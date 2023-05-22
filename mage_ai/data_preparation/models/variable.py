@@ -1,17 +1,24 @@
+import json
+import os
+import traceback
 from enum import Enum
-from mage_ai.data_cleaner.shared.utils import (
-    is_geo_dataframe,
-    is_spark_dataframe,
-)
+from typing import Any, Dict, List
+
+import numpy as np
+import pandas as pd
+import polars as pl
+from pandas.api.types import is_object_dtype
+
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
     DATAFRAME_SAMPLE_MAX_COLUMNS,
     VARIABLE_DIR,
 )
-from mage_ai.data_preparation.models.utils import (
+from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
+    STRING_SERIALIZABLE_COLUMN_TYPES,
     apply_transform_pandas,
-    # dask_from_pandas,
     cast_column_types,
     deserialize_columns,
     serialize_columns,
@@ -20,14 +27,6 @@ from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.shared.parsers import sample_output
 from mage_ai.shared.utils import clean_name
-from pandas.api.types import is_object_dtype
-from typing import Any, Dict, List
-import json
-import numpy as np
-import os
-import pandas as pd
-import polars as pl
-import traceback
 
 DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
 DATAFRAME_PARQUET_FILE = 'data.parquet'
@@ -54,11 +53,14 @@ class Variable:
         block_uuid: str,
         partition: str = None,
         spark=None,
-        storage: BaseStorage = LocalStorage(),
+        storage: BaseStorage = None,
         variable_type: VariableType = None
     ) -> None:
         self.uuid = uuid
-        self.storage = storage
+        if storage is None:
+            self.storage = LocalStorage()
+        else:
+            self.storage = storage
         # if not self.storage.path_exists(pipeline_path):
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
@@ -269,7 +271,9 @@ class Variable:
             self.storage.remove(file_path)
             self.storage.remove_dir(self.variable_path)
 
-    def __read_json(self, default_value={}, sample: bool = False) -> Dict:
+    def __read_json(self, default_value: Dict = None, sample: bool = False) -> Dict:
+        if default_value is None:
+            default_value = {}
         # For backward compatibility
         old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         file_path = os.path.join(self.variable_path, JSON_FILE)
@@ -291,7 +295,9 @@ class Variable:
             data = sample_output(data)[0]
         return data
 
-    async def __read_json_async(self, default_value={}, sample: bool = False) -> Dict:
+    async def __read_json_async(self, default_value: Dict = None, sample: bool = False) -> Dict:
+        if default_value is None:
+            default_value = {}
         # For backward compatibility
         old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         file_path = os.path.join(self.variable_path, JSON_FILE)
@@ -415,10 +421,14 @@ class Variable:
                 series_non_null = df_output[c].dropna()
                 if len(series_non_null) > 0:
                     coltype = type(series_non_null.iloc[0])
-
                     if is_object_dtype(series_non_null.dtype):
+                        if coltype.__name__ in STRING_SERIALIZABLE_COLUMN_TYPES:
+                            cast_coltype = str
+                        else:
+                            cast_coltype = coltype
                         try:
-                            df_output[c] = series_non_null.astype(coltype)
+                            df_output[c] = series_non_null.astype(cast_coltype)
+                            coltype = str
                         except Exception:
                             # Fall back to convert to string
                             # df_output[c] = series_non_null.astype(str)
@@ -430,6 +440,13 @@ class Variable:
                         column_types[c] = coltype.__name__
                     else:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
+
+        # Try using Polars to write the dataframe to improve performance
+        try:
+            pl_df = pl.from_pandas(df_output)
+            return self.__write_polars_dataframe(pl_df)
+        except Exception:
+            pass
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
