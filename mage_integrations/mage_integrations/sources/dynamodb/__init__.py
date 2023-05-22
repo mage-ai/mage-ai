@@ -5,10 +5,12 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.sources.constants import (
+    COLUMN_TYPE_DICT,
     COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
     DATABASE_TYPE_DYNAMODB,
+    REPLICATION_METHOD_FULL_TABLE,
 )
 from singer.schema import Schema
 from typing import Dict, Generator, List
@@ -23,7 +25,6 @@ ATTRIBUTE_TYPE = 'AttributeType'
 AWS_ACCESS_KEY_ID = 'aws_access_key_id'
 AWS_REGION = 'aws_region'
 AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
-DYNAMODB_LAST_EVALUATED_KEY = 'dynamodb_last_evaluated_key'
 EXCLUSIVE_START_KEY = 'ExclusiveStartKey'
 ITEMS = 'Items'
 KEY_SCHEMA = 'KeySchema'
@@ -81,18 +82,29 @@ class DynamoDb(Source):
             properties[column_name] = dict(
                     type=column_types,
                 )
+
+        properties[LAST_EVALUATED_KEY] = dict(
+                properties=None,
+                format=COLUMN_TYPE_DICT,
+                type=[COLUMN_TYPE_STRING],
+            )
+
         schema = Schema.from_dict(dict(
                 properties=properties,
                 type='object',
             ))
         metadata = get_standard_metadata(
                 key_properties=key_props,
+                # DynamoDB replicas with global tables.
+                replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema.to_dict(),
                 stream_id=table_name,
+                valid_replication_keys=[LAST_EVALUATED_KEY],
             )
         catalog_entry = CatalogEntry(
                 key_properties=key_props,
                 metadata=metadata,
+                replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema,
                 stream=table_name,
                 tap_stream_id=table_name,
@@ -143,7 +155,7 @@ class DynamoDb(Source):
         '''
         scan_params = {
             'TableName': table_name,
-            'Limit': 1000
+            'Limit': 10
         }
 
         client = self.build_client()
@@ -161,17 +173,6 @@ class DynamoDb(Source):
 
             has_more = result.get(LAST_EVALUATED_KEY, False)
 
-    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
-        if DATABASE_TYPE_DYNAMODB == stream.database:
-            return [DYNAMODB_LAST_EVALUATED_KEY]
-        return super()._get_bookmark_properties_for_stream(stream)
-
-    def __get_bookmarks_for_stream(self, stream) -> Dict:
-        if DATABASE_TYPE_DYNAMODB == stream.database:
-            data = self.state or {}
-            return data.get('bookmarks', {}).get(stream.tap_stream_id, None)
-        return super().__get_bookmarks_for_stream(stream)
-
     def load_data(
         self,
         stream,
@@ -183,19 +184,12 @@ class DynamoDb(Source):
     ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
 
-        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
-        bookmark_last_modified = None
-        if bookmarks:
-            for key, val in bookmarks.items():
-                if key not in bookmark_properties or val is None:
-                    continue
-                bookmark_last_modified = val
+        bookmark_last_evaluated_key = None
+        if bookmarks is not None and bookmarks.get(LAST_EVALUATED_KEY) is not None:
+            bookmark_last_evaluated_key = bookmarks.get(LAST_EVALUATED_KEY)
 
-        for result in self.scan_table(table_name, bookmark_last_modified):
+        for result in self.scan_table(table_name, bookmark_last_evaluated_key):
             data = []
-
-            if result.get(LAST_EVALUATED_KEY):
-                bookmark_last_modified = result[LAST_EVALUATED_KEY]
 
             for item in result.get(ITEMS, []):
                 record_message = common.row_to_singer_record(
@@ -205,6 +199,18 @@ class DynamoDb(Source):
                         None,
                     )
                 data.append(record_message.record)
+            
+            if result.get(LAST_EVALUATED_KEY):
+                bookmark_last_evaluated_key = result[LAST_EVALUATED_KEY]
+                # If last evaluated key exists, add it into the data.
+                record_message = common.row_to_singer_record(
+                        stream.to_dict(),
+                        {LAST_EVALUATED_KEY: bookmark_last_evaluated_key},
+                        None,
+                        None,
+                    )
+                data.append(record_message.record)
+
             yield data
 
 
