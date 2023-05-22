@@ -1,9 +1,11 @@
-from mage_ai.shared.parsers import encode_complex
+import traceback
 from typing import Dict
+
 import dask.dataframe as dd
 import pandas as pd
 import simplejson
-import traceback
+
+from mage_ai.shared.parsers import encode_complex
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = [
@@ -56,7 +58,7 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
             continue
 
         val = row[column]
-        if val is not None:
+        if val is not None and type(val) is str:
             row[column] = simplejson.loads(val)
 
     return row
