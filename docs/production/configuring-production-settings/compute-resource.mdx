@@ -99,16 +99,25 @@ is installed and run on your nodes to use the GPUs.
 You can choose to launch separate AWS ECS tasks to executor blocks by specifying
 block executor_type to be `ecs` in pipeline's metadata.yaml file.
 
-To customize the compute resource of ECS executor, you can update `cpu` and
-`memory` the `ecs_config` in project's metadata.yaml file.
-
-Example config:
-
-```yaml
-ecs_config:
-  cpu: 1024
-  memory: 2048
-```
+There're 2 ways to customize the compute resource of ECS executor,
+1. Update `cpu` and `memory` the `ecs_config` in project's metadata.yaml file. Example config:
+    ```yaml
+    ecs_config:
+      cpu: 1024
+      memory: 2048
+    ```
+2. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
+    ```yaml
+    blocks:
+    - uuid: example_data_loader
+      type: data_loader
+      upstream_blocks: []
+      downstream_blocks: []
+      executor_type: ecs
+      executor_config:
+        cpu: 1024
+        memory: 2048
+    ```
 
 ### GCP Cloud Run executor
 
