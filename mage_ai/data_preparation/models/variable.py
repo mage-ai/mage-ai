@@ -442,6 +442,10 @@ class Variable:
                     else:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
+        self.storage.makedirs(self.variable_path, exist_ok=True)
+        with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
+            f.write(json.dumps(column_types))
+
         # Try using Polars to write the dataframe to improve performance
         if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
                 and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
@@ -451,8 +455,6 @@ class Variable:
                 return self.__write_polars_dataframe(pl_df)
             except Exception:
                 pass
-
-        self.storage.makedirs(self.variable_path, exist_ok=True)
 
         # ddf = dask_from_pandas(df_output)
         df_output_serialized = apply_transform_pandas(
@@ -464,9 +466,6 @@ class Variable:
             df_output_serialized,
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
         )
-
-        with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
-            f.write(json.dumps(column_types))
 
         try:
             df_sample_output = df_output_serialized.iloc[
