@@ -58,7 +58,7 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
             continue
 
         val = row[column]
-        if val is not None and type(val).__name__ == column_type:
+        if val is not None and type(val) is str:
             row[column] = simplejson.loads(val)
 
     return row
