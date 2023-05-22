@@ -1,7 +1,15 @@
+import io
+import json
+import sys
+import uuid
 from ast import literal_eval
 from functools import reduce
+from typing import Any, Dict, List, Tuple
+
+import google
 from google.api_core.exceptions import BadRequest
 from google.cloud import bigquery
+
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_BUFFER,
@@ -33,17 +41,10 @@ from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
+    clean_column_name,
     column_type_mapping,
 )
-from mage_integrations.destinations.sql.utils import clean_column_name
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Any, Dict, List, Tuple
-import google
-import io
-import os
-import pandas as pd
-import sys
-import uuid
 
 
 def convert_column_if_json(value, column_type):
@@ -219,8 +220,11 @@ WHERE table_id = '{table_name}'
         self,
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[str]:
+        if tags is None:
+            tags = {}
+
         return []
 
     def process_queries(
@@ -228,9 +232,12 @@ WHERE table_id = '{table_name}'
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
         **kwargs,
     ) -> List[List[Tuple]]:
+        if tags is None:
+            tags = {}
+
         tries = kwargs.get('tries', 0)
 
         try:
@@ -275,7 +282,10 @@ WHERE table_id = '{table_name}'
             tags=dict(stream=stream),
         )
 
-    def __recreate_table(self, tags: Dict = {}):
+    def __recreate_table(self, tags: Dict = None):
+        if tags is None:
+            tags = {}
+
         self.logger.info('Recreating table started.', tags)
 
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
@@ -322,8 +332,11 @@ WHERE table_id = '{table_name}'
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[List[Tuple]]:
+        if tags is None:
+            tags = {}
+
         connection = self.build_connection()
 
         try:
@@ -338,7 +351,10 @@ WHERE table_id = '{table_name}'
             session_id = job.session_info.session_id
             job.result()
 
-            session_id_property = bigquery.query.ConnectionProperty(key='session_id', value=session_id)
+            session_id_property = bigquery.query.ConnectionProperty(
+                key='session_id',
+                value=session_id,
+            )
             query_job_config = dict(
                 create_session=False,
                 connection_properties=[session_id_property],
@@ -350,7 +366,12 @@ WHERE table_id = '{table_name}'
             )
             job.result()
 
-            results, jobs = self.__insert(client, record_data, stream, query_job_config=query_job_config)
+            results, jobs = self.__insert(
+                client,
+                record_data,
+                stream,
+                query_job_config=query_job_config,
+            )
 
             job = client.query(
                 'COMMIT TRANSACTION',
@@ -394,8 +415,11 @@ WHERE table_id = '{table_name}'
         client,
         record_data: List[Dict],
         stream: str,
-        query_job_config: Dict = {},
+        query_job_config: Dict = None,
     ) -> Tuple[List[List[Tuple]], List[Any]]:
+        if query_job_config is None:
+            query_job_config = {}
+
         records = [d['record'] for d in record_data]
 
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
@@ -545,9 +569,14 @@ WHERE table_id = '{table_name}'
         mapping: Dict,
         record_data: List[Dict],
         count_rows: bool = True,
-        query_job_config: Dict = {},
-        tags: Dict = {},
+        query_job_config: Dict = None,
+        tags: Dict = None,
     ) -> Tuple[List[Any], List[Any]]:
+        if query_job_config is None:
+            query_job_config = {}
+        if tags is None:
+            tags = {}
+
         jobs = []
         job_results = []
 
@@ -631,9 +660,18 @@ WHERE table_id = '{table_name}'
                 ))
 
                 # Documentation https://cloud.google.com/bigquery/quotas
-                self.logger.info(f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.', tags=tags2)
-                self.logger.info(f'Number of Standard SQL query parameters: {len(query_parameters)}.', tags=tags2)
-                self.logger.info(f'Request payload size: {query_payload_size / 1000} kbs.', tags=tags2)
+                self.logger.info(
+                    f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.',
+                    tags=tags2,
+                )
+                self.logger.info(
+                    f'Number of Standard SQL query parameters: {len(query_parameters)}.',
+                    tags=tags2,
+                )
+                self.logger.info(
+                    f'Request payload size: {query_payload_size / 1000} kbs.',
+                    tags=tags2,
+                )
 
                 job = client.query(
                     query,
@@ -663,7 +701,7 @@ WHERE table_id = '{table_name}'
 
         values = []
         for row in records:
-            vals = []
+            vals = dict()
             for column in columns:
                 v = row.get(column, None)
 
@@ -685,10 +723,9 @@ WHERE table_id = '{table_name}'
                     else:
                         value_final = convert_json_or_string_for_batch_load(v, column_type_dict)
 
-                vals.append(value_final)
+                vals[column] = value_final
             values.append(vals)
-        df = pd.DataFrame.from_records(values, columns=columns)
-        json_data = df.to_json(orient='records', lines=True)
+        json_data = '\n'.join([json.dumps(value) for value in values])
         job_result, job = self.__create_load_job(client, mapping, full_table_name, json_data)
         job_results.append(job_result)
         jobs.append(job)
