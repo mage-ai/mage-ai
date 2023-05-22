@@ -21,6 +21,8 @@ COLUMN_TYPES = [
   COLUMN_TYPE_STRING,
 ]
 
+DATABASE_TYPE_DYNAMODB = 'dynamodb'
+
 FILE_TYPE_CSV = 'csv'
 FILE_TYPE_PARQUET = 'parquet'
 

@@ -8,6 +8,7 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
+    DATABASE_TYPE_DYNAMODB,
 )
 from singer.schema import Schema
 from typing import Dict, Generator, List
@@ -22,6 +23,7 @@ ATTRIBUTE_TYPE = 'AttributeType'
 AWS_ACCESS_KEY_ID = 'aws_access_key_id'
 AWS_REGION = 'aws_region'
 AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
+DYNAMODB_LAST_EVALUATED_KEY = 'dynamodb_last_evaluated_key'
 EXCLUSIVE_START_KEY = 'ExclusiveStartKey'
 ITEMS = 'Items'
 KEY_SCHEMA = 'KeySchema'
@@ -94,6 +96,7 @@ class DynamoDb(Source):
                 schema=schema,
                 stream=table_name,
                 tap_stream_id=table_name,
+                database=DATABASE_TYPE_DYNAMODB,
             )
         return catalog_entry
 
@@ -158,6 +161,17 @@ class DynamoDb(Source):
 
             has_more = result.get(LAST_EVALUATED_KEY, False)
 
+    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
+        if DATABASE_TYPE_DYNAMODB == stream.database:
+            return [DYNAMODB_LAST_EVALUATED_KEY]
+        return super()._get_bookmark_properties_for_stream(stream)
+
+    def __get_bookmarks_for_stream(self, stream) -> Dict:
+        if DATABASE_TYPE_DYNAMODB == stream.database:
+            data = self.state or {}
+            return data.get('bookmarks', {}).get(stream.tap_stream_id, None)
+        return super().__get_bookmarks_for_stream(stream)
+
     def load_data(
         self,
         stream,
@@ -169,9 +183,13 @@ class DynamoDb(Source):
     ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
 
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
         bookmark_last_modified = None
-        if bookmarks is not None and bookmarks.get(LAST_EVALUATED_KEY) is not None:
-            bookmark_last_modified = bookmarks.get(LAST_EVALUATED_KEY)
+        if bookmarks:
+            for key, val in bookmarks.items():
+                if key not in bookmark_properties or val is None:
+                    continue
+                bookmark_last_modified = val
 
         for result in self.scan_table(table_name, bookmark_last_modified):
             data = []
