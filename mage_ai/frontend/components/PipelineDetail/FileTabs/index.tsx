@@ -3,8 +3,9 @@ import { ThemeContext } from 'styled-components';
 
 import FileTab, { FileTabProps } from './Tab';
 import FlexContainer from '@oracle/components/FlexContainer';
-import { PipelineHeaderStyle } from '../index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { goToWithQuery } from '@utils/routing';
+import { remove } from '@utils/array';
 
 type FileTabsProps = {
   filePaths: string[];
@@ -15,6 +16,7 @@ type FileTabsProps = {
 function FileTabs({
   filePaths,
   isSelectedFilePath,
+  onClickTabClose,
   selectedFilePath,
   ...props
 }: FileTabsProps) {
@@ -24,29 +26,42 @@ function FileTabs({
   const numberOfFilePaths = useMemo(() => filePathsMemo?.length, [filePathsMemo]);
 
   return (
-    <PipelineHeaderStyle relativePosition secondary>
-      <FlexContainer
-        alignItems="center"
-        justifyContent="flex-start"
-      >
-        {filePathsMemo?.map((filePath: string, idx: number) => {
-          const selected: boolean = isSelectedFilePath
-            ? isSelectedFilePath(filePath, selectedFilePath)
-            : selectedFilePath === encodeURIComponent(filePath);
+    <FlexContainer
+      alignItems="center"
+      justifyContent="flex-start"
+    >
+      {filePathsMemo?.map((filePath: string, idx: number) => {
+        const selected: boolean = isSelectedFilePath
+          ? isSelectedFilePath(filePath, selectedFilePath)
+          : selectedFilePath === encodeURIComponent(filePath);
 
-          return (
-            <FileTab
-              {...props}
-              filePath={filePath}
-              isLast={idx === numberOfFilePaths - 1}
-              key={filePath}
-              selected={selected}
-              themeContext={themeContext}
-            />
-          );
-        })}
-      </FlexContainer>
-    </PipelineHeaderStyle>
+        return (
+          <FileTab
+            {...props}
+            filePath={filePath}
+            isLast={idx === numberOfFilePaths - 1}
+            key={filePath}
+            onClickTabClose={(fp: string) => {
+              if (onClickTabClose) {
+                onClickTabClose(fp);
+              } else {
+                const newFilePaths = remove(filePathsMemo, path => path === fp)
+                  .map(path => encodeURIComponent(path));
+
+                goToWithQuery({
+                  file_path: newFilePaths[newFilePaths.length - 1] || null,
+                  'file_paths[]': newFilePaths,
+                }, {
+                  pushHistory: true,
+                });
+              }
+            }}
+            selected={selected}
+            themeContext={themeContext}
+          />
+        );
+      })}
+    </FlexContainer>
   );
 }
 

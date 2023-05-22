@@ -12,7 +12,6 @@ import { FileTabStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
-import { remove } from '@utils/array';
 
 export type FileTabProps = {
   filesTouched?: {
@@ -128,20 +127,7 @@ function FileTab({
               noOutline
               onClick={(e) => {
                 pauseEvent(e);
-
-                if (onClickTabClose) {
-                  onClickTabClose(filePath);
-                } else {
-                  const newFilePaths = remove(filePathsMemo, path => path === filePath)
-                    .map(path => encodeURIComponent(path));
-
-                  goToWithQuery({
-                    file_path: newFilePaths[newFilePaths.length - 1] || null,
-                    'file_paths[]': newFilePaths,
-                  }, {
-                    pushHistory: true,
-                  });
-                }
+                onClickTabClose?.(filePath);
               }}
               preventDefault
             >
@@ -156,7 +142,6 @@ function FileTab({
           </Tooltip>
         </FlexContainer>
       </FileTabStyle>
-
     </FlexContainer>
   );
 }

@@ -1,0 +1,36 @@
+import styled from 'styled-components';
+
+import dark from '@oracle/styles/themes/dark';
+import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+
+const MENU_HEIGHT = 36;
+const TAB_HEIGHT = 36;
+export const HEADER_HEIGHT_TOTAL = MENU_HEIGHT + TAB_HEIGHT;
+export const MAIN_CONTENT_TOP_OFFSET = (HEADER_HEIGHT_TOTAL - ALL_HEADERS_HEIGHT) + HEADER_HEIGHT;
+
+export const HeaderStyle = styled.div`
+  height: ${HEADER_HEIGHT_TOTAL}px;
+  position: fixed;
+  top: ${HEADER_HEIGHT}px;
+  width: 100%;
+  z-index: 1;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).codeArea};
+  `}
+`;
+
+export const MenuStyle = styled.div`
+  height: ${MENU_HEIGHT}px;
+  position: relative;
+  z-index: 2;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+`;
+
+export const TabsStyle = styled.div`
+  height: ${TAB_HEIGHT}px;
+`;

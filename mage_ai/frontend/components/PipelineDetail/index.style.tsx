@@ -66,7 +66,7 @@ export const FileTabStyle = styled.div<{
   last?: boolean;
   selected?: boolean;
 }>`
-  border-left: 1px solid transparent;
+  border-right: 1px solid transparent;
   height: 100%;
   padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
 
@@ -85,11 +85,7 @@ export const FileTabStyle = styled.div<{
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 
-  ${props => !props.selected && `
+  ${props => !props.selected && !props.last && `
     border-color: ${(props.theme.borders || dark.borders).light} !important;
-  `}
-
-  ${props => props.last && `
-    border-right: 1px solid transparent;
   `}
 `;

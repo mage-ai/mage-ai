@@ -49,10 +49,12 @@ import { useKeyboardContext } from '@context/Keyboard';
 type FileEditorProps = {
   active: boolean;
   addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
+  disableRefreshWarning?: boolean;
   fetchPipeline: () => void;
   fetchVariables: () => void;
   filePath: string;
-  openSidekickView: (newView: ViewKeyEnum) => void;
+  hideHeaderButtons?: boolean;
+  openSidekickView?: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
   selectedFilePath: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
@@ -67,9 +69,11 @@ type FileEditorProps = {
 function FileEditor({
   active,
   addNewBlock,
+  disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
   filePath,
+  hideHeaderButtons,
   openSidekickView,
   pipeline,
   selectedFilePath,
@@ -270,7 +274,7 @@ function FileEditor({
         inline
         loading={loading}
         onClick={() => {
-          openSidekickView(ViewKeyEnum.TERMINAL);
+          openSidekickView?.(ViewKeyEnum.TERMINAL);
           sendTerminalMessage(JSON.stringify({
             ...oauthWebsocketData,
             command: ['stdin', `pip install -r ${repoPath}/requirements.txt\r`],
@@ -298,9 +302,11 @@ function FileEditor({
   }, [unregisterOnKeyDown, uuidKeyboard]);
   registerOnKeyDown(
     uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
-      if (active) {
-        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping) || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)) {
+    (event, keyMapping) => {
+      if (active && !disableRefreshWarning) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
+        ) {
           event.preventDefault();
           saveFile(content, file);
         } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
@@ -316,6 +322,7 @@ function FileEditor({
     [
       active,
       content,
+      disableRefreshWarning,
       file,
       saveFile,
       touched,
@@ -324,37 +331,41 @@ function FileEditor({
 
   return (
     <div ref={containerRef}>
-      <Spacing p={2}>
-        <FlexContainer justifyContent="space-between">
-          <ButtonGroup>
-            {addToPipelineEl}
+      {!hideHeaderButtons && (
+        <Spacing p={2}>
+          <FlexContainer justifyContent="space-between">
+            <ButtonGroup>
+              {addToPipelineEl}
 
-            <Button
-              disabled={!content}
-              onClick={(e) => {
-                e.preventDefault();
-                saveFile(content, file);
-              }}
-              title={content ? null : 'No changes have been made to this file.'}
-            >
-              Save file content
-            </Button>
-          </ButtonGroup>
+              <Button
+                disabled={!content}
+                onClick={(e) => {
+                  e.preventDefault();
+                  saveFile(content, file);
+                }}
+                title={content ? null : 'No changes have been made to this file.'}
+              >
+                Save file content
+              </Button>
+            </ButtonGroup>
 
-          <ButtonGroup>
-            <Button
-              compact
-              onClick={() => {
-                openSidekickView(ViewKeyEnum.FILE_VERSIONS);
-              }}
-              small
-              title="View previous changes to this file."
-            >
-              Show versions
-            </Button>
-          </ButtonGroup>
-        </FlexContainer>
-      </Spacing>
+            {openSidekickView && (
+              <ButtonGroup>
+                <Button
+                  compact
+                  onClick={() => {
+                    openSidekickView(ViewKeyEnum.FILE_VERSIONS);
+                  }}
+                  small
+                  title="View previous changes to this file."
+                >
+                  Show versions
+                </Button>
+              </ButtonGroup>
+            )}
+          </FlexContainer>
+        </Spacing>
+      )}
 
       {codeEditorEl}
 
