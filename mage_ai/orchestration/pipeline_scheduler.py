@@ -87,10 +87,26 @@ class PipelineScheduler:
 
     def start(self, should_schedule: bool = True) -> None:
         if get_preferences().sync_config:
+            tags = dict(
+                pipeline_run_id=self.pipeline_run.id,
+                pipeline_uuid=self.pipeline.uuid,
+            )
             sync_config = GitConfig.load(config=get_preferences().sync_config)
             if sync_config.sync_on_pipeline_run:
                 sync = GitSync(sync_config)
-                sync.sync_data()
+                try:
+                    sync.sync_data()
+                    self.logger.info(
+                        f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
+                        f', branch: {sync_config.branch}',
+                        **tags,
+                    )
+                except Exception as err:
+                    self.logger.warning(
+                        f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                        f', branch: {sync_config.branch} with error: {str(err)}',
+                        **tags,
+                    )
 
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
             return

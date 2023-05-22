@@ -1,11 +1,13 @@
+import os
+import traceback
 from typing import Dict
+
+import yaml
+
 from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.hash import merge_dict
-import os
-import traceback
-import yaml
 
 # Git environment variables
 GIT_REPO_LINK_VAR = 'GIT_REPO_LINK'
@@ -29,11 +31,10 @@ class Preferences:
             os.path.join(self.repo_path, PREFERENCES_FILE)
         self.user = user
         project_preferences = dict()
-        user_preferences = dict()
         try:
-            if user:
-                user_preferences = user.preferences or dict()
-            if config_dict:
+            if user and user.preferences and user.git_settings is None:
+                project_preferences = user.preferences
+            elif config_dict:
                 project_preferences = config_dict
             elif os.path.exists(self.preferences_file_path):
                 with open(self.preferences_file_path) as f:
@@ -55,25 +56,22 @@ class Preferences:
             )
         else:
             project_sync_config = project_preferences.get('sync_config', dict())
-            user_preferences = (
-                user_preferences.get(self.repo_path)
-                if self.repo_path in user_preferences
-                else user_preferences
-            )
-            user_git_settings = user_preferences.get('sync_config')
-            self.sync_config = merge_dict(project_sync_config, user_git_settings)
+            if user:
+                user_git_settings = user.git_settings or {}
+                self.sync_config = merge_dict(project_sync_config, user_git_settings)
+            else:
+                self.sync_config = project_sync_config
 
-    def has_valid_git_config(self) -> bool:
-        return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config
+    def is_git_integration_enabled(self) -> bool:
+        return 'remote_repo_link' in self.sync_config and \
+            'repo_path' in self.sync_config and \
+            self.sync_config.get('branch') is None
 
     def update_preferences(self, updates: Dict):
         preferences = self.to_dict()
         preferences.update(updates)
-        if self.user:
-            self.user.update(preferences=preferences)
-        else:
-            with open(self.preferences_file_path, 'w') as f:
-                yaml.dump(preferences, f)
+        with open(self.preferences_file_path, 'w') as f:
+            yaml.dump(preferences, f)
 
     def to_dict(self) -> Dict:
         return dict(

@@ -1,22 +1,21 @@
+import os
+from typing import Dict
+
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.preferences import (
-    get_preferences,
-    Preferences,
-)
+from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.sync import (
-    GitConfig,
-    UserGitConfig,
     GIT_ACCESS_TOKEN_SECRET_NAME,
     GIT_SSH_PRIVATE_KEY_SECRET_NAME,
     GIT_SSH_PUBLIC_KEY_SECRET_NAME,
+    GitConfig,
+    UserGitConfig,
 )
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.secrets import Secret
-from typing import Dict
-import os
 
 
 def get_ssh_public_key_secret_name(user: User = None) -> str:
@@ -37,8 +36,10 @@ def get_access_token_secret_name(user: User = None) -> str:
 class SyncResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        preferences = get_preferences(user=user)
-        sync_config = preferences.sync_config
+        sync_config = get_preferences().sync_config
+        if user:
+            sync_config['user_git_settings'] = user.git_settings
+            print('HUH:', sync_config)
         return self.build_result_set(
             [sync_config],
             user,
@@ -56,24 +57,28 @@ class SyncResource(GenericResource):
         # default repo_path to os.getcwd()
         if not updated_config.get('repo_path', None):
             updated_config['repo_path'] = os.getcwd()
-        repo_path = updated_config['repo_path']
 
+        # Validate payloads
+        user_payload = self.update_user_settings(user_settings, user=user)
+        UserGitConfig.load(config=user_payload)
+        sync_config = GitConfig.load(config=updated_config)
+
+        # Update user git settings if they are included
         if user:
-            user_payload = self.update_user_settings(user_settings, user=user)
-            user_git_config = UserGitConfig.load(user_payload)
-            user_preferences = user.preferences or dict()
-            user_git_settings = user_preferences.get(repo_path, {}).get('git_settings', {})
+            repo_path = get_repo_path()
+            user_preferences = user.preferences or {}
+            user_git_settings = user.git_settings or {}
             user_preferences[repo_path] = {
                 **user_preferences.get(repo_path, {}),
                 'git_settings': {
                     **user_git_settings,
-                    **user_git_config.to_dict()
+                    **user_payload,
                 }
             }
+            user.refresh()
             user.update(preferences=user_preferences)
-
-        # Validate payload
-        sync_config = GitConfig.load(config=updated_config)
+        else:
+            updated_config.update(user_payload)
 
         preferences.update_preferences(dict(sync_config=updated_config))
 
@@ -84,8 +89,7 @@ class SyncResource(GenericResource):
     @classmethod
     def member(self, pk, user, **kwargs):
         sync_config = get_preferences().sync_config
-        repo_path = sync_config['repo_path']
-        sync_config['user_git_settings'] = user.git_settings(repo_path)
+        sync_config['user_git_settings'] = user.git_settings
 
         return self(sync_config, user, **kwargs)
 
