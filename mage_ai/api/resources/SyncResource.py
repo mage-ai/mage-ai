@@ -36,10 +36,13 @@ def get_access_token_secret_name(user: User = None) -> str:
 class SyncResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        sync_config = get_preferences().sync_config
-        if user:
+        sync_config = get_preferences(user=user).sync_config
+        # Make it backwards compatible with storing all of the git settings in the user
+        # preferences field.
+        if user and user.git_settings:
             sync_config['user_git_settings'] = user.git_settings
-            print('HUH:', sync_config)
+        else:
+            sync_config['user_git_settings'] = UserGitConfig.from_dict(sync_config).to_dict()
         return self.build_result_set(
             [sync_config],
             user,

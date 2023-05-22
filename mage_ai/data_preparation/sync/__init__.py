@@ -1,3 +1,4 @@
+import inspect
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -38,3 +39,10 @@ class UserGitConfig(BaseConfig):
     ssh_private_key_secret_name: str = GIT_SSH_PRIVATE_KEY_SECRET_NAME
     ssh_public_key_secret_name: str = GIT_SSH_PUBLIC_KEY_SECRET_NAME
     access_token_secret_name: str = GIT_ACCESS_TOKEN_SECRET_NAME
+
+    @classmethod
+    def from_dict(cls, config):
+        return cls(**{
+            k: v for k, v in config.items()
+            if k in inspect.signature(cls).parameters
+        })

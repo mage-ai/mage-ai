@@ -123,60 +123,46 @@ function SyncData() {
     return SSH_GIT_FIELDS;
   }, [authType]);
 
-  const { data } = api.statuses.list();
-  const requireUserAuthentication =
-    useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
-
-  const userGitFields = useMemo(() => {
-    let updateSettings: React.Dispatch<React.SetStateAction<SyncType | UserGitSettingsType>> = setSync;
-    let settings: SyncType | UserGitSettingsType = sync;
-
-    if (requireUserAuthentication) {
-      updateSettings = setUserGitSettings;
-      settings = userGitSettings;
-    }
-
-    return (
-      <form>
-        {additionalGitFields.map(({
-          autoComplete,
-          disabled,
-          label,
-          labelDescription,
-          required,
-          type,
-          uuid,
-        }: SyncFieldType) => (
-          <Spacing key={uuid} mt={2}>
-            {labelDescription && (
-              <Spacing mb={1}>
-                <Text small>
-                  {labelDescription}
-                </Text>
-              </Spacing>
-            )}
-            <TextInput  
-              autoComplete={autoComplete}
-              disabled={disabled}
-              label={label}
-              // @ts-ignore
-              onChange={e => {
-                updateSettings(prev => ({
-                  ...prev,
-                  [uuid]: e.target.value,
-                }));
-              }}
-              primary
-              required={required}
-              setContentOnMount
-              type={type}
-              value={settings?.[uuid] || ''}
-            />
-          </Spacing>
-        ))}
-      </form>
-    );
-  }, [requireUserAuthentication, userGitSettings, setUserGitSettings, sync, setSync, additionalGitFields]);
+  const userGitFields = useMemo(() => (
+    <form>
+      {additionalGitFields.map(({
+        autoComplete,
+        disabled,
+        label,
+        labelDescription,
+        required,
+        type,
+        uuid,
+      }: SyncFieldType) => (
+        <Spacing key={uuid} mt={2}>
+          {labelDescription && (
+            <Spacing mb={1}>
+              <Text small>
+                {labelDescription}
+              </Text>
+            </Spacing>
+          )}
+          <TextInput  
+            autoComplete={autoComplete}
+            disabled={disabled}
+            label={label}
+            // @ts-ignore
+            onChange={e => {
+              setUserGitSettings(prev => ({
+                ...prev,
+                [uuid]: e.target.value,
+              }));
+            }}
+            primary
+            required={required}
+            setContentOnMount
+            type={type}
+            value={userGitSettings?.[uuid] || ''}
+          />
+        </Spacing>
+      ))}
+    </form>
+  ), [additionalGitFields, setUserGitSettings, userGitSettings]);
 
   return (
     <SettingsDashboard
