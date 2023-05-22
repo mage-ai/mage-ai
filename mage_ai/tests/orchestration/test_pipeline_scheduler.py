@@ -319,7 +319,7 @@ class PipelineSchedulerTests(DBTestCase):
         preferences = get_preferences(repo_path=self.repo_path)
         preferences.update_preferences(
             dict(sync_config=dict(
-                repo_repo_link='test_git_repo',
+                remote_repo_link='test_git_repo',
                 repo_path=self.repo_path,
                 branch='main',
                 sync_on_pipeline_run=True,
