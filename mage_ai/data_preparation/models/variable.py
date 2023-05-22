@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pandas.api.types import is_object_dtype
+from pandas.core.indexes.range import RangeIndex
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
@@ -442,11 +443,14 @@ class Variable:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
         # Try using Polars to write the dataframe to improve performance
-        try:
-            pl_df = pl.from_pandas(df_output)
-            return self.__write_polars_dataframe(pl_df)
-        except Exception:
-            pass
+        if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
+                and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
+            # Polars ignores any index
+            try:
+                pl_df = pl.from_pandas(df_output)
+                return self.__write_polars_dataframe(pl_df)
+            except Exception:
+                pass
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
