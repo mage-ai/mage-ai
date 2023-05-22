@@ -97,7 +97,7 @@ function SyncData() {
           callback: ({ sync }) => {
             if (sync) {
               toast.success(
-                'Data synced!',
+                'Success!',
                 {
                   position: toast.POSITION.BOTTOM_RIGHT,
                   toastId: 'data_sync_success',
@@ -429,21 +429,43 @@ function SyncData() {
                 This may <Text bold danger inline>overwrite</Text> your
                 existing data, so make sure you’ve committed or backed up your current changes.
               </Text>
+              <Spacing mt={2} />
+              <Text>
+                Reset will tell Mage to try to clone your repository from remote. This will
+                also <Text bold danger inline>overwrite</Text> all your local changes and 
+                reset any settings you may have configured for your local Git repo. This may be
+                helpful if you are having issues syncing your repository.
+              </Text>
             </Spacing>
 
             <Spacing mt={2}>
-              <Button
-                loading={isLoadingRunSync}
-                // @ts-ignore
-                onClick={() => runSync({
-                  sync: {
-                    action_type: 'sync_data',
-                  },
-                })}
-                warning
-              >
-                Synchronize code
-              </Button>
+              <FlexContainer>
+                <Button
+                  loading={isLoadingRunSync}
+                  // @ts-ignore
+                  onClick={() => runSync({
+                    sync: {
+                      action_type: 'sync_data',
+                    },
+                  })}
+                  warning
+                >
+                  Synchronize code
+                </Button>
+                <Spacing ml={2}/>
+                <Button
+                  danger
+                  loading={isLoadingRunSync}
+                  // @ts-ignore
+                  onClick={() => runSync({
+                    sync: {
+                      action_type: 'reset',
+                    },
+                  })}
+                >
+                  Reset repository
+                </Button>
+              </FlexContainer>
             </Spacing>
           </Spacing>
         )}

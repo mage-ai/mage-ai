@@ -103,6 +103,8 @@ class SyncResource(GenericResource):
         action_type = payload.get('action_type')
         if action_type == 'sync_data':
             sync.sync_data()
+        elif action_type == 'reset':
+            sync.reset()
 
         return self
 

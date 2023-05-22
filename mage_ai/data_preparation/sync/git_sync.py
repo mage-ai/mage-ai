@@ -16,3 +16,10 @@ class GitSync(BaseSync):
             verbose=True,
         ):
             self.git_manager.reset(self.branch)
+
+    def reset(self):
+        with VerboseFunctionExec(
+            f'Attempting to clone from remote repo {self.remote_repo_link}',
+            verbose=True,
+        ):
+            self.git_manager.clone()
