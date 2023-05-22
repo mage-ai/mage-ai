@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import logging
 import os
 from contextlib import redirect_stderr, redirect_stdout
@@ -36,9 +37,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 # Data loader block should be root block
                 if len(b.upstream_blocks or []) > 0:
                     raise Exception(f'Data loader {b.uuid} can\'t have upstream blocks.')
-                if len(b.downstream_blocks or []) != 1:
-                    raise Exception(f'Data loader {b.uuid} must have one transformer or data'
-                                    ' exporter as the downstream block.')
+                if len(b.downstream_blocks or []) < 1:
+                    raise Exception(f'Data loader {b.uuid} must have at least one transformer or'
+                                    ' data exporter as the downstream block.')
                 source_blocks.append(b)
             if b.type == BlockType.DATA_EXPORTER:
                 # Data exporter block should be leaf block
@@ -122,18 +123,19 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 if downstream_block.type == BlockType.TRANSFORMER:
                     execute_block_kwargs = dict(
                         global_vars=kwargs,
-                        input_args=[curr_block_output],
+                        input_args=[copy.deepcopy(curr_block_output)],
                         logger=self.logger,
                     )
                     if build_block_output_stdout:
                         execute_block_kwargs['build_block_output_stdout'] = \
                             build_block_output_stdout
                     outputs_by_block[downstream_block.uuid] = \
-                        self.transformer_block.execute_block(
+                        downstream_block.execute_block(
                             **execute_block_kwargs,
                     )['output']
                 elif downstream_block.type == BlockType.DATA_EXPORTER:
-                    sinks_by_uuid[downstream_block.uuid].batch_write(curr_block_output)
+                    sinks_by_uuid[downstream_block.uuid].batch_write(
+                        copy.deepcopy(curr_block_output))
                 if downstream_block.downstream_blocks:
                     handle_batch_events_recursively(
                         downstream_block,
