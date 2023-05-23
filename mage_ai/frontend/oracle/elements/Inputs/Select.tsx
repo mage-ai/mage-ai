@@ -69,13 +69,14 @@ const Select = ({
     input={
       <SelectStyle multiple={multiple} {...props}>
         {(label || placeholder) && (
-        <option
-          disabled
-          value=""
-        >
-          {label || placeholder}
-        </option>
+          <option
+            disabled={!!props?.value}
+            value=""
+          >
+            {label || placeholder}
+          </option>
         )}
+
         {children}
       </SelectStyle>
       }

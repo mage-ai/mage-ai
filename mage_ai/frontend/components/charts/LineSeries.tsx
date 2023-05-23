@@ -493,8 +493,6 @@ function LineSeriesContainer({
           </FlexContainer>
         )}
 
-        <Spacing mr={1} />
-
         <div
           style={{
             height: parentHeight,

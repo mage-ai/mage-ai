@@ -7,7 +7,7 @@ from mage_ai.orchestration.triggers.api import trigger_pipeline
 
 {% block content %}
 @callback('success')
-def trigger(**kwargs):
+def trigger(parent_block_data, **kwargs):
     """
     Trigger another pipeline to run.
 

@@ -248,7 +248,6 @@ function UserEditForm({
               value={(profile?.owner ? RoleValueEnum.OWNER : profile?.roles)
                 || (user?.roles || '')}
             >
-              <option value="" />
               {roleOptions.map((value) => (
                 <option key={value} value={value}>
                   {ROLE_DISPLAY_MAPPING[value]}
