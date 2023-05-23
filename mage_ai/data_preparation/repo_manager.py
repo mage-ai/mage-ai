@@ -78,6 +78,7 @@ class RepoConfig:
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
+            self.spark_config = repo_config.get('spark_config')
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -118,6 +119,7 @@ class RepoConfig:
             remote_variables_dir=self.remote_variables_dir,
             project_uuid=self.project_uuid,
             help_improve_mage=self.help_improve_mage,
+            spark_config=self.spark_config,
         )
 
     def save(self, **kwargs) -> None:
