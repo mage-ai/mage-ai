@@ -239,7 +239,8 @@ function LogsTable({
         ))}
       </TableHeadStyle>
       <FixedSizeList
-        height={windowHeight - 86 - 34 - 58 - HEADER_HEIGHT}
+        // window height - header - subheader - table header - footer
+        height={windowHeight - HEADER_HEIGHT - 86 - 34 - 58}
         itemCount={logs.length}
         itemData={{
           blocksByUUID,
