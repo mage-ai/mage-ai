@@ -78,6 +78,7 @@ def remove_duplicate_rows(df):
         )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
         assert_frame_equal(data, df_final)
+        print(analysis)
         self.assertEqual(
             analysis['metadata']['column_types'],
             dict(col1=ColumnType.TRUE_OR_FALSE, col2=ColumnType.TRUE_OR_FALSE),
