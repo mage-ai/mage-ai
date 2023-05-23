@@ -206,9 +206,11 @@ class IntegrationPipeline(Pipeline):
             json_object = {}
             for line in stderr:
                 if line.startswith('ERROR'):
-                    json_object = next(extract_json_objects(line))
-
-            error = dig(json_object, 'tags.error')
+                    try:
+                        json_object = next(extract_json_objects(line))
+                        error = dig(json_object, 'tags.error')
+                    except Exception:
+                        error = line
             raise Exception(error)
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
@@ -276,9 +278,11 @@ class IntegrationPipeline(Pipeline):
             json_object = {}
             for line in stderr:
                 if line.startswith('ERROR'):
-                    json_object = next(extract_json_objects(line))
-
-            error = dig(json_object, 'tags.error')
+                    try:
+                        json_object = next(extract_json_objects(line))
+                        error = dig(json_object, 'tags.error')
+                    except Exception:
+                        error = line
             if not error:
                 raise Exception('The sample data was not able to be loaded. Please check \
                                 if the stream still exists. If it does not, click the "View and \
@@ -366,17 +370,23 @@ class IntegrationPipeline(Pipeline):
                 message = e.stderr.decode('utf-8')
                 raise Exception(message)
 
-    def streams(self, variables: Dict = {}) -> List[Dict]:
+    def streams(self, variables: Dict = None) -> List[Dict]:
+        if variables is None:
+            variables = {}
         return self.__catalog(variables)['streams']
 
-    def __catalog(self, variables: Dict = {}) -> Dict:
+    def __catalog(self, variables: Dict = None) -> Dict:
+        if variables is None:
+            variables = {}
         return get_catalog(
             self.data_loader,
             self.__global_variables(variables),
             pipeline=self,
         )
 
-    def __global_variables(self, variables: Dict = {}) -> Dict:
+    def __global_variables(self, variables: Dict = None) -> Dict:
+        if variables is None:
+            variables = {}
         d = get_global_variables(self.uuid) or dict()
         d.update(variables)
         return d
