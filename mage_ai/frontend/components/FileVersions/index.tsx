@@ -29,7 +29,7 @@ type FileVersionsProps = {
   selectedBlock?: BlockType;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
-  width: number;
+  width?: number;
 };
 
 function FileVersions({

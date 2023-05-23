@@ -48,24 +48,24 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
   active: boolean;
-  addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
+  addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
   disableRefreshWarning?: boolean;
-  fetchPipeline: () => void;
+  fetchPipeline?: () => void;
   fetchVariables?: () => void;
   filePath: string;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
-  pipeline: PipelineType;
+  pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
   selectedFilePath: string;
-  sendTerminalMessage: (message: string, keep?: boolean) => void;
+  sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
-  setSelectedBlock: (block: BlockType) => void;
+  setSelectedBlock?: (block: BlockType) => void;
 };
 
 function FileEditor({
@@ -226,7 +226,9 @@ function FileEditor({
     setFilesTouched,
   ]);
 
-  const dataExporterBlock: BlockType = find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
+  const dataExporterBlock: BlockType = pipeline?.blocks
+    ? find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type)
+    : null;
   const [updateDestinationBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
     {
@@ -240,7 +242,7 @@ function FileEditor({
     },
   );
 
-  const addToPipelineEl = (
+  const addToPipelineEl = addNewBlock && pipeline && (
     fileExtension === FileExtensionEnum.PY
     || fileExtension === FileExtensionEnum.SQL
     || (
@@ -253,7 +255,7 @@ function FileEditor({
     && (
     <Button
       onClick={() => {
-        const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+        const isIntegrationPipeline = pipeline?.type === PipelineTypeEnum.INTEGRATION;
 
         const blockReqPayload = buildAddBlockRequestPayload(
           file,
@@ -273,7 +275,7 @@ function FileEditor({
                 },
               });
             }
-            setSelectedBlock(block);
+            setSelectedBlock?.(block);
           },
         );
       }}
@@ -283,7 +285,7 @@ function FileEditor({
     </Button>
   );
 
-  const installPackagesButtonEl = (
+  const installPackagesButtonEl = sendTerminalMessage && (
     <Spacing m={2}>
       <KeyboardShortcutButton
         disabled={!repoPath}
@@ -291,7 +293,7 @@ function FileEditor({
         loading={loading}
         onClick={() => {
           openSidekickView?.(ViewKeyEnum.TERMINAL);
-          sendTerminalMessage(JSON.stringify({
+          sendTerminalMessage?.(JSON.stringify({
             ...oauthWebsocketData,
             command: ['stdin', `pip install -r ${repoPath}/requirements.txt\r`],
           }));

@@ -40,7 +40,7 @@ export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX =
   new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
 export default interface FileType {
-  children: FileType[];
+  children?: FileType[];
   content?: string;
   disabled?: boolean;
   name?: string;

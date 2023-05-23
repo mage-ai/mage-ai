@@ -9,6 +9,7 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
+import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import api from '@api';
 import {
@@ -105,7 +106,7 @@ function FilesPageComponent() {
     setOpenFilePaths,
   ]);
 
-  const openFile = useCallback((filePath: string, isFolder: boolean) => {
+  const openFile = useCallback((filePath: string, isFolder?: boolean) => {
     if (!isFolder) {
       addOpenFilePath(filePath);
       setSelectedFilePath(filePath);
@@ -217,7 +218,7 @@ function FilesPageComponent() {
   ]);
 
   const [updateFile] = useMutation(
-    file => api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))({
+    (file: FileType) => api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))({
       file_content: file,
     }),
     {
