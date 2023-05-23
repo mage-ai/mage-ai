@@ -1,5 +1,7 @@
 import * as osPath from 'path';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useGlobalState } from '@storage/state';
+import { useMutation } from 'react-query';
 
 import ApiReloader from '@components/ApiReloader';
 import Dashboard from '@components/Dashboard';
@@ -9,8 +11,6 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
 import api from '@api';
 import {
-  EditorStyle,
-  HEADER_HEIGHT_TOTAL,
   HeaderStyle,
   MAIN_CONTENT_TOP_OFFSET,
   MenuStyle,
@@ -26,6 +26,7 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
+import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -37,7 +38,23 @@ function getFilenameFromFilePath(filePath: string): string {
 }
 
 function FilesPageComponent() {
+  const [, setApiReloads] = useGlobalState('apiReloads');
+
   const fileTreeRef = useRef(null);
+  const contentByFilePath = useRef(null);
+  const setContentByFilePath = useCallback((data: {
+    [filePath: string]: string;
+  }) => {
+    if (!contentByFilePath.current) {
+      contentByFilePath.current = {};
+    }
+
+    contentByFilePath.current = {
+      ...contentByFilePath.current,
+      ...data,
+    };
+  }, [contentByFilePath]);
+
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [filesTouched, setFilesTouched] = useState<{
@@ -99,25 +116,9 @@ function FilesPageComponent() {
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  // const [showError] = useError(null, {}, [], {
-  //   uuid: 'FilesPage',
-  // });
-  // const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
-  //   api.projects.useUpdate(project?.name),
-  //   {
-  //     onSuccess: (response: any) => onSuccess(
-  //       response, {
-  //         callback: () => {
-  //           fetchProjects();
-  //         },
-  //         onErrorCallback: (response, errors) => showError({
-  //           errors,
-  //           response,
-  //         }),
-  //       },
-  //     ),
-  //   },
-  // );
+  const [showError] = useError(null, {}, [], {
+    uuid: 'FilesPage',
+  });
 
   const uuidKeyboard = 'Files/index';
   const {
@@ -202,6 +203,50 @@ function FilesPageComponent() {
     openFile,
   ]);
 
+  const [updateFile] = useMutation(
+    file => api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))({
+      file_content: file,
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            file_content: file,
+          }) => {
+            setApiReloads(prev => ({
+              ...prev,
+              [`FileVersions/${file?.path}`]: Number(new Date()),
+            }));
+            setContentByFilePath({
+              [file?.path]: null,
+            });
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const saveFile = useCallback((value: string, f: FileType) => {
+    // @ts-ignore
+    updateFile({
+      ...f,
+      content: value,
+    });
+    // @ts-ignore
+    setFilesTouched((prev: {
+      [path: string]: boolean;
+    }) => ({
+      ...prev,
+      [f?.path]: false,
+    }));
+  }, [
+    setFilesTouched,
+    updateFile,
+  ]);
+
   const fileEditorMemo = useMemo(() => openFilePaths?.map((filePath: string) => (
     <div
       key={filePath}
@@ -217,17 +262,37 @@ function FilesPageComponent() {
           disableRefreshWarning
           filePath={filePath}
           hideHeaderButtons
-          // openSidekickView={openSidekickView}
+          onContentChange={(content: string) => setContentByFilePath({
+            [filePath]: content,
+          })}
+          saveFile={saveFile}
           selectedFilePath={selectedFilePath}
-          // sendTerminalMessage={sendTerminalMessage}
-          // setDisableShortcuts={setDisableShortcuts}
-          // setErrors={setErrors}
+          setErrors={showError}
           setFilesTouched={setFilesTouched}
         />
       </ApiReloader>
     </div>
   )), [
     openFilePaths,
+    saveFile,
+    selectedFilePath,
+    setContentByFilePath,
+    showError,
+  ]);
+
+  const menuMemo = useMemo(() => (
+    <FileEditorHeader
+      onSave={() => {
+        if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
+          saveFile(contentByFilePath.current[selectedFilePath], {
+            path: selectedFilePath,
+          });
+        }
+      }}
+    />
+  ), [
+    contentByFilePath,
+    saveFile,
     selectedFilePath,
   ]);
 
@@ -238,8 +303,7 @@ function FilesPageComponent() {
       mainContainerHeader={
         <HeaderStyle>
           <MenuStyle>
-            <FileEditorHeader
-            />
+            {menuMemo}
           </MenuStyle>
 
           <TabsStyle>

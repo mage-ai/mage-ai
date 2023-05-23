@@ -14,7 +14,7 @@ export const HeaderStyle = styled.div`
   position: fixed;
   top: ${HEADER_HEIGHT}px;
   width: 100%;
-  z-index: 1;
+  z-index: 3;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
@@ -24,7 +24,7 @@ export const HeaderStyle = styled.div`
 export const MenuStyle = styled.div`
   height: ${MENU_HEIGHT}px;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};

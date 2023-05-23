@@ -51,11 +51,13 @@ type FileEditorProps = {
   addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
   disableRefreshWarning?: boolean;
   fetchPipeline: () => void;
-  fetchVariables: () => void;
+  fetchVariables?: () => void;
   filePath: string;
   hideHeaderButtons?: boolean;
+  onContentChange?: (content: string) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
+  saveFile?: (value: string, file: FileType) => void;
   selectedFilePath: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
@@ -74,8 +76,10 @@ function FileEditor({
   fetchVariables,
   filePath,
   hideHeaderButtons,
+  onContentChange,
   openSidekickView,
   pipeline,
+  saveFile: saveFileProp,
   selectedFilePath,
   sendTerminalMessage,
   setDisableShortcuts,
@@ -105,7 +109,13 @@ function FileEditor({
     }
   }, [data]);
 
-  const [content, setContent] = useState<string>(file?.content);
+  const [content, setContentState] = useState<string>(file?.content);
+  const setContent = useCallback((content: string) => {
+    setContentState(content);
+    if (onContentChange) {
+      onContentChange?.(content);
+    }
+  }, [onContentChange]);
   const [touched, setTouched] = useState<boolean>(false);
 
   useEffect(() => {
@@ -140,6 +150,10 @@ function FileEditor({
     },
   );
   const saveFile = useCallback((value: string, f: FileType) => {
+    if (saveFileProp) {
+      return saveFileProp(value, f);
+    }
+
     // @ts-ignore
     updateFile({
       file_content: {
@@ -148,8 +162,8 @@ function FileEditor({
       },
     }).then(() => {
       const fileName = decodeURIComponent(filePath).split(path.sep).pop();
-      if (fileName === SpecialFileEnum.METADATA_YAML) {
-        fetchVariables();
+      if (fileName === SpecialFileEnum.METADATA_YAML && fetchVariables) {
+        fetchVariables?.();
       }
     });
     // @ts-ignore
@@ -163,6 +177,7 @@ function FileEditor({
   }, [
     fetchVariables,
     filePath,
+    saveFileProp,
     setFilesTouched,
     updateFile,
   ]);
@@ -207,6 +222,7 @@ function FileEditor({
     file,
     fileExtension,
     saveFile,
+    setContent,
     setFilesTouched,
   ]);
 

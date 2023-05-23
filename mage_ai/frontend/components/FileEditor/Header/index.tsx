@@ -3,14 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
-import KernelOutputType from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import {
-  KEY_CODE_NUMBERS_TO_NUMBER,
-  KEY_CODE_NUMBER_0,
   KEY_SYMBOL_CONTROL,
-  KEY_SYMBOL_I,
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
@@ -19,165 +14,50 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
-import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 
 type FileHeaderMenuProps = {
-  cancelPipeline: () => void;
-  createPipeline: (data: any) => void;
   children?: any;
-  executePipeline: () => void;
-  interruptKernel: () => void;
-  isPipelineExecuting: boolean;
-  pipeline: PipelineType;
-  restartKernel: () => void;
-  savePipelineContent: () => void;
-  setActiveSidekickView: (
-    newView: ViewKeyEnum,
-    pushHistory?: boolean,
-  ) => void;
-  setMessages: (message: {
-    [uuid: string]: KernelOutputType[];
-  }) => void;
+  onSave?: () => void;
 };
 
 function FileHeaderMenu({
-  cancelPipeline,
   children,
-  createPipeline,
-  executePipeline,
-  interruptKernel,
-  isPipelineExecuting,
-  pipeline,
-  restartKernel,
-  savePipelineContent,
-  setActiveSidekickView,
-  setMessages,
+  onSave,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);
   const refRun = useRef(null);
-  const refEdit = useRef(null);
 
-  const fileItems = [
+  const fileItems = useMemo(() => [
     {
-      label: () => 'New standard pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-        },
-      }),
-      uuid: 'new_standard_pipeline',
-    },
-    {
-      label: () => 'New streaming pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-          type: PipelineTypeEnum.STREAMING,
-        },
-      }),
-      uuid: 'new_streaming_pipeline',
-    },
-    {
+      disabled: !onSave,
       keyTextGroups: [[
         isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
         KEY_SYMBOL_S,
       ]],
-      label: () => 'Save pipeline',
-      onClick: () => savePipelineContent(),
-      uuid: 'save_pipeline',
+      label: () => 'Save',
+      onClick: () => onSave ? onSave() : null,
+      uuid: 'save',
     },
-  ];
-  const runItems = useMemo(() => {
-    const items = [
-      // TODO (tommy dang): add onClick functions to these 2 menu items
-      // {
-      //   label: () => 'Run selected block',
-      //   keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]],
-      //   uuid: 'Run selected block',
-      // },
-      // {
-      //   label: () => 'Delete selected block',
-      //   keyTextGroups: [
-      //     [KEY_SYMBOL_D],
-      //     [KEY_SYMBOL_D],
-      //   ],
-      //   uuid: 'Delete selected block',
-      // },
-      {
-        label: () => 'Interrupt kernel',
-        keyTextGroups: [
-          [KEY_SYMBOL_I],
-          [KEY_SYMBOL_I],
-        ],
-        onClick: () => interruptKernel(),
-        uuid: 'Interrupt kernel',
-      },
-      {
-        label: () => 'Restart kernel',
-        keyTextGroups: [
-          [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-          [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-        ],
-        onClick: () => restartKernel(),
-        uuid: 'Restart kernel',
-      },
-      {
-        label: () => 'Clear all outputs',
-        // @ts-ignore
-        onClick: () => setMessages(messagesByUUID => Object
-          .keys(messagesByUUID)
-          .reduce((acc, uuid) => ({
-            ...acc,
-            [uuid]: [],
-          }), {}),
-        ),
-        uuid: 'Clear all outputs',
-      },
-    ];
-
-    if (isPipelineExecuting) {
-      items.push({
-        label: () => 'Cancel pipeline',
-        onClick: () => cancelPipeline(),
-        uuid: 'Cancel pipeline',
-      });
-    } else {
-      items.push({
-        label: () => 'Execute pipeline',
-        onClick: () => executePipeline(),
-        uuid: 'Execute pipeline',
-      });
-    }
-
-    return items;
-  }, [
-    cancelPipeline,
-    executePipeline,
-    interruptKernel,
-    isPipelineExecuting,
-    restartKernel,
-    setMessages,
+  ], [
+    onSave,
   ]);
 
   const editItems = useMemo(() => [
     {
-      label: () => 'Pipeline settings',
-      linkProps: {
-        as: `/pipelines/${pipeline?.uuid}/settings`,
-        href: '/pipelines/[pipeline]/settings',
+      label: () => 'Show versions',
+      // @ts-ignore
+      onClick: () => {
+        return true;
       },
-      uuid: 'Pipeline settings',
+      uuid: 'versions',
     },
-  ], [pipeline]);
+  ], [
+  ]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {
@@ -190,7 +70,7 @@ function FileHeaderMenu({
 
   registerOnKeyDown(
     uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
+    (event, keyMapping) => {
       if (highlightedIndex === null) {
         return;
       }
@@ -233,7 +113,7 @@ function FileHeaderMenu({
             onClickCallback={() => setHighlightedIndex(null)}
             open={highlightedIndex === 0}
             parentRef={refFile}
-            uuid="FileHeaderMenu/file_items"
+            uuid="FileHeaderMenu/file"
           />
         </div>
 
@@ -245,27 +125,6 @@ function FileHeaderMenu({
             ref={refRun}
           >
             <Text>
-              Run
-            </Text>
-          </LinkStyle>
-
-          <FlyoutMenu
-            items={runItems}
-            onClickCallback={() => setHighlightedIndex(null)}
-            open={highlightedIndex === 1}
-            parentRef={refRun}
-            uuid="FileHeaderMenu/run_items"
-          />
-        </div>
-
-        <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 2}
-            onClick={() => setHighlightedIndex(val => val === 2 ? null : 2)}
-            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 2 : null)}
-            ref={refEdit}
-          >
-            <Text>
               Edit
             </Text>
           </LinkStyle>
@@ -273,9 +132,9 @@ function FileHeaderMenu({
           <FlyoutMenu
             items={editItems}
             onClickCallback={() => setHighlightedIndex(null)}
-            open={highlightedIndex === 2}
-            parentRef={refEdit}
-            uuid="FileHeaderMenu/edit_items"
+            open={highlightedIndex === 1}
+            parentRef={refRun}
+            uuid="FileHeaderMenu/edit"
           />
         </div>
 
