@@ -31,9 +31,15 @@ class BasePolicy():
         self.resource = resource
         self.parent_model_attr = None
         self.parent_resource_attr = None
-        if isinstance(resource, Iterable):
-            self.resources = resource
-        else:
+
+        # Without this try block, this error occurs:
+        # TypeError: Instance and class checks can only be used with @runtime protocols
+        try:
+            if isinstance(resource, Iterable):
+                self.resources = resource
+            else:
+                self.resources = [resource]
+        except TypeError:
             self.resources = [resource]
 
     @classmethod
