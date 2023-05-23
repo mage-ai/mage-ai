@@ -359,7 +359,12 @@ class Variable:
                 df = df.iloc[:sample_count]
         return df
 
-    def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
+    def __read_parquet(
+        self,
+        sample: bool = False,
+        sample_count: int = None,
+        raise_exception: bool = False,
+    ) -> pd.DataFrame:
         file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
 
@@ -368,12 +373,16 @@ class Variable:
             try:
                 df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
                 read_sample_success = True
-            except Exception:
+            except Exception as e:
+                if raise_exception:
+                    raise e
                 pass
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
-            except Exception:
+            except Exception as e:
+                if raise_exception:
+                    raise e
                 df = pd.DataFrame()
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
@@ -452,7 +461,11 @@ class Variable:
             # Polars ignores any index
             try:
                 pl_df = pl.from_pandas(df_output)
-                return self.__write_polars_dataframe(pl_df)
+                self.__write_polars_dataframe(pl_df)
+                # Test read dataframe from parquet
+                self. __read_parquet(sample=True, raise_exception=True)
+
+                return
             except Exception:
                 pass
 
