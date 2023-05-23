@@ -1,3 +1,12 @@
+import datetime
+import re
+from select import select
+from typing import Dict, Generator, List
+
+import psycopg2
+import psycopg2.extras
+import singer
+
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
 from mage_integrations.destinations.constants import (
     DATETIME_COLUMN_SCHEMA,
@@ -15,16 +24,9 @@ from mage_integrations.sources.postgresql.decoders import (
     Delete,
     Insert,
     Update,
-    decode_message
+    decode_message,
 )
 from mage_integrations.sources.sql.base import Source
-from select import select
-from typing import Dict, Generator, List
-import datetime
-import psycopg2
-import psycopg2.extras
-import re
-import singer
 
 INTERNAL_COLUMN_LSN = 'lsn'
 
@@ -107,9 +109,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = dict(),
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query is None:
+            query = dict()
         tap_stream_id = stream.tap_stream_id
         bookmarks = bookmarks or dict()
         start_lsn = bookmarks.get(INTERNAL_COLUMN_LSN) or 0
@@ -152,7 +156,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             while True:
                 poll_duration = (datetime.datetime.now() - begin_ts).total_seconds()
                 if poll_duration > poll_total_seconds:
-                    self.logger.info(f'Breaking after {poll_duration} seconds of polling with no data')
+                    self.logger.info(f'Breaking after {poll_duration} seconds of '
+                                     'polling with no data')
                     break
 
                 msg = cur.read_message()
@@ -164,7 +169,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
                     decoded_payload = decode_message(msg.payload)
                     if msg.data_start < start_lsn:
-                        self.logger.info(f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}')
+                        self.logger.info(
+                            f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}')
                         continue
                     if type(decoded_payload) in [Insert, Update]:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
@@ -257,7 +263,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
     def __get_pg_version(self, cur):
         cur.execute("SELECT version()")
         res = cur.fetchone()[0]
-        version_match = re.match('PostgreSQL (\d+)', res)
+        version_match = re.match(r'PostgreSQL (\d+)', res)
         if not version_match:
             raise Exception('unable to determine PostgreSQL version from {}'.format(res))
 
