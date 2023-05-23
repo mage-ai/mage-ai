@@ -10,7 +10,7 @@ from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
 from queue import Queue
-from typing import Any, Callable, Dict, List, Set, Tuple
+from typing import Any, Callable, Dict, List, Set, Tuple, Union
 
 import pandas as pd
 import simplejson
@@ -2132,6 +2132,9 @@ class CallbackBlock(Block):
     def execute_callback(
         self,
         callback: str,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
+        execution_partition: str = None,
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
@@ -2194,11 +2197,33 @@ class CallbackBlock(Block):
                 callback_functions_legacy = success_functions
                 callback_status = CallbackStatus.SUCCESS
 
+            # Fetch input variables
+            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                None,
+                execution_partition,
+                global_vars,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            )
+
+            outputs_from_input_vars = {}
+            upstream_block_uuids_length = len(upstream_block_uuids)
+            for idx, input_var in enumerate(input_vars):
+                if idx < upstream_block_uuids_length:
+                    upstream_block_uuid = upstream_block_uuids[idx]
+                    outputs_from_input_vars[upstream_block_uuid] = input_var
+                    outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+
+            global_vars_copy = global_vars.copy()
+            for kwargs_var in kwargs_vars:
+                global_vars_copy.update(kwargs_var)
+            global_vars_copy.update(outputs_from_input_vars)
+
             for callback_function in callback_functions_legacy:
-                callback_function(**global_vars)
+                callback_function(**global_vars_copy)
 
             for callback_function in callback_functions:
-                callback_function(callback_status, **global_vars)
+                callback_function(callback_status, **global_vars_copy)
 
     def update_content(self, content, widget=False):
         if not self.file.exists():

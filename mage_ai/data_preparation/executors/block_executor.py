@@ -112,6 +112,8 @@ class BlockExecutor:
                     )
                 self._execute_callback(
                     'on_failure',
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,
                     logging_tags=tags,
                     pipeline_run=pipeline_run,
@@ -129,6 +131,8 @@ class BlockExecutor:
                 )
             self._execute_callback(
                 'on_success',
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 global_vars=global_vars,
                 logging_tags=tags,
                 pipeline_run=pipeline_run,
@@ -194,6 +198,8 @@ class BlockExecutor:
         global_vars,
         logging_tags,
         pipeline_run,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
         arr = []
         if self.block.callback_block:
@@ -206,6 +212,9 @@ class BlockExecutor:
             try:
                 callback_block.execute_callback(
                     callback,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    execution_partition=self.execution_partition,
                     global_vars=global_vars,
                     logger=self.logger,
                     logging_tags=logging_tags,
