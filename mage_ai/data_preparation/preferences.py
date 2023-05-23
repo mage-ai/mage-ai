@@ -1,10 +1,13 @@
+import os
+import traceback
 from typing import Dict
+
+import yaml
+
 from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.oauth import User
-import os
-import traceback
-import yaml
+from mage_ai.shared.hash import merge_dict
 
 # Git environment variables
 GIT_REPO_LINK_VAR = 'GIT_REPO_LINK'
@@ -27,19 +30,20 @@ class Preferences:
         self.preferences_file_path = \
             os.path.join(self.repo_path, PREFERENCES_FILE)
         self.user = user
-        preferences = dict()
+        project_preferences = dict()
         try:
-            if user:
-                preferences = user.preferences or {}
+            if user and user.preferences and user.git_settings is None:
+                project_preferences = user.preferences
             elif config_dict:
-                preferences = config_dict
+                project_preferences = config_dict
             elif os.path.exists(self.preferences_file_path):
                 with open(self.preferences_file_path) as f:
-                    preferences = yaml.full_load(f.read()) or {}
+                    project_preferences = yaml.full_load(f.read()) or {}
         except Exception:
             traceback.print_exc()
             pass
 
+        # Git settings
         if os.getenv(GIT_REPO_LINK_VAR):
             self.sync_config = dict(
                 remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
@@ -51,19 +55,23 @@ class Preferences:
                 sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE) or 0)),
             )
         else:
-            self.sync_config = preferences.get('sync_config', dict())
+            project_sync_config = project_preferences.get('sync_config', dict())
+            if user:
+                user_git_settings = user.git_settings or {}
+                self.sync_config = merge_dict(project_sync_config, user_git_settings)
+            else:
+                self.sync_config = project_sync_config
 
-    def has_valid_git_config(self) -> bool:
-        return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config
+    def is_git_integration_enabled(self) -> bool:
+        return 'remote_repo_link' in self.sync_config and \
+            'repo_path' in self.sync_config and \
+            self.sync_config.get('branch') is None
 
     def update_preferences(self, updates: Dict):
         preferences = self.to_dict()
         preferences.update(updates)
-        if self.user:
-            self.user.update(preferences=preferences)
-        else:
-            with open(self.preferences_file_path, 'w') as f:
-                yaml.dump(preferences, f)
+        with open(self.preferences_file_path, 'w') as f:
+            yaml.dump(preferences, f)
 
     def to_dict(self) -> Dict:
         return dict(

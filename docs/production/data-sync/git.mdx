@@ -91,11 +91,16 @@ to Github, unless you want them to.
 
 ## Git sync
 
-Git sync is a separate feature from integrating Mage with Github. Running a Git sync will ***overwrite all local changes***,
-and replace them with the code in the specified remote branch. Git syncs can be run either from the
-Git settings page, or before every trigger run if you selected the `Sync before each trigger run` field.
+<Warning>
+Git sync is a separate feature from enabling Git within Mage. If you want to be able to perform Git actions such as 
+pushing, pulling, creating new branches, etc., you don't want to enable this feature.
 
 This feature should only be used if you are not planning to make any local changes to your Mage repository.
+</Warning>
+
+Running a Git sync will ***overwrite all local changes***
+and replace them with the code in the specified remote branch. Git syncs can be run either from the
+Git settings page, or before every trigger run if you selected the `Sync before each trigger run` field.
 
 ## Git settings as environment variables
 

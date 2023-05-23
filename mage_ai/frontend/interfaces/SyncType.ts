@@ -3,6 +3,11 @@ export enum AuthType {
   HTTPS = 'https',
 }
 
+export interface UserGitSettingsType {
+  username?: string;
+  email?: string;
+}
+
 export default interface SyncType {
   type?: string;
   auth_type?: AuthType;
@@ -10,6 +15,7 @@ export default interface SyncType {
   repo_path?: string;
   branch?: string;
   sync_on_pipeline_run?: boolean;
+  user_git_settings?: UserGitSettingsType;
 }
 
 export const GIT_FIELDS = [
@@ -27,7 +33,7 @@ export const GIT_FIELDS = [
   },
 ];
 
-export const OPTIONAL_GIT_FIELDS = [
+export const SSH_GIT_FIELDS = [
   {
     autoComplete: 'username',
     label: 'Username',

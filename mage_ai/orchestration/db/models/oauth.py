@@ -1,20 +1,24 @@
+import enum
+import re
 from datetime import datetime
-from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.errors import ValidationError
-from mage_ai.orchestration.db.models.base import BaseModel
+from typing import Dict, Union
+
 from sqlalchemy import (
-    Column,
+    JSON,
     Boolean,
+    Column,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
-    JSON,
     String,
 )
 from sqlalchemy.orm import relationship, validates
-import enum
-import re
+
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.errors import ValidationError
+from mage_ai.orchestration.db.models.base import BaseModel
 
 
 class User(BaseModel):
@@ -79,6 +83,11 @@ class User(BaseModel):
             return self.roles & 1 != 0
 
         return False
+
+    @property
+    def git_settings(self) -> Union[Dict, None]:
+        preferences = self.preferences or dict()
+        return preferences.get(get_repo_path(), {}).get('git_settings')
 
 
 class Oauth2Application(BaseModel):

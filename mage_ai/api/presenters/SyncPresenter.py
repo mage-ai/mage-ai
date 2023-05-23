@@ -14,4 +14,5 @@ class SyncPresenter(BasePresenter):
         'type',
         'access_token',
         'auth_type',
+        'user_git_settings',
     ]

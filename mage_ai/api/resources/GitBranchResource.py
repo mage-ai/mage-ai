@@ -26,7 +26,7 @@ class GitBranchResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         branch = None
         preferences = get_preferences(user=user)
-        if preferences.has_valid_git_config():
+        if preferences.is_git_integration_enabled():
             git_manager = Git.get_manager(user=user)
             branch = git_manager.current_branch
         return self(dict(name=branch), user, **kwargs)

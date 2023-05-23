@@ -15,8 +15,9 @@ import SyncType, {
   AuthType,
   GIT_FIELDS,
   HTTPS_GIT_FIELDS,
-  OPTIONAL_GIT_FIELDS,
+  SSH_GIT_FIELDS,
   SYNC_FIELDS,
+  UserGitSettingsType,
 } from '@interfaces/SyncType';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -46,6 +47,7 @@ export interface SyncFieldType {
 function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
+  const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
   const [error, setError] = useState<string>(null);
 
   const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
@@ -53,6 +55,7 @@ function SyncData() {
   useEffect(() => {
     if (dataSyncs) {
       const initialSync = dataSyncs?.syncs?.[0];
+      setUserGitSettings(initialSync?.user_git_settings);
       setSync(initialSync);
       setShowSyncSettings(!!initialSync?.branch);
     }
@@ -79,12 +82,11 @@ function SyncData() {
           onErrorCallback: ({
             error: {
               exception,
-              message,
             },
           }) => setError(exception),
-        }
-      )
-    }
+        },
+      ),
+    },
   );
 
   const [runSync, { isLoading: isLoadingRunSync }] = useMutation(
@@ -95,7 +97,7 @@ function SyncData() {
           callback: ({ sync }) => {
             if (sync) {
               toast.success(
-                'Data synced!',
+                'Success!',
                 {
                   position: toast.POSITION.BOTTOM_RIGHT,
                   toastId: 'data_sync_success',
@@ -106,12 +108,11 @@ function SyncData() {
           onErrorCallback: ({
             error: {
               exception,
-              message,
             },
           }) => setError(exception),
-        }
-      )
-    }
+        },
+      ),
+    },
   );
 
   const authType = useMemo(() => sync?.auth_type || AuthType.SSH, [sync?.auth_type]);
@@ -119,8 +120,49 @@ function SyncData() {
     if (authType === AuthType.HTTPS) {
       return HTTPS_GIT_FIELDS;
     }
-    return OPTIONAL_GIT_FIELDS;
+    return SSH_GIT_FIELDS;
   }, [authType]);
+
+  const userGitFields = useMemo(() => (
+    <form>
+      {additionalGitFields.map(({
+        autoComplete,
+        disabled,
+        label,
+        labelDescription,
+        required,
+        type,
+        uuid,
+      }: SyncFieldType) => (
+        <Spacing key={uuid} mt={2}>
+          {labelDescription && (
+            <Spacing mb={1}>
+              <Text small>
+                {labelDescription}
+              </Text>
+            </Spacing>
+          )}
+          <TextInput  
+            autoComplete={autoComplete}
+            disabled={disabled}
+            label={label}
+            // @ts-ignore
+            onChange={e => {
+              setUserGitSettings(prev => ({
+                ...prev,
+                [uuid]: e.target.value,
+              }));
+            }}
+            primary
+            required={required}
+            setContentOnMount
+            type={type}
+            value={userGitSettings?.[uuid] || ''}
+          />
+        </Spacing>
+      ))}
+    </form>
+  ), [additionalGitFields, setUserGitSettings, userGitSettings]);
 
   return (
     <SettingsDashboard
@@ -161,11 +203,7 @@ function SyncData() {
             ))}
           </Select>
         </Spacing>
-        <Spacing mt={1}>
-          <Text bold>
-            You can enable the Git integration by supplying the url
-            for your remote repository.
-          </Text>
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           {authType === AuthType.SSH && (
             <Text bold>
               You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
@@ -215,56 +253,11 @@ function SyncData() {
         </form>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Text bold>
-            These fields are {authType === AuthType.HTTPS ? 'required': 'recommended'} to
-            help Mage configure your Git settings.
-          </Text>
-        </Spacing>
-        <form>
-          {additionalGitFields.map(({
-            autoComplete,
-            disabled,
-            label,
-            labelDescription,
-            required,
-            type,
-            uuid,
-          }: SyncFieldType) => (
-            <Spacing key={uuid} mt={2}>
-              {labelDescription && (
-                <Spacing mb={1}>
-                  <Text small>
-                    {labelDescription}
-                  </Text>
-                </Spacing>
-              )}
-              <TextInput  
-                autoComplete={autoComplete}
-                disabled={disabled}
-                label={label}
-                // @ts-ignore
-                onChange={e => {
-                  setSync(prev => ({
-                    ...prev,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                primary
-                required={required}
-                setContentOnMount
-                type={type}
-                value={sync?.[uuid] || ''}
-              />
-            </Spacing>
-          ))}
-        </form>
-        
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <FlexContainer alignItems="center">
-            <Spacing mr={2}>
-              <ToggleSwitch
+            <Spacing mr={1}>
+              <Checkbox
                 checked={!!showSyncSettings}
-                onCheck={() => setShowSyncSettings(prev => {
+                onClick={() => setShowSyncSettings(prev => {
                   // @ts-ignore
                   const newVal = !prev;
                   if (!newVal) {
@@ -278,22 +271,23 @@ function SyncData() {
                 })}
               />
             </Spacing>
-            <Text bold large>
+            <Text bold>
               Use <Link
                 bold
                 href="https://docs.mage.ai/production/data-sync/git#git-sync"
-                large
                 openNewWindow>
                 Git Sync
-              </Link>
+              </Link> (Click link for more information)
             </Text>
           </FlexContainer>
         </Spacing>
-        {showSyncSettings && (
+
+        {showSyncSettings ? (
           <>
-            <Spacing mt={1}>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <Text bold>
-                (OPTIONAL) You can also set up your project to only sync with a specified branch.
+                Sync with a specified branch when requested or on every trigger run. These settings
+                will be saved at the project level.
               </Text>
             </Spacing>
             <form>
@@ -340,6 +334,60 @@ function SyncData() {
                 />
               </Spacing>
             </FlexContainer>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text bold>
+                Configure the Git authentication credentials that will be used to sync with
+                the specified Git repository.
+              </Text>
+            </Spacing>
+            <form>
+              {additionalGitFields.map(({
+                autoComplete,
+                disabled,
+                label,
+                labelDescription,
+                required,
+                type,
+                uuid,
+              }: SyncFieldType) => (
+                <Spacing key={uuid} mt={2}>
+                  {labelDescription && (
+                    <Spacing mb={1}>
+                      <Text small>
+                        {labelDescription}
+                      </Text>
+                    </Spacing>
+                  )}
+                  <TextInput  
+                    autoComplete={autoComplete}
+                    disabled={disabled}
+                    label={label}
+                    // @ts-ignore
+                    onChange={e => {
+                      setSync(prev => ({
+                        ...prev,
+                        [uuid]: e.target.value,
+                      }));
+                    }}
+                    primary
+                    required={required}
+                    setContentOnMount
+                    type={type}
+                    value={sync?.[uuid] || ''}
+                  />
+                </Spacing>
+              ))}
+            </form>
+          </>
+        ) : (
+          <>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text bold>
+                These fields are required to help Mage configure your Git settings. These settings
+                will be specific to your user.
+              </Text>
+            </Spacing>
+            {userGitFields}
           </>
         )}
 
@@ -348,7 +396,10 @@ function SyncData() {
             loading={isLoadingCreateSync}
             // @ts-ignore
             onClick={() => createSync({
-              sync: sync,
+              sync: {
+                ...sync,
+                user_git_settings: userGitSettings,
+              },
             })}
             primary
           >
@@ -378,21 +429,43 @@ function SyncData() {
                 This may <Text bold danger inline>overwrite</Text> your
                 existing data, so make sure you’ve committed or backed up your current changes.
               </Text>
+              <Spacing mt={2} />
+              <Text>
+                Reset will tell Mage to try to clone your repository from remote. This will
+                also <Text bold danger inline>overwrite</Text> all your local changes and 
+                reset any settings you may have configured for your local Git repo. This may be
+                helpful if you are having issues syncing your repository.
+              </Text>
             </Spacing>
 
             <Spacing mt={2}>
-              <Button
-                loading={isLoadingRunSync}
-                // @ts-ignore
-                onClick={() => runSync({
-                  sync: {
-                    action_type: 'sync_data',
-                  },
-                })}
-                warning
-              >
-                Synchronize code
-              </Button>
+              <FlexContainer>
+                <Button
+                  loading={isLoadingRunSync}
+                  // @ts-ignore
+                  onClick={() => runSync({
+                    sync: {
+                      action_type: 'sync_data',
+                    },
+                  })}
+                  warning
+                >
+                  Synchronize code
+                </Button>
+                <Spacing ml={2}/>
+                <Button
+                  danger
+                  loading={isLoadingRunSync}
+                  // @ts-ignore
+                  onClick={() => runSync({
+                    sync: {
+                      action_type: 'reset',
+                    },
+                  })}
+                >
+                  Reset repository
+                </Button>
+              </FlexContainer>
             </Spacing>
           </Spacing>
         )}

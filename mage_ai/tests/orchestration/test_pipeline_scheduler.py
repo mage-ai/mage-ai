@@ -1,6 +1,10 @@
-from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.variable_manager import VariableManager
+from unittest.mock import MagicMock, patch
+
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
@@ -10,7 +14,6 @@ from mage_ai.tests.factory import (
     create_pipeline_with_blocks,
     create_pipeline_with_dynamic_blocks,
 )
-from unittest.mock import MagicMock, patch
 
 
 class PipelineSchedulerTests(DBTestCase):
@@ -306,3 +309,21 @@ class PipelineSchedulerTests(DBTestCase):
                         block_uuid='block2:for_user_2',
                     )
                     self.assertTrue(block_run2 is not None)
+
+    def test_sync_data_on_pipeline_run(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_dynamic_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        preferences = get_preferences(repo_path=self.repo_path)
+        preferences.update_preferences(
+            dict(sync_config=dict(
+                remote_repo_link='test_git_repo',
+                repo_path=self.repo_path,
+                branch='main',
+                sync_on_pipeline_run=True,
+            )))
+        with patch.object(GitSync, 'sync_data') as mock_sync:
+            scheduler.start(should_schedule=False)
+            mock_sync.assert_called_once()
