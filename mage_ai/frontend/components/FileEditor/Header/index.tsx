@@ -21,12 +21,16 @@ const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 
 type FileHeaderMenuProps = {
   children?: any;
+  fileVersionsVisible?: boolean;
   onSave?: () => void;
+  setFilesVersionsVisible: (visible: boolean) => void;
 };
 
 function FileHeaderMenu({
   children,
+  fileVersionsVisible,
   onSave,
+  setFilesVersionsVisible,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);
@@ -49,14 +53,13 @@ function FileHeaderMenu({
 
   const editItems = useMemo(() => [
     {
-      label: () => 'Show versions',
-      // @ts-ignore
-      onClick: () => {
-        return true;
-      },
+      label: () => fileVersionsVisible ? 'Hide versions' : 'Show versions',
+      onClick: () => setFilesVersionsVisible(!fileVersionsVisible),
       uuid: 'versions',
     },
   ], [
+    fileVersionsVisible,
+    setFilesVersionsVisible,
   ]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';

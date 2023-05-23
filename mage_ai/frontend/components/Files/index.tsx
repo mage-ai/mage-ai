@@ -9,6 +9,7 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
+import FileVersions from '@components/FileVersions';
 import api from '@api';
 import {
   HeaderStyle,
@@ -60,6 +61,7 @@ function FilesPageComponent() {
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
+  const [fileVersionsVisible, setFilesVersionsVisible] = useState<boolean>(false);
 
   const openFilenameMapping = useMemo(() => openFilePaths.reduce((acc, filePath: string) => {
     const filename = getFilenameFromFilePath(filePath);
@@ -81,14 +83,25 @@ function FilesPageComponent() {
   }, [setOpenFilePaths]);
 
   const removeOpenFilePath = useCallback((filePath: string) => {
+    setContentByFilePath({ [filePath]: null });
+    setFilesTouched(prev => ({
+      ...prev,
+      [filePath]: false,
+    }));
+
     const arr = removeOpenFilePathLocalStorage(filePath);
     setOpenFilePaths(arr);
 
     if (selectedFilePath === filePath && arr?.length >= 1) {
       setSelectedFilePath(arr[arr.length - 1]);
     }
+
+    if (arr?.length === 0) {
+      setSelectedFilePath(null);
+    }
   }, [
     selectedFilePath,
+    setContentByFilePath,
     setOpenFilePaths,
   ]);
 
@@ -282,6 +295,7 @@ function FilesPageComponent() {
 
   const menuMemo = useMemo(() => (
     <FileEditorHeader
+      fileVersionsVisible={fileVersionsVisible}
       onSave={() => {
         if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
           saveFile(contentByFilePath.current[selectedFilePath], {
@@ -289,18 +303,34 @@ function FilesPageComponent() {
           });
         }
       }}
+      setFilesVersionsVisible={setFilesVersionsVisible}
     />
   ), [
     contentByFilePath,
+    fileVersionsVisible,
     saveFile,
     selectedFilePath,
+    setFilesVersionsVisible,
   ]);
 
   return (
     <Dashboard
+      after={fileVersionsVisible && selectedFilePath && (
+        <ApiReloader uuid={`FileVersions/${selectedFilePath
+            ? decodeURIComponent(selectedFilePath)
+            : ''
+          }`
+        }>
+          <FileVersions
+            selectedFilePath={selectedFilePath}
+            setErrors={showError}
+            // width={afterWidth > SCROLLBAR_WIDTH ? afterWidth - SCROLLBAR_WIDTH : afterWidth}
+          />
+        </ApiReloader>
+      )}
       before={fileBrowserMemo}
       headerOffset={MAIN_CONTENT_TOP_OFFSET}
-      mainContainerHeader={
+      mainContainerHeader={openFilePaths?.length >= 1 && (
         <HeaderStyle>
           <MenuStyle>
             {menuMemo}
@@ -310,7 +340,7 @@ function FilesPageComponent() {
             {fileTabsMemo}
           </TabsStyle>
         </HeaderStyle>
-      }
+      )}
       title="Files"
       uuid="Files/index"
     >
