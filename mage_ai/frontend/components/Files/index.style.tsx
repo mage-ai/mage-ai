@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 const MENU_HEIGHT = 36;
 const TAB_HEIGHT = 36;
@@ -11,9 +12,7 @@ export const MAIN_CONTENT_TOP_OFFSET = (HEADER_HEIGHT_TOTAL - ALL_HEADERS_HEIGHT
 
 export const HeaderStyle = styled.div`
   height: ${HEADER_HEIGHT_TOTAL}px;
-  position: fixed;
   top: ${HEADER_HEIGHT}px;
-  width: 100%;
   z-index: 3;
 
   ${props => `
@@ -32,5 +31,11 @@ export const MenuStyle = styled.div`
 `;
 
 export const TabsStyle = styled.div`
+  ${hideScrollBar()}
+
   height: ${TAB_HEIGHT}px;
+  overflow-x: auto;
+  position: sticky;
+  width: 100%;
+  z-index: 0;
 `;

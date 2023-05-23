@@ -315,7 +315,7 @@ function FilesPageComponent() {
 
   return (
     <Dashboard
-      after={fileVersionsVisible && selectedFilePath && (
+      after={(
         <ApiReloader uuid={`FileVersions/${selectedFilePath
             ? decodeURIComponent(selectedFilePath)
             : ''
@@ -324,10 +324,10 @@ function FilesPageComponent() {
           <FileVersions
             selectedFilePath={selectedFilePath}
             setErrors={showError}
-            // width={afterWidth > SCROLLBAR_WIDTH ? afterWidth - SCROLLBAR_WIDTH : afterWidth}
           />
         </ApiReloader>
       )}
+      afterHidden={!(fileVersionsVisible && selectedFilePath)}
       before={fileBrowserMemo}
       headerOffset={MAIN_CONTENT_TOP_OFFSET}
       mainContainerHeader={openFilePaths?.length >= 1 && (

@@ -5,7 +5,6 @@ import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
-
 export const ANIMATION_DURATION = 300;
 const TABS_HEADER_HEIGHT = 37;
 
