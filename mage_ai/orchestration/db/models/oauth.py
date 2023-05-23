@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 
@@ -122,6 +122,22 @@ class User(BaseModel):
         preferences = self.preferences or dict()
         return preferences.get(get_repo_path(), {}).get('git_settings')
 
+    @safe_db_query
+    @classmethod
+    def batch_update_user_roles(self):
+        for user in User.query.all():
+            roles_new = []
+            if user._owner:
+                roles_new = [Role.get_default_role('Owner')]
+            elif user.roles and user.roles & 1 != 0:
+                roles_new = [Role.get_default_role('Admin')]
+            elif user.roles and user.roles & 2 != 0:
+                roles_new = [Role.get_default_role('Editor')]
+            elif user.roles and user.roles & 4 != 0:
+                roles_new = [Role.get_default_role('Viewer')]
+            user.roles_new = roles_new
+        db_connection.session.commit()
+
 
 class Role(BaseModel):
     name = Column(String(255))
@@ -132,50 +148,29 @@ class Role(BaseModel):
     @safe_db_query
     def create_default_roles(self):
         Permission.create_default_global_permissions()
-        owner = self.query.filter(self.name == 'Owner').first()
-        if not owner:
-            self.create(
-                name='Owner',
-                permissions=[
-                    Permission.query.filter(
-                        Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.OWNER,
-                    ).first()
-                ]
-            )
-        admin = self.query.filter(self.name == 'Admin').first()
-        if not admin:
-            self.create(
-                name='Admin',
-                permissions=[
-                    Permission.query.filter(
-                        Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.ADMIN,
-                    ).first()
-                ]
-            )
-        editor = self.query.filter(self.name == 'Editor').first()
-        if not editor:
-            self.create(
-                name='Editor',
-                permissions=[
-                    Permission.query.filter(
-                        Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.EDITOR,
-                    ).first()
-                ]
-            )
-        viewer = self.query.filter(self.name == 'Viewer').first()
-        if not viewer:
-            self.create(
-                name='Viewer',
-                permissions=[
-                    Permission.query.filter(
-                        Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.VIEWER,
-                    ).first()
-                ]
-            )
+        mapping = {
+            'Owner': Permission.Access.OWNER,
+            'Admin': Permission.Access.ADMIN,
+            'Editor': Permission.Access.EDITOR,
+            'Viewer': Permission.Access.VIEWER,
+        }
+        for name, access in mapping.items():
+            role = self.query.filter(self.name == name).first()
+            if not role:
+                self.create(
+                    name=name,
+                    permissions=[
+                        Permission.query.filter(
+                            Permission.entity == Permission.Entity.GLOBAL,
+                            Permission.access == access,
+                        ).first()
+                    ]
+                )
+
+    @classmethod
+    @safe_db_query
+    def get_default_role(self, name):
+        return Role.query.filter(Role.name == name).first()
 
     def get_access(
         self,

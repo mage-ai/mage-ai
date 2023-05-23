@@ -13,11 +13,6 @@ from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 from tornado.options import options
 
-from mage_ai.api.utils import (
-    has_at_least_admin_role,
-    has_at_least_editor_role,
-    has_at_least_viewer_role,
-)
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -223,12 +218,12 @@ async def main(
 
         # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()
-        user = User.query.filter(User._owner == True).first()  # noqa: E712
+        user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
-                    roles_new=[Role.query.filter(Role.name == 'owner').first()],
+                    roles_new=[Role.get_default_role('Owner')],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
@@ -237,21 +232,12 @@ async def main(
                     email='admin@admin.com',
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
-                    roles_new=[Role.query.filter(Role.name == 'owner').first()],
+                    roles_new=[Role.get_default_role('Owner')],
                     username='admin',
                 )
         else:
             if not user.roles_new:
-                all_users = User.query.all()
-                for user in all_users:
-                    if user.owner:
-                        user.update(roles_new=[Role.query.filter(Role.name == 'owner').first()])
-                    elif has_at_least_admin_role(user):
-                        user.update(roles_new=[Role.query.filter(Role.name == 'admin').first()])
-                    elif has_at_least_editor_role(user):
-                        user.update(roles_new=[Role.query.filter(Role.name == 'editor').first()])
-                    elif has_at_least_viewer_role(user):
-                        user.update(roles_new=[Role.query.filter(Role.name == 'viewer').first()])
+                User.batch_update_user_roles()
 
         oauth_client = Oauth2Application.query.filter(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,

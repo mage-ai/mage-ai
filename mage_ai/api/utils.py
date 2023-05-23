@@ -30,7 +30,7 @@ def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2Acc
 def is_owner(user: User, entity=None, entity_id=None) -> bool:
     return (user and user.owner) or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        (user and user.get_access(entity, entity_id) & 1 != 0)
+        (user and user.get_access(entity, entity_id) & Permission.Access.OWNER != 0)
 
 
 def has_at_least_admin_role(user: User, entity=None, entity_id=None) -> bool:
@@ -38,7 +38,7 @@ def has_at_least_admin_role(user: User, entity=None, entity_id=None) -> bool:
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
         is_owner(user) or \
         (user.roles and user.roles & 1 != 0) or \
-        (user and user.get_access(entity, entity_id) & 2 != 0)
+        (user and user.get_access(entity, entity_id) & Permission.Access.ADMIN != 0)
 
 
 def has_at_least_editor_role(user: User, entity=None, entity_id=None) -> bool:
@@ -47,7 +47,7 @@ def has_at_least_editor_role(user: User, entity=None, entity_id=None) -> bool:
         is_owner(user) or \
         has_at_least_admin_role(user) or \
         (user.roles and user.roles & 2 != 0) or \
-        (user and user.get_access(entity, entity_id) & 4 != 0)
+        (user and user.get_access(entity, entity_id) & Permission.Access.EDITOR != 0)
 
 
 def has_at_least_editor_role_and_notebook_edit_access(
@@ -75,7 +75,7 @@ def has_at_least_viewer_role(user: User, entity=None, entity_id=None) -> bool:
         has_at_least_admin_role(user) or \
         has_at_least_editor_role(user) or \
         (user.roles and user.roles & 4 != 0) or \
-        (user and user.get_access(entity, entity_id) & 8 != 0)
+        (user and user.get_access(entity, entity_id) & Permission.Access.VIEWER != 0)
 
 
 def get_access_for_roles(

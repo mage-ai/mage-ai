@@ -14,12 +14,12 @@ class RoleResource(GenericResource):
 
         roles = Role.query.all()
         access = user.get_access(Permission.Entity.PROJECT, get_repo_path())
-        if access & 1 == 0:
+        if access & Permission.Access.OWNER == 0:
             roles = list(filter(
                 lambda role: role.get_access(
                     Permission.Entity.PROJECT,
                     get_repo_path(),
-                ) & 3 == 0,
+                ) & 3 == 0,  # Only editors and viewers
                 roles,
             ))
 
