@@ -1,3 +1,8 @@
+from time import sleep
+from typing import Any, Dict, Generator, List, Tuple
+
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source as BaseSource
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
@@ -25,9 +30,6 @@ from mage_integrations.utils.schema_helpers import (
     extract_selected_columns,
     filter_columns,
 )
-from singer.schema import Schema
-from time import sleep
-from typing import Any, Dict, Generator, List, Tuple
 
 
 class Source(BaseSource):
@@ -83,10 +85,12 @@ class Source(BaseSource):
                         'numeric' in column_type or 'decimal' in column_type or \
                         'real' in column_type or 'number' in column_type:
                     column_types.append(COLUMN_TYPE_NUMBER)
-                elif 'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type:
+                elif 'datetime' in column_type or 'timestamp' in column_type or \
+                        'date' in column_type:
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
-                    # TODO (tommy dang): remove this so we allow any columns to be used as a bookmark
+                    # TODO (tommy dang): remove this so we allow any columns to be
+                    # used as a bookmark
                     valid_replication_keys.append(column_name)
                 elif 'json' in column_type or 'variant' in column_type:
                     column_properties = {}
@@ -139,9 +143,11 @@ class Source(BaseSource):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> int:
+        if query is None:
+            query = {}
         if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             # Not support count records for LOG_BASED replication
             return 1
@@ -158,9 +164,11 @@ class Source(BaseSource):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query is None:
+            query = {}
         if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             for data in self.load_data_from_logs(
                 stream,
@@ -205,7 +213,7 @@ class Source(BaseSource):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         raise Exception('Subclasses must implement the test_connection method.')
@@ -231,7 +239,9 @@ WHERE table_schema = '{schema}'
         return query
 
     def test_connection(self):
-        self.build_connection().build_connection()
+        conn = self.build_connection()
+        conn.build_connection()
+        conn.close_connection()
 
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         return column_type_mapping(column_type, column_format)
@@ -265,11 +275,13 @@ WHERE table_schema = '{schema}'
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         count_records: bool = False,
         limit: int = SUBBATCH_FETCH_LIMIT,
         offset: int = 0,
     ) -> Tuple[List[Dict], List[Any]]:
+        if query is None:
+            query = {}
         table_name = stream.tap_stream_id
 
         key_properties = stream.key_properties
