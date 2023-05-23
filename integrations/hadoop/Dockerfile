@@ -7,10 +7,10 @@ apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
-RUN echo "    PermitRootLogin yes" >> /etc/ssh/sshd_config \
-    echo "    PasswordAuthentication yes" >> /etc/ssh/sshd_config \
-    echo "    PermitEmptyPasswords yes" >> /etc/ssh/sshd_config \
-    echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config
+RUN echo "    PermitRootLogin yes" >> /etc/ssh/sshd_config
+RUN echo "    PasswordAuthentication yes" >> /etc/ssh/sshd_config
+RUN echo "    PermitEmptyPasswords yes" >> /etc/ssh/sshd_config
+RUN echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
 EXPOSE 22
 
@@ -33,19 +33,18 @@ ENV HDFS_SECONDARYNAMENODE_USER=root
 ENV YARN_NODEMANAGER_USER=root
 ENV YARN_RESOURCEMANAGER_USER=root
 
-RUN echo export JAVA_HOME=$JAVA_HOME >> /opt/hadoop/etc/hadoop/hadoop-env.sh
-RUN echo export HADOOP_SSH_OPTS=\"-p 22\" >> /opt/hadoop/etc/hadoop/hadoop-env.sh
+RUN echo "export JAVA_HOME=$JAVA_HOME" >> /opt/hadoop/etc/hadoop/hadoop-env.sh
+RUN echo "export HADOOP_SSH_OPTS=\"-p 22\"" >> /opt/hadoop/etc/hadoop/hadoop-env.sh
 
-# Start ssh server
+# Enable passwordless SSH
 RUN ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" && \
         cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-RUN /etc/init.d/ssh start
 
 # Format the Hadoop filesystem
 RUN hdfs namenode -format
 RUN ${PIP} install pyspark
 
-# Start the Hadoop services
-CMD "/usr/sbin/sshd -D" && start-dfs.sh && start-yarn.sh && tail -f /dev/null
+COPY run_app_with_hadoop.sh /app/run_app_with_hadoop.sh
+RUN chmod +x /app/run_app_with_hadoop.sh
 
 ENV MAGE_DATA_DIR=
