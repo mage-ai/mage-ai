@@ -75,6 +75,7 @@ import {
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
@@ -2107,12 +2108,14 @@ function PipelineDetailPage({
             {beforeHeader}
           </KernelStatus>
           {selectedFilePaths?.length > 0 &&
-            <FileTabs
-              filePaths={selectedFilePaths}
-              filesTouched={filesTouched}
-              savePipelineContent={savePipelineContent}
-              selectedFilePath={selectedFilePath}
-            />
+            <PipelineHeaderStyle relativePosition secondary>
+              <FileTabs
+                filePaths={selectedFilePaths}
+                filesTouched={filesTouched}
+                savePipelineContent={savePipelineContent}
+                selectedFilePath={selectedFilePath}
+              />
+            </PipelineHeaderStyle>
           }
         </>
       );

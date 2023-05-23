@@ -26,7 +26,7 @@ export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
 }>`
   position: fixed;
-  z-index: 2;
+  z-index: 3;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.monotone || dark.monotone).grey200};

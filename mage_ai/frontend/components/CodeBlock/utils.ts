@@ -173,8 +173,8 @@ export const getMoreActionsItems = (
       }
     });
 
-    if (isDBT) {
-      const dbtItems = [
+    if (isDBT && BlockLanguageEnum.SQL === language) {
+      items.unshift(...[
         {
           label: () => 'Run model',
           onClick: () => runBlock({
@@ -208,10 +208,7 @@ export const getMoreActionsItems = (
           tooltip: () => 'Execute command dbt build.',
           uuid: 'build_model',
         },
-      ];
-
-      if (BlockLanguageEnum.SQL === language) {
-        dbtItems.push({
+        {
           label: () => 'Add upstream models',
           onClick: () => {
             updatePipeline({
@@ -222,10 +219,8 @@ export const getMoreActionsItems = (
           },
           tooltip: () => 'Add upstream models for this model to the pipeline.',
           uuid: 'add_upstream_models',
-        });
-      }
-
-      items.unshift(...dbtItems);
+        },
+      ]);
     }
 
     if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {

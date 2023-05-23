@@ -1471,7 +1471,7 @@ function CodeBlock({
                           </FlexContainer>
                         </Tooltip>
                         {limitInputEl}
-                        <Spacing mr={5} />
+                        <Spacing mr={1} />
                       </FlexContainer>
                     )}
                   </FlexContainer>
@@ -1509,7 +1509,7 @@ function CodeBlock({
                           </Link>
                         </Text>
 
-                        <Spacing mr={5} />
+                        <Spacing mr={1} />
                       </FlexContainer>
                     </Spacing>
                   )}
@@ -1899,7 +1899,7 @@ function CodeBlock({
                 && !isStreamingPipeline
                 && (
                 <CodeHelperStyle normalPadding>
-                  <Spacing mr={5}>
+                  <Spacing mr={1}>
                     <Text muted small>
                       {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
                       {isSQLBlock && (

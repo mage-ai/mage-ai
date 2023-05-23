@@ -48,30 +48,38 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
   active: boolean;
-  addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
-  fetchPipeline: () => void;
-  fetchVariables: () => void;
+  addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
+  disableRefreshWarning?: boolean;
+  fetchPipeline?: () => void;
+  fetchVariables?: () => void;
   filePath: string;
-  openSidekickView: (newView: ViewKeyEnum) => void;
-  pipeline: PipelineType;
+  hideHeaderButtons?: boolean;
+  onContentChange?: (content: string) => void;
+  openSidekickView?: (newView: ViewKeyEnum) => void;
+  pipeline?: PipelineType;
+  saveFile?: (value: string, file: FileType) => void;
   selectedFilePath: string;
-  sendTerminalMessage: (message: string, keep?: boolean) => void;
-  setDisableShortcuts: (disableShortcuts: boolean) => void;
+  sendTerminalMessage?: (message: string, keep?: boolean) => void;
+  setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
-  setSelectedBlock: (block: BlockType) => void;
+  setSelectedBlock?: (block: BlockType) => void;
 };
 
 function FileEditor({
   active,
   addNewBlock,
+  disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
   filePath,
+  hideHeaderButtons,
+  onContentChange,
   openSidekickView,
   pipeline,
+  saveFile: saveFileProp,
   selectedFilePath,
   sendTerminalMessage,
   setDisableShortcuts,
@@ -101,12 +109,18 @@ function FileEditor({
     }
   }, [data]);
 
-  const [content, setContent] = useState<string>(file?.content);
+  const [content, setContentState] = useState<string>(file?.content);
+  const setContent = useCallback((content: string) => {
+    setContentState(content);
+    if (onContentChange) {
+      onContentChange?.(content);
+    }
+  }, [onContentChange]);
   const [touched, setTouched] = useState<boolean>(false);
 
   useEffect(() => {
-    if (active) {
-      setDisableShortcuts(true);
+    if (active && setDisableShortcuts) {
+      setDisableShortcuts?.(true);
     }
   }, [active, setDisableShortcuts]);
 
@@ -136,6 +150,10 @@ function FileEditor({
     },
   );
   const saveFile = useCallback((value: string, f: FileType) => {
+    if (saveFileProp) {
+      return saveFileProp(value, f);
+    }
+
     // @ts-ignore
     updateFile({
       file_content: {
@@ -144,8 +162,8 @@ function FileEditor({
       },
     }).then(() => {
       const fileName = decodeURIComponent(filePath).split(path.sep).pop();
-      if (fileName === SpecialFileEnum.METADATA_YAML) {
-        fetchVariables();
+      if (fileName === SpecialFileEnum.METADATA_YAML && fetchVariables) {
+        fetchVariables?.();
       }
     });
     // @ts-ignore
@@ -159,6 +177,7 @@ function FileEditor({
   }, [
     fetchVariables,
     filePath,
+    saveFileProp,
     setFilesTouched,
     updateFile,
   ]);
@@ -203,10 +222,13 @@ function FileEditor({
     file,
     fileExtension,
     saveFile,
+    setContent,
     setFilesTouched,
   ]);
 
-  const dataExporterBlock: BlockType = find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
+  const dataExporterBlock: BlockType = pipeline?.blocks
+    ? find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type)
+    : null;
   const [updateDestinationBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
     {
@@ -220,7 +242,7 @@ function FileEditor({
     },
   );
 
-  const addToPipelineEl = (
+  const addToPipelineEl = addNewBlock && pipeline && (
     fileExtension === FileExtensionEnum.PY
     || fileExtension === FileExtensionEnum.SQL
     || (
@@ -233,7 +255,7 @@ function FileEditor({
     && (
     <Button
       onClick={() => {
-        const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+        const isIntegrationPipeline = pipeline?.type === PipelineTypeEnum.INTEGRATION;
 
         const blockReqPayload = buildAddBlockRequestPayload(
           file,
@@ -253,7 +275,7 @@ function FileEditor({
                 },
               });
             }
-            setSelectedBlock(block);
+            setSelectedBlock?.(block);
           },
         );
       }}
@@ -263,15 +285,15 @@ function FileEditor({
     </Button>
   );
 
-  const installPackagesButtonEl = (
+  const installPackagesButtonEl = sendTerminalMessage && (
     <Spacing m={2}>
       <KeyboardShortcutButton
         disabled={!repoPath}
         inline
         loading={loading}
         onClick={() => {
-          openSidekickView(ViewKeyEnum.TERMINAL);
-          sendTerminalMessage(JSON.stringify({
+          openSidekickView?.(ViewKeyEnum.TERMINAL);
+          sendTerminalMessage?.(JSON.stringify({
             ...oauthWebsocketData,
             command: ['stdin', `pip install -r ${repoPath}/requirements.txt\r`],
           }));
@@ -298,9 +320,11 @@ function FileEditor({
   }, [unregisterOnKeyDown, uuidKeyboard]);
   registerOnKeyDown(
     uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
-      if (active) {
-        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping) || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)) {
+    (event, keyMapping) => {
+      if (active && !disableRefreshWarning) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
+        ) {
           event.preventDefault();
           saveFile(content, file);
         } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
@@ -316,6 +340,7 @@ function FileEditor({
     [
       active,
       content,
+      disableRefreshWarning,
       file,
       saveFile,
       touched,
@@ -324,37 +349,41 @@ function FileEditor({
 
   return (
     <div ref={containerRef}>
-      <Spacing p={2}>
-        <FlexContainer justifyContent="space-between">
-          <ButtonGroup>
-            {addToPipelineEl}
+      {!hideHeaderButtons && (
+        <Spacing p={2}>
+          <FlexContainer justifyContent="space-between">
+            <ButtonGroup>
+              {addToPipelineEl}
 
-            <Button
-              disabled={!content}
-              onClick={(e) => {
-                e.preventDefault();
-                saveFile(content, file);
-              }}
-              title={content ? null : 'No changes have been made to this file.'}
-            >
-              Save file content
-            </Button>
-          </ButtonGroup>
+              <Button
+                disabled={!content}
+                onClick={(e) => {
+                  e.preventDefault();
+                  saveFile(content, file);
+                }}
+                title={content ? null : 'No changes have been made to this file.'}
+              >
+                Save file content
+              </Button>
+            </ButtonGroup>
 
-          <ButtonGroup>
-            <Button
-              compact
-              onClick={() => {
-                openSidekickView(ViewKeyEnum.FILE_VERSIONS);
-              }}
-              small
-              title="View previous changes to this file."
-            >
-              Show versions
-            </Button>
-          </ButtonGroup>
-        </FlexContainer>
-      </Spacing>
+            {openSidekickView && (
+              <ButtonGroup>
+                <Button
+                  compact
+                  onClick={() => {
+                    openSidekickView(ViewKeyEnum.FILE_VERSIONS);
+                  }}
+                  small
+                  title="View previous changes to this file."
+                >
+                  Show versions
+                </Button>
+              </ButtonGroup>
+            )}
+          </FlexContainer>
+        </Spacing>
+      )}
 
       {codeEditorEl}
 
