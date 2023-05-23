@@ -31,12 +31,12 @@ any associated callback blocks will also be executed depending on the status of 
 
     ```python
     @callback('success')
-    def hello_world(**kwargs):
+    def hello_world(parent_block_data, **kwargs):
         # some code...
 
 
     @callback('failure')
-    def alert_me(**kwargs):
+    def alert_me(parent_block_data, **kwargs):
         # some code...
     ```
 
@@ -74,7 +74,7 @@ Execute callback function when block runs successfully.
 
 ```python
 @callback('success')
-def only_run_this_function_on_success(**kwargs):
+def only_run_this_function_on_success(parent_block_data, **kwargs):
     pass
 ```
 
@@ -83,9 +83,17 @@ Execute callback function when block fails.
 
 ```python
 @callback('failure')
-def only_run_this_function_on_failure(**kwargs):
+def only_run_this_function_on_failure(parent_block_data, **kwargs):
     pass
 ```
+
+### Positional arguments
+
+The 1st positional argument is the data output of the callback block’s parent block.
+
+<Note>
+    Positional arguments are only supported in Mage versions `>= 0.8.81`.
+</Note>
 
 ### Keyword arguments
 
@@ -101,6 +109,27 @@ Here are the keyword arguments that are  available in each callback function:
 | `hr` | Hour string when the parent block started executing. | `'20'` |
 | `pipeline_run` | Python pipeline run object associated to the current run. | `PipelineRun(id=2357, pipeline_uuid=fire_etl, execution_date=2023-04-26 20:28:17.335254+00:00)` |
 | `pipeline_uuid` | UUID of the current pipeline. | `'fire_etl'` |
+| `__input` | For version `>= 0.8.81`. See below for more details. | `{ 'some_block_uuid': {} }` |
+
+#### `__input` keyword argument
+
+<Note>For versions `>= 0.8.81`.</Note>
+
+If your callback function is defined to only accept keyword arguments and no positional arguments,
+you can access the callback block’s parent block’s data output by accessing the key
+labeled `__input` in the callback function’s keyword arguments.
+
+The value of the `__input` key is a dictionary. The keys in that dictionary are named after the
+callback block’s parent block’s UUID.
+
+For example, if the callback block’s parent block’s UUID is `load_api_data`, then this is how
+you would access `load_api_data`’s data output:
+
+```python
+@callback('success')
+def callback_for_load_api_data(**kwargs):
+    data_from_parent_block = kwargs['__input']['load_api_data']
+```
 
 #### Data integration pipelines only
 
