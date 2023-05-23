@@ -204,6 +204,7 @@ class IntegrationPipeline(Pipeline):
             stderr = e.stderr.decode('utf-8').split('\n')
 
             json_object = {}
+            error = ''
             for line in stderr:
                 if line.startswith('ERROR'):
                     try:
@@ -276,6 +277,7 @@ class IntegrationPipeline(Pipeline):
             stderr = e.stderr.decode('utf-8').split('\n')
 
             json_object = {}
+            error = None
             for line in stderr:
                 if line.startswith('ERROR'):
                     try:
