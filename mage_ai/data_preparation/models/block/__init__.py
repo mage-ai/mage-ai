@@ -1650,6 +1650,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             )
 
     def analyze_outputs(self, variable_mapping, shape_only: bool = False):
+        print('analyze_outputs')
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
@@ -1682,6 +1683,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                         transform=False,
                         verbose=False,
                     )
+                    print(f'Store variable: {self.uuid}')
                     self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
                         self.uuid,
@@ -1695,7 +1697,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
                 except Exception:
-                    pass
+                    traceback.print_exc()
                     # TODO: we use to silently fail, but it looks bad when using BigQuery
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())

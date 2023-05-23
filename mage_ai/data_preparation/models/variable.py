@@ -447,14 +447,14 @@ class Variable:
             f.write(json.dumps(column_types))
 
         # Try using Polars to write the dataframe to improve performance
-        # if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
-        #         and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
-        #     # Polars ignores any index
-        #     try:
-        #         pl_df = pl.from_pandas(df_output)
-        #         return self.__write_polars_dataframe(pl_df)
-        #     except Exception:
-        #         pass
+        if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
+                and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
+            # Polars ignores any index
+            try:
+                pl_df = pl.from_pandas(df_output)
+                return self.__write_polars_dataframe(pl_df)
+            except Exception:
+                pass
 
         # ddf = dask_from_pandas(df_output)
         df_output_serialized = apply_transform_pandas(
