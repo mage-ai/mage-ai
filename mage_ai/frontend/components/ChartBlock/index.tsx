@@ -604,7 +604,6 @@ function ChartBlock({
                   }}
                   value={null}
                 >
-                  <option value="" />
                   {sortByKey(columns.filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
@@ -678,7 +677,6 @@ function ChartBlock({
                   {...sharedProps}
                   label="aggregation"
                 >
-                  <option value="" />
                   {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
@@ -690,7 +688,6 @@ function ChartBlock({
                   {...sharedProps}
                   label="column"
                 >
-                  <option value="" />
                   {sortByKey(columns, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}

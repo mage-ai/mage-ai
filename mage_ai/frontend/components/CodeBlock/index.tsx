@@ -1310,7 +1310,6 @@ function CodeBlock({
                           small
                           value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
                         >
-                          <option value="" />
                           {Object.keys(dbtProjects || {}).map((projectName: string) => (
                             <option key={projectName} value={projectName}>
                               {projectName}
@@ -1361,7 +1360,6 @@ function CodeBlock({
                           small
                           value={dbtProfileTarget || ''}
                         >
-                          <option value="" />
                           {dbtProfileTargets?.map((target: string) => (
                             <option key={target} value={target}>
                               {target}
@@ -1537,7 +1535,6 @@ function CodeBlock({
                         small
                         value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
                       >
-                        <option value="" />
                         {dataProviders?.map(({
                           id,
                           value,
@@ -1561,7 +1558,6 @@ function CodeBlock({
                         small
                         value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
                       >
-                        <option value="" />
                         {dataProviderProfiles?.map((id: string) => (
                           <option key={id} value={id}>
                             {id}
@@ -1806,7 +1802,6 @@ function CodeBlock({
                               small
                               value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
                             >
-                              <option value="" />
                               {EXPORT_WRITE_POLICIES?.map(value => (
                                 <option key={value} value={value}>
                                   {capitalize(value)}

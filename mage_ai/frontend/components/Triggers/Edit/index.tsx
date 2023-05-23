@@ -381,7 +381,6 @@ function Edit({
             placeholder="Choose the frequency to run"
             value={scheduleInterval}
           >
-            {!scheduleInterval && <option value="" />}
             {Object.values(ScheduleIntervalEnum).map(value => (
               <option key={value} value={value}>
                 {value.substring(1)}
@@ -669,7 +668,6 @@ function Edit({
                 placeholder="Event provider"
                 value={provider || ''}
               >
-                {!provider && <option value="" />}
                 {PROVIDER_EVENTS.map(({
                   label,
                   uuid,
@@ -694,7 +692,6 @@ function Edit({
                 placeholder="Event name"
                 value={eventName}
               >
-                {!eventName && <option value="" />}
                 {eventRules.map(({
                   name,
                 }) => (

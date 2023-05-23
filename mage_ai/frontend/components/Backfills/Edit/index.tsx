@@ -266,7 +266,6 @@ function BackfillEdit({
             placeholder="Time spacing between each backfill"
             value={intervalType}
           >
-            {!intervalType && <option value="" />}
             {INTERVAL_TYPES.map(value => (
               <option key={value} value={value}>
                 {capitalize(value)}
