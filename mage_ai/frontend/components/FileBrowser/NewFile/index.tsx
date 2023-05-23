@@ -18,7 +18,9 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 type NewFileProps = {
   fetchFileTree?: () => void;
   file?: FileType;
+  moveFile?: boolean;
   onCancel: () => void;
+  onCreateFile?: (file: FileType) => void;
   selectedFolder: FileType;
   setErrors?: (opts: {
     errors: any;
@@ -29,7 +31,9 @@ type NewFileProps = {
 function NewFile({
   fetchFileTree,
   file: fileProp,
+  moveFile,
   onCancel,
+  onCreateFile,
   selectedFolder,
   setErrors,
 }: NewFileProps) {
@@ -60,9 +64,10 @@ function NewFile({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({ file }) => {
             fetchFileTree?.();
             onCancel();
+            onCreateFile?.(file);
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -128,7 +133,11 @@ function NewFile({
             tabIndex={0}
             uuid="NewFile/create_file"
           >
-            {file ? 'Rename' : 'Create'} file
+            {file
+              ? moveFile
+                ? 'Move'
+                : 'Rename'
+              : 'Create'} file
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>
@@ -141,10 +150,14 @@ function NewFile({
           </Spacing>
         </FlexContainer>
       )}
-      headerTitle={file ? 'Rename file' : 'New file'}
+      headerTitle={file
+        ? moveFile
+          ? 'Move file'
+          : 'Rename file'
+        : 'New file'}
     >
       <TextInput
-        disabled={!!file}
+        disabled={!!file && !moveFile}
         label="Directory"
         monospace
         onChange={e => setDirectory(e.target.value)}
@@ -154,6 +167,7 @@ function NewFile({
 
       <Spacing mt={2}>
         <TextInput
+          disabled={!!moveFile}
           label="Filename"
           monospace
           onChange={e => setFilename(e.target.value)}
