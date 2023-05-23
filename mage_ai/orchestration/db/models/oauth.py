@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
 )
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, validates
 
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -102,7 +103,7 @@ class User(BaseModel):
             elif self.roles & 4 != 0:
                 return 'Viewer'
 
-    @property
+    @hybrid_property
     def owner(self) -> bool:
         access = self.project_access if self.roles_new else 0
         return self._owner or access & Permission.Access.OWNER != 0
@@ -122,8 +123,8 @@ class User(BaseModel):
         preferences = self.preferences or dict()
         return preferences.get(get_repo_path(), {}).get('git_settings')
 
-    @safe_db_query
     @classmethod
+    @safe_db_query
     def batch_update_user_roles(self):
         for user in User.query.all():
             roles_new = []
