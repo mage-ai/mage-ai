@@ -1800,6 +1800,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     conf.setMaster(spark_config.get('spark_master'))
                 if spark_config.get('spark_home'):
                     conf.setSparkHome(spark_config.get('spark_home'))
+                if spark_config.get('executor_env'):
+                    list_kv_pairs = []
+                    for key, value in spark_config.get('executor_env').items():
+                        list_kv_pairs.append((key, value))
+                    conf.setExecutorEnv(key=None, value=None, pairs=list_kv_pairs)
                 if spark_config.get('spark_jars'):
                     conf.set('spark.jars', ','.join(spark_config.get('spark_jars')))
                 if spark_config.get('others'):

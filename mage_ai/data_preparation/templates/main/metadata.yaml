@@ -25,6 +25,9 @@ spark_config:
   # Master URL to connect to
   # e.g., spark_master: 'spark://host:port', or spark_master: 'yarn'
   spark_master: 'local'
+  # Executor environment variables
+  # e.g., executor_env: {'PYTHONPATH': '/home/path'}
+  executor_env: {}
   # Jar files to be uploaded to the cluster and added to the classpath
   # e.g., spark_jars: ['/home/path/example1.jar']
   spark_jars: []
