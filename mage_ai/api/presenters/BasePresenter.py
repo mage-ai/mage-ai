@@ -75,14 +75,9 @@ class BasePresenter():
 
             return results
 
-        # Without this try block, this error occurs:
-        # TypeError: Instance and class checks can only be used with @runtime protocols
-        try:
-            if isinstance(resource, Iterable):
-                return [await present_lambda(r) for r in resource]
-            else:
-                return await present_lambda(resource)
-        except TypeError:
+        if isinstance(resource, Iterable):
+            return [await present_lambda(r) for r in resource]
+        else:
             return await present_lambda(resource)
 
     @classmethod

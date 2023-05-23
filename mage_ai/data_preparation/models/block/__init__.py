@@ -2232,7 +2232,9 @@ class CallbackBlock(Block):
                     # a user has already written callback functions with only keyword arguments.
                     callback_function(
                         callback_status,
-                        **merge_dict(global_vars_copy, outputs_from_input_vars),
+                        **merge_dict(global_vars_copy, dict(
+                            __input=outputs_from_input_vars,
+                        )),
                     )
 
     def update_content(self, content, widget=False):
