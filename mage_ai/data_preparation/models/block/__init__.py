@@ -1801,7 +1801,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 if spark_config.get('spark_home'):
                     conf.setSparkHome(spark_config.get('spark_home'))
                 if spark_config.get('spark_jars'):
-                    conf.setJars(spark_config.get('spark_jars'))
+                    conf.set('spark.jars', ','.join(spark_config.get('spark_jars')))
                 if spark_config.get('others'):
                     conf.setAll(spark_config.get('others'))
 
