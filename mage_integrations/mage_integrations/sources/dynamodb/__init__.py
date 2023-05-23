@@ -5,7 +5,6 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.sources.constants import (
-    COLUMN_TYPE_DICT,
     COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
@@ -66,6 +65,7 @@ class DynamoDb(Source):
         key_props = [key_schema.get(ATTRIBUTE_NAME)
                      for key_schema in table_info.get(KEY_SCHEMA, [])]
         properties = dict()
+        valid_replication_keys = key_props
         for column_schema in table_info.get(ATTRIBUTE_DEFINITIONS, []):
             column_name = column_schema.get(ATTRIBUTE_NAME)
             column_type = column_schema.get(ATTRIBUTE_TYPE)
@@ -83,12 +83,6 @@ class DynamoDb(Source):
                     type=column_types,
                 )
 
-        properties[LAST_EVALUATED_KEY] = dict(
-                properties=None,
-                format=COLUMN_TYPE_DICT,
-                type=[COLUMN_TYPE_STRING],
-            )
-
         schema = Schema.from_dict(dict(
                 properties=properties,
                 type='object',
@@ -99,7 +93,7 @@ class DynamoDb(Source):
                 replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema.to_dict(),
                 stream_id=table_name,
-                valid_replication_keys=[LAST_EVALUATED_KEY],
+                valid_replication_keys=valid_replication_keys,
             )
         catalog_entry = CatalogEntry(
                 key_properties=key_props,
@@ -155,13 +149,13 @@ class DynamoDb(Source):
         '''
         scan_params = {
             'TableName': table_name,
-            'Limit': 10
+            'Limit': 100
         }
 
         client = self.build_client()
         has_more = True
 
-        if last_evaluated_key is not None:
+        if last_evaluated_key is not None and last_evaluated_key:
             scan_params[EXCLUSIVE_START_KEY] = last_evaluated_key
 
         while has_more:
@@ -184,28 +178,13 @@ class DynamoDb(Source):
     ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
 
-        bookmark_last_evaluated_key = None
-        if bookmarks is not None and bookmarks.get(LAST_EVALUATED_KEY) is not None:
-            bookmark_last_evaluated_key = bookmarks.get(LAST_EVALUATED_KEY)
-
-        for result in self.scan_table(table_name, bookmark_last_evaluated_key):
+        for result in self.scan_table(table_name, bookmarks):
             data = []
 
             for item in result.get(ITEMS, []):
                 record_message = common.row_to_singer_record(
                         stream.to_dict(),
                         item,
-                        None,
-                        None,
-                    )
-                data.append(record_message.record)
-            
-            if result.get(LAST_EVALUATED_KEY):
-                bookmark_last_evaluated_key = result[LAST_EVALUATED_KEY]
-                # If last evaluated key exists, add it into the data.
-                record_message = common.row_to_singer_record(
-                        stream.to_dict(),
-                        {LAST_EVALUATED_KEY: bookmark_last_evaluated_key},
                         None,
                         None,
                     )
