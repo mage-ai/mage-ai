@@ -55,13 +55,12 @@ class SyncResource(GenericResource):
         if not updated_config.get('repo_path', None):
             updated_config['repo_path'] = os.getcwd()
 
-        # Validate payloads
-        user_payload = self.update_user_settings(user_settings, user=user)
-        UserGitConfig.load(config=user_payload)
-        sync_config = GitConfig.load(config=updated_config)
-
         # Update user git settings if they are included
         if user:
+            # Validate payloads
+            user_payload = self.update_user_settings(user_settings, user=user)
+            UserGitConfig.load(config=user_payload)
+
             repo_path = get_repo_path()
             user_preferences = user.preferences or {}
             user_git_settings = user.git_settings or {}
@@ -74,8 +73,8 @@ class SyncResource(GenericResource):
             }
             user.refresh()
             user.update(preferences=user_preferences)
-        else:
-            updated_config.update(user_payload)
+
+        sync_config = GitConfig.load(config=updated_config)
 
         preferences.update_preferences(dict(sync_config=updated_config))
 
