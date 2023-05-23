@@ -43,6 +43,7 @@ type FileBrowserProps = {
   fetchFileTree?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
+  onCreateFile?: (file: FileType) => void;
   pipeline?: PipelineType;
   setErrors?: (opts: {
     errors: any;
@@ -69,6 +70,7 @@ function FileBrowser({
   fetchFileTree,
   fetchPipeline,
   files,
+  onCreateFile,
   pipeline,
   setErrors,
   setSelectedBlock,
@@ -316,17 +318,23 @@ function FileBrowser({
     uuid: 'upload_files',
   });
 
-  const [showModalNewFile, hideModalNewFile] = useModal((file: FileType = null) => (
+  const [showModalNewFile, hideModalNewFile] = useModal((opts: {
+    file: FileType;
+    moveFile?: boolean;
+  }) => (
     <NewFile
       fetchFileTree={fetchFileTree}
-      file={file}
+      file={opts?.file}
+      moveFile={opts?.moveFile}
       onCancel={hideModalNewFile}
+      onCreateFile={onCreateFile}
       selectedFolder={selectedFolder}
       setErrors={setErrors}
     />
   ), {
   }, [
     fetchFileTree,
+    onCreateFile,
     selectedFolder,
     setErrors,
   ], {
@@ -369,7 +377,7 @@ function FileBrowser({
         {
           label: () => 'New file',
           onClick: () => {
-            showModalNewFile({});
+            showModalNewFile({ file: {} });
           },
           uuid: 'new_file',
         },
@@ -399,9 +407,16 @@ function FileBrowser({
         {
           label: () => 'Rename file',
           onClick: () => {
-            showModalNewFile(selectedFile);
+            showModalNewFile({ file: selectedFile });
           },
           uuid: 'rename_file',
+        },
+        {
+          label: () => 'Move file',
+          onClick: () => {
+            showModalNewFile({ file: selectedFile, moveFile: true });
+          },
+          uuid: 'move_file',
         },
         {
           label: () => 'Delete file',
