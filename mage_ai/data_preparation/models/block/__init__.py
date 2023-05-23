@@ -1786,11 +1786,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.spark_init:
             return self.spark
         try:
-            repo_config = RepoConfig(repo_path=self.repo_path)
-            spark_config = repo_config.get('spark_config')
-
             from pyspark.conf import SparkConf
             from pyspark.sql import SparkSession
+
+            repo_config = RepoConfig(repo_path=self.repo_path)
+            spark_config = repo_config.spark_config
 
             if spark_config:
                 conf = SparkConf()
