@@ -35,6 +35,8 @@ class User(BaseModel):
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
+    # roles_new is used for the new authentication system to define permissions at
+    # an entity level
     roles_new = relationship('Role', secondary='user_role', back_populates='users')
 
     @validates('email')
@@ -72,7 +74,7 @@ class User(BaseModel):
 
     def get_access(
         self,
-        entity: Union['Permission.Entity', None],
+        entity: Union['Permission.Entity', None] = None,
         entity_id: Union[str, None] = None,
     ) -> int:
         '''
@@ -103,7 +105,7 @@ class User(BaseModel):
     @property
     def owner(self) -> bool:
         access = self.project_access if self.roles_new else 0
-        return self._owner or access & 1 != 0
+        return self._owner or access & Permission.Access.OWNER != 0
 
     @property
     def is_admin(self) -> bool:
@@ -130,54 +132,54 @@ class Role(BaseModel):
     @safe_db_query
     def create_default_roles(self):
         Permission.create_default_global_permissions()
-        owner = self.query.filter(self.name == 'owner').first()
+        owner = self.query.filter(self.name == 'Owner').first()
         if not owner:
             self.create(
                 name='Owner',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == 1,
+                        Permission.access == Permission.Access.OWNER,
                     ).first()
                 ]
             )
-        admin = self.query.filter(self.name == 'admin').first()
+        admin = self.query.filter(self.name == 'Admin').first()
         if not admin:
             self.create(
                 name='Admin',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == 2,
+                        Permission.access == Permission.Access.ADMIN,
                     ).first()
                 ]
             )
-        editor = self.query.filter(self.name == 'editor').first()
+        editor = self.query.filter(self.name == 'Editor').first()
         if not editor:
             self.create(
                 name='Editor',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == 4,
+                        Permission.access == Permission.Access.EDITOR,
                     ).first()
                 ]
             )
-        viewer = self.query.filter(self.name == 'viewer').first()
+        viewer = self.query.filter(self.name == 'Viewer').first()
         if not viewer:
             self.create(
                 name='Viewer',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == 8,
+                        Permission.access == Permission.Access.VIEWER,
                     ).first()
                 ]
             )
 
     def get_access(
         self,
-        entity: Union['Permission.Entity', None],
+        entity: Union['Permission.Entity', None] = None,
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
@@ -224,6 +226,12 @@ class Permission(BaseModel):
         PROJECT = 'project'
         PIPELINE = 'pipeline'
 
+    class Access(int, enum.Enum):
+        OWNER = 1
+        ADMIN = 2
+        EDITOR = 4
+        VIEWER = 8
+
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
     # 1 = owner
@@ -240,7 +248,7 @@ class Permission(BaseModel):
     def create_default_global_permissions(self) -> List['Permission']:
         permissions = self.query.filter(self.entity == Permission.Entity.GLOBAL).all()
         if len(permissions) == 0:
-            for access in [1, 2, 4, 8]:
+            for access in [a.value for a in Permission.Access]:
                 permissions.append(
                     self.create(
                         entity=Permission.Entity.GLOBAL,

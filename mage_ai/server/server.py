@@ -220,6 +220,8 @@ async def main(
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
         sleep(3)
+
+        # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()
         user = User.query.filter(User._owner == True).first()  # noqa: E712
         if not user:
