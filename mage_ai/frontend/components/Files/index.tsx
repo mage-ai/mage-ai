@@ -210,12 +210,14 @@ function FilesPageComponent() {
       onClickFolder={(path: string) => openFile(path, true)}
       onCreateFile={({ path }: FileType) => openFile(path)}
       ref={fileTreeRef}
+      setErrors={showError}
     />
   ), [
     fetchFileTree,
     fileTreeRef,
     files,
     openFile,
+    showError,
   ]);
 
   const [updateFile] = useMutation(

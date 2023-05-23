@@ -14,6 +14,7 @@ import FileType from '@interfaces/FileType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import NewFile from './NewFile';
+import NewFolder from './NewFolder';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Text from '@oracle/elements/Text';
@@ -106,25 +107,40 @@ function FileBrowser({
     },
   );
 
+  const [deleteFolder] = useMutation(
+    (fullPath: string) => api.folders.useDelete(fullPath)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchFileTree?.();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const [showDeleteConfirmation, hideDeleteConfirmation] = useModal(({
     block,
-    exception,
   }: {
     block: BlockType;
-    exception: string;
   }) => (
     <PopupMenu
       centerOnScreen
       danger
+      onCancel={hideDeleteConfirmation}
       onClick={
         () => deleteBlockFile({ block, force: true })
           .then(() => hideDeleteConfirmation())
       }
-      onCancel={hideDeleteConfirmation}
       subtitle={
-        "Deleting this block file is dangerous. This block may have dependencies " +
-        "in active pipelines. Press confirm to delete this block anyway " +
-        "and remove it as a dependency from downstream blocks."
+        'Deleting this block file is dangerous. This block may have dependencies ' +
+        'in active pipelines. Press confirm to delete this block anyway ' +
+        'and remove it as a dependency from downstream blocks.'
       }
       title={`Delete ${block.uuid} anyway?`}
       width={UNIT * 34}
@@ -343,6 +359,29 @@ function FileBrowser({
     uuid: 'new_file',
   });
 
+  const [showModalNewFolder, hideModalNewFolder] = useModal((opts: {
+    file: FileType;
+    moveFile?: boolean;
+  }) => (
+    <NewFolder
+      fetchFileTree={fetchFileTree}
+      file={opts?.file}
+      moveFile={opts?.moveFile}
+      onCancel={hideModalNewFolder}
+      selectedFolder={selectedFolder}
+      setErrors={setErrors}
+    />
+  ), {
+  }, [
+    fetchFileTree,
+    selectedFolder,
+    setErrors,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    uuid: 'new_folder',
+  });
+
   const menuMemo = useMemo(() => {
     if (!selectedBlock && !selectedFile && !selectedFolder) {
       return <div />;
@@ -368,11 +407,39 @@ function FileBrowser({
     if (selectedFolder) {
       items.push(...[
         {
-          label: () => 'Upload files',
+          label: () => 'New folder',
           onClick: () => {
-            showModal();
+            showModalNewFolder();
           },
-          uuid: 'upload_files',
+          uuid: 'new_folder',
+        },
+        {
+          label: () => 'Rename folder',
+          onClick: () => {
+            showModalNewFolder({ file: selectedFolder });
+          },
+          uuid: 'rename_folder',
+        },
+        {
+          label: () => 'Move folder',
+          onClick: () => {
+            showModalNewFolder({ file: selectedFolder, moveFile: true });
+          },
+          uuid: 'Move_folder',
+        },
+        {
+          label: () => 'Delete folder',
+          onClick: () => {
+            const fp = getFullPathWithoutRootFolder(selectedFolder);
+            if (typeof window !== 'undefined'
+              && window.confirm(
+                `Are you sure you want to delete folder ${fp} and all its subfolders and files?`,
+              )
+            ) {
+              deleteFolder(encodeURIComponent(fp));
+            }
+          },
+          uuid: 'Delete_folder',
         },
         {
           label: () => 'New file',
@@ -380,6 +447,13 @@ function FileBrowser({
             showModalNewFile({ file: {} });
           },
           uuid: 'new_file',
+        },
+        {
+          label: () => 'Upload files',
+          onClick: () => {
+            showModal();
+          },
+          uuid: 'upload_files',
         },
       ]);
     } else if (selectedBlock) {
@@ -459,6 +533,7 @@ function FileBrowser({
     ref,
     showModal,
     showModalNewFile,
+    showModalNewFolder,
     selectedBlock,
     selectedFile,
     selectedFolder,
