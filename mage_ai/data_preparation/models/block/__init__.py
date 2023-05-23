@@ -2206,6 +2206,7 @@ class CallbackBlock(Block):
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             )
 
+            # Copied logic from the method self.execute_block
             outputs_from_input_vars = {}
             upstream_block_uuids_length = len(upstream_block_uuids)
             for idx, input_var in enumerate(input_vars):
@@ -2217,13 +2218,22 @@ class CallbackBlock(Block):
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
                 global_vars_copy.update(kwargs_var)
-            global_vars_copy.update(outputs_from_input_vars)
 
             for callback_function in callback_functions_legacy:
                 callback_function(**global_vars_copy)
 
             for callback_function in callback_functions:
-                callback_function(callback_status, **global_vars_copy)
+                try:
+                    # As of version 0.8.81, callback functions have access to the parent block’s
+                    # data output.
+                    callback_function(callback_status, *input_vars, **global_vars_copy)
+                except TypeError:
+                    # This try except block will make the above code backwards compatible in case
+                    # a user has already written callback functions with only keyword arguments.
+                    callback_function(
+                        callback_status,
+                        **merge_dict(global_vars_copy, outputs_from_input_vars),
+                    )
 
     def update_content(self, content, widget=False):
         if not self.file.exists():
