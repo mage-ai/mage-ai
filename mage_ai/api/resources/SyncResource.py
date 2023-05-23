@@ -36,13 +36,7 @@ def get_access_token_secret_name(user: User = None) -> str:
 class SyncResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        sync_config = get_preferences(user=user).sync_config
-        # Make it backwards compatible with storing all of the git settings in the user
-        # preferences field.
-        if user and user.git_settings:
-            sync_config['user_git_settings'] = user.git_settings
-        else:
-            sync_config['user_git_settings'] = UserGitConfig.from_dict(sync_config).to_dict()
+        sync_config = self.get_project_sync_config(user)
         return self.build_result_set(
             [sync_config],
             user,
@@ -91,9 +85,7 @@ class SyncResource(GenericResource):
 
     @classmethod
     def member(self, pk, user, **kwargs):
-        sync_config = get_preferences().sync_config
-        sync_config['user_git_settings'] = user.git_settings
-
+        sync_config = self.get_project_sync_config(user)
         return self(sync_config, user, **kwargs)
 
     def update(self, payload, **kwargs):
@@ -107,6 +99,17 @@ class SyncResource(GenericResource):
             sync.reset()
 
         return self
+
+    @classmethod
+    def get_project_sync_config(self, user):
+        sync_config = get_preferences().sync_config
+        # Make it backwards compatible with storing all of the git settings in the user
+        # preferences field.
+        if user and user.git_settings:
+            sync_config['user_git_settings'] = user.git_settings
+        else:
+            sync_config['user_git_settings'] = UserGitConfig.from_dict(sync_config).to_dict()
+        return sync_config
 
     @classmethod
     def update_user_settings(self, payload, user=None) -> Dict:
