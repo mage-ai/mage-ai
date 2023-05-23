@@ -47,7 +47,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
@@ -78,8 +78,8 @@ async def run_blocks(
     tasks = dict()
     blocks = Queue()
 
-    def create_block_task(block: 'Block'):
-        async def execute_and_run_tests():
+    def create_block_task(block: 'Block') -> asyncio.Task:
+        async def execute_and_run_tests() -> None:
             with BlockFunctionExec(
                 block.uuid,
                 f'Executing {block.type} block...',
@@ -229,7 +229,7 @@ class Block:
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
-    ):
+    ) -> None:
         if configuration is None:
             configuration = dict()
         self.name = name or uuid
@@ -264,22 +264,22 @@ class Block:
         self.spark_init = False
 
     @property
-    def uuid(self):
+    def uuid(self) -> str:
         return self.dynamic_block_uuid or self._uuid
 
     @uuid.setter
-    def uuid(self, x):
+    def uuid(self, x) -> None:
         self.dynamic_block_uuid = None
         self._uuid = x
 
     @property
-    def content(self):
+    def content(self) -> str:
         if self._content is None:
             self._content = self.file.content()
         return self._content
 
     @property
-    def callback_block(self):
+    def callback_block(self) -> 'CallbackBlock':
         if self.has_callback:
             callback_block_uuid = f'{clean_name_orig(self.uuid)}_callback'
             return CallbackBlock(
@@ -290,61 +290,63 @@ class Block:
             )
         return None
 
-    async def content_async(self):
+    async def content_async(self) -> str:
         if self._content is None:
             self._content = await self.file.content_async()
         return self._content
 
-    async def metadata_async(self):
+    async def metadata_async(self) -> Dict:
         return {}
 
     @property
-    def executable(self):
+    def executable(self) -> bool:
         return (
             self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
             and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
         )
 
     @property
-    def outputs(self):
+    def outputs(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def outputs_async(self):
+    async def outputs_async(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = await self.get_outputs_async()
         return self._outputs
 
     @property
-    def callback_block_uuids(self):
+    def callback_block_uuids(self) -> List[str]:
         return [b.uuid for b in self.callback_blocks]
 
     @property
-    def upstream_block_uuids(self):
+    def upstream_block_uuids(self) -> List[str]:
         return [b.uuid for b in self.upstream_blocks]
 
     @property
-    def downstream_block_uuids(self):
+    def downstream_block_uuids(self) -> List[str]:
         return [b.uuid for b in self.downstream_blocks]
 
     @property
-    def file_path(self):
-        repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+    def repo_path(self) -> str:
+        return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
+    @property
+    def file_path(self) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
         block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
 
         return os.path.join(
-            repo_path or os.getcwd(),
+            self.repo_path or os.getcwd(),
             block_directory,
             f'{self.uuid}.{file_extension}',
         )
 
     @property
-    def file(self):
+    def file(self) -> File:
         return File.from_path(self.file_path)
 
     @property
@@ -384,7 +386,7 @@ class Block:
         return matches[len(matches) - 1]
 
     @classmethod
-    def after_create(self, block: 'Block', **kwargs):
+    def after_create(self, block: 'Block', **kwargs) -> None:
         from mage_ai.data_preparation.models.block.dbt.utils import (
             add_blocks_upstream_from_refs,
         )
@@ -455,7 +457,7 @@ class Block:
         upstream_block_uuids=None,
         config=None,
         widget=False,
-    ):
+    ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
         2. Create a new python file with code template
@@ -521,7 +523,7 @@ class Block:
         return block
 
     @classmethod
-    def get_all_blocks(self, repo_path):
+    def get_all_blocks(self, repo_path) -> Dict:
         block_uuids = dict()
         for t in BlockType:
             block_dir = os.path.join(repo_path, f'{t.value}s')
@@ -544,7 +546,7 @@ class Block:
         language=None,
         pipeline=None,
         status=BlockStatus.NOT_EXECUTED,
-    ):
+    ) -> 'Block':
         block_class = self.block_class_from_type(
             block_type,
             language=language,
@@ -561,7 +563,7 @@ class Block:
             status=status,
         )
 
-    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
+    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]) -> bool:
         return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
 
     def delete(
@@ -618,7 +620,7 @@ class Block:
         logger: Logger = None,
         logging_tags: Dict = None,
         **kwargs
-    ):
+    ) -> Dict:
         """
         This method will execute the block and run the callback functions if they exist
         for this block. This function should only be used when running a block from the
@@ -1039,7 +1041,7 @@ class Block:
             output = block_function(*input_vars)
         return output
 
-    def exists(self):
+    def exists(self) -> bool:
         return os.path.exists(self.file_path)
 
     def fetch_input_variables(
@@ -1060,7 +1062,7 @@ class Block:
             dynamic_upstream_block_uuids,
         )
 
-    def get_analyses(self):
+    def get_analyses(self) -> List:
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
         output_variable_objects = self.output_variable_objects()
@@ -1315,7 +1317,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    def __save_outputs_prepare(self, outputs):
+    def __save_outputs_prepare(self, outputs) -> Dict:
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -1328,15 +1330,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self._outputs_loaded = True
         return variable_mapping
 
-    def save_outputs(self, outputs, override=False):
+    def save_outputs(self, outputs, override=False) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
         self.store_variables(variable_mapping, override=override)
 
-    async def save_outputs_async(self, outputs, override=False):
+    async def save_outputs_async(self, outputs, override=False) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
-    def to_dict_base(self, include_callback_blocks: bool = False):
+    def to_dict_base(self, include_callback_blocks: bool = False) -> Dict:
         language = self.language
         if language and type(self.language) is not str:
             language = self.language.value
@@ -1372,7 +1374,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         sample_count: int = None,
         check_if_file_exists: bool = False,
         **kwargs,
-    ):
+    ) -> Dict:
         data = self.to_dict_base(include_callback_blocks=include_callback_blocks)
 
         if include_content:
@@ -1402,7 +1404,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_outputs: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
-    ):
+    ) -> Dict:
         data = self.to_dict_base(include_callback_blocks=include_callback_blocks)
 
         if include_content:
@@ -1430,7 +1432,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         return data
 
-    def update(self, data, **kwargs):
+    def update(self, data, **kwargs) -> 'Block':
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
 
@@ -1473,7 +1475,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
         self.upstream_blocks = upstream_blocks
 
-    def update_content(self, content, widget=False):
+    def update_content(self, content, widget=False) -> 'Block':
         if not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
@@ -1484,7 +1486,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
-    async def update_content_async(self, content, widget=False):
+    async def update_content_async(self, content, widget=False) -> 'Block':
         block_content = await self.content_async()
         if content != block_content:
             self.status = BlockStatus.UPDATED
@@ -1493,7 +1495,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
-    def update_status(self, status: BlockStatus):
+    def update_status(self, status: BlockStatus) -> None:
         self.status = status
         self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
@@ -1649,7 +1651,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 logging_tags=logging_tags,
             )
 
-    def analyze_outputs(self, variable_mapping, shape_only: bool = False):
+    def analyze_outputs(self, variable_mapping, shape_only: bool = False) -> None:
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
@@ -1700,12 +1702,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())
 
-    def set_global_vars(self, global_vars):
+    def set_global_vars(self, global_vars: Dict) -> None:
         self.global_vars = global_vars
         for upstream_block in self.upstream_blocks:
             upstream_block.global_vars = global_vars
 
-    def __consolidate_variables(self, variable_mapping: Dict):
+    def __consolidate_variables(self, variable_mapping: Dict) -> Dict:
         # Consolidate print variables
         output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
         print_variables = {k: v for k, v in variable_mapping.items()
@@ -1721,7 +1723,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             consolidated_data=None,
         )
 
-        def save_variable_and_reset_state():
+        def save_variable_and_reset_state() -> None:
             if state['msg_key'] is not None and state['msg_value'] is not None:
                 state['msg_value']['data'] = state['consolidated_data']
                 consolidated_print_variables[state['msg_key']] = json.dumps(state['msg_value'])
@@ -1766,7 +1768,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = merge_dict(output_variables, consolidated_print_variables)
         return variable_mapping
 
-    def __enrich_global_vars(self, global_vars: Dict = None):
+    def __enrich_global_vars(self, global_vars: Dict = None) -> Dict:
         global_vars = global_vars or dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
                 is_spark_env()):
@@ -1784,11 +1786,33 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.spark_init:
             return self.spark
         try:
+            repo_config = RepoConfig(repo_path=self.repo_path)
+            spark_config = repo_config.get('spark_config')
+
+            from pyspark.conf import SparkConf
             from pyspark.sql import SparkSession
-            self.spark = SparkSession.builder.master(
-                os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+
+            if spark_config:
+                conf = SparkConf()
+                if spark_config.get('app_name'):
+                    conf.setAppName(spark_config.get('app_name'))
+                if spark_config.get('spark_master'):
+                    conf.setMaster(spark_config.get('spark_master'))
+                if spark_config.get('spark_home'):
+                    conf.setSparkHome(spark_config.get('spark_home'))
+                if spark_config.get('spark_jars'):
+                    conf.setJars(spark_config.get('spark_jars'))
+                if spark_config.get('others'):
+                    conf.setAll(spark_config.get('others'))
+
+                self.spark = SparkSession.builder.config(
+                    conf=conf).getOrCreate()
+            else:
+                self.spark = SparkSession.builder.master(
+                    os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
         except Exception:
             self.spark = None
+
         self.spark_init = True
         return self.spark
 
@@ -1799,7 +1823,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         override: bool = False,
         override_outputs: bool = False,
         dynamic_block_uuid: str = None,
-    ):
+    ) -> Dict:
         self.dynamic_block_uuid = dynamic_block_uuid
 
         if self.pipeline is None:
@@ -1834,7 +1858,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         override_outputs: bool = False,
         spark=None,
         dynamic_block_uuid: str = None,
-    ):
+    ) -> None:
         variables_data = self.__store_variables_prepare(
             variable_mapping,
             execution_partition,
@@ -1869,7 +1893,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         override_outputs: bool = False,
         spark=None,
         dynamic_block_uuid: str = None,
-    ):
+    ) -> None:
         variables_data = self.__store_variables_prepare(
             variable_mapping,
             execution_partition,
@@ -1989,7 +2013,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self,
         variable_uuid: str,
         execution_partition: str = None,
-    ):
+    ) -> Any:
         if self.pipeline is None:
             return []
         return self.pipeline.variable_manager.get_variable_object(
@@ -1999,15 +2023,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             partition=execution_partition,
         )
 
-    def _block_decorator(self, decorated_functions):
-        def custom_code(function):
+    def _block_decorator(self, decorated_functions) -> Callable:
+        def custom_code(function) -> Callable:
             decorated_functions.append(function)
             return function
 
         return custom_code
 
     # TODO: Update all pipelines that use this block
-    def __update_name(self, name):
+    def __update_name(self, name) -> None:
         """
         1. Rename block file
         2. Update the folder of variable
@@ -2040,12 +2064,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
-    def __update_pipeline_block(self, widget=False):
+    def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
             return
         self.pipeline.update_block(self, widget=widget)
 
-    def __update_type(self, block_type):
+    def __update_type(self, block_type) -> None:
         """
         1. Move block file to another folder
         2. Update the block type in pipeline metadata.yaml
@@ -2071,7 +2095,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             language=self.language,
         )
 
-    def __update_upstream_blocks(self, upstream_blocks):
+    def __update_upstream_blocks(self, upstream_blocks) -> None:
         if self.pipeline is None:
             return
         self.pipeline.update_block(
@@ -2080,7 +2104,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             widget=BlockType.CHART == self.type,
         )
 
-    def __update_callback_blocks(self, block_uuids: List[str]):
+    def __update_callback_blocks(self, block_uuids: List[str]) -> None:
         if self.pipeline is None:
             return
 
@@ -2121,7 +2145,7 @@ class SensorBlock(Block):
 
 class CallbackBlock(Block):
     @classmethod
-    def create(cls, orig_block_name):
+    def create(cls, orig_block_name) -> 'CallbackBlock':
         return Block.create(
             f'{clean_name_orig(orig_block_name)}_callback',
             BlockType.CALLBACK,
@@ -2137,7 +2161,7 @@ class CallbackBlock(Block):
         logging_tags: Dict = None,
         parent_block: Block = None,
         **kwargs
-    ):
+    ) -> None:
         pipeline_run = kwargs.get('pipeline_run')
 
         if logger is not None:
@@ -2200,7 +2224,7 @@ class CallbackBlock(Block):
             for callback_function in callback_functions:
                 callback_function(callback_status, **global_vars)
 
-    def update_content(self, content, widget=False):
+    def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
@@ -2209,14 +2233,14 @@ class CallbackBlock(Block):
             self.file.update_content(content)
         return self
 
-    async def update_content_async(self, content, widget=False):
+    async def update_content_async(self, content, widget=False) -> 'CallbackBlock':
         block_content = await self.content_async()
         if content != block_content:
             self._content = content
             await self.file.update_content_async(content)
         return self
 
-    def _block_decorator(self, decorated_functions):
+    def _block_decorator(self, decorated_functions) -> Callable:
         def custom_code(callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs):
             # If the decorator is just @callback with no arguments, default to success callback
             if isfunction(callback_status):
