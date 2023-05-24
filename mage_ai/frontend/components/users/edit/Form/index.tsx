@@ -57,7 +57,9 @@ function UserEditForm({
     owner: isOwner,
   } = getUser() || {};
 
-  const { data: dataRoles, mutate: fetchRoles } = api.roles.list({}, {
+  const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
+    limit_roles: !!newUser,
+  }, {
     revalidateOnFocus: false,
   });
   const roles = useMemo(
@@ -143,9 +145,12 @@ function UserEditForm({
   useEffect(() => {
     if (user && (!profile || userPrev?.id !== user?.id)) {
       // @ts-ignore
-      setProfile(selectKeys(user, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
+      const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
         uuid,
-      }) => uuid)));
+      }) => uuid);
+      keys.push('roles_new');
+      // @ts-ignore
+      setProfile(selectKeys(user, keys));
     }
 
     if (profile?.password || profile?.password_confirmation) {
@@ -182,7 +187,7 @@ function UserEditForm({
   const profileRoleValue = useMemo(() => {
     const roles_new = profile?.roles_new;
     if (roles_new && roles_new.length > 0) {
-      return roles_new[0].id;
+      return roles_new[0]?.id;
     } else {
       return profile?.owner ? RoleValueEnum.OWNER : profile?.roles;
     }
@@ -236,19 +241,19 @@ function UserEditForm({
               onChange={e => {
                 setButtonDisabled(false);
                 const role = find(roles, (({ id }: RoleType) => id == e.target.value));
-                const updatedProfile: UserType = {
-                  roles_new: [role],
-                };
-                setProfile(prev => ({
-                  ...prev,
-                  ...updatedProfile,
-                }));
+                if (role) {
+                  const updatedProfile: UserType = {
+                    roles_new: [role],
+                  };
+                  setProfile(prev => ({
+                    ...prev,
+                    ...updatedProfile,
+                  }));
+                }
               }}
               primary
               setContentOnMount
-              value={profileRoleValue
-                || user?.roles
-                || user?.roles_new?.[0]?.id}
+              value={profileRoleValue || user?.roles}
             >
               <option value="" />
               {roles.map(({ id, name }) => (
@@ -310,7 +315,7 @@ function UserEditForm({
               onClick={() => {
                 const updated_profile = {
                   ...profile,
-                  roles_new: profile.roles_new.map(({ id }: RoleType) => id)
+                  roles_new: profile.roles_new?.map(({ id }: RoleType) => id),
                 };
                 // @ts-ignore
                 updateUser({ user: updated_profile });

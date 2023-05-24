@@ -1,7 +1,7 @@
 """Create user roles, roles, and permissions
 
 Revision ID: 83a74eca6ea1
-Revises: 66e67039b8a2
+Revises: 1bfc6d904929
 Create Date: 2023-05-17 10:10:41.359684
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '83a74eca6ea1'
-down_revision = '66e67039b8a2'
+down_revision = '1bfc6d904929'
 branch_labels = None
 depends_on = None
 

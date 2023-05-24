@@ -61,6 +61,9 @@ class UserResource(DatabaseResource):
             if not payload.get(key):
                 missing_values.append(key)
 
+        if len(roles_new) == 0:
+            missing_values.append('roles')
+
         if len(missing_values) >= 1:
             error.update(
                 {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
@@ -141,9 +144,13 @@ class UserResource(DatabaseResource):
                     {'message': 'Admins cannot update users who are Admins.'})
                 raise ApiError(error)
             elif payload.get('roles') and int(payload.get('roles')) & 1 != 0 or \
-                    access & 2 != 0:
+                    access & Permission.Access.ADMIN != 0:
                 error.update(
                     {'message': 'Admins cannot make other users Admins.'})
+                raise ApiError(error)
+            elif access & Permission.Access.OWNER != 0:
+                error.update(
+                    {'message': 'Admins cannot make other users Owners.'})
                 raise ApiError(error)
 
         password = payload.get('password')

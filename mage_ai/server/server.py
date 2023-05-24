@@ -218,7 +218,11 @@ async def main(
 
         # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()
-        user = User.query.filter(User.owner == True).first()  # noqa: E712
+        all_users = User.query.all()
+        user = None
+        for u in all_users:
+            if u.owner:
+                user = u
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':

@@ -12,8 +12,14 @@ RolePolicy.allow_actions([
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 RolePolicy.allow_read(RolePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+RolePolicy.allow_query([
+    'limit_roles',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
