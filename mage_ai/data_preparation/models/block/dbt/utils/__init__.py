@@ -913,28 +913,7 @@ def build_command_line_arguments(
         elif run_settings.get('test_model'):
             dbt_command = 'test'
 
-    variables_json = {}
-    for k, v in variables.items():
-        if PIPELINE_RUN_MAGE_VARIABLES_KEY == k:
-            continue
-
-        if (type(v) is str or
-                type(v) is int or
-                type(v) is bool or
-                type(v) is float or
-                type(v) is dict or
-                type(v) is list or
-                type(v) is datetime):
-            variables_json[k] = v
-
-    args = [
-        '--vars',
-        simplejson.dumps(
-            variables_json,
-            default=encode_complex,
-            ignore_nan=True,
-        ),
-    ]
+    args = []
 
     runtime_configuration = variables.get(
         PIPELINE_RUN_MAGE_VARIABLES_KEY,
@@ -985,7 +964,55 @@ def build_command_line_arguments(
             **get_template_vars(),
         )
         project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
-        args += block.content.split(' ')
+        content_args = block.content.split(' ')
+        try:
+            vars_start_idx = content_args.index('--vars')
+            vars_args = []
+            vars_end_idx = vars_start_idx + 2
+            # Include variables if they have spaces in the dictionary
+            for i in range(vars_start_idx, len(content_args)):
+                current_item = content_args[i]
+                if i > vars_start_idx and current_item.startswith('--'):
+                    vars_end_idx = i
+                    break
+                elif current_item != ('--vars'):
+                    vars_args.append(content_args[i])
+                    vars_end_idx = i + 1
+
+            vars_str = ''.join(vars_args)
+            # Remove trailing single quotes to form proper json
+            if vars_str.startswith("'") and vars_str.endswith("'"):
+                vars_str = vars_str[1:-1]
+            vars_dict = simplejson.loads(vars_str)
+            variables = merge_dict(variables, vars_dict)
+            del content_args[vars_start_idx:vars_end_idx]
+        except ValueError as err:
+            print('Error parsing vars argument:', err)
+
+        args += content_args
+
+    variables_json = {}
+    for k, v in variables.items():
+        if PIPELINE_RUN_MAGE_VARIABLES_KEY == k:
+            continue
+
+        if (type(v) is str or
+                type(v) is int or
+                type(v) is bool or
+                type(v) is float or
+                type(v) is dict or
+                type(v) is list or
+                type(v) is datetime):
+            variables_json[k] = v
+
+    args += [
+        '--vars',
+        simplejson.dumps(
+            variables_json,
+            default=encode_complex,
+            ignore_nan=True,
+        ),
+    ]
 
     profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles', str(uuid.uuid4()))
 
