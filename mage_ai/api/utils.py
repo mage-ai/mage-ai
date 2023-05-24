@@ -56,3 +56,14 @@ def has_at_least_viewer_role(user) -> bool:
         has_at_least_admin_role(user) or \
         has_at_least_editor_role(user) or \
         (user.roles and user.roles & 4 != 0)
+
+
+def parse_cookie_header(cookies_raw):
+    cookies = {}
+    if cookies_raw:
+        for cookie_string in cookies_raw.split(';'):
+            cookie_string = cookie_string.strip()
+            cookie_name, cookie_value = cookie_string.split('=', 1)
+            cookies[cookie_name] = cookie_value
+
+    return cookies
