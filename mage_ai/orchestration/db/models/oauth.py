@@ -13,7 +13,6 @@ from sqlalchemy import (
     Integer,
     String,
 )
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, validates
 
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -103,7 +102,7 @@ class User(BaseModel):
             elif self.roles & 4 != 0:
                 return 'Viewer'
 
-    @hybrid_property
+    @property
     def owner(self) -> bool:
         access = self.project_access if self.roles_new else 0
         return self._owner or access & Permission.Access.OWNER != 0
@@ -112,7 +111,8 @@ class User(BaseModel):
     def is_admin(self) -> bool:
         if self.roles_new:
             access = self.project_access
-            return access & 1 == 0 and access & 2 != 0
+            return access & \
+                (Permission.Access.OWNER | Permission.Access.ADMIN) == Permission.Access.ADMIN
         if not self.owner and self.roles:
             return self.roles & 1 != 0
 
@@ -129,13 +129,13 @@ class User(BaseModel):
         for user in User.query.all():
             roles_new = []
             if user._owner:
-                roles_new = [Role.get_default_role('Owner')]
+                roles_new = [Role.get_role('Owner')]
             elif user.roles and user.roles & 1 != 0:
-                roles_new = [Role.get_default_role('Admin')]
+                roles_new = [Role.get_role('Admin')]
             elif user.roles and user.roles & 2 != 0:
-                roles_new = [Role.get_default_role('Editor')]
+                roles_new = [Role.get_role('Editor')]
             elif user.roles and user.roles & 4 != 0:
-                roles_new = [Role.get_default_role('Viewer')]
+                roles_new = [Role.get_role('Viewer')]
             user.roles_new = roles_new
         db_connection.session.commit()
 
@@ -165,12 +165,14 @@ class Role(BaseModel):
                             Permission.entity == Permission.Entity.GLOBAL,
                             Permission.access == access,
                         ).first()
-                    ]
+                    ],
+                    commit=False,
                 )
+        db_connection.session.commit()
 
     @classmethod
     @safe_db_query
-    def get_default_role(self, name):
+    def get_role(self, name):
         return Role.query.filter(Role.name == name).first()
 
     def get_access(
@@ -249,8 +251,10 @@ class Permission(BaseModel):
                     self.create(
                         entity=Permission.Entity.GLOBAL,
                         access=access,
+                        commit=False,
                     )
                 )
+            db_connection.session.commit()
         return permissions
 
 

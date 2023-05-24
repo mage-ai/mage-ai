@@ -227,7 +227,7 @@ async def main(
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
-                    roles_new=[Role.get_default_role('Owner')],
+                    roles_new=[Role.get_role('Owner')],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
@@ -236,7 +236,7 @@ async def main(
                     email='admin@admin.com',
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
-                    roles_new=[Role.get_default_role('Owner')],
+                    roles_new=[Role.get_role('Owner')],
                     username='admin',
                 )
         else:

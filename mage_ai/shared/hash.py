@@ -57,21 +57,13 @@ def ignore_keys_with_blank_values(d):
     return d2
 
 
-def extract(d, keys):
+def extract(d, keys, include_blank_values: bool = False):
     def _build(obj, key):
         val = None
         if key in d:
             val = d[key]
-        if val is not None:
+        if include_blank_values or val is not None:
             obj[key] = val
-        return obj
-    return reduce(_build, keys, {})
-
-
-def extract_including_blank_values(d, keys):
-    def _build(obj, key):
-        if key in d:
-            obj[key] = d[key]
         return obj
     return reduce(_build, keys, {})
 

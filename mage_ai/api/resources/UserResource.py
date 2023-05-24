@@ -132,6 +132,15 @@ class UserResource(DatabaseResource):
         ))
         payload['roles_new'] = roles_new
 
+        missing_values = []
+        if len(roles_new) == 0:
+            missing_values.append('roles')
+
+        if len(missing_values) >= 1:
+            error.update(
+                {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
+            raise ApiError(error)
+
         access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
 
         if self.current_user.is_admin:

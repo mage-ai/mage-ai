@@ -1,10 +1,15 @@
-from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
 
 class UserOperationTests(BaseApiTestCase):
     model_class = User
+
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        Role.create_default_roles()
 
     async def test_execute_create(self):
         email = self.faker.email()
@@ -21,6 +26,7 @@ class UserOperationTests(BaseApiTestCase):
                 email=self.faker.email(),
                 password='water_lightning',
                 password_confirmation='water_lightning',
+                roles_new=[Role.get_role('Owner')],
             ), user=create_user(), after_create_count=3, before_create_count=2)
 
         await self.assertRaisesAsync(Exception, _func)
