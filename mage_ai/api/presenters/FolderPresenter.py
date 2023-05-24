@@ -8,6 +8,5 @@ class FolderPresenter(BasePresenter):
         'path',
     ]
 
-
     def name(self, **kwargs) -> str:
         return os.path.basename(self.resource.path)
