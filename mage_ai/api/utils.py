@@ -63,7 +63,12 @@ def parse_cookie_header(cookies_raw):
     if cookies_raw:
         for cookie_string in cookies_raw.split(';'):
             cookie_string = cookie_string.strip()
-            cookie_name, cookie_value = cookie_string.split('=', 1)
+            if "=" in cookie_string:
+                cookie_name, cookie_value = cookie_string.split('=', 1)
+            else:
+                # Assume an empty name per
+                # https://bugzilla.mozilla.org/show_bug.cgi?id=169091
+                cookie_name, cookie_value = "", cookie_string
             cookies[cookie_name] = cookie_value
 
     return cookies
