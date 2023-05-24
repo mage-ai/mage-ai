@@ -967,7 +967,7 @@ def build_command_line_arguments(
         content_args = block.content.split(' ')
         try:
             vars_start_idx = content_args.index('--vars')
-            vars_args = []
+            vars_parts = []
             vars_end_idx = vars_start_idx + 2
             # Include variables if they have spaces in the object
             for i in range(vars_start_idx, len(content_args)):
@@ -983,10 +983,10 @@ def build_command_line_arguments(
                     vars_end_idx = i
                     break
                 elif current_item != ('--vars'):
-                    vars_args.append(content_args[i])
+                    vars_parts.append(content_args[i])
                     vars_end_idx = i + 1
 
-            vars_str = ''.join(vars_args)
+            vars_str = ''.join(vars_parts)
             # Remove trailing single quotes to form proper json
             if vars_str.startswith("'") and vars_str.endswith("'"):
                 vars_str = vars_str[1:-1]
