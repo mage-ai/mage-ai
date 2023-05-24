@@ -153,7 +153,7 @@ export function displayErrorFromReadResponse(
     onClick?: () => void;
   }[],
 ) {
-  let linksFinal = links;
+  let linksFinal = links || [];
   if (data?.error?.exception?.includes('Too many open files')) {
     const tooManyOpenFilesErrLink = [
       {
@@ -161,7 +161,7 @@ export function displayErrorFromReadResponse(
         label: 'Refer to the docs for troubleshooting this error.',
       },
     ];
-    linksFinal = links.concat(tooManyOpenFilesErrLink);
+    linksFinal = linksFinal.concat(tooManyOpenFilesErrLink);
   }
   if (data?.error) {
     setErrors?.({
