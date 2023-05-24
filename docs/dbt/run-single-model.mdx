@@ -80,3 +80,25 @@ WHERE created_at >= '{{ var("ds") }}'
 
 In the above example, the variable named `ds` is defined as part of the runtime
 variables for the pipeline.
+
+---
+
+## Adding variables when running a YAML dbt block
+
+In addition to interpolating variables described above, you can define variables directly
+in the dbt code block if it is a YAML dbt code block (i.e. not a SQL dbt block) by following
+these steps:
+
+1. In the Pipeline Editor, add a dbt model by selecting on the `All models (w/option exclusion)`
+option from the dropdown when clicking on the `DBT model` button for adding a block.
+2. For the newly added code block, you should see that is `YAML` type indicated in the top left
+corner of the block.
+3. On the same line as your `--select` or `--exclude` syntax, add the `--vars` syntax with the
+variables you want to include. Note: Putting the `--vars` syntax on a separate line may cause
+issues.
+4. Format the variables like a JSON object, so there should be double quotes around the keys and
+string values. Single quotes surrounding the variables object are optional.
+
+Examples of YAML dbt code block content (note the syntax for the variables object):
+`--select demo/models --vars '{"demo_key": "demo_value", "date": 20230101}'`
+`--select demo/models --vars {"demo_key":"demo_value","date":20230101}`

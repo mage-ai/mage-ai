@@ -986,8 +986,9 @@ def build_command_line_arguments(
             vars_dict = simplejson.loads(vars_str)
             variables = merge_dict(variables, vars_dict)
             del content_args[vars_start_idx:vars_end_idx]
-        except ValueError as err:
-            print('Error parsing vars argument:', err)
+        except ValueError:
+            # If args do not contain "--vars", continue.
+            pass
 
         args += content_args
 
