@@ -90,17 +90,7 @@ function PipelineListPage() {
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
 
   useEffect(() => {
-    if (data?.error?.exception?.includes('Too many open files')) {
-      const links = [
-        {
-          href: 'https://docs.mage.ai/production/configuring-production-settings/overview#ulimit',
-          label: 'Refer to the docs for troubleshooting this error.',
-        },
-      ];
-      displayErrorFromReadResponse(data, setErrors, links);
-    } else {
-      displayErrorFromReadResponse(data, setErrors);
-    }
+    displayErrorFromReadResponse(data, setErrors);
   }, [data]);
 
   const useCreatePipelineMutation = (onSuccessCallback) => useMutation(

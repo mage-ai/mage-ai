@@ -153,10 +153,20 @@ export function displayErrorFromReadResponse(
     onClick?: () => void;
   }[],
 ) {
+  let linksFinal = links || [];
+  if (data?.error?.exception?.includes('Too many open files')) {
+    const tooManyOpenFilesErrLink = [
+      {
+        href: 'https://docs.mage.ai/production/configuring-production-settings/overview#ulimit',
+        label: 'Refer to the docs for troubleshooting this error.',
+      },
+    ];
+    linksFinal = linksFinal.concat(tooManyOpenFilesErrLink);
+  }
   if (data?.error) {
     setErrors?.({
       errors: parseErrorFromResponse(data),
-      links,
+      links: linksFinal,
       response: data,
     });
   } else {
