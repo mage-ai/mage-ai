@@ -125,42 +125,43 @@ class UserResource(DatabaseResource):
     def update(self, payload, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
-        roles_new = payload.get('roles_new', [])
-        roles_new = list(map(
-            lambda role_id: Role.query.get(int(role_id)),
-            roles_new,
-        ))
-        payload['roles_new'] = roles_new
+        if 'roles_new' in payload:
+            roles_new = payload.get('roles_new', [])
+            roles_new = list(map(
+                lambda role_id: Role.query.get(int(role_id)),
+                roles_new,
+            ))
+            payload['roles_new'] = roles_new
 
-        missing_values = []
-        if len(roles_new) == 0:
-            missing_values.append('roles')
+            missing_values = []
+            if len(roles_new) == 0:
+                missing_values.append('roles')
 
-        if len(missing_values) >= 1:
-            error.update(
-                {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
-            raise ApiError(error)
+            if len(missing_values) >= 1:
+                error.update(
+                    {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
+                raise ApiError(error)
 
-        access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
+            access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
 
-        if self.current_user.is_admin:
-            if self.owner:
-                error.update(
-                    {'message': 'Admins cannot update users who are Owners.'})
-                raise ApiError(error)
-            elif self.is_admin and self.current_user.id != self.id:
-                error.update(
-                    {'message': 'Admins cannot update users who are Admins.'})
-                raise ApiError(error)
-            elif payload.get('roles') and int(payload.get('roles')) & 1 != 0 or \
-                    access & Permission.Access.ADMIN != 0:
-                error.update(
-                    {'message': 'Admins cannot make other users Admins.'})
-                raise ApiError(error)
-            elif access & Permission.Access.OWNER != 0:
-                error.update(
-                    {'message': 'Admins cannot make other users Owners.'})
-                raise ApiError(error)
+            if self.current_user.is_admin:
+                if self.owner:
+                    error.update(
+                        {'message': 'Admins cannot update users who are Owners.'})
+                    raise ApiError(error)
+                elif self.is_admin and self.current_user.id != self.id:
+                    error.update(
+                        {'message': 'Admins cannot update users who are Admins.'})
+                    raise ApiError(error)
+                elif payload.get('roles') and int(payload.get('roles')) & 1 != 0 or \
+                        access & Permission.Access.ADMIN != 0:
+                    error.update(
+                        {'message': 'Admins cannot make other users Admins.'})
+                    raise ApiError(error)
+                elif access & Permission.Access.OWNER != 0:
+                    error.update(
+                        {'message': 'Admins cannot make other users Owners.'})
+                    raise ApiError(error)
 
         password = payload.get('password')
         if password:

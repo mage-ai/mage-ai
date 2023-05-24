@@ -17,6 +17,7 @@ class UserOperationTests(BaseApiTestCase):
             email=email,
             password='water_lightning',
             password_confirmation='water_lightning',
+            roles_new=[Role.get_role('Owner').id],
         ))
         self.assertEqual(User.query.get(response['user']['id']).email, email)
 
@@ -26,7 +27,6 @@ class UserOperationTests(BaseApiTestCase):
                 email=self.faker.email(),
                 password='water_lightning',
                 password_confirmation='water_lightning',
-                roles_new=[Role.get_role('Owner')],
             ), user=create_user(), after_create_count=3, before_create_count=2)
 
         await self.assertRaisesAsync(Exception, _func)
@@ -74,11 +74,13 @@ class UserOperationTests(BaseApiTestCase):
                     email=email1,
                     password='water_lightning',
                     password_confirmation='water_lightning',
+                    roles_new=[Role.get_role('Editor').id],
                 ),
                 dict(
                     email=email2,
                     password='water_lightning',
                     password_confirmation='water_lightning',
+                    roles_new=[Role.get_role('Editor').id],
                 ),
             ],
             [

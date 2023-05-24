@@ -172,7 +172,7 @@ class Role(BaseModel):
 
     @classmethod
     @safe_db_query
-    def get_role(self, name):
+    def get_role(self, name) -> 'Role':
         return Role.query.filter(Role.name == name).first()
 
     def get_access(
