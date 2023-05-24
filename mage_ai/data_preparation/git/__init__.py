@@ -116,26 +116,11 @@ class Git:
 
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
-        ct = 0
-        while ct < 20:
-            return_code = proc.poll()
-            if return_code is not None:
-                proc.kill()
-                break
-            ct += 1
-            await asyncio.sleep(0.5)
 
-        if return_code is not None and return_code != 0:
-            _, err = proc.communicate()
-            message = (
-                err.decode('UTF-8') if err
-                else 'Error connecting to remote, make sure your SSH key is set up properly.'
-            )
-            raise ChildProcessError(message)
-
-        if return_code is None:
-            proc.kill()
-            raise TimeoutError
+        self.__poll_process_with_timeout(
+            proc,
+            error_message='Error connecting to remote, make sure your SSH key is set up properly.',
+        )
 
     def _run_command(self, command: str) -> None:
         proc = subprocess.Popen(args=command, shell=True)
@@ -343,11 +328,19 @@ class Git:
                     raise Exception('Could not add host to known_hosts')
             repo_git = git.cmd.Git(self.repo_path)
             repo_git.update_environment(**env)
-            repo_git.clone(
+            proc = repo_git.clone(
                 self.remote_repo_link,
                 tmp_path,
                 origin=REMOTE_NAME,
-                kill_after_timeout=30,
+                as_process=True,
+            )
+
+            asyncio.run(
+                self.__poll_process_with_timeout(
+                    proc,
+                    error_message='Error cloning repo.',
+                    timeout=20,
+                )
             )
 
             git_folder = os.path.join(self.repo_path, '.git')
@@ -369,3 +362,33 @@ class Git:
             self._run_command(cmd)
             return True
         return False
+
+    async def __poll_process_with_timeout(
+        self,
+        proc: subprocess.Popen,
+        error_message: str = None,
+        timeout: int = 10,
+    ):
+        ct = 0
+        while ct < timeout * 2:
+            return_code = proc.poll()
+            if return_code is not None:
+                proc.kill()
+                break
+            ct += 1
+            await asyncio.sleep(0.5)
+
+        if error_message is None:
+            error_message = 'Error running Git process'
+
+        if return_code is not None and return_code != 0:
+            _, err = proc.communicate()
+            message = (
+                err.decode('UTF-8') if err
+                else error_message
+            )
+            raise ChildProcessError(message)
+
+        if return_code is None:
+            proc.kill()
+            raise TimeoutError
