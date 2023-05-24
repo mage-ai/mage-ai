@@ -987,6 +987,22 @@ def build_command_line_arguments(
                     vars_end_idx = i + 1
 
             vars_str = ''.join(vars_parts)
+            interpolated_vars = re.findall(r'\{\{(.*?)\}\}', vars_str)
+            for v in interpolated_vars:
+                val = variables.get(v.strip())
+                variable_with_brackets = '{{' + v + '}}'
+                """
+                Replace the variables in the command with the JSON-supported values
+                from the global/environment variables.
+                """
+                if val is not None:
+                    vars_str = vars_str.replace(variable_with_brackets, simplejson.dumps(val))
+                else:
+                    vars_str = vars_str.replace(
+                        variable_with_brackets,
+                        simplejson.dumps(variable_with_brackets),
+                    )
+
             # Remove trailing single quotes to form proper json
             if vars_str.startswith("'") and vars_str.endswith("'"):
                 vars_str = vars_str[1:-1]
