@@ -218,16 +218,17 @@ async def main(
 
         # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()
-        all_users = User.query.all()
-        user = None
-        for u in all_users:
-            if u.owner:
-                user = u
-        if not user:
+
+        # Fetch legacy owner user to check if we need to batch update the users with new roles.
+        legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
+
+        default_owner_role = Role.get_role('Owner')
+        owner_users = default_owner_role.users if default_owner_role else []
+        if not legacy_owner_user and len(owner_users) == 0:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
-                    roles_new=[Role.get_role('Owner')],
+                    roles_new=[default_owner_role],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
@@ -236,12 +237,14 @@ async def main(
                     email='admin@admin.com',
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
-                    roles_new=[Role.get_role('Owner')],
+                    roles_new=[default_owner_role],
                     username='admin',
                 )
+            owner_user = user
         else:
-            if not user.roles_new:
+            if legacy_owner_user and not legacy_owner_user.roles_new:
                 User.batch_update_user_roles()
+            owner_user = next(iter(owner_users), None) or legacy_owner_user
 
         oauth_client = Oauth2Application.query.filter(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
@@ -252,7 +255,7 @@ async def main(
                 client_id=OAUTH2_APPLICATION_CLIENT_ID,
                 client_type=Oauth2Application.ClientType.PUBLIC,
                 name='frontend',
-                user_id=user.id,
+                user_id=owner_user.id,
             )
 
     # Check scheduler status periodically
