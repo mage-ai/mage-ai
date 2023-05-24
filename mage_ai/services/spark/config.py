@@ -3,5 +3,5 @@ from mage_ai.shared.config import BaseConfig
 
 
 @dataclass
-class SpackConfig(BaseConfig):
+class SparkConfig(BaseConfig):
     repo_path: str = None
