@@ -1,17 +1,18 @@
-from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.data_preparation.shared.secrets import get_secret_value
-from mage_ai.data_preparation.sync import AuthType, GitConfig
-from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.shared.logger import VerboseFunctionExec
-from typing import Any, List
-from urllib.parse import urlparse, urlsplit, urlunsplit
 import asyncio
 import base64
 import os
 import shutil
 import subprocess
 import uuid
+from typing import Any, List
+from urllib.parse import urlparse, urlsplit, urlunsplit
+
+from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.shared.secrets import get_secret_value
+from mage_ai.data_preparation.sync import AuthType, GitConfig
+from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.logger import VerboseFunctionExec
 
 DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')
 REMOTE_NAME = 'mage-repo'
@@ -78,7 +79,8 @@ class Git:
 
     def untracked_files(self, untracked_files: bool = False) -> List[str]:
         from git.compat import defenc
-        # Taken from GitPython source code
+
+        # ---------- Taken from GitPython source code -----------
         proc = self.repo.git.status(
             as_process=True,
             porcelain=True,
@@ -105,6 +107,7 @@ class Git:
                 )
             untracked_files.append(filename)
         proc.wait()
+        # -------------------------------------------------------
         return untracked_files
 
     @property
@@ -336,7 +339,8 @@ class Git:
             if self.auth_type == AuthType.SSH:
                 private_key_file = self.__create_ssh_keys()
                 env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
-                self.__add_host_to_known_hosts()
+                if not self.__add_host_to_known_hosts():
+                    raise Exception('Could not add host to known_hosts')
             repo_git = git.cmd.Git(self.repo_path)
             repo_git.update_environment(**env)
             repo_git.clone(
@@ -363,3 +367,5 @@ class Git:
         if hostname:
             cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
             self._run_command(cmd)
+            return True
+        return False
