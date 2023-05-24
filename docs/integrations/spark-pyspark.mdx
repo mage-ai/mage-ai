@@ -36,7 +36,6 @@ Find the Spark Master URL at the top of the web page.
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Build the docker image with the command `docker build -t mage_spark .`
 
-
 ### 3. Run Mage in Kubernetes cluster with the `SPARK_MASTER_HOST` environment variable
 * Use the docker image built from step 2 as the container image in your Kubernetes yaml file.
 * Add `SPARK_MASTER_HOST` environment variable with the Spark Master URL from step 1 to your the container spec
@@ -74,7 +73,7 @@ spec:
 ```
 
 ### 4. Run PySpark code in Mage
-When Mage pod is running, you can create a "Standard(batch)" pipeline and then write PySpark code in any blocks.
+When Mage pod is running, you can create a "Standard (batch)" pipeline and then write PySpark code in any blocks.
 
 In `Scratchpad` block, you'll need to manually create the Spark session with the code:
 ```python
@@ -92,7 +91,6 @@ In other blocks, you can access the Spark session from the `kwargs` via `kwargs[
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Build the docker image with the command `docker build -t mage_spark .`
 
-
 ### 2. Start Mage with `SPARK_MASTER_HOST` environment variable
 Type this command in your terminal to start Mage using docker
 
@@ -104,9 +102,8 @@ Notes
 * `demo_project` is the name of your project, you can change it to anything you want
 * Set the Spark cluster's master node url as the value for environment variable `SPARK_MASTER_HOST`
 
-
 ### 3. Run PySpark code in Mage
-When Mage is running, you can create a "Standard(batch)" pipeline and then write PySpark code in any blocks.
+When Mage is running, you can create a "Standard (batch)" pipeline and then write PySpark code in any blocks.
 
 In `Scratchpad` block, you'll need to manually create the Spark session with the code:
 ```python
@@ -115,6 +112,64 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 ```
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
+
+---
+
+## Custom Spark Session
+
+### 1. Build Mage docker image with Spark environment
+* Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
+* Build the docker image with the command `docker build -t mage_spark .`
+
+### 2. Start Mage using docker with the following command in your terminal
+
+```bash
+docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
+  /app/run_app.sh mage start demo_project
+```
+Notes
+* `demo_project` is the name of your project, you can change it to anything you want
+
+### 3. Review the `spark_config` settings in the `metadata.yaml` file under
+the pipeline folder, and make necessary adjustments
+
+```
+spark_config:
+  # Application name
+  app_name: 'my spark app'
+  # Master URL to connect to
+  # e.g., spark_master: 'spark://host:port', or spark_master: 'yarn'
+  spark_master: 'local'
+  # Executor environment variables
+  # e.g., executor_env: {'PYTHONPATH': '/home/path'}
+  executor_env: {}
+  # Jar files to be uploaded to the cluster and added to the classpath
+  # e.g., spark_jars: ['/home/path/example1.jar']
+  spark_jars: []
+  # Path where Spark is installed on worker nodes,
+  # e.g. spark_home: '/usr/lib/spark'
+  spark_home: null
+  # List of key-value pairs to be set in SparkConf
+  # e.g., others: {'spark.executor.memory': '4g', 'spark.executor.cores': '2'}
+  others: {}
+```
+
+### 4. Run PySpark code in Mage
+When Mage is running, you can create a "Standard (batch)" pipeline and then write
+PySpark code using the Spark session from the `kwargs` via `kwargs['spark']`, e.g.,
+
+```python
+spark = kwargs.get('spark')
+print(spark.sql('select 1'))
+```
+
+In `Scratchpad` block, you'll need to manually create the Spark session with the code:
+
+```python
+from mage_ai.data_preparation.models.block.utils import get_spark_session
+spark = get_spark_session()
+print(spark.sql('select 1'))
+```
 
 ---
 
