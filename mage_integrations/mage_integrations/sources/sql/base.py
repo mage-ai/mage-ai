@@ -240,8 +240,7 @@ WHERE table_schema = '{schema}'
 
     def test_connection(self):
         conn = self.build_connection()
-        conn.build_connection()
-        conn.close_connection()
+        conn.close_connection(conn.build_connection())
 
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         return column_type_mapping(column_type, column_format)
