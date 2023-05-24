@@ -211,7 +211,7 @@ class PipelineRun(BaseModel):
         FAILED = 'failed'
         CANCELLED = 'cancelled'
 
-    pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
+    pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'), index=True)
     pipeline_uuid = Column(String(255), index=True)
     execution_date = Column(DateTime(timezone=True), index=True)
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL, index=True)
@@ -220,7 +220,7 @@ class PipelineRun(BaseModel):
     passed_sla = Column(Boolean, default=False)
     event_variables = Column(JSON)
     metrics = Column(JSON)
-    backfill_id = Column(Integer, ForeignKey('backfill.id'))
+    backfill_id = Column(Integer, ForeignKey('backfill.id'), index=True)
     executor_type = Column(Enum(ExecutorType), default=ExecutorType.LOCAL_PYTHON)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
@@ -384,7 +384,7 @@ class BlockRun(BaseModel):
         CANCELLED = 'cancelled'
         UPSTREAM_FAILED = 'upstream_failed'
 
-    pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'))
+    pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'), index=True)
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
     started_at = Column(DateTime(timezone=True))
