@@ -98,7 +98,11 @@ variables you want to include. Note: Putting the `--vars` syntax on a separate l
 issues.
 4. Format the variables like a JSON object, so there should be double quotes around the keys and
 string values. Single quotes surrounding the variables object are optional.
+5. You can interpolate global or environment variables using double brackets around the
+variable name. See below for examples.
 
 Examples of YAML dbt code block content (note the syntax for the variables object):
 `--select demo/models --vars '{"demo_key": "demo_value", "date": 20230101}'`
 `--select demo/models --vars {"demo_key":"demo_value","date":20230101}`
+`--select demo/models --vars '{"global_var": {{ test_global_var }}, "env_var": {{ test_env_var }}}'`
+`--select demo/models --vars {"refresh":{{page_refresh}},"env_var":{{env}}}`
