@@ -38,7 +38,7 @@ import { range, sum } from '@utils/array';
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
-const WIDTH_OF_SINGLE_CHARACTER_MONOSPACE = 8.7;
+export const WIDTH_OF_SINGLE_CHARACTER_MONOSPACE = 8.7;
 
 type InvalidValueType = {
   [key: string]: number[];

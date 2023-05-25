@@ -1,5 +1,3 @@
-import Ansi from 'ansi-to-react';
-import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
 import {
@@ -12,14 +10,10 @@ import {
 } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
@@ -27,31 +21,27 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import LogsTable, { LOG_UUID_PARAM } from '@components/Logs/Table';
 import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { ChevronRight } from '@oracle/icons';
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,
   LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
 } from '@components/Logs/Toolbar/constants';
-import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
-import { formatTimestamp, initializeLogs } from '@utils/models/log';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { initializeLogs } from '@utils/models/log';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
-const LOG_UUID_PARAM = 'log_uuid';
 const PIPELINE_RUN_ID_PARAM = 'pipeline_run_id[]';
 const BLOCK_RUN_ID_PARAM = 'block_run_id[]';
 
@@ -298,6 +288,17 @@ function PipelineLogsPage({
     }
   }, [greaterLogCount, limit, offset, q]);
 
+  const LogsTableMemo = useMemo(() => (
+    <LogsTable
+      blocksByUUID={blocksByUUID}
+      logs={logsFiltered}
+      pipeline={pipeline}
+      query={query}
+      setSelectedLog={setSelectedLog}
+      themeContext={themeContext}
+    />
+  ), [blocksByUUID, logsFiltered, pipeline, query, themeContext]);
+
   return (
     <PipelineDetailPage
       after={selectedLog && (
@@ -357,157 +358,9 @@ function PipelineLogsPage({
         </Spacing>
       )}
 
-      {!isLoading && logsFiltered.length >= 1 && (
-        <Table
-          columnFlex={[null, null, 1, 9, null]}
-          columnMaxWidth={(idx: number) => idx === 3 ? '100px' : null}
-          columns={[
-            {
-              label: () => '',
-              uuid: '!',
-            },
-            {
-              uuid: 'Date',
-            },
-            {
-              uuid: 'Block',
-            },
-            {
-              uuid: 'Message',
-            },
-            {
-              label: () => '',
-              uuid: '>',
-            },
-          ]}
-          compact
-          onClickRow={(rowIndex: number) => {
-            const log = logsFiltered[rowIndex];
-            let logUUID = log.data?.uuid;
+      {!isLoading && logsFiltered.length >= 1 && LogsTableMemo}
 
-            if (query[LOG_UUID_PARAM] === logUUID) {
-              logUUID = null;
-            }
-
-            goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
-            setSelectedLog(logUUID ? log : null);
-          }}
-          rows={logsFiltered?.map(({
-            content,
-            createdAt,
-            data,
-            name,
-          }: LogType) => {
-            const {
-              block_uuid: blockUUIDProp,
-              level,
-              message,
-              pipeline_uuid: pUUID,
-              timestamp,
-            } = data || {};
-
-            let idEl;
-            let blockUUID = blockUUIDProp || name.split('.log')[0];
-
-            let streamID;
-            let index;
-            const parts = blockUUID.split(':');
-            if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
-              blockUUID = parts[0];
-              streamID = parts[1];
-              index = parts[2];
-            }
-
-            let block = blocksByUUID[blockUUID];
-            if (!block) {
-              block = blocksByUUID[parts[0]];
-            }
-
-            if (block) {
-              const color = getColorsForBlockType(
-                block.type,
-                { blockColor: block.color, theme: themeContext },
-              ).accent;
-
-              idEl = (
-                <FlexContainer alignItems="center">
-                  <NextLink
-                    as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
-                    href="/pipelines/[pipeline]/edit"
-                    passHref
-                  >
-                    <Link
-                      block
-                      fullWidth
-                      sameColorAsText
-                      verticalAlignContent
-                    >
-                      <Circle
-                        color={color}
-                        size={UNIT * 1.5}
-                        square
-                      />
-
-                      <Spacing mr={1} />
-
-                      <Text monospace>
-                        {blockUUID}{streamID && ': '}{streamID && (
-                          <Text default inline monospace>
-                            {streamID}
-                          </Text>
-                        )}{index >= 0 && ': '}{index >= 0 && (
-                          <Text default inline monospace>
-                            {index}
-                          </Text>
-                        )}
-                      </Text>
-                    </Link>
-                  </NextLink>
-                </FlexContainer>
-              );
-            }
-
-            return [
-              <Flex
-                alignItems="center"
-                justifyContent="center"
-                key="log_type"
-              >
-                <LogLevelIndicatorStyle {...{ [level?.toLowerCase()]: true }} />
-              </Flex>,
-              <Text
-                default
-                key="log_timestamp"
-                monospace
-              >
-                {formatTimestamp(timestamp)}
-              </Text>,
-              idEl,
-              <Text
-                key="log_message"
-                monospace
-                preWrap
-                textOverflow
-                title={message || content}
-              >
-                <Ansi>
-                  {message || content}
-                </Ansi>
-              </Text>,
-              <Flex
-                flex={1}
-                justifyContent="flex-end"
-                key="chevron_right_icon"
-              >
-                <ChevronRight default size={2 * UNIT} />
-              </Flex>,
-            ];
-          })}
-          uuid="logs"
-        />
-      )}
-
-      <Spacing p={PADDING_UNITS} ref={bottomOfPageButtonRef}>
+      <Spacing p={`${UNIT * 1.5}px`} ref={bottomOfPageButtonRef}>
         <KeyboardShortcutButton
           blackBorder
           inline
