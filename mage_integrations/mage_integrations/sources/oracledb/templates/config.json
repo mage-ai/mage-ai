@@ -1,7 +1,8 @@
 {
-    "host": "oracle-db1",
+    "host": "host_name",
     "port": "1521",
-    "service": "xepdb1",
-    "password": "123456",
-    "user": "ot"
+    "service": "exported service name",
+    "password": "password",
+    "user": "user_name"
 }
+

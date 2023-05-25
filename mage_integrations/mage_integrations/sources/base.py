@@ -119,7 +119,6 @@ class Source:
         """
         parts = inspect.getfile(self).split('/')
         absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
-        self.logger.info(f"Testing absolute_path: {absolute_path}")
 
         templates = {}
         for filename in os.listdir(absolute_path):
@@ -142,7 +141,6 @@ class Source:
             Catalog: Description
         """
         catalog_entries = []
-        self.logger.info("Testing source discover")
         for stream_id, schema in self.load_schemas_from_folder().items():
             if not streams or stream_id in streams:
                 catalog_entries.append(self.build_catalog_entry(stream_id, schema))
@@ -205,15 +203,9 @@ class Source:
                 self.test_connection()
             elif self.load_sample_data:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
-                self.logger.info(f"Testing catalog in source/base: {catalog}")
-                self.logger.info("Testing self.selected_streams "
-                                 f"in source/base: {self.selected_streams}")
-
                 streams = [
                     catalog.get_stream(tap_stream_id) for tap_stream_id in self.selected_streams
                 ]
-                self.logger.info(f"Testing streams in source/base: {streams}")
-
                 for stream in streams:
                     gen = self.load_data(stream, sample_data=True)
                     if gen is not None:
@@ -228,7 +220,6 @@ class Source:
 
                         sys.stdout.write(simplejson.dumps(output) + '\n')
             elif self.discover_mode:
-                self.logger.info('Testing source base: discover_mode')
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)
                 else:
@@ -257,7 +248,6 @@ class Source:
             elif self.show_templates:
                 json.dump(self.templates(), sys.stdout)
             else:
-                self.logger.info(f'Testing source base: else: {self.catalog}')
                 if not self.catalog:
                     catalog = self.discover(streams=self.selected_streams)
                 else:
@@ -265,7 +255,6 @@ class Source:
                     for stream in self.catalog.streams:
                         if stream.auto_add_new_fields:
                             streams_to_update.append(stream.tap_stream_id)
-                    self.logger.info(f'Testing source base: streams_to_update: {streams_to_update}')
                     if len(streams_to_update) > 0:
                         updated_streams = self.discover(streams=streams_to_update).streams
                         updated_streams = group_by(
@@ -274,8 +263,6 @@ class Source:
                         )
                         for stream in self.catalog.streams:
                             if stream.tap_stream_id in updated_streams:
-                                self.logger.info("Testing source base: updated_streams:"
-                                                 f" {updated_streams[stream.tap_stream_id][0]}")
                                 stream.update_schema(updated_streams[stream.tap_stream_id][0])
                     catalog = self.catalog
 
@@ -284,8 +271,7 @@ class Source:
                         lambda x: x.tap_stream_id in self.selected_streams,
                         catalog.streams,
                     ))
-                
-                self.logger.info(f'Testing source base catalog: {catalog}')
+
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'
@@ -344,7 +330,6 @@ class Source:
             raise Exception(message)
 
         schema_dict = stream.schema.to_dict()
-        self.logger.info(f'Testing schema_dict {schema_dict}.')
         schema_properties_dict = schema_dict['properties']
         if properties:
             schema_dict['properties'] = {
@@ -365,7 +350,6 @@ class Source:
             self.internal_column_schema(stream, bookmarks=bookmarks),
         )
 
-        self.logger.info(f'Testing key_properties {stream.key_properties}.')
         schema_data = dict(
             bookmark_properties=self._get_bookmark_properties_for_stream(
                 stream, bookmarks=bookmarks),
@@ -546,7 +530,6 @@ class Source:
             tap_stream_id = stream.tap_stream_id
             tags = dict(stream=tap_stream_id)
             self.logger.info(f'Sync for stream {tap_stream_id} started.', tags=tags)
-            self.logger.info(f'Testing Sync for stream {stream}', tags=tags)
 
             self.process_stream(stream, properties)
             record_count = self.sync_stream(stream, properties)

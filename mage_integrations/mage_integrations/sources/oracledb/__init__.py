@@ -1,21 +1,21 @@
-from mage_integrations.sources.base import main
+from datetime import datetime
 from mage_integrations.connections.oracledb import (
     OracleDB as OracleDBConnection
 )
-from mage_integrations.sources.sql.base import Source
-import itertools
-from datetime import datetime
-from singer.schema import Schema
-from singer import metadata
-import collections
+from mage_integrations.sources.base import main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
-from mage_integrations.utils.schema_helpers import (
-    extract_selected_columns,
-)
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
 )
+from mage_integrations.sources.sql.base import Source
+from mage_integrations.utils.schema_helpers import (
+    extract_selected_columns,
+)
+from singer.schema import Schema
+from singer import metadata
 from typing import Dict, Generator, List
+import collections
+import itertools
 
 Column = collections.namedtuple('Column', [
     "table_schema",
@@ -58,27 +58,20 @@ class OracleDB(Source):
 
     @property
     def user(self) -> str:
-        return "ot"
-        # return self.config['user']
+        return self.config['user']
 
     @property
     def password(self) -> str:
-        return "123456"
-        # return self.config['password']
-
-    def make_dsn(self):
-        return "oracle-db1:1521/xepdb1"
-        return "{}:{}/{}".format(self.host, self.port, self.service)
+        return self.config['password']
 
     def nullable_column(self, col_name, col_type, pks_for_table):
         if col_name in pks_for_table:
             return [col_type]
         else:
             return ['null', col_type]
-    
+
     def get_database_name(self, connection):
         cur = connection.cursor()
-
         rows = cur.execute("SELECT name FROM v$database").fetchall()
         return rows[0][0]
 
@@ -215,28 +208,19 @@ class OracleDB(Source):
         FROM user_tab_columns
        ORDER BY owner, table_name, column_name
       """
-        self.logger.info("Testing discover_columns")
         cursor.execute(sql)
         columns = []
         rec = cursor.fetchone()
-        counter = 0
         while rec is not None:
-            counter += 1
-            self.logger.info(f"Testing counter {counter}")
             columns.append(Column(*rec))
             rec = cursor.fetchone()
 
-        self.logger.info(f"Testing counter {counter}")
-        self.logger.info(f"Testing columns {columns}")
         pk_constraints = self.produce_pk_constraints(connection, current_user)
         entries = []
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
             cols = list(cols)
             (table_schema, table_name) = k
-            self.logger.info(f"Testing table_schema {table_schema}")
-            self.logger.info(f"Testing table_name {table_name}")
             pks_for_table = pk_constraints.get(table_schema, {}).get(table_name, [])
-            self.logger.info(f"Testing pks_for_table: {pks_for_table}")
 
             column_schemas = {
                 c.column_name: self.schema_for_column(c, pks_for_table) for c in cols}
@@ -256,16 +240,13 @@ class OracleDB(Source):
                 schema=schema)
 
             entries.append(entry)
-        self.logger.info(f"Testing entries: {entries}")
         cursor.close()
         return entries
 
     def _limit_query_string(self, limit, offset):
-        self.logger.info("Testing customized _limit_query_string")
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
 
     def discover_streams(self) -> List[Dict]:
-        self.logger.info("Testing discover_streams")
         connection = self.build_connection().build_connection()
         cursor = connection.cursor()
 
@@ -286,15 +267,11 @@ class OracleDB(Source):
         '''
         Read a single table in OracleDB.
         '''
-        self.logger.info("Testing discover_stream")
         cursor = connection.cursor()
         current_user_sql = "select user from dual"
         for row in cursor.execute(current_user_sql):
-            self.logger.info(f"Testing current_user_response row: {row}")
             current_user = row[0]
             break
-        self.logger.info(f"Testing current_user_response: "
-                         f"current user: {current_user}")
 
         table_info = {}
         table_info[current_user] = {}
@@ -308,7 +285,6 @@ class OracleDB(Source):
         '''
         Read streams in OracleDB.
         '''
-        self.logger.info("Testing discover")
         connection = self.build_connection().build_connection()
         outputs = []
         if streams:
@@ -319,7 +295,6 @@ class OracleDB(Source):
                     outputs.extend(catalog_entries)
                 
         connection.close()
-        self.logger.info(f"Testing outputs: {outputs}")
         return Catalog(outputs)
 
     def build_connection(self) -> OracleDBConnection:
@@ -327,13 +302,12 @@ class OracleDB(Source):
             self.host, self.password, self.user, self.port, self.service)
 
     def test_connection(self):
-        self.logger.info(f"Testing test_connection: {self.make_dsn}")
         conn = self.build_connection().build_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("""SELECT name FROM v$database""")
         except Exception as exc:
-            self.logger.info(f"Testing exception: {exc}")
+            self.logger.info(f"test_connection exception: {exc}")
             raise exc
         return
 
