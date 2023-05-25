@@ -54,6 +54,7 @@ from mage_ai.server.logger import Logger
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
+from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.shared.retry import retry
 
@@ -1173,6 +1174,8 @@ def sync_schedules(pipeline_uuids: List[str]):
 
         logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.')
         for pipeline_trigger in pipeline_triggers:
+            if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
+                continue
             PipelineSchedule.create_or_update(pipeline_trigger)
 
 

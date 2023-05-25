@@ -1,15 +1,15 @@
-from dataclasses import dataclass, field
-from datetime import datetime
-from mage_ai.data_preparation.models.constants import (
-    PIPELINES_FOLDER,
-)
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.shared.config import BaseConfig
-from typing import Dict, List
 import enum
 import os
 import traceback
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, List
+
 import yaml
+
+from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.shared.config import BaseConfig
 
 TRIGGER_FILE_NAME = 'triggers.yaml'
 
@@ -50,6 +50,7 @@ class Trigger(BaseConfig):
     variables: Dict = field(default_factory=dict)
     sla: int = None     # in seconds
     settings: Dict = field(default_factory=dict)
+    envs: List = field(default_factory=list)
 
     def __post_init__(self):
         if self.schedule_type and type(self.schedule_type) is str:

@@ -34,6 +34,7 @@ Here are the steps to create and configure triggers via code:
         1. `settings`: a dictionary of [advanced settings](/guides/triggering-pipelines#additional-trigger-settings)
             1. `skip_if_previous_running`: `true`/`false` 
             1. `allow_blocks_to_fail`: `true`/`false`
+        1. `envs`: The environments that the trigger runs in. If envs is not set or empty, the trigger will run in all environments.
 1. Save the `triggers.yaml` file. The trigger configs will be synced to the triggers UI shortly.
 
 
@@ -59,6 +60,9 @@ triggers:
   settings:
     skip_if_previous_running: true
     allow_blocks_to_fail: true
+  envs:
+  - prod
+  - dev
 ```
 
 ## Modify triggers
