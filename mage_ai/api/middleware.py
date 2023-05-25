@@ -1,6 +1,6 @@
 from json.decoder import JSONDecodeError
 from mage_ai.api.errors import ApiError
-from mage_ai.api.utils import authenticate_client_and_token
+from mage_ai.api.utils import authenticate_client_and_token, parse_cookie_header
 from mage_ai.authentication.oauth2 import decode_token
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
@@ -68,13 +68,7 @@ class OAuthMiddleware(RequestHandler):
             else:
                 token_from_header = self.request.query_arguments.get('HTTP_AUTHORIZATION', None)
 
-        cookies_raw = self.request.headers.get('Cookie', '')
-        cookies = {}
-        if cookies_raw:
-            for cookie_string in cookies_raw.split(';'):
-                cookie_string = cookie_string.strip()
-                cookie_name, cookie_value = cookie_string.split('=', 1)
-                cookies[cookie_name] = cookie_value
+        cookies = parse_cookie_header(self.request.headers.get('Cookie', ''))
 
         if api_key:
             oauth_client = Oauth2Application.query_client(api_key)
