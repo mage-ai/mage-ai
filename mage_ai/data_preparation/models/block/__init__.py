@@ -47,10 +47,12 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.services.spark.config import SparkConfig
+from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
@@ -1786,35 +1788,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.spark_init:
             return self.spark
         try:
-            from pyspark.conf import SparkConf
-            from pyspark.sql import SparkSession
-
-            repo_config = RepoConfig(repo_path=self.repo_path)
-            spark_config = repo_config.spark_config
-
-            if spark_config:
-                conf = SparkConf()
-                if spark_config.get('app_name'):
-                    conf.setAppName(spark_config.get('app_name'))
-                if spark_config.get('spark_master'):
-                    conf.setMaster(spark_config.get('spark_master'))
-                if spark_config.get('spark_home'):
-                    conf.setSparkHome(spark_config.get('spark_home'))
-                if spark_config.get('executor_env'):
-                    list_kv_pairs = []
-                    for key, value in spark_config.get('executor_env').items():
-                        list_kv_pairs.append((key, value))
-                    conf.setExecutorEnv(key=None, value=None, pairs=list_kv_pairs)
-                if spark_config.get('spark_jars'):
-                    conf.set('spark.jars', ','.join(spark_config.get('spark_jars')))
-                if spark_config.get('others'):
-                    conf.setAll(spark_config.get('others'))
-
-                self.spark = SparkSession.builder.config(
-                    conf=conf).getOrCreate()
-            else:
-                self.spark = SparkSession.builder.master(
-                    os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+            spark_config = SparkConfig.load(
+                config={'repo_path': self.repo_path})
+            self.spark = get_spark_session(spark_config)
         except Exception:
             self.spark = None
 
