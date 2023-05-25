@@ -24,4 +24,4 @@ BLOCK_TYPE_TO_CLASS = {
 TAG_DYNAMIC = 'dynamic'
 TAG_DYNAMIC_CHILD = 'dynamic_child'
 TAG_REDUCE_OUTPUT = 'reduce_output'
-TAG_REPLICATION = 'replication'
+TAG_REPLICA = 'replica'

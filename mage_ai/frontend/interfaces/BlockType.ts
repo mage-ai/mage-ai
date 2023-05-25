@@ -9,6 +9,7 @@ export enum TagEnum {
   DYNAMIC = 'dynamic',
   DYNAMIC_CHILD = 'dynamic_child',
   REDUCE_OUTPUT = 'reduce_output',
+  REPLICA = 'replica',
 }
 
 export enum BlockLanguageEnum {

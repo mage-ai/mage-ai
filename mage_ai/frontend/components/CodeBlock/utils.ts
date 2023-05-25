@@ -337,6 +337,11 @@ export function buildTags({ tags }: BlockType): {
         description: 'Reduce output from all dynamically created blocks into a single array output.',
         title: capitalizeRemoveUnderscoreLower(TagEnum.REDUCE_OUTPUT),
       });
+    } else if (TagEnum.REPLICA === tag) {
+      arr.push({
+        description: 'This block is a replica of another block in the current pipeline.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.REPLICA),
+      });
     } else {
       arr.push({
         title: tag,

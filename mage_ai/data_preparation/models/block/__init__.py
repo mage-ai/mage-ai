@@ -1412,7 +1412,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
-        inclide_block_tags: bool = False,
+        include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
@@ -1442,7 +1442,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
 
-        if inclide_block_tags:
+        if include_block_tags:
             data['tags'] = self.tags()
 
         return data
@@ -1988,7 +1988,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
-            TAG_REPLICATION,
+            TAG_REPLICA,
         )
 
         arr = []
@@ -2003,7 +2003,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             arr.append(TAG_REDUCE_OUTPUT)
 
         if self.replicated_block:
-            arr.append(TAG_REPLICATION)
+            arr.append(TAG_REPLICA)
 
         return arr
 

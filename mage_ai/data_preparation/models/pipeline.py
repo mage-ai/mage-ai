@@ -590,7 +590,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
-        inclide_block_tags: bool = False,
+        include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_extensions: bool = False,
@@ -599,7 +599,7 @@ class Pipeline:
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
-            inclide_block_tags=inclide_block_tags,
+            include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
             include_callback_blocks=include_callback_blocks,
             include_content=include_content,
