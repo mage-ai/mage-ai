@@ -1,4 +1,3 @@
-from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 from mage_ai.api.middleware import parse_cookie_header
 from mage_ai.api.utils import (
     has_at_least_editor_role,
