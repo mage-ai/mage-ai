@@ -48,7 +48,7 @@ def parse_attributes(block) -> Dict:
 
     file_path = configuration['file_path']
     path_parts = file_path.split(os.sep)
-    project_name = path_parts[0]
+    project_folder_name = path_parts[0]
     filename = path_parts[-1]
     model_name = None
     file_extension = None
@@ -67,7 +67,15 @@ def parse_attributes(block) -> Dict:
 
     full_path = os.path.join(get_repo_path(), 'dbt', file_path)
 
-    project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
+    project_full_path = os.path.join(get_repo_path(), 'dbt', project_folder_name)
+    dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
+
+    project_name = project_folder_name
+    profile_name = project_folder_name
+    with open(dbt_project_full_path, 'r') as f:
+        dbt_project = yaml.safe_load(f)
+        project_name = dbt_project.get('name') or project_folder_name
+        profile_name = dbt_project.get('profile') or project_name
 
     models_folder_path = os.path.join(project_full_path, 'models')
     sources_full_path = os.path.join(models_folder_path, 'mage_sources.yml')
@@ -75,9 +83,7 @@ def parse_attributes(block) -> Dict:
 
     profiles_full_path = os.path.join(project_full_path, PROFILES_FILE_NAME)
     profile_target = configuration.get('dbt_profile_target')
-    profile = load_profile(project_name, profiles_full_path, profile_target)
-
-    dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
+    profile = load_profile(profile_name, profiles_full_path, profile_target)
 
     source_name = f'mage_{project_name}'
     if profile:
@@ -88,14 +94,19 @@ def parse_attributes(block) -> Dict:
                 DataSource.SPARK == profile.get('type')):
             source_name = profile['schema']
 
+    file_path_with_project_name = os.path.join(project_name, *path_parts[1:])
+
     return dict(
         dbt_project_full_path=dbt_project_full_path,
         file_extension=file_extension,
         file_path=file_path,
+        file_path_with_project_name=file_path_with_project_name,
         filename=filename,
         full_path=full_path,
         model_name=model_name,
         models_folder_path=models_folder_path,
+        profile=profile,
+        profile_name=profile_name,
         profiles_full_path=profiles_full_path,
         project_full_path=project_full_path,
         project_name=project_name,
@@ -356,33 +367,33 @@ async def load_profiles_file_async(profiles_full_path: str) -> Dict:
         return {}
 
 
-def load_profiles(project_name: str, profiles_full_path: str) -> Dict:
+def load_profiles(profile_name: str, profiles_full_path: str) -> Dict:
     profiles = load_profiles_file(profiles_full_path)
 
-    if not profiles or project_name not in profiles:
-        print(f'Project name {project_name} does not exist in profile file {profiles_full_path}.')
+    if not profiles or profile_name not in profiles:
+        print(f'Project name {profile_name} does not exist in profile file {profiles_full_path}.')
         return {}
 
-    return profiles[project_name]
+    return profiles[profile_name]
 
 
-async def load_profiles_async(project_name: str, profiles_full_path: str) -> Dict:
+async def load_profiles_async(profile_name: str, profiles_full_path: str) -> Dict:
     profiles = await load_profiles_file_async(profiles_full_path)
 
-    if not profiles or project_name not in profiles:
-        print(f'Project name {project_name} does not exist in profile file {profiles_full_path}.')
+    if not profiles or profile_name not in profiles:
+        print(f'Project name {profile_name} does not exist in profile file {profiles_full_path}.')
         return {}
 
-    return profiles[project_name]
+    return profiles[profile_name]
 
 
 def load_profile(
-    project_name: str,
+    profile_name: str,
     profiles_full_path: str,
     profile_target: str = None,
 ) -> Dict:
 
-    profile = load_profiles(project_name, profiles_full_path)
+    profile = load_profiles(profile_name, profiles_full_path)
     outputs = profile.get('outputs', {})
     target = profile.get('target', None)
 
@@ -391,10 +402,10 @@ def load_profile(
 
 def get_profile(block, profile_target: str = None) -> Dict:
     attr = parse_attributes(block)
-    project_name = attr['project_name']
+    profile_name = attr['profile_name']
     profiles_full_path = attr['profiles_full_path']
 
-    return load_profile(project_name, profiles_full_path, profile_target)
+    return load_profile(profile_name, profiles_full_path, profile_target)
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
@@ -799,18 +810,20 @@ def interpolate_refs_with_table_names(
     )
 
 
-def compiled_query_string(block: Block) -> str:
+def compiled_query_string(block: Block, error_if_not_found: bool = False) -> str:
     attr = parse_attributes(block)
 
     project_full_path = attr['project_full_path']
-    file_path = attr['file_path']
+    file_path_with_project_name = attr['file_path_with_project_name']
 
-    file = os.path.join(project_full_path, 'target', 'compiled', file_path)
+    file_path = os.path.join(project_full_path, 'target', 'compiled', file_path_with_project_name)
 
-    if not os.path.exists(file):
+    if not os.path.exists(file_path):
+        if error_if_not_found:
+            raise Exception(f'Compiled SQL query file at {file_path} not found.')
         return None
 
-    with open(file, 'r') as f:
+    with open(file_path, 'r') as f:
         query_string = f.read()
 
         # TODO (tommy dang): this was needed because we didn’t want to create model tables and
@@ -886,7 +899,7 @@ def execute_query(
 
 
 def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
-    query_string = compiled_query_string(block)
+    query_string = compiled_query_string(block, error_if_not_found=True)
 
     return execute_query(block, profile_target, query_string, limit)
 

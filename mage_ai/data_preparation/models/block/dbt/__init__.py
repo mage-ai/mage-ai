@@ -43,10 +43,11 @@ class DBTBlock(Block):
             attributes_dict = parse_attributes(self)
             profiles_full_path = attributes_dict['profiles_full_path']
             project_name = attributes_dict['project_name']
+            profile_name = attributes_dict['profile_name']
             project = project_name
 
             targets = []
-            profiles = await load_profiles_async(project_name, profiles_full_path)
+            profiles = await load_profiles_async(profile_name, profiles_full_path)
             outputs = profiles.get('outputs')
             if outputs:
                 targets += sorted(list(outputs.keys()))
