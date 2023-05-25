@@ -9,6 +9,13 @@ from mage_ai.orchestration.db.models.oauth import Permission
 class PipelineRunPolicy(BasePolicy):
     @property
     def entity(self):
+        query = self.options.get('query', {})
+        pipeline_uuid = query.get('pipeline_uuid', [None])
+        if pipeline_uuid:
+            pipeline_uuid = pipeline_uuid[0]
+        if pipeline_uuid:
+            return Permission.Entity.PIPELINE, pipeline_uuid
+
         if self.resource and self.resource.model:
             return Permission.Entity.PIPELINE, self.resource.model.pipeline_uuid
 

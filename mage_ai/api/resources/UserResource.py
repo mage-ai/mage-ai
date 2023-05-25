@@ -45,18 +45,15 @@ class UserResource(DatabaseResource):
 
         error = ApiError.RESOURCE_INVALID.copy()
 
-        roles_new = payload.get('roles_new', [])
-        roles_new = list(map(
-            lambda role_id: Role.query.get(int(role_id)),
-            roles_new,
-        ))
-        if any(role is None for role in roles_new):
-            error.update(
-                {'message': 'Role does not exist'})
-            raise ApiError(error)
-        payload['roles_new'] = roles_new
+        role_ids = payload.get('roles_new', [])
+        roles_new = self.check_roles(role_ids)
 
         missing_values = []
+        if len(roles_new) == 0:
+            missing_values.append('roles')
+
+        payload['roles_new'] = roles_new
+
         for key in ['email', 'password']:
             if not payload.get(key):
                 missing_values.append(key)
@@ -126,16 +123,14 @@ class UserResource(DatabaseResource):
         error = ApiError.RESOURCE_INVALID.copy()
 
         if 'roles_new' in payload:
-            roles_new = payload.get('roles_new', [])
-            roles_new = list(map(
-                lambda role_id: Role.query.get(int(role_id)),
-                roles_new,
-            ))
-            payload['roles_new'] = roles_new
+            role_ids = payload.get('roles_new', [])
+            roles_new = self.check_roles(role_ids)
 
             missing_values = []
             if len(roles_new) == 0:
                 missing_values.append('roles')
+
+            payload['roles_new'] = roles_new
 
             if len(missing_values) >= 1:
                 error.update(
@@ -203,3 +198,23 @@ class UserResource(DatabaseResource):
         oauth_token = self.model_options.get('oauth_token')
         if oauth_token:
             return encode_token(oauth_token.token, oauth_token.expires)
+
+    @classmethod
+    @safe_db_query
+    def check_roles(self, role_ids):
+        missing_ids = []
+        roles_new = []
+        for role_id in role_ids:
+            role = Role.query.get(int(role_id))
+            if role is None:
+                missing_ids.append(role_id)
+            else:
+                roles_new.append(role)
+
+        if len(missing_ids) > 0:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(
+                {'message': f'Roles with ids: {missing_ids} do not exist'})
+            raise ApiError(error)
+
+        return roles_new

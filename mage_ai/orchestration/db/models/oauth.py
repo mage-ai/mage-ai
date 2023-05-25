@@ -198,6 +198,7 @@ class Role(BaseModel):
                 access = access | permission.access
             return access
         else:
+            # TODO: Handle permissions with different entity types better.
             return self.get_parent_access(entity)
 
     def get_parent_access(self, entity) -> int:
