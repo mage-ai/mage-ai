@@ -265,6 +265,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 import datetime
 import json
 import pandas as pd
@@ -292,15 +293,15 @@ def execute_custom_code():
 {escaped_code}
     \'\'\'
 
-    if run_upstream:
-        block.run_upstream_blocks()
-
-    global_vars = {global_vars} or dict()
+    global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
 
     try:
         global_vars[\'spark\'] = spark
     except Exception:
         pass
+
+    if run_upstream:
+        block.run_upstream_blocks(global_vars=global_vars)
 
     block_output = block.execute_with_callback(
         custom_code=code,

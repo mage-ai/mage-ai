@@ -1553,7 +1553,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self) -> None:
+    def run_upstream_blocks(self, **kwargs) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1568,7 +1568,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks)
         )
 
-        run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
+        run_blocks_sync(
+            root_blocks,
+            selected_blocks=upstream_block_uuids,
+            **kwargs,
+        )
 
     def run_tests(
         self,
