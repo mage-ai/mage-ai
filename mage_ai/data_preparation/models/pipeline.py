@@ -958,6 +958,9 @@ class Pipeline:
 
         block = mapping.get(block_uuid)
         if not block:
+            # Dynamic blocks have the following block UUID convention: [block_uuid]:[index]
+            # Replica blocks have the following block UUID convention:
+            # [block_uuid]:[replicated_block_uuid]
             block = mapping.get(block_uuid.split(':')[0])
 
         return block

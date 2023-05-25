@@ -293,7 +293,6 @@ export const getMoreActionsItems = (
       label: () => 'Replicate block',
       onClick: () => addNewBlock({
         replicated_block: blockUUID,
-        type: blockType,
       }),
       uuid: 'Replicate block',
     });

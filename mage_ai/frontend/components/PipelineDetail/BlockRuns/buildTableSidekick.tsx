@@ -17,8 +17,8 @@ import { isJsonString } from '@utils/string';
 export const TAB_TREE = { uuid: 'Dependency tree' };
 export const TAB_OUTPUT = { uuid: 'Block output' };
 export const TABS = [
-  TAB_TREE,
   TAB_OUTPUT,
+  TAB_TREE,
 ];
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -112,7 +112,7 @@ export default function({
             <ButtonTabs
               onClickTab={setSelectedTab}
               selectedTabUUID={selectedTab?.uuid}
-              tabs={selectedRun ? TABS : TABS.slice(0, 1)}
+              tabs={selectedRun ? TABS : [TAB_TREE]}
             />
           </Spacing>
         )}

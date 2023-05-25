@@ -588,11 +588,15 @@ class SQLBlock(Block):
         global_vars=None,
         **kwargs,
     ) -> List:
-        test_execution = kwargs.get('test_execution')
+        if custom_code and custom_code.strip():
+            query = custom_code
+        else:
+            query = self.content
+
         return execute_sql_code(
             self,
-            custom_code or self.content,
+            query,
             execution_partition=execution_partition,
             global_vars=global_vars,
-            test_execution=test_execution,
+            test_execution=kwargs.get('test_execution'),
         )

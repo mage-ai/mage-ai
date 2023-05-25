@@ -280,8 +280,17 @@ class Block:
 
     @property
     def content(self) -> str:
+        if self.replicated_block:
+            self._content = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            ).content
+
         if self._content is None:
             self._content = self.file.content()
+
         return self._content
 
     @property
@@ -998,7 +1007,7 @@ class Block:
         }
         results.update(outputs_from_input_vars)
 
-        if custom_code is not None:
+        if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                 exec(custom_code, results)
         elif self.content is not None:

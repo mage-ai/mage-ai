@@ -427,13 +427,13 @@ function DependencyGraph({
 
       let nodeHeight = 37;
       if (tags?.length >= 1) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 1.5;
       }
       if (kicker) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 1.5;
       }
       if (subtitle) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 2;
       }
 
       let longestText = displayText;
