@@ -19,6 +19,7 @@ class BlockPresenter(BasePresenter):
         'language',
         'metadata',
         'name',
+        'replicated_block',
         'status',
         'type',
         'upstream_blocks',

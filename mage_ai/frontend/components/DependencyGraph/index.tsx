@@ -347,6 +347,11 @@ function DependencyGraph({
       kicker = project;
     }
 
+    if (block?.replicated_block) {
+      displayText = block?.replicated_block;
+      kicker = block?.uuid;
+    }
+
     if (!displayText) {
       displayText = block.uuid;
     }
@@ -422,13 +427,13 @@ function DependencyGraph({
 
       let nodeHeight = 37;
       if (tags?.length >= 1) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 1.5;
       }
       if (kicker) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 1.5;
       }
       if (subtitle) {
-        nodeHeight += 26;
+        nodeHeight += UNIT * 2;
       }
 
       let longestText = displayText;
@@ -730,6 +735,8 @@ function DependencyGraph({
                 const blockStatus = getBlockStatus(block);
                 const {
                   displayText,
+                  kicker,
+                  subtitle,
                 } = displayTextForBlock(block);
 
                 return (
@@ -750,10 +757,12 @@ function DependencyGraph({
                       height={nodeHeight}
                       hideStatus={disabledProp}
                       key={block.uuid}
+                      kicker={kicker}
                       selected={blockEditing
                         ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
                         : selectedBlock?.uuid === block.uuid
                       }
+                      subtitle={subtitle}
                       {...blockStatus}
                     />
                   </foreignObject>

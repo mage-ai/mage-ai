@@ -89,8 +89,9 @@
             "design/blocks/data-exporter",
             "design/blocks/scratchpad",
             "design/blocks/sensor",
+            "design/blocks/extension",
             "design/blocks/dynamic-blocks",
-            "design/blocks/extension"
+            "design/blocks/replicate-blocks"
           ]
         }
       ]

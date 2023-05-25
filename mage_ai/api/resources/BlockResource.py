@@ -20,10 +20,11 @@ class BlockResource(GenericResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
+        block_type = payload.get('type')
         content = payload.get('content')
-        name = payload.get('name')
         language = payload.get('language')
-        uuid = clean_name(name)
+        name = payload.get('name')
+
         """
         New DBT models include "content" in its block create payload,
         whereas creating blocks from existing DBT model files do not.
@@ -31,7 +32,7 @@ class BlockResource(GenericResource):
         if payload.get('type') == BlockType.DBT and content and language == BlockLanguage.SQL:
             dbt_block = DBTBlock(
                 name,
-                uuid,
+                clean_name(name),
                 BlockType.DBT,
                 configuration=payload.get('configuration'),
                 language=language,
@@ -41,10 +42,7 @@ class BlockResource(GenericResource):
                     Please choose a different model name, or add a DBT model by \
                     selecting single model from file.')
 
-        block = Block.create(
-            name or payload.get('uuid'),
-            payload.get('type'),
-            get_repo_path(),
+        block_attributes = dict(
             color=payload.get('color'),
             config=payload.get('config'),
             configuration=payload.get('configuration'),
@@ -53,6 +51,28 @@ class BlockResource(GenericResource):
             pipeline=pipeline,
             priority=payload.get('priority'),
             upstream_block_uuids=payload.get('upstream_blocks', []),
+        )
+
+        replicated_block_uuid = payload.get('replicated_block')
+        if replicated_block_uuid:
+            replicated_block = pipeline.get_block(replicated_block_uuid)
+            if replicated_block:
+                block_type = replicated_block.type
+                block_attributes['language'] = replicated_block.language
+                block_attributes['replicated_block'] = replicated_block.uuid
+            else:
+                error = ApiError.RESOURCE_INVALID.copy()
+                error.update(
+                    message=f'Replicated block {replicated_block_uuid} ' +
+                    f'does not exist in pipeline {pipeline.uuid}.',
+                )
+                raise ApiError(error)
+
+        block = Block.create(
+            name or payload.get('uuid'),
+            block_type,
+            get_repo_path(),
+            **block_attributes,
         )
 
         if content:

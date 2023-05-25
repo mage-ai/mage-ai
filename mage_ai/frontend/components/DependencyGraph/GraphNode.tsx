@@ -34,9 +34,11 @@ type GraphNodeProps = {
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
+  kicker?: string;
   onClick?: (block: BlockType) => void;
   runtime?: number;
   selected?: boolean;
+  subtitle?: string;
 };
 
 function GraphNode({
@@ -51,9 +53,11 @@ function GraphNode({
   isInProgress,
   isQueued,
   isSuccessful,
+  kicker: kickerProp,
   onClick,
   runtime,
   selected,
+  subtitle: subtitleProp,
 }: GraphNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -82,10 +86,10 @@ function GraphNode({
   const inverted = INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)
     || INVERTED_TEXT_COLOR_BLOCK_COLORS.includes(color);
 
-  let kicker;
-  let subtitle;
+  let kicker = kickerProp;
+  let subtitle = subtitleProp;
 
-  if (BlockTypeEnum.DBT === type) {
+  if (BlockTypeEnum.DBT === type && !kicker) {
     const {
       project,
     } = getModelAttributes(block);

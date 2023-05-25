@@ -228,6 +228,7 @@ class Block:
         extension_uuid: str = None,
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
+        replicated_block: str = None,
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
@@ -265,6 +266,9 @@ class Block:
         self.spark = None
         self.spark_init = False
 
+        # Replicate block
+        self.replicated_block = replicated_block
+
     @property
     def uuid(self) -> str:
         return self.dynamic_block_uuid or self._uuid
@@ -276,8 +280,17 @@ class Block:
 
     @property
     def content(self) -> str:
+        if self.replicated_block:
+            self._content = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            ).content
+
         if self._content is None:
             self._content = self.file.content()
+
         return self._content
 
     @property
@@ -456,6 +469,7 @@ class Block:
         language=None,
         pipeline=None,
         priority=None,
+        replicated_block: str = None,
         upstream_block_uuids=None,
         config=None,
         widget=False,
@@ -472,7 +486,10 @@ class Block:
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
 
-        if BlockType.DBT != block_type or BlockLanguage.YAML == language:
+        # Don’t create a file if block is replicated from another block
+        if not replicated_block and \
+                (BlockType.DBT != block_type or BlockLanguage.YAML == language):
+
             block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
             block_dir_path = os.path.join(repo_path, block_directory)
             if not os.path.exists(block_dir_path):
@@ -507,6 +524,7 @@ class Block:
             extension_uuid=extension_uuid,
             language=language,
             pipeline=pipeline,
+            replicated_block=replicated_block,
         )
 
         if BlockType.DBT == block.type:
@@ -989,7 +1007,7 @@ class Block:
         }
         results.update(outputs_from_input_vars)
 
-        if custom_code is not None:
+        if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                 exec(custom_code, results)
         elif self.content is not None:
@@ -1366,6 +1384,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_callback_blocks:
             data['callback_blocks'] = self.callback_block_uuids
 
+        if self.replicated_block:
+            data['replicated_block'] = self.replicated_block
+
         return data
 
     def to_dict(
@@ -1383,9 +1404,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = self.content
             if self.callback_block is not None:
                 data['callback_content'] = self.callback_block.content
+
         if include_outputs:
             data['outputs'] = self.outputs
-            if check_if_file_exists:
+
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1400,7 +1423,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
-        inclide_block_tags: bool = False,
+        include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
@@ -1416,7 +1439,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
-            if check_if_file_exists:
+
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1429,7 +1453,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
 
-        if inclide_block_tags:
+        if include_block_tags:
             data['tags'] = self.tags()
 
         return data
@@ -1975,6 +1999,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
+            TAG_REPLICA,
         )
 
         arr = []
@@ -1987,6 +2012,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if should_reduce_output(self):
             arr.append(TAG_REDUCE_OUTPUT)
+
+        if self.replicated_block:
+            arr.append(TAG_REPLICA)
 
         return arr
 

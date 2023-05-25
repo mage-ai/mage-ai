@@ -124,11 +124,24 @@ function PipelineBlockRuns({
   const tableBlockRuns = useMemo(() => (
     <BlockRunsTable
       blockRuns={blockRuns}
-      onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
-        const run = blockRuns[rowIndex];
+      onClickRow={(rowIndex: number) => {
+        setSelectedRun((prev) => {
+          const run = blockRuns[rowIndex];
+          const newRun = prev?.id !== run.id ? run : null
 
-        return prev?.id !== run.id ? run : null;
-      })}
+          if (newRun) {
+            setSelectedTabSidekick(prev => {
+              if (prev !== TAB_OUTPUT) {
+                return TAB_OUTPUT;
+              }
+
+              return prev;
+            });
+          }
+
+          return newRun;
+        });
+      }}
       pipeline={pipeline}
       selectedRun={selectedRun}
     />

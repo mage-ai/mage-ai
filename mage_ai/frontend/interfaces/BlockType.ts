@@ -9,6 +9,7 @@ export enum TagEnum {
   DYNAMIC = 'dynamic',
   DYNAMIC_CHILD = 'dynamic_child',
   REDUCE_OUTPUT = 'reduce_output',
+  REPLICA = 'replica',
 }
 
 export enum BlockLanguageEnum {
@@ -153,7 +154,8 @@ export interface BlockRequestPayloadType {
   language?: BlockLanguageEnum;
   name?: string;
   priority?: number;
-  type: BlockTypeEnum;
+  replicated_block?: string;
+  type?: BlockTypeEnum;
   upstream_blocks?: string[];
 }
 
@@ -190,6 +192,7 @@ export default interface BlockType {
   name?: string;
   outputs?: OutputType[];
   priority?: number;
+  replicated_block?: string;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   type?: BlockTypeEnum;

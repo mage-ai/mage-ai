@@ -42,7 +42,7 @@ class PipelinePresenter(BasePresenter):
 
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
-                inclide_block_tags=True,
+                include_block_tags=True,
                 include_callback_blocks=True,
                 include_content=include_content,
                 include_extensions=include_extensions,

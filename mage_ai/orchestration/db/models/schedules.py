@@ -348,7 +348,8 @@ class PipelineRun(BaseModel):
         )
 
     def create_block_runs(self) -> List['BlockRun']:
-        blocks = self.pipeline.get_executable_blocks()
+        pipeline = self.pipeline
+        blocks = pipeline.get_executable_blocks()
 
         arr = []
         for block in blocks:
@@ -356,7 +357,23 @@ class PipelineRun(BaseModel):
             if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
                 arr.append(block)
 
-        return [self.create_block_run(b.uuid) for b in arr]
+        block_uuids = []
+
+        for block in arr:
+            block_uuid = block.uuid
+            if block.replicated_block:
+                replicated_block = pipeline.get_block(block.replicated_block)
+                if replicated_block:
+                    block_uuid = f'{block.uuid}:{replicated_block.uuid}'
+                else:
+                    raise Exception(
+                        f'Replicated block {block.replicated_block} ' +
+                        f'does not exist in pipeline {pipeline.uuid}.',
+                    )
+
+            block_uuids.append(block_uuid)
+
+        return [self.create_block_run(block_uuid) for block_uuid in block_uuids]
 
     def any_blocks_failed(self) -> bool:
         return any(
@@ -434,10 +451,18 @@ class BlockRun(BaseModel):
     def get_outputs(self, sample_count: int = None) -> List[Dict]:
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         block = pipeline.get_block(self.block_uuid)
+        block_uuid = self.block_uuid
+
+        # The block_run’s block_uuid for replicated blocks will be in this format:
+        # [block_uuid]:[replicated_block_uuid]
+        # We need to use the original block_uuid to get the proper output.
+        if block.replicated_block:
+            block_uuid = block.uuid
+
         return block.get_outputs(
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
-            block_uuid=self.block_uuid,
+            block_uuid=block_uuid,
         )
 
 

@@ -445,6 +445,7 @@ class Pipeline:
                 has_callback=c.get('has_callback'),
                 language=c.get('language'),
                 pipeline=self,
+                replicated_block=c.get('replicated_block'),
                 status=c.get('status'),
             )
 
@@ -589,7 +590,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
-        inclide_block_tags: bool = False,
+        include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_extensions: bool = False,
@@ -598,7 +599,7 @@ class Pipeline:
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
-            inclide_block_tags=inclide_block_tags,
+            include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
             include_callback_blocks=include_callback_blocks,
             include_content=include_content,
@@ -957,6 +958,9 @@ class Pipeline:
 
         block = mapping.get(block_uuid)
         if not block:
+            # Dynamic blocks have the following block UUID convention: [block_uuid]:[index]
+            # Replica blocks have the following block UUID convention:
+            # [block_uuid]:[replicated_block_uuid]
             block = mapping.get(block_uuid.split(':')[0])
 
         return block
@@ -1113,6 +1117,14 @@ class Pipeline:
             self.blocks_by_uuid = {
                 new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()
             }
+
+        # Update the replicated_block value for all replication blocks for this current block.
+        for block in self.blocks_by_uuid.values():
+            if block.uuid == new_uuid:
+                continue
+
+            if block.replicated_block == old_uuid:
+                block.replicated_block = new_uuid
 
         self.save()
         return block
