@@ -100,6 +100,7 @@ export const getMoreActionsItems = (
   setOutputCollapsed: (outputCollapsed: boolean) => void,
   onlyIncludeDeleteBlock?: boolean,
   opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
     blocksMapping: {
       [uuid: string]: BlockType;
     };
@@ -121,20 +122,25 @@ export const getMoreActionsItems = (
     downstream_blocks: downstreamBlocks,
     has_callback,
     language,
+    replicated_block: replicatedBlock,
+    type: blockType,
     upstream_blocks: upstreamBlocks,
+    uuid: blockUUID,
   } = block || {};
   const {
     dynamic,
     reduce_output: reduceOutput,
   } = configuration || {};
-  const isDBT = BlockTypeEnum.DBT === block?.type;
+  const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
+
+  console.log(block)
 
   if (![
     BlockTypeEnum.CALLBACK,
     BlockTypeEnum.EXTENSION,
     BlockTypeEnum.MARKDOWN,
-  ].includes(block.type)) {
+  ].includes(blockType)) {
     items.push({
       label: () => isDBT
         ? 'Execute and run upstream blocks'
@@ -152,6 +158,7 @@ export const getMoreActionsItems = (
     }
 
     const {
+      addNewBlock,
       blocksMapping,
       fetchFileTree,
       fetchPipeline,
@@ -281,6 +288,16 @@ export const getMoreActionsItems = (
         }
       },
       uuid: 'has_callback',
+    });
+
+    items.push({
+      disabled: !!replicatedBlock,
+      label: () => 'Replicate block',
+      onClick: () => addNewBlock({
+        replicated_block: blockUUID,
+        type: blockType,
+      }),
+      uuid: 'Replicate block',
     });
   }
 

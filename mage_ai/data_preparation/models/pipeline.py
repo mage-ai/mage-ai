@@ -445,6 +445,7 @@ class Pipeline:
                 has_callback=c.get('has_callback'),
                 language=c.get('language'),
                 pipeline=self,
+                replicated_block=c.get('replicated_block'),
                 status=c.get('status'),
             )
 
@@ -1113,6 +1114,14 @@ class Pipeline:
             self.blocks_by_uuid = {
                 new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()
             }
+
+        # Update the replicated_block value for all replication blocks for this current block.
+        for block in self.blocks_by_uuid.values():
+            if block.uuid == new_uuid:
+                continue
+
+            if block.replicated_block == old_uuid:
+                block.replicated_block = new_uuid
 
         self.save()
         return block

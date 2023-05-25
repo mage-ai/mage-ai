@@ -52,6 +52,7 @@ class BlockResource(GenericResource):
             language=language,
             pipeline=pipeline,
             priority=payload.get('priority'),
+            replicated_block=payload.get('replicated_block'),
             upstream_block_uuids=payload.get('upstream_blocks', []),
         )
 

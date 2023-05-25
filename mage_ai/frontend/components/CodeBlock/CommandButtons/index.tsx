@@ -469,6 +469,7 @@ function CommandButtons({
             setOutputCollapsed,
             isStreaming || isIntegration,
             {
+              addNewBlock,
               blocksMapping,
               fetchFileTree,
               fetchPipeline,

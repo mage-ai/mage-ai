@@ -190,6 +190,7 @@ export default interface BlockType {
   name?: string;
   outputs?: OutputType[];
   priority?: number;
+  replicated_block?: string;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   type?: BlockTypeEnum;

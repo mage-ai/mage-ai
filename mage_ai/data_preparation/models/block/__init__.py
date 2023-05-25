@@ -228,6 +228,7 @@ class Block:
         extension_uuid: str = None,
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
+        replicated_block: str = None,
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
@@ -264,6 +265,9 @@ class Block:
         # Spark session
         self.spark = None
         self.spark_init = False
+
+        # Replicate block
+        self.replicated_block = replicated_block
 
     @property
     def uuid(self) -> str:
@@ -456,6 +460,7 @@ class Block:
         language=None,
         pipeline=None,
         priority=None,
+        replicated_block: str = None,
         upstream_block_uuids=None,
         config=None,
         widget=False,
@@ -507,6 +512,7 @@ class Block:
             extension_uuid=extension_uuid,
             language=language,
             pipeline=pipeline,
+            replicated_block=replicated_block,
         )
 
         if BlockType.DBT == block.type:
@@ -1357,6 +1363,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             has_callback=self.has_callback,
             name=self.name,
             language=language,
+            replicated_block=self.replicated_block,
             status=format_enum(self.status) if self.status else None,
             type=format_enum(self.type) if self.type else None,
             upstream_blocks=self.upstream_block_uuids,
