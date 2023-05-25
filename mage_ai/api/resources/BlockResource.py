@@ -62,7 +62,8 @@ class BlockResource(GenericResource):
                 block_attributes['replicated_block'] = replicated_block.uuid
             else:
                 error = ApiError.RESOURCE_INVALID.copy()
-                error.update(message=f'Replicated block {replicated_block_uuid} ' +
+                error.update(
+                    message=f'Replicated block {replicated_block_uuid} ' +
                     f'does not exist in pipeline {pipeline.uuid}.',
                 )
                 raise ApiError(error)

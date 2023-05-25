@@ -366,7 +366,8 @@ class PipelineRun(BaseModel):
                 if replicated_block:
                     block_uuid = f'{block.uuid}:{replicated_block.uuid}'
                 else:
-                    raise Exception(f'Replicated block {block.replicated_block} ' +
+                    raise Exception(
+                        f'Replicated block {block.replicated_block} ' +
                         f'does not exist in pipeline {pipeline.uuid}.',
                     )
 

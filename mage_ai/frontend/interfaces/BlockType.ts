@@ -154,7 +154,8 @@ export interface BlockRequestPayloadType {
   language?: BlockLanguageEnum;
   name?: string;
   priority?: number;
-  type: BlockTypeEnum;
+  replicated_block?: string;
+  type?: BlockTypeEnum;
   upstream_blocks?: string[];
 }
 
