@@ -1,10 +1,15 @@
-from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.tests.api.operations.base import BaseApiTestCase
+from mage_ai.orchestration.db.models.oauth import Role, User
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
 
 class UserOperationTests(BaseApiTestCase):
     model_class = User
+
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        Role.create_default_roles()
 
     async def test_execute_create(self):
         email = self.faker.email()
@@ -12,6 +17,7 @@ class UserOperationTests(BaseApiTestCase):
             email=email,
             password='water_lightning',
             password_confirmation='water_lightning',
+            roles_new=[Role.get_role('Owner').id],
         ))
         self.assertEqual(User.query.get(response['user']['id']).email, email)
 
@@ -57,7 +63,7 @@ class UserOperationTests(BaseApiTestCase):
         await self.assertRaisesAsync(Exception, _func)
 
     async def test_execute_list(self):
-        owner = create_user(owner=True)
+        owner = create_user(_owner=True)
 
         email1 = self.faker.email()
         email2 = self.faker.email()
@@ -68,11 +74,13 @@ class UserOperationTests(BaseApiTestCase):
                     email=email1,
                     password='water_lightning',
                     password_confirmation='water_lightning',
+                    roles_new=[Role.get_role('Editor').id],
                 ),
                 dict(
                     email=email2,
                     password='water_lightning',
                     password_confirmation='water_lightning',
+                    roles_new=[Role.get_role('Editor').id],
                 ),
             ],
             [

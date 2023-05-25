@@ -9,7 +9,7 @@ export const SECTION_ITEM_UUID_USERS = 'Users';
 export const SECTION_UUID_ACCOUNT = 'Account';
 export const SECTION_ITEM_UUID_PROFILE = 'Profile';
 
-export const SECTIONS = ({ owner, roles }: UserType) => {
+export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
   const workspaceItems = [
     {
       linkProps: {
@@ -19,7 +19,7 @@ export const SECTIONS = ({ owner, roles }: UserType) => {
     },
   ];
 
-  if (owner || roles === RoleValueEnum.ADMIN) {
+  if (owner || roles === RoleValueEnum.ADMIN || (project_access & 2) !== 0) {
     workspaceItems.push({
       linkProps: {
         href: '/settings/workspace/users',

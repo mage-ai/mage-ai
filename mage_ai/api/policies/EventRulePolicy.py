@@ -5,7 +5,9 @@ from mage_ai.api.presenters.EventRulePresenter import EventRulePresenter
 
 
 class EventRulePolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 EventRulePolicy.allow_actions([

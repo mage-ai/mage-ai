@@ -19,7 +19,6 @@ class BlockOutputResource(GenericResource):
         pipeline_uuid = query.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
-
         outputs = []
         if pipeline_uuid is not None:
             pipeline = Pipeline.get(pipeline_uuid)

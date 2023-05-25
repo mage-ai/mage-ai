@@ -1,7 +1,7 @@
 import enum
 import re
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from sqlalchemy import (
     JSON,
@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 
@@ -26,7 +26,7 @@ class User(BaseModel):
     email = Column(String(255), default=None, index=True, unique=True)
     first_name = Column(String(255), default=None)
     last_name = Column(String(255), default=None)
-    owner = Column(Boolean, default=False)
+    _owner = Column('owner', Boolean, default=False)
     password_hash = Column(String(255), default=None)
     password_salt = Column(String(255), default=None)
     roles = Column(Integer, default=None)
@@ -35,6 +35,9 @@ class User(BaseModel):
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
+    # roles_new is used for the new authentication system to define permissions at
+    # an entity level
+    roles_new = relationship('Role', secondary='user_role', back_populates='users')
 
     @validates('email')
     def validate_email(self, key, value):
@@ -66,6 +69,28 @@ class User(BaseModel):
         return value
 
     @property
+    def project_access(self) -> int:
+        return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+
+    def get_access(
+        self,
+        entity: Union['Permission.Entity', None] = None,
+        entity_id: Union[str, None] = None,
+    ) -> int:
+        '''
+        If entity is None, we will go through all of the user's permissions and
+        get the "highest" permission regardless of entity type. This should only be
+        used for resources that are not entity dependent.
+
+        Otherwise, search for permissions for the specified entity and entity_id, and
+        return the access of the user for that entity.
+        '''
+        access = 0
+        for role in self.roles_new:
+            access = access | role.get_access(entity, entity_id)
+        return access
+
+    @property
     def roles_display(self) -> str:
         if self.owner:
             return 'Owner'
@@ -78,7 +103,16 @@ class User(BaseModel):
                 return 'Viewer'
 
     @property
+    def owner(self) -> bool:
+        access = self.project_access if self.roles_new else 0
+        return self._owner or access & Permission.Access.OWNER != 0
+
+    @property
     def is_admin(self) -> bool:
+        if self.roles_new:
+            access = self.project_access
+            return access & \
+                (Permission.Access.OWNER | Permission.Access.ADMIN) == Permission.Access.ADMIN
         if not self.owner and self.roles:
             return self.roles & 1 != 0
 
@@ -88,6 +122,141 @@ class User(BaseModel):
     def git_settings(self) -> Union[Dict, None]:
         preferences = self.preferences or dict()
         return preferences.get(get_repo_path(), {}).get('git_settings')
+
+    @classmethod
+    @safe_db_query
+    def batch_update_user_roles(self):
+        for user in User.query.all():
+            roles_new = []
+            if user._owner:
+                roles_new = [Role.get_role('Owner')]
+            elif user.roles and user.roles & 1 != 0:
+                roles_new = [Role.get_role('Admin')]
+            elif user.roles and user.roles & 2 != 0:
+                roles_new = [Role.get_role('Editor')]
+            elif user.roles and user.roles & 4 != 0:
+                roles_new = [Role.get_role('Viewer')]
+            user.roles_new = roles_new
+        db_connection.session.commit()
+
+
+class Role(BaseModel):
+    name = Column(String(255))
+    permissions = relationship('Permission', back_populates='role')
+    users = relationship('User', secondary='user_role', back_populates='roles_new')
+
+    @classmethod
+    @safe_db_query
+    def create_default_roles(self):
+        Permission.create_default_global_permissions()
+        mapping = {
+            'Owner': Permission.Access.OWNER,
+            'Admin': Permission.Access.ADMIN,
+            'Editor': Permission.Access.EDITOR,
+            'Viewer': Permission.Access.VIEWER,
+        }
+        for name, access in mapping.items():
+            role = self.query.filter(self.name == name).first()
+            if not role:
+                self.create(
+                    name=name,
+                    permissions=[
+                        Permission.query.filter(
+                            Permission.entity == Permission.Entity.GLOBAL,
+                            Permission.access == access,
+                        ).first()
+                    ],
+                    commit=False,
+                )
+        db_connection.session.commit()
+
+    @classmethod
+    @safe_db_query
+    def get_role(self, name) -> 'Role':
+        return Role.query.filter(Role.name == name).first()
+
+    def get_access(
+        self,
+        entity: Union['Permission.Entity', None] = None,
+        entity_id: Union[str, None] = None,
+    ) -> int:
+        permissions = []
+        if entity is None:
+            permissions.extend(self.permissions)
+        else:
+            entity_permissions = list(filter(
+                lambda perm: perm.entity == entity and
+                (entity_id is None or perm.entity_id == entity_id),
+                self.permissions,
+            ))
+            if entity_permissions:
+                permissions.extend(entity_permissions)
+
+        access = 0
+        if permissions:
+            for permission in permissions:
+                access = access | permission.access
+            return access
+        else:
+            # TODO: Handle permissions with different entity types better.
+            return self.get_parent_access(entity)
+
+    def get_parent_access(self, entity) -> int:
+        '''
+        This method is used when a role does not have a permission for a specified entity. Then,
+        we will go up the entity chain to see if there are permissions for parent entities.
+        '''
+        if entity == Permission.Entity.PIPELINE:
+            return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+        elif entity == Permission.Entity.PROJECT:
+            return self.get_access(Permission.Entity.GLOBAL)
+        else:
+            return 0
+
+
+class UserRole(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id'))
+    role_id = Column(Integer, ForeignKey('role.id'))
+
+
+class Permission(BaseModel):
+    class Entity(str, enum.Enum):
+        GLOBAL = 'global'
+        PROJECT = 'project'
+        PIPELINE = 'pipeline'
+
+    class Access(int, enum.Enum):
+        OWNER = 1
+        ADMIN = 2
+        EDITOR = 4
+        VIEWER = 8
+
+    entity_id = Column(String(255))
+    entity = Column(Enum(Entity), default=Entity.GLOBAL)
+    # 1 = owner
+    # 2 = admin
+    # 4 = edit
+    # 8 = view
+    access = Column(Integer, default=None)
+    role_id = Column(Integer, ForeignKey('role.id'))
+
+    role = relationship(Role, back_populates='permissions')
+
+    @classmethod
+    @safe_db_query
+    def create_default_global_permissions(self) -> List['Permission']:
+        permissions = self.query.filter(self.entity == Permission.Entity.GLOBAL).all()
+        if len(permissions) == 0:
+            for access in [a.value for a in Permission.Access]:
+                permissions.append(
+                    self.create(
+                        entity=Permission.Entity.GLOBAL,
+                        access=access,
+                        commit=False,
+                    )
+                )
+            db_connection.session.commit()
+        return permissions
 
 
 class Oauth2Application(BaseModel):

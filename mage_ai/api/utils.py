@@ -1,11 +1,17 @@
-from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken
+from typing import List, Tuple
+
+from mage_ai.orchestration.db.models.oauth import (
+    Oauth2AccessToken,
+    Permission,
+    Role,
+    User,
+)
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     REQUIRE_USER_AUTHENTICATION,
+    is_disable_pipeline_edit_access,
 )
 from mage_ai.shared.environments import is_test
-from typing import Tuple
 
 
 def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2AccessToken, bool]:
@@ -21,41 +27,83 @@ def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2Acc
     return oauth_token, valid
 
 
-def is_owner(user) -> bool:
+def is_owner(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
     return (user and user.owner) or \
-        (not REQUIRE_USER_AUTHENTICATION and not is_test())
+        (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+        (user and user.get_access(entity, entity_id) & Permission.Access.OWNER != 0)
 
 
-def has_at_least_admin_role(user) -> bool:
+def has_at_least_admin_role(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
         is_owner(user) or \
-        (user.roles and user.roles & 1 != 0)
+        (user.roles and user.roles & 1 != 0) or \
+        (user and user.get_access(entity, entity_id) & Permission.Access.ADMIN != 0)
 
 
-def has_at_least_editor_role(user) -> bool:
+def has_at_least_editor_role(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
         is_owner(user) or \
         has_at_least_admin_role(user) or \
-        (user.roles and user.roles & 2 != 0)
+        (user.roles and user.roles & 2 != 0) or \
+        (user and user.get_access(entity, entity_id) & Permission.Access.EDITOR != 0)
 
 
-def has_at_least_editor_role_and_notebook_edit_access(user) -> bool:
-    return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and has_at_least_editor_role(user)
+def has_at_least_editor_role_and_notebook_edit_access(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
+    return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and \
+        has_at_least_editor_role(user, entity, entity_id)
 
 
-def has_at_least_editor_role_and_pipeline_edit_access(user) -> bool:
-    return not is_disable_pipeline_edit_access() and has_at_least_editor_role(user)
+def has_at_least_editor_role_and_pipeline_edit_access(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
+    return not is_disable_pipeline_edit_access() and \
+        has_at_least_editor_role(user, entity, entity_id)
 
 
-def has_at_least_viewer_role(user) -> bool:
+def has_at_least_viewer_role(
+    user: User,
+    entity: Permission.Entity = None,
+    entity_id: str = None,
+) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
         is_owner(user) or \
         has_at_least_admin_role(user) or \
         has_at_least_editor_role(user) or \
-        (user.roles and user.roles & 4 != 0)
+        (user.roles and user.roles & 4 != 0) or \
+        (user and user.get_access(entity, entity_id) & Permission.Access.VIEWER != 0)
+
+
+def get_access_for_roles(
+    roles: List[Role],
+    entity: Permission.Entity,
+    entity_id: str = None,
+):
+    access = 0
+    for role in roles:
+        if role:
+            access = access | role.get_access(entity, entity_id=entity_id)
+    return access
 
 
 def parse_cookie_header(cookies_raw):

@@ -1,6 +1,6 @@
-from functools import reduce
 import math
 import re
+from functools import reduce
 
 
 def dig(obj_arg, arr_or_string):
@@ -57,12 +57,12 @@ def ignore_keys_with_blank_values(d):
     return d2
 
 
-def extract(d, keys):
+def extract(d, keys, include_blank_values: bool = False):
     def _build(obj, key):
         val = None
         if key in d:
             val = d[key]
-        if val is not None:
+        if include_blank_values or val is not None:
             obj[key] = val
         return obj
     return reduce(_build, keys, {})
@@ -70,7 +70,7 @@ def extract(d, keys):
 
 def extract_arrays(input_data):
     arr = []
-    for k, v in input_data.items():
+    for _, v in input_data.items():
         if type(v) is list:
             arr.append(v)
     return arr

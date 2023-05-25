@@ -23,7 +23,7 @@ from mage_ai.data_preparation.repo_manager import (
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
+from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
@@ -215,12 +215,20 @@ async def main(
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
         sleep(3)
-        user = User.query.filter(User.owner == True).first()  # noqa: E712
-        if not user:
+
+        # Create new roles on existing users. This should only need to be run once.
+        Role.create_default_roles()
+
+        # Fetch legacy owner user to check if we need to batch update the users with new roles.
+        legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
+
+        default_owner_role = Role.get_role('Owner')
+        owner_users = default_owner_role.users if default_owner_role else []
+        if not legacy_owner_user and len(owner_users) == 0:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
-                    owner=True,
+                    roles_new=[default_owner_role],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
@@ -229,9 +237,14 @@ async def main(
                     email='admin@admin.com',
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
-                    owner=True,
+                    roles_new=[default_owner_role],
                     username='admin',
                 )
+            owner_user = user
+        else:
+            if legacy_owner_user and not legacy_owner_user.roles_new:
+                User.batch_update_user_roles()
+            owner_user = next(iter(owner_users), None) or legacy_owner_user
 
         oauth_client = Oauth2Application.query.filter(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
@@ -242,7 +255,7 @@ async def main(
                 client_id=OAUTH2_APPLICATION_CLIENT_ID,
                 client_type=Oauth2Application.ClientType.PUBLIC,
                 name='frontend',
-                user_id=user.id,
+                user_id=owner_user.id,
             )
 
     # Check scheduler status periodically

@@ -4,7 +4,9 @@ from mage_ai.api.policies.BasePolicy import BasePolicy
 
 
 class SessionPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 SessionPolicy.allow_actions([

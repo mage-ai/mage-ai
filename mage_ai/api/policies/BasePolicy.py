@@ -1,4 +1,9 @@
+import importlib
 from collections.abc import Iterable
+from typing import Tuple, Union
+
+import inflection
+
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
@@ -10,11 +15,11 @@ from mage_ai.api.utils import (
     has_at_least_viewer_role,
     is_owner,
 )
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.orchestration.db.models.oauth import Permission
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS
 from mage_ai.shared.hash import extract
-import importlib
-import inflection
 
 ALL_ACTIONS = 'all'
 
@@ -35,6 +40,10 @@ class BasePolicy():
             self.resources = resource
         else:
             self.resources = [resource]
+
+    @property
+    def entity(self) -> Tuple[Union[Permission.Entity, None], Union[str, None]]:
+        return Permission.Entity.PROJECT, get_repo_path()
 
     @classmethod
     def action_rule(self, action):
@@ -125,13 +134,25 @@ class BasePolicy():
                 'Policy', '')).lower()
 
     def is_owner(self) -> bool:
-        return is_owner(self.current_user)
+        return is_owner(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def has_at_least_admin_role(self) -> bool:
-        return has_at_least_admin_role(self.current_user)
+        return has_at_least_admin_role(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def has_at_least_editor_role(self) -> bool:
-        return has_at_least_editor_role(self.current_user)
+        return has_at_least_editor_role(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def has_at_least_editor_role_and_notebook_edit_access(self) -> bool:
         return has_at_least_editor_role_and_notebook_edit_access(self.current_user)
@@ -140,7 +161,11 @@ class BasePolicy():
         return has_at_least_editor_role_and_pipeline_edit_access(self.current_user)
 
     def has_at_least_viewer_role(self) -> bool:
-        return has_at_least_viewer_role(self.current_user)
+        return has_at_least_viewer_role(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def authorize_action(self, action):
         config = self.__class__.action_rule(action)

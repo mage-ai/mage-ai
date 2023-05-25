@@ -1,12 +1,14 @@
 from datetime import datetime
-from freezegun import freeze_time
-from mage_ai.api.operations import constants
-from mage_ai.authentication.oauth2 import encode_token
-from mage_ai.authentication.ldap import LDAPConnection
-from mage_ai.orchestration.db.models.oauth import User, Oauth2AccessToken
-from mage_ai.tests.api.operations.base import BaseApiTestCase
-from mage_ai.tests.factory import create_user
 from unittest.mock import patch
+
+from freezegun import freeze_time
+
+from mage_ai.api.operations import constants
+from mage_ai.authentication.ldap import LDAPConnection
+from mage_ai.authentication.oauth2 import encode_token
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
+from mage_ai.tests.factory import create_user
 
 
 class SessionOperationTests(BaseApiTestCase):

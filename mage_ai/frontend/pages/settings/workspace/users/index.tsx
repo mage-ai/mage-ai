@@ -189,6 +189,7 @@ function UsersListPage() {
         rows={users.map(({
           email,
           roles_display,
+          roles_new,
           username,
         }: UserType) => [
           <Text bold key="username">
@@ -198,7 +199,7 @@ function UsersListPage() {
             {email}
           </Text>,
           <Text default key="roles">
-            {roles_display}
+            {roles_new && roles_new[0] ? roles_new[0].name : roles_display}
           </Text>,
         ])}
         uuid="pipeline-runs"

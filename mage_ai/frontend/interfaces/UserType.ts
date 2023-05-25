@@ -1,3 +1,5 @@
+import RoleType from './RoleType';
+
 export enum RoleValueEnum {
   ADMIN = 1,
   EDITOR = 2,
@@ -28,7 +30,9 @@ export default interface UserType {
   password?: string;
   password_confirmation?: string;
   password_current?: string;
+  project_access?: number;
   roles?: number;
+  roles_new?: RoleType[];
   roles_display?: string;
   username?: string;
 }

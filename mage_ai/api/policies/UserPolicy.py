@@ -59,6 +59,7 @@ UserPolicy.allow_write([
 
 UserPolicy.allow_write([
     'roles',
+    'roles_new'
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -81,6 +82,7 @@ UserPolicy.allow_write([
     'password',
     'password_confirmation',
     'roles',
+    'roles_new',
     'username',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

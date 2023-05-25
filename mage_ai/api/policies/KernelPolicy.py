@@ -5,7 +5,9 @@ from mage_ai.api.presenters.KernelPresenter import KernelPresenter
 
 
 class KernelPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 KernelPolicy.allow_actions([

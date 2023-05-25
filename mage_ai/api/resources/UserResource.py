@@ -1,9 +1,15 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.api.utils import get_access_for_roles
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
-from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt, verify_password
+from mage_ai.authentication.passwords import (
+    create_bcrypt_hash,
+    generate_salt,
+    verify_password,
+)
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.shared.hash import extract, ignore_keys
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -25,8 +31,7 @@ class UserResource(DatabaseResource):
         )
 
         if user.is_admin:
-            results = results \
-                .filter(User.owner == False).filter(User.roles > 1)     # noqa: E712
+            results = list(filter(lambda user: user.project_access & 3 == 0, results))
 
         return results
 
@@ -40,10 +45,21 @@ class UserResource(DatabaseResource):
 
         error = ApiError.RESOURCE_INVALID.copy()
 
+        role_ids = payload.get('roles_new', [])
+        roles_new = self.check_roles(role_ids)
+
         missing_values = []
+        if len(roles_new) == 0:
+            missing_values.append('roles')
+
+        payload['roles_new'] = roles_new
+
         for key in ['email', 'password']:
             if not payload.get(key):
                 missing_values.append(key)
+
+        if len(roles_new) == 0:
+            missing_values.append('roles')
 
         if len(missing_values) >= 1:
             error.update(
@@ -86,6 +102,7 @@ class UserResource(DatabaseResource):
             'password_hash',
             'password_salt',
             'roles',
+            'roles_new',
             'username',
         ]), user, **kwargs)
 
@@ -105,19 +122,41 @@ class UserResource(DatabaseResource):
     def update(self, payload, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
-        if self.current_user.is_admin:
-            if self.owner:
+        if 'roles_new' in payload:
+            role_ids = payload.get('roles_new', [])
+            roles_new = self.check_roles(role_ids)
+
+            missing_values = []
+            if len(roles_new) == 0:
+                missing_values.append('roles')
+
+            payload['roles_new'] = roles_new
+
+            if len(missing_values) >= 1:
                 error.update(
-                    {'message': 'Admins cannot update users who are Owners.'})
+                    {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
                 raise ApiError(error)
-            elif self.is_admin and self.current_user.id != self.id:
-                error.update(
-                    {'message': 'Admins cannot update users who are Admins.'})
-                raise ApiError(error)
-            elif payload.get('roles') and int(payload.get('roles')) & 1 != 0:
-                error.update(
-                    {'message': 'Admins cannot make other users Admins.'})
-                raise ApiError(error)
+
+            access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
+
+            if self.current_user.is_admin:
+                if self.owner:
+                    error.update(
+                        {'message': 'Admins cannot update users who are Owners.'})
+                    raise ApiError(error)
+                elif self.is_admin and self.current_user.id != self.id:
+                    error.update(
+                        {'message': 'Admins cannot update users who are Admins.'})
+                    raise ApiError(error)
+                elif payload.get('roles') and int(payload.get('roles')) & 1 != 0 or \
+                        access & Permission.Access.ADMIN != 0:
+                    error.update(
+                        {'message': 'Admins cannot make other users Admins.'})
+                    raise ApiError(error)
+                elif access & Permission.Access.OWNER != 0:
+                    error.update(
+                        {'message': 'Admins cannot make other users Owners.'})
+                    raise ApiError(error)
 
         password = payload.get('password')
         if password:
@@ -159,3 +198,23 @@ class UserResource(DatabaseResource):
         oauth_token = self.model_options.get('oauth_token')
         if oauth_token:
             return encode_token(oauth_token.token, oauth_token.expires)
+
+    @classmethod
+    @safe_db_query
+    def check_roles(self, role_ids):
+        missing_ids = []
+        roles_new = []
+        for role_id in role_ids:
+            role = Role.query.get(int(role_id))
+            if role is None:
+                missing_ids.append(role_id)
+            else:
+                roles_new.append(role)
+
+        if len(missing_ids) > 0:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(
+                {'message': f'Roles with ids: {missing_ids} do not exist'})
+            raise ApiError(error)
+
+        return roles_new

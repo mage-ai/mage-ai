@@ -1,11 +1,13 @@
+from typing import Dict, List, Union
+
+import inflection
 from faker import Faker
+
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
 from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
-from typing import Dict, List, Union
-import inflection
 
 
 class BaseApiTestCase(TestCase):
@@ -28,7 +30,7 @@ class BaseApiTestCase(TestCase):
         if 'user' in kwargs:
             user = kwargs['user']
         else:
-            user = User(owner=True)
+            user = User(_owner=True)
 
         return BaseOperation(
             action=kwargs.get('action'),
@@ -138,10 +140,14 @@ class BaseApiTestCase(TestCase):
 
     async def base_test_execute_list(
         self,
-        create_payloads: List[Dict] = [{}],
-        model_fields_to_check: List[str] = [],
+        create_payloads: List[Dict] = None,
+        model_fields_to_check: List[str] = None,
         **kwargs,
     ) -> Dict:
+        if create_payloads is None:
+            create_payloads = [{}]
+        if model_fields_to_check is None:
+            model_fields_to_check = []
         models = []
         for payload in create_payloads:
             response = await self.build_create_operation(payload, **kwargs).execute()
@@ -158,7 +164,8 @@ class BaseApiTestCase(TestCase):
         models = response[self.model_class_name_plural]
         for model in models:
             match = find(
-                lambda m: all([m[field] == model[field] for field in model_fields_to_check]),
+                lambda m, model=model:
+                all([m[field] == model[field] for field in model_fields_to_check]),
                 models,
             )
             self.assertEqual(match, model)

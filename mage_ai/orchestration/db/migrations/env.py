@@ -1,10 +1,10 @@
-from alembic import context
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 import logging
 import os
 import sys
+from logging.config import fileConfig
+
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -30,10 +30,10 @@ sys.path.insert(0, os.path.dirname(
                 # migrations
                 os.path.dirname(os.path.abspath(__file__)))))))
 
-from mage_ai.orchestration.db.models.base import Base  # noqa: E402
 import mage_ai.orchestration.db.models.oauth  # noqa: E402, F401
 import mage_ai.orchestration.db.models.schedules  # noqa: E402, F401
 import mage_ai.orchestration.db.models.secrets  # noqa: E402, F401
+from mage_ai.orchestration.db.models.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
 

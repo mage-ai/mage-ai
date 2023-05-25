@@ -1,16 +1,18 @@
+import logging
+import os
+
+import sqlalchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
+
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
     DB_PASS,
-    DB_USER
+    DB_USER,
 )
 from mage_ai.shared.environments import is_dev, is_test
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-import logging
-import os
-import sqlalchemy
 
 DB_RETRY_COUNT = 2
 TEST_DB = 'test.db'
@@ -40,7 +42,7 @@ elif not db_connection_url:
             # For backward compatiblility
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
         else:
-            # For new projects, create mage-ai.db in variables idr
+            # For new projects, create mage-ai.db in variables dir
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
         db_kwargs['connect_args']['check_same_thread'] = False
 
