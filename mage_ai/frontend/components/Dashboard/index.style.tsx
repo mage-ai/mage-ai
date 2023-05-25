@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import Spacing from '@oracle/elements/Spacing';
@@ -30,7 +30,9 @@ type VerticalNavigationStyleProps = {
   showMore?: boolean;
 };
 
-const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps>`
+const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps & {
+  visible?: boolean;
+}>`
   height: calc(100% - ${HEADER_HEIGHT}px);
 
   ${props => `
@@ -55,7 +57,7 @@ const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps
     }
   }
 
-  ${props => props.showMore && `
+  ${props => props.showMore && props.visible && `
     &:hover {
       animation: animate-in 100ms linear forwards;
       position: fixed;
@@ -63,7 +65,7 @@ const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps
     }
   `}
 
-  ${props => props.showMore && props.aligned === 'right' && `
+  ${props => props.showMore && props.visible && props.aligned === 'right' && `
     &:hover {
       right: 0;
       top: ${HEADER_HEIGHT}px;
@@ -79,15 +81,31 @@ export function VerticalNavigationStyle({
 }: {
   children: any;
 } & VerticalNavigationStyleProps) {
+  const timeout = useRef(null);
   const [visible, setVisible] = useState<boolean>(false);
 
   return (
     <VerticalNavigationStyleComponent
       aligned={aligned}
       borderless={borderless && !visible}
-      onMouseEnter={showMore ? () => setVisible(true) : null}
-      onMouseLeave={showMore ? () => setVisible(false) : null}
+      onMouseEnter={showMore
+        ? () => {
+          clearTimeout(timeout.current);
+          timeout.current = setTimeout(() => {
+            setVisible(true);
+          }, 300);
+        }
+        : null
+      }
+      onMouseLeave={showMore
+        ? () => {
+          clearTimeout(timeout.current);
+          setVisible(false);
+        }
+        : null
+      }
       showMore={showMore}
+      visible={visible}
     >
       <Spacing
         px={showMore && visible ? 0 : PADDING_UNITS}
