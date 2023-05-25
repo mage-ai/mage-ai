@@ -2,6 +2,7 @@ import traceback
 from typing import Dict
 
 import dask.dataframe as dd
+import numpy
 import pandas as pd
 import simplejson
 
@@ -60,6 +61,8 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
         val = row[column]
         if val is not None and type(val) is str:
             row[column] = simplejson.loads(val)
+        elif val is not None and type(val) is numpy.ndarray and column_type == list.__name__:
+            row[column] = list(val)
 
     return row
 
