@@ -162,7 +162,7 @@ function LogsTable({
           goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
           setSelectedLog(logUUID ? log : null);
         }}
-        selected={query?.[LOG_UUID_PARAM] === uuid}
+        selected={query?.[LOG_UUID_PARAM] && query?.[LOG_UUID_PARAM] === uuid}
         style={{
           ...style,
         }}
