@@ -148,7 +148,6 @@ function UserEditForm({
       const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
         uuid,
       }) => uuid);
-      keys.push('roles_new');
       // @ts-ignore
       setProfile(selectKeys(user, keys));
     }
@@ -188,10 +187,12 @@ function UserEditForm({
     const roles_new = profile?.roles_new;
     if (roles_new && roles_new.length > 0) {
       return roles_new[0]?.id;
+    } else if (user?.roles_new && user?.roles_new.length > 0) {
+      return user.roles_new[0]?.id;
     } else {
       return profile?.owner ? RoleValueEnum.OWNER : profile?.roles;
     }
-  }, [profile]);
+  }, [profile, user]);
 
   return (
     <>
@@ -315,8 +316,11 @@ function UserEditForm({
               onClick={() => {
                 const updated_profile = {
                   ...profile,
-                  roles_new: profile.roles_new?.map(({ id }: RoleType) => id),
                 };
+                if ('roles_new' in updated_profile) {
+                  // @ts-ignore
+                  updated_profile['roles_new'] = profile.roles_new?.map(({ id }: RoleType) => id);
+                }
                 // @ts-ignore
                 updateUser({ user: updated_profile });
               }}
