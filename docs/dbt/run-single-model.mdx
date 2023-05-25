@@ -102,7 +102,9 @@ string values. Single quotes surrounding the variables object are optional.
 variable name. See below for examples.
 
 Examples of YAML dbt code block content (note the syntax for the variables object):
-`--select demo/models --vars '{"demo_key": "demo_value", "date": 20230101}'`
-`--select demo/models --vars {"demo_key":"demo_value","date":20230101}`
-`--select demo/models --vars '{"global_var": {{ test_global_var }}, "env_var": {{ test_env_var }}}'`
-`--select demo/models --vars {"refresh":{{page_refresh}},"env_var":{{env}}}`
+```
+--select demo/models --vars '{"demo_key": "demo_value", "date": 20230101}'
+--select demo/models --vars {"demo_key":"demo_value","date":20230101}
+--select demo/models --vars '{"global_var": {{ test_global_var }}, "env_var": {{ test_env_var }}}'
+--select demo/models --vars {"refresh":{{page_refresh}},"env_var":{{env}}}
+```
