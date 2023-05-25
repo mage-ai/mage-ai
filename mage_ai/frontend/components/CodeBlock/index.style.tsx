@@ -237,8 +237,8 @@ export const BlockDividerInner = styled.div`
 export const CodeHelperStyle = styled.div<{
   normalPadding?: boolean;
 }>`
-  margin-bottom: ${PADDING_UNITS * UNIT}px;
-  padding-bottom: ${UNIT}px;
+  margin-bottom: ${1 * UNIT}px;
+  padding-bottom: ${1 * UNIT}px;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};

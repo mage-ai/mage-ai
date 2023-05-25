@@ -134,8 +134,6 @@ export const getMoreActionsItems = (
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
 
-  console.log(block)
-
   if (![
     BlockTypeEnum.CALLBACK,
     BlockTypeEnum.EXTENSION,

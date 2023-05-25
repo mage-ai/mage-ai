@@ -477,7 +477,10 @@ class Block:
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
 
-        if BlockType.DBT != block_type or BlockLanguage.YAML == language:
+        # Don’t create a file if block is replicated from another block
+        if not replicated_block and \
+                (BlockType.DBT != block_type or BlockLanguage.YAML == language):
+
             block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
             block_dir_path = os.path.join(repo_path, block_directory)
             if not os.path.exists(block_dir_path):
@@ -1390,9 +1393,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = self.content
             if self.callback_block is not None:
                 data['callback_content'] = self.callback_block.content
+
         if include_outputs:
             data['outputs'] = self.outputs
-            if check_if_file_exists:
+
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1423,7 +1428,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
-            if check_if_file_exists:
+
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1982,6 +1988,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
+            TAG_REPLICATION,
         )
 
         arr = []
@@ -1994,6 +2001,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if should_reduce_output(self):
             arr.append(TAG_REDUCE_OUTPUT)
+
+        if self.replicated_block:
+            arr.append(TAG_REPLICATION)
 
         return arr
 

@@ -248,6 +248,7 @@ function CodeBlock({
     error: blockError,
     has_callback: hasCallback,
     language: blockLanguage,
+    replicated_block: replicatedBlockUUID,
     type: blockType,
     upstream_blocks: blockUpstreamBlocks = [],
     uuid: blockUUID,
@@ -730,7 +731,13 @@ function CodeBlock({
     savePipelineContent,
   ]);
 
-  const codeEditorEl = useMemo(() => (
+  const replicatedBlock =
+    useMemo(() => replicatedBlockUUID && blocksMapping?.[replicatedBlockUUID], [
+      blocksMapping,
+      replicatedBlockUUID,
+    ]);
+
+  const codeEditorEl = useMemo(() => !replicatedBlockUUID && (
     <>
       <CodeEditor
         autoHeight
@@ -816,6 +823,7 @@ function CodeBlock({
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
+    replicatedBlockUUID,
     runBlockAndTrack,
     selected,
     setContent,
@@ -1892,6 +1900,7 @@ function CodeBlock({
                 && !codeCollapsed
                 && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
                 && !isStreamingPipeline
+                && !replicatedBlockUUID
                 && (
                 <CodeHelperStyle normalPadding>
                   <Spacing mr={1}>
@@ -2001,7 +2010,37 @@ function CodeBlock({
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
-                      ? codeEditorEl
+                      ? replicatedBlock
+                        ? (<Spacing px={1}>
+                          <Text monospace muted>
+                            Replicated from block <Link
+                              color={getColorsForBlockType(
+                                replicatedBlock?.type,
+                                { blockColor: replicatedBlock?.color, theme: themeContext },
+                              ).accent}
+                              onClick={(e) => {
+                                pauseEvent(e);
+
+                                const refBlock =
+                                  blockRefs?.current?.[`${replicatedBlock?.type}s/${replicatedBlock?.uuid}.py`];
+                                refBlock?.current?.scrollIntoView();
+                              }}
+                              preventDefault
+                            >
+                              <Text
+                                color={getColorsForBlockType(
+                                  replicatedBlock?.type,
+                                  { blockColor: replicatedBlock?.color, theme: themeContext },
+                                ).accent}
+                                inline
+                                monospace
+                              >
+                                {replicatedBlock?.uuid}
+                              </Text>
+                            </Link>
+                          </Text>
+                        </Spacing>)
+                        : codeEditorEl
                       : markdownEl
                     )
                     : (
