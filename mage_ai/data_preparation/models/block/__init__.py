@@ -1375,7 +1375,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             has_callback=self.has_callback,
             name=self.name,
             language=language,
-            replicated_block=self.replicated_block,
             status=format_enum(self.status) if self.status else None,
             type=format_enum(self.type) if self.type else None,
             upstream_blocks=self.upstream_block_uuids,
@@ -1384,6 +1383,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_callback_blocks:
             data['callback_blocks'] = self.callback_block_uuids
+
+        if self.replicated_block:
+            data['replicated_block'] = self.replicated_block
 
         return data
 
