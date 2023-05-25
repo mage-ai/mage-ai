@@ -3,6 +3,7 @@
 .gitkeep
 .log
 .logs/
+.mage_temp_profiles
 .preferences.yaml
 .variables/
 __pycache__/
