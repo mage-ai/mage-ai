@@ -280,6 +280,7 @@ def start_server(
     project: str = None,
     manage: bool = False,
     dbt_docs: bool = False,
+    instance_type: str = 'server_and_scheduler',
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -300,6 +301,7 @@ def start_server(
     if dbt_docs:
         run_docs_server()
     else:
+        run_web_server = True
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
             os.environ[MANAGE_ENV_VAR] = '1'
@@ -308,22 +310,27 @@ def start_server(
                 database_manager.run_migrations()
             except Exception:
                 traceback.print_exc()
-        else:
+        elif instance_type == 'server_and_scheduler':
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
+        elif instance_type == 'scheduler':
+            # Start a subprocess for scheduler
+            scheduler_manager.start_scheduler(foreground=True)
+            run_web_server = False
 
-        if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
-            options.logging = SERVER_VERBOSITY
-        enable_pretty_logging()
+        if run_web_server:
+            if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
+                options.logging = SERVER_VERBOSITY
+            enable_pretty_logging()
 
-        # Start web server
-        asyncio.run(
-            main(
-                host=host,
-                port=port,
-                project=project,
+            # Start web server
+            asyncio.run(
+                main(
+                    host=host,
+                    port=port,
+                    project=project,
+                )
             )
-        )
 
 
 if __name__ == '__main__':
@@ -333,6 +340,7 @@ if __name__ == '__main__':
     parser.add_argument('--project', type=str, default=None)
     parser.add_argument('--manage-instance', type=str, default='0')
     parser.add_argument('--dbt-docs-instance', type=str, default='0')
+    parser.add_argument('--instance-type', type=str, default='server_and_scheduler')
     args = parser.parse_args()
 
     host = args.host
@@ -340,6 +348,7 @@ if __name__ == '__main__':
     project = args.project
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
+    instance_type = args.instance_type
 
     start_server(
         host=host,
@@ -347,4 +356,5 @@ if __name__ == '__main__':
         project=project,
         manage=manage,
         dbt_docs=dbt_docs,
+        instance_type=instance_type,
     )

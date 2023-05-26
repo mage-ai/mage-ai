@@ -46,6 +46,7 @@ def start(
     port: str = typer.Option('6789', help='specify the port.'),
     manage_instance: str = typer.Option('0', help=''),
     dbt_docs_instance: str = typer.Option('0', help=''),
+    instance_type: str = typer.Option('server_and_scheduler', help='specify the instance type.')
 ):
     """
     Start Mage server and UI.
@@ -64,6 +65,7 @@ def start(
         project=project_path,
         manage=manage_instance == "1",
         dbt_docs=dbt_docs_instance == "1",
+        instance_type=instance_type,
     )
 
 
