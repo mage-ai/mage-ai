@@ -235,7 +235,7 @@ class DBTBlock(Block):
 
                     print('Compiled snapshot query string:')
                     for line in query_string.split('\n'):
-                        print(f'|    {query_string}')
+                        print(f'|    {line.strip()}')
             else:
                 run_results_file_path = os.path.join(
                     project_full_path,
