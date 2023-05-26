@@ -486,15 +486,16 @@ function PipelineDetail({
           <CodeBlock
             addNewBlock={(
               b: BlockRequestPayloadType,
-              downstreamBlocks?: string[],
+              downstreamBlocks?: BlockType[],
             ) => {
               setTextareaFocused(true);
               const onCreateCallback = (block: BlockType) => {
                 if (downstreamBlocks?.length === 1) {
-                  const downstreamBlockUUID = downstreamBlocks[0];
+                  const downstreamBlockUUID = downstreamBlocks[0]?.uuid;
+                  const upstreamsOfDownstreamBlock = downstreamBlocks[0]?.upstream_blocks || [];
                   updateBlock({
                     block: { uuid: downstreamBlockUUID },
-                    upstreamBlocks: [block.uuid],
+                    upstreamBlocks: [block.uuid, ...upstreamsOfDownstreamBlock],
                   });
                 }
                 setSelectedBlock?.(block);

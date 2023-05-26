@@ -136,7 +136,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 export const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
 
 type CodeBlockProps = {
-  addNewBlock?: (block: BlockType, downstreamBlocks?: string[]) => Promise<any>;
+  addNewBlock?: (block: BlockType, downstreamBlocks?: BlockType[]) => Promise<any>;
   addNewBlockMenuOpenIdx?: number;
   allBlocks: BlockType[];
   allowCodeBlockShortcuts?: boolean;
@@ -2109,7 +2109,17 @@ function CodeBlock({
                     let content = newBlock.content;
                     let configuration = newBlock.configuration;
                     const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
-                    const downstreamBlocks = getDownstreamBlockUuids(block, newBlock);
+                    const downstreamBlockUUIDs = getDownstreamBlockUuids(pipeline, block, newBlock);
+                    const downstreamBlocks = downstreamBlockUUIDs.map(uuid => {
+                      const currDownstreamBlock = { ...(blocksMapping[uuid] || {}) };
+                      const upstreamsOfDownstreamBlock = currDownstreamBlock.upstream_blocks;
+                      if (upstreamsOfDownstreamBlock) {
+                        currDownstreamBlock.upstream_blocks = upstreamsOfDownstreamBlock.filter(
+                          upstreamUUID => upstreamUUID !== blockUUID,
+                        );
+                      }
+                      return currDownstreamBlock;
+                    });
 
                     if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(blockType)
                       && BlockTypeEnum.SCRATCHPAD === newBlock.type
