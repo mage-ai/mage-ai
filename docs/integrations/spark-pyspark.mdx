@@ -162,7 +162,7 @@ spark_config:
 ```
 
 ### 4. Run PySpark code in Mage
-When Mage is running, you can create a "Standard (batch)" pipeline, and add a block,
+When Mage is running, you can create a "Standard (batch)" pipeline (`python` kernel), and add a block,
 then write PySpark code using the Spark session via `kwargs['spark']`, e.g.,
 
 ```python
@@ -181,6 +181,68 @@ spark_config = SparkConfig.load(
 spark = get_spark_session(spark_config)
 print(spark.sql('select 1'))
 ```
+
+---
+
+## Hadoop and Yarn cluster for Spark
+
+### 1. Build Mage docker image with a Hadoop Yarn environment
+* Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/hadoop/Dockerfile) for Mage with Hadoop environment.
+* Build the docker image with the command `docker build -t mage_hadoop .`
+
+
+### 2. Start Mage with the following command in your terminal using docker
+
+```bash
+docker run -it --name mage_hadoop -p 6789:6789 -v $(pwd):/home/src mage_hadoop \
+  /app/run_app_with_hadoop.sh mage start demo_project
+```
+Notes
+* `demo_project` is the name of your project, you can change it to anything you want
+
+### 3. Run PySpark code in Mage using Hadoop Yarn
+
+* Change the `metadata.yaml` file in the main pipeline folder to include the following Spark settings:
+```yaml
+spark_config:
+  # Application name
+  app_name: 'my spark yarn app'
+  # Master URL to connect to
+  # e.g., spark_master: 'spark://host:port', or spark_master: 'yarn'
+  spark_master: 'yarn'
+  # Executor environment variables
+  # e.g., executor_env: {'PYTHONPATH': '/home/path'}
+  executor_env: {}
+  # Jar files to be uploaded to the cluster and added to the classpath
+  # e.g., spark_jars: ['/home/path/example1.jar']
+  spark_jars: []
+  # Path where Spark is installed on worker nodes,
+  # e.g. spark_home: '/usr/lib/spark'
+  spark_home: null
+  # List of key-value pairs to be set in SparkConf
+  # e.g., others: {'spark.executor.memory': '4g', 'spark.executor.cores': '2'}
+  others: {}
+```
+* Create a new `Standalone (batch)` pipeline and add a `Data loader`, then run it with the following code:
+```python
+@data_loader
+def load_data(*args, **kwargs):
+    """
+    Template code for loading data from any source.
+
+    Returns:
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
+    """
+    # Specify your data loading logic here
+    spark = kwargs.get('spark')
+    spark_conf = spark.sparkContext.getConf()
+    print('#' * 40)
+    print(spark_conf.toDebugString())
+    print('#' * 40)
+    print(spark.sql('select 1'))
+    return {}
+```
+* Verify that the added Spark code is running through a Yarn master.
 
 ---
 
