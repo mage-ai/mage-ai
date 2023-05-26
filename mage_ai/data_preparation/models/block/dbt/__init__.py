@@ -1,8 +1,9 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.utils import (
     build_command_line_arguments,
-    create_upstream_tables,
+    compiled_query_string,
     create_temporary_profile,
+    create_upstream_tables,
     fetch_model_data,
     load_profiles_async,
     parse_attributes,
@@ -38,6 +39,7 @@ class DBTBlock(Block):
     async def metadata_async(self) -> Dict:
         project = None
         projects = {}
+        block_metadata = {}
 
         if self.configuration.get('file_path'):
             attributes_dict = parse_attributes(self)
@@ -56,6 +58,8 @@ class DBTBlock(Block):
                 target=profiles.get('target'),
                 targets=targets,
             )
+
+            block_metadata['snapshot'] = attributes_dict['snapshot']
         else:
             dbt_dir = os.path.join(get_repo_path(), 'dbt')
             project_names = [
@@ -75,6 +79,7 @@ class DBTBlock(Block):
                 )
 
         return dict(dbt=dict(
+            block=block_metadata,
             project=project,
             projects=projects,
         ))
@@ -85,11 +90,27 @@ class DBTBlock(Block):
         global_vars=None,
         **kwargs,
     ):
-        run_dbt_tests(
-            block=self,
-            build_block_output_stdout=build_block_output_stdout,
-            global_vars=global_vars,
-        )
+        attributes_dict = parse_attributes(self)
+        snapshot = attributes_dict['snapshot']
+
+        # if not snapshot:
+        #     run_dbt_tests(
+        #         block=self,
+        #         build_block_output_stdout=build_block_output_stdout,
+        #         global_vars=global_vars,
+        #     )
+
+    def tags(self) -> List[str]:
+        arr = super().tags()
+
+        attributes_dict = parse_attributes(self)
+        if attributes_dict['snapshot']:
+            from mage_ai.data_preparation.models.block.constants import (
+                TAG_DBT_SNAPSHOT,
+            )
+            arr.append(TAG_DBT_SNAPSHOT)
+
+        return arr
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
         upstream_blocks_previous = self.upstream_blocks
@@ -167,23 +188,27 @@ class DBTBlock(Block):
 
         print(f'dbt {dbt_command} \\\n{args_string}\n')
 
+        snapshot = dbt_command == 'snapshot'
+
         if is_sql and test_execution:
             subprocess.run(
                 cmds,
                 preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                 stdout=stdout,
             )
-            df = query_from_compiled_sql(
-                self,
-                dbt_profile_target,
-                limit=self.configuration.get('limit'),
-            )
-            self.store_variables(
-                dict(df=df),
-                execution_partition=execution_partition,
-                override_outputs=True,
-            )
-            outputs = [df]
+
+            if not snapshot:
+                df = query_from_compiled_sql(
+                    self,
+                    dbt_profile_target,
+                    limit=self.configuration.get('limit'),
+                )
+                self.store_variables(
+                    dict(df=df),
+                    execution_partition=execution_partition,
+                    override_outputs=True,
+                )
+                outputs = [df]
         elif not test_execution:
             proc = subprocess.Popen(
                 cmds,
@@ -199,18 +224,27 @@ class DBTBlock(Block):
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not test_execution:
-            run_results_file_path = os.path.join(project_full_path, 'target', 'run_results.json')
-            with open(run_results_file_path, 'r') as f:
-                try:
-                    run_results = json.load(f)
+            attributes_dict = parse_attributes(self)
+            target_path = attributes_dict['target_path']
+            file_path_with_project_name = attributes_dict['file_path_with_project_name']
 
-                    print(f'\n{json.dumps(run_results, indent=2)}\n')
+            if snapshot:
+                query_string = compiled_query_string(self)
+                print('Compiled snapshot query string:')
+                print(f'\n{query_string}\n')
+            else:
+                run_results_file_path = os.path.join(project_full_path, target_path, 'run_results.json')
+                with open(run_results_file_path, 'r') as f:
+                    try:
+                        run_results = json.load(f)
 
-                    for result in run_results['results']:
-                        if 'error' == result['status']:
-                            raise Exception(result['message'])
-                except json.decoder.JSONDecodeError:
-                    print(f'WARNING: no run results found at {run_results_file_path}.')
+                        print(f'\n{json.dumps(run_results, indent=2)}\n')
+
+                        for result in run_results['results']:
+                            if 'error' == result['status']:
+                                raise Exception(result['message'])
+                    except json.decoder.JSONDecodeError:
+                        print(f'WARNING: no run results found at {run_results_file_path}.')
 
             if is_sql and dbt_command in ['build', 'run']:
                 limit = 1000

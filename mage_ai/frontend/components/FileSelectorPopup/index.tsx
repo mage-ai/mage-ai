@@ -51,12 +51,11 @@ function FileSelectorPopup({
         const {
           children = [],
         } = folder;
-        const modelsFolders = children.filter(({ name }) => 'models' === name);
 
-        if (modelsFolders.length >= 1) {
+        if (children.length >= 1) {
           projects.push({
             ...folder,
-            children: modelsFolders,
+            children,
           });
         }
       });
@@ -81,8 +80,8 @@ function FileSelectorPopup({
             monospace
           >
             {creatingNewDBTModel
-              ? 'Create new DBT model'
-              : 'Select DBT model file'
+              ? 'Create new dbt model'
+              : 'Select dbt model or snapshot file'
             }
           </Text>
         </Flex>

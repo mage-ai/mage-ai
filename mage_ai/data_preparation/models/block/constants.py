@@ -25,3 +25,5 @@ TAG_DYNAMIC = 'dynamic'
 TAG_DYNAMIC_CHILD = 'dynamic_child'
 TAG_REDUCE_OUTPUT = 'reduce_output'
 TAG_REPLICA = 'replica'
+
+TAG_DBT_SNAPSHOT = 'snapshot'

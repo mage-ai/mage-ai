@@ -302,7 +302,7 @@ function CodeBlock({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
-  const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
+  const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT(block)[0]);
 
   const [collected, drag] = useDrag(() => ({
     collect: (monitor) => ({
@@ -861,7 +861,7 @@ function CodeBlock({
           }}
           selectedTabUUID={selectedTab?.uuid}
           small
-          tabs={TABS_DBT}
+          tabs={TABS_DBT(block)}
         />
       </Spacing>
     )
@@ -1448,7 +1448,7 @@ function CodeBlock({
                       </FlexContainer>
                     </Flex>
 
-                    {BlockLanguageEnum.YAML !== blockLanguage && (
+                    {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
                       <FlexContainer alignItems="center">
                         <Tooltip
                           appearBefore

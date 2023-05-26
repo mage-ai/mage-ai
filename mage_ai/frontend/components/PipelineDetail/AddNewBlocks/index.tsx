@@ -338,7 +338,7 @@ function AddNewBlocks({
                     uuid: 'dbt/new_model',
                   },
                   {
-                    label: () => 'Single model (from file)',
+                    label: () => 'Single model or snapshot (from file)',
                     onClick: () => onClickAddSingleDBTModel?.(blockIdx),
                     uuid: 'dbt/single_model',
                   },

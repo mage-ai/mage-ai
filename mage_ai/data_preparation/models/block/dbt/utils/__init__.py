@@ -50,6 +50,13 @@ def parse_attributes(block) -> Dict:
     path_parts = file_path.split(os.sep)
     project_folder_name = path_parts[0]
     filename = path_parts[-1]
+
+    first_folder_name = None
+    if len(path_parts) >= 3:
+        # e.g. demo_project/models/users.sql will be
+        # ['demo_project', 'models', 'users.sql']
+        first_folder_name = path_parts[1]
+
     model_name = None
     file_extension = None
 
@@ -70,6 +77,7 @@ def parse_attributes(block) -> Dict:
     project_full_path = os.path.join(get_repo_path(), 'dbt', project_folder_name)
     dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
 
+    dbt_project = None
     project_name = project_folder_name
     profile_name = project_folder_name
     with open(dbt_project_full_path, 'r') as f:
@@ -96,24 +104,32 @@ def parse_attributes(block) -> Dict:
 
     file_path_with_project_name = os.path.join(project_name, *path_parts[1:])
 
+    snapshot_paths = dbt_project.get('snapshot-paths', [])
+    snapshot = first_folder_name and first_folder_name in snapshot_paths
+
     return dict(
+        dbt_project=dbt_project,
         dbt_project_full_path=dbt_project_full_path,
         file_extension=file_extension,
         file_path=file_path,
         file_path_with_project_name=file_path_with_project_name,
         filename=filename,
+        first_folder_name=first_folder_name,
         full_path=full_path,
         model_name=model_name,
         models_folder_path=models_folder_path,
         profile=profile,
         profile_name=profile_name,
         profiles_full_path=profiles_full_path,
+        project_folder_name=project_folder_name,
         project_full_path=project_full_path,
         project_name=project_name,
+        snapshot=snapshot,
         source_name=source_name,
         sources_full_path=sources_full_path,
         sources_full_path_legacy=sources_full_path_legacy,
         table_name=table_name,
+        target_path=dbt_project.get('target-path', 'target'),
     )
 
 
@@ -813,10 +829,14 @@ def interpolate_refs_with_table_names(
 def compiled_query_string(block: Block, error_if_not_found: bool = False) -> str:
     attr = parse_attributes(block)
 
-    project_full_path = attr['project_full_path']
+    dbt_project = attr['dbt_project']
     file_path_with_project_name = attr['file_path_with_project_name']
+    project_full_path = attr['project_full_path']
+    target_path = attr['target_path']
+    snapshot = attr['snapshot']
 
-    file_path = os.path.join(project_full_path, 'target', 'compiled', file_path_with_project_name)
+    folder_name = 'run' if snapshot else 'compiled'
+    file_path = os.path.join(project_full_path, target_path, folder_name, file_path_with_project_name)
 
     if not os.path.exists(file_path):
         if error_if_not_found:
@@ -942,21 +962,27 @@ def build_command_line_arguments(
 
     if BlockLanguage.SQL == block.language:
         attr = parse_attributes(block)
-        project_name = attr['project_name']
+
+        dbt_project = attr['dbt_project']
         file_path = attr['file_path']
-        project_full_path = attr['project_full_path']
         full_path = attr['full_path']
+        project_full_path = attr['project_full_path']
+        project_name = attr['project_name']
+        snapshot = attr['snapshot']
+        target_path = attr['target_path']
+
         path_to_model = full_path.replace(f'{project_full_path}{os.sep}', '')
 
-        if test_execution:
+        if snapshot:
+            dbt_command = 'snapshot'
+        elif test_execution:
             dbt_command = 'compile'
 
-            with open(os.path.join(project_full_path, 'dbt_project.yml')) as f:
-                dbt_project = yaml.safe_load(f)
-                target_path = dbt_project['target-path']
-                path = os.path.join(project_full_path, target_path, 'compiled', file_path)
-                if os.path.exists(path):
-                    os.remove(path)
+            # Remove previously compiled SQL so that the upcoming compile command creates a fresh
+            # compiled SQL file.
+            path = os.path.join(project_full_path, target_path, 'compiled', file_path)
+            if os.path.exists(path):
+                os.remove(path)
 
         if runtime_configuration:
             prefix = runtime_configuration.get('prefix')
@@ -1147,19 +1173,8 @@ def run_dbt_tests(
         raise Exception('DBT test failed.')
 
 
-def get_dbt_project_settings(block: 'Block') -> Dict:
-    attributes_dict = parse_attributes(block)
-    dbt_project_full_path = attributes_dict['dbt_project_full_path']
-
-    config = {}
-    with open(dbt_project_full_path, 'r') as f:
-        config = yaml.safe_load(f)
-
-    return config
-
-
 def get_model_configurations_from_dbt_project_settings(block: 'Block') -> Dict:
-    dbt_project = get_dbt_project_settings(block)
+    dbt_project = parse_attributes(block)['dbt_project']
 
     if not dbt_project.get('models'):
         return

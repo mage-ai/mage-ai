@@ -6,6 +6,7 @@ import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
 export enum TagEnum {
+  DBT_SNAPSHOT = 'snapshot',
   DYNAMIC = 'dynamic',
   DYNAMIC_CHILD = 'dynamic_child',
   REDUCE_OUTPUT = 'reduce_output',
@@ -178,6 +179,9 @@ export default interface BlockType {
   language?: BlockLanguageEnum;
   metadata?: {
     dbt?: {
+      block?: {
+        snapshot?: boolean;
+      };
       lineage?: BlockType[];
       project: string;
       projects: {
