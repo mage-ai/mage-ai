@@ -94,6 +94,7 @@ BlockPolicy.allow_write([
     'name',
     'outputs',
     'replicated_block',
+    'retry_config',
     'status',
     'tags',
     'tap_stream_id',
