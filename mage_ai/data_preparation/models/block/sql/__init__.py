@@ -487,8 +487,8 @@ def execute_sql_code(
             trino.create_upstream_block_tables(
                 loader,
                 block,
-                **create_upstream_block_tables_kwargs,
                 unique_table_name_suffix=unique_table_name_suffix,
+                **create_upstream_block_tables_kwargs,
             )
 
             query_string = trino.interpolate_input_data(
@@ -496,6 +496,7 @@ def execute_sql_code(
                 query,
                 loader,
                 unique_table_name_suffix=unique_table_name_suffix,
+                **interpolate_input_data_kwargs,
             )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
