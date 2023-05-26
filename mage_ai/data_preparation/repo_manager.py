@@ -1,14 +1,16 @@
+import os
+import sys
+import traceback
 from enum import Enum
+from typing import Dict
+
+import ruamel.yaml
+import yaml
 from jinja2 import Template
+
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.environments import is_test
-from typing import Dict
-import os
-import ruamel.yaml
-import sys
-import traceback
-import yaml
 
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
 if is_test():
@@ -78,6 +80,7 @@ class RepoConfig:
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
+            self.retry_config = repo_config.get('retry_config')
             self.spark_config = repo_config.get('spark_config')
 
             self.s3_bucket = None

@@ -229,6 +229,7 @@ class Block:
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
         replicated_block: str = None,
+        retry_config: Dict = None,
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
@@ -248,6 +249,7 @@ class Block:
         self.color = block_color
         self.configuration = configuration
         self.has_callback = has_callback
+        self.retry_config = retry_config
 
         self._outputs = None
         self._outputs_loaded = False
@@ -1376,6 +1378,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             has_callback=self.has_callback,
             name=self.name,
             language=language,
+            retry_config=self.retry_config,
             status=format_enum(self.status) if self.status else None,
             type=format_enum(self.type) if self.type else None,
             upstream_blocks=self.upstream_block_uuids,

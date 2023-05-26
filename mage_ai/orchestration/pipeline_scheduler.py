@@ -196,7 +196,7 @@ class PipelineScheduler:
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
-        @retry(retries=3, delay=5)
+        @retry(retries=2, delay=5)
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
@@ -226,7 +226,7 @@ class PipelineScheduler:
 
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
-        @retry(retries=3, delay=5)
+        @retry(retries=2, delay=5)
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
@@ -247,7 +247,7 @@ class PipelineScheduler:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         metrics = block_run.metrics or {}
 
-        @retry(retries=3, delay=5)
+        @retry(retries=2, delay=5)
         def update_status():
             block_run.update(
                 metrics=metrics,
@@ -709,7 +709,8 @@ def run_integration_pipeline(
                         tags_updated,
                         pipeline_type=PipelineType.INTEGRATION,
                         verify_output=False,
-                        retry_count=1,  # Not retry for data integration pipeline blocks
+                        # Not retry for data integration pipeline blocks
+                        retry_config=dict(retries=0),
                         runtime_arguments=runtime_arguments,
                         schedule_after_complete=False,
                         template_runtime_configuration=template_runtime_configuration,
@@ -757,7 +758,7 @@ def run_block(
     input_from_output: Dict = None,
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
-    retry_count: int = 3,
+    retry_config: Dict = None,
     runtime_arguments: Dict = None,
     schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
@@ -789,10 +790,15 @@ def run_block(
     block_run_data = block_run.metrics or {}
     dynamic_block_index = block_run_data.get('dynamic_block_index', None)
     dynamic_upstream_block_uuids = block_run_data.get('dynamic_upstream_block_uuids', None)
-
     execution_partition = pipeline_run.execution_partition
-
     block_uuid = block_run.block_uuid
+    block = pipeline.get_block(block_uuid)
+
+    if retry_config is None:
+        retry_config = merge_dict(
+            get_repo_config(get_repo_path()).retry_config or dict(),
+            block.retry_config or dict(),
+        )
 
     # If there are upstream blocks that were dynamically created, and if any of them are configured
     # to reduce their output, we must update the dynamic_upstream_block_uuids to include all
@@ -866,7 +872,7 @@ def run_block(
         input_from_output=input_from_output,
         verify_output=verify_output,
         pipeline_run_id=pipeline_run_id,
-        retry_count=retry_count,
+        retry_config=retry_config,
         runtime_arguments=runtime_arguments,
         template_runtime_configuration=template_runtime_configuration,
         dynamic_block_index=dynamic_block_index,

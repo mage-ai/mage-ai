@@ -20,6 +20,7 @@ class BlockPresenter(BasePresenter):
         'metadata',
         'name',
         'replicated_block',
+        'retry_config',
         'status',
         'type',
         'upstream_blocks',

@@ -1,18 +1,18 @@
+import os
+from unittest.mock import patch
+
+import pandas as pd
 from async_timeout import asyncio
 from faker import Faker
+from pandas.testing import assert_frame_equal
+
 # from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
-from mage_ai.data_preparation.models.block.errors import (
-    HasDownstreamDependencies,
-)
+from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
-import os
-import pandas as pd
 
 
 class BlockTest(DBTestCase):
@@ -374,6 +374,7 @@ def on_failure_callback(**kwargs):
             has_callback=False,
             language='sql',
             name='test_transformer_2',
+            retry_config=None,
             status='not_executed',
             type='transformer',
             upstream_blocks=[],
@@ -389,6 +390,7 @@ def on_failure_callback(**kwargs):
             has_callback=False,
             language='python',
             name='test_data_exporter',
+            retry_config=None,
             status='not_executed',
             type='data_exporter',
             upstream_blocks=['test_transformer_2'],

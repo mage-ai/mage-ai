@@ -8,6 +8,7 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
@@ -43,7 +44,7 @@ class BlockExecutor:
         on_start: Union[Callable[[str], None], None] = None,
         input_from_output: Union[Dict, None] = None,
         verify_output: bool = True,
-        retry_count: int = 1,
+        retry_config: Dict = None,
         runtime_arguments: Union[Dict, None] = None,
         template_runtime_configuration: Union[Dict, None] = None,
         dynamic_block_index: Union[int, None] = None,
@@ -66,7 +67,19 @@ class BlockExecutor:
             try:
                 from mage_ai.shared.retry import retry
 
-                @retry(retries=retry_count, delay=5, logger=self.logger, logging_tags=tags)
+                if retry_config is None:
+                    retry_config = dict()
+                if type(retry_config) is not RetryConfig:
+                    retry_config = RetryConfig.load(config=retry_config)
+
+                @retry(
+                    retries=retry_config.retries,
+                    delay=retry_config.delay,
+                    max_delay=retry_config.max_delay,
+                    exponential_backoff=retry_config.exponential_backoff,
+                    logger=self.logger,
+                    logging_tags=tags,
+                )
                 def __execute_with_retry():
                     return self._execute(
                         analyze_outputs=analyze_outputs,
@@ -149,7 +162,7 @@ class BlockExecutor:
         global_vars: Union[Dict, None] = None,
         update_status: bool = False,
         input_from_output: Union[Dict, None] = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         verify_output: bool = True,
         runtime_arguments: Union[Dict, None] = None,
         dynamic_block_index: Union[int, None] = None,
@@ -157,6 +170,8 @@ class BlockExecutor:
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
+        if logging_tags is None:
+            logging_tags = dict()
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
             execution_partition=self.execution_partition,
@@ -267,7 +282,7 @@ class BlockExecutor:
         status: str,
         block_run_id: int = None,
         callback_url: str = None,
-        tags: Dict = dict(),
+        tags: Dict = None,
     ):
         """
         Update the status of block run by edither updating the BlockRun db object or making
@@ -279,6 +294,8 @@ class BlockExecutor:
             callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             tags (dict): tags used in logging
         """
+        if tags is None:
+            tags = dict()
         if not block_run_id and not callback_url:
             return
         try:
