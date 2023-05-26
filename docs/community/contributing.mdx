@@ -37,17 +37,85 @@ If you’re looking for cool projects to ship, check out the following:
 
 ## Set up development environment
 
-1. Create a new project:
-   ```bash
-   ./scripts/init.sh [project_name]
-   ```
-2. Run the below script to build the Docker image and run all the services:
-   ```bash
-   ./scripts/dev.sh [project]
-   ```
-3. Open your browser and go to [http://localhost:3000](http://localhost:3000).
+### MacOS or Linux
 
-You can find more information about setting up your local environment for development [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
+1. Clone the Mage-ai repository:
+   ```bash
+   % git clone https://github.com/mage-ai/mage-ai.git
+   ```
+2. Create a new project:
+   ```bash
+   % cd mage-ai
+   % ./scripts/init.sh [project_name]
+   ```
+3. Run the below script to build the Docker image and run all the services:
+   ```bash
+   % ./scripts/dev.sh [project]
+   ```
+4. Open your browser and go to [http://localhost:3000](http://localhost:3000).
+
+### Windows WSL
+
+Some additional installations would be needed, as listed below:
+
+#### Install Windows WSL (Windows Subsystem for Linux)
+
+* To install WSL2 on Windows, open Command Prompt as admin and run “wsl –install.”
+It will install all the WSL2 components and the default Ubuntu Linux distro.
+* To view a list of available WSL distros to install on Windows, run "wsl --list --online"
+* To install a specific distro, run “wsl –install -d <Distro>”.
+
+#### Install Docker and Enable WSL Integration
+
+Follow the instructions given at Get started with Docker remote containers on WSL2,
+to install the Docker desktop and set up WSL integration in Docker. 
+
+To confirm that Docker is available in WSL, open a WSL distribution (e.g. Ubuntu) terminal and run:
+```
+$ docker --version
+$ docker run hello-world
+```
+
+#### Install Pip and Pre-commit in WSL
+
+To install `pip` and `pre-commit`, run the following commands 
+```
+$ sudo apt-get update
+$ sudo apt install python3-pip
+$ sudo apt install pre-commit
+```
+
+#### Install Anaconda
+
+Go to https://repo.continuum.io/archive to find the list of Anaconda releases
+and select the release you want, e.g., Anaconda3-2023.03-1-Linux-x86_64.sh.
+
+From a `WSL` terminal, run:
+```
+$ wget https://repo.continuum.io/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
+$ bash Anaconda3-2023.03-1-Linux-x86_64.sh
+```
+Close the terminal and reopen it to reload `.bash` configs. To test that it worked, run
+```
+$ which python
+```
+It should print a path that has an "anaconda" in it.
+
+#### Install Poetry
+
+In a WSL terminal, run
+```
+$ curl -sSL https://install.python-poetry.org | python3 -
+```
+To test out the installation, run
+```
+$ poetry --version
+```
+
+Clone and start Mage using the same steps listed above for "MacOS or Linux".
+
+For all these operating systems, more information about setting up your local environment
+for development is available [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
 
 ### Errors
 
