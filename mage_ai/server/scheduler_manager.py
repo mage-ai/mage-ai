@@ -1,15 +1,14 @@
+import multiprocessing
+import time
+import traceback
 from enum import Enum
+
+import sentry_sdk
+
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
-from mage_ai.settings import (
-    SENTRY_DSN,
-    SENTRY_TRACES_SAMPLE_RATE,
-)
-import multiprocessing
-import sentry_sdk
-import traceback
-
+from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
@@ -62,7 +61,7 @@ class SchedulerManager:
             return SchedulerManager.SchedulerStatus.RUNNING
         return SchedulerManager.SchedulerStatus.STOPPED
 
-    def start_scheduler(self):
+    def start_scheduler(self, foreground: bool = False):
         logger.info('Start scheduler.')
         if self.is_alive:
             return
@@ -71,6 +70,10 @@ class SchedulerManager:
         proc.start()
         self.scheduler_process = proc
         self.status = self.SchedulerStatus.RUNNING
+        if foreground:
+            while True:
+                check_scheduler_status()
+                time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL / 1000)
 
     def stop_scheduler(self):
         logger.info('Stop scheduler.')
