@@ -93,12 +93,14 @@ class DBTBlock(Block):
         attributes_dict = parse_attributes(self)
         snapshot = attributes_dict['snapshot']
 
-        if not snapshot:
-            run_dbt_tests(
-                block=self,
-                build_block_output_stdout=build_block_output_stdout,
-                global_vars=global_vars,
-            )
+        if snapshot:
+            return
+
+        run_dbt_tests(
+            block=self,
+            build_block_output_stdout=build_block_output_stdout,
+            global_vars=global_vars,
+        )
 
     def tags(self) -> List[str]:
         arr = super().tags()
@@ -226,14 +228,20 @@ class DBTBlock(Block):
         if not test_execution:
             attributes_dict = parse_attributes(self)
             target_path = attributes_dict['target_path']
-            file_path_with_project_name = attributes_dict['file_path_with_project_name']
 
             if snapshot:
                 query_string = compiled_query_string(self)
-                print('Compiled snapshot query string:')
-                print(f'\n{query_string}\n')
+                if query_string:
+
+                    print('Compiled snapshot query string:')
+                    for line in query_string.split('\n'):
+                        print(f'|    {query_string}')
             else:
-                run_results_file_path = os.path.join(project_full_path, target_path, 'run_results.json')
+                run_results_file_path = os.path.join(
+                    project_full_path,
+                    target_path,
+                    'run_results.json',
+                )
                 with open(run_results_file_path, 'r') as f:
                     try:
                         run_results = json.load(f)

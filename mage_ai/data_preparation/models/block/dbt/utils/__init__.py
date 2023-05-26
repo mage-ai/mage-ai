@@ -829,14 +829,18 @@ def interpolate_refs_with_table_names(
 def compiled_query_string(block: Block, error_if_not_found: bool = False) -> str:
     attr = parse_attributes(block)
 
-    dbt_project = attr['dbt_project']
     file_path_with_project_name = attr['file_path_with_project_name']
     project_full_path = attr['project_full_path']
     target_path = attr['target_path']
     snapshot = attr['snapshot']
 
     folder_name = 'run' if snapshot else 'compiled'
-    file_path = os.path.join(project_full_path, target_path, folder_name, file_path_with_project_name)
+    file_path = os.path.join(
+        project_full_path,
+        target_path,
+        folder_name,
+        file_path_with_project_name,
+    )
 
     if not os.path.exists(file_path):
         if error_if_not_found:
@@ -963,7 +967,6 @@ def build_command_line_arguments(
     if BlockLanguage.SQL == block.language:
         attr = parse_attributes(block)
 
-        dbt_project = attr['dbt_project']
         file_path = attr['file_path']
         full_path = attr['full_path']
         project_full_path = attr['project_full_path']
@@ -1127,6 +1130,12 @@ def run_dbt_tests(
     logger: Logger = None,
     logging_tags: Dict = dict(),
 ) -> None:
+    attributes_dict = parse_attributes(block)
+    snapshot = attributes_dict['snapshot']
+
+    if snapshot:
+        return
+
     if logger is not None:
         stdout = StreamToLogger(logger, logging_tags=logging_tags)
     elif build_block_output_stdout:
