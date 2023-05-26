@@ -1,5 +1,6 @@
-from mage_integrations.connections.sql.base import Connection
 import oracledb
+
+from mage_integrations.connections.sql.base import Connection
 
 
 class OracleDB(Connection):
