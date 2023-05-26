@@ -257,6 +257,17 @@ def table_name_parts(
     return database, schema, table
 
 
+def table_name_parts_from_query(
+    query: str,
+) -> Tuple[str, str, str]:
+    match = re.search(r'[^.+]from[\s](.+)\.(.+)\.(.+)', query, re.IGNORECASE)
+    if match is None:
+        return None
+    else:
+        database, schema, table = match.groups()
+        return database, schema, table
+
+
 def build_dynamic_table_name(table_name: str, dynamic_block_index: int = None) -> str:
     if dynamic_block_index is None:
         return table_name
