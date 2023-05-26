@@ -99,6 +99,8 @@ def interpolate_input(
     get_database: Callable = None,
     get_schema: Callable = None,
     get_table: Callable = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
 ) -> str:
     def __replace_func(db, schema, tn):
         if replace_func:
@@ -152,6 +154,8 @@ def interpolate_input(
                 configuration=configuration,
                 table=table_name,
             ))
+
+        table_name = build_dynamic_table_name(table_name, dynamic_block_index)
 
         replace_with = __replace_func(database, schema, table_name)
 
@@ -250,6 +254,13 @@ def table_name_parts(
     return database, schema, table
 
 
+def build_dynamic_table_name(table_name: str, dynamic_block_index: int = None) -> str:
+    if dynamic_block_index is None:
+        return table_name
+
+    return f'{table_name}__dynamic_{dynamic_block_index}'
+
+
 def create_upstream_block_tables(
     loader,
     block,
@@ -261,6 +272,8 @@ def create_upstream_block_tables(
     no_schema: bool = False,
     query: str = None,
     schema_name: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
 ):
     if cache_keys is None:
         cache_keys = []
@@ -270,8 +283,16 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
 
+    input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
+        None,
+        execution_partition,
+        None,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+    )
+
     mapping = blocks_in_query(block, query)
-    for _, upstream_block in enumerate(block.upstream_blocks):
+    for idx, upstream_block in enumerate(block.upstream_blocks):
         if query and upstream_block.uuid not in mapping:
             continue
 
@@ -281,12 +302,15 @@ def create_upstream_block_tables(
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
-            df = get_variable(
-                upstream_block.pipeline.uuid,
-                upstream_block.uuid,
-                'output_0',
-                partition=execution_partition,
-            )
+            if input_vars and idx < len(input_vars):
+                df = input_vars[idx]
+            else:
+                df = get_variable(
+                    upstream_block.pipeline.uuid,
+                    upstream_block.uuid,
+                    'output_0',
+                    partition=execution_partition,
+                )
 
             no_data = False
             if type(df) is DataFrame:
@@ -308,6 +332,8 @@ def create_upstream_block_tables(
                 upstream_block,
                 no_schema=no_schema,
             )
+
+            table_name = build_dynamic_table_name(table_name, dynamic_block_index)
 
             if not schema and not no_schema:
                 schema = schema_name

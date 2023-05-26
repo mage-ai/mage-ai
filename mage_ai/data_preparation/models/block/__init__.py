@@ -963,6 +963,8 @@ class Block:
             outputs = self._execute_block(
                 outputs_from_input_vars,
                 custom_code=custom_code,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 input_vars=input_vars,
                 logger=logger,
@@ -984,6 +986,8 @@ class Block:
         self,
         outputs_from_input_vars,
         custom_code: str = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
         input_vars: List = None,
         logger: Logger = None,
