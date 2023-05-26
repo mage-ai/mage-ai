@@ -5,4 +5,7 @@ class WorkspacePresenter(BasePresenter):
     default_attributes = [
         'name',
         'instance',
+        'cluster_type',
+        'access',
+        'repo_path',
     ]

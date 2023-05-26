@@ -26,6 +26,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
 
@@ -42,28 +43,49 @@ class WorkspaceResource(GenericResource):
             if cluster_type:
                 cluster_type = cluster_type[0]
 
-        instances = self.get_instances(cluster_type)
-        instance_map = {
-            instance.get('name'): instance
-            for instance in instances
-        }
+        user_id = query_arg.get('user_id', [None])
+        query_user = None
+        if user_id:
+            user_id = user_id[0]
+            query_user = User.query.get(user_id)
+
+        # instances = self.get_instances(cluster_type)
+        # instance_map = {
+        #     instance.get('name'): instance
+        #     for instance in instances
+        # }
+
+        is_main_project = get_project_type() == ProjectType.MAIN
 
         repo_path = get_repo_path()
         projects_folder = os.path.join(repo_path, 'projects')
-        if get_project_type() == ProjectType.MAIN:
-            projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
-        else:
-            projects = [instance.get('name') for instance in instances]
+        if is_main_project:
+            projects = [f.name for f in os.scandir(projects_folder) if f.is_dir()]
+        # else:
+        #     projects = [instance.get('name') for instance in instances]
 
-        workspaces = [
-            dict(
+        workspaces = []
+        for project in projects:
+            # if project in instance_map:
+            repo_path = os.path.join(projects_folder, project)
+            workspace = dict(
                 name=project,
+                repo_path=repo_path,
                 cluster_type=cluster_type,
-                instance=instance_map[project],
+                # instance=instance_map[project],
+                instance=dict(
+                    ip='1.1.1.1',
+                    name=project,
+                    status='RUNNING',
+                    type='kubernetes',
+                )
             )
-            for project in projects
-            if project in instance_map
-        ]
+            if is_main_project and query_user:
+                workspace['access'] = query_user.get_access(
+                    Permission.Entity.PROJECT,
+                    repo_path,
+                )
+            workspaces.append(workspace)
 
         return self.build_result_set(workspaces, user, **kwargs)
 
@@ -98,13 +120,24 @@ class WorkspaceResource(GenericResource):
 
         error = ApiError.RESOURCE_ERROR.copy()
 
+        print('CREATE WORKSPACE')
         if get_project_type() == ProjectType.MAIN:
+            print('CREATE SUB PROJECT')
             workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
             if os.path.exists(workspace_folder):
                 error.update(message=f'Project with name {workspace_name} already exists')
                 raise ApiError(error)
+            try:
+                init_repo(workspace_folder, project_type=ProjectType.SUB)
+            except Exception as e:
+                print(str(e))
 
-            init_repo(workspace_folder, project_type=ProjectType.SUB)
+            print('CREATE ROLES')
+            Role.create_default_roles(
+                entity=Permission.Entity.PROJECT,
+                entity_id=workspace_folder,
+                prefix=workspace_name,
+            )
 
         if cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.kubernetes.workload_manager import (

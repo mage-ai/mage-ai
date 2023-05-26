@@ -59,6 +59,7 @@ function UserEditForm({
 
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
     limit_roles: !!newUser,
+    entity: 'global',
   }, {
     revalidateOnFocus: false,
   });

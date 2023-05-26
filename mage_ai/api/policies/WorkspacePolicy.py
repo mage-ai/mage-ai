@@ -65,6 +65,7 @@ WorkspacePolicy.allow_write([
 
 WorkspacePolicy.allow_query([
     'cluster_type',
+    'user_id',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

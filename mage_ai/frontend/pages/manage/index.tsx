@@ -228,6 +228,12 @@ function WorkspacePage() {
 
   return (
     <WorkspacesDashboard  
+      breadcrumbs={[
+        {
+          bold: true,
+          label: () => 'Workspaces',
+        },
+      ]}
       pageName={WorkspacesPageNameEnum.WORKSPACES}
       subheaderChildren={
         <ConfigureWorkspace
