@@ -936,27 +936,27 @@ class Block:
         else:
             stdout = sys.stdout
 
-        # Fetch input variables
-        input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
-            input_args,
-            execution_partition,
-            global_vars,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-        )
-
-        outputs_from_input_vars = {}
-        if input_args is None:
-            upstream_block_uuids_length = len(upstream_block_uuids)
-            for idx, input_var in enumerate(input_vars):
-                if idx < upstream_block_uuids_length:
-                    upstream_block_uuid = upstream_block_uuids[idx]
-                    outputs_from_input_vars[upstream_block_uuid] = input_var
-                    outputs_from_input_vars[f'df_{idx + 1}'] = input_var
-        else:
-            outputs_from_input_vars = dict()
-
         with redirect_stdout(stdout):
+            # Fetch input variables
+            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                input_args,
+                execution_partition,
+                global_vars,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            )
+
+            outputs_from_input_vars = {}
+            if input_args is None:
+                upstream_block_uuids_length = len(upstream_block_uuids)
+                for idx, input_var in enumerate(input_vars):
+                    if idx < upstream_block_uuids_length:
+                        upstream_block_uuid = upstream_block_uuids[idx]
+                        outputs_from_input_vars[upstream_block_uuid] = input_var
+                        outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+            else:
+                outputs_from_input_vars = dict()
+
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
                 if kwargs_var:
@@ -965,6 +965,8 @@ class Block:
             outputs = self._execute_block(
                 outputs_from_input_vars,
                 custom_code=custom_code,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 input_vars=input_vars,
                 logger=logger,
@@ -986,6 +988,8 @@ class Block:
         self,
         outputs_from_input_vars,
         custom_code: str = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
         input_vars: List = None,
         logger: Logger = None,

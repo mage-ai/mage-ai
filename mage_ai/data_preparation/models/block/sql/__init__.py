@@ -40,6 +40,8 @@ PREVIEWABLE_BLOCK_TYPES = [
 def execute_sql_code(
     block,
     query: str,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
     global_vars: Dict = None,
     config_file_loader: Any = None,
@@ -67,18 +69,31 @@ def execute_sql_code(
     table_name = block.table_name
     should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
+    limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
+    if test_execution:
+        limit = min(limit, QUERY_ROW_LIMIT)
+    else:
+        limit = QUERY_ROW_LIMIT
+
+    create_upstream_block_tables_kwargs = dict(
+        configuration=configuration,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        execution_partition=execution_partition,
+        query=query,
+    )
+
+    interpolate_input_data_kwargs = dict(
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+    )
+
     kwargs_shared = dict(
         drop_table_on_replace=True,
         if_exists=export_write_policy,
         index=False,
         verbose=BlockType.DATA_EXPORTER == block.type,
     )
-
-    limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
-    if test_execution:
-        limit = min(limit, QUERY_ROW_LIMIT)
-    else:
-        limit = QUERY_ROW_LIMIT
 
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
@@ -89,12 +104,15 @@ def execute_sql_code(
         bigquery.create_upstream_block_tables(
             loader,
             block,
-            configuration=configuration,
-            execution_partition=execution_partition,
-            query=query,
+            **create_upstream_block_tables_kwargs,
         )
 
-        query_string = bigquery.interpolate_input_data(block, query, loader)
+        query_string = bigquery.interpolate_input_data(
+            block,
+            query,
+            loader,
+            **interpolate_input_data_kwargs,
+        )
         query_string = interpolate_vars(query_string, global_vars=global_vars)
 
         if use_raw_sql:
@@ -142,12 +160,14 @@ def execute_sql_code(
         clickhouse.create_upstream_block_tables(
             loader,
             block,
-            configuration=configuration,
-            execution_partition=execution_partition,
-            query=query,
+            **create_upstream_block_tables_kwargs,
         )
 
-        query_string = clickhouse.interpolate_input_data(block, query)
+        query_string = clickhouse.interpolate_input_data(
+            block,
+            query,
+            **interpolate_input_data_kwargs,
+        )
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
 
@@ -177,7 +197,6 @@ def execute_sql_code(
                         verbose=False,
                     ),
                 ]
-
     elif DataSource.DRUID.value == data_provider:
         from mage_ai.io.druid import Druid
 
@@ -185,12 +204,14 @@ def execute_sql_code(
             druid.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
-            query_string = druid.interpolate_input_data(block, query)
+            query_string = druid.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -225,12 +246,14 @@ def execute_sql_code(
             mssql.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
-            query_string = mssql.interpolate_input_data(block, query)
+            query_string = mssql.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -268,12 +291,14 @@ def execute_sql_code(
             mysql.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
-            query_string = mysql.interpolate_input_data(block, query)
+            query_string = mysql.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -308,12 +333,15 @@ def execute_sql_code(
             postgres.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
-            query_string = postgres.interpolate_input_data(block, query, loader)
+            query_string = postgres.interpolate_input_data(
+                block,
+                query,
+                loader,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             schema = schema or loader.default_schema()
@@ -350,15 +378,18 @@ def execute_sql_code(
             redshift.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
             database = database or loader.default_database()
             schema = schema or loader.default_schema()
 
-            query_string = redshift.interpolate_input_data(block, query, loader)
+            query_string = redshift.interpolate_input_data(
+                block,
+                query,
+                loader,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -401,12 +432,15 @@ def execute_sql_code(
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
+                **create_upstream_block_tables_kwargs,
             )
 
-            query_string = snowflake.interpolate_input_data(block, query, loader)
+            query_string = snowflake.interpolate_input_data(
+                block,
+                query,
+                loader,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -453,10 +487,8 @@ def execute_sql_code(
             trino.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
-                query=query,
                 unique_table_name_suffix=unique_table_name_suffix,
+                **create_upstream_block_tables_kwargs,
             )
 
             query_string = trino.interpolate_input_data(
@@ -464,6 +496,7 @@ def execute_sql_code(
                 query,
                 loader,
                 unique_table_name_suffix=unique_table_name_suffix,
+                **interpolate_input_data_kwargs,
             )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
@@ -583,9 +616,11 @@ class SQLBlock(Block):
     def _execute_block(
         self,
         outputs_from_input_vars,
-        custom_code=None,
-        execution_partition=None,
-        global_vars=None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        custom_code: str = None,
+        execution_partition: str = None,
+        global_vars: Dict = None,
         **kwargs,
     ) -> List:
         if custom_code and custom_code.strip():
@@ -596,6 +631,8 @@ class SQLBlock(Block):
         return execute_sql_code(
             self,
             query,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             execution_partition=execution_partition,
             global_vars=global_vars,
             test_execution=kwargs.get('test_execution'),

@@ -304,6 +304,58 @@ The input data to each of these 2 downstream blocks will be:
 ]
 ```
 
+---
+
+## Dynamic SQL blocks
+
+SQL blocks can be dynamic or be a child of a dynamic block.
+
+Here is an example pipeline with code:
+
+```
+    [data_loader]
+          ↓
+ [dynamic_sql_loader]
+          ↓
+    [transformer]
+```
+
+<b>`data_loader.py`</b>: dynamic block
+
+```python
+@data_loader
+def load_data(*args, **kwargs):
+    return [[dict(uuid=1), dict(uuid=2)]]
+```
+
+<b>`dynamic_sql_loader`</b>: dynamic block, dynamic child
+
+```sql
+SELECT * FROM {{ df_1 }}
+UNION ALL
+SELECT 2 AS uuid
+```
+
+<b>`transformer`</b>: dynamic child
+
+```python
+@transformer
+def transform(data, *args, **kwargs):
+    return data
+```
+
+When this pipeline is triggered, the following block runs will be created:
+
+```
+                                [data_loader]
+                                 ↓         ↓
+              [dynamic_sql_loader:0]     [dynamic_sql_loader:1]
+                ↓                ↓         ↓                ↓
+ [transformer:0:0]  [transformer:0:1]   [transformer:1:0]  [transformer:1:1]
+```
+
+---
+
 ## Tutorial guide
 
 Follow this [guide](/guides/blocks/dynamic-blocks) to create a simple pipeline with a dynamic block,

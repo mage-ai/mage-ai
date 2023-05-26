@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigKey
 from pandas import DataFrame
-from typing import Dict
+from typing import Dict, List
 
 
 def create_upstream_block_tables(
@@ -20,6 +20,8 @@ def create_upstream_block_tables(
     cache_upstream_dbt_models: bool = False,
     query: str = None,
     unique_table_name_suffix: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -28,6 +30,14 @@ def create_upstream_block_tables(
     configuration = configuration if configuration else block.configuration
     database_default = configuration.get('data_provider_database') or loader.default_database()
     schema_default = configuration.get('data_provider_schema') or loader.default_schema()
+
+    input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
+        None,
+        execution_partition,
+        None,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+    )
 
     mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
@@ -49,12 +59,15 @@ def create_upstream_block_tables(
                     and not cache_upstream_dbt_models:
                 continue
 
-            df = get_variable(
-                upstream_block.pipeline.uuid,
-                upstream_block.uuid,
-                'output_0',
-                partition=execution_partition,
-            )
+            if input_vars and idx < len(input_vars):
+                df = input_vars[idx]
+            else:
+                df = get_variable(
+                    upstream_block.pipeline.uuid,
+                    upstream_block.uuid,
+                    'output_0',
+                    partition=execution_partition,
+                )
 
             no_data = False
             if type(df) is DataFrame:
@@ -74,6 +87,7 @@ def create_upstream_block_tables(
             database_custom, schema_custom, table_name = table_name_parts(
                 configuration,
                 upstream_block,
+                dynamic_block_index=dynamic_block_index,
             )
 
             database = database_custom or database_default
@@ -104,7 +118,14 @@ def create_upstream_block_tables(
             )
 
 
-def interpolate_input_data(block, query, loader, unique_table_name_suffix: str = None):
+def interpolate_input_data(
+    block,
+    query: str,
+    loader,
+    unique_table_name_suffix: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+):
     def _get_table(opts):
         table_name = opts['table']
         return f'{table_name}_{unique_table_name_suffix}'
@@ -115,4 +136,6 @@ def interpolate_input_data(block, query, loader, unique_table_name_suffix: str =
         get_database=lambda opts: loader.default_database(),
         get_schema=lambda opts: loader.default_schema(),
         get_table=_get_table if unique_table_name_suffix else None,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
