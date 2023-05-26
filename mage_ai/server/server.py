@@ -64,6 +64,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
+from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -280,7 +281,7 @@ def start_server(
     project: str = None,
     manage: bool = False,
     dbt_docs: bool = False,
-    instance_type: str = 'server_and_scheduler',
+    instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -310,13 +311,19 @@ def start_server(
                 database_manager.run_migrations()
             except Exception:
                 traceback.print_exc()
-        elif instance_type == 'server_and_scheduler':
+        elif instance_type == InstanceType.SERVER_AND_SCHEDULER:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
-        elif instance_type == 'scheduler':
+        elif instance_type == InstanceType.SCHEDULER:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler(foreground=True)
             run_web_server = False
+        elif instance_type == InstanceType.WEB_SERVER:
+            # run migrations to enable user authentication
+            try:
+                database_manager.run_migrations()
+            except Exception:
+                traceback.print_exc()
 
         if run_web_server:
             if LoggingLevel.is_valid_level(SERVER_VERBOSITY):

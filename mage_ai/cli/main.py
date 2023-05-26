@@ -9,6 +9,7 @@ from rich import print
 from typer.core import TyperGroup
 
 from mage_ai.cli.utils import parse_runtime_variables
+from mage_ai.shared.constants import InstanceType
 
 
 class OrderCommands(TyperGroup):
@@ -46,7 +47,8 @@ def start(
     port: str = typer.Option('6789', help='specify the port.'),
     manage_instance: str = typer.Option('0', help=''),
     dbt_docs_instance: str = typer.Option('0', help=''),
-    instance_type: str = typer.Option('server_and_scheduler', help='specify the instance type.')
+    instance_type: str = typer.Option(
+        InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.'),
 ):
     """
     Start Mage server and UI.
