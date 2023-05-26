@@ -17,6 +17,7 @@ export const TableContainer = styled.div`
 export const TableHeadStyle = styled.div`
   display: flex;
   align-items: center;
+  overflow: hidden;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme || dark).borders.medium2};

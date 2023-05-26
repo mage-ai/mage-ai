@@ -222,7 +222,7 @@ function LogsTable({
             key={`${col}_${idx}`}
             style={{
               height: UNIT * 4,
-              width: col.width || null,
+              minWidth: col.width || null,
             }}
           >
             {col.uuid !== '_' &&
