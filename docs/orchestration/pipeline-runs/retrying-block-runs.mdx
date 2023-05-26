@@ -5,6 +5,38 @@ sidebarTitle: "Retrying block runs"
 
 <Note>Requires version `0.8.76` or greater.</Note>
 
+## Automatic retry
+Mage supports configuring automatic retry for block runs with the following ways
+1. Add `retry_config` to project's `metadata.yaml`. This `retry_config` will be applied to all block runs.
+   Here is an example:
+    ```yaml
+    retry_config:
+      # Number of retry times
+      retries: 3
+      # Initial delay before retry. If exponential_backoff is true,
+      # the delay time is multiplied by 2 for the next retry
+      delay: 5
+      # Maximum time between the first attempt and the last retry
+      max_delay: 60
+      # Whether to use exponential backoff retry
+      exponential_backoff: true
+    ```
+2. Add `retry_config` to the block config in pipeline's `metadata.yaml`. The block level `retry_config` will
+   override the global `retry_config`. Here is an example
+    ```yaml
+    blocks:
+    - uuid: example_data_loader
+      type: data_loader
+      upstream_blocks: []
+      downstream_blocks: []
+      retry_config:
+        retries: 2
+        delay: 5
+        max_delay: 10
+        exponential_backoff: false
+      ...
+    ```
+
 ## Retry incomplete blocks
 
 - Supported pipeline types: Integration and Standard pipelines

@@ -19,6 +19,26 @@ emr_config:
   # You can create a key pair in page https://console.aws.amazon.com/ec2#KeyPairs and download the key file.
   # ec2_key_name: '[ec2_key_pair_name]'
 
+notification_config:
+  alert_on:
+    - trigger_failure
+    - trigger_passed_sla
+  slack_config:
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
+  teams_config:
+    webhook_url: "{{ env_var('MAGE_TEAMS_WEBHOOK_URL') }}"
+
+retry_config:
+  # Number of retry times
+  retries: 0
+  # Initial delay before retry. If exponential_backoff is true,
+  # the delay time is multiplied by 2 for the next retry
+  delay: 5
+  # Maximum time between the first attempt and the last retry
+  max_delay: 60
+  # Whether to use exponential backoff retry
+  exponential_backoff: true
+
 spark_config:
   # Application name
   app_name: 'my spark app'
@@ -37,12 +57,3 @@ spark_config:
   # List of key-value pairs to be set in SparkConf
   # e.g., others: {'spark.executor.memory': '4g', 'spark.executor.cores': '2'}
   others: {}
-
-notification_config:
-  alert_on:
-    - trigger_failure
-    - trigger_passed_sla
-  slack_config:
-    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
-  teams_config:
-    webhook_url: "{{ env_var('MAGE_TEAMS_WEBHOOK_URL') }}"

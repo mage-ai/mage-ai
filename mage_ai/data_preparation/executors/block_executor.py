@@ -75,6 +75,8 @@ class BlockExecutor:
                 @retry(
                     retries=retry_config.retries,
                     delay=retry_config.delay,
+                    max_delay=retry_config.max_delay,
+                    exponential_backoff=retry_config.exponential_backoff,
                     logger=self.logger,
                     logging_tags=tags,
                 )
