@@ -264,6 +264,7 @@ class Snowflake(BaseSQLConnection):
 
                 if query_string:
                     cur.execute(f'USE DATABASE {database}', timeout=self.timeout)
+                    cur.execute(f'USE SCHEMA {schema}', timeout=self.timeout)
 
                     if should_create_table:
                         cur.execute(f"""
