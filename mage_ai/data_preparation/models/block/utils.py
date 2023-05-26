@@ -94,6 +94,10 @@ def create_block_runs_from_dynamic_block(
         block_uuid,
     )
 
+    # SQL blocks will return a Pandas DataFrame
+    if type(values) is pd.DataFrame:
+        values = values.to_dict(orient='records')
+
     all_block_runs = []
     # Dynamic child blocks (aka created from a dynamic block)
     for downstream_block in block.downstream_blocks:
@@ -441,8 +445,13 @@ def fetch_input_variables(
                 if len(variable_values) >= 1:
                     arr = variable_values[0]
                     index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
-                    if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
+
+                    # SQL blocks will return a Pandas DataFrame
+                    if type(arr) is pd.DataFrame:
+                        val = arr.iloc[index_to_use].to_dict()
+                    elif type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
                         val = arr[index_to_use]
+
                 input_vars[idx] = val
 
                 # output_0 is the metadata for dynamic blocks
@@ -527,12 +536,17 @@ def fetch_input_variables(
                     # Only get the 1st output of a dynamic block;
                     # the 2nd output is the dynamic child block’s metadata
                     if upstream_is_dynamic and dynamic_block_index is not None:
-                        final_value = final_value[dynamic_block_index]
+                        # SQL blocks will return a Pandas DataFrame
+                        if type(final_value) is pd.DataFrame:
+                            final_value = final_value.iloc[dynamic_block_index].to_dict()
+                        else:
+                            final_value = final_value[dynamic_block_index]
 
                     if type(final_value) is not pd.DataFrame and \
                         type(final_value) is list and \
                             len(final_value) == 1:
                         final_value = final_value[0]
+
                 input_vars[idx] = final_value
 
     return input_vars, kwargs_vars, upstream_block_uuids_final
