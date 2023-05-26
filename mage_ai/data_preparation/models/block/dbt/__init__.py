@@ -93,12 +93,12 @@ class DBTBlock(Block):
         attributes_dict = parse_attributes(self)
         snapshot = attributes_dict['snapshot']
 
-        # if not snapshot:
-        #     run_dbt_tests(
-        #         block=self,
-        #         build_block_output_stdout=build_block_output_stdout,
-        #         global_vars=global_vars,
-        #     )
+        if not snapshot:
+            run_dbt_tests(
+                block=self,
+                build_block_output_stdout=build_block_output_stdout,
+                global_vars=global_vars,
+            )
 
     def tags(self) -> List[str]:
         arr = super().tags()
