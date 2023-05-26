@@ -148,7 +148,6 @@ function CommandButtons({
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const isDBT = useMemo(() => BlockTypeEnum.DBT === block?.type, [block]);
-  const dbtMetadata = useMemo(() => metadata?.dbt || {}, [metadata]);
   const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }] = useMutation(
@@ -247,7 +246,7 @@ function CommandButtons({
               }}
               small
             >
-              {dbtMetadata?.block?.snapshot ? 'Run snapshot' : 'Compile & preview'}
+              {metadata?.dbt?.block?.snapshot ? 'Run snapshot' : 'Compile & preview'}
             </Button>
           )}
           <ClickOutside
