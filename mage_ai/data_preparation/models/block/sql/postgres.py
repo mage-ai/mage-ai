@@ -31,10 +31,10 @@ def create_upstream_block_tables(
             ConfigKey.POSTGRES_PORT,
             # ConfigKey.POSTGRES_SCHEMA,
         ],
-        dynamic_block_index=dynamic_block_index,
-        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         query=query,
         schema_name=loader.default_schema(),
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
 
 

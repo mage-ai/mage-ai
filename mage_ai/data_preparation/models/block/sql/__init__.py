@@ -107,7 +107,12 @@ def execute_sql_code(
             **create_upstream_block_tables_kwargs,
         )
 
-        query_string = bigquery.interpolate_input_data(block, query, loader)
+        query_string = bigquery.interpolate_input_data(
+            block,
+            query,
+            loader,
+            **interpolate_input_data_kwargs,
+        )
         query_string = interpolate_vars(query_string, global_vars=global_vars)
 
         if use_raw_sql:
@@ -158,7 +163,11 @@ def execute_sql_code(
             **create_upstream_block_tables_kwargs,
         )
 
-        query_string = clickhouse.interpolate_input_data(block, query)
+        query_string = clickhouse.interpolate_input_data(
+            block,
+            query,
+            **interpolate_input_data_kwargs,
+        )
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
 
@@ -188,7 +197,6 @@ def execute_sql_code(
                         verbose=False,
                     ),
                 ]
-
     elif DataSource.DRUID.value == data_provider:
         from mage_ai.io.druid import Druid
 
@@ -199,7 +207,11 @@ def execute_sql_code(
                 **create_upstream_block_tables_kwargs,
             )
 
-            query_string = druid.interpolate_input_data(block, query)
+            query_string = druid.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -237,7 +249,11 @@ def execute_sql_code(
                 **create_upstream_block_tables_kwargs,
             )
 
-            query_string = mssql.interpolate_input_data(block, query)
+            query_string = mssql.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -278,7 +294,11 @@ def execute_sql_code(
                 **create_upstream_block_tables_kwargs,
             )
 
-            query_string = mysql.interpolate_input_data(block, query)
+            query_string = mysql.interpolate_input_data(
+                block,
+                query,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -364,7 +384,12 @@ def execute_sql_code(
             database = database or loader.default_database()
             schema = schema or loader.default_schema()
 
-            query_string = redshift.interpolate_input_data(block, query, loader)
+            query_string = redshift.interpolate_input_data(
+                block,
+                query,
+                loader,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -410,7 +435,12 @@ def execute_sql_code(
                 **create_upstream_block_tables_kwargs,
             )
 
-            query_string = snowflake.interpolate_input_data(block, query, loader)
+            query_string = snowflake.interpolate_input_data(
+                block,
+                query,
+                loader,
+                **interpolate_input_data_kwargs,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:

@@ -194,6 +194,7 @@ def table_name_parts(
     configuration: Dict,
     upstream_block,
     no_schema: bool = False,
+    dynamic_block_index: int = None,
 ) -> Tuple[str, str, str]:
     """Get the table name parts (database, schema, table_name) of the upstream block.
     The upstream block will be uploaded to the full table name. The full table name
@@ -250,6 +251,8 @@ def table_name_parts(
             schema = upstream_block.configuration.get('data_provider_schema')
         else:
             schema = configuration.get('data_provider_schema')
+
+    table = build_dynamic_table_name(table, dynamic_block_index)
 
     return database, schema, table
 
@@ -331,9 +334,8 @@ def create_upstream_block_tables(
                 configuration,
                 upstream_block,
                 no_schema=no_schema,
+                dynamic_block_index=dynamic_block_index,
             )
-
-            table_name = build_dynamic_table_name(table_name, dynamic_block_index)
 
             if not schema and not no_schema:
                 schema = schema_name
