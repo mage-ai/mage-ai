@@ -122,6 +122,7 @@ export const getMoreActionsItems = (
     downstream_blocks: downstreamBlocks,
     has_callback,
     language,
+    metadata,
     replicated_block: replicatedBlock,
     type: blockType,
     upstream_blocks: upstreamBlocks,
@@ -179,53 +180,55 @@ export const getMoreActionsItems = (
     });
 
     if (isDBT && BlockLanguageEnum.SQL === language) {
-      items.unshift(...[
-        {
-          label: () => 'Run model',
-          onClick: () => runBlock({
-            block,
-            runSettings: {
-              run_model: true,
-            },
-          }),
-          tooltip: () => 'Execute command dbt run.',
-          uuid: 'run_model',
-        },
-        {
-          label: () => 'Test model',
-          onClick: () => runBlock({
-            block,
-            runSettings: {
-              test_model: true,
-            },
-          }),
-          tooltip: () => 'Execute command dbt test.',
-          uuid: 'test_model',
-        },
-        {
-          label: () => 'Build model',
-          onClick: () => runBlock({
-            block,
-            runSettings: {
-              build_model: true,
-            },
-          }),
-          tooltip: () => 'Execute command dbt build.',
-          uuid: 'build_model',
-        },
-        {
-          label: () => 'Add upstream models',
-          onClick: () => {
-            updatePipeline({
-              pipeline: {
-                add_upstream_for_block_uuid: block?.uuid,
+      if (!metadata?.dbt?.block?.snapshot) {
+        items.unshift(...[
+          {
+            label: () => 'Run model',
+            onClick: () => runBlock({
+              block,
+              runSettings: {
+                run_model: true,
               },
-            });
+            }),
+            tooltip: () => 'Execute command dbt run.',
+            uuid: 'run_model',
           },
-          tooltip: () => 'Add upstream models for this model to the pipeline.',
-          uuid: 'add_upstream_models',
-        },
-      ]);
+          {
+            label: () => 'Test model',
+            onClick: () => runBlock({
+              block,
+              runSettings: {
+                test_model: true,
+              },
+            }),
+            tooltip: () => 'Execute command dbt test.',
+            uuid: 'test_model',
+          },
+          {
+            label: () => 'Build model',
+            onClick: () => runBlock({
+              block,
+              runSettings: {
+                build_model: true,
+              },
+            }),
+            tooltip: () => 'Execute command dbt build.',
+            uuid: 'build_model',
+          },
+          {
+            label: () => 'Add upstream models',
+            onClick: () => {
+              updatePipeline({
+                pipeline: {
+                  add_upstream_for_block_uuid: block?.uuid,
+                },
+              });
+            },
+            tooltip: () => 'Add upstream models for this model to the pipeline.',
+            uuid: 'add_upstream_models',
+          },
+        ]);
+      }
     }
 
     if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
@@ -324,7 +327,12 @@ export function buildTags({ tags }: BlockType): {
   const arr = [];
 
   tags?.forEach((tag: TagEnum) => {
-    if (TagEnum.DYNAMIC === tag) {
+    if (TagEnum.DBT_SNAPSHOT === tag) {
+      arr.push({
+        description: 'This is a dbt snapshot file.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.DBT_SNAPSHOT),
+      });
+    } else if (TagEnum.DYNAMIC === tag) {
       arr.push({
         description: 'This block will create N blocks for each of its downstream blocks.',
         title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC),

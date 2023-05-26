@@ -104,6 +104,7 @@ function CommandButtons({
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
     color: blockColor,
+    metadata,
     type,
     uuid,
   } = block;
@@ -245,7 +246,7 @@ function CommandButtons({
               }}
               small
             >
-              Compile & preview
+              {metadata?.dbt?.block?.snapshot ? 'Run snapshot' : 'Compile & preview'}
             </Button>
           )}
           <ClickOutside

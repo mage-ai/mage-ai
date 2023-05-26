@@ -456,26 +456,6 @@ function FileBrowser({
           uuid: 'upload_files',
         },
       ]);
-    } else if (selectedBlock) {
-      items.push({
-        label: () => 'Delete block file',
-        onClick: () => {
-          if (selectedBlock.type === BlockTypeEnum.CHART) {
-            if (typeof window !== 'undefined'
-              && window.confirm(`Are you sure you want to delete widget ${selectedBlock.uuid}?`)
-            ) {
-              deleteWidget(selectedBlock);
-            }
-          } else {
-            if (typeof window !== 'undefined'
-              && window.confirm(`Are you sure you want to delete block ${selectedBlock.uuid}?`)
-            ) {
-              deleteBlockFile({ block: selectedBlock });
-            }
-          }
-        },
-        uuid: 'delete_block_file',
-      });
     } else if (selectedFile) {
       items.push(...[
         {
@@ -492,7 +472,31 @@ function FileBrowser({
           },
           uuid: 'move_file',
         },
-        {
+      ]);
+
+
+      if (selectedBlock) {
+        items.push({
+          label: () => 'Delete block file',
+          onClick: () => {
+            if (selectedBlock.type === BlockTypeEnum.CHART) {
+              if (typeof window !== 'undefined'
+                && window.confirm(`Are you sure you want to delete widget ${selectedBlock.uuid}?`)
+              ) {
+                deleteWidget(selectedBlock);
+              }
+            } else {
+              if (typeof window !== 'undefined'
+                && window.confirm(`Are you sure you want to delete block ${selectedBlock.uuid}?`)
+              ) {
+                deleteBlockFile({ block: selectedBlock });
+              }
+            }
+          },
+          uuid: 'delete_block_file',
+        });
+      } else {
+        items.push({
           label: () => 'Delete file',
           onClick: () => {
             const fp = getFullPathWithoutRootFolder(selectedFile);
@@ -503,8 +507,8 @@ function FileBrowser({
             }
           },
           uuid: 'delete_file',
-        },
-      ]);
+        });
+      }
     }
 
     return (
@@ -529,6 +533,7 @@ function FileBrowser({
     coordinates,
     deleteBlockFile,
     deleteFile,
+    deleteFolder,
     deleteWidget,
     ref,
     showModal,
