@@ -1,8 +1,5 @@
 import os
-<<<<<<< HEAD
-=======
 import shutil
->>>>>>> 8a5164070 ([dy] Initial commit)
 import sys
 import traceback
 from enum import Enum
