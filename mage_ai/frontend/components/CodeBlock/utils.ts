@@ -7,7 +7,7 @@ import BlockType, {
   CONVERTIBLE_BLOCK_TYPES,
   TagEnum,
 } from '@interfaces/BlockType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
@@ -33,12 +33,14 @@ export const getUpstreamBlockUuids = (
 };
 
 export const getDownstreamBlockUuids = (
+  pipeline: PipelineType,
   currentBlock: BlockType,
   newBlock?: BlockRequestPayloadType,
 ): string[] => {
   let downstreamBlocks = [];
 
-  if (!BLOCK_TYPES_WITH_NO_PARENTS.includes(currentBlock?.type)
+  if (pipeline?.type === PipelineTypeEnum.STREAMING
+    && !BLOCK_TYPES_WITH_NO_PARENTS.includes(currentBlock?.type)
     && !BLOCK_TYPES_WITH_NO_PARENTS.includes(newBlock?.type)
   ) {
     downstreamBlocks = downstreamBlocks.concat(currentBlock?.downstream_blocks || []);
