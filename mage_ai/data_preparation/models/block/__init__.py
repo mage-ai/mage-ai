@@ -957,7 +957,8 @@ class Block:
         with redirect_stdout(stdout):
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
-                global_vars_copy.update(kwargs_var)
+                if kwargs_var:
+                    global_vars_copy.update(kwargs_var)
 
             outputs = self._execute_block(
                 outputs_from_input_vars,
