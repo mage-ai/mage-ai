@@ -446,6 +446,7 @@ class Pipeline:
                 language=c.get('language'),
                 pipeline=self,
                 replicated_block=c.get('replicated_block'),
+                retry_config=c.get('retry_config'),
                 status=c.get('status'),
             )
 
@@ -470,13 +471,13 @@ class Pipeline:
             all_blocks,
         )
 
-        for extension_uuid, config in config.get('extensions', {}).items():
-            extension_configs = config.get('blocks') or []
+        for extension_uuid, extension_config in config.get('extensions', {}).items():
+            extension_configs = extension_config.get('blocks') or []
             extension_blocks = [build_shared_args_kwargs(merge_dict(c, dict(
                 extension_uuid=extension_uuid,
             ))) for c in extension_configs]
 
-            self.extensions[extension_uuid] = merge_dict(config, dict(
+            self.extensions[extension_uuid] = merge_dict(extension_config, dict(
                 blocks_by_uuid=self.__initialize_blocks_by_uuid(
                     extension_configs,
                     extension_blocks,
@@ -894,10 +895,12 @@ class Pipeline:
     def add_block(
         self,
         block: Block,
-        upstream_block_uuids: List[str] = [],
+        upstream_block_uuids: List[str] = None,
         priority: int = None,
         widget: bool = False,
     ) -> Block:
+        if upstream_block_uuids is None:
+            upstream_block_uuids = []
         if widget:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,

@@ -73,7 +73,7 @@ class BlockExecutor:
                     retry_config = RetryConfig.load(config=retry_config)
 
                 @retry(
-                    retries=retry_config.retires,
+                    retries=retry_config.retries,
                     delay=retry_config.delay,
                     logger=self.logger,
                     logging_tags=tags,
