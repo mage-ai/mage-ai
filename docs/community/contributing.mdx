@@ -60,7 +60,7 @@ Some additional installations would be needed, as listed below:
 
 #### Install Windows WSL (Windows Subsystem for Linux)
 
-* To install WSL2 on Windows, open Command Prompt as admin and run
+* To install WSL on Windows, open Command Prompt as admin and run
 ```bash
 $ wsl –install
 ```
@@ -79,7 +79,7 @@ wsl –install -d <Distro>
 Follow the instructions at [Get started with Docker remote containers on WSL2](https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers),
 to install the Docker desktop and set up WSL integration in Docker. 
 
-To confirm that Docker is available in WSL, open a WSL distribution (e.g. Ubuntu) terminal and run:
+To confirm that Docker is available in WSL, open a WSL terminal and run:
 ```bash
 $ docker --version
 $ docker run hello-world
@@ -99,7 +99,7 @@ $ sudo apt install pre-commit
 Go to [Anaconda Releases](https://repo.continuum.io/archive) to find the release you want,
 e.g., Anaconda3-2023.03-1-Linux-x86_64.sh.
 
-From a `WSL` terminal, run:
+From a WSL terminal, run:
 ```bash
 $ wget https://repo.continuum.io/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
 $ bash Anaconda3-2023.03-1-Linux-x86_64.sh
