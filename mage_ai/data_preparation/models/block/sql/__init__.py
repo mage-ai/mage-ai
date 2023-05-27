@@ -421,11 +421,12 @@ def execute_sql_code(
     elif DataSource.SNOWFLAKE.value == data_provider:
         from mage_ai.io.snowflake import Snowflake
 
-        table_name_parts = table_name_parts_from_query(query)
-        if table_name_parts is not None:
-            db_from_query, schema_from_query, _ = table_name_parts
-            database = db_from_query or database
-            schema = schema_from_query or schema
+        if not use_raw_sql:
+            table_name_parts = table_name_parts_from_query(query)
+            if table_name_parts is not None:
+                db_from_query, schema_from_query, _ = table_name_parts
+                database = db_from_query or database
+                schema = schema_from_query or schema
 
         table_name = table_name.upper() if table_name else table_name
 
