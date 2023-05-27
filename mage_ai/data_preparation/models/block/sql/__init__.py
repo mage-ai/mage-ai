@@ -14,6 +14,7 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
     interpolate_vars,
+    table_name_parts_from_query,
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -419,6 +420,13 @@ def execute_sql_code(
                         ]
     elif DataSource.SNOWFLAKE.value == data_provider:
         from mage_ai.io.snowflake import Snowflake
+
+        if not use_raw_sql:
+            table_name_parts = table_name_parts_from_query(query)
+            if table_name_parts is not None:
+                db_from_query, schema_from_query, _ = table_name_parts
+                database = db_from_query or database
+                schema = schema_from_query or schema
 
         table_name = table_name.upper() if table_name else table_name
 

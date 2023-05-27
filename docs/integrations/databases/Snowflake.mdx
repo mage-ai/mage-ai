@@ -19,6 +19,8 @@ default:
   SNOWFLAKE_PASSWORD: ...
   SNOWFLAKE_ACCOUNT: ...
   SNOWFLAKE_DEFAULT_WH: ...
+  SNOWFLAKE_DEFAULT_DB: ...
+  SNOWFLAKE_DEFAULT_SCHEMA: ...
   SNOWFLAKE_ROLE: ...
 ```
 
@@ -32,12 +34,27 @@ default:
 4. Under the `Data provider` dropdown, select `Snowflake`.
 5. Under the `Profile` dropdown, select `default` (or the profile you added
    credentials underneath).
-6. Next to the `Database` label, enter the database name you want this block to
+6. In the `Database` input in the block header, enter the database name you want this block to
    save data to.
-7. Next to the `Save to schema` label, enter the schema name you want this block
+7. In the `Schema` input in the block header, enter the schema name you want this block
    to save data to.
 8. Under the `Write policy` dropdown, select `Replace` or `Append` (please see
    [SQL blocks guide](/guides/sql-blocks)
    for more information on write policies).
 9. Enter in this test query: `SELECT 1`.
 10. Run the block.
+
+## Methods for configuring database and schema
+
+You only need to include the database and schema config in one of these 3 places, in
+order of priority (so if all 3 are included, #1 takes priority, then #2, then #3):
+1. Inlude the db and schema directly in the query (e.g.
+`select * from [database_name].[schema_name].[table_name];`). This is supported
+when NOT using the "raw sql" query option.
+2. Include the db and schema in the SQL code block header inputs, as mentioned in Steps
+6 and 7 of the "Using SQL block" section above.
+3. Include the default db and schema in the `io_config.yaml` file using these fields:
+```
+SNOWFLAKE_DEFAULT_DB: YOUR_DB_NAME
+SNOWFLAKE_DEFAULT_SCHEMA: YOUR_SCHEMA_NAME
+```

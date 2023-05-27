@@ -1,6 +1,6 @@
 import re
 from os import path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
 from jinja2 import Template
 from pandas import DataFrame
@@ -255,6 +255,22 @@ def table_name_parts(
     table = build_dynamic_table_name(table, dynamic_block_index)
 
     return database, schema, table
+
+
+def table_name_parts_from_query(
+    query: str,
+) -> Union[Tuple[str, str, str], None]:
+    """
+    This method is intended to parse the database, query, and table name from a SELECT
+    query, such as "select * from demo_db.demo_schema.demo_table;". The regex may need
+    to be updated if using non-SELECT queries.
+    """
+    match = re.search(r'[^.+]from[\s](\S+)\.(\S+)\.(\S+[^;\s]+)', query, re.IGNORECASE)
+    if match is None:
+        return None
+    else:
+        database, schema, table = match.groups()
+        return database, schema, table
 
 
 def build_dynamic_table_name(table_name: str, dynamic_block_index: int = None) -> str:
