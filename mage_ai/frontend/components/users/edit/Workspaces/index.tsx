@@ -4,7 +4,7 @@ import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constan
 import UserType from '@interfaces/UserType';
 import WorkspaceType from '@interfaces/WorkspaceType';
 import Text from '@oracle/elements/Text';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import api from '@api';
 import Select from '@oracle/elements/Inputs/Select';
 import { find } from '@utils/array';
@@ -16,15 +16,23 @@ import { toast } from 'react-toastify';
 import Spacing from '@oracle/elements/Spacing';
 
 type UserWorkspacesEditProps = {
+  fetchUser: () => void;
   user: UserType;
   workspaces: WorkspaceType[];
 };
 
 function UserWorkspacesEdit({
+  fetchUser,
   user,
   workspaces,
 }: UserWorkspacesEditProps) {
-  const [profile, setProfile] = useState<UserType>(user);
+  const [profile, setProfile] = useState<UserType>();
+
+  useEffect(() => {
+    if (user) {
+      setProfile(user);
+    }
+  }, [user]);
 
   const workspaceEntityIDs = workspaces?.map(({ repo_path }) => repo_path);
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
@@ -53,11 +61,11 @@ function UserWorkspacesEdit({
   console.log(rolesByWorkspace);
 
   const userRoleByWorkspace = useMemo(() => {
-    const roles = user?.roles_new;
-    console.log('roles:', roles);
+    const u = profile ? profile : user;
+    const roles = u?.roles_new;
     return roles?.reduce(
       (obj, role) => {
-        const repoPath = role?.permissions?.[0].entity_id;
+        const repoPath = role?.permissions?.[0]?.entity_id;
 
         // const name = repoPath.split('/').slice(-1)
         return {
@@ -67,7 +75,7 @@ function UserWorkspacesEdit({
       },
       {},
     );
-  }, [user]);
+  }, [profile, user]);
 
   const [updateUser, { isLoading }] = useMutation(
     api.users.useUpdate(user?.id),
@@ -84,6 +92,7 @@ function UserWorkspacesEdit({
                 toastId: `user-update-success-${userServer.id}`,
               },
             );
+            fetchUser();
           },
           onErrorCallback: ({
             error: {
@@ -139,7 +148,8 @@ function UserWorkspacesEdit({
                 const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (newRole) {
                   setProfile(prev => {
-                    const prevRoles = prev?.roles_new?.filter(role => role.id == userRole?.id) || [];
+                    const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
+                    console.log('prev roles:', prevRoles);
                     const updatedProfile: UserType = {
                       roles_new: [...prevRoles, newRole],
                     };

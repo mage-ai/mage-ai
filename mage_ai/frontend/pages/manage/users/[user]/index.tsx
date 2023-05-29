@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '@api';
 
@@ -11,6 +11,7 @@ import UserEditForm from '@components/users/edit/Form';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
 import { goToWithQuery } from '@utils/routing';
+import UserType from '@interfaces/UserType';
 
 type ManageUserDetailProps = {
   user: { id: number };
@@ -43,6 +44,8 @@ function ManageUserDetail({
       before={
         <Spacing p={PADDING_UNITS}>
           <UserEditForm
+            entity="global"
+            entityID={null}
             hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
             onDeleteSuccess={() => router.push('/manage/users')}
             onSaveSuccess={() => {
@@ -77,6 +80,7 @@ function ManageUserDetail({
       pageName={WorkspacesPageNameEnum.USERS}
     >
       <UserWorkspacesEdit
+        fetchUser={fetchUser}
         user={user}
         workspaces={workspaces}
       />

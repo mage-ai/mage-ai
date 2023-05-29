@@ -8,11 +8,7 @@ import Headline from '@oracle/elements/Headline';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import UserType, {
-  ROLE_DISPLAY_MAPPING,
-  ROLES,
-  RoleValueEnum,
-} from '@interfaces/UserType';
+import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -24,11 +20,14 @@ import {
 import { getUser } from '@utils/session';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { find } from '@utils/array';
+import { find, remove } from '@utils/array';
 import RoleType from '@interfaces/RoleType';
+import Chip from '@oracle/components/Chip';
 
 type UserEditFormProps = {
   disabledFields?: string[];
+  entity?: string,
+  entityID?: string,
   hideFields?: string[];
   newUser?: boolean;
   onDeleteSuccess?: () => void;
@@ -40,6 +39,8 @@ type UserEditFormProps = {
 
 function UserEditForm({
   disabledFields,
+  entity,
+  entityID,
   hideFields: hideFieldsProp,
   newUser,
   onDeleteSuccess,
@@ -58,8 +59,9 @@ function UserEditForm({
   } = getUser() || {};
 
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
+    entity: entity,
+    entity_ids: entityID ? [entityID] : [],
     limit_roles: !!newUser,
-    entity: 'global',
   }, {
     revalidateOnFocus: false,
   });
@@ -76,11 +78,12 @@ function UserEditForm({
           callback: ({
             user: userServer,
           }) => {
-            const newProfile =
-              // @ts-ignore
-              selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
-                uuid,
-              }) => uuid));
+            // @ts-ignore
+            const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
+              uuid,
+            }) => uuid);
+            keys.push('roles_new');
+            const newProfile = selectKeys(userServer, keys);
             setProfile(newProfile);
 
             toast.success(
@@ -149,6 +152,7 @@ function UserEditForm({
       const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
         uuid,
       }) => uuid);
+      keys.push('roles_new');
       // @ts-ignore
       setProfile(selectKeys(user, keys));
     }
@@ -184,16 +188,17 @@ function UserEditForm({
     userPrev,
   ]);
 
-  const profileRoleValue = useMemo(() => {
-    const roles_new = profile?.roles_new;
-    if (roles_new && roles_new.length > 0) {
-      return roles_new[0]?.id;
+  const profileRoles = useMemo(() => {
+    let userRoles = [];
+
+    const roleIDs = roles.map(({ id }: RoleType) => id);
+    if (profile) {
+      userRoles = profile?.roles_new;
     } else if (user?.roles_new && user?.roles_new.length > 0) {
-      return user.roles_new[0]?.id;
-    } else {
-      return profile?.owner ? RoleValueEnum.OWNER : profile?.roles;
+      userRoles = user.roles_new;
     }
-  }, [profile, user]);
+    return userRoles.filter((({ id }: RoleType) => roleIDs.includes(id)));
+  }, [profile, user, roles]);
 
   return (
     <>
@@ -244,26 +249,56 @@ function UserEditForm({
                 setButtonDisabled(false);
                 const role = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (role) {
-                  const updatedProfile: UserType = {
-                    roles_new: [role],
-                  };
-                  setProfile(prev => ({
-                    ...prev,
-                    ...updatedProfile,
-                  }));
+                  setProfile(prev => {
+                    const prevRoles = prev?.roles_new || [];
+                    let updatedProfile = {};
+                    if (!find(prevRoles, ({ id }: RoleType) => id == role?.id)) {
+                      updatedProfile = {
+                        roles_new: [...prevRoles, role],
+                      };
+                    }
+                    return {
+                      ...prev,
+                      ...updatedProfile,
+                    };
+                  });
                 }
               }}
               primary
               setContentOnMount
-              value={profileRoleValue || user?.roles}
             >
-              <option value="" />
               {roles.map(({ id, name }) => (
                 <option key={name} value={id}>
                   {name}
                 </option>
               ))}
             </Select>
+            <Spacing mb={1} />
+            <FlexContainer alignItems="center" flexWrap="wrap">
+              {profileRoles?.map(({ id, name }: RoleType) => (
+                <Spacing
+                  key={`user_roles/${name}`}
+                  mb={1}
+                  mr={1} 
+                >
+                  <Chip
+                    label={name}
+                    onClick={() => {
+                      setButtonDisabled(false);
+                      setProfile(prev => ({
+                        ...prev,
+                        roles_new: remove(
+                          prev.roles_new || [],
+                          ({ id: rid }: RoleType) => rid === id,
+                        ),
+                      }));
+                    }}
+                    primary
+                  />
+                </Spacing>
+              ))}
+            </FlexContainer>
+            
           </Spacing>
         )}
 

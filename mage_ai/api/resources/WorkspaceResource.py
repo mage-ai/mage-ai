@@ -49,11 +49,11 @@ class WorkspaceResource(GenericResource):
             user_id = user_id[0]
             query_user = User.query.get(user_id)
 
-        # instances = self.get_instances(cluster_type)
-        # instance_map = {
-        #     instance.get('name'): instance
-        #     for instance in instances
-        # }
+        instances = self.get_instances(cluster_type)
+        instance_map = {
+            instance.get('name'): instance
+            for instance in instances
+        }
 
         is_main_project = get_project_type() == ProjectType.MAIN
 
@@ -61,31 +61,31 @@ class WorkspaceResource(GenericResource):
         projects_folder = os.path.join(repo_path, 'projects')
         if is_main_project:
             projects = [f.name for f in os.scandir(projects_folder) if f.is_dir()]
-        # else:
-        #     projects = [instance.get('name') for instance in instances]
+        else:
+            projects = [instance.get('name') for instance in instances]
 
         workspaces = []
         for project in projects:
-            # if project in instance_map:
-            repo_path = os.path.join(projects_folder, project)
-            workspace = dict(
-                name=project,
-                repo_path=repo_path,
-                cluster_type=cluster_type,
-                # instance=instance_map[project],
-                instance=dict(
-                    ip='1.1.1.1',
+            if project in instance_map:
+                repo_path = os.path.join(projects_folder, project)
+                workspace = dict(
                     name=project,
-                    status='RUNNING',
-                    type='kubernetes',
+                    repo_path=repo_path,
+                    cluster_type=cluster_type,
+                    instance=instance_map[project],
+                    instance=dict(
+                        ip='1.1.1.1',
+                        name=project,
+                        status='RUNNING',
+                        type='kubernetes',
+                    )
                 )
-            )
-            if is_main_project and query_user:
-                workspace['access'] = query_user.get_access(
-                    Permission.Entity.PROJECT,
-                    repo_path,
-                )
-            workspaces.append(workspace)
+                if is_main_project and query_user:
+                    workspace['access'] = query_user.get_access(
+                        Permission.Entity.PROJECT,
+                        repo_path,
+                    )
+                workspaces.append(workspace)
 
         return self.build_result_set(workspaces, user, **kwargs)
 
@@ -120,9 +120,7 @@ class WorkspaceResource(GenericResource):
 
         error = ApiError.RESOURCE_ERROR.copy()
 
-        print('CREATE WORKSPACE')
         if get_project_type() == ProjectType.MAIN:
-            print('CREATE SUB PROJECT')
             workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
             if os.path.exists(workspace_folder):
                 error.update(message=f'Project with name {workspace_name} already exists')
@@ -132,7 +130,6 @@ class WorkspaceResource(GenericResource):
             except Exception as e:
                 print(str(e))
 
-            print('CREATE ROLES')
             Role.create_default_roles(
                 entity=Permission.Entity.PROJECT,
                 entity_id=workspace_folder,
