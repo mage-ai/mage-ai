@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
@@ -23,16 +24,14 @@ class PipelineScheduleResource(DatabaseResource):
         pipeline = kwargs.get('parent_model')
 
         query = PipelineSchedule.query.filter(
-            PipelineSchedule.repo_name == get_repo_path() or
-            PipelineSchedule.repo_name is None,
+            or_(
+                PipelineSchedule.repo_name == get_repo_path(),
+                PipelineSchedule.repo_name.is_(None),
+            )
         )
         if pipeline:
             return (
                 query.
-                filter(
-                    PipelineSchedule.repo_name == get_repo_path(),
-                    PipelineSchedule.repo_name is None,
-                ).
                 options(selectinload(PipelineSchedule.event_matchers)).
                 options(selectinload(PipelineSchedule.pipeline_runs)).
                 filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
@@ -60,7 +59,7 @@ class PipelineScheduleResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
-        payload['repo_name'] = get_repo_path()
+        # payload['repo_name'] = get_repo_path()
 
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex

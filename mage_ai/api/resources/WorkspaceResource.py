@@ -73,12 +73,6 @@ class WorkspaceResource(GenericResource):
                     repo_path=repo_path,
                     cluster_type=cluster_type,
                     instance=instance_map[project],
-                    instance=dict(
-                        ip='1.1.1.1',
-                        name=project,
-                        status='RUNNING',
-                        type='kubernetes',
-                    )
                 )
                 if is_main_project and query_user:
                     workspace['access'] = query_user.get_access(
