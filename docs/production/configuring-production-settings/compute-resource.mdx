@@ -26,6 +26,7 @@ Mage provides multiple executors to execute blocks. Here are the available execu
 * `local_python`
 * `ecs`
 * `gcp_cloud_run`
+* `azure_container_instance`
 * `k8s`
 
 Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
@@ -121,7 +122,7 @@ There're 2 ways to customize the compute resource of ECS executor,
 
 ### GCP Cloud Run executor
 
-If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to executor blocks.
+If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to execute blocks.
 
 How to configure pipeline to use GCP cloud run executor:
 1. Update Project's metadata.yaml
@@ -143,6 +144,34 @@ blocks:
 ```
 Customizing compute resource for GCP Cloud Run executor is coming soon.
 
+### Azure Container Instance executor
+
+If your Mage app is deployed on Microsoft Azure with Mage's [terraform scripts](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/azure),
+you can choose to launch separate Azure containce instances to execute blocks.
+
+How to configure pipeline to use Azure Container Instance executor:
+1. Update Project's metadata.yaml
+```yaml
+azure_container_instance_config:
+  cpu: 1
+  memory: 2
+```
+
+2. Update the `executor_type` of the block to `azure_container_instance` in pipeline's metadata.yaml and specify `executor_config` optionally.
+The block level executor_config will override the global executor_config.
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: azure_container_instance
+  executor_config:
+    cpu: 1
+    memory: 2
+  ...
+```
 
 ### PySpark executor
 
