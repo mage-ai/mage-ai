@@ -90,11 +90,11 @@ class DBTBlock(Block):
         global_vars=None,
         **kwargs,
     ):
-        attributes_dict = parse_attributes(self)
-        snapshot = attributes_dict['snapshot']
-
-        if snapshot:
-            return
+        if self.configuration.get('file_path') is not None:
+            attributes_dict = parse_attributes(self)
+            snapshot = attributes_dict['snapshot']
+            if snapshot:
+                return
 
         run_dbt_tests(
             block=self,
@@ -105,12 +105,13 @@ class DBTBlock(Block):
     def tags(self) -> List[str]:
         arr = super().tags()
 
-        attributes_dict = parse_attributes(self)
-        if attributes_dict['snapshot']:
-            from mage_ai.data_preparation.models.block.constants import (
-                TAG_DBT_SNAPSHOT,
-            )
-            arr.append(TAG_DBT_SNAPSHOT)
+        if self.configuration.get('file_path') is not None:
+            attributes_dict = parse_attributes(self)
+            if attributes_dict['snapshot']:
+                from mage_ai.data_preparation.models.block.constants import (
+                    TAG_DBT_SNAPSHOT,
+                )
+                arr.append(TAG_DBT_SNAPSHOT)
 
         return arr
 
@@ -226,8 +227,10 @@ class DBTBlock(Block):
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not test_execution:
-            attributes_dict = parse_attributes(self)
-            target_path = attributes_dict['target_path']
+            target_path = None
+            if self.configuration.get('file_path') is not None:
+                attributes_dict = parse_attributes(self)
+                target_path = attributes_dict['target_path']
 
             if snapshot:
                 query_string = compiled_query_string(self)
@@ -236,7 +239,7 @@ class DBTBlock(Block):
                     print('Compiled snapshot query string:')
                     for line in query_string.split('\n'):
                         print(f'|    {line.strip()}')
-            else:
+            elif target_path is not None:
                 run_results_file_path = os.path.join(
                     project_full_path,
                     target_path,

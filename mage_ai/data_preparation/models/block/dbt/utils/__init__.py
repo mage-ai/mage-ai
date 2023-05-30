@@ -1130,11 +1130,11 @@ def run_dbt_tests(
     logger: Logger = None,
     logging_tags: Dict = dict(),
 ) -> None:
-    attributes_dict = parse_attributes(block)
-    snapshot = attributes_dict['snapshot']
-
-    if snapshot:
-        return
+    if block.configuration.get('file_path') is not None:
+        attributes_dict = parse_attributes(block)
+        snapshot = attributes_dict['snapshot']
+        if snapshot:
+            return
 
     if logger is not None:
         stdout = StreamToLogger(logger, logging_tags=logging_tags)
