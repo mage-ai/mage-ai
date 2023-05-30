@@ -1,25 +1,26 @@
 import asyncio
 import enum
+import pytz
 import traceback
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List
 
-import pytz
 from croniter import croniter
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import (
-    JSON,
     Boolean,
     Column,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Table,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
+from sqlalchemy.sql.functions import coalesce
+from typing import Dict, List
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
@@ -313,7 +314,7 @@ class PipelineRun(BaseModel):
                 self.PipelineRunStatus.INITIAL,
                 self.PipelineRunStatus.RUNNING,
             ]),
-            PipelineRun.passed_sla.is_(False),
+            (coalesce(PipelineRun.passed_sla, False) == False),
         ).all()
 
     @safe_db_query

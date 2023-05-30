@@ -8,3 +8,6 @@ In production, you can set the environment variable in the corresponding Terrafo
 
 ## Postgres
 `export MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://user:password@host:port/dbname`
+
+## MSSQL
+`export MAGE_DATABASE_CONNECTION_URL=mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;`
