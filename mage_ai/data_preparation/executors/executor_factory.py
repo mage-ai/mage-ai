@@ -132,6 +132,11 @@ class ExecutorFactory:
                 PySparkBlockExecutor,
             )
             return PySparkBlockExecutor(**executor_kwargs)
+        elif executor_type == ExecutorType.AZURE_CONTAINER_INSTANCE:
+            from mage_ai.data_preparation.executors.azure_container_instance_executor import (
+                AzureContainerInstanceExecutor,
+            )
+            return AzureContainerInstanceExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.ECS:
             from mage_ai.data_preparation.executors.ecs_block_executor import (
                 EcsBlockExecutor,
