@@ -5,7 +5,7 @@ from mage_ai.services.azure.container_instance import container_instance
 from mage_ai.shared.hash import merge_dict
 
 
-class GcpCloudRunBlockExecutor(BlockExecutor):
+class AzureContainerInstanceExecutor(BlockExecutor):
     def __init__(self, pipeline, block_uuid: str, execution_partition: str = None):
         super().__init__(pipeline, block_uuid, execution_partition=execution_partition)
         self.executor_config = self.pipeline.repo_config.azure_container_instance_config or dict()
