@@ -314,7 +314,7 @@ class PipelineRun(BaseModel):
                 self.PipelineRunStatus.INITIAL,
                 self.PipelineRunStatus.RUNNING,
             ]),
-            (coalesce(PipelineRun.passed_sla, False) == False),
+            (coalesce(PipelineRun.passed_sla, False) == False),  # noqa: E712
         ).all()
 
     @safe_db_query
