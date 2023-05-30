@@ -1,19 +1,18 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+import { useMutation } from 'react-query';
+
+import Button from '@oracle/elements/Button';
+import RoleType from '@interfaces/RoleType';
+import Select from '@oracle/elements/Inputs/Select';
+import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
-import WorkspacesDashboard from '@components/workspaces/Dashboard';
-import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
+import Text from '@oracle/elements/Text';
 import UserType from '@interfaces/UserType';
 import WorkspaceType from '@interfaces/WorkspaceType';
-import Text from '@oracle/elements/Text';
-import React, { useEffect, useMemo, useState } from 'react';
 import api from '@api';
-import Select from '@oracle/elements/Inputs/Select';
 import { find } from '@utils/array';
-import RoleType from '@interfaces/RoleType';
-import Button from '@oracle/elements/Button';
-import { useMutation } from 'react-query';
 import { onSuccess } from '@api/utils/response';
-import { toast } from 'react-toastify';
-import Spacing from '@oracle/elements/Spacing';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
@@ -57,8 +56,6 @@ function UserWorkspacesEdit({
       {},
     );
   }, [dataRoles]);
-
-  console.log(rolesByWorkspace);
 
   const userRoleByWorkspace = useMemo(() => {
     const u = profile ? profile : user;
@@ -114,8 +111,6 @@ function UserWorkspacesEdit({
       ),
     },
   );
-
-  console.log('userRoleByWorkspace:', userRoleByWorkspace);
 
   return (
     <>
@@ -176,12 +171,11 @@ function UserWorkspacesEdit({
       />
       <Spacing p={2}>
         <Button
-          // disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
           loading={isLoading}
           onClick={() => {
             const updated_profile = {
               ...profile,
-              roles_new: profile.roles_new?.map(({ id }: RoleType) => id),
+              roles_new: profile?.roles_new?.map(({ id }: RoleType) => id),
             };
             // @ts-ignore
             updateUser({ user: updated_profile });

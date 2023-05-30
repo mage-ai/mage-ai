@@ -59,7 +59,7 @@ class PipelineScheduleResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
-        # payload['repo_name'] = get_repo_path()
+        payload['repo_name'] = get_repo_path()
 
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex

@@ -4,27 +4,22 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
+import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import {
-  SECTION_ITEM_UUID_USERS,
-  SECTION_UUID_WORKSPACE,
-} from '@components/settings/Dashboard/constants';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
+import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
-import WorkspacesDashboard from '@components/workspaces/Dashboard';
-import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 
 function UsersListPage() {
   const router = useRouter();

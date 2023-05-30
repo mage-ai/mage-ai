@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import Chip from '@oracle/components/Chip';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import RoleType from '@interfaces/RoleType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -17,12 +19,10 @@ import {
   USER_PROFILE_FIELDS,
   UserFieldType,
 } from './constants';
+import { find, remove } from '@utils/array';
 import { getUser } from '@utils/session';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { find, remove } from '@utils/array';
-import RoleType from '@interfaces/RoleType';
-import Chip from '@oracle/components/Chip';
 
 type UserEditFormProps = {
   disabledFields?: string[];
@@ -191,14 +191,14 @@ function UserEditForm({
   const profileRoles = useMemo(() => {
     let userRoles = [];
 
-    const roleIDs = roles.map(({ id }: RoleType) => id);
+    const roleIDs = roles?.map(({ id }: RoleType) => id) || [];
     if (profile) {
-      userRoles = profile?.roles_new;
+      userRoles = profile.roles_new;
     } else if (user?.roles_new && user?.roles_new.length > 0) {
       userRoles = user.roles_new;
     }
-    return userRoles.filter((({ id }: RoleType) => roleIDs.includes(id)));
-  }, [profile, user, roles]);
+    return userRoles?.filter((({ id }: RoleType) => roleIDs.includes(id)));
+  }, [profile, roles, user]);
 
   return (
     <>
