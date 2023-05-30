@@ -66,7 +66,7 @@ class UtilsTest(DBTestCase):
             password_hash=create_bcrypt_hash('edit', password_salt),
             password_salt=password_salt,
             roles_new=[Role.create(
-                name='pipeline_editor',
+                name='pipeline_editor_1',
                 permissions=[
                     Permission.create(
                         entity=Permission.Entity.PIPELINE,
@@ -98,7 +98,7 @@ class UtilsTest(DBTestCase):
             password_hash=create_bcrypt_hash('edit', password_salt),
             password_salt=password_salt,
             roles_new=[Role.create(
-                name='pipeline_editor',
+                name='pipeline_editor_2',
                 permissions=[
                     Permission.create(
                         entity=Permission.Entity.PIPELINE,
