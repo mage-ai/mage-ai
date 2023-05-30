@@ -69,10 +69,11 @@ class CallbackStatus(str, Enum):
 
 
 class ExecutorType(str, Enum):
-    LOCAL_PYTHON = 'local_python'
+    AZURE_CONTAINER_INSTANCE = 'azure_container_instance'
     ECS = 'ecs'
     GCP_CLOUD_RUN = 'gcp_cloud_run'
     K8S = 'k8s'
+    LOCAL_PYTHON = 'local_python'
     PYSPARK = 'pyspark'
 
     @classmethod
