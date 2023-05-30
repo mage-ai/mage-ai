@@ -72,16 +72,21 @@ class RepoConfig:
             self.project_type = repo_config.get('project_type')
             self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
+
+            # Executor configs
+            self.azure_container_instance_config = \
+                repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.k8s_executor_config = repo_config.get('k8s_executor_config')
+            self.spark_config = repo_config.get('spark_config')
+
             self.notification_config = repo_config.get('notification_config', dict())
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.retry_config = repo_config.get('retry_config')
-            self.spark_config = repo_config.get('spark_config')
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -111,6 +116,7 @@ class RepoConfig:
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
             project_type=self.project_type,
+            azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
