@@ -170,7 +170,7 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
         new_repo_config = get_repo_config(repo_path)
         current_metadata = get_repo_config().metadata_path
         new_metadata = new_repo_config.metadata_path
-        if os.path.exists(get_repo_config().metadata_path):
+        if os.path.exists(current_metadata):
             shutil.copyfile(current_metadata, new_metadata)
         new_repo_config.save(
             project_type=ProjectType.SUB.value,

@@ -8,6 +8,7 @@ class PipelineSchedulePresenter(BasePresenter):
         'id',
         'name',
         'pipeline_uuid',
+        'repo_path',
         'schedule_interval',
         'schedule_type',
         'settings',

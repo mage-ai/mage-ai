@@ -25,8 +25,8 @@ class PipelineScheduleResource(DatabaseResource):
 
         query = PipelineSchedule.query.filter(
             or_(
-                PipelineSchedule.repo_name == get_repo_path(),
-                PipelineSchedule.repo_name.is_(None),
+                PipelineSchedule.repo_path == get_repo_path(),
+                PipelineSchedule.repo_path.is_(None),
             )
         )
         if pipeline:
@@ -59,8 +59,9 @@ class PipelineScheduleResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
-        payload['repo_name'] = get_repo_path()
 
+        if 'repo_path' not in payload:
+            payload['repo_path'] = get_repo_path()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
 

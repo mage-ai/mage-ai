@@ -65,6 +65,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_write([
     'name',
+    'repo_path',
     'schedule_interval',
     'schedule_type',
     'start_time',
@@ -80,6 +81,7 @@ PipelineSchedulePolicy.allow_write([
     'event_matchers',
     'id',
     'name',
+    'repo_path',
     'schedule_interval',
     'schedule_type',
     'settings',

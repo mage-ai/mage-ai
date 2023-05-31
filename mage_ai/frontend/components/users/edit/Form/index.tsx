@@ -188,7 +188,7 @@ function UserEditForm({
     userPrev,
   ]);
 
-  const profileRoles = useMemo(() => {
+  const visibleProfileRoles = useMemo(() => {
     let userRoles = [];
 
     const roleIDs = roles?.map(({ id }: RoleType) => id) || [];
@@ -197,7 +197,7 @@ function UserEditForm({
     } else if (user?.roles_new && user?.roles_new.length > 0) {
       userRoles = user.roles_new;
     }
-    return userRoles?.filter((({ id }: RoleType) => roleIDs.includes(id)));
+    return userRoles?.filter(({ id }: RoleType) => roleIDs.includes(id));
   }, [profile, roles, user]);
 
   return (
@@ -275,7 +275,7 @@ function UserEditForm({
             </Select>
             <Spacing mb={1} />
             <FlexContainer alignItems="center" flexWrap="wrap">
-              {profileRoles?.map(({ id, name }: RoleType) => (
+              {visibleProfileRoles?.map(({ id, name }: RoleType) => (
                 <Spacing
                   key={`user_roles/${name}`}
                   mb={1}
