@@ -15,6 +15,7 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.logger import VerboseFunctionExec
 
 DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')
+DEFAULT_KNOWN_HOSTS_FILE = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
 REMOTE_NAME = 'mage-repo'
 
 # Git authentication variables
@@ -143,6 +144,8 @@ class Git:
                 private_key_file = self.__create_ssh_keys()
                 git_ssh_cmd = f'ssh -i {private_key_file}'
                 with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+                    if not os.path.exists(DEFAULT_KNOWN_HOSTS_FILE):
+                        self.__add_host_to_known_hosts()
                     try:
                         asyncio.run(self.check_connection())
                     except ChildProcessError as err:
@@ -358,7 +361,7 @@ class Git:
         url = f'ssh://{self.git_config.remote_repo_link}'
         hostname = urlparse(url).hostname
         if hostname:
-            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
+            cmd = f'ssh-keyscan -t rsa {hostname} >> {DEFAULT_KNOWN_HOSTS_FILE}'
             self._run_command(cmd)
             return True
         return False
