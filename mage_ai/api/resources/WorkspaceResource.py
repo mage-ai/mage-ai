@@ -1,3 +1,9 @@
+import os
+import shutil
+from typing import Dict, List
+
+import yaml
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.constants import (
@@ -12,19 +18,17 @@ from mage_ai.cluster_manager.constants import (
     KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.data_preparation.repo_manager import (
+    ProjectType,
     get_project_type,
     get_repo_config,
     get_repo_path,
-    ProjectType,
+    init_repo,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
-from typing import Dict, List
-import os
-import shutil
-import yaml
 
 logger = Logger().new_server_logger(__name__)
 
@@ -39,28 +43,43 @@ class WorkspaceResource(GenericResource):
             if cluster_type:
                 cluster_type = cluster_type[0]
 
+        user_id = query_arg.get('user_id', [None])
+        query_user = None
+        if user_id:
+            user_id = user_id[0]
+            query_user = User.query.get(user_id)
+
         instances = self.get_instances(cluster_type)
         instance_map = {
             instance.get('name'): instance
             for instance in instances
         }
 
+        is_main_project = get_project_type() == ProjectType.MAIN
+
         repo_path = get_repo_path()
         projects_folder = os.path.join(repo_path, 'projects')
-        if get_project_type() == ProjectType.MAIN:
-            projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
+        if is_main_project:
+            projects = [f.name for f in os.scandir(projects_folder) if f.is_dir()]
         else:
             projects = [instance.get('name') for instance in instances]
 
-        workspaces = [
-            dict(
-                name=project,
-                cluster_type=cluster_type,
-                instance=instance_map[project],
-            )
-            for project in projects
-            if project in instance_map
-        ]
+        workspaces = []
+        for project in projects:
+            if project in instance_map:
+                repo_path = os.path.join(projects_folder, project)
+                workspace = dict(
+                    name=project,
+                    repo_path=repo_path,
+                    cluster_type=cluster_type,
+                    instance=instance_map[project],
+                )
+                if is_main_project and query_user:
+                    workspace['access'] = query_user.get_access(
+                        Permission.Entity.PROJECT,
+                        repo_path,
+                    )
+                workspaces.append(workspace)
 
         return self.build_result_set(workspaces, user, **kwargs)
 
@@ -91,9 +110,30 @@ class WorkspaceResource(GenericResource):
         if not cluster_type:
             cluster_type = payload.get('cluster_type')
 
+        workspace_name = payload.get('name')
+
+        error = ApiError.RESOURCE_ERROR.copy()
+
+        if get_project_type() == ProjectType.MAIN:
+            workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
+            if os.path.exists(workspace_folder):
+                error.update(message=f'Project with name {workspace_name} already exists')
+                raise ApiError(error)
+            try:
+                init_repo(workspace_folder, project_type=ProjectType.SUB)
+            except Exception as e:
+                print(str(e))
+
+            Role.create_default_roles(
+                entity=Permission.Entity.PROJECT,
+                entity_id=workspace_folder,
+                prefix=workspace_name,
+            )
+
         if cluster_type == ClusterType.K8S:
-            from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-            name = payload.get('name')
+            from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                WorkloadManager,
+            )
             namespace = payload.get('namespace', os.getenv(KUBE_NAMESPACE))
             storage_class_name = payload.get(
                 'storage_class_name',
@@ -110,14 +150,14 @@ class WorkspaceResource(GenericResource):
 
             k8s_workload_manager = WorkloadManager(namespace)
             k8s_workload_manager.create_stateful_set(
-                name,
+                workspace_name,
                 container_config=container_config,
                 service_account_name=service_account_name,
                 storage_class_name=storage_class_name,
+                path=workspace_folder,
             )
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            name = payload.get('name')
             cluster_name = payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
             task_definition = payload.get(
                 'task_definition',
@@ -131,14 +171,14 @@ class WorkspaceResource(GenericResource):
             ecs_instance_manager = EcsTaskManager(cluster_name)
 
             ecs_instance_manager.create_task(
-                name,
+                workspace_name,
                 task_definition,
                 container_name,
             )
         elif cluster_type == ClusterType.CLOUD_RUN:
-            from mage_ai.cluster_manager.gcp.cloud_run_service_manager \
-                import CloudRunServiceManager
-            name = payload.get('name')
+            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
+                CloudRunServiceManager,
+            )
             project_id = payload.get('project_id', os.getenv(GCP_PROJECT_ID))
             path_to_credentials = payload.get(
                 'path_to_credentials',
@@ -152,7 +192,7 @@ class WorkspaceResource(GenericResource):
                 region=region
             )
 
-            cloud_run_service_manager.create_service(name)
+            cloud_run_service_manager.create_service(workspace_name)
 
         return self(dict(success=True), user, **kwargs)
 
@@ -227,7 +267,9 @@ class WorkspaceResource(GenericResource):
     def get_instances(self, cluster_type: str) -> List[Dict]:
         instances = []
         if cluster_type == ClusterType.K8S:
-            from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+            from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                WorkloadManager,
+            )
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
@@ -244,7 +286,9 @@ class WorkspaceResource(GenericResource):
                 error.update(message=str(e))
                 raise ApiError(error)
         elif cluster_type == ClusterType.CLOUD_RUN:
-            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
+                CloudRunServiceManager,
+            )
             project_id = os.getenv(GCP_PROJECT_ID)
             path_to_credentials = os.getenv(GCP_PATH_TO_KEYFILE)
             region = os.getenv(GCP_REGION)

@@ -20,6 +20,8 @@ RolePolicy.allow_read(RolePresenter.default_attributes, scopes=[
 
 RolePolicy.allow_query([
     'limit_roles',
+    'entity',
+    'entity_ids[]',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

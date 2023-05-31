@@ -1,18 +1,20 @@
 import React from 'react';
 import Dashboard from '@components/Dashboard';
 import { BreadcrumbType } from '@components/shared/Header';
-import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum, buildNavigationItems } from './constants';
 import { getUser } from '@utils/session';
 
 type WorkspacesDashboardProps = {
+  before?: any;
   breadcrumbs?: BreadcrumbType[],
   children: any;
   pageName: WorkspacesPageNameEnum;
-  subheaderChildren: any;
+  subheaderChildren?: any;
 };
 
 function WorkspacesDashboard({
+  before,
   breadcrumbs = [],
   children,
   pageName,
@@ -22,14 +24,9 @@ function WorkspacesDashboard({
 
   return (
     <Dashboard
-      afterWidth={VERTICAL_NAVIGATION_WIDTH}
-      breadcrumbs={[
-        {
-          bold: true,
-          label: () => 'Workspaces',
-        },
-        ...breadcrumbs,
-      ]}
+      before={before}
+      beforeWidth={before ? 50 * UNIT : 0}
+      breadcrumbs={breadcrumbs}
       navigationItems={buildNavigationItems(user, pageName)}
       subheaderChildren={subheaderChildren}
       title="Workspaces"

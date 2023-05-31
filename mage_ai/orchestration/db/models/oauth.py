@@ -141,14 +141,21 @@ class User(BaseModel):
 
 
 class Role(BaseModel):
-    name = Column(String(255))
+    name = Column(String(255), index=True, unique=True)
     permissions = relationship('Permission', back_populates='role')
     users = relationship('User', secondary='user_role', back_populates='roles_new')
 
     @classmethod
     @safe_db_query
-    def create_default_roles(self):
-        Permission.create_default_global_permissions()
+    def create_default_roles(
+        self,
+        entity: 'Permission.Entity' = None,
+        entity_id: str = None,
+        prefix: str = None,
+    ):
+        if entity is None:
+            entity = Permission.Entity.GLOBAL
+        Permission.create_default_permissions(entity=entity, entity_id=entity_id)
         mapping = {
             'Owner': Permission.Access.OWNER,
             'Admin': Permission.Access.ADMIN,
@@ -156,13 +163,17 @@ class Role(BaseModel):
             'Viewer': Permission.Access.VIEWER,
         }
         for name, access in mapping.items():
-            role = self.query.filter(self.name == name).first()
+            role_name = name
+            if prefix is not None:
+                role_name = f'{prefix}_{name}'
+            role = self.query.filter(self.name == role_name).first()
             if not role:
                 self.create(
-                    name=name,
+                    name=role_name,
                     permissions=[
                         Permission.query.filter(
-                            Permission.entity == Permission.Entity.GLOBAL,
+                            Permission.entity == entity,
+                            Permission.entity_id == entity_id,
                             Permission.access == access,
                         ).first()
                     ],
@@ -244,13 +255,23 @@ class Permission(BaseModel):
 
     @classmethod
     @safe_db_query
-    def create_default_global_permissions(self) -> List['Permission']:
-        permissions = self.query.filter(self.entity == Permission.Entity.GLOBAL).all()
+    def create_default_permissions(
+        self,
+        entity: 'Permission.Entity' = None,
+        entity_id: str = None,
+    ) -> List['Permission']:
+        if entity is None:
+            entity = Permission.Entity.GLOBAL
+        permissions = self.query.filter(
+            self.entity == entity,
+            self.entity_id == entity_id,
+        ).all()
         if len(permissions) == 0:
             for access in [a.value for a in Permission.Access]:
                 permissions.append(
                     self.create(
-                        entity=Permission.Entity.GLOBAL,
+                        entity=entity,
+                        entity_id=entity_id,
                         access=access,
                         commit=False,
                     )

@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import traceback
 from enum import Enum
@@ -160,6 +161,20 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
 
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
+    elif project_type == ProjectType.SUB:
+        os.makedirs(
+            os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
+            exist_ok=True,
+        )
+        copy_template_directory('repo', repo_path)
+        new_repo_config = get_repo_config(repo_path)
+        current_metadata = get_repo_config().metadata_path
+        new_metadata = new_repo_config.metadata_path
+        if os.path.exists(current_metadata):
+            shutil.copyfile(current_metadata, new_metadata)
+        new_repo_config.save(
+            project_type=ProjectType.SUB.value,
+        )
     else:
         os.makedirs(
             os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,

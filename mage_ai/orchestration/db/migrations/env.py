@@ -19,6 +19,7 @@ logging.getLogger('alembic').setLevel(config.get_section_option('logger_alembic'
 
 # add your model's MetaData object here for 'autogenerate' support
 
+sys.path.insert(0, '/Users/david_yang/mage/mage-ai/.venv/lib/python3.9/site-packages')
 
 sys.path.insert(0, os.path.dirname(
     # mage_ai
