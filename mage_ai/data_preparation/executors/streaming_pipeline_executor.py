@@ -149,13 +149,13 @@ class StreamingPipelineExecutor(PipelineExecutor):
             outputs_by_block = dict()
             outputs_by_block[self.source_block.uuid] = messages
 
-            handle_batch_events_recursively(self.source_block, outputs_by_block)
+            handle_batch_events_recursively(self.source_block, outputs_by_block, **kwargs)
 
         async def handle_event_async(message, **kwargs):
             outputs_by_block = dict()
             outputs_by_block[self.source_block.uuid] = [message]
 
-            handle_batch_events_recursively(self.source_block, outputs_by_block)
+            handle_batch_events_recursively(self.source_block, outputs_by_block, **kwargs)
 
         # Long running method
         if source.consume_method == SourceConsumeMethod.BATCH_READ:
