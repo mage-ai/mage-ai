@@ -36,22 +36,28 @@ If you’re looking for cool projects to ship, check out the following:
 
 ## Set up development environment
 
-### MacOS or Linux
+### macOS
 
-1. Clone the Mage-ai repository:
+1. Install Docker
+   To setup Docker on Mac, follow the instructions at [Install Docker Desktop on Mac](https://docs.docker.com/desktop/install/mac-install/). To confirm that Docker is available, open a terminal and run:
+   ```bash
+   % docker --version
+   % docker run hello-world
+   ```
+2. Clone the Mage-ai repository:
    ```bash
    % git clone https://github.com/mage-ai/mage-ai.git
    ```
-2. Create a new project:
+3. Create a new project:
    ```bash
    % cd mage-ai
    % ./scripts/init.sh [project_name]
    ```
-3. Run the below script to build the Docker image and run all the services:
+4. Run the below script to build the Docker image and run all the services:
    ```bash
    % ./scripts/dev.sh [project]
    ```
-4. Open your browser and go to [http://localhost:3000](http://localhost:3000).
+5. Open your browser and go to [http://localhost:3000](http://localhost:3000).
 
 ### Windows
 
@@ -83,41 +89,7 @@ $ docker --version
 $ docker run hello-world
 ```
 
-#### Install Pip and Pre-commit in WSL
-
-To install `pip` and `pre-commit`, run the following commands in a WSL terminal
-```bash
-$ sudo apt-get update
-$ sudo apt install python3-pip
-$ sudo apt install pre-commit
-```
-
-#### Install Anaconda
-
-Go to [Anaconda Releases](https://repo.continuum.io/archive) to find the release you want, e.g., `Anaconda3-2023.03-1-Linux-x86_64.sh`.
-
-From a WSL terminal, run:
-```bash
-$ wget https://repo.continuum.io/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
-$ bash Anaconda3-2023.03-1-Linux-x86_64.sh
-```
-Close the terminal and reopen it to reload `.bash` configs. To test that it worked, run
-```bash
-$ which python
-```
-It should print a path that has an "anaconda" in it.
-
-#### Install Poetry
-In a WSL terminal, run
-```bash
-$ curl -sSL https://install.python-poetry.org | python3 -
-```
-To test out the Peotry installation, run
-```bash
-$ poetry --version
-```
-
-Clone and start Mage using the same steps listed above for "MacOS or Linux".
+Clone and start Mage using the same steps listed above for "macOS".
 
 For all these operating systems, more information about setting up your local environment for development using virtual environments is available [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
 
