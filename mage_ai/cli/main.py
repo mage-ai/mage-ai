@@ -22,13 +22,74 @@ app = typer.Typer(
     cls=OrderCommands,
 )
 
+# Defaults
+
+INIT_PROJECT_PATH_DEFAULT = typer.Argument(..., help='path of the Mage project to be created.')
+INIT_PROJECT_TYPE_DEFAULT = typer.Option(
+    'standalone', help='type of project to create, options are main, sub, or standalone')
+
+START_PROJECT_PATH_DEFAULT = typer.Argument(
+    os.getcwd(), help='path of the Mage project to be loaded.')
+START_HOST_DEFAULT = typer.Option('localhost', help='specify the host.')
+START_PORT_DEFAULT = typer.Option('6789', help='specify the port.')
+START_MANAGE_INSTANCE_DEFAULT = typer.Option('0', help='')
+START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
+START_INSTANCE_TYPE_DEFAULT = typer.Option(
+    InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.')
+
+RUN_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project that contains the pipeline.'
+)
+RUN_PIPELINE_UUID_DEFAULT = typer.Argument(
+    ..., help='uuid of the pipeline to be run.'
+)
+RUN_TEST_DEFAULT = typer.Option(
+    False, help='specify if tests should be run.'
+)
+RUN_BLOCK_UUID_DEFAULT = typer.Option(
+    None, help='uuid of the block to be run.'
+)
+RUN_EXECUTION_PARTITION_DEFAULT = typer.Option(
+    None, help=''
+)
+RUN_EXECUTOR_TYPE_DEFAULT = typer.Option(
+    None, help=''
+)
+RUN_CALLBACK_URL_DEFAULT = typer.Option(
+    None, help=''
+)
+RUN_BLOCK_RUN_ID_DEFAULT = typer.Option(
+    None, help=''
+)
+RUN_PIPELINE_RUN_ID_DEFAULT = typer.Option(
+    None, help=''
+)
+RUN_RUNTIME_VARS_DEFAULT = typer.Option(
+    None, help='specify runtime variables. These will overwrite the pipeline global variables.'
+)
+RUN_SKIP_SENSORS_DEFAULT = typer.Option(
+    False, help='specify if the sensors should be skipped.'
+)
+RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT = typer.Option(
+    None, help='runtime configuration of data integration block runs.'
+)
+
+CLEAN_VARIABLES_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project to clean variables.'
+)
+CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT = typer.Option(
+    None, help='uuid of the pipeline to clean.'
+)
+
+CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project that contains the EMR config.'
+)
+
 
 @app.command()
 def init(
-    project_path: str = typer.Argument(..., help='path of the Mage project to be created.'),
-    # project_type: Union[str, None] = typer.Option(
-    #     'standalone', help='type of project to create, options are main, sub, or standalone'
-    # ),
+    project_path: str = INIT_PROJECT_PATH_DEFAULT,
+    project_type: Union[str, None] = INIT_PROJECT_TYPE_DEFAULT,
 ):
     """
     Initialize Mage project.
@@ -36,19 +97,18 @@ def init(
     from mage_ai.data_preparation.repo_manager import init_repo
 
     repo_path = os.path.join(os.getcwd(), project_path)
-    init_repo(repo_path)
+    init_repo(repo_path, project_type=project_type)
     print(f'Initialized Mage project at {repo_path}')
 
 
 @app.command()
 def start(
-    project_path: str = typer.Argument(os.getcwd(), help='path of the Mage project to be loaded.'),
-    host: str = typer.Option('localhost', help='specify the host.'),
-    port: str = typer.Option('6789', help='specify the port.'),
-    manage_instance: str = typer.Option('0', help=''),
-    dbt_docs_instance: str = typer.Option('0', help=''),
-    instance_type: str = typer.Option(
-        InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.'),
+    project_path: str = START_PROJECT_PATH_DEFAULT,
+    host: str = START_HOST_DEFAULT,
+    port: str = START_PORT_DEFAULT,
+    manage_instance: str = START_MANAGE_INSTANCE_DEFAULT,
+    dbt_docs_instance: str = START_DBT_DOCS_INSTANCE_DEFAULT,
+    instance_type: str = START_INSTANCE_TYPE_DEFAULT,
 ):
     """
     Start Mage server and UI.
@@ -73,42 +133,18 @@ def start(
 
 @app.command()
 def run(
-    project_path: str = typer.Argument(
-        ..., help='path of the Mage project that contains the pipeline.'
-    ),
-    pipeline_uuid: str = typer.Argument(
-        ..., help='uuid of the pipeline to be run.'
-    ),
-    test: bool = typer.Option(
-        False, help='specify if tests should be run.'
-    ),
-    block_uuid: Union[str, None] = typer.Option(
-        None, help='uuid of the block to be run.'
-    ),
-    execution_partition: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    executor_type: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    callback_url: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    block_run_id: Union[int, None] = typer.Option(
-        None, help=''
-    ),
-    pipeline_run_id: Union[int, None] = typer.Option(
-        None, help=''
-    ),
-    runtime_vars: Union[List[str], None] = typer.Option(
-        None, help='specify runtime variables. These will overwrite the pipeline global variables.'
-    ),
-    skip_sensors: bool = typer.Option(
-        False, help='specify if the sensors should be skipped.'
-    ),
-    template_runtime_configuration: Union[str, None] = typer.Option(
-        None, help='runtime configuration of data integration block runs.'
-    ),
+    project_path: str = RUN_PROJECT_PATH_DEFAULT,
+    pipeline_uuid: str = RUN_PIPELINE_UUID_DEFAULT,
+    test: bool = RUN_TEST_DEFAULT,
+    block_uuid: Union[str, None] = RUN_BLOCK_UUID_DEFAULT,
+    execution_partition: Union[str, None] = RUN_EXECUTION_PARTITION_DEFAULT,
+    executor_type: Union[str, None] = RUN_EXECUTOR_TYPE_DEFAULT,
+    callback_url: Union[str, None] = RUN_CALLBACK_URL_DEFAULT,
+    block_run_id: Union[int, None] = RUN_BLOCK_RUN_ID_DEFAULT,
+    pipeline_run_id: Union[int, None] = RUN_PIPELINE_RUN_ID_DEFAULT,
+    runtime_vars: Union[List[str], None] = RUN_RUNTIME_VARS_DEFAULT,
+    skip_sensors: bool = RUN_SKIP_SENSORS_DEFAULT,
+    template_runtime_configuration: Union[str, None] = RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT,
 ):
     """
     Run pipeline.
@@ -183,12 +219,8 @@ def run(
 
 @app.command()
 def clean_cached_variables(
-    project_path: str = typer.Argument(
-        ..., help='path of the Mage project to clean variables.'
-    ),
-    pipeline_uuid: str = typer.Option(
-        None, help='uuid of the pipeline to clean.'
-    ),
+    project_path: str = CLEAN_VARIABLES_PROJECT_PATH_DEFAULT,
+    pipeline_uuid: str = CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT,
 ):
     from mage_ai.data_preparation.repo_manager import set_repo_path
 
@@ -202,9 +234,7 @@ def clean_cached_variables(
 
 @app.command()
 def create_spark_cluster(
-    project_path: str = typer.Argument(
-        ..., help='path of the Mage project that contains the EMR config.'
-    ),
+    project_path: str = CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT,
 ):
     """
     Create EMR cluster for Mage project.
