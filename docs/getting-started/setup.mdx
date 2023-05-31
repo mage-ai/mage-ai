@@ -81,7 +81,7 @@ Mage uses SQLite as the default database engine. To use PostgreSQL as the databa
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
       -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
       mageai/mageai \
-      /app/run_app.sh mage start another_repo
+      /app/run_app.sh mage start <project_name>
    ```
 
 ### Using MSSQL as database
@@ -109,7 +109,7 @@ Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
    -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Username123;ENCRYPT=yes;TrustServerCertificate=yes;" \
    mageai/mageai \
-   /app/run_app.sh mage start another_repo_mssql
+   /app/run_app.sh mage start <project_name>
    ```
 
 ---
