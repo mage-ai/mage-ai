@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import RoleType from '@interfaces/RoleType';
 import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -23,7 +24,6 @@ import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
-import RoleType from '@interfaces/RoleType';
 
 function UsersListPage() {
   const router = useRouter();

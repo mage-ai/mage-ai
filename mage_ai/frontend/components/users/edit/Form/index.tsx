@@ -186,18 +186,6 @@ function UserEditForm({
     userPrev,
   ]);
 
-  const visibleProfileRoles = useMemo(() => {
-    let userRoles = [];
-
-    const roleIDs = roles?.map(({ id }: RoleType) => id) || [];
-    if (profile && profile.roles_new) {
-      userRoles = profile.roles_new;
-    } else if (user?.roles_new && user?.roles_new.length > 0) {
-      userRoles = user.roles_new;
-    }
-    return userRoles?.filter(({ id }: RoleType) => roleIDs.includes(id));
-  }, [profile, roles, user]);
-
   const [rolesUpdated, setRolesUpdated] = useState<boolean>(false);
   const currentRoles = useMemo(() => {
     let roles;
@@ -208,6 +196,11 @@ function UserEditForm({
     }
     return roles || [];
   }, [profile, rolesUpdated, user]);
+
+  const visibleProfileRoles = useMemo(() => {
+    const roleIDs = roles?.map(({ id }: RoleType) => id) || [];
+    return currentRoles?.filter(({ id }: RoleType) => roleIDs.includes(id));
+  }, [currentRoles, roles]);
 
   return (
     <>
@@ -257,6 +250,8 @@ function UserEditForm({
               onChange={e => {
                 const role = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (role) {
+                  setButtonDisabled(false);
+                  setRolesUpdated(true);
                   setProfile(prev => {
                     let updatedProfile = {};
                     if (!find(currentRoles, ({ id }: RoleType) => id == role?.id)) {
@@ -269,9 +264,7 @@ function UserEditForm({
                       ...updatedProfile,
                     };
                   });
-                  setRolesUpdated(true);
                 }
-                setButtonDisabled(false);
               }}
               primary
               setContentOnMount
