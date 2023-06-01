@@ -57,8 +57,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
 ### Using PostgreSQL as database
 
-Mage uses SQLite as the default database engine. To use PostgreSQL as
-the database engine, you'll need to run your Docker container slightly differently:
+Mage uses SQLite as the default database engine. To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
 
 1. Create Docker network
 
@@ -66,7 +65,7 @@ the database engine, you'll need to run your Docker container slightly different
    docker network create mage-app
    ```
 
-1. Start PostgreSQL Docker container in a separate window
+2. Start PostgreSQL Docker container in a separate window
 
    ```bash
    docker run --network mage-app --network-alias postgres_db \
@@ -76,14 +75,54 @@ the database engine, you'll need to run your Docker container slightly different
       postgres:13-alpine3.17 postgres
    ```
 
-1. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
 
    ```bash
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
       -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
       mageai/mageai \
-      /app/run_app.sh mage start another_repo
+      /app/run_app.sh mage start <project_name>
    ```
+
+### Using MSSQL as database
+
+Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
+
+1. Create Docker network
+
+   ```bash
+   docker network create mage-app
+   ```
+
+2. Start MSSQL Docker container in a separate window
+
+   ```bash
+   docker run --network mage-app --network-alias mssql_db \
+   -it -p 1433:1433 -e "ACCEPT_EULA=Y" \
+   -e "MSSQL_SA_PASSWORD=test_Password123" \
+   mcr.microsoft.com/mssql/server:2022-latest
+   ```
+
+   More details about the MSSQL docker image are available at [Microsoft SQL Server - Ubuntu based images](https://hub.docker.com/_/microsoft-mssql-server)
+
+3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+
+   ```bash
+   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+   -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Password123;ENCRYPT=yes;TrustServerCertificate=yes;" \
+   mageai/mageai \
+   /app/run_app.sh mage start <project_name>
+   ```
+
+   The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
+
+   * "DRIVER={ODBC Driver 18 for SQL Server}" - a formatted string with a version number matching that of the SQL server
+   * "SERVER=database_server" - the name or IP address of the database server
+   * "DATABASE=database" - the name of the database
+   * "UID=user" - the user ID for the database
+   * "PWD=password" - the password for the user
+   * "ENCRYPT=yes" - whether to use encryption
+   * "TrustServerCertificate=yes" - whether to trust the server certificate
 
 ---
 
