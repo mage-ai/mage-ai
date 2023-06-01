@@ -126,7 +126,7 @@ class PipelineSchedule(BaseModel):
             ).one_or_none()
         except Exception:
             traceback.print_exc()
-            existing_trigger = None
+            return
 
         kwargs = dict(
             name=trigger_config.name,
