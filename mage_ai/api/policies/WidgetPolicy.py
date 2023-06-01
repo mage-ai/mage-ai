@@ -36,7 +36,9 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
-WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
+WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [
+    'retry_config',
+], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -45,12 +47,20 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 WidgetPolicy.allow_write([
+    'all_upstream_blocks_executed',
+    'color',
     'config',
     'configuration',
     'content',
+    'downstream_blocks',
+    'executor_config',
+    'executor_type',
+    'has_callback',
     'language',
     'name',
     'priority',
+    'retry_config',
+    'status',
     'type',
     'upstream_blocks',
     'uuid',
