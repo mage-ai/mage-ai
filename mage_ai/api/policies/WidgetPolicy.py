@@ -47,12 +47,20 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 WidgetPolicy.allow_write([
+    'all_upstream_blocks_executed',
+    'color',
     'config',
     'configuration',
     'content',
+    'downstream_blocks',
+    'executor_config',
+    'executor_type',
+    'has_callback',
     'language',
     'name',
     'priority',
+    'retry_config',
+    'status',
     'type',
     'upstream_blocks',
     'uuid',
