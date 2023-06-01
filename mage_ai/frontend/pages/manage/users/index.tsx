@@ -7,14 +7,12 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
@@ -69,61 +67,6 @@ function UsersListPage() {
   }, [
     q,
     qPrev,
-  ]);
-
-  const showAddNewUser = query?.add_new_user;
-  const formMemo = useMemo(() => {
-    if (showAddNewUser) {
-      return (
-        <Spacing p={PADDING_UNITS}>
-          <UserEditForm
-            newUser
-            onSaveSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUsers();
-            }}
-            title="Add new user"
-            user={{}}
-          />
-        </Spacing>
-      );
-    } else if (user) {
-      return (
-        <Spacing p={PADDING_UNITS}>
-          <UserEditForm
-            hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
-            onDeleteSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUsers();
-            }}
-            onSaveSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUser();
-              fetchUsers();
-            }}
-            showDelete
-            title="Edit user"
-            user={user}
-          />
-        </Spacing>
-      );
-    }
-
-    return null;
-  }, [
-    fetchUser,
-    fetchUsers,
-    showAddNewUser,
-    user,
   ]);
 
   return (

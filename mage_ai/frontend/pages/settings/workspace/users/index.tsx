@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import RoleType from '@interfaces/RoleType';
 import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -191,17 +192,22 @@ function UsersListPage() {
           roles_display,
           roles_new,
           username,
-        }: UserType) => [
-          <Text bold key="username">
-            {username}
-          </Text>,
-          <Text default key="email">
-            {email}
-          </Text>,
-          <Text default key="roles">
-            {roles_new && roles_new[0] ? roles_new[0].name : roles_display}
-          </Text>,
-        ])}
+        }: UserType) => {
+          const sortedRoles = roles_new || [];
+          sortedRoles.sort((a: RoleType, b: RoleType) => a.id - b.id);
+
+          return [
+            <Text bold key="username">
+              {username}
+            </Text>,
+            <Text default key="email">
+              {email}
+            </Text>,
+            <Text default key="roles">
+              {sortedRoles.length > 0 ? sortedRoles[0].name : roles_display}
+            </Text>,
+          ];
+        })}
         uuid="pipeline-runs"
       />
     </SettingsDashboard>

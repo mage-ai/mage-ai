@@ -148,8 +148,7 @@ class UserResource(DatabaseResource):
                     error.update(
                         {'message': 'Admins cannot update users who are Admins.'})
                     raise ApiError(error)
-                elif payload.get('roles') and int(payload.get('roles')) & 1 != 0 or \
-                        access & Permission.Access.ADMIN != 0:
+                elif access & Permission.Access.ADMIN != 0:
                     error.update(
                         {'message': 'Admins cannot make other users Admins.'})
                     raise ApiError(error)
