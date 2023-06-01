@@ -43,6 +43,7 @@ import {
   WIDTH_OF_SINGLE_CHARACTER_SMALL,
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
+import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelAttributes } from '@utils/models/dbt';
 import { isActivePort } from './utils';
@@ -456,7 +457,7 @@ function DependencyGraph({
         width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
           + (disabledProp ? 0 : UNIT * 5)
           + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
-          + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
+          + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
       });
 
     });
@@ -481,7 +482,7 @@ function DependencyGraph({
       const {
         status,
         runtime,
-      } = blockStatus[block.uuid] || {};
+      } = blockStatus[getBlockRunBlockUUID(block)] || {};
       return {
         hasFailed: RunStatus.FAILED === status,
         isCancelled: RunStatus.CANCELLED === status,

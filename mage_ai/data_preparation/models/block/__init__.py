@@ -586,7 +586,16 @@ class Block:
         )
 
     def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]) -> bool:
-        return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
+        arr = []
+        for b in self.upstream_blocks:
+            uuid = b.uuid
+            # Replicated block’s have a block_run block_uuid value with this convention:
+            # [block_uuid]:[replicated_block_uuid]
+            if b.replicated_block:
+                uuid = f'{uuid}:{b.replicated_block}'
+            arr.append(uuid)
+
+        return all(uuid in completed_block_uuids for uuid in arr)
 
     def delete(
         self,
