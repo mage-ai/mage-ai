@@ -71,61 +71,6 @@ function UsersListPage() {
     qPrev,
   ]);
 
-  const showAddNewUser = query?.add_new_user;
-  const formMemo = useMemo(() => {
-    if (showAddNewUser) {
-      return (
-        <Spacing p={PADDING_UNITS}>
-          <UserEditForm
-            newUser
-            onSaveSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUsers();
-            }}
-            title="Add new user"
-            user={{}}
-          />
-        </Spacing>
-      );
-    } else if (user) {
-      return (
-        <Spacing p={PADDING_UNITS}>
-          <UserEditForm
-            hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
-            onDeleteSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUsers();
-            }}
-            onSaveSuccess={() => {
-              goToWithQuery({
-                add_new_user: null,
-                user_id: null,
-              });
-              fetchUser();
-              fetchUsers();
-            }}
-            showDelete
-            title="Edit user"
-            user={user}
-          />
-        </Spacing>
-      );
-    }
-
-    return null;
-  }, [
-    fetchUser,
-    fetchUsers,
-    showAddNewUser,
-    user,
-  ]);
-
   return (
     <WorkspacesDashboard
       pageName={WorkspacesPageNameEnum.USERS}

@@ -16,6 +16,7 @@ import {
 export type ChipProps = {
   border?: boolean;
   children?: any;
+  disabled?: boolean;
   label?: string | any;
   onClick?: () => void;
   primary?: boolean;
@@ -53,6 +54,7 @@ const ChipStyle = styled.div<ChipProps>`
 const Chip = ({
   border,
   children,
+  disabled,
   label,
   onClick,
   primary,
@@ -61,8 +63,9 @@ const Chip = ({
   <ChipStyle border={border} primary={primary} small={small}>
     <Button
       basic
-      noPadding
+      disabled={disabled}
       noBackground
+      noPadding
       onClick={onClick}
       transparent
     >
@@ -73,8 +76,11 @@ const Chip = ({
             {label}
           </Text>
         )}
-        <Spacing mr={1} />
-        <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
+        {!disabled && (
+          <Spacing ml={1}>
+            <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
+          </Spacing>
+        )}
       </FlexContainer>
     </Button>
   </ChipStyle>

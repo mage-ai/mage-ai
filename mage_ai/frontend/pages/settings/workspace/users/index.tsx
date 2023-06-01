@@ -23,6 +23,7 @@ import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import RoleType from '@interfaces/RoleType';
 
 function UsersListPage() {
   const router = useRouter();
@@ -191,17 +192,22 @@ function UsersListPage() {
           roles_display,
           roles_new,
           username,
-        }: UserType) => [
-          <Text bold key="username">
-            {username}
-          </Text>,
-          <Text default key="email">
-            {email}
-          </Text>,
-          <Text default key="roles">
-            {roles_new && roles_new[0] ? roles_new[0].name : roles_display}
-          </Text>,
-        ])}
+        }: UserType) => {
+          const sortedRoles = roles_new || [];
+          sortedRoles.sort((a: RoleType, b: RoleType) => a.id - b.id);
+
+          return [
+            <Text bold key="username">
+              {username}
+            </Text>,
+            <Text default key="email">
+              {email}
+            </Text>,
+            <Text default key="roles">
+              {sortedRoles.length > 0 ? sortedRoles[0].name : roles_display}
+            </Text>,
+          ];
+        })}
         uuid="pipeline-runs"
       />
     </SettingsDashboard>

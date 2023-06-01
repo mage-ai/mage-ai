@@ -46,9 +46,7 @@ function ManageUserDetail({
             entityID={null}
             hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
             onDeleteSuccess={() => router.push('/manage/users')}
-            onSaveSuccess={() => {
-              fetchUser();
-            }}
+            onSaveSuccess={fetchUser}
             showDelete
             title="Edit user"
             user={user}

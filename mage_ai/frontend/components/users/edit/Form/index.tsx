@@ -1,5 +1,5 @@
 import { toast } from 'react-toastify';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -39,7 +39,7 @@ type UserEditFormProps = {
 
 function UserEditForm({
   disabledFields,
-  entity,
+  entity = 'global',
   entityID,
   hideFields: hideFieldsProp,
   newUser,
@@ -82,7 +82,6 @@ function UserEditForm({
             const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
               uuid,
             }) => uuid);
-            keys.push('roles_new');
             const newProfile = selectKeys(userServer, keys);
             setProfile(newProfile);
 
@@ -152,7 +151,6 @@ function UserEditForm({
       const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
         uuid,
       }) => uuid);
-      keys.push('roles_new');
       // @ts-ignore
       setProfile(selectKeys(user, keys));
     }
@@ -192,13 +190,24 @@ function UserEditForm({
     let userRoles = [];
 
     const roleIDs = roles?.map(({ id }: RoleType) => id) || [];
-    if (profile) {
+    if (profile && profile.roles_new) {
       userRoles = profile.roles_new;
     } else if (user?.roles_new && user?.roles_new.length > 0) {
       userRoles = user.roles_new;
     }
     return userRoles?.filter(({ id }: RoleType) => roleIDs.includes(id));
   }, [profile, roles, user]);
+
+  const [rolesUpdated, setRolesUpdated] = useState<boolean>(false);
+  const currentRoles = useMemo(() => {
+    let roles;
+    if (!rolesUpdated) {
+      roles = user?.roles_new;
+    } else {
+      roles = profile?.roles_new;
+    }
+    return roles || [];
+  }, [profile, rolesUpdated, user]);
 
   return (
     <>
@@ -246,15 +255,13 @@ function UserEditForm({
               label="Roles"
               // @ts-ignore
               onChange={e => {
-                setButtonDisabled(false);
                 const role = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (role) {
                   setProfile(prev => {
-                    const prevRoles = prev?.roles_new || [];
                     let updatedProfile = {};
-                    if (!find(prevRoles, ({ id }: RoleType) => id == role?.id)) {
+                    if (!find(currentRoles, ({ id }: RoleType) => id == role?.id)) {
                       updatedProfile = {
-                        roles_new: [...prevRoles, role],
+                        roles_new: [...currentRoles, role],
                       };
                     }
                     return {
@@ -262,7 +269,9 @@ function UserEditForm({
                       ...updatedProfile,
                     };
                   });
+                  setRolesUpdated(true);
                 }
+                setButtonDisabled(false);
               }}
               primary
               setContentOnMount
@@ -279,16 +288,18 @@ function UserEditForm({
                 <Spacing
                   key={`user_roles/${name}`}
                   mb={1}
-                  mr={1} 
+                  mr={1}
                 >
                   <Chip
+                    disabled={disabledFields?.includes('roles')}
                     label={name}
                     onClick={() => {
                       setButtonDisabled(false);
+                      setRolesUpdated(true);
                       setProfile(prev => ({
                         ...prev,
                         roles_new: remove(
-                          prev.roles_new || [],
+                          currentRoles,
                           ({ id: rid }: RoleType) => rid === id,
                         ),
                       }));
