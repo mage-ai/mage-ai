@@ -114,13 +114,13 @@ Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as
    /app/run_app.sh mage start <project_name>
    ```
 
-   The parameters listed in the MAGE_DATABASE_CONNECTION_URL are explained below:
+   The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
 
    * "DRIVER={ODBC Driver 18 for SQL Server}" - a formatted string with a version number matching that of the SQL server
-   * "SERVER=<your_server>" - the name or IP address of the database server
-   * "DATABASE=<your_database>" - the name of the database
-   * "UID=<user>" - the user ID for the database
-   * "PWD=<password>" - the password for the user
+   * "SERVER=database_server" - the name or IP address of the database server
+   * "DATABASE=database" - the name of the database
+   * "UID=user" - the user ID for the database
+   * "PWD=password" - the password for the user
    * "ENCRYPT=yes" - whether to use encryption
    * "TrustServerCertificate=yes" - whether to trust the server certificate
 
