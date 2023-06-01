@@ -6,6 +6,7 @@ SQL_SOURCES = [
     ),
     dict(name='MongoDB'),
     dict(name='MySQL'),
+    dict(name='OracleDB'),
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
     dict(name='Snowflake'),
