@@ -1,7 +1,7 @@
 import Ansi from 'ansi-to-react';
 import NextLink from 'next/link';
 import { FixedSizeList } from 'react-window';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
@@ -46,9 +46,27 @@ function LogsTable({
   themeContext,
 }: LogsTableProps) {
   const { height: windowHeight } = useWindowSize();
-  const maxBlockUUIDLength = Math.max(...Object.keys(blocksByUUID || {}).map(k => k.length));
-  const blockUUIDColWidth = (maxBlockUUIDLength * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE)
-    + 12 + 8;  // add block color square and spacing
+  const isIntegration = useMemo(
+    () => PipelineTypeEnum.INTEGRATION === pipeline?.type,
+    [pipeline.type],
+  );
+
+  let blockUUIDs = Object.keys(blocksByUUID || {});
+  if (isIntegration) {
+    const streamUUIDs = (pipeline?.data_integration?.catalog?.streams || []).map(
+      ({ tap_stream_id }) => tap_stream_id,
+    );
+    const blockUUIDsWithStreamSet: Set<string> = new Set();
+    blockUUIDs.forEach(blockUUID => {
+      streamUUIDs.forEach(streamUUID => blockUUIDsWithStreamSet.add(`${blockUUID}:${streamUUID}:0`));
+    });
+    blockUUIDs = Array.from(blockUUIDsWithStreamSet);
+  }
+  const maxBlockUUIDLength = Math.max(...blockUUIDs.map(k => k.length));
+  const blockUUIDColWidth = Math.min(
+    (maxBlockUUIDLength * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE) + 12 + 8,  // add block color square and spacing
+    UNIT * 50,
+  );
   const columns = [
     {
       uuid: '_',
@@ -93,7 +111,7 @@ function LogsTable({
     let streamID;
     let streamIndex;
     const parts = blockUUID.split(':');
-    if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
+    if (isIntegration) {
       blockUUID = parts[0];
       streamID = parts[1];
       streamIndex = parts[2];
@@ -131,14 +149,20 @@ function LogsTable({
 
               <Spacing mr={1} />
 
-              <Text disableWordBreak monospace>
-                {blockUUID}{streamID && ': '}{streamID && (
+              <Text
+                disableWordBreak
+                monospace
+                noWrapping
+                title={blockUUIDProp}
+                width={blockUUIDColWidth - 16}
+              >
+                {blockUUID}{streamID && ':'}{streamID && (
                   <Text default inline monospace>
                     {streamID}
                   </Text>
-                )}{streamIndex >= 0 && ': '}{streamIndex >= 0 && (
+                )}{streamIndex >= 0 && ':'}{streamIndex >= 0 && (
                   <Text default inline monospace>
-                    {index}
+                    {streamIndex}
                   </Text>
                 )}
               </Text>
@@ -184,7 +208,12 @@ function LogsTable({
             {formatTimestamp(timestamp)}
           </Text>
         </Flex>
-        <Flex style={{ minWidth: blockUUIDColWidth }}>
+        <Flex
+          style={{
+            minWidth: blockUUIDColWidth,
+            width: blockUUIDColWidth,
+          }}
+        >
           {idEl}
         </Flex>
         <Flex
@@ -211,7 +240,7 @@ function LogsTable({
         </Flex>
       </TableRowStyle>
     );
-  }, [blockUUIDColWidth, query, setSelectedLog]);
+  }, [blockUUIDColWidth, isIntegration, query, setSelectedLog]);
 
   return (
     <TableContainer>
@@ -223,6 +252,7 @@ function LogsTable({
             style={{
               height: UNIT * 4,
               minWidth: col.width || null,
+              width: col.width || null,
             }}
           >
             {col.uuid !== '_' &&
