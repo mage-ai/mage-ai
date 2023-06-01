@@ -73,7 +73,8 @@ from selected_items where row_id = 1
 
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
-            self.host, self.password, self.user, self.port, self.service)
+            host=self.host, password=self.password, user=self.user,
+            port=self.port, service=self.service)
 
     def test_connection(self):
         conn = self.build_connection().build_connection()
