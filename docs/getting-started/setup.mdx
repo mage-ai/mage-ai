@@ -103,6 +103,8 @@ Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as
    mcr.microsoft.com/mssql/server:2022-latest
    ```
 
+   More details about the MSSQL docker image are available at [Microsoft SQL Server - Ubuntu based images](https://hub.docker.com/_/microsoft-mssql-server)
+
 3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
 
    ```bash
@@ -111,6 +113,16 @@ Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as
    mageai/mageai \
    /app/run_app.sh mage start <project_name>
    ```
+
+   The parameters listed in the MAGE_DATABASE_CONNECTION_URL are explained below:
+
+   * "DRIVER={ODBC Driver 18 for SQL Server}" - a formatted string with a version number matching that of the SQL server
+   * "SERVER=<your_server>" - the name or IP address of the database server
+   * "DATABASE=<your_database>" - the name of the database
+   * "UID=<user>" - the user ID for the database
+   * "PWD=<password>" - the password for the user
+   * "ENCRYPT=yes" - whether to use encryption
+   * "TrustServerCertificate=yes" - whether to trust the server certificate
 
 ---
 
