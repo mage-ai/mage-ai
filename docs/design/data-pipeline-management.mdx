@@ -226,3 +226,20 @@ queue_config:
   concurrency: 100
 ```
 The default value of concurrency is 20.
+
+## Variable retention
+
+Mage automatically persists the output of block runs on disk. If you want to clean up the old variables,
+You can set the `variables_retention_period` config in project's metadata.yaml. The valid period should
+end with "d", "h", or "w".
+
+Example config:
+```yaml
+variables_retention_period: 30d
+```
+
+After configuring `variables_retention_period` in project's metadata.yaml, you can run the following command
+to clean up old variables:
+```bash
+mage clean-cached-variables [project_path]
+```
