@@ -6,12 +6,14 @@ from contextlib import redirect_stderr, redirect_stdout
 from typing import Callable, Dict, List, Union
 
 import yaml
+from jinja2 import Template
 
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.shared.hash import merge_dict
 
 
@@ -97,7 +99,8 @@ class StreamingPipelineExecutor(PipelineExecutor):
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         from mage_ai.streaming.sources.base import SourceConsumeMethod
         from mage_ai.streaming.sources.source_factory import SourceFactory
-        source_config = yaml.safe_load(self.source_block.content)
+        source_config = self.__interpolate_vars(self.source_block.content)
+
         source = SourceFactory.get_source(
             source_config,
             checkpoint_path=os.path.join(
@@ -108,9 +111,8 @@ class StreamingPipelineExecutor(PipelineExecutor):
 
         sinks_by_uuid = dict()
         for sink_block in self.sink_blocks:
-            sink_config = yaml.safe_load(sink_block.content)
             sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
-                sink_config,
+                self.__interpolate_vars(sink_block.content),
                 buffer_path=os.path.join(
                     self.pipeline.pipeline_variables_dir,
                     'buffer',
@@ -172,3 +174,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
         TODO: Implement this method
         """
         pass
+
+    def __interpolate_vars(self, content):
+        config_file = Template(content).render(
+            **get_template_vars()
+        )
+        return yaml.safe_load(config_file)
