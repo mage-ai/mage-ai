@@ -131,7 +131,7 @@ dmypy.json
 
 # data files
 mage_ai/server/data/files/**
-default_repo
+default_repoMAIN
 instance_metadata.json
 ~/.mage_data
 
