@@ -304,7 +304,7 @@ class PipelineScheduler:
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
-            message=msg,
+            summary=msg,
         )
 
         if PipelineType.INTEGRATION == self.pipeline.type:
