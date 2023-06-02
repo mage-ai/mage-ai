@@ -103,7 +103,7 @@ function Dashboard({
       },
       {
         bold: true,
-        label: () => title,
+        label: () => "HELLO",
       },
     ]);
   }
