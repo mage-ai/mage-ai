@@ -71,16 +71,26 @@ function UsersListPage() {
 
   return (
     <WorkspacesDashboard
+      breadcrumbs={[
+        {
+          label: () => 'Workspaces',
+          linkProps: {
+            as: '/manage',
+            href: '/manage',
+          },
+        },
+        {
+          bold: true,
+          label: () => 'Users',
+        },
+      ]}
       pageName={WorkspacesPageNameEnum.USERS}
     >
       {isOwner &&
         <Spacing p={PADDING_UNITS}>
           <Button
             beforeIcon={<Add />}
-            onClick={() => goToWithQuery({
-              add_new_user: 1,
-              user_id: null,
-            })}
+            onClick={() => router.push('/manage/users/new')}
             primary
           >
             Add new user
@@ -110,11 +120,7 @@ function UsersListPage() {
         onClickRow={(rowIndex: number) => {
           const rowUserID = users[rowIndex]?.id;
 
-          if (rowUserID === currentUserID) {
-            router.push('/settings/account/profile');
-          } else {
-            router.push('/manage/users/[user]', `/manage/users/${rowUserID}`);
-          }
+          router.push('/manage/users/[user]', `/manage/users/${rowUserID}`);
         }}
         rows={users.map(({
           email,

@@ -49,17 +49,14 @@ class UserResource(DatabaseResource):
         roles_new = self.check_roles(role_ids)
 
         missing_values = []
-        if len(roles_new) == 0:
-            missing_values.append('roles')
+        # if len(roles_new) == 0:
+        #     missing_values.append('roles')
 
         payload['roles_new'] = roles_new
 
         for key in ['email', 'password']:
             if not payload.get(key):
                 missing_values.append(key)
-
-        if len(roles_new) == 0:
-            missing_values.append('roles')
 
         if len(missing_values) >= 1:
             error.update(
@@ -126,16 +123,16 @@ class UserResource(DatabaseResource):
             role_ids = payload.get('roles_new', [])
             roles_new = self.check_roles(role_ids)
 
-            missing_values = []
-            if len(roles_new) == 0:
-                missing_values.append('roles')
-
             payload['roles_new'] = roles_new
 
-            if len(missing_values) >= 1:
-                error.update(
-                    {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
-                raise ApiError(error)
+            # missing_values = []
+            # if len(roles_new) == 0:
+            #     missing_values.append('roles')
+
+            # if len(missing_values) >= 1:
+            #     error.update(
+            #         {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
+            #     raise ApiError(error)
 
             access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
 
@@ -190,6 +187,9 @@ class UserResource(DatabaseResource):
             'password',
             'password_confirmation',
             'password_current',
+            'owner',
+            'project_access',
+            'roles_display',
         ]), **kwargs)
 
     @safe_db_query
