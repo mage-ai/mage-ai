@@ -192,7 +192,7 @@ class Role(BaseModel):
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
-        if entity is None:
+        if entity == Permission.Entity.ANY:
             permissions.extend(self.permissions)
         else:
             entity_permissions = list(filter(
@@ -232,6 +232,7 @@ class UserRole(BaseModel):
 
 class Permission(BaseModel):
     class Entity(str, enum.Enum):
+        ANY = 'any'
         GLOBAL = 'global'
         PROJECT = 'project'
         PIPELINE = 'pipeline'

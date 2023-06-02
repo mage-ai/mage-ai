@@ -8,6 +8,7 @@ from mage_ai.cluster_manager.constants import (
     CONNECTION_URL_SECRETS_NAME,
     DB_SECRETS_NAME,
     GCP_BACKEND_CONFIG_ANNOTATION,
+    KUBE_NAMESPACE,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
     NODE_PORT_SERVICE_TYPE,
@@ -55,10 +56,10 @@ class WorkloadManager:
                 labels = service.metadata.labels
                 if not labels.get('dev-instance'):
                     continue
-                ip_address = service.status.load_balancer.ingress[0].ip
+                # ip_address = service.status.load_balancer.ingress[0].ip
                 conditions = service.status.conditions or list()
                 services_list.append(dict(
-                    ip=ip_address,
+                    # ip=ip_address,
                     name=labels.get('app'),
                     status='RUNNING' if len(conditions) == 0 else conditions[0].status,
                     type='kubernetes',
@@ -79,14 +80,16 @@ class WorkloadManager:
         if container_config is None:
             container_config = dict()
 
-        env_vars = self.__populate_env_vars(container_config)
+        env_vars = self.__populate_env_vars(container_config, volume_host_path=volume_host_path)
         container_config['env'] = env_vars
 
         containers = [
             {
                 'name': f'{deployment_name}-container',
-                'image': 'mageai/mageai:latest',
-                'command': ['mage', 'start', deployment_name],
+                # UPDATE TEST CODE
+                'image': 'mageai/mage-local:latest',
+                'imagePullPolicy': 'Never',
+                # 'command': ['mage', 'start', deployment_name],
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -151,7 +154,7 @@ class WorkloadManager:
                 {
                     'name': 'mage-data',
                     'hostPath': {
-                        'path': volume_host_path
+                        'path': volume_host_path,
                     },
                 }
             )
@@ -228,7 +231,7 @@ class WorkloadManager:
 
         return self.core_client.create_namespaced_service(self.namespace, service)
 
-    def __populate_env_vars(self, container_config) -> List:
+    def __populate_env_vars(self, container_config, volume_host_path=None) -> List:
         env_vars = []
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
@@ -244,6 +247,16 @@ class WorkloadManager:
                     }
                 }
             )
+
+        for var in [
+            DATABASE_CONNECTION_URL_ENV_VAR,
+            KUBE_NAMESPACE,
+        ]:
+            if os.getenv(var) is not None:
+                env_vars.append({
+                    'name': var,
+                    'value': os.getenv(var),
+                })
 
         # For connecting to CloudSQL PostgreSQL database.
         db_secrets_name = os.getenv(DB_SECRETS_NAME)
