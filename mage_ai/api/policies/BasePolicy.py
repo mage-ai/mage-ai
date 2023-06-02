@@ -15,7 +15,7 @@ from mage_ai.api.utils import (
     has_at_least_viewer_role,
     is_owner,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db.models.oauth import Permission
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS
@@ -43,7 +43,7 @@ class BasePolicy():
 
     @property
     def entity(self) -> Tuple[Union[Permission.Entity, None], Union[str, None]]:
-        return Permission.Entity.PROJECT, get_repo_path()
+        return Permission.Entity.PROJECT, get_repo_identifier()
 
     @classmethod
     def action_rule(self, action):

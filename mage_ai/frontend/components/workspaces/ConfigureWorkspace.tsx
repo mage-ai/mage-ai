@@ -55,6 +55,7 @@ function ConfigureWorkspace({
               message,
             },
           }) => {
+            setError(message);
             console.log(errors, message);
           },
         },
