@@ -25,44 +25,61 @@ GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig) -> None:
+    def __init__(self, git_config: GitConfig = None) -> None:
         import git
-        self.remote_repo_link = git_config.remote_repo_link
-        self.repo_path = git_config.repo_path or os.getcwd()
-        os.makedirs(self.repo_path, exist_ok=True)
+
+        self.auth_type = AuthType.SSH
         self.git_config = git_config
-        self.auth_type = git_config.auth_type or AuthType.SSH
+        self.remote_repo_link = None
+        self.repo_path = os.getcwd()
+
+        if self.git_config:
+            self.remote_repo_link = self.git_config.remote_repo_link
+
+            if self.git_config.repo_path:
+                self.repo_path = self.git_config.repo_path
+
+            if self.git_config.auth_type:
+                self.auth_type = self.git_config.auth_type
+
+        os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
-            url = urlsplit(self.remote_repo_link)
+            if self.remote_repo_link:
+                url = urlsplit(self.remote_repo_link)
+
             if os.getenv(GIT_ACCESS_TOKEN_VAR):
                 token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-            else:
+            elif self.git_config and self.git_config.access_token_secret_name:
                 token = get_secret_value(
-                    git_config.access_token_secret_name,
+                    self.git_config.access_token_secret_name,
                     repo_name=get_repo_path(),
                 )
-            user = git_config.username
-            url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-            self.remote_repo_link = urlunsplit(url)
+
+            if self.git_config:
+                user = self.git_config.username
+                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+                self.remote_repo_link = urlunsplit(url)
 
         try:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             self.__setup_repo()
 
-        self.__set_git_config()
+        if self.git_config:
+            self.__set_git_config()
 
-        try:
-            self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
-        except git.exc.GitCommandError:
-            # if the remote already exists
-            pass
+        if self.remote_repo_link:
+            try:
+                self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
+            except git.exc.GitCommandError:
+                # if the remote already exists
+                pass
 
-        # replace the existing remote url if it is different from the provided url
-        self.origin = self.repo.remotes[REMOTE_NAME]
-        if self.remote_repo_link not in self.origin.urls:
-            self.origin.set_url(self.remote_repo_link)
+            # replace the existing remote url if it is different from the provided url
+            self.origin = self.repo.remotes[REMOTE_NAME]
+            if self.remote_repo_link not in self.origin.urls:
+                self.origin.set_url(self.remote_repo_link)
 
     @classmethod
     def get_manager(self, user: User = None) -> 'Git':
@@ -193,6 +210,15 @@ class Git:
     def status(self) -> str:
         return self.repo.git.status()
 
+    def add_file(self, filename: str) -> None:
+        self.repo.git.add(filename)
+
+    def checkout_file(self, filename: str) -> None:
+        self.repo.git.checkout(filename)
+
+    def reset_file(self, filename: str) -> None:
+        self.repo.git.reset(filename)
+
     def commit(self, message, files: List[str] = None) -> None:
         if self.repo.index.diff(None) or self.repo.untracked_files:
             if files:
@@ -201,6 +227,9 @@ class Git:
             else:
                 self.repo.git.add('.')
             self.repo.index.commit(message)
+
+    def commit_message(self, message: str) -> None:
+        self.repo.index.commit(message)
 
     def switch_branch(self, branch) -> None:
         if branch in self.repo.heads:
