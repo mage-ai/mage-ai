@@ -25,7 +25,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import { BorderColorShareProps } from '../index.style';
-import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
+import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -81,6 +81,21 @@ type CodeOutputProps = {
   setSelectedOutputBlock?: (block: BlockType) => void;
   setSelectedTab?: (tab: TabType) => void;
 } & BorderColorShareProps;
+
+const SHARED_TOOLTIP_PROPS = {
+  appearAbove: true,
+  appearBefore: true,
+  block: true,
+  size: null,
+  widthFitContent: true,
+};
+
+const SHARED_BUTTON_PROPS = {
+  basic: true,
+  iconOnly: true,
+  noPadding: true,
+  transparent: true,
+};
 
 function CodeOutput({
   block,
@@ -591,11 +606,8 @@ function CodeOutput({
             {setCollapsed && (
               <Flex alignItems="center" px={1}>
                 <Button
-                  basic
-                  iconOnly
-                  noPadding
+                  {...SHARED_BUTTON_PROPS}
                   onClick={() => setCollapsed(!collapsed)}
-                  transparent
                 >
                   {collapsed ? (
                     <FlexContainer alignItems="center">
@@ -626,9 +638,7 @@ function CodeOutput({
                 justifyContent="flex-end"
               >
                 <Tooltip
-                  appearAbove
-                  appearBefore
-                  block
+                  {...SHARED_TOOLTIP_PROPS}
                   label={runCount >= 1 && runStartTime
                     ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
                     : (
@@ -637,8 +647,6 @@ function CodeOutput({
                         : 'Block executed successfully'
                     )
                   }
-                  size={null}
-                  widthFitContent
                 >
                   <FlexContainer alignItems="center">
                     {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
@@ -665,29 +673,45 @@ function CodeOutput({
                   </FlexContainer>
                 </Tooltip>
                 {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
-                  <Spacing pl={1}>
-                    <Button
-                      afterIcon={<Expand muted size={UNIT * 1.75} />}
-                      basic
-                      noPadding
-                      onClick={() => {
-                        addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                        openSidekickView?.(ViewKeyEnum.DATA);
-                        setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
-                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                            setSelectedOutputBlock?.(block);
-                            return prevOutputBlocks.concat(block);
-                          } else {
-                            return prevOutputBlocks;
-                          }
-                        });
-                      }}
-                      transparent
-                    >
-                      <Text default>
-                        Expand table
-                      </Text>
-                    </Button>
+                  <Spacing pl={2}>
+                    <FlexContainer alignItems="center">
+                      <Tooltip
+                        {...SHARED_TOOLTIP_PROPS}
+                        label="Expand table"
+                      >
+                        <Button
+                          {...SHARED_BUTTON_PROPS}
+                          onClick={() => {
+                            addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
+                            openSidekickView?.(ViewKeyEnum.DATA);
+                            setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
+                              if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                                setSelectedOutputBlock?.(block);
+                                return prevOutputBlocks.concat(block);
+                              } else {
+                                return prevOutputBlocks;
+                              }
+                            });
+                          }}
+                        >
+                          <Expand muted size={UNIT * 1.75} />
+                        </Button>
+                      </Tooltip>
+
+                      <Spacing pl={2} />
+
+                      <Tooltip
+                        {...SHARED_TOOLTIP_PROPS}
+                        label="Save output as CSV file"
+                      >
+                        <Button
+                          {...SHARED_BUTTON_PROPS}
+                          onClick={() => console.log('save button clicked')}
+                        >
+                          <Save muted size={UNIT * 1.75} />
+                        </Button>
+                      </Tooltip>
+                    </FlexContainer>
                   </Spacing>
                 }
               </FlexContainer>
