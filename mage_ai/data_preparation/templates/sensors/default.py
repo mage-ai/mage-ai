@@ -5,7 +5,7 @@ if 'sensor' not in globals():
 
 
 @sensor
-def check_condition(**kwargs) -> bool:
+def check_condition(*args, **kwargs) -> bool:
     """
     Template code for checking if block or pipeline run completed.
     """

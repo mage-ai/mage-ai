@@ -2162,10 +2162,13 @@ class SensorBlock(Block):
             )
         else:
             sig = signature(block_function)
+            has_args = any([p.kind == p.VAR_POSITIONAL for p in sig.parameters.values()])
             has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
             use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
+            args = input_vars if has_args else []
             while True:
-                condition = block_function(**global_vars) if use_global_vars else block_function()
+                condition = block_function(*args, **global_vars) \
+                            if use_global_vars else block_function()
                 if condition:
                     break
                 print('Sensor sleeping for 1 minute...')

@@ -8,7 +8,7 @@ if 'sensor' not in globals():
 
 
 @sensor
-def query_mysql_and_check_condition(**kwargs) -> bool:
+def query_mysql_and_check_condition(*args, **kwargs) -> bool:
     """
     Template code for checking the results of a MySQL query.
     Specify your configuration settings in 'io_config.yaml'.
