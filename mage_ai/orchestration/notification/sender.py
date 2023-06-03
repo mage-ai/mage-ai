@@ -148,9 +148,6 @@ class NotificationSender:
             """
             default_details += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
                                'to check pipeline run results and logs.'
-        print('default_title', default_title)
-        print('default_summary', default_summary)
-        print('default_details', default_details)
 
         title = None
         details = None
@@ -169,7 +166,6 @@ class NotificationSender:
         )
 
     def __interpolate_vars(self, text: str, pipeline, pipeline_run):
-        print(f'interpolate {text}')
         if text is None or pipeline is None or pipeline_run is None:
             return text
         return Template(text).render(
