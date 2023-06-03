@@ -15,6 +15,8 @@ You must enter the following credentials when configuring this source:
 | `headers` | Request headers. | Optional |
 | `response_parser` | Parse the API response using dot notation. The final result must be an array. | Optional |
 | `columns` | If the final data returned from the API or from the `response_parser` is not a JSON object (e.g. it’s an array of strings or an array of array of strings), then you must define the columns. | Required (conditionally) |
+|`separator`| If the file extension is TSV, XLSX (or CSV with specific separator), then you must define it | Optional: ',' is default|
+|`has_header`| If the file extension is TSV, XLSX or CSV, and contains a header, then you must define it as True | Optional: False is default
 
 <br />
 
