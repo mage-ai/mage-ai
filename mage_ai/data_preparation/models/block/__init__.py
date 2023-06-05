@@ -50,6 +50,8 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.io.base import FileFormat
+from mage_ai.io.file import FileIO
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
@@ -1361,6 +1363,34 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 continue
             outputs.append(data)
         return outputs + data_products
+
+    def export_output_to_csv(self, execution_partition: str = None) -> None:
+        block_uuid = self.uuid
+        variable_manager = self.pipeline.variable_manager
+        all_variables = self.output_variables(execution_partition=execution_partition)
+
+        for v in all_variables:
+            variable_object = variable_manager.get_variable_object(
+                self.pipeline.uuid,
+                block_uuid,
+                v,
+                partition=execution_partition,
+                spark=self.__get_spark_session(),
+            )
+            data = variable_object.read_data(
+                sample=False,
+                spark=self.__get_spark_session(),
+            )
+            block_output_path = os.path.join(
+                self.pipeline.outputs_path,
+                f'{block_uuid}.{FileFormat.CSV}',
+            )
+
+            FileIO().export(
+                data,
+                block_output_path,
+                format=FileFormat.CSV,
+            )
 
     def __save_outputs_prepare(self, outputs) -> Dict:
         variable_mapping = dict()

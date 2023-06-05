@@ -879,6 +879,7 @@ function CodeBlock({
       blockMetadata={blockMetadata}
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
+      fetchFileTree={fetchFileTree}
       hasOutput={hasOutput}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
@@ -896,6 +897,7 @@ function CodeBlock({
           return val;
         });
       }}
+      setErrors={setErrors}
       setOutputBlocks={setOutputBlocks}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedTab={setSelectedTab}
@@ -905,6 +907,7 @@ function CodeBlock({
     blockMetadata,
     borderColorShareProps,
     buttonTabs,
+    fetchFileTree,
     hasOutput,
     isInProgress,
     mainContainerWidth,
@@ -918,6 +921,7 @@ function CodeBlock({
     runStartTime,
     selected,
     selectedTab,
+    setErrors,
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,

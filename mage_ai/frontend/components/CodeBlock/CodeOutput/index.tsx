@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
+import { toast } from 'react-toastify';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
@@ -12,6 +14,7 @@ import CodeEditor from '@components/CodeEditor';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -23,6 +26,7 @@ import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { BorderColorShareProps } from '../index.style';
 import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
@@ -53,6 +57,7 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -65,6 +70,7 @@ type CodeOutputProps = {
   buttonTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
+  fetchFileTree?: () => void;
   hasOutput?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
@@ -77,6 +83,7 @@ type CodeOutputProps = {
   runStartTime?: number;
   selectedTab?: TabType;
   setCollapsed?: (boolean) => void;
+  setErrors?: (errors: ErrorsType) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   setSelectedTab?: (tab: TabType) => void;
@@ -105,6 +112,7 @@ function CodeOutput({
   contained = true,
   dynamicBlock,
   dynamicChildBlock,
+  fetchFileTree,
   hasError,
   hasOutput,
   hideExtraInfo,
@@ -119,6 +127,7 @@ function CodeOutput({
   selected,
   selectedTab,
   setCollapsed,
+  setErrors,
   setOutputBlocks,
   setSelectedOutputBlock,
   setSelectedTab,
@@ -126,7 +135,8 @@ function CodeOutput({
   const {
     status,
     type: blockType,
-  } = block;
+    uuid: blockUUID,
+  } = block || {};
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const executedAndIdle = StatusTypeEnum.EXECUTED === status
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
@@ -134,6 +144,34 @@ function CodeOutput({
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
   const [progress, setProgress] = useState<number>();
+
+  const [
+    exportBlockOutputToCsvFile,
+    { isLoading: isLoadingExportBlockOutputToCsvFile },
+  ]: any = useMutation(
+    api.block_outputs.pipelines.useCreate(pipeline?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({ block_output: { outputs_path } }) => {
+            fetchFileTree?.();
+            toast.success(
+              'Block output successfully saved to CSV file at the following path: ' +
+              `${outputs_path} ` + `/${blockUUID}.${FileExtensionEnum.CSV}`,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: `${blockUUID}_output_csv_file_saved`,
+              },
+            );
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   useEffect(() => {
     if (!isInProgress) {
@@ -682,10 +720,10 @@ function CodeOutput({
                         <Button
                           {...SHARED_BUTTON_PROPS}
                           onClick={() => {
-                            addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
+                            addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
                             openSidekickView?.(ViewKeyEnum.DATA);
                             setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
-                              if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                              if (!prevOutputBlocks.find(({ uuid }) => uuid === blockUUID)) {
                                 setSelectedOutputBlock?.(block);
                                 return prevOutputBlocks.concat(block);
                               } else {
@@ -706,7 +744,11 @@ function CodeOutput({
                       >
                         <Button
                           {...SHARED_BUTTON_PROPS}
-                          onClick={() => console.log('save button clicked')}
+                          compact
+                          loading={isLoadingExportBlockOutputToCsvFile}
+                          onClick={() => exportBlockOutputToCsvFile({
+                            block_output: { block_uuid: blockUUID },
+                          })}
                         >
                           <Save muted size={UNIT * 1.75} />
                         </Button>

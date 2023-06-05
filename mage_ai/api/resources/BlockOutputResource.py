@@ -36,3 +36,13 @@ class BlockOutputResource(GenericResource):
             )
 
         return self(dict(outputs=outputs), user, **kwargs)
+
+    @classmethod
+    @safe_db_query
+    def create(self, payload, user, **kwargs):
+        pipeline = kwargs.get('parent_model')
+        block_uuid = payload.get('block_uuid')
+        block = pipeline.get_block(block_uuid)
+        block.export_output_to_csv()
+
+        return self(None, user, **kwargs)
