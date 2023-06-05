@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
@@ -70,7 +70,7 @@ class User(BaseModel):
 
     @property
     def project_access(self) -> int:
-        return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+        return self.get_access(Permission.Entity.PROJECT, get_repo_identifier())
 
     def get_access(
         self,
@@ -121,7 +121,7 @@ class User(BaseModel):
     @property
     def git_settings(self) -> Union[Dict, None]:
         preferences = self.preferences or dict()
-        return preferences.get(get_repo_path(), {}).get('git_settings')
+        return preferences.get(get_repo_identifier(), {}).get('git_settings')
 
     @classmethod
     @safe_db_query
@@ -192,7 +192,7 @@ class Role(BaseModel):
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
-        if entity is None:
+        if entity == Permission.Entity.ANY:
             permissions.extend(self.permissions)
         else:
             entity_permissions = list(filter(
@@ -218,7 +218,7 @@ class Role(BaseModel):
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
         if entity == Permission.Entity.PIPELINE:
-            return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+            return self.get_access(Permission.Entity.PROJECT, get_repo_identifier())
         elif entity == Permission.Entity.PROJECT:
             return self.get_access(Permission.Entity.GLOBAL)
         else:
@@ -232,6 +232,9 @@ class UserRole(BaseModel):
 
 class Permission(BaseModel):
     class Entity(str, enum.Enum):
+        # Permissions saved to the DB should not have the "ANY" entity. It should only be used
+        # when evaluating permissions.
+        ANY = 'any'
         GLOBAL = 'global'
         PROJECT = 'project'
         PIPELINE = 'pipeline'
@@ -252,6 +255,19 @@ class Permission(BaseModel):
     role_id = Column(Integer, ForeignKey('role.id'))
 
     role = relationship(Role, back_populates='permissions')
+
+    @validates('entity')
+    def validate_entity(self, key, value):
+        if value == Permission.Entity.ANY:
+            raise ValidationError(
+                'Permission entity cannot be ANY. Please select a specific entity.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
 
     @classmethod
     @safe_db_query

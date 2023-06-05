@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.VariablePresenter import VariablePresenter
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db.models.oauth import Permission
 
 
@@ -13,7 +13,7 @@ class VariablePolicy(BasePolicy):
         if parent_model:
             return Permission.Entity.PIPELINE, parent_model.uuid
 
-        return Permission.Entity.PROJECT, get_repo_path()
+        return Permission.Entity.PROJECT, get_repo_identifier()
 
 
 VariablePolicy.allow_actions([

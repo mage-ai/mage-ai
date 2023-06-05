@@ -3,7 +3,7 @@ from typing import Dict
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.sync import (
     GIT_ACCESS_TOKEN_SECRET_NAME,
@@ -61,7 +61,7 @@ class SyncResource(GenericResource):
             user_payload = self.update_user_settings(user_settings, user=user)
             UserGitConfig.load(config=user_payload)
 
-            repo_path = get_repo_path()
+            repo_path = get_repo_identifier()
             user_preferences = user.preferences or {}
             user_git_settings = user.git_settings or {}
             user_preferences[repo_path] = {
