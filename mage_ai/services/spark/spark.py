@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.services.spark.config import SparkConfig
 import os
 
@@ -7,11 +6,7 @@ def get_spark_session(config: SparkConfig):
     from pyspark.conf import SparkConf
     from pyspark.sql import SparkSession
 
-    if config.pipeline and config.pipeline.spark_config:
-        spark_config = config.pipeline.spark_config
-    else:
-        repo_config = RepoConfig(repo_path=config.repo_path)
-        spark_config = repo_config.spark_config
+    spark_config = config.spark_config
 
     if spark_config:
         conf = SparkConf()

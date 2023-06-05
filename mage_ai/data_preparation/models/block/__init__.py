@@ -47,7 +47,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
@@ -1842,8 +1842,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.spark_init:
             return self.spark
         try:
-            spark_config = SparkConfig.load(
-                config={'repo_path': self.repo_path})
+            if self.pipeline and self.pipeline.spark_config:
+                spark_config = SparkConfig.load(
+                    config={'spark_config': self.pipeline.spark_config})
+            else:
+                repo_config = RepoConfig(repo_path=self.repo_path)
+                spark_config = SparkConfig.load(
+                    config={'spark_config': repo_config.spark_config})
             self.spark = get_spark_session(spark_config)
         except Exception:
             self.spark = None
