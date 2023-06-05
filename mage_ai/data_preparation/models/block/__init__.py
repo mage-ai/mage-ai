@@ -1848,7 +1848,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             else:
                 repo_config = RepoConfig(repo_path=self.repo_path)
                 spark_config = SparkConfig.load(
-                    config={'spark_config': repo_config.spark_config})
+                    config={'spark_config': repo_config.repo_spark_config})
             self.spark = get_spark_session(spark_config)
         except Exception:
             self.spark = None
