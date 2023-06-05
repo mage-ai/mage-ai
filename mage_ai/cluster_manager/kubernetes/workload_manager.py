@@ -42,7 +42,10 @@ class WorkloadManager:
         except Exception:
             pass
 
-        config.load_kube_config(config_file='/home/src/k8s_main_project/kubeconfig')
+        try:
+            config.load_kube_config()
+        except Exception:
+            pass
 
         return False
 
