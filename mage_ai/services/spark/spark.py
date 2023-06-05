@@ -21,7 +21,6 @@ def has_same_spark_config(spark_session, config: SparkConfig) -> bool:
             for key, value in spark_config.get('executor_env').items():
                 if spark_session.conf.get(f'spark.executorEnv.{key}') != value:
                     return False
-            return False
         if (spark_config.get('spark_jars') and spark_config.get('spark_jars')
                 != spark_session.conf.get('spark.jars')):
             return False
