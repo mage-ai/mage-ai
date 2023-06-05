@@ -128,7 +128,7 @@ class Pipeline:
         return f'v{self.version}'
 
     @property
-    def spark_config(self):
+    def pipeline_spark_config(self):
         return self.spark_config
 
     @classmethod

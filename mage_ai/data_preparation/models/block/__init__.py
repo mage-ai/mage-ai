@@ -1842,9 +1842,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.spark_init:
             return self.spark
         try:
-            if self.pipeline and self.pipeline.spark_config:
+            if self.pipeline and self.pipeline.pipeline_spark_config:
                 spark_config = SparkConfig.load(
-                    config={'spark_config': self.pipeline.spark_config})
+                    config={'spark_config': self.pipeline.pipeline_spark_config})
             else:
                 repo_config = RepoConfig(repo_path=self.repo_path)
                 spark_config = SparkConfig.load(
