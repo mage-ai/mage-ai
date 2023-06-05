@@ -41,15 +41,13 @@ class WorkloadManager:
         except Exception:
             pass
 
-        try:
-            config.load_kube_config()
-        except Exception:
-            pass
+        config.load_kube_config(config_file='/home/src/k8s_main_project/kubeconfig')
 
         return False
 
     def list_services(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
+        # print('services:', services)
         services_list = []
         for service in services:
             try:
@@ -69,9 +67,9 @@ class WorkloadManager:
 
         return services_list
 
-    def create_deployment(
+    def create_stateful_set(
         self,
-        deployment_name,
+        name,
         container_config: Dict = None,
         service_account_name: str = None,
         storage_class_name: str = None,
@@ -80,16 +78,15 @@ class WorkloadManager:
         if container_config is None:
             container_config = dict()
 
-        env_vars = self.__populate_env_vars(container_config, volume_host_path=volume_host_path)
+        env_vars = self.__populate_env_vars(container_config)
         container_config['env'] = env_vars
 
         containers = [
             {
-                'name': f'{deployment_name}-container',
+                'name': f'{name}-container',
                 # UPDATE TEST CODE
-                'image': 'mageai/mage-local:latest',
-                'imagePullPolicy': 'Never',
-                # 'command': ['mage', 'start', deployment_name],
+                'image': 'mageai/mageai-manage-instance-test:latest',
+                'command': ['mage', 'start', name],
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -149,32 +146,30 @@ class WorkloadManager:
                 }
             )
 
-        if volume_host_path:
-            volumes.append(
-                {
-                    'name': 'mage-data',
-                    'hostPath': {
-                        'path': volume_host_path,
-                    },
-                }
-            )
-        deployment_template_spec = dict()
+        stateful_set_template_spec = dict()
         if service_account_name:
-            deployment_template_spec['serviceAccountName'] = service_account_name
+            stateful_set_template_spec['serviceAccountName'] = service_account_name
 
-        deployment = {
+        if storage_class_name is None:
+            self.__create_persistent_volume(
+                name,
+                volume_host_path=volume_host_path,
+            )
+            storage_class_name = f'{name}-storage'
+
+        stateful_set = {
             'apiVersion': 'apps/v1',
-            'kind': 'Deployment',
+            'kind': 'StatefulSet',
             'metadata': {
-                'name': deployment_name,
+                'name': name,
                 'labels': {
-                    'app': deployment_name
+                    'app': name
                 }
             },
             'spec': {
                 'selector': {
                     'matchLabels': {
-                        'app': deployment_name
+                        'app': name
                     }
                 },
                 'replicas': 1,
@@ -182,22 +177,40 @@ class WorkloadManager:
                 'template': {
                     'metadata': {
                         'labels': {
-                            'app': deployment_name
+                            'app': name
                         }
                     },
                     'spec': {
                         'terminationGracePeriodSeconds': 10,
                         'containers': containers,
                         'volumes': volumes,
-                        **deployment_template_spec
+                        **stateful_set_template_spec
                     }
                 },
+                'volumeClaimTemplates': [
+                    {
+                        'metadata': {
+                            'name': 'mage-data'
+                        },
+                        'spec': {
+                            'accessModes': [
+                                'ReadWriteOnce'
+                            ],
+                            'storageClassName': storage_class_name,
+                            'resources': {
+                                'requests': {
+                                    'storage': '1Gi'
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         }
 
-        self.apps_client.create_namespaced_deployment(self.namespace, deployment)
+        self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
 
-        service_name = f'{deployment_name}-service'
+        service_name = f'{name}-service'
 
         annotations = {}
         if os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG):
@@ -210,7 +223,7 @@ class WorkloadManager:
             'metadata': {
                 'name': service_name,
                 'labels': {
-                    'app': deployment_name,
+                    'app': name,
                     'dev-instance': '1',
                 },
                 'annotations': annotations
@@ -223,7 +236,7 @@ class WorkloadManager:
                     }
                 ],
                 'selector': {
-                    'app': deployment_name
+                    'app': name
                 },
                 'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE)
             }
@@ -231,7 +244,52 @@ class WorkloadManager:
 
         return self.core_client.create_namespaced_service(self.namespace, service)
 
-    def __populate_env_vars(self, container_config, volume_host_path=None) -> List:
+    def __create_persistent_volume(
+        self,
+        name,
+        volume_host_path=None,
+    ):
+        nodes = self.core_client.list_node().items
+        hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
+        pv = {
+            "apiVersion": "v1",
+            "kind": "PersistentVolume",
+            "metadata": {
+                "name": f"{name}-pv"
+            },
+            "spec": {
+                "capacity": {
+                    "storage": "1Gi"
+                },
+                "volumeMode": "Filesystem",
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "persistentVolumeReclaimPolicy": "Delete",
+                "storageClassName": f"{name}-storage",
+                "local": {
+                    "path": volume_host_path,
+                },
+                "nodeAffinity": {
+                    "required": {
+                        "nodeSelectorTerms": [
+                            {
+                                "matchExpressions": [
+                                    {
+                                        "key": "kubernetes.io/hostname",
+                                        "operator": "In",
+                                        "values": hostnames
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        self.core_client.create_persistent_volume(pv)
+
+    def __populate_env_vars(self, container_config) -> List:
         env_vars = []
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
