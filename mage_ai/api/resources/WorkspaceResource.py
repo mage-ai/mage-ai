@@ -275,17 +275,14 @@ class WorkspaceResource(GenericResource):
     @classmethod
     def get_instances(self, cluster_type: str) -> List[Dict]:
         instances = []
-        print('cluster type:', cluster_type)
         if cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.kubernetes.workload_manager import (
                 WorkloadManager,
             )
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
-            print('HUH')
 
             instances = workload_manager.list_services()
-            print('instances:', instances)
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
 

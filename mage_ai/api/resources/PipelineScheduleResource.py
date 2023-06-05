@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
@@ -25,7 +25,7 @@ class PipelineScheduleResource(DatabaseResource):
 
         query = PipelineSchedule.query.filter(
             or_(
-                PipelineSchedule.repo_path == get_repo_path(),
+                PipelineSchedule.repo_path == get_repo_identifier(),
                 PipelineSchedule.repo_path.is_(None),
             )
         )
@@ -61,7 +61,7 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         if 'repo_path' not in payload:
-            payload['repo_path'] = get_repo_path()
+            payload['repo_path'] = get_repo_identifier()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
 

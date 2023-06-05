@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import ErrorsType from '@interfaces/ErrorsType';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
@@ -15,13 +16,14 @@ import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { getUser } from '@utils/session';
-import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { displayErrorFromReadResponse } from '@api/utils/response';
 
 function UsersListPage() {
   const router = useRouter();
-  const { id: currentUserID, owner: isOwner } = getUser() || {};
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const { owner: isOwner } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;
@@ -30,6 +32,11 @@ function UsersListPage() {
   const { data, mutate: fetchUsers } = api.users.list({}, {
     revalidateOnFocus: false,
   });
+
+  useEffect(() => {
+    displayErrorFromReadResponse(data, setErrors);
+  }, [data]);
+
   const users = useMemo(
     () => data?.users || [],
     [data?.users],
@@ -37,6 +44,11 @@ function UsersListPage() {
   const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
   });
+
+  useEffect(() => {
+    displayErrorFromReadResponse(dataUser, setErrors);
+  }, [dataUser]);
+
   const user = dataUser?.user;
 
   const q = queryFromUrl();
@@ -84,6 +96,7 @@ function UsersListPage() {
           label: () => 'Users',
         },
       ]}
+      errors={errors}
       pageName={WorkspacesPageNameEnum.USERS}
     >
       {isOwner &&

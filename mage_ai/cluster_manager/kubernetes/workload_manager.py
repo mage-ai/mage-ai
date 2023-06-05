@@ -21,6 +21,7 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER,
 )
+from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 
 
 class WorkloadManager:
@@ -47,17 +48,14 @@ class WorkloadManager:
 
     def list_services(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
-        # print('services:', services)
         services_list = []
         for service in services:
             try:
                 labels = service.metadata.labels
                 if not labels.get('dev-instance'):
                     continue
-                # ip_address = service.status.load_balancer.ingress[0].ip
                 conditions = service.status.conditions or list()
                 services_list.append(dict(
-                    # ip=ip_address,
                     name=labels.get('app'),
                     status='RUNNING' if len(conditions) == 0 else conditions[0].status,
                     type='kubernetes',
@@ -84,8 +82,7 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                # UPDATE TEST CODE
-                'image': 'mageai/mageai-manage-instance-test:latest',
+                'image': 'mageai/mageai:latest',
                 'command': ['mage', 'start', name],
                 'ports': [
                     {
@@ -252,33 +249,33 @@ class WorkloadManager:
         nodes = self.core_client.list_node().items
         hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
         pv = {
-            "apiVersion": "v1",
-            "kind": "PersistentVolume",
-            "metadata": {
-                "name": f"{name}-pv"
+            'apiVersion': 'v1',
+            'kind': 'PersistentVolume',
+            'metadata': {
+                'name': f'{name}-pv'
             },
-            "spec": {
-                "capacity": {
-                    "storage": "1Gi"
+            'spec': {
+                'capacity': {
+                    'storage': '1Gi'
                 },
-                "volumeMode": "Filesystem",
-                "accessModes": [
-                    "ReadWriteOnce"
+                'volumeMode': 'Filesystem',
+                'accessModes': [
+                    'ReadWriteOnce'
                 ],
-                "persistentVolumeReclaimPolicy": "Delete",
-                "storageClassName": f"{name}-storage",
-                "local": {
-                    "path": volume_host_path,
+                'persistentVolumeReclaimPolicy': 'Delete',
+                'storageClassName': f'{name}-storage',
+                'local': {
+                    'path': volume_host_path,
                 },
-                "nodeAffinity": {
-                    "required": {
-                        "nodeSelectorTerms": [
+                'nodeAffinity': {
+                    'required': {
+                        'nodeSelectorTerms': [
                             {
-                                "matchExpressions": [
+                                'matchExpressions': [
                                     {
-                                        "key": "kubernetes.io/hostname",
-                                        "operator": "In",
-                                        "values": hostnames
+                                        'key': 'kubernetes.io/hostname',
+                                        'operator': 'In',
+                                        'values': hostnames
                                     }
                                 ]
                             }
@@ -306,14 +303,14 @@ class WorkloadManager:
                 }
             )
 
-        for var in [
+        for var in MAGE_SETTINGS_ENVIRONMENT_VARIABLES + [
             DATABASE_CONNECTION_URL_ENV_VAR,
             KUBE_NAMESPACE,
         ]:
             if os.getenv(var) is not None:
                 env_vars.append({
                     'name': var,
-                    'value': os.getenv(var),
+                    'value': str(os.getenv(var)),
                 })
 
         # For connecting to CloudSQL PostgreSQL database.
