@@ -161,6 +161,7 @@ def run(
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
+    from mage_ai.orchestration.db.models.schedules import PipelineRun
     from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
     from mage_ai.shared.hash import merge_dict
 
@@ -178,10 +179,14 @@ def run(
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
-    default_variables = get_global_variables(pipeline_uuid)
-    global_vars = merge_dict(default_variables, runtime_variables)
-
     db_connection.start_session()
+
+    if pipeline_run_id is None:
+        default_variables = get_global_variables(pipeline_uuid)
+        global_vars = merge_dict(default_variables, runtime_variables)
+    else:
+        pipeline_run = PipelineRun.query.get(pipeline_run_id)
+        global_vars = pipeline_run.get_variables(extra_variables=runtime_variables)
 
     if template_runtime_configuration is not None:
         template_runtime_configuration = json.loads(template_runtime_configuration)

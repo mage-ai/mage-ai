@@ -1,26 +1,26 @@
 import asyncio
 import enum
-import pytz
 import traceback
 import uuid
-
-from croniter import croniter
 from datetime import datetime, timedelta, timezone
+from typing import Dict, List
+
+import pytz
+from croniter import croniter
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Table,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
-from typing import Dict, List
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
@@ -36,11 +36,13 @@ from mage_ai.data_preparation.models.triggers import (
     SettingsConfig,
     Trigger,
 )
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel
 from mage_ai.shared.array import find
+from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
-from mage_ai.shared.hash import ignore_keys, index_by
+from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -392,6 +394,38 @@ class PipelineRun(BaseModel):
                 BlockRun.BlockRunStatus.UPSTREAM_FAILED,
             ])
         return all(b.status in statuses for b in self.block_runs)
+
+    def get_variables(self, extra_variables: Dict = None) -> Dict:
+        if extra_variables is None:
+            extra_variables = dict()
+
+        pipeline_run_variables = self.variables or {}
+        event_variables = self.event_variables or {}
+
+        variables = merge_dict(
+            merge_dict(
+                get_global_variables(self.pipeline_uuid) or dict(),
+                self.pipeline_schedule.variables or dict(),
+            ),
+            pipeline_run_variables,
+        )
+
+        # For backwards compatibility
+        for k, v in event_variables.items():
+            if k not in variables:
+                variables[k] = v
+
+        if self.execution_date:
+            variables['ds'] = self.execution_date.strftime('%Y-%m-%d')
+            variables['hr'] = self.execution_date.strftime('%H')
+
+        variables['env'] = ENV_PROD
+        variables['event'] = merge_dict(variables.get('event', {}), event_variables)
+        variables['execution_date'] = self.execution_date
+        variables['execution_partition'] = self.execution_partition
+        variables.update(extra_variables)
+
+        return variables
 
 
 class BlockRun(BaseModel):
