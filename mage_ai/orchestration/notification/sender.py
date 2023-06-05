@@ -1,6 +1,5 @@
 import os
-
-from jinja2 import Template
+from typing import Dict
 
 from mage_ai.orchestration.notification.config import (
     AlertOn,
@@ -16,24 +15,24 @@ from mage_ai.settings import DEFAULT_LOCALHOST_URL, MAGE_PUBLIC_HOST
 
 DEFAULT_MESSAGES = dict(
     success=dict(
-        title='Successfully ran Pipeline {{pipeline_uuid}}',
+        title='Successfully ran Pipeline {pipeline_uuid}',
         summary=(
-            'Successfully ran Pipeline `{{pipeline_uuid}}` with Trigger {{pipeline_schedule_id}} '
-            '`{{pipeline_schedule_name}}` at execution time `{{execution_time}}`.'
+            'Successfully ran Pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
+            '`{pipeline_schedule_name}` at execution time `{execution_time}`.'
         ),
     ),
     failure=dict(
-        title='Failed to run Mage pipeline {{pipeline_uuid}}',
+        title='Failed to run Mage pipeline {pipeline_uuid}',
         summary=(
-            'Failed to run Pipeline `{{pipeline_uuid}}` with Trigger {{pipeline_schedule_id}} '
-            '`{{pipeline_schedule_name}}` at execution time `{{execution_time}}`.'
+            'Failed to run Pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
+            '`{pipeline_schedule_name}` at execution time `{execution_time}`.'
         ),
     ),
     passed_sla=dict(
         title='SLA passed for Mage pipeline {{pipeline_uuid}}',
         summary=(
-            'SLA passed for pipeline `{{pipeline_uuid}}` with Trigger {{pipeline_schedule_id}} '
-            '`{{pipeline_schedule_name}}` at execution time `{{execution_time}}`.'
+            'SLA passed for pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
+            '`{pipeline_schedule_name}` at execution time `{execution_time}`.'
         ),
     ),
 )
@@ -129,34 +128,57 @@ class NotificationSender:
                 message_template=message_template,
             )
 
+    def __interpolate_vars(self, text: str, pipeline, pipeline_run):
+        if text is None or pipeline is None or pipeline_run is None:
+            return text
+        return text.format(
+            execution_time=pipeline_run.execution_date,
+            pipeline_run_url=self.__pipeline_run_url(pipeline, pipeline_run),
+            pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
+            pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
+            pipeline_uuid=pipeline.uuid,
+        )
+
     def __send_pipeline_run_message(
         self,
-        default_message,
+        default_message: Dict,
         pipeline,
         pipeline_run,
         message_template: MessageTemplate = None,
         summary: str = None,
     ):
-        default_title = default_message['title']
-        default_summary = default_message['summary']
-        default_details = f'{default_summary}\n'
-        if os.getenv('ENV') != 'production' or MAGE_PUBLIC_HOST != DEFAULT_LOCALHOST_URL:
-            """
-            Include the URL for the following cases
-            1. Dev environment: Use the default localhost as host in URL
-            2. Production environment: If MAGE_PUBLIC_HOST is set, use it as host.
-            """
-            default_details += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                               'to check pipeline run results and logs.'
+        """Shared method to send pipeline run message of multiple types (success, failure, etc.).
+        Priority of constructing message payload.
+        1. If `summary` is provided in the method kwargs, use the `summary`
+        2. If `message_template` is not None, use the user defined `message_template`.
+        3. If any of `title`, `summary`, `details` is None after the steps above, get the value from
+            `default_message`.
 
+        Args:
+            default_message (TYPE): default message dict, containing "title",
+                "summary", "details" keys.
+            pipeline: the pipeline object, used to interpolate variables in the message.
+            pipeline_run: the pipeline run object, used to interpolate variables in the message.
+            message_template (MessageTemplate, optional): custom message template that's provided
+                by user.
+            summary (str, optional): summary that's used to override the custom message template.
+        """
         title = None
         details = None
+
+        if summary is not None:
+            details = self.__with_pipeline_run_url(summary, pipeline, pipeline_run)
+
+        default_title = default_message['title']
+        default_summary = default_message['summary']
+        default_details = self.__with_pipeline_run_url(default_summary, pipeline, pipeline_run)
+
         if message_template is not None:
-            if message_template.title is not None:
+            if title is None and message_template.title is not None:
                 title = message_template.title
             if summary is None and message_template.summary is not None:
                 summary = message_template.summary
-            if message_template.details is not None:
+            if details is None and message_template.details is not None:
                 details = message_template.details
 
         self.send(
@@ -165,16 +187,19 @@ class NotificationSender:
             details=self.__interpolate_vars(details or default_details, pipeline, pipeline_run),
         )
 
-    def __interpolate_vars(self, text: str, pipeline, pipeline_run):
-        if text is None or pipeline is None or pipeline_run is None:
+    def __with_pipeline_run_url(self, text, pipeline, pipeline_run):
+        if text is None:
             return text
-        return Template(text).render(
-            execution_time=pipeline_run.execution_date,
-            pipeline_run_url=self.__pipeline_run_url(pipeline, pipeline_run),
-            pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
-            pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
-            pipeline_uuid=pipeline.uuid,
-        )
+        text = f'{text}\n'
+        if os.getenv('ENV') != 'production' or MAGE_PUBLIC_HOST != DEFAULT_LOCALHOST_URL:
+            """
+            Include the URL for the following cases
+            1. Dev environment: Use the default localhost as host in URL
+            2. Production environment: If MAGE_PUBLIC_HOST is set, use it as host.
+            """
+            text += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
+                    'to check pipeline run results and logs.'
+        return text
 
     @staticmethod
     def __pipeline_run_url(pipeline, pipeline_run):
