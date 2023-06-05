@@ -41,7 +41,6 @@ from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 
 CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
-METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
@@ -142,7 +141,7 @@ class Pipeline:
         # Copy pipeline files from template folder
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
-        with open(os.path.join(pipeline_path, METADATA_FILE_NAME), 'w') as fp:
+        with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
                 name=name,
                 uuid=uuid,
@@ -291,7 +290,7 @@ class Pipeline:
     @classmethod
     def is_valid_pipeline(self, pipeline_path):
         return os.path.isdir(pipeline_path) and os.path.exists(
-            os.path.join(pipeline_path, METADATA_FILE_NAME)
+            os.path.join(pipeline_path, PIPELINE_CONFIG_FILE)
         )
 
     def block_deletable(self, block, widget=False):
