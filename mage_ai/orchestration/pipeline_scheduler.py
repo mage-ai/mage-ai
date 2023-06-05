@@ -36,7 +36,6 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
-from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
@@ -52,7 +51,6 @@ from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.shared.array import find
-from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import index_by, merge_dict
@@ -436,7 +434,7 @@ class PipelineScheduler:
                 # args
                 self.pipeline_run.id,
                 b.id,
-                get_variables(self.pipeline_run),
+                self.pipeline_run.get_variables(),
                 self.__build_tags(**tags),
             )
 
@@ -460,7 +458,7 @@ class PipelineScheduler:
                 # args
                 self.pipeline_run.id,
                 [b.id for b in block_runs_to_schedule],
-                get_variables(self.pipeline_run, dict(
+                self.pipeline_run.get_variables(extra_variables=dict(
                     pipeline_uuid=self.pipeline.uuid,
                 )),
                 self.__build_tags(),
@@ -479,7 +477,7 @@ class PipelineScheduler:
             run_pipeline,
             # args
             self.pipeline_run.id,
-            get_variables(self.pipeline_run),
+            self.pipeline_run.get_variables(),
             self.__build_tags(),
         )
 
@@ -937,11 +935,6 @@ def configure_pipeline_run_payload(
 
 
 def start_scheduler(pipeline_run: PipelineRun) -> None:
-    from mage_ai.orchestration.pipeline_scheduler import (
-        PipelineScheduler,
-        get_variables,
-    )
-
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
 
@@ -949,7 +942,7 @@ def start_scheduler(pipeline_run: PipelineRun) -> None:
         initialize_state_and_runs(
             pipeline_run,
             pipeline_scheduler.logger,
-            get_variables(pipeline_run),
+            pipeline_run.get_variables(),
         )
     else:
         pipeline_run.create_block_runs()
@@ -1129,7 +1122,7 @@ def schedule_all():
                         initialize_state_and_runs(
                             pipeline_run,
                             pipeline_scheduler.logger,
-                            get_variables(pipeline_run),
+                            pipeline_run.get_variables(),
                         )
 
                 pipeline_scheduler.start(should_schedule=False)
@@ -1183,38 +1176,3 @@ def sync_schedules(pipeline_uuids: List[str]):
             if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
                 continue
             PipelineSchedule.create_or_update(pipeline_trigger)
-
-
-def get_variables(pipeline_run, extra_variables: Dict = None) -> Dict:
-    if extra_variables is None:
-        extra_variables = dict()
-    if not pipeline_run:
-        return {}
-
-    pipeline_run_variables = pipeline_run.variables or {}
-    event_variables = pipeline_run.event_variables or {}
-
-    variables = merge_dict(
-        merge_dict(
-            get_global_variables(pipeline_run.pipeline_uuid) or dict(),
-            pipeline_run.pipeline_schedule.variables or dict(),
-        ),
-        pipeline_run_variables,
-    )
-
-    # For backwards compatibility
-    for k, v in event_variables.items():
-        if k not in variables:
-            variables[k] = v
-
-    if pipeline_run.execution_date:
-        variables['ds'] = pipeline_run.execution_date.strftime('%Y-%m-%d')
-        variables['hr'] = pipeline_run.execution_date.strftime('%H')
-
-    variables['env'] = ENV_PROD
-    variables['event'] = merge_dict(variables.get('event', {}), event_variables)
-    variables['execution_date'] = pipeline_run.execution_date
-    variables['execution_partition'] = pipeline_run.execution_partition
-    variables.update(extra_variables)
-
-    return variables
