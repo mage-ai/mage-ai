@@ -1,15 +1,14 @@
 from datetime import datetime
+from typing import Dict, Union
+
 from faker import Faker
+
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.orchestration.db.models.schedules import (
-    PipelineRun,
-    PipelineSchedule,
-)
+from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
-from typing import Dict, Union
 
 faker = Faker()
 
@@ -69,10 +68,13 @@ def create_pipeline_run_with_schedule(
     pipeline_uuid: str,
     execution_date: datetime = None,
     pipeline_schedule_id: int = None,
-    pipeline_schedule_settings: Dict = dict(),
+    pipeline_schedule_settings: Dict = None,
 ):
+    if pipeline_schedule_settings is None:
+        pipeline_schedule_settings = dict()
     if pipeline_schedule_id is None:
         pipeline_schedule = PipelineSchedule.create(
+            name=f'{pipeline_uuid}_trigger',
             pipeline_uuid=pipeline_uuid,
             settings=pipeline_schedule_settings,
         )

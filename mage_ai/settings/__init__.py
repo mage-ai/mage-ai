@@ -1,6 +1,5 @@
 import os
 
-
 DEBUG = os.getenv('DEBUG', False)
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
@@ -46,4 +45,5 @@ USE_UNIQUE_TERMINAL = os.getenv('USE_UNIQUE_TERMINAL', None)
 SENTRY_DSN = os.getenv('SENTRY_DSN', None)
 SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 
-MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or 'http://localhost:6789'
+DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
+MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
