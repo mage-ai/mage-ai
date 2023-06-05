@@ -425,6 +425,7 @@ class Pipeline:
         self.callback_configs = config.get('callbacks') or []
         self.executor_type = config.get('executor_type')
         self.executor_config = config.get('executor_confid') or dict()
+        self.spark_config = config.get('spark_config') or dict()
         self.widget_configs = config.get('widgets') or []
 
         self.variables = config.get('variables')
