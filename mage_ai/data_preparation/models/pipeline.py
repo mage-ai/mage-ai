@@ -536,8 +536,13 @@ class Pipeline:
             updated_at=self.updated_at,
             uuid=self.uuid,
         )
+
         if self.variables is not None:
             base['variables'] = self.variables
+
+        if self.spark_config is not None:
+            base['spark_config'] = self.spark_config
+
         return base
 
     def to_dict(
