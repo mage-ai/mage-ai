@@ -179,7 +179,7 @@ from mage_ai.services.spark.spark import get_spark_session
 
 repo_config = RepoConfig(repo_path=get_repo_path())
 spark_config = SparkConfig.load(
-    config={'spark_config': repo_config.repo_spark_config})
+    config=repo_config.repo_spark_config)
 
 spark = get_spark_session(spark_config)
 print(spark.sql('select 1'))
