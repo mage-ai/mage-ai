@@ -37,7 +37,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
-            spark_config=None,
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
