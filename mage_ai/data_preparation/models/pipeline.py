@@ -129,7 +129,7 @@ class Pipeline:
 
     @property
     def pipeline_spark_config(self):
-        return {'spark_config': self.spark_config}
+        return self.spark_config
 
     @classmethod
     def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):

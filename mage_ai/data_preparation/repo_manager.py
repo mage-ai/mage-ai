@@ -119,7 +119,7 @@ class RepoConfig:
 
     @property
     def repo_spark_config(self) -> dict:
-        return {'spark_config': self.spark_config}
+        return self.spark_config
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
