@@ -59,6 +59,7 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { useWindowSize } from '@utils/sizes';
+import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
 const MAX_COLUMNS = 100;
 
@@ -567,8 +568,8 @@ function Sidekick({
           />
         )}
 
-        {ViewKeyEnum.CALLBACKS === activeView && (
-          <Callbacks
+        {ViewKeyEnum.ADDON_BLOCKS === activeView && (
+          <AddonBlocks
             {...extensionsAndCallbacksProps}
           />
         )}

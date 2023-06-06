@@ -41,9 +41,9 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
 
-export type CallbacksProps = {} & ExtensionProps;
+export type ConditionalsProps = {} & ExtensionProps;
 
-function Callbacks({
+function Conditionals({
   addNewBlockAtIndex,
   autocompleteItems,
   blockRefs,
@@ -68,7 +68,7 @@ function Callbacks({
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
-}: CallbacksProps) {
+}: ConditionalsProps) {
   const refParent = useRef(null);
   const [dropdownMenuVisible, setDropdownMenuVisible] = useState<boolean>(false);
 
@@ -102,9 +102,9 @@ function Callbacks({
     type: pipelineType,
   } = pipeline || {};
 
-  const callbackBlocks = useMemo(() => pipeline?.callbacks || [], [pipeline]);
-  const callbackBlocksByUUID = useMemo(() => indexBy(callbackBlocks, ({ uuid }) => uuid), [
-    callbackBlocks,
+  const conditionalBlocks = useMemo(() => pipeline?.conditionals || [], [pipeline]);
+  const conditionalBlocksByUUID = useMemo(() => indexBy(conditionalBlocks, ({ uuid }) => uuid), [
+      conditionalBlocks,
   ]);
 
   const { data: dataBlockTemplates } = api.block_templates.list({}, {
@@ -117,10 +117,10 @@ function Callbacks({
 
   const addNewBlock = useCallback(payload => addNewBlockAtIndex(
     payload,
-    callbackBlocks?.length || 0,
+    conditionalBlocks?.length || 0,
   ), [
     addNewBlockAtIndex,
-    callbackBlocks,
+    conditionalBlocks,
   ]);
   const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
     blockTemplates,
@@ -129,9 +129,9 @@ function Callbacks({
     addNewBlock,
     blockTemplates,
   ]);
-  const callbackItems = useMemo(() => getdataSourceMenuItems(
+  const conditionalItems = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
-    BlockTypeEnum.CALLBACK,
+    BlockTypeEnum.CONDITIONAL,
     pipelineType,
     {
       blockTemplatesByBlockType,
@@ -143,8 +143,8 @@ function Callbacks({
     pipelineType,
   ]);
 
-  const isSelected = useMemo(() => callbackBlocksByUUID[selectedBlock?.uuid], [
-    callbackBlocksByUUID,
+  const isSelected = useMemo(() => conditionalBlocksByUUID[selectedBlock?.uuid], [
+      conditionalBlocksByUUID,
     selectedBlock,
   ]);
 
@@ -197,7 +197,7 @@ function Callbacks({
     },
   );
 
-  const codeBlocks = useMemo(() => callbackBlocks.map((block: BlockType, idx: number) => {
+  const codeBlocks = useMemo(() => conditionalBlocks.map((block: BlockType, idx: number) => {
     const {
       type,
       uuid,
@@ -285,7 +285,7 @@ function Callbacks({
     blockRefs,
     blocks,
     blocksInNotebook,
-    callbackBlocks,
+    conditionalBlocks,
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
@@ -368,7 +368,7 @@ function Callbacks({
         >
           <FlyoutMenuWrapper
             disableKeyboardShortcuts
-            items={callbackItems}
+            items={conditionalItems}
             onClickCallback={() => setDropdownMenuVisible(false)}
             open={dropdownMenuVisible}
             parentRef={refParent}
@@ -396,4 +396,4 @@ function Callbacks({
   );
 }
 
-export default Callbacks;
+export default Conditionals;

@@ -32,6 +32,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
 export enum BlockTypeEnum {
   CALLBACK = 'callback',
   CHART = 'chart',
+  CONDITIONAL = 'conditional',
   CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',

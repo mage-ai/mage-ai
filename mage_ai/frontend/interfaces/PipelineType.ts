@@ -55,6 +55,7 @@ export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
   callbacks?: BlockType[];
+  conditionals?: BlockType[];
   data_integration?: {
     catalog: CatalogType;
   };

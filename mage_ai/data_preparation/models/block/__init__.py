@@ -1404,7 +1404,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
-    def to_dict_base(self, include_callback_blocks: bool = False) -> Dict:
+    def to_dict_base(
+        self,
+        include_callback_blocks: bool = False,
+        include_conditional_blocks: bool = False,
+    ) -> Dict:
         language = self.language
         if language and type(self.language) is not str:
             language = self.language.value
@@ -1430,6 +1434,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_callback_blocks:
             data['callback_blocks'] = self.callback_block_uuids
+
+        if include_conditional_blocks:
+            data['conditional_blocks'] = self.conditional_block_uuids
 
         if self.replicated_block:
             data['replicated_block'] = self.replicated_block
@@ -1472,12 +1479,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_block_metadata: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
+        include_conditional_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
     ) -> Dict:
-        data = self.to_dict_base(include_callback_blocks=include_callback_blocks)
+        data = self.to_dict_base(
+            include_callback_blocks=include_callback_blocks,
+            include_conditional_blocks=include_conditional_blocks,
+        )
 
         if include_content:
             data['content'] = await self.content_async()
