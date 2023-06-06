@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineRunPresenter import PipelineRunPresenter
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db.models.oauth import Permission
 
 
@@ -19,7 +19,7 @@ class PipelineRunPolicy(BasePolicy):
         if self.resource and self.resource.model:
             return Permission.Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Permission.Entity.PROJECT, get_repo_path()
+        return Permission.Entity.PROJECT, get_repo_identifier()
 
 
 PipelineRunPolicy.allow_actions([

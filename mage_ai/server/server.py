@@ -119,7 +119,8 @@ def make_app():
         (r'/sign-in', MainPageHandler),
         (r'/terminal', MainPageHandler),
         (r'/triggers', MainPageHandler),
-        (r'/manage', ManagePageHandler),
+        (r'/manage', MainPageHandler),
+        (r'/manage/(.*)', MainPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,

@@ -2,12 +2,13 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockTemplatePresenter import BlockTemplatePresenter
+from mage_ai.orchestration.db.models.oauth import Permission
 
 
 class BlockTemplatePolicy(BasePolicy):
     @property
     def entity(self):
-        return None, None
+        return Permission.Entity.ANY, None
 
 
 BlockTemplatePolicy.allow_actions([
