@@ -1,10 +1,9 @@
-from cryptography.fernet import Fernet, InvalidToken
-from mage_ai.data_preparation.repo_manager import (
-    get_data_dir,
-    get_repo_path
-)
-from typing import List
 import os
+from typing import List
+
+from cryptography.fernet import Fernet, InvalidToken
+
+from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_identifier
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
@@ -30,7 +29,7 @@ def create_secret(name: str, value: str):
     kwargs = {
         'name': name,
         'value': encrypted_value.decode('utf-8'),
-        'repo_name': get_repo_path(),
+        'repo_name': get_repo_identifier(),
     }
 
     secret = Secret(**kwargs)
@@ -60,7 +59,7 @@ def get_valid_secrets() -> List:
 
     fernet = Fernet(key)
 
-    secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
+    secrets = Secret.query.filter(Secret.repo_name == get_repo_identifier())
     valid_secrets = []
     if secrets.count() > 0:
         for secret in secrets:

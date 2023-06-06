@@ -74,6 +74,9 @@ class RepoConfig:
             os.makedirs(self.variables_dir, exist_ok=True)
 
             self.project_type = repo_config.get('project_type')
+            self.subproject_path = None
+            if self.project_type == ProjectType.SUB:
+                self.subproject_path = repo_config.get('subproject_path')
             self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
 
@@ -177,6 +180,7 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
             shutil.copyfile(current_metadata, new_metadata)
         new_repo_config.save(
             project_type=ProjectType.SUB.value,
+            subproject_path=repo_path,
         )
     else:
         os.makedirs(
@@ -196,6 +200,14 @@ def get_repo_name() -> str:
 
 def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
+
+
+def get_repo_identifier() -> str:
+    repo_config = get_repo_config()
+    if repo_config.project_type == ProjectType.SUB:
+        return repo_config.subproject_path
+    else:
+        return get_repo_path()
 
 
 def get_repo_config(repo_path=None) -> RepoConfig:

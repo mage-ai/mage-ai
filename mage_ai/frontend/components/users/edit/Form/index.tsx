@@ -82,6 +82,7 @@ function UserEditForm({
             const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
               uuid,
             }) => uuid);
+            keys.push('id');
             const newProfile = selectKeys(userServer, keys);
             setProfile(newProfile);
 
@@ -241,7 +242,7 @@ function UserEditForm({
           </Spacing>
         ))}
 
-        {!user?.owner && (
+        {!user?.owner && !hideFields?.includes('roles') && (
           <Spacing mt={2}>
             <Select
               disabled={disabledFields?.includes('roles')}
