@@ -3,6 +3,7 @@ import shutil
 import sys
 import traceback
 from enum import Enum
+from functools import lru_cache
 from typing import Dict
 
 import ruamel.yaml
@@ -202,6 +203,7 @@ def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
 
 
+@lru_cache(maxsize=1)
 def get_repo_identifier() -> str:
     repo_config = get_repo_config()
     if repo_config.project_type == ProjectType.SUB:
