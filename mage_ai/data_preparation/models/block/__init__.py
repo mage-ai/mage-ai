@@ -1199,8 +1199,9 @@ class Block:
                     data = dict(
                         sample_data=dict(
                             columns=columns_to_display,
-                            rows=json.loads(data[columns_to_display].
-                                            to_json(orient='split'))['data']
+                            rows=json.loads(
+                                data[columns_to_display].to_json(orient='split')
+                            )['data']
                         ),
                         shape=[row_count, column_count],
                         type=DataType.TABLE,
