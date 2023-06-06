@@ -1839,7 +1839,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return global_vars
 
     def __get_spark_session(self):
-        if self.spark_init:
+        if self.spark_init and (not self.pipeline or
+                                not self.pipeline.spark_config):
             return self.spark
         try:
             if self.pipeline and self.pipeline.pipeline_spark_config:
