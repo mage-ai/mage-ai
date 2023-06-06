@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 
+
 @dataclass
 class SparkConfig(BaseConfig):
     app_name: str = None
