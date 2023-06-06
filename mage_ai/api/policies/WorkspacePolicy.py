@@ -34,7 +34,6 @@ WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes, scopes=[
 ], condition=lambda policy: policy.has_at_least_admin_role())
 
 WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes + [
-    'error_message',
     'success',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

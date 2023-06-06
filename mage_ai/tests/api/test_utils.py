@@ -39,29 +39,6 @@ class UtilsTest(DBTestCase):
             },
         )
 
-    def test_get_user_access_for_user_with_no_permissions(self):
-        password_salt = generate_salt()
-        user = User.create(
-            email='no_access@admin.com',
-            password_hash=create_bcrypt_hash('admin', password_salt),
-            password_salt=password_salt,
-            username='no_access',
-        )
-
-        access = user.get_access(None)
-        self.assertEqual(0, access)
-
-        access = user.get_access(Permission.Entity.ANY)
-        self.assertEqual(0, access)
-
-        access = user.get_access(Permission.Entity.GLOBAL, None)
-        self.assertEqual(0, access)
-
-        access = user.get_access(Permission.Entity.PIPELINE, 'test')
-        self.assertEqual(0, access)
-
-        self.assertFalse(is_owner(user))
-
     def test_get_user_access_for_global_owner(self):
         password_salt = generate_salt()
         user = User.create(
@@ -71,11 +48,7 @@ class UtilsTest(DBTestCase):
             roles_new=[Role.query.filter(Role.name == 'Owner').first()],
             username='admin',
         )
-
         access = user.get_access(None)
-        self.assertEqual(0, access)
-
-        access = user.get_access(Permission.Entity.ANY)
         self.assertEqual(1, access)
 
         access = user.get_access(Permission.Entity.GLOBAL, None)
@@ -104,7 +77,7 @@ class UtilsTest(DBTestCase):
             )],
             username='editor',
         )
-        access = user.get_access(Permission.Entity.ANY)
+        access = user.get_access(None)
         self.assertEqual(4, access)
 
         access = user.get_access(Permission.Entity.GLOBAL, None)
@@ -151,7 +124,7 @@ class UtilsTest(DBTestCase):
             )],
             username='editor2',
         )
-        access = user.get_access(Permission.Entity.ANY)
+        access = user.get_access(None)
         self.assertEqual(12, access)
 
         access = user.get_access(Permission.Entity.GLOBAL, None)

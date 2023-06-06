@@ -67,7 +67,7 @@ class WorkspaceResource(GenericResource):
         workspaces = []
         for project in projects:
             if project in instance_map:
-                repo_path = os.path.join(projects_folder, project, project)
+                repo_path = os.path.join(projects_folder, project)
                 workspace = dict(
                     name=project,
                     repo_path=repo_path,
@@ -120,9 +120,8 @@ class WorkspaceResource(GenericResource):
             if os.path.exists(workspace_folder):
                 error.update(message=f'Project with name {workspace_name} already exists')
                 raise ApiError(error)
-            project_folder = os.path.join(workspace_folder, workspace_name)
             try:
-                init_repo(project_folder, project_type=ProjectType.SUB)
+                init_repo(workspace_folder, project_type=ProjectType.SUB)
             except Exception as e:
                 error.update(message=f'Error creating project: {str(e)}')
                 raise ApiError(error)
@@ -146,7 +145,7 @@ class WorkspaceResource(GenericResource):
                     container_config = yaml.full_load(container_config_yaml)
 
                 k8s_workload_manager = WorkloadManager(namespace)
-                k8s_workload_manager.create_stateful_set(
+                k8s_workload_manager.create_deployment(
                     workspace_name,
                     container_config=container_config,
                     service_account_name=service_account_name,
@@ -193,13 +192,12 @@ class WorkspaceResource(GenericResource):
         except Exception as e:
             if workspace_folder and os.path.exists(workspace_folder):
                 shutil.rmtree(workspace_folder)
-            error.update(message=str(e))
-            raise ApiError(error)
+            return self(dict(success=False, error=str(e)), user, **kwargs)
 
         if get_project_type() == ProjectType.MAIN:
             Role.create_default_roles(
                 entity=Permission.Entity.PROJECT,
-                entity_id=project_folder,
+                entity_id=workspace_folder,
                 prefix=workspace_name,
             )
 
