@@ -2066,6 +2066,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
+            TAG_CONDITION,
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
@@ -2085,6 +2086,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if self.replicated_block:
             arr.append(TAG_REPLICA)
+
+        if len(self.conditional_blocks) > 0:
+            arr.append(TAG_CONDITION)
 
         return arr
 

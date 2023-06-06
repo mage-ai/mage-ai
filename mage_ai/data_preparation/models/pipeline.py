@@ -990,6 +990,8 @@ class Pipeline:
             mapping = self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {})
         elif BlockType.CALLBACK == block_type:
             mapping = self.callbacks_by_uuid
+        elif BlockType.CONDITIONAL == block_type:
+            mapping = self.conditionals_by_uuid
         else:
             mapping = self.blocks_by_uuid
 

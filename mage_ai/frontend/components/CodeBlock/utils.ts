@@ -354,6 +354,11 @@ export function buildTags({ tags }: BlockType): {
         description: 'This block is a replica of another block in the current pipeline.',
         title: capitalizeRemoveUnderscoreLower(TagEnum.REPLICA),
       });
+    } else if (TagEnum.CONDITION === tag) {
+      arr.push({
+        description: 'This block has a condition that will be run before its execution.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.CONDITION),
+      });
     } else {
       arr.push({
         title: tag,

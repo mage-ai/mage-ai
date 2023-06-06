@@ -9,11 +9,15 @@ import Text from '@oracle/elements/Text';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
+import Flex from '@oracle/components/Flex';
+import BlockExtraRow from './BlockExtraRow';
 
 type BlockExtrasProps = {
   block: BlockType;
   blocks: BlockType[];
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    addon: AddonBlockTypeEnum,
     blockUUID: string;
   }) => void;
 };
@@ -23,8 +27,6 @@ function BlockExtras({
   blocks,
   openSidekickView,
 }: BlockExtrasProps) {
-  const themeContext = useContext(ThemeContext);
-
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const callbackBlocks = useMemo(() => block?.callback_blocks?.reduce((acc, uuid) => {
     const b = blocksByUUID?.[uuid];
@@ -38,50 +40,52 @@ function BlockExtras({
     blocksByUUID,
   ]);
 
+  const conditionalBlocks = useMemo(() => block?.conditional_blocks?.reduce((acc, uuid) => {
+    const b = blocksByUUID?.[uuid];
+    if (b) {
+      return acc.concat(b);
+    }
+
+    return acc;
+  }, []), [
+    block,
+    blocksByUUID,
+  ]);
+
   return (
     <>
+      {conditionalBlocks?.length >= 1 && (
+        <Flex flexDirection="column">
+          <Spacing px={1}>
+            <Text bold muted>
+              Conditionals
+            </Text>
+          </Spacing>
+          <BlockExtraRow
+            blocks={conditionalBlocks}
+            onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+              addon: AddonBlockTypeEnum.CONDITIONAL,
+              blockUUID: uuid,
+            })}
+          />
+        </Flex>
+      )}
+      <Spacing mb={1} />
       {callbackBlocks?.length >= 1 && (
-        <>
+        <Flex flexDirection="column">
           <Spacing px={1}>
             <Text bold muted>
               Callbacks
             </Text>
           </Spacing>
-          <FlexContainer alignItems="center">
-            {callbackBlocks?.map(({
-              color: colorInit,
-              type,
-              uuid,
-            }) => {
-              const color = getColorsForBlockType(
-                type,
-                {
-                  blockColor: colorInit,
-                  theme: themeContext,
-                },
-              ).accentLight;
-
-              return (
-                <Spacing key={uuid} ml={1} mt={1}>
-                  <Button
-                    backgroundColor={color}
-                    compact
-                    onClick={() => {
-                      openSidekickView(ViewKeyEnum.CALLBACKS, true, {
-                        blockUUID: uuid,
-                      });
-                    }}
-                    small
-                  >
-                    <Text monospace small>
-                      {uuid}
-                    </Text>
-                  </Button>
-                </Spacing>
-              );
+          <BlockExtraRow
+            blocks={callbackBlocks}
+            onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+              addon: AddonBlockTypeEnum.CALLBACK,
+              blockUUID: uuid,
             })}
-          </FlexContainer>
-        </>
+          />
+        </Flex>
       )}
     </>
   );

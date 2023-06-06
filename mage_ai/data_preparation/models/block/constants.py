@@ -22,6 +22,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.SENSOR: SensorBlock,
 }
 
+TAG_CONDITION = 'condition'
 TAG_DYNAMIC = 'dynamic'
 TAG_DYNAMIC_CHILD = 'dynamic_child'
 TAG_REDUCE_OUTPUT = 'reduce_output'

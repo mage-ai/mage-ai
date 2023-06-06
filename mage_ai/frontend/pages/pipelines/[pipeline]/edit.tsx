@@ -15,6 +15,7 @@ import BlockType, {
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
+  SIDEKICK_BLOCK_TYPES,
   SampleDataType,
 } from '@interfaces/BlockType';
 import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
@@ -283,11 +284,13 @@ function PipelineDetailPage({
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
     opts?: {
+      addon?: string;
       blockUUID: string;
     },
   ) => {
     const newQuery: {
       [VIEW_QUERY_PARAM]: ViewKeyEnum;
+      addon?: string;
       block_uuid?: string;
     } = {
       [VIEW_QUERY_PARAM]: newView,
@@ -297,8 +300,13 @@ function PipelineDetailPage({
       newQuery.block_uuid = opts?.blockUUID;
     }
 
+    if (opts?.addon) {
+      newQuery.addon = opts?.addon;
+    }
+
     goToWithQuery(newQuery, {
       preserveParams: [
+        'addon',
         'block_uuid',
         'file_path',
         'file_paths[]',
@@ -318,6 +326,7 @@ function PipelineDetailPage({
     newView: ViewKeyEnum,
     pushHistory?: boolean,
     opts?: {
+      addon?: string;
       blockUUID: string;
     },
   ) => {
@@ -646,6 +655,7 @@ function PipelineDetailPage({
     const blocksByExtensions = {};
     const blocksByUUID = {};
     const callbacksByUUID = {};
+    const conditionalsByUUID = {};
 
     blocks.forEach((block: BlockType) => {
       const {
@@ -755,6 +765,8 @@ function PipelineDetailPage({
         blocksByExtensions[extensionUUID].push(blockPayload);
       } else if (BlockTypeEnum.CALLBACK === type) {
         callbacksByUUID[blockPayload.uuid] = blockPayload;
+      } else if (BlockTypeEnum.CONDITIONAL === type) {
+        conditionalsByUUID[blockPayload.uuid] = blockPayload;
       } else {
         blocksByUUID[blockPayload.uuid] = blockPayload;
       }
@@ -774,16 +786,20 @@ function PipelineDetailPage({
 
     const blocksToSave = [];
     const callbacksToSave = [];
+    const conditionalsToSave = [];
 
     // @ts-ignore
     (pipelineOverride?.blocks || blocks).forEach(({ uuid }) => {
-      const b = blocksByUUID[uuid];
-      const c = callbacksByUUID[uuid];
+      const blockToSave = blocksByUUID[uuid];
+      const callbackBlock = callbacksByUUID[uuid];
+      const conditionalBlock = conditionalsByUUID[uuid];
 
-      if (typeof b !== 'undefined') {
-        blocksToSave.push(b);
-      } else if (typeof c !== 'undefined') {
-        callbacksToSave.push(c);
+      if (typeof blockToSave !== 'undefined') {
+        blocksToSave.push(blockToSave);
+      } else if (typeof callbackBlock !== 'undefined') {
+        callbacksToSave.push(callbackBlock);
+      } else if (typeof conditionalBlock !== 'undefined') {
+        conditionalsToSave.push(conditionalBlock);
       }
     });
 
@@ -794,6 +810,7 @@ function PipelineDetailPage({
         ...pipelineOverride,
         blocks: blocksToSave,
         callbacks: callbacksToSave,
+        conditionals: conditionalsToSave,
         extensions: extensionsToSave,
         updated_at: utcNowDateString,
         widgets: widgets.map((block: BlockType) => {
@@ -854,6 +871,7 @@ function PipelineDetailPage({
     });
   }, [
     blocks,
+    maxPrintOutputLines,
     messages,
     pipeline,
     pipelineLastSaved,
@@ -889,11 +907,9 @@ function PipelineDetailPage({
   } = useMemo(() => {
     const blocksInNotebookInner = [];
     const blocksInSidekickInner = [];
-
+    
     blocks.forEach((block: BlockType) => {
-      if (BlockTypeEnum.EXTENSION === block.type) {
-        blocksInSidekickInner.push(block);
-      } else if (BlockTypeEnum.CALLBACK === block.type) {
+      if (SIDEKICK_BLOCK_TYPES.includes(block.type)) {
         blocksInSidekickInner.push(block);
       } else {
         blocksInNotebookInner.push(block);
@@ -1400,6 +1416,9 @@ function PipelineDetailPage({
       if (typeof pipeline?.callbacks !== 'undefined') {
         arr.push(...pipeline?.callbacks);
       }
+      if (typeof pipeline?.conditionals !== 'undefined') {
+        arr.push(...pipeline?.conditionals);
+      }
       if (typeof pipeline?.extensions !== 'undefined') {
         // @ts-ignore
         Object.entries(pipeline?.extensions || {}).forEach(([extensionUUID, { blocks }]) => {
@@ -1413,6 +1432,7 @@ function PipelineDetailPage({
   }, [
     pipeline?.blocks,
     pipeline?.callbacks,
+    pipeline?.conditionals,
     pipeline?.extensions,
   ]);
 

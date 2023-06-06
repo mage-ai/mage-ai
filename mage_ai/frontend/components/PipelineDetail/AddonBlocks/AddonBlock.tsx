@@ -272,7 +272,7 @@ function AddonBlock({
           interruptKernel={interruptKernel}
           messages={messages[uuid]}
           noDivider
-          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+          // onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
           onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
           pipeline={pipeline}
           ref={blockRefs.current[path]}
