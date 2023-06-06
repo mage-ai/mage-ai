@@ -86,7 +86,7 @@ export function getBlockFromFile(
     }
   }
 
-  if (!parts) {
+  if (!parts || BlockTypeEnum.DBT === blockType) {
     return null;
   }
 
@@ -98,7 +98,6 @@ export function getBlockFromFile(
   } else {
     fileName = parts[parts.length - 1];
   }
-
 
   const extensions = [
     `\\.${FileExtensionEnum.PY}`,

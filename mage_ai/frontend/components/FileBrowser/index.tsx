@@ -474,6 +474,7 @@ function FileBrowser({
         },
       ]);
 
+      console.log(selectedBlock)
 
       if (selectedBlock) {
         items.push({
