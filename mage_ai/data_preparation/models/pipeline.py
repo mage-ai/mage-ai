@@ -424,6 +424,7 @@ class Pipeline:
 
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
+        self.conditional_configs = config.get('conditionals') or []
         self.executor_type = config.get('executor_type')
         self.executor_config = config.get('executor_confid') or dict()
         self.widget_configs = config.get('widgets') or []
@@ -453,6 +454,7 @@ class Pipeline:
 
         blocks = [build_shared_args_kwargs(c) for c in self.block_configs]
         callbacks = [build_shared_args_kwargs(c) for c in self.callback_configs]
+        conditionals = [build_shared_args_kwargs(c) for c in self.conditional_configs]
         widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
         all_blocks = blocks + callbacks + widgets
 
@@ -464,6 +466,11 @@ class Pipeline:
         self.callbacks_by_uuid = self.__initialize_blocks_by_uuid(
             self.callback_configs,
             callbacks,
+            all_blocks,
+        )
+        self.conditionals_by_uuid = self.__initialize_blocks_by_uuid(
+            self.conditional_configs,
+            conditionals,
             all_blocks,
         )
         self.widgets_by_uuid = self.__initialize_blocks_by_uuid(
@@ -493,8 +500,16 @@ class Pipeline:
                     blocks_with_callbacks[upstream_block.uuid] = []
                 blocks_with_callbacks[upstream_block.uuid].append(callback_block)
 
+        blocks_with_conditionals = {}
+        for conditional_block in self.conditionals_by_uuid.values():
+            for upstream_block in conditional_block.upstream_blocks:
+                if upstream_block.uuid not in blocks_with_conditionals:
+                    blocks_with_conditionals[upstream_block.uuid] = []
+                blocks_with_conditionals[upstream_block.uuid].append(conditional_block)
+
         for block in self.blocks_by_uuid.values():
             block.callback_blocks = blocks_with_callbacks.get(block.uuid, [])
+            block.conditional_blocks = blocks_with_conditionals.get(block.uuid, [])
 
         self.validate('A cycle was detected in the loaded pipeline')
 
@@ -553,11 +568,13 @@ class Pipeline:
 
         blocks_data = [b.to_dict(**shared_kwargs) for b in self.blocks_by_uuid.values()]
         callbacks_data = [b.to_dict(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
+        conditionals_data = [b.to_dict(**shared_kwargs) for b in self.conditionals_by_uuid.values()]
         widgets_data = [b.to_dict(**shared_kwargs) for b in self.widgets_by_uuid.values()]
 
         data = dict(
             blocks=blocks_data,
             callbacks=callbacks_data,
+            conditionals=conditionals_data,
             widgets=widgets_data,
         )
 
@@ -594,6 +611,7 @@ class Pipeline:
         include_block_metadata: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
+        include_conditional_blocks: bool = False,
         include_content: bool = False,
         include_extensions: bool = False,
         include_outputs: bool = False,
@@ -604,6 +622,7 @@ class Pipeline:
             include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
             include_callback_blocks=include_callback_blocks,
+            include_conditional_blocks=include_conditional_blocks,
             include_content=include_content,
             include_outputs=include_outputs,
             sample_count=sample_count,
@@ -613,6 +632,9 @@ class Pipeline:
         )
         callbacks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
+        )
+        conditionals_data = await asyncio.gather(
+            *[b.to_dict_async(**shared_kwargs) for b in self.conditionals_by_uuid.values()]
         )
         widgets_data = await asyncio.gather(
             *[b.to_dict_async(
@@ -624,6 +646,7 @@ class Pipeline:
         data = dict(
             blocks=blocks_data,
             callbacks=callbacks_data,
+            conditionals=conditionals_data,
             widgets=widgets_data,
         )
 
@@ -746,6 +769,9 @@ class Pipeline:
 
             if 'callbacks' in data:
                 arr.append(('callbacks', data['callbacks'], self.callbacks_by_uuid))
+
+            if 'conditionals' in data:
+                arr.append(('conditionals', data['conditionals'], self.conditionals_by_uuid))
 
             if 'widgets' in data:
                 arr.append(('widgets', data['widgets'], self.widgets_by_uuid))
@@ -930,6 +956,13 @@ class Pipeline:
                 upstream_blocks=self.get_blocks(upstream_block_uuids),
                 priority=priority,
             )
+        elif BlockType.CONDITIONAL == block.type:
+            self.conditionals_by_uuid = self.__add_block_to_mapping(
+                self.conditionals_by_uuid,
+                block,
+                upstream_blocks=self.get_blocks(upstream_block_uuids),
+                priority=priority,
+            )
         else:
             self.blocks_by_uuid = self.__add_block_to_mapping(
                 self.blocks_by_uuid,
@@ -984,6 +1017,8 @@ class Pipeline:
                 block_uuid in self.extensions[extension_uuid]['blocks_by_uuid']
         elif BlockType.CALLBACK == block_type:
             return block_uuid in self.callbacks_by_uuid
+        elif BlockType.CONDITIONAL == block_type:
+            return block_uuid in self.conditionals_by_uuid
 
         return block_uuid in self.blocks_by_uuid
 
@@ -991,6 +1026,7 @@ class Pipeline:
         self,
         block: Block,
         callback_block_uuids: List[str] = None,
+        conditional_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
     ):
@@ -998,6 +1034,7 @@ class Pipeline:
 
         extension_uuid = block.extension_uuid
         is_callback = BlockType.CALLBACK == block.type
+        is_conditional = BlockType.CONDITIONAL == block.type
         is_extension = BlockType.EXTENSION == block.type
 
         if upstream_block_uuids is not None:
@@ -1010,6 +1047,8 @@ class Pipeline:
                 mapping = self.extensions[extension_uuid].get('blocks_by_uuid', {})
             elif is_callback:
                 mapping = self.callbacks_by_uuid
+            elif is_conditional:
+                mapping = self.conditionals_by_uuid
             else:
                 mapping = self.blocks_by_uuid
 
@@ -1029,8 +1068,8 @@ class Pipeline:
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids:
                 # Only set upstream block’s downstream to the current block if current block
-                # is not an extension block and not a callback block
-                if not is_extension and not is_callback:
+                # is not an extension block and not a callback/conditional block
+                if not is_extension and not is_callback and not is_conditional:
                     # There are currently no upstream blocks that are widgets (e.g. chart)
                     upstream_blocks_added = self.get_blocks(
                         new_upstream_block_uuids - curr_upstream_block_uuids,
@@ -1066,6 +1105,22 @@ class Pipeline:
             # Callback blocks don’t have an upstream.
             # The normal block will know about the callback block via the callback_blocks field.
             block.update_callback_blocks(callback_blocks)
+        elif conditional_block_uuids is not None:
+            conditional_blocks = []
+            for conditional_block_uuid in conditional_block_uuids:
+                conditional_block = self.callbacks_by_uuid.get(conditional_block_uuid)
+                if not conditional_block:
+                    raise Exception(
+                        f'Conditional block {conditional_block_uuid}'
+                        f' is not in the {self.uuid} pipeline.',
+                    )
+
+                conditional_blocks.append(conditional_block)
+
+            # Conditional blocks don’t have an upstream.
+            # The normal block will know about the conditional block via the
+            # conditional_blocks field.
+            block.update_conditional_blocks(conditional_blocks)
         else:
             save_kwargs['block_uuid'] = block.uuid
 
@@ -1079,6 +1134,8 @@ class Pipeline:
             })
         elif is_callback:
             self.callbacks_by_uuid[block.uuid] = block
+        elif is_conditional:
+            self.conditionals_by_uuid[block.uuid] = block
         else:
             self.blocks_by_uuid[block.uuid] = block
 
@@ -1116,6 +1173,10 @@ class Pipeline:
         elif BlockType.CALLBACK == block.type:
             self.callbacks_by_uuid = {
                 new_uuid if k == old_uuid else k: v for k, v in self.callbacks_by_uuid.items()
+            }
+        elif BlockType.CONDITIONAL == block.type:
+            self.conditionals_by_uuid = {
+                new_uuid if k == old_uuid else k: v for k, v in self.conditionals_by_uuid.items()
             }
         elif old_uuid in self.blocks_by_uuid:
             self.blocks_by_uuid = {
@@ -1159,6 +1220,7 @@ class Pipeline:
         force: bool = False,
     ) -> None:
         is_callback = BlockType.CALLBACK == block.type
+        is_conditional = BlockType.CONDITIONAL == block.type
         is_extension = BlockType.EXTENSION == block.type
 
         mapping = {}
@@ -1168,6 +1230,8 @@ class Pipeline:
             mapping = self.extensions.get(block.extension_uuid, {}).get('blocks_by_uuid', {})
         elif is_callback:
             mapping = self.callbacks_by_uuid
+        elif is_conditional:
+            mapping = self.conditionals_by_uuid
         else:
             mapping = self.blocks_by_uuid
 
@@ -1211,6 +1275,8 @@ class Pipeline:
             del self.extensions[block.extension_uuid]['blocks_by_uuid'][block.uuid]
         elif is_callback:
             del self.callbacks_by_uuid[block.uuid]
+        elif is_conditional:
+            del self.conditionals_by_uuid[block.uuid]
         else:
             del self.blocks_by_uuid[block.uuid]
 
@@ -1247,6 +1313,8 @@ class Pipeline:
                 self.extensions[extension_uuid]['blocks_by_uuid'][block_uuid] = block
             elif BlockType.CALLBACK == block.type:
                 current_pipeline.callbacks_by_uuid[block_uuid] = block
+            elif BlockType.CONDITIONAL == block.type:
+                current_pipeline.conditionals_by_uuid[block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict(include_extensions=True)
@@ -1302,6 +1370,8 @@ class Pipeline:
                 self.extensions[extension_uuid]['blocks_by_uuid'][block_uuid] = block
             elif BlockType.CALLBACK == block_type:
                 current_pipeline.callbacks_by_uuid[block_uuid] = block
+            elif BlockType.CONDITIONAL == block_type:
+                current_pipeline.conditionals_by_uuid[block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict(include_extensions=True)
@@ -1373,6 +1443,7 @@ class Pipeline:
 
         combined_blocks.update(self.widgets_by_uuid)
         combined_blocks.update(self.callbacks_by_uuid)
+        combined_blocks.update(self.conditionals_by_uuid)
         combined_blocks.update(self.blocks_by_uuid)
         status = {uuid: 'unvisited' for uuid in combined_blocks}
 

@@ -37,11 +37,13 @@ class BlockStatus(str, Enum):
     EXECUTED = 'executed'
     FAILED = 'failed'
     NOT_EXECUTED = 'not_executed'
+    SKIPPED = 'skipped'
     UPDATED = 'updated'
 
 
 class BlockType(str, Enum):
     CALLBACK = 'callback'
+    CONDITIONAL = 'conditional'
     CHART = 'chart'
     CUSTOM = 'custom'
     DATA_EXPORTER = 'data_exporter'

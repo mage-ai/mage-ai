@@ -11,6 +11,7 @@ class BlockPresenter(BasePresenter):
         'all_upstream_blocks_executed',
         'callback_blocks',
         'color',
+        'conditional_blocks',
         'configuration',
         'downstream_blocks',
         'executor_config',

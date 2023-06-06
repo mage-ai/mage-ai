@@ -64,6 +64,23 @@ class BlockExecutor:
                 on_start(self.block_uuid)
             pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
                 if 'pipeline_run_id' in kwargs else None
+
+            conditional_result = self._execute_conditional(
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                global_vars=global_vars,
+                logging_tags=tags,
+                pipeline_run=pipeline_run,
+            )
+            if not conditional_result:
+                self.__update_block_run_status(
+                    'cancelled',
+                    block_run_id=kwargs.get('block_run_id'),
+                    callback_url=callback_url,
+                    tags=tags,
+                )
+                return dict()
+
             try:
                 from mage_ai.shared.retry import retry
 
@@ -204,6 +221,38 @@ class BlockExecutor:
                 update_tests=False,
                 dynamic_block_uuid=dynamic_block_uuid,
             )
+
+        return result
+
+    def _execute_conditional(
+        self,
+        global_vars,
+        logging_tags,
+        pipeline_run,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
+    ):
+        result = True
+        for conditional_block in self.block.conditional_blocks:
+            try:
+                result = result and conditional_block.execute_conditional(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    execution_partition=self.execution_partition,
+                    global_vars=global_vars,
+                    logger=self.logger,
+                    logging_tags=logging_tags,
+                    parent_block=self.block,
+                    pipeline_run=pipeline_run,
+                )
+            except Exception as callback_err:
+                self.logger.exception(
+                    f'Failed to execute conditional block {conditional_block.uuid} ' +
+                    f'for block {self.block.uuid}.',
+                    **merge_dict(logging_tags, dict(
+                        error=callback_err,
+                    )),
+                )
 
         return result
 

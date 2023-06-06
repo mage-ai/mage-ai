@@ -44,6 +44,7 @@ class PipelinePresenter(BasePresenter):
                 include_block_metadata=include_block_metadata,
                 include_block_tags=True,
                 include_callback_blocks=True,
+                include_conditional_blocks=True,
                 include_content=include_content,
                 include_extensions=include_extensions,
                 include_outputs=include_outputs,
