@@ -1,3 +1,9 @@
+import json
+import os
+import shutil
+import subprocess
+from typing import Any, Dict, List
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.utils import (
     build_command_line_arguments,
@@ -14,11 +20,6 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
-from typing import Any, Dict, List
-import json
-import os
-import shutil
-import subprocess
 
 
 class DBTBlock(Block):
@@ -157,132 +158,135 @@ class DBTBlock(Block):
             profiles_dir,
         )
 
-        is_sql = BlockLanguage.SQL == self.language
-        if is_sql:
-            create_upstream_tables(
-                self,
-                execution_partition=execution_partition,
-                profile_target=dbt_profile_target,
-                # TODO (tommy dang): this is creating unnecessary tables in notebook
-                # cache_upstream_dbt_models=test_execution,
-            )
-
-        stdout = None if test_execution else subprocess.PIPE
-
-        cmds = [
-            'dbt',
-            dbt_command,
-        ] + args
-
-        outputs = []
-
-        args_pairs = []
-        args_pair = []
-        for a in args:
-            args_pair.append(f"'{a}'" if '"' in a else a)
-            if len(args_pair) == 2:
-                args_pairs.append(args_pair)
-                args_pair = []
-        if len(args_pair) >= 1:
-            args_pairs.append(args_pair)
-
-        args_pairs = [f"  {' '.join(p)}" for p in args_pairs]
-        args_string = ' \\\n'.join(args_pairs)
-
-        print(f'dbt {dbt_command} \\\n{args_string}\n')
-
-        snapshot = dbt_command == 'snapshot'
-
-        if is_sql and test_execution:
-            subprocess.run(
-                cmds,
-                preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
-                stdout=stdout,
-            )
-
-            if not snapshot:
-                df = query_from_compiled_sql(
+        try:
+            is_sql = BlockLanguage.SQL == self.language
+            if is_sql:
+                create_upstream_tables(
                     self,
-                    dbt_profile_target,
-                    limit=self.configuration.get('limit'),
-                )
-                self.store_variables(
-                    dict(df=df),
                     execution_partition=execution_partition,
-                    override_outputs=True,
+                    profile_target=dbt_profile_target,
+                    # TODO (tommy dang): this is creating unnecessary tables in notebook
+                    # cache_upstream_dbt_models=test_execution,
                 )
-                outputs = [df]
-        elif not test_execution:
-            proc = subprocess.Popen(
-                cmds,
-                bufsize=1,
-                preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
-                stdout=stdout,
-                universal_newlines=True,
-            )
-            for line in proc.stdout:
-                print(line, end='')
-            proc.communicate()
-            if proc.returncode != 0 and proc.returncode is not None:
-                raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-        if not test_execution:
-            target_path = None
-            if self.configuration.get('file_path') is not None:
-                attributes_dict = parse_attributes(self)
-                target_path = attributes_dict['target_path']
+            stdout = None if test_execution else subprocess.PIPE
 
-            if snapshot:
-                query_string = compiled_query_string(self)
-                if query_string:
+            cmds = [
+                'dbt',
+                dbt_command,
+            ] + args
 
-                    print('Compiled snapshot query string:')
-                    for line in query_string.split('\n'):
-                        print(f'|    {line.strip()}')
-            elif target_path is not None:
-                run_results_file_path = os.path.join(
-                    project_full_path,
-                    target_path,
-                    'run_results.json',
+            outputs = []
+
+            args_pairs = []
+            args_pair = []
+            for a in args:
+                args_pair.append(f"'{a}'" if '"' in a else a)
+                if len(args_pair) == 2:
+                    args_pairs.append(args_pair)
+                    args_pair = []
+            if len(args_pair) >= 1:
+                args_pairs.append(args_pair)
+
+            args_pairs = [f"  {' '.join(p)}" for p in args_pairs]
+            args_string = ' \\\n'.join(args_pairs)
+
+            print(f'dbt {dbt_command} \\\n{args_string}\n')
+
+            snapshot = dbt_command == 'snapshot'
+
+            if is_sql and test_execution:
+                subprocess.run(
+                    cmds,
+                    preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
+                    stdout=stdout,
                 )
-                with open(run_results_file_path, 'r') as f:
-                    try:
-                        run_results = json.load(f)
 
-                        print(f'\n{json.dumps(run_results, indent=2)}\n')
-
-                        for result in run_results['results']:
-                            if 'error' == result['status']:
-                                raise Exception(result['message'])
-                    except json.decoder.JSONDecodeError:
-                        print(f'WARNING: no run results found at {run_results_file_path}.')
-
-            if is_sql and dbt_command in ['build', 'run']:
-                limit = 1000
-                if self.downstream_blocks and \
-                        len(self.downstream_blocks) >= 1 and \
-                        not all([BlockType.DBT == block.type for block in self.downstream_blocks]):
-                    limit = None
-
-                try:
-                    df = fetch_model_data(
+                if not snapshot:
+                    df = query_from_compiled_sql(
                         self,
                         dbt_profile_target,
-                        limit=limit,
+                        limit=self.configuration.get('limit'),
                     )
-
                     self.store_variables(
-                        dict(output_0=df),
+                        dict(df=df),
                         execution_partition=execution_partition,
                         override_outputs=True,
                     )
                     outputs = [df]
-                except Exception as err:
-                    print(f'Error: {err}')
+            elif not test_execution:
+                proc = subprocess.Popen(
+                    cmds,
+                    bufsize=1,
+                    preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
+                    stdout=stdout,
+                    universal_newlines=True,
+                )
+                for line in proc.stdout:
+                    print(line, end='')
+                proc.communicate()
+                if proc.returncode != 0 and proc.returncode is not None:
+                    raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-        try:
-            shutil.rmtree(profiles_dir)
-        except Exception as err:
-            print(f'Error removing temporary profile at {temp_profile_full_path}: {err}')
+            if not test_execution:
+                target_path = None
+                if self.configuration.get('file_path') is not None:
+                    attributes_dict = parse_attributes(self)
+                    target_path = attributes_dict['target_path']
+
+                if snapshot:
+                    query_string = compiled_query_string(self)
+                    if query_string:
+
+                        print('Compiled snapshot query string:')
+                        for line in query_string.split('\n'):
+                            print(f'|    {line.strip()}')
+                elif target_path is not None:
+                    run_results_file_path = os.path.join(
+                        project_full_path,
+                        target_path,
+                        'run_results.json',
+                    )
+                    with open(run_results_file_path, 'r') as f:
+                        try:
+                            run_results = json.load(f)
+
+                            print(f'\n{json.dumps(run_results, indent=2)}\n')
+
+                            for result in run_results['results']:
+                                if 'error' == result['status']:
+                                    raise Exception(result['message'])
+                        except json.decoder.JSONDecodeError:
+                            print(f'WARNING: no run results found at {run_results_file_path}.')
+
+                if is_sql and dbt_command in ['build', 'run']:
+                    limit = 1000
+                    if self.downstream_blocks and \
+                            len(self.downstream_blocks) >= 1 and \
+                            not all([BlockType.DBT == block.type
+                                     for block in self.downstream_blocks]):
+                        limit = None
+
+                    try:
+                        df = fetch_model_data(
+                            self,
+                            dbt_profile_target,
+                            limit=limit,
+                        )
+
+                        self.store_variables(
+                            dict(output_0=df),
+                            execution_partition=execution_partition,
+                            override_outputs=True,
+                        )
+                        outputs = [df]
+                    except Exception as err:
+                        print(f'Error: {err}')
+        finally:
+            # Always delete the temporary profiles dir
+            try:
+                shutil.rmtree(profiles_dir)
+            except Exception as err:
+                print(f'Error removing temporary profile at {temp_profile_full_path}: {err}')
 
         return outputs
