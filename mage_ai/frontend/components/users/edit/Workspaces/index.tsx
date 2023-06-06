@@ -16,7 +16,6 @@ import { onSuccess } from '@api/utils/response';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
-  newUser?: boolean;
   user: UserType;
   workspaces: WorkspaceType[];
 };
@@ -46,6 +45,8 @@ function UserWorkspacesEdit({
     return roles?.reduce(
       (obj, role) => {
         const repoPath = role.permissions[0].entity_id;
+
+        // const name = repoPath.split('/').slice(-1)
         const existingRoles = obj[repoPath] || [];
         return {
           ...obj,
@@ -62,6 +63,8 @@ function UserWorkspacesEdit({
     return roles?.reduce(
       (obj, role) => {
         const repoPath = role?.permissions?.[0]?.entity_id;
+
+        // const name = repoPath.split('/').slice(-1)
         return {
           ...obj,
           [repoPath]: role,
@@ -80,7 +83,7 @@ function UserWorkspacesEdit({
             user: userServer,
           }) => {
             toast.success(
-              'User roles successfully saved.',
+              'User roles successfully updated.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
                 toastId: `user-update-success-${userServer.id}`,

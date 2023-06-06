@@ -34,7 +34,7 @@ function ConfigureWorkspace({
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [containerConfig, setContainerConfig] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>();
-  const [k8sConfig, setK8sConfig] = useState({});
+  const [serviceAccountName, setServiceAccountName] = useState<string>();
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),
@@ -55,7 +55,6 @@ function ConfigureWorkspace({
               message,
             },
           }) => {
-            setError(message);
             console.log(errors, message);
           },
         },
@@ -110,32 +109,10 @@ function ConfigureWorkspace({
           monospace
           onChange={(e) => {
             e.preventDefault();
-            setK8sConfig(prev => ({
-              ...prev,
-              service_account_name: e.target.value,
-            }));
+            setServiceAccountName(e.target.value);
           }}
           placeholder="Service account name"
-          value={k8sConfig?.['service_account_name']}
-        />,
-      ],
-      [
-        <Text bold color={BLUE_SKY} key="service_account_name">
-          Storage class name (optional)
-        </Text>,
-        <TextInput
-          key="storage_class_name_label"
-          label="Storage class name of persistent volume"
-          monospace
-          onChange={(e) => {
-            e.preventDefault();
-            setK8sConfig(prev => ({
-              ...prev,
-              storage_class_name: e.target.value,
-            }));
-          }}
-          placeholder="Storage class name"
-          value={k8sConfig?.['storage_class_name']}
+          value={serviceAccountName}
         />,
       ],
     );
@@ -219,8 +196,8 @@ function ConfigureWorkspace({
                     cluster_type: clusterType,
                     container_config: configureContainer && containerConfig,
                     name: updateWorkspaceName(newWorkspaceName),
-                    ...k8sConfig,
-                  },
+                    service_account_name: serviceAccountName,
+                  }
                 })}
                 uuid="workspaces/create"
               >
