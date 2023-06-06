@@ -50,8 +50,6 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.io.base import FileFormat
-from mage_ai.io.file import FileIO
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
@@ -1133,6 +1131,8 @@ class Block:
         self,
         execution_partition: str = None,
         include_print_outputs: bool = True,
+        csv_lines_only: bool = False,
+        sample: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
@@ -1168,7 +1168,7 @@ class Block:
                 continue
 
             data = variable_object.read_data(
-                sample=True,
+                sample=sample,
                 sample_count=sample_count,
                 spark=self.__get_spark_session(),
             )
@@ -1192,16 +1192,19 @@ class Block:
                 else:
                     row_count, column_count = data.shape
 
-                columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
-                    ),
-                    shape=[row_count, column_count],
-                    type=DataType.TABLE,
-                    variable_uuid=v,
-                )
+                if csv_lines_only:
+                    data = data.to_csv(header=True, index=False).strip('\n')
+                else:
+                    columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                    data = dict(
+                        sample_data=dict(
+                            columns=columns_to_display,
+                            rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
+                        ),
+                        shape=[row_count, column_count],
+                        type=DataType.TABLE,
+                        variable_uuid=v,
+                    )
                 data_products.append(data)
                 continue
             elif is_geo_dataframe(data):
@@ -1363,34 +1366,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 continue
             outputs.append(data)
         return outputs + data_products
-
-    def export_output_to_csv(self, execution_partition: str = None) -> None:
-        block_uuid = self.uuid
-        variable_manager = self.pipeline.variable_manager
-        all_variables = self.output_variables(execution_partition=execution_partition)
-
-        for v in all_variables:
-            variable_object = variable_manager.get_variable_object(
-                self.pipeline.uuid,
-                block_uuid,
-                v,
-                partition=execution_partition,
-                spark=self.__get_spark_session(),
-            )
-            data = variable_object.read_data(
-                sample=False,
-                spark=self.__get_spark_session(),
-            )
-            block_output_path = os.path.join(
-                self.pipeline.outputs_path,
-                f'{block_uuid}.{FileFormat.CSV}',
-            )
-
-            FileIO().export(
-                data,
-                block_output_path,
-                format=FileFormat.CSV,
-            )
 
     def __save_outputs_prepare(self, outputs) -> Dict:
         variable_mapping = dict()

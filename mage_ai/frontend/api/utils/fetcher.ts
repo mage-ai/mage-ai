@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { ResponseType } from 'axios';
 
 import AuthToken from '@api/utils/AuthToken';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
@@ -6,10 +6,18 @@ import { queryFromUrl } from '@utils/url';
 
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || OAUTH2_APPLICATION_CLIENT_ID;
 
-type FetcherOptionsType = {
+export type FetcherOptionsType = {
   body?: any;
   ctx?: any;
   method?: any;
+  onDownloadProgress?: (progress: any, opts?: {
+    body: {
+      [key: string]: number | string;
+    };
+    query: {
+      [key: string]: number | string;
+    };
+  }) => void;
   onUploadProgress?: (progress: any, opts?: {
     body: {
       [key: string]: number | string;
@@ -19,6 +27,7 @@ type FetcherOptionsType = {
     };
   }) => void;
   query?: any;
+  responseType?: ResponseType;
   token?: string;
 };
 
@@ -119,6 +128,7 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     queryString,
     url,
   } = preprocess(urlArg, opts);
+  const responseType = opts?.responseType || 'json';
 
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 
@@ -126,12 +136,19 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     data: data.body,
     headers,
     method,
+    onDownloadProgress: opts?.onDownloadProgress
+      ? e => opts.onDownloadProgress(e, {
+        body: opts?.body,
+        query: opts?.query,
+      })
+      : null,
     onUploadProgress: opts?.onUploadProgress
       ? e => opts.onUploadProgress(e, {
         body: opts?.body,
         query: opts?.query,
       })
       : null,
+    responseType,
     url: finalUrl,
   });
 }

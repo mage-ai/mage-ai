@@ -1,6 +1,5 @@
 import Ansi from 'ansi-to-react';
-import { toast } from 'react-toastify';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
@@ -70,7 +69,6 @@ type CodeOutputProps = {
   buttonTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
-  fetchFileTree?: () => void;
   hasOutput?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
@@ -112,7 +110,6 @@ function CodeOutput({
   contained = true,
   dynamicBlock,
   dynamicChildBlock,
-  fetchFileTree,
   hasError,
   hasOutput,
   hideExtraInfo,
@@ -144,32 +141,41 @@ function CodeOutput({
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
   const [progress, setProgress] = useState<number>();
+  const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
 
   const [
-    exportBlockOutputToCsvFile,
-    { isLoading: isLoadingExportBlockOutputToCsvFile },
+    downloadBlockOutputAsCsvFile,
+    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
   ]: any = useMutation(
-    api.block_outputs.pipelines.useCreate(pipeline?.uuid),
+    () => api.block_outputs.pipelines.downloads.detailAsync(
+      pipeline?.uuid,
+      blockUUID,
+      {},
+      {
+        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+        responseType: 'blob',
+      },
+    ),
     {
       onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({ block_output: { outputs_path } }) => {
-            fetchFileTree?.();
-            toast.success(
-              'Block output successfully saved to CSV file at the following path: ' +
-              `${outputs_path} ` + `/${blockUUID}.${FileExtensionEnum.CSV}`,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `${blockUUID}_output_csv_file_saved`,
-              },
-            );
+          response, {
+            callback: (blobResponse) => {
+              if (typeof window !== 'undefined') {
+                const url = window.URL.createObjectURL(blobResponse);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${blockUUID}.${FileExtensionEnum.CSV}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }
+            },
+            onErrorCallback: (response, errors) => setErrors?.({
+              errors,
+              response,
+            }),
           },
-          onErrorCallback: (response, errors) => setErrors?.({
-            errors,
-            response,
-          }),
-        },
-      ),
+        ),
     },
   );
 
@@ -740,15 +746,17 @@ function CodeOutput({
 
                       <Tooltip
                         {...SHARED_TOOLTIP_PROPS}
-                        label="Save output as CSV file"
+                        forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
+                        label={isLoadingDownloadBlockOutputAsCsvFile
+                          ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                          : 'Save output as CSV file'
+                        }
                       >
                         <Button
                           {...SHARED_BUTTON_PROPS}
                           compact
-                          loading={isLoadingExportBlockOutputToCsvFile}
-                          onClick={() => exportBlockOutputToCsvFile({
-                            block_output: { block_uuid: blockUUID },
-                          })}
+                          loading={isLoadingDownloadBlockOutputAsCsvFile}
+                          onClick={() => downloadBlockOutputAsCsvFile()}
                         >
                           <Save muted size={UNIT * 1.75} />
                         </Button>

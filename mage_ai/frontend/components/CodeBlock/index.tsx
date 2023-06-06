@@ -879,7 +879,6 @@ function CodeBlock({
       blockMetadata={blockMetadata}
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
-      fetchFileTree={fetchFileTree}
       hasOutput={hasOutput}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
@@ -907,7 +906,6 @@ function CodeBlock({
     blockMetadata,
     borderColorShareProps,
     buttonTabs,
-    fetchFileTree,
     hasOutput,
     isInProgress,
     mainContainerWidth,

@@ -9,12 +9,6 @@ class BlockOutputPolicy(BasePolicy):
 
 
 BlockOutputPolicy.allow_actions([
-    constants.CREATE,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
-
-BlockOutputPolicy.allow_actions([
     constants.DETAIL,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -25,22 +19,6 @@ BlockOutputPolicy.allow_read(BlockOutputPresenter.default_attributes, scopes=[
 ], on_action=[
     constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
-
-BlockOutputPolicy.allow_read([
-    'outputs_path',
-] + BlockOutputPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
-
-BlockOutputPolicy.allow_write([
-    'block_uuid'
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 BlockOutputPolicy.allow_query([
     'pipeline_uuid',

@@ -1,5 +1,7 @@
 import { useMutation } from 'react-query';
+import { ResponseType } from 'axios';
 
+import { FetcherOptionsType } from './utils/fetcher';
 import {
   fetchCreate,
   fetchCreateWithParent,
@@ -13,6 +15,7 @@ import {
   useDeleteWithParent,
   useDetail,
   useDetailWithParent,
+  useDetailWithParentAsync,
   useList,
   useListWithParent,
   useUpdate,
@@ -81,6 +84,7 @@ const RESOURCES: any[][] = [
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCK_OUTPUTS],
   [BLOCK_OUTPUTS, PIPELINES],
+  [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [DATA_PROVIDERS],
@@ -178,6 +182,24 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       },
       grandchildResource,
     );
+    apis[resource][parentResource][grandchildResource].detailAsync = async (
+      parentId: string,
+      id: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useDetailWithParentAsync(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        options,
+        grandchildResource,
+      );
+
+      return await handle(response);
+    };
   } else if (parentResource) {
     apis[resource][parentResource] = {};
 

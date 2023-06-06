@@ -1,6 +1,16 @@
 import useSWR from 'swr';
+import { ResponseType } from 'axios';
 
-import { DELETE, GET, POST, PUT, buildFetch, buildFetchV2, fetcher } from './fetcher';
+import {
+  buildFetch,
+  buildFetchV2,
+  DELETE,
+  fetcher,
+  FetcherOptionsType,
+  GET,
+  POST,
+  PUT,
+} from './fetcher';
 import { buildUrl } from './url';
 
 export function fetchCreate(resource: string, body: object, opts: any = {}) {
@@ -126,6 +136,28 @@ export function useDetailWithParent(
     error,
     mutate,
   };
+}
+
+export function useDetailWithParentAsync(
+  resource: string,
+  id: string,
+  parentResource: string,
+  parentId: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+  grandchildResource?: string,
+
+) {
+  return buildFetchV2(buildUrl(
+      parentResource,
+      parentId,
+      resource,
+      id,
+      query,
+      grandchildResource,
+    ),
+    { ...options, method: GET, query },
+  );
 }
 
 export function useDelete(resource: string, id: string, query: object = {}) {

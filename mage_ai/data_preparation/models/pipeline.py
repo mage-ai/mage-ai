@@ -17,7 +17,6 @@ from mage_ai.data_preparation.models.block.errors import (
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
-    OUTPUTS_FOLDER,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
     BlockLanguage,
@@ -97,13 +96,6 @@ class Pipeline:
     @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
-
-    @property
-    def outputs_path(self):
-        outputs_folder = os.path.join(self.dir_path, OUTPUTS_FOLDER)
-        if not os.path.exists(outputs_folder):
-            os.mkdir(outputs_folder)
-        return outputs_folder
 
     @property
     def executor_count(self):
