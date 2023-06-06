@@ -109,7 +109,7 @@ Mage uses SQLite as the default database engine. To use MySQL as the database en
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
       -e MAGE_DATABASE_CONNECTION_URL="mysql+mysqlconnector://test_username:test_password@mysql_db:3306/test_database" \
       mageai/mageai \
-      /app/run_app.sh mage start <project_name>
+      /app/run_app.sh mage start [project_name]
    ```
 
 ### Using MSSQL as database
