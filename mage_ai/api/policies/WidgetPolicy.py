@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.WidgetPresenter import WidgetPresenter
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_identifier
 from mage_ai.orchestration.db.models.oauth import Permission
 
 
@@ -13,7 +13,7 @@ class WidgetPolicy(BasePolicy):
         if parent_model:
             return Permission.Entity.PIPELINE, parent_model.uuid
 
-        return Permission.Entity.PROJECT, get_repo_path()
+        return Permission.Entity.PROJECT, get_repo_identifier()
 
 
 WidgetPolicy.allow_actions([
@@ -36,7 +36,9 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
-WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
+WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [
+    'retry_config',
+], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -45,12 +47,20 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 WidgetPolicy.allow_write([
+    'all_upstream_blocks_executed',
+    'color',
     'config',
     'configuration',
     'content',
+    'downstream_blocks',
+    'executor_config',
+    'executor_type',
+    'has_callback',
     'language',
     'name',
     'priority',
+    'retry_config',
+    'status',
     'type',
     'upstream_blocks',
     'uuid',

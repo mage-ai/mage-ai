@@ -289,6 +289,44 @@ def incorrect_function(df1, df2, df3):
         with self.assertRaises(Exception):
             asyncio.run(block3.execute())
 
+    def test_sensor_block_args_execution(self):
+        pipeline = Pipeline.create(
+            'test pipeline 7',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block2 = Block.create(
+            'test_sensor',
+            'sensor',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block2.upstream_blocks = [block1]
+        block1.downstream_blocks = [block2]
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block2.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@sensor
+def sensor(*args):
+    df = args[0]
+    return df is not None
+            ''')
+        asyncio.run(block1.execute())
+        output = block2.execute_sync(test_execution=True)
+        self.assertEqual(output['output'][0], True)
+
     @patch('builtins.print')
     def test_execute_with_callback_success(self, mock_print):
         pipeline = Pipeline.create(

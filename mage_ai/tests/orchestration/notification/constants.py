@@ -22,6 +22,22 @@ SLACK_NOTIFICATION_CONFIG = dict(
     )
 )
 
+SLACK_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE = dict(
+    alert_on=[
+        'trigger_failure',
+        'trigger_success',
+    ],
+    slack_config=dict(
+        webhook_url='test_webhook_url',
+    ),
+    message_templates=dict(
+        failure=dict(
+            details='Failed to execute pipeline {pipeline_run_url}. '
+                    'Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.',
+        )
+    )
+)
+
 GOOGLE_CHAT_NOTIFICATION_CONFIG = dict(
     alert_on=[
         'trigger_failure',

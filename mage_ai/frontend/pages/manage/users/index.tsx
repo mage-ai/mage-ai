@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import ErrorsType from '@interfaces/ErrorsType';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
@@ -15,13 +16,14 @@ import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { getUser } from '@utils/session';
-import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { displayErrorFromReadResponse } from '@api/utils/response';
 
 function UsersListPage() {
   const router = useRouter();
-  const { id: currentUserID, owner: isOwner } = getUser() || {};
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const { owner: isOwner } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;
@@ -30,6 +32,11 @@ function UsersListPage() {
   const { data, mutate: fetchUsers } = api.users.list({}, {
     revalidateOnFocus: false,
   });
+
+  useEffect(() => {
+    displayErrorFromReadResponse(data, setErrors);
+  }, [data]);
+
   const users = useMemo(
     () => data?.users || [],
     [data?.users],
@@ -37,6 +44,11 @@ function UsersListPage() {
   const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
   });
+
+  useEffect(() => {
+    displayErrorFromReadResponse(dataUser, setErrors);
+  }, [dataUser]);
+
   const user = dataUser?.user;
 
   const q = queryFromUrl();
@@ -71,16 +83,27 @@ function UsersListPage() {
 
   return (
     <WorkspacesDashboard
+      breadcrumbs={[
+        {
+          label: () => 'Workspaces',
+          linkProps: {
+            as: '/manage',
+            href: '/manage',
+          },
+        },
+        {
+          bold: true,
+          label: () => 'Users',
+        },
+      ]}
+      errors={errors}
       pageName={WorkspacesPageNameEnum.USERS}
     >
       {isOwner &&
         <Spacing p={PADDING_UNITS}>
           <Button
             beforeIcon={<Add />}
-            onClick={() => goToWithQuery({
-              add_new_user: 1,
-              user_id: null,
-            })}
+            onClick={() => router.push('/manage/users/new')}
             primary
           >
             Add new user
@@ -110,11 +133,7 @@ function UsersListPage() {
         onClickRow={(rowIndex: number) => {
           const rowUserID = users[rowIndex]?.id;
 
-          if (rowUserID === currentUserID) {
-            router.push('/settings/account/profile');
-          } else {
-            router.push('/manage/users/[user]', `/manage/users/${rowUserID}`);
-          }
+          router.push('/manage/users/[user]', `/manage/users/${rowUserID}`);
         }}
         rows={users.map(({
           email,

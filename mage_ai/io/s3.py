@@ -154,5 +154,6 @@ class S3(BaseFile):
             aws_access_key_id=config[ConfigKey.AWS_ACCESS_KEY_ID],
             aws_secret_access_key=config[ConfigKey.AWS_SECRET_ACCESS_KEY],
             region_name=config[ConfigKey.AWS_REGION],
+            endpoint_url=config[ConfigKey.AWS_ENDPOINT],
             **kwargs,
         )
