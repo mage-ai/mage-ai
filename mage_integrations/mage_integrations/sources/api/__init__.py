@@ -1,5 +1,14 @@
 from collections import Counter
 from io import BytesIO, StringIO
+from typing import Dict, Generator, List
+from urllib.parse import parse_qs, urlencode, urlsplit
+
+import magic
+import pandas as pd
+import polars
+import urllib3
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
@@ -12,15 +21,8 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.transformers.utils import convert_data_type, infer_dtypes
 from mage_integrations.utils.dictionary import dig
-import magic
-import pandas as pd
-import polars
-from singer.schema import Schema
-from typing import Dict, Generator, List
-from urllib.parse import parse_qs, urlencode, urlsplit
-import urllib3
 
-urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Api(Source):
@@ -122,35 +124,12 @@ class Api(Source):
         """
         url = self.config['url']
 
-        separator = self.config.get('separator')
-        if separator is None:
-            separator = ','
-
-        header = self.config.get('has_header')
-        if header is None:
-            header = False
-
         if url.startswith('https://docs.google'):
-            df = self._deal_with_google_sheets(response, separator, header)
-            return df
+            return 'google_sheets'
 
         data = response.content
         mime_type = magic.Magic(mime=True).from_buffer(data)
-        if mime_type == 'text/plain':
-            df = polars.read_csv(StringIO(data.decode()), separator=separator,
-                                 has_header=header).to_pandas()
-            return df
-
-        elif mime_type == 'application/json':
-            return 'json'
-        else:
-            try:
-                df = polars.read_excel(BytesIO(data),
-                                       read_csv_options={"separator": separator,
-                                       "has_header": header}).to_pandas()
-                return df
-            except Exception:
-                raise Exception(f'Problems reading file {mime_type}. Check if extension is XLSX')
+        return mime_type
 
     def _build_response(self):
         url = self.config['url']
@@ -181,6 +160,7 @@ class Api(Source):
         self.logger.info(f'API request {self.http_method} {url} started.', tags=tags)
 
         import requests
+        requests.packages.urllib3.disable_warnings()
         s = requests.Session()
         a = requests.adapters.HTTPAdapter(max_retries=100)
         b = requests.adapters.HTTPAdapter(max_retries=100)
@@ -204,14 +184,28 @@ class Api(Source):
         response_parser = self.config.get('response_parser')
         columns = self.config.get('columns')
 
+        separator = self.config.get('separator')
+        if separator is None:
+            separator = ','
+
+        header = self.config.get('has_header')
+        if header is None:
+            header = False
+
         response = self._build_response()
 
         checked_type = self._check_response_type(response)
 
-        if isinstance(checked_type, pd.DataFrame):
-            yield checked_type
+        if checked_type == 'text/plain':
+            df = polars.read_csv(StringIO(response.content.decode()), separator=separator,
+                                 has_header=header).to_pandas()
+            yield df
 
-        else:
+        elif checked_type == 'google_sheets':
+            df = self._deal_with_google_sheets(response, separator, header)
+            yield df
+
+        elif checked_type == 'application/json':
             result = response.json()
 
             if response_parser:
@@ -254,6 +248,15 @@ class Api(Source):
             self.logger.info(f'API request {self.http_method} {url} completed.')
 
             yield rows
+
+        else:
+            try:
+                df = polars.read_excel(BytesIO(response.content),
+                                       read_csv_options={"separator": separator,
+                                       "has_header": header}).to_pandas()
+                yield df
+            except Exception:
+                raise Exception(f'Problems reading file {checked_type}. Check if extension is XLSX')
 
     def test_connection(self):
         response = self._build_response()

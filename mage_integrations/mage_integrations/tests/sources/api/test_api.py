@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
 from mage_integrations.sources.api import Api
-import urllib3
-urllib3.disable_warnings()
 
 
 def csv_catalog_example():
