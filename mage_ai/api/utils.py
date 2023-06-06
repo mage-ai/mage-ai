@@ -44,7 +44,7 @@ def has_at_least_admin_role(
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
+        is_owner(user, entity, entity_id) or \
         (user.roles and user.roles & 1 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.ADMIN != 0)
 
@@ -56,8 +56,8 @@ def has_at_least_editor_role(
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
-        has_at_least_admin_role(user) or \
+        is_owner(user, entity, entity_id) or \
+        has_at_least_admin_role(user, entity, entity_id) or \
         (user.roles and user.roles & 2 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.EDITOR != 0)
 
@@ -87,9 +87,9 @@ def has_at_least_viewer_role(
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
-        has_at_least_admin_role(user) or \
-        has_at_least_editor_role(user) or \
+        is_owner(user, entity, entity_id) or \
+        has_at_least_admin_role(user, entity, entity_id) or \
+        has_at_least_editor_role(user, entity, entity_id) or \
         (user.roles and user.roles & 4 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.VIEWER != 0)
 
