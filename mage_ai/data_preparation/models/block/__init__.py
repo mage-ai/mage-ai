@@ -308,8 +308,17 @@ class Block:
         return None
 
     async def content_async(self) -> str:
+        if self.replicated_block:
+            self._content =  await Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            ).content_async()
+
         if self._content is None:
             self._content = await self.file.content_async()
+
         return self._content
 
     async def metadata_async(self) -> Dict:
@@ -2068,11 +2077,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         3. Update upstream and downstream relationships
         """
         old_uuid = self.uuid
-        old_file_path = self.file_path
         new_uuid = clean_name(name)
         self.name = name
         self.uuid = new_uuid
-        new_file_path = self.file_path
         if self.pipeline is not None:
             if self.pipeline.has_block(
                 new_uuid,
@@ -2083,14 +2090,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     f'Block {new_uuid} already exists in pipeline. Please use a different name.'
                 )
 
-        if os.path.exists(new_file_path):
-            raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
+        if not self.replicated_block:
+            old_file_path = self.file_path
+            new_file_path = self.file_path
+            if os.path.exists(new_file_path):
+                raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
-        file_path_parts = new_file_path.split(os.sep)
-        parent_dir = os.path.join(*file_path_parts[:-1])
-        os.makedirs(parent_dir, exist_ok=True)
+            file_path_parts = new_file_path.split(os.sep)
+            parent_dir = os.path.join(*file_path_parts[:-1])
+            os.makedirs(parent_dir, exist_ok=True)
 
-        os.rename(old_file_path, new_file_path)
+            os.rename(old_file_path, new_file_path)
+
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 

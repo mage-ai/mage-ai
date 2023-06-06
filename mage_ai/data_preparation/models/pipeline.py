@@ -249,6 +249,7 @@ class Pipeline:
                         catalog = json.loads(await f.read())
                     except Exception as err:
                         catalog = {}
+                        print('pipeline.get_async')
                         print(err)
             pipeline = IntegrationPipeline(
                 uuid,
@@ -1339,6 +1340,7 @@ class Pipeline:
             try:
                 os.remove(test_path)
             except Exception as err:
+                print('pipeline.save_async')
                 print(err)
 
             if not success:
