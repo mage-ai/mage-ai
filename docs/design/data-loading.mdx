@@ -1143,7 +1143,7 @@ Loads secrets from AWS Secrets Manager. To authenticate access to AWS Secrets Ma
     aws configure
     ```
 -   Manually specify your AWS Credentials when constructing the configuration loader
-    `python config = AWSSecretLoader( aws_access_key_id = 'your access key id', aws_secret_access_key = 'your secret key', aws_region = 'your region' ) `
+    `python config = AWSSecretLoader( aws_access_key_id = 'your access key id', aws_secret_access_key = 'your secret key', region_name = 'your region' ) `
 
 **Example**:
 
@@ -1161,7 +1161,7 @@ postgres_db = config.get(ConfigKey.POSTGRES_DBNAME, version_id='my_version_id')
 -   **Keyword Arguments**:
     -   `aws_access_key_id (str, Optional)`: AWS access key ID credential.
     -   `aws_secret_access_key (str, Optional)`: AWS secret access key credential.
-    -   `aws_region (str, Optional)`: AWS region which Secrets Manager is created in.
+    -   `region_name (str, Optional)`: AWS region which Secrets Manager is created in.
 
 **Methods**:
 
