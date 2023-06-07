@@ -26,6 +26,7 @@ from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManage
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
     is_dynamic_block,
+    is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.constants import ExecutorType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -493,7 +494,12 @@ class BlockRun(BaseModel):
         # The block_run’s block_uuid for replicated blocks will be in this format:
         # [block_uuid]:[replicated_block_uuid]
         # We need to use the original block_uuid to get the proper output.
-        if block.replicated_block:
+
+        # Block runs for dynamic child blocks will have the following block UUID:
+        # [block.uuid]:[index]
+        # Don’t use the original UUID even if the block is a replica because it will get rid of
+        # the dynamic child block index.
+        if block.replicated_block and not is_dynamic_block_child(block):
             block_uuid = block.uuid
 
         return block.get_outputs(

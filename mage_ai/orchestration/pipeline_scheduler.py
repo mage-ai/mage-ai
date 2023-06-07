@@ -348,9 +348,12 @@ class PipelineScheduler:
                 ]:
                     block_uuid = block_run.block_uuid
                     block = self.pipeline.get_block(block_uuid)
+                    arr.add(block_uuid)
+
                     # Block runs for replicated blocks have the following block UUID convention:
                     # [block.uuid]:[block.replicated_block]
-                    arr.add(block.uuid if block and block.replicated_block else block_uuid)
+                    if block and block.replicated_block:
+                        arr.add(block.uuid)
 
             return arr
 
