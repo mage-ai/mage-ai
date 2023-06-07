@@ -5,9 +5,9 @@ import FileType, {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
-  SpecialFileEnum,
   SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
+import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
@@ -55,6 +55,7 @@ export type FolderSharedProps = {
   openFile?: (path: string) => void;
   openPipeline?: (uuid: string) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  renderAfterContent?: (file: FileType) => any;
   selectFile?: (path: string) => void;
   uncollapsed?: boolean;
   useRootFolder?: boolean;
@@ -65,14 +66,14 @@ type FolderProps = {
   file: FileType;
   level: number;
   pipelineBlockUuids: string[];
-  theme: ThemeType;
-  timeout?: any;
   setCoordinates: (coordinates: {
     x: number;
     y: number;
   }) => void;
   setDraggingFile: (file: FileType) => void;
   setSelectedFile: (file: FileType) => void;
+  theme: ThemeType;
+  timeout?: any;
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
@@ -90,6 +91,7 @@ function Folder({
   openPipeline,
   openSidekickView,
   pipelineBlockUuids,
+  renderAfterContent,
   selectFile,
   setContextItem,
   setCoordinates,
@@ -183,6 +185,7 @@ function Folder({
       openPipeline={openPipeline}
       openSidekickView={openSidekickView}
       pipelineBlockUuids={pipelineBlockUuids}
+      renderAfterContent={renderAfterContent}
       selectFile={selectFile}
       setContextItem={setContextItem}
       setCoordinates={setCoordinates}
@@ -209,6 +212,7 @@ function Folder({
     openPipeline,
     openSidekickView,
     pipelineBlockUuids,
+    renderAfterContent,
     selectFile,
     setContextItem,
     setCoordinates,
@@ -357,37 +361,41 @@ function Folder({
             paddingRight: (UNIT / 4),
           }}
         >
-          {lineEls}
+          <Flex alignItems="center" flex={1}>
+            {lineEls}
 
-          {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
-          {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
-          {!children && <div style={{ width: ICON_SIZE }} />}
+            {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
+            {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
+            {!children && <div style={{ width: ICON_SIZE }} />}
 
-          <div
-            style={{
-              marginLeft: UNIT / 2,
-              marginRight: UNIT / 2,
-            }}
-          >
-            {!color && <IconEl disabled={disabledColor} size={ICON_SIZE} />}
-            {color && (
-              <Circle
-                color={color}
-                size={ICON_SIZE}
-                square
-              />
-            )}
-          </div>
+            <div
+              style={{
+                marginLeft: UNIT / 2,
+                marginRight: UNIT / 2,
+              }}
+            >
+              {!color && <IconEl disabled={disabledColor} size={ICON_SIZE} />}
+              {color && (
+                <Circle
+                  color={color}
+                  size={ICON_SIZE}
+                  square
+                />
+              )}
+            </div>
 
-          <Text
-            color={color}
-            default={!color && !disabled}
-            disabled={disabled}
-            monospace
-            small
-          >
-            {name}
-          </Text>
+            <Text
+              color={color}
+              default={!color && !disabled}
+              disabled={disabled}
+              monospace
+              small
+            >
+              {name}
+            </Text>
+          </Flex>
+
+          {renderAfterContent && renderAfterContent(file)}
         </div>
       )}
 
