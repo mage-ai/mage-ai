@@ -84,7 +84,9 @@ class Git:
     @classmethod
     def get_manager(self, user: User = None) -> 'Git':
         preferences = get_preferences(user=user)
-        git_config = GitConfig.load(config=preferences.sync_config)
+        git_config = None
+        if preferences and preferences.sync_config:
+            git_config = GitConfig.load(config=preferences.sync_config)
         return Git(git_config)
 
     @property
@@ -216,8 +218,14 @@ class Git:
     def checkout_file(self, filename: str) -> None:
         self.repo.git.checkout(filename)
 
+    def diff_file(self, filename: str) -> str:
+        return self.repo.git.diff(filename)
+
     def reset_file(self, filename: str) -> None:
         self.repo.git.reset(filename)
+
+    def show_file_from_branch(self, branch: str, filename: str) -> str:
+        return self.repo.git.show(f'{branch}:{filename}')
 
     def commit(self, message, files: List[str] = None) -> None:
         if self.repo.index.diff(None) or self.repo.untracked_files:
