@@ -33,7 +33,7 @@ type VerticalNavigationStyleProps = {
 const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps & {
   visible?: boolean;
 }>`
-  height: calc(100% - ${HEADER_HEIGHT}px);
+  height: 100%;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
