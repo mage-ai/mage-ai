@@ -220,7 +220,11 @@ class PipelineScheduler:
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
         block = self.pipeline.get_block(block_uuid)
         if block and is_dynamic_block(block):
-            create_block_runs_from_dynamic_block(block, self.pipeline_run, block_uuid=block_uuid)
+            create_block_runs_from_dynamic_block(
+                block,
+                self.pipeline_run,
+                block_uuid=block.uuid if block.replicated_block else block_uuid,
+            )
 
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
@@ -333,15 +337,28 @@ class PipelineScheduler:
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
-        completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
-        finished_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.COMPLETED,
-                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-                BlockRun.BlockRunStatus.FAILED,
-            ]
-        )
+        def _build_block_uuids(block_runs: List[BlockRun]) -> List[str]:
+            arr = set()
+
+            for block_run in block_runs:
+                if block_run.status in [
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                    BlockRun.BlockRunStatus.FAILED,
+                ]:
+                    block_uuid = block_run.block_uuid
+                    block = self.pipeline.get_block(block_uuid)
+                    arr.add(block_uuid)
+
+                    # Block runs for replicated blocks have the following block UUID convention:
+                    # [block.uuid]:[block.replicated_block]
+                    if block and block.replicated_block:
+                        arr.add(block.uuid)
+
+            return arr
+
+        completed_block_uuids = _build_block_uuids(self.completed_block_runs)
+        finished_block_uuids = _build_block_uuids(self.pipeline_run.block_runs)
 
         executable_block_runs = list()
         for block_run in self.initial_block_runs:

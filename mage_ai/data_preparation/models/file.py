@@ -254,6 +254,7 @@ class File:
                 file_content = fp.read()
             return file_content
         except FileNotFoundError as err:
+            print('file.content')
             print(err)
         return ''
 
