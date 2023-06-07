@@ -36,10 +36,7 @@ class Api(Source):
         for rows in self.load_data():
             if len(rows) >= 1:
 
-                if isinstance(rows, pd.DataFrame):
-                    df = rows
-                else:
-                    df = pd.DataFrame(rows)
+                df = pd.DataFrame(rows)
 
                 stream_id = 'api'
 
@@ -199,11 +196,11 @@ class Api(Source):
         if checked_type == 'text/plain':
             df = polars.read_csv(StringIO(response.content.decode()), separator=separator,
                                  has_header=header).to_pandas()
-            yield df
+            yield df.to_dict()
 
         elif checked_type == 'google_sheets':
             df = self._deal_with_google_sheets(response, separator, header)
-            yield df
+            yield df.to_dict()
 
         elif checked_type == 'application/json':
             result = response.json()
@@ -254,7 +251,7 @@ class Api(Source):
                 df = polars.read_excel(BytesIO(response.content),
                                        read_csv_options={"separator": separator,
                                        "has_header": header}).to_pandas()
-                yield df
+                yield df.to_dict()
             except Exception:
                 raise Exception(f'Problems reading file {checked_type}. Check if extension is XLSX')
 
