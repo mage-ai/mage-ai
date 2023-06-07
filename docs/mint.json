@@ -302,7 +302,8 @@
         {
           "group": "Pipeline runs",
           "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs"
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
         }
       ]
