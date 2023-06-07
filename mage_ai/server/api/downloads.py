@@ -1,13 +1,11 @@
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.server.api.base import BaseHandler
-
-import tornado.gen
+from tornado import gen, iostream
 
 
 class ApiDownloadHandler(BaseHandler):
-    @tornado.gen.coroutine
-    def get(self, pipeline_uuid, block_uuid):
+    async def get(self, pipeline_uuid, block_uuid):
         self.set_header('Content-Type', 'text/csv')
         self.set_header('Content-Disposition', 'attachment; filename=' + f'{block_uuid}.csv')
         self.set_header('Content-Encoding', 'UTF-8')
@@ -26,6 +24,11 @@ class ApiDownloadHandler(BaseHandler):
         for table in tables:
             line_count = len(table)
             for line in range(0, line_count):
-                self.write(table[line].encode('UTF-8'))
-                if (line > 0 and (line % 10000 == 0 or line == line_count - 1)):
-                    yield self.flush()
+                try:
+                    self.write(table[line].encode('UTF-8'))
+                except iostream.StreamClosedError:
+                    break
+                if (line == 0 or (line % 10000 == 0 or line == line_count - 1)):
+                    await self.flush()
+                    # Sleep for a nanosecond so other handlers can run and avoid blocking
+                    await gen.sleep(0.000000001)

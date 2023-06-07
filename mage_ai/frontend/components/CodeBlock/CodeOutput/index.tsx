@@ -756,7 +756,10 @@ function CodeOutput({
                           {...SHARED_BUTTON_PROPS}
                           compact
                           loading={isLoadingDownloadBlockOutputAsCsvFile}
-                          onClick={() => downloadBlockOutputAsCsvFile()}
+                          onClick={() => {
+                            setBlockOutputDownloadProgress(null);
+                            downloadBlockOutputAsCsvFile();
+                          }}
                         >
                           <Save muted size={UNIT * 1.75} />
                         </Button>
