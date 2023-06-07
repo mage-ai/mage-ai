@@ -309,7 +309,7 @@ class Block:
 
     async def content_async(self) -> str:
         if self.replicated_block:
-            self._content =  await Block(
+            self._content = await Block(
                 self.replicated_block,
                 self.replicated_block,
                 self.type,
