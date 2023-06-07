@@ -1,18 +1,15 @@
 """Salesforce target sink class, which handles writing streams."""
 
-from typing import Dict, List, Optional
 from dataclasses import asdict
+from typing import Dict, List, Optional
 
-
-from singer_sdk.sinks import BatchSink
 from simple_salesforce import Salesforce, bulk, exceptions
-from target_salesforce.session_credentials import parse_credentials, SalesforceAuth
-from target_salesforce.utils.exceptions import InvalidStreamSchema, SalesforceApiError
 from singer_sdk.plugin_base import PluginBase
-from target_salesforce.utils.validation import ObjectField
+from singer_sdk.sinks import BatchSink
+from target_salesforce.session_credentials import SalesforceAuth, parse_credentials
+from target_salesforce.utils.exceptions import InvalidStreamSchema, SalesforceApiError
 from target_salesforce.utils.transformation import transform_record
-
-from target_salesforce.utils.validation import validate_schema_field
+from target_salesforce.utils.validation import ObjectField, validate_schema_field
 
 
 class SalesforceSink(BatchSink):
@@ -39,7 +36,6 @@ class SalesforceSink(BatchSink):
     @property
     def sf_client(self):
         if self._sf_client:
-            self.logger.info('teste')
             return self._sf_client
         return self._new_session()
 
@@ -80,7 +76,7 @@ class SalesforceSink(BatchSink):
         return self._sf_client
 
     def start_batch(self, context: dict) -> None:
-        self.logger.info(f"Starting new batch")
+        self.logger.info("Starting new batch")
         self._batched_records = []
 
     def process_record(self, record: dict, context: dict) -> None:
@@ -120,7 +116,8 @@ class SalesforceSink(BatchSink):
                 results = sf_object_action(batched_data)
         except exceptions.SalesforceMalformedRequest as e:
             self.logger.error(
-                f"Data in {action} {self.stream_name} batch does not conform to target SF {self.stream_name} Object"
+                f"Data in {action} {self.stream_name}\
+                    batch does not conform to target SF {self.stream_name} Object"
             )
             raise (e)
 
@@ -136,7 +133,8 @@ class SalesforceSink(BatchSink):
             else:
                 records_failed += 1
                 self.logger.error(
-                    f"Failed {action} to to {self.stream_name}. Error: {result.get('errors')}. Record {batched_records[i]}"
+                    f"Failed {action} to to {self.stream_name}. Error: {result.get('errors')}.\
+                        Record {batched_records[i]}"
                 )
 
         self.logger.info(
