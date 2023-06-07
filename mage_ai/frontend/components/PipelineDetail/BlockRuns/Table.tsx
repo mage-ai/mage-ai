@@ -74,7 +74,7 @@ function BlockRunsTable({
               setBlockRunIdDownloading(null);
               openSaveFileDialog(
                 blobResponse,
-                `${selectedRun?.block_uuid || 'output'}.${FileExtensionEnum.CSV}`,
+                `block_output.${FileExtensionEnum.CSV}`,
               );
             },
             onErrorCallback: (response, errors) => setErrors?.({
@@ -255,12 +255,14 @@ function BlockRunsTable({
               >
                 <Button
                   default
-                  disabled={!isStandardPipeline || !(RunStatus.COMPLETED === status)}
+                  disabled={!isStandardPipeline
+                    || !(RunStatus.COMPLETED === status)
+                    || isLoadingDownloadBlockOutputAsCsvFile}
                   iconOnly
                   loading={downloadingOutput}
                   noBackground
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
+                    setBlockOutputDownloadProgress(null);
                     setBlockRunIdDownloading(id);
                     downloadBlockOutputAsCsvFile({ blockUUID, pipelineRunId });
                   }}
