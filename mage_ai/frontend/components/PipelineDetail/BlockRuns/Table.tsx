@@ -1,26 +1,37 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
+import ErrorsType from '@interfaces/ErrorsType';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import { TodoList } from '@oracle/icons';
+import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
+
+import { FileExtensionEnum } from '@interfaces/FileType';
+import { ResponseTypeEnum } from '@api/constants';
+import { Save, TodoList } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
+import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 
 type BlockRunsTableProps = {
   blockRuns: BlockRunType[];
   onClickRow?: (rowIndex: number) => void;
   pipeline: PipelineType;
   selectedRun?: BlockRunType;
+  setErrors?: (errors: ErrorsType) => void;
 };
 
 function BlockRunsTable({
@@ -28,16 +39,54 @@ function BlockRunsTable({
   onClickRow,
   pipeline,
   selectedRun,
+  setErrors,
 }: BlockRunsTableProps) {
   const themeContext = useContext(ThemeContext);
+  const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
+  const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
   const {
     uuid: pipelineUUID,
+    type: pipelineType,
   } = pipeline || {};
 
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipelineType, [pipelineType]);
+  const isStandardPipeline = useMemo(() => PipelineTypeEnum.PYTHON === pipelineType, [pipelineType]);
 
-  const columnFlex = [null, 1, 3, 2, null, null];
+  const [
+    downloadBlockOutputAsCsvFile,
+    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
+  ]: any = useMutation(
+    ({ blockUUID, pipelineRunId }: any) => api.block_outputs.pipelines.downloads.detailAsync(
+      pipeline?.uuid,
+      blockUUID,
+      { pipeline_run_id: pipelineRunId },
+      {
+        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+        responseType: ResponseTypeEnum.BLOB,
+      },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+          response, {
+            callback: (blobResponse) => {
+              setBlockRunIdDownloading(null);
+              openSaveFileDialog(
+                blobResponse,
+                `${selectedRun?.block_uuid || 'output'}.${FileExtensionEnum.CSV}`,
+              );
+            },
+            onErrorCallback: (response, errors) => setErrors?.({
+              errors,
+              response,
+            }),
+          },
+        ),
+    },
+  );
+
+  const columnFlex = [null, 1, 3, 2, null, null, null];
   const columns = [
     {
       uuid: 'Date',
@@ -59,28 +108,40 @@ function BlockRunsTable({
     },
   ];
 
+  if (isStandardPipeline) {
+    columns.push(
+      {
+        uuid: 'Output',
+      },
+    );
+  }
+
   return (
     <Table
       columnFlex={columnFlex}
       columns={columns}
       isSelectedRow={(rowIndex: number) => blockRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
-      rows={blockRuns?.map(({
-        block_uuid: blockUUIDOrig,
-        completed_at: completedAt,
-        created_at: createdAt,
-        id,
-        pipeline_schedule_id: pipelineScheduleId,
-        pipeline_schedule_name: pipelineScheduleName,
-        status,
-      }: BlockRunType) => {
+      rows={blockRuns?.map((blockRun: BlockRunType) => {
+        const {
+          block_uuid: blockUUIDOrig,
+          completed_at: completedAt,
+          created_at: createdAt,
+          id,
+          pipeline_run_id: pipelineRunId,
+          pipeline_schedule_id: pipelineScheduleId,
+          pipeline_schedule_name: pipelineScheduleName,
+          status,
+        } = blockRun || {};
         let blockUUID = blockUUIDOrig;
 
         let streamID;
         let index;
         const parts = blockUUID.split(':');
+        const downloadingOutput = blockRunIdDownloading === id
+          && isLoadingDownloadBlockOutputAsCsvFile;
 
-        if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
+        if (isIntegration) {
           blockUUID = parts[0];
           streamID = parts[1];
           index = parts[2];
@@ -91,14 +152,19 @@ function BlockRunsTable({
           block = blocksByUUID[parts[0]];
         }
 
-        return [
-          <Text monospace default>
+        const rows = [
+          <Text
+            default
+            key={`${id}_created_at`}
+            monospace
+          >
             {createdAt}
           </Text>,
           <Text
             danger={RunStatus.FAILED === status}
             default={RunStatus.CANCELLED === status}
             info={RunStatus.INITIAL === status}
+            key={`${id}_status`}
             monospace
             success={RunStatus.COMPLETED === status}
             warning={RunStatus.RUNNING === status}
@@ -108,6 +174,7 @@ function BlockRunsTable({
           <NextLink
             as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
             href={'/pipelines/[pipeline]/triggers/[...slug]'}
+            key={`${id}_trigger`}
             passHref
           >
             <Link bold sameColorAsText>
@@ -117,6 +184,7 @@ function BlockRunsTable({
           <NextLink
             as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
             href={'/pipelines/[pipeline]/edit'}
+            key={`${id}_block_uuid`}
             passHref
           >
             <Link
@@ -146,12 +214,17 @@ function BlockRunsTable({
               </Text>
             </Link>
           </NextLink>,
-          <Text monospace default>
+          <Text
+            default
+            key={`${id}_completed_at`}
+            monospace
+          >
             {completedAt || '-'}
           </Text>,
           <Button
             default
             iconOnly
+            key={`${id}_logs`}
             noBackground
             onClick={() => Router.push(
               `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
@@ -160,6 +233,46 @@ function BlockRunsTable({
             <TodoList default size={2 * UNIT} />
           </Button>,
         ];
+
+        if (isStandardPipeline) {
+          rows.push(
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
+              key={`${id}_save_output`}
+            >
+              <Tooltip
+                appearBefore
+                autoHide={!downloadingOutput}
+                block
+                forceVisible={downloadingOutput}
+                label={downloadingOutput
+                  ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                  : 'Save block run output as CSV file'
+                }
+                size={null}
+                widthFitContent
+              >
+                <Button
+                  default
+                  disabled={!isStandardPipeline || !(RunStatus.COMPLETED === status)}
+                  iconOnly
+                  loading={downloadingOutput}
+                  noBackground
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setBlockRunIdDownloading(id);
+                    downloadBlockOutputAsCsvFile({ blockUUID, pipelineRunId });
+                  }}
+                >
+                  <Save default size={2 * UNIT} />
+                </Button>
+              </Tooltip>
+            </FlexContainer>,
+          );
+        }
+
+        return rows;
       })}
       uuid="block-runs"
     />

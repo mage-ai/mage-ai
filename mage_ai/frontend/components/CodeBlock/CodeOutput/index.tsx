@@ -45,6 +45,7 @@ import {
   INTERNAL_TEST_STRING,
 } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ResponseTypeEnum } from '@api/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   TAB_DBT_LINEAGE_UUID,
@@ -54,7 +55,7 @@ import {
 } from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
+import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
@@ -153,22 +154,14 @@ function CodeOutput({
       {},
       {
         onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
-        responseType: 'blob',
+        responseType: ResponseTypeEnum.BLOB,
       },
     ),
     {
       onSuccess: (response: any) => onSuccess(
           response, {
             callback: (blobResponse) => {
-              if (typeof window !== 'undefined') {
-                const url = window.URL.createObjectURL(blobResponse);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${blockUUID}.${FileExtensionEnum.CSV}`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-              }
+              openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
             },
             onErrorCallback: (response, errors) => setErrors?.({
               errors,

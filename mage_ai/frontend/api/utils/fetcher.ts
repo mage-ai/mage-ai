@@ -1,7 +1,7 @@
 import axios, { ResponseType } from 'axios';
 
 import AuthToken from '@api/utils/AuthToken';
-import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID, ResponseTypeEnum } from '@api/constants';
 import { queryFromUrl } from '@utils/url';
 
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || OAUTH2_APPLICATION_CLIENT_ID;
@@ -128,7 +128,7 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     queryString,
     url,
   } = preprocess(urlArg, opts);
-  const responseType = opts?.responseType || 'json';
+  const responseType = opts?.responseType || ResponseTypeEnum.JSON;
 
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 

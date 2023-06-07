@@ -131,3 +131,15 @@ export const redirectToFirstPipeline = (pipelines: PipelineType[], router: NextR
     });
   }
 };
+
+export const openSaveFileDialog = (blobResponse: any, filename: string) => {
+  if (typeof window !== 'undefined') {
+    const url = window.URL.createObjectURL(blobResponse);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+};

@@ -1,21 +1,29 @@
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.server.api.base import BaseHandler
 from tornado import gen, iostream
 
 
 class ApiDownloadHandler(BaseHandler):
-    async def get(self, pipeline_uuid, block_uuid):
+    async def get(self, pipeline_uuid, block_uuid, **kwargs):
         self.set_header('Content-Type', 'text/csv')
         self.set_header('Content-Disposition', 'attachment; filename=' + f'{block_uuid}.csv')
         self.set_header('Content-Encoding', 'UTF-8')
 
         pipeline = Pipeline.get(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
+        pipeline_run_id = self.get_argument('pipeline_run_id', None)
+        execution_partition = None
+        if pipeline_run_id is not None:
+            pipeline_run = PipelineRun.query.get(pipeline_run_id)
+            execution_partition = pipeline_run.execution_partition
+
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
 
         tables = block.get_outputs(
+            execution_partition=execution_partition,
             include_print_outputs=False,
             csv_lines_only=True,
             sample=False,
