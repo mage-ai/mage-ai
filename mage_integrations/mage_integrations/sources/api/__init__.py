@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 import magic
 import pandas as pd
 import polars
-import urllib3
+import requests
 from singer.schema import Schema
 
 from mage_integrations.sources.base import Source, main
@@ -21,8 +21,6 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.transformers.utils import convert_data_type, infer_dtypes
 from mage_integrations.utils.dictionary import dig
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Api(Source):
@@ -128,7 +126,7 @@ class Api(Source):
         mime_type = magic.Magic(mime=True).from_buffer(data)
         return mime_type
 
-    def _build_response(self):
+    def __build_response(self):
         url = self.config['url']
         query = self.config.get('query')
         payload = self.config.get('payload')
@@ -156,8 +154,6 @@ class Api(Source):
 
         self.logger.info(f'API request {self.http_method} {url} started.', tags=tags)
 
-        import requests
-        requests.packages.urllib3.disable_warnings()
         s = requests.Session()
         a = requests.adapters.HTTPAdapter(max_retries=100)
         b = requests.adapters.HTTPAdapter(max_retries=100)
@@ -189,7 +185,7 @@ class Api(Source):
         if header is None:
             header = False
 
-        response = self._build_response()
+        response = self.__build_response()
 
         checked_type = self._check_response_type(response)
 
@@ -256,7 +252,7 @@ class Api(Source):
                 raise Exception(f'Problems reading file {checked_type}. Check if extension is XLSX')
 
     def test_connection(self):
-        response = self._build_response()
+        response = self.__build_response()
         if response.status_code != 200:
             raise Exception(f'API response status code is {response.status_code}, must be 200.')
 
