@@ -63,20 +63,20 @@ in the request payload body as `api_key`.
 
 ### OAuth token
 
-The API request must include the OAuth token using the `authorization` header in the request.
+The API request must include the OAuth token using the `OAUTH-TOKEN` header in the request.
 
 ### Example
 
 ```curl
 curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2" \
-    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww"
+    -H "OAUTH-TOKEN: ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww"
 ```
 
 or
 
 ```curl
 curl -X POST "localhost:6789/api/pipelines" \
-    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww" \
+    -H "OAUTH-TOKEN: ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww" \
     -d '{
         "api_key": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
         "pipeline": {}
