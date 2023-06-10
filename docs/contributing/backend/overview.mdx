@@ -34,9 +34,9 @@ To run the tests locally, execute this script:
 ./scripts/server/test.sh
 ```
 
-It is also possible to run the unit tests directly in the docker instance, as given in the following steps.
+It is also possible to the unit tests directly in a running docker instance, as given in the following steps.
 
-1. Find out the server container name, with the command `docker container ls` in a terminal:
+1. Find out the backend server container name, with the command `docker container ls` in a terminal:
 ```bash
  % docker container ls
 
@@ -45,7 +45,7 @@ CONTAINER ID   IMAGE       COMMAND                  CREATED      STATUS         
 b9d811e1e3e8   mage/data   "python mage_ai/serv…"   5 days ago   Up 38 minutes   0.0.0.0:6789->6789/tcp   mage-ai-server-1
 ```
 
-2. Start an interactive `bash` session with the server container:
+2. Start an interactive `bash` session with the backend server container:
 ```bash
 % docker exec -it mage-ai-server-1 /bin/bash
 ```
