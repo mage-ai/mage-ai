@@ -1,18 +1,15 @@
-from io import StringIO
+import argparse
+import sys
 from typing import Dict
 
 from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.salesforce.target_salesforce.sinks import (
-    SalesforceSink,
-)
 from mage_integrations.destinations.salesforce.target_salesforce.target import (
     TargetSalesforce,
 )
-from mage_integrations.destinations.sql.base import main
 
 
 class Salesforce(Destination):
-    def __init__(self, argument_parser=False,
+    def __init__(self, argument_parser=None,
                  batch_processing: bool = False,
                  config: Dict = None,
                  config_file_path: str = None,
@@ -37,10 +34,14 @@ class Salesforce(Destination):
                          test_connection)
 
     def process(self, input_buffer) -> None:
-        target = TargetSalesforce(config=self.config)
-        target.get_sink(SalesforceSink(stream_name='Account'))
-        target.listen(file_input=StringIO.readlines(open(self.input_file_path)))
+        self.logger.info(self.config)
+        TargetSalesforce(config=self.config).listen_override(file_input=open(self.input_file_path,
+                                                             'r'))
 
 
 if __name__ == '__main__':
-    main(Salesforce)
+    destination = Salesforce(
+        argument_parser=argparse.ArgumentParser(),
+        batch_processing=True,
+    )
+    destination.process(sys.stdin.buffer)

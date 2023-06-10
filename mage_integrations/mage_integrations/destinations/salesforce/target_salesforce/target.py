@@ -1,12 +1,14 @@
 """Salesforce target class."""
+import json
+import sys
+import typing as t
+from collections import Counter, defaultdict
 
-from singer_sdk.target_base import Target
 from singer_sdk import typing as th
 from singer_sdk.exceptions import ConfigValidationError
-
-from target_salesforce.sinks import (
-    SalesforceSink,
-)
+from singer_sdk.io_base import SingerMessageType
+from singer_sdk.target_base import Target
+from target_salesforce.sinks import SalesforceSink
 
 
 class TargetSalesforce(Target):
@@ -15,8 +17,8 @@ class TargetSalesforce(Target):
     name = "target-salesforce"
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "client_id", 
-            th.StringType, 
+            "client_id",
+            th.StringType,
             description="OAuth client_id",
         ),
         th.Property(
@@ -32,14 +34,14 @@ class TargetSalesforce(Target):
             description="OAuth refresh_token",
         ),
         th.Property(
-            "username", 
-            th.StringType, 
+            "username",
+            th.StringType,
             description="User/password username",
         ),
         th.Property(
-            "password", 
-            th.StringType, 
-            secret=True, 
+            "password",
+            th.StringType,
+            secret=True,
             description="User/password username",
         ),
         th.Property(
@@ -52,19 +54,22 @@ class TargetSalesforce(Target):
             "domain",
             th.StringType,
             default="login",
-            description="Your Salesforce instance domain. Use 'login' (default) or 'test' (sandbox), or Salesforce My domain."
+            description="Your Salesforce instance domain. Use 'login' (default) \
+                         or 'test' (sandbox), or Salesforce My domain."
         ),
         th.Property(
             "is_sandbox",
             th.BooleanType,
-            description="DEPRECATED: Use domain. is_sandbox-False = 'login', is_sandbox-True = 'test'",
+            description="DEPRECATED: Use domain. is_sandbox-False = 'login',\
+            is_sandbox-True = 'test'",
         ),
         th.Property(
             "action",
             th.StringType,
             default="update",
             allowed_values=SalesforceSink.valid_actions,
-            description="How to handle incomming records by default (insert/update/upsert/delete/hard_delete)",
+            description="How to handle incomming records by default\
+                        (insert/update/upsert/delete/hard_delete)",
         ),
         th.Property(
             "allow_failures",
@@ -75,8 +80,95 @@ class TargetSalesforce(Target):
     ).to_dict()
     default_sink_class = SalesforceSink
 
-    def __init__(self, *, config= None, parse_env_config: bool = False, validate_config: bool = True) -> None:
-        super().__init__(config=config, parse_env_config=parse_env_config, validate_config=validate_config)
+    def __init__(self, *, config=None, parse_env_config: bool = False,
+                 validate_config: bool = True) -> None:
+
+        super().__init__(config=config, parse_env_config=parse_env_config,
+                         validate_config=validate_config)
+
         print(self.config.get("is_sandbox"))
         if self.config.get("is_sandbox") is not None:
-            raise ConfigValidationError("is_sandbox has been deprecated, use domain. is_sandbox-False = 'login', is_sandbox-True = 'test'")
+            raise ConfigValidationError("is_sandbox has been deprecated, use domain.\
+                                         is_sandbox-False = 'login', is_sandbox-True = 'test'")
+
+    def listen_override(self, file_input: t.IO[str] | None = None) -> None:
+        if not file_input:
+            file_input = sys.stdin
+
+        self._process_lines_override(file_input)
+        self._process_endofpipe()
+
+    def _process_lines_override(self, file_input: t.IO[str]) -> t.Counter[str]:
+        """Internal method to process jsonl lines from a Singer tap.
+
+        Args:
+            file_input: Readable stream of messages, each on a separate line.
+
+        Returns:
+            A counter object for the processed lines.
+        """
+        self.logger.info("Target '%s' is listening for input from tap.", "test")
+        counter = self._process_lines_internal(file_input)
+
+        line_count = sum(counter.values())
+
+        self.logger.info(
+            "Target '%s' completed reading %d lines of input "
+            "(%d records, %d batch manifests, %d state messages).",
+            self.name,
+            line_count,
+            counter[SingerMessageType.RECORD],
+            counter[SingerMessageType.BATCH],
+            counter[SingerMessageType.STATE],
+        )
+
+        return counter
+
+    def _process_lines_internal(self, file_input: t.IO[str]) -> t.Counter[str]:
+        """Internal method to process jsonl lines from a Singer tap.
+
+        Args:
+            file_input: Readable stream of messages, each on a separate line.
+
+        Returns:
+            A counter object for the processed lines.
+
+        Raises:
+            json.decoder.JSONDecodeError: raised if any lines are not valid json
+        """
+        stats: dict[str, int] = defaultdict(int)
+        for line in file_input.readlines():
+
+            if line.startswith('INFO'):
+                continue
+
+            line_dict = json.loads(line)
+            if line_dict.get('stream') is not None and \
+               self.config['table_name'] is not None:
+
+                line_dict['stream'] = self.config['table_name']
+
+            self._assert_line_requires(line_dict, requires={"type"})
+
+            record_type: SingerMessageType = line_dict["type"]
+            if record_type == SingerMessageType.SCHEMA:
+                self._process_schema_message(line_dict)
+
+            elif record_type == SingerMessageType.RECORD:
+                self._process_record_message(line_dict)
+
+            elif record_type == SingerMessageType.ACTIVATE_VERSION:
+                self._process_activate_version_message(line_dict)
+
+            elif record_type == SingerMessageType.STATE:
+                self._process_state_message(line_dict)
+
+            elif record_type == SingerMessageType.BATCH:
+                self._process_batch_message(line_dict)
+
+            else:
+                continue
+
+            stats[record_type] += 1
+
+        return Counter(**stats)
