@@ -246,12 +246,11 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 
 ### Install using Docker
 
-1. Create a new project and launch tool (change `demo_project` to any other name
-   if you want):
+1. Create a new project and launch tool (change `[project_name]` to any name you want):
 
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-  /app/run_app.sh mage start demo_project
+  /app/run_app.sh mage start [project_name]
 ```
 
   - If you want to run Mage locally on a different port, change the first port after `-p`
@@ -259,7 +258,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
   ```bash
   docker run -it -p 6790:6789 -v $(pwd):/home/src mageai/mageai \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
   ```
 
 2. Open http://localhost:6789 in your browser and build a pipeline.
@@ -287,11 +286,10 @@ For additional packages (e.g. `spark`, `postgres`, etc), please see
 If you run into errors, please see
 [Install errors](/getting-started/setup#errors).
 
-2. Create new project and launch tool (change `demo_project` to any other name
-   if you want):
+2. Create a new project and launch tool (change `[project_name]` to any name you want):
 
 ```bash
-mage start demo_project
+mage start [project_name]
 ```
 
 3. Open http://localhost:6789 in your browser and build a pipeline.
