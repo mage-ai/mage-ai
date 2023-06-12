@@ -6,8 +6,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useMutation } from 'react-query';
 
 import BlockTemplateType from '@interfaces/BlockTemplateType';
@@ -31,6 +29,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ICON_SIZE, IconContainerStyle } from '../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { capitalize, lowercase, pluralize } from '@utils/string';
 import {
   getdataSourceMenuItems,
   groupBlockTemplates,
@@ -40,7 +39,6 @@ import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
-import { capitalize, lowercase, pluralize } from '@utils/string';
 
 export type AddonBlockProps = {
   addOnBlocks: BlockType[];

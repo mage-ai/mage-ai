@@ -75,7 +75,7 @@ class BlockExecutor:
             if not conditional_result:
                 self.logger.info(
                     f'Conditional block(s) returned false for {self.block.uuid}. '
-                    'This block run and downstream blocks will be CANCELLED.',
+                    'This block run and downstream blocks will set as CONDITION_FAILED.',
                     **merge_dict(tags, dict(
                         block_type=self.block.type,
                         block_uuid=self.block.uuid,

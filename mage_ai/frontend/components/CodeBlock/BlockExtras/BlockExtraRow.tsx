@@ -1,11 +1,12 @@
-import FlexContainer from '@oracle/components/FlexContainer';
 import React, { useContext } from 'react';
-import { getColorsForBlockType } from '../index.style';
-import Spacing from '@oracle/elements/Spacing';
-import Button from '@oracle/elements/Button';
+
 import BlockType from '@interfaces/BlockType';
-import { ThemeContext } from 'styled-components';
+import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { ThemeContext } from 'styled-components';
+import { getColorsForBlockType } from '../index.style';
 
 type BlockExtraRowProps = {
   blocks: BlockType[];

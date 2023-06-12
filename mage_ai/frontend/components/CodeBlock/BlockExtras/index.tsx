@@ -1,17 +1,13 @@
-import { ThemeContext } from 'styled-components';
-import { useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import BlockExtraRow from './BlockExtraRow';
 import BlockType from '@interfaces/BlockType';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Button from '@oracle/elements/Button';
+import Flex from '@oracle/components/Flex';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { indexBy } from '@utils/array';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
-import Flex from '@oracle/components/Flex';
-import BlockExtraRow from './BlockExtraRow';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { indexBy } from '@utils/array';
 
 type BlockExtrasProps = {
   block: BlockType;

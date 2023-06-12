@@ -12,7 +12,6 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Callbacks, { CallbacksProps } from '@components/PipelineDetail/Callbacks';
 import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -115,7 +114,7 @@ export type SidekickProps = {
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
-} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & CallbacksProps;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
   activeView,
@@ -278,7 +277,7 @@ function Sidekick({
     secrets,
   ]);
 
-  const extensionsAndCallbacksProps = {
+  const extensionsAndAddonsProps = {
     addNewBlockAtIndex,
     autocompleteItems,
     blockRefs,
@@ -564,13 +563,13 @@ function Sidekick({
 
         {ViewKeyEnum.EXTENSIONS === activeView && (
           <Extensions
-            {...extensionsAndCallbacksProps}
+            {...extensionsAndAddonsProps}
           />
         )}
 
         {ViewKeyEnum.ADDON_BLOCKS === activeView && (
           <AddonBlocks
-            {...extensionsAndCallbacksProps}
+            {...extensionsAndAddonsProps}
           />
         )}
       </SidekickContainerStyle>

@@ -399,6 +399,11 @@ class PipelineScheduler:
                 BlockRun.BlockRunStatus.CONDITION_FAILED,
             ]
         )
+
+        statuses = {
+            BlockRun.BlockRunStatus.CONDITION_FAILED: condition_failed_block_uuids,
+            BlockRun.BlockRunStatus.UPSTREAM_FAILED: failed_block_uuids,
+        }
         not_updated_block_runs = []
         for block_run in block_runs:
             updated_status = False
@@ -406,30 +411,22 @@ class PipelineScheduler:
                 'dynamic_upstream_block_uuids',
             )
 
-            if dynamic_upstream_block_uuids:
-                if all(
-                    b in failed_block_uuids
-                    for b in dynamic_upstream_block_uuids
-                ):
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
-                    updated_status = True
-            else:
-                block = self.pipeline.get_block(block_run.block_uuid)
-                if any(
-                    b in failed_block_uuids
-                    for b in block.upstream_block_uuids
-                ):
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
-                    updated_status = True
-                elif any(
-                    b in condition_failed_block_uuids
-                    for b in block.upstream_block_uuids
-                ):
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.CONDITION_FAILED)
-                    updated_status = True
+            for status, block_uuids in statuses.items():
+                if dynamic_upstream_block_uuids:
+                    if all(
+                        b in block_uuids
+                        for b in dynamic_upstream_block_uuids
+                    ):
+                        block_run.update(status=status)
+                        updated_status = True
+                else:
+                    block = self.pipeline.get_block(block_run.block_uuid)
+                    if any(
+                        b in block_uuids
+                        for b in block.upstream_block_uuids
+                    ):
+                        block_run.update(status=status)
+                        updated_status = True
 
             if not updated_status:
                 not_updated_block_runs.append(block_run)

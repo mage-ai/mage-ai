@@ -907,7 +907,7 @@ function PipelineDetailPage({
   } = useMemo(() => {
     const blocksInNotebookInner = [];
     const blocksInSidekickInner = [];
-    
+
     blocks.forEach((block: BlockType) => {
       if (SIDEKICK_BLOCK_TYPES.includes(block.type)) {
         blocksInSidekickInner.push(block);

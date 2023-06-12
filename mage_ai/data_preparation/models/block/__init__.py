@@ -677,23 +677,24 @@ class Block:
         if logging_tags is None:
             logging_tags = dict()
 
-        result = True
-        for conditional_block in self.conditional_blocks:
-            result = result and conditional_block.execute_conditional(
-                global_vars=global_vars,
-                logger=logger,
-                logging_tags=logging_tags,
-                parent_block=self,
-            )
+        if self.conditional_blocks and len(self.conditional_blocks) > 0:
+            result = True
+            for conditional_block in self.conditional_blocks:
+                result = result and conditional_block.execute_conditional(
+                    global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                    parent_block=self,
+                )
 
-        # Print result to block output
-        conditional_message = f'Conditional block(s) evaluated to {result}.'
-        if not result:
-            conditional_message += '\nThis block would not be executed in a trigger run.'
-        conditional_json = json.dumps(dict(
-            message=conditional_message,
-        ))
-        print(f'[__internal_test__]{conditional_json}')
+            # Print result to block output
+            conditional_message = f'Conditional block(s) evaluated to {result}.'
+            if not result:
+                conditional_message += '\nThis block would not be executed in a trigger run.'
+            conditional_json = json.dumps(dict(
+                message=conditional_message,
+            ))
+            print(f'[__internal_test__]{conditional_json}')
 
         callback_arr = []
         if self.callback_block:

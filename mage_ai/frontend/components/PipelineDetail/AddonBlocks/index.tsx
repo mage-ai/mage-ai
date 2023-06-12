@@ -1,37 +1,36 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ExtensionProps } from '../Extensions/constants';
-import Spacing from '@oracle/elements/Spacing';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import Text from '@oracle/elements/Text';
-import Link from '@oracle/elements/Link';
-import { goToWithQuery } from '@utils/routing';
-import Panel from '@oracle/components/Panel';
-import PanelV2 from '@oracle/components/Panel/v2';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Flex from '@oracle/components/Flex';
-import { Callback, ChevronRight, Conditional } from '@oracle/icons';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
-import Callbacks from '../Callbacks';
-import { queryFromUrl } from '@utils/url';
 import { useRouter } from 'next/router';
-import Conditionals from '../Conditionals';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+
 import AddonBlock from './AddonBlock';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
+import Panel from '@oracle/components/Panel';
+import PanelV2 from '@oracle/components/Panel/v2';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import { Callback, ChevronRight, Conditional } from '@oracle/icons';
+import { ExtensionProps } from '../Extensions/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { goToWithQuery } from '@utils/routing';
+import { queryFromUrl } from '@utils/url';
 
 export type AddonBlocksProps = {} & ExtensionProps;
 
 const ADDON_BLOCK_OPTIONS = [
   {
+    Icon: Callback,
     name: 'Callbacks',
     uuid: AddonBlockTypeEnum.CALLBACK,
-    Icon: Callback,
   },
   {
+    Icon: Conditional,
     name: 'Conditionals',
     uuid: AddonBlockTypeEnum.CONDITIONAL,
-    Icon: Conditional,
   },
 ];
 
@@ -49,15 +48,15 @@ function AddonBlocks({
     let addOnProps;
     if (AddonBlockTypeEnum.CALLBACK === selectedAddonUUID) {
       addOnProps = {
-        addOnBlocks: props.pipeline?.callbacks,
         addOnBlockType: BlockTypeEnum.CALLBACK,
+        addOnBlocks: props.pipeline?.callbacks,
         displayBlockName: 'callback',
       };
     }
     else if (AddonBlockTypeEnum.CONDITIONAL === selectedAddonUUID) {
       addOnProps = {
-        addOnBlocks: props.pipeline?.conditionals,
         addOnBlockType: BlockTypeEnum.CONDITIONAL,
+        addOnBlocks: props.pipeline?.conditionals,
         displayBlockName: 'conditional',
       };
     }
