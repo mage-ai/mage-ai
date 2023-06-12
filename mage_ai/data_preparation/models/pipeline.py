@@ -127,10 +127,6 @@ class Pipeline:
     def version_name(self):
         return f'v{self.version}'
 
-    @property
-    def pipeline_spark_config(self):
-        return self.spark_config
-
     @classmethod
     def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
         """

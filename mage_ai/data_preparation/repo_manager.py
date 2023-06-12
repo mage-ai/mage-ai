@@ -117,10 +117,6 @@ class RepoConfig:
     def metadata_path(self) -> str:
         return os.path.join(self.repo_path, 'metadata.yaml')
 
-    @property
-    def repo_spark_config(self) -> dict:
-        return self.spark_config
-
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
             project_type=self.project_type,
