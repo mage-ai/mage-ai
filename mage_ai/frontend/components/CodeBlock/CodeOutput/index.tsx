@@ -2,6 +2,7 @@ import Ansi from 'ansi-to-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
@@ -144,6 +145,7 @@ function CodeOutput({
   const [progress, setProgress] = useState<number>();
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
 
+  const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
   const [
     downloadBlockOutputAsCsvFile,
     { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
@@ -151,7 +153,7 @@ function CodeOutput({
     () => api.block_outputs.pipelines.downloads.detailAsync(
       pipeline?.uuid,
       blockUUID,
-      {},
+      { token },
       {
         onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
         responseType: ResponseTypeEnum.BLOB,
