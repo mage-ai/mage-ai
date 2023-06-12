@@ -36,7 +36,6 @@ class BlockStatus(str, Enum):
     EXECUTED = 'executed'
     FAILED = 'failed'
     NOT_EXECUTED = 'not_executed'
-    SKIPPED = 'skipped'
     UPDATED = 'updated'
 
 

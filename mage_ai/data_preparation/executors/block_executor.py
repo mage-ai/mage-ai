@@ -234,16 +234,16 @@ class BlockExecutor:
 
     def _execute_conditional(
         self,
-        global_vars,
-        logging_tags,
-        pipeline_run,
+        global_vars: Dict,
+        logging_tags: Dict,
+        pipeline_run: PipelineRun,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
         result = True
         for conditional_block in self.block.conditional_blocks:
             try:
-                result = result and conditional_block.execute_conditional(
+                block_result = conditional_block.execute_conditional(
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     execution_partition=self.execution_partition,
@@ -253,23 +253,31 @@ class BlockExecutor:
                     parent_block=self.block,
                     pipeline_run=pipeline_run,
                 )
-            except Exception as callback_err:
+                if not block_result:
+                    self.logger.info(
+                        f'Conditional block {conditional_block.uuid} evaluated as False ' +
+                        f'for block {self.block.uuid}',
+                        logging_tags,
+                    )
+                result = result and block_result
+            except Exception as conditional_err:
                 self.logger.exception(
                     f'Failed to execute conditional block {conditional_block.uuid} ' +
                     f'for block {self.block.uuid}.',
                     **merge_dict(logging_tags, dict(
-                        error=callback_err,
+                        error=conditional_err,
                     )),
                 )
+                result = False
 
         return result
 
     def _execute_callback(
         self,
         callback: str,
-        global_vars,
-        logging_tags,
-        pipeline_run,
+        global_vars: Dict,
+        logging_tags: Dict,
+        pipeline_run: PipelineRun,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):

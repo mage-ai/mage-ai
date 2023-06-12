@@ -187,6 +187,13 @@
               ]
             },
             {
+              "group": "Conditionals",
+              "pages": [
+                "development/blocks/conditionals/overview",
+                "development/blocks/conditionals/templates"
+              ]
+            },
+            {
               "group": "SQL",
               "pages": [
                 "guides/sql-blocks",
