@@ -388,7 +388,7 @@ environment variables as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 respectively.
 
 ```bash
-mage create_spark_cluster demo_project
+mage create-spark-cluster demo_project
 ```
 
 <b>Using Docker:</b>
@@ -398,7 +398,7 @@ docker run -it \
   -v $(pwd):/home/src mageai/mageai \
   --env AWS_ACCESS_KEY_ID=your_key_id \
   --env AWS_SECRET_ACCESS_KEY=your_access_key \
-  mage create_spark_cluster demo_project
+  mage create-spark-cluster demo_project
 ```
 
 This script will take a few minutes to complete. Once finished, your terminal
