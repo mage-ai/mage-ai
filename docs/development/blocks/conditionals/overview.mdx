@@ -30,7 +30,7 @@ parent block will not be executed, and its status will be set as `condition_fail
 
     ```python
     @condition
-    def check_if_data_exists(*args, **kwargs):
+    def check_if_data_exists(*args, **kwargs) -> bool:
         # some code...
     ```
 
@@ -57,13 +57,10 @@ The `save_data` data exporter block is also not executed, and is set as `conditi
     If you don’t see it, try expanding the right area of the page.
 1. Click the button <b>Conditionals<b>.
 1. Click the button <b>+ Conditional block</b>.
-1. In the conditional block’s code, add a function and decorate it with `@condition`.
+1. In the conditional block’s code, add a function that returns a boolean value and
+   decorate it with `@condition`.
 
 ### Positional arguments
 
 The positional arguments to the conditional block will be the same as the positional
 arguments to the parent block.
-
-<Note>
-    Positional arguments are only supported in Mage versions `>= 0.8.81`.
-</Note>

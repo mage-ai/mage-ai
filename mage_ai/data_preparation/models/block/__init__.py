@@ -678,19 +678,22 @@ class Block:
             logging_tags = dict()
 
         if self.conditional_blocks and len(self.conditional_blocks) > 0:
+            conditional_message = ''
             result = True
             for conditional_block in self.conditional_blocks:
-                result = result and conditional_block.execute_conditional(
+                block_result = conditional_block.execute_conditional(
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
                     parent_block=self,
                 )
+                conditional_message += \
+                    f'Conditional block {conditional_block.uuid} evaluated to {block_result}.\n'
+                result = result and block_result
 
             # Print result to block output
-            conditional_message = f'Conditional block(s) evaluated to {result}.'
             if not result:
-                conditional_message += '\nThis block would not be executed in a trigger run.'
+                conditional_message += 'This block would not be executed in a trigger run.\n'
             conditional_json = json.dumps(dict(
                 message=conditional_message,
             ))
@@ -1549,7 +1552,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if 'conditional_blocks' in data and set(data['conditional_blocks']) != set(
             self.conditional_block_uuids
         ):
-            self.__update_conditional__blocks(data['conditional_blocks'])
+            self.__update_conditional_blocks(data['conditional_blocks'])
 
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']
@@ -2213,7 +2216,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             widget=BlockType.CHART == self.type,
         )
 
-    def __update_conditional__blocks(self, block_uuids: List[str]) -> None:
+    def __update_conditional_blocks(self, block_uuids: List[str]) -> None:
         if self.pipeline is None:
             return
 
@@ -2255,16 +2258,45 @@ class SensorBlock(Block):
             return []
 
 
-class ConditionalBlock(Block):
-    @classmethod
-    def create(cls, orig_block_name) -> 'ConditionalBlock':
-        return Block.create(
-            f'{clean_name_orig(orig_block_name)}_conditional',
-            BlockType.CONDITIONAL,
-            get_repo_path(),
-            language=BlockLanguage.PYTHON,
+class AddonBlock(Block):
+    def _create_global_vars(
+        self,
+        global_vars: Dict,
+        parent_block: Block,
+        **kwargs,
+    ) -> Dict:
+        pipeline_run = kwargs.get('pipeline_run')
+        global_vars = merge_dict(
+            global_vars or dict(),
+            dict(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=self.uuid,
+                pipeline_run=pipeline_run,
+            ),
         )
+        if parent_block:
+            global_vars['parent_block_uuid'] = parent_block.uuid
 
+        if parent_block and \
+                parent_block.pipeline and \
+                PipelineType.INTEGRATION == parent_block.pipeline.type:
+
+            template_runtime_configuration = parent_block.template_runtime_configuration
+            index = template_runtime_configuration.get('index', None)
+            is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
+            selected_streams = template_runtime_configuration.get('selected_streams', [])
+            stream = selected_streams[0] if len(selected_streams) >= 1 else None
+            destination_table = template_runtime_configuration.get('destination_table', stream)
+
+            global_vars['index'] = index
+            global_vars['is_last_block_run'] = is_last_block_run
+            global_vars['stream'] = stream
+            global_vars['destination_table'] = destination_table
+
+        return global_vars
+
+
+class ConditionalBlock(AddonBlock):
     def execute_conditional(
         self,
         dynamic_block_index: Union[int, None] = None,
@@ -2276,40 +2308,17 @@ class ConditionalBlock(Block):
         parent_block: Block = None,
         **kwargs
     ) -> bool:
-        pipeline_run = kwargs.get('pipeline_run')
-
         if logger is not None:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
 
         with redirect_stdout(stdout):
-            global_vars = merge_dict(
-                global_vars or dict(),
-                dict(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=self.uuid,
-                    pipeline_run=pipeline_run,
-                ),
+            global_vars = self._create_global_vars(
+                global_vars,
+                parent_block,
+                **kwargs,
             )
-            if parent_block:
-                global_vars['parent_block_uuid'] = parent_block.uuid
-
-            if parent_block and \
-                    parent_block.pipeline and \
-                    PipelineType.INTEGRATION == parent_block.pipeline.type:
-
-                template_runtime_configuration = parent_block.template_runtime_configuration
-                index = template_runtime_configuration.get('index', None)
-                is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
-                selected_streams = template_runtime_configuration.get('selected_streams', [])
-                stream = selected_streams[0] if len(selected_streams) >= 1 else None
-                destination_table = template_runtime_configuration.get('destination_table', stream)
-
-                global_vars['index'] = index
-                global_vars['is_last_block_run'] = is_last_block_run
-                global_vars['stream'] = stream
-                global_vars['destination_table'] = destination_table
 
             condition_functions = []
 
@@ -2319,7 +2328,7 @@ class ConditionalBlock(Block):
             exec(self.content, results)
 
             # Fetch input variables
-            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+            input_vars, kwargs_vars, _ = self.fetch_input_variables(
                 None,
                 execution_partition,
                 global_vars,
@@ -2338,7 +2347,7 @@ class ConditionalBlock(Block):
             return result
 
 
-class CallbackBlock(Block):
+class CallbackBlock(AddonBlock):
     @classmethod
     def create(cls, orig_block_name) -> 'CallbackBlock':
         return Block.create(
@@ -2360,40 +2369,17 @@ class CallbackBlock(Block):
         parent_block: Block = None,
         **kwargs
     ) -> None:
-        pipeline_run = kwargs.get('pipeline_run')
-
         if logger is not None:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
 
         with redirect_stdout(stdout):
-            global_vars = merge_dict(
-                global_vars or dict(),
-                dict(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=self.uuid,
-                    pipeline_run=pipeline_run,
-                ),
+            global_vars = self._create_global_vars(
+                global_vars,
+                parent_block,
+                **kwargs
             )
-            if parent_block:
-                global_vars['parent_block_uuid'] = parent_block.uuid
-
-            if parent_block and \
-                    parent_block.pipeline and \
-                    PipelineType.INTEGRATION == parent_block.pipeline.type:
-
-                template_runtime_configuration = parent_block.template_runtime_configuration
-                index = template_runtime_configuration.get('index', None)
-                is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
-                selected_streams = template_runtime_configuration.get('selected_streams', [])
-                stream = selected_streams[0] if len(selected_streams) >= 1 else None
-                destination_table = template_runtime_configuration.get('destination_table', stream)
-
-                global_vars['index'] = index
-                global_vars['is_last_block_run'] = is_last_block_run
-                global_vars['stream'] = stream
-                global_vars['destination_table'] = destination_table
 
             callback_functions = []
             failure_functions = []
