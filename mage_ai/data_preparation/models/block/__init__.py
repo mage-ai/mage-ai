@@ -1844,7 +1844,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             print('Spark session already initialized.')
             return self.spark
         try:
-            if self.pipeline and self.pipeline.pipeline_spark_config:
+            if self.pipeline and self.pipeline.spark_config:
                 print('Initiate Spark session with the pipeline spark_config.')
                 spark_config = SparkConfig.load(
                     config=self.pipeline.spark_config)
