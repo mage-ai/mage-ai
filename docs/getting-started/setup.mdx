@@ -273,7 +273,7 @@ The command to run Mage using Docker could look like this:
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src \
     -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    mageai/mageai /app/run_app.sh mage start demo_project
+    mageai/mageai /app/run_app.sh mage start [project_name]
 ```
 
 See [here](/development/environment-variables) for a list of environment variables you can configure.
@@ -294,7 +294,7 @@ then run the following Docker command to start Mage and add files in the `secret
 docker run -it -p 6789:6789
     -v /Users/dragon/secrets:/home/secrets \
     -v $(pwd):/home/src mageai/mageai \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
 ```
 
 This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets`
@@ -330,7 +330,7 @@ Your Docker run command could look like this:
 docker run -it -p 6789:6789 \
     -v $(pwd):/home/src mageai/mageai \
     -m 2048m \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
 ```
 
 ---
