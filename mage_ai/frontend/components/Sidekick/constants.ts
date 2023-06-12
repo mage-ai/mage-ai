@@ -106,7 +106,7 @@ export const SIDEKICK_VIEWS: {
   {
     buildLabel: ({
       pipeline,
-    }) => 'Add-ons',
+    }) => 'Add-on blocks',
     key: ViewKeyEnum.ADDON_BLOCKS,
   },
   {
