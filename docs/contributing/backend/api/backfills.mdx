@@ -132,7 +132,7 @@ description: "Programmatically create multiple pipeline runs to backfill a pipel
 ```curl cURL
 curl --request GET \
   --url 'http://localhost:6789/api/backfills?_limit=20&_offset=0&include_run_count=true&pipeline_uuid=example_pipeline&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
-  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
+  --header 'OAUTH-TOKEN=some_really_long_string' \
 ```
 </CodeGroup>
 
@@ -173,7 +173,7 @@ curl --request GET \
 ```curl cURL
 curl --request PUT \
   --url 'http://localhost:6789/api/pipelines/example_pipeline/backfills?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
-  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
+  --header 'OAUTH-TOKEN=some_really_long_string' \
   --data '{
     "backfill": {
       "name": "fire wind"
