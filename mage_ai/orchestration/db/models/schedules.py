@@ -388,7 +388,10 @@ class PipelineRun(BaseModel):
         )
 
     def all_blocks_completed(self, include_failed_blocks: bool = False) -> bool:
-        statuses = [BlockRun.BlockRunStatus.COMPLETED]
+        statuses = [
+            BlockRun.BlockRunStatus.COMPLETED,
+            BlockRun.BlockRunStatus.CONDITION_FAILED,
+        ]
         if include_failed_blocks:
             statuses.extend([
                 BlockRun.BlockRunStatus.FAILED,
@@ -438,6 +441,7 @@ class BlockRun(BaseModel):
         FAILED = 'failed'
         CANCELLED = 'cancelled'
         UPSTREAM_FAILED = 'upstream_failed'
+        CONDITION_FAILED = 'condition_failed'
 
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'), index=True)
     block_uuid = Column(String(255))

@@ -9,6 +9,7 @@ import {
   Table,
   Terminal,
   Tree,
+  Union,
   Variables,
 } from '@oracle/icons';
 import { indexBy } from '@utils/array';
@@ -105,15 +106,7 @@ export const SIDEKICK_VIEWS: {
   {
     buildLabel: ({
       pipeline,
-    }) => {
-      // const { callbacks = [] } = pipeline || {};
-
-      // if (callbacks?.length >= 1) {
-      //   return `Add-on Blocks (${callbacks.length})`;
-      // }
-
-      return 'Add-ons';
-    },
+    }) => 'Add-ons',
     key: ViewKeyEnum.ADDON_BLOCKS,
   },
   {
@@ -147,7 +140,7 @@ export const SIDEKICK_VIEWS: {
 export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
 
 export const NAV_ICON_MAPPING = {
-  [ViewKeyEnum.ADDON_BLOCKS]: Callback,
+  [ViewKeyEnum.ADDON_BLOCKS]: Union,
   [ViewKeyEnum.CALLBACKS]: Callback,
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,

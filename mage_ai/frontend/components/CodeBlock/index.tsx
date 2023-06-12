@@ -2079,6 +2079,7 @@ function CodeBlock({
 
               {!codeCollapsed && ![
                 BlockTypeEnum.CALLBACK,
+                BlockTypeEnum.CONDITIONAL,
                 BlockTypeEnum.EXTENSION,
               ].includes(blockType) && (
                 <BlockExtras

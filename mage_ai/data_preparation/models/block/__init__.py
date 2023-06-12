@@ -686,10 +686,14 @@ class Block:
                 parent_block=self,
             )
 
+        # Print result to block output
+        conditional_message = f'Conditional block(s) evaluated to {result}.'
         if not result:
-            logger.info('Conditional block evaluated to false. The block will not be executed.')
-            self.status = self.update_status(BlockStatus.SKIPPED)
-            return dict()
+            conditional_message += '\nThis block would not be executed in a trigger run.'
+        conditional_json = json.dumps(dict(
+            message=conditional_message,
+        ))
+        print(f'[__internal_test__]{conditional_json}')
 
         callback_arr = []
         if self.callback_block:
@@ -2297,10 +2301,10 @@ class ConditionalBlock(Block):
                 global_vars['stream'] = stream
                 global_vars['destination_table'] = destination_table
 
-            conditional_functions = []
+            condition_functions = []
 
             results = dict(
-                conditional=self._block_decorator(conditional_functions),
+                condition=self._block_decorator(condition_functions),
             )
             exec(self.content, results)
 
@@ -2318,8 +2322,8 @@ class ConditionalBlock(Block):
                 global_vars_copy.update(kwargs_var)
 
             result = True
-            for conditional_function in conditional_functions:
-                result = result and conditional_function(*input_vars, **global_vars_copy)
+            for condition_function in condition_functions:
+                result = result and condition_function(*input_vars, **global_vars_copy)
 
             return result
 

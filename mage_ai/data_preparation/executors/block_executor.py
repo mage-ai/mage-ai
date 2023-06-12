@@ -73,13 +73,21 @@ class BlockExecutor:
                 pipeline_run=pipeline_run,
             )
             if not conditional_result:
+                self.logger.info(
+                    f'Conditional block(s) returned false for {self.block.uuid}. '
+                    'This block run and downstream blocks will be CANCELLED.',
+                    **merge_dict(tags, dict(
+                        block_type=self.block.type,
+                        block_uuid=self.block.uuid,
+                    )),
+                )
                 self.__update_block_run_status(
-                    'cancelled',
+                    'condition_failed',
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
                     tags=tags,
                 )
-                return dict()
+                return dict(output=[])
 
             try:
                 from mage_ai.shared.retry import retry

@@ -486,6 +486,7 @@ function DependencyGraph({
       return {
         hasFailed: RunStatus.FAILED === status,
         isCancelled: RunStatus.CANCELLED === status,
+        isConditionFailed: RunStatus.CONDITION_FAILED === status,
         isInProgress: RunStatus.RUNNING === status,
         isQueued: RunStatus.INITIAL === status,
         isSuccessful: RunStatus.COMPLETED === status,

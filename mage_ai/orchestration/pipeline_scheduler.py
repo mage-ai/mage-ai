@@ -393,6 +393,12 @@ class PipelineScheduler:
                 BlockRun.BlockRunStatus.FAILED,
             ]
         )
+        condition_failed_block_uuids = set(
+            b.block_uuid for b in self.pipeline_run.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.CONDITION_FAILED,
+            ]
+        )
         not_updated_block_runs = []
         for block_run in block_runs:
             updated_status = False
@@ -416,6 +422,13 @@ class PipelineScheduler:
                 ):
                     block_run.update(
                         status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+                    updated_status = True
+                elif any(
+                    b in condition_failed_block_uuids
+                    for b in block.upstream_block_uuids
+                ):
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.CONDITION_FAILED)
                     updated_status = True
 
             if not updated_status:
