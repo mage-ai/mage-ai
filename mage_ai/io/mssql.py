@@ -65,6 +65,16 @@ class MSSQL(BaseSQL):
             )
             self._ctx = pyodbc.connect(connection_string)
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return '\n'.join([
+                'IF NOT EXISTS (',
+                f'SELECT * FROM information_schema.schemata WHERE schema_name = \'{schema_name}\')',
+                f'BEGIN EXEC(\'CREATE SCHEMA {schema_name}\') END'
+            ])
+
     def build_create_table_as_command(
         self,
         table_name: str,
@@ -79,7 +89,7 @@ class MSSQL(BaseSQL):
         with self.conn.cursor() as cur:
             cur.execute('\n'.join([
                 'SELECT TOP 1 * FROM information_schema.tables ',
-                f'WHERE table_name = \'{table_name}\'',
+                f'WHERE table_schema = \'{schema_name}\' AND table_name = \'{table_name}\'',
             ]))
             return len(cur.fetchall()) >= 1
 
