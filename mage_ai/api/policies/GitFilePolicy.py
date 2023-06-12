@@ -20,3 +20,13 @@ GitFilePolicy.allow_read(GitFilePresenter.default_attributes + [], scopes=[
 ], on_action=[
     constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+GitFilePolicy.allow_query([
+    'base_branch',
+    'compare_branch',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())

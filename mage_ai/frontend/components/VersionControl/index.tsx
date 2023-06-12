@@ -1,28 +1,57 @@
-import { useMemo, useRef, useState } from 'react';
+import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Dashboard from '@components/Dashboard';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
+import GitFileType from '@interfaces/GitFileType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import {
-  getFullPath,
-} from '@components/FileBrowser/utils';
+  DIFF_STYLES,
+  DiffContainerStyle,
+} from './index.style';
+import { getFullPath } from '@components/FileBrowser/utils';
+import { useError } from '@context/Error';
 
 function VersionControl() {
   const fileTreeRef = useRef(null);
 
+  const [showError] = useError(null, {}, [], {
+    uuid: 'VersionControlPage',
+  });
+
+  const [branchBase, setBranchBase] = useState<string>('td--version_control');
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
 
-  // const { data: dataBranches } = api.git_branches.list();
-  // const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
+  const { data: dataBranches } = api.git_branches.list();
+  const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('current');
   const branch: GitBranchType = useMemo(() => dataBranch?.git_branch || {}, [dataBranch]);
   const files: FileType[] = useMemo(() => branch?.files || [], [branch]);
+
+  const { data: dataFile, mutate: fetchFileGit } = api.git_files.detail(
+    selectedFilePath
+      ? encodeURIComponent(selectedFilePath)
+      : null,
+    {
+      base_branch: branchBase,
+    });
+  const fileGit: GitFileType = useMemo(() => dataFile?.git_file, [dataFile]);
+
+  useEffect(() => {
+    if (dataFile?.error) {
+      showError({
+        errors: dataFile?.error,
+        response: dataFile,
+      });
+    }
+  }, [dataFile, showError]);
+
   const {
     modifiedFiles = {},
     untrackedFiles = {},
@@ -43,7 +72,6 @@ function VersionControl() {
       [fullPath]: true,
     }), {}),
   }), [branch]);
-
 
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
@@ -101,6 +129,7 @@ function VersionControl() {
           </Spacing>
         );
       }}
+      useRootFolder
     />
   ), [
     fetchBranch,
@@ -111,14 +140,41 @@ function VersionControl() {
     untrackedFiles,
   ]);
 
+
+  const fileDiffMemo = useMemo(() => {
+    if (!selectedFilePath || !fileGit) {
+      return null;
+    }
+
+    const {
+      content,
+      content_from_base: contentFromBase,
+    } = fileGit;
+
+    return (
+      <DiffContainerStyle>
+        <ReactDiffViewer
+          compareMethod={DiffMethod.WORDS}
+          newValue={content || ''}
+          oldValue={contentFromBase || ''}
+          renderContent={(str) => <Text monospace>{str}</Text>}
+          splitView={true}
+          styles={DIFF_STYLES}
+          useDarkTheme
+        />
+      </DiffContainerStyle>
+    );
+  }, [
+    fileGit,
+    selectedFilePath,
+  ]);
+
   return (
     <Dashboard
-      after={(
-        <>
-          <h1>selectedFilePath</h1>
-        </>
-      )}
+      // TODO (tommy dang): when we’re ready to show diffs, uncomment the below code.
+      after={fileDiffMemo}
       afterHidden={!selectedFilePath}
+      // afterHidden
       before={fileBrowserMemo}
       // headerOffset={MAIN_CONTENT_TOP_OFFSET}
       // mainContainerHeader={openFilePaths?.length >= 1 && (
