@@ -12,6 +12,7 @@ class PipelinePresenter(BasePresenter):
         'executor_count',
         'executor_type',
         'name',
+        'spark_config',
         'type',
         'updated_at',
         'uuid',

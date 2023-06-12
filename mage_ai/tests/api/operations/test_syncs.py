@@ -3,7 +3,7 @@ import os
 import inflection
 
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import MAGE_DATA_DIR_ENV_VAR
+from mage_ai.data_preparation.shared.constants import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user

@@ -37,6 +37,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -172,6 +173,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 3',
             uuid='test_pipeline_3',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -250,6 +252,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 4',
             uuid='test_pipeline_4',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -350,6 +353,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 5',
             uuid='test_pipeline_5',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -578,6 +582,7 @@ class PipelineTest(DBTestCase):
                     "executor_type": None,
                     "extensions": {},
                     "name": "test_pipeline_9",
+                    "spark_config": {},
                     "type": "integration",
                     "updated_at": None,
                     "uuid": "test_pipeline_9",
