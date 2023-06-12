@@ -25,11 +25,15 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 type BranchesProps = {
   branch: GitBranchType;
   branches: GitBranchType[];
+  createBranch: (branchName: string) => void;
+  onChangeBranch: (branchName: string) => void;
 };
 
 function Branches({
   branch,
   branches,
+  createBranch,
+  onChangeBranch,
 }: BranchesProps) {
   const [branchNameNew, setBranchNameNew] = useState<string>('');
   const [actionName, setActionName] = useState<string>(null);
@@ -57,9 +61,7 @@ function Branches({
               beforeIcon={<Branch muted={false} />}
               beforeIconSize={UNIT * 2}
               monospace
-              onChange={() => {
-                // Change branches
-              }}
+              onChange={e => onChangeBranch(e.target.value)}
               value={branch?.name}
             >
               {branch?.name && branches?.map(({ name }) => (
@@ -83,8 +85,9 @@ function Branches({
             <Spacing mr={1} />
 
             <Button
+              disabled={!branchNameNew}
               onClick={() => {
-                // Create new branch
+                createBranch(branchNameNew);
               }}
               secondary
             >
@@ -191,11 +194,11 @@ function Branches({
             <Button
               disabled={!actionName}
               onClick={() => {
-
+                // Execute action
               }}
               secondary
             >
-              Execute {actionName ? actionName?.toLowerCase() : 'action'}
+              Execute action{actionName ? ` ${actionName?.toLowerCase()}` : ''}
             </Button>
           </Spacing>
         </Spacing>

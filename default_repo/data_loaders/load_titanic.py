@@ -11,38 +11,13 @@ if 'test' not in globals():
 
 @data_loader
 def load_data_from_api(**kwargs) -> DataFrame:
-    """
-    Template for loading data from API
-    """
-    url = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'
+    url = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv?'
 
     response = requests.get(url)
-    return pd.read_csv(io.StringIO(response.text), sep=',')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return pd.read_csv(
+        io.StringIO(response.text),
+        sep=',',
+    )
 
 
 @test
@@ -50,17 +25,4 @@ def test_output(df) -> None:
     """
     Template code for testing the output of the block.
     """
-    assert df is not None, 'The output is undefined'
-
-
-
-
-
-
-
-
-
-
-
-
-
+    assert df is not None, 'The output is undefined11111111111'
