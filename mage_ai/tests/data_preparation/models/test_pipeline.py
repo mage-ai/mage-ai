@@ -106,6 +106,7 @@ class PipelineTest(DBTestCase):
                 ),
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[
                 dict(
@@ -136,7 +137,7 @@ class PipelineTest(DBTestCase):
             'test_pipeline_b',
             repo_path=self.repo_path,
         )
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Pipeline test_pipeline_a already exists.'):
             asyncio.run(pipeline2.update(dict(name='test_pipeline_a', uuid='test_pipeline_b')))
         self.assertEqual(pipeline1.name, 'test_pipeline_a')
         self.assertEqual(pipeline2.name, 'test_pipeline_b')
@@ -226,6 +227,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -321,6 +323,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -470,6 +473,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -621,6 +625,7 @@ class PipelineTest(DBTestCase):
                         },
                     ],
                     "callbacks": [],
+                    "conditionals": [],
                     "widgets": [],
                 },
             )

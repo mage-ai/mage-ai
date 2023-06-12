@@ -322,11 +322,20 @@ export const getMoreActionsItems = (
   return items;
 };
 
-export function buildTags({ tags }: BlockType): {
+export function buildTags(
+  { tags }: BlockType,
+  opts: {
+    conditionFailed?: boolean;
+  } = {},
+): {
   description?: string;
   title: string;
 }[] {
   const arr = [];
+
+  const {
+    conditionFailed,
+  } = opts;
 
   tags?.forEach((tag: TagEnum) => {
     if (TagEnum.DBT_SNAPSHOT === tag) {
@@ -354,6 +363,18 @@ export function buildTags({ tags }: BlockType): {
         description: 'This block is a replica of another block in the current pipeline.',
         title: capitalizeRemoveUnderscoreLower(TagEnum.REPLICA),
       });
+    } else if (TagEnum.CONDITION === tag) {
+      if (conditionFailed) {
+        arr.push({
+          description: 'This block condition evaluated as false.',
+          title: 'Condition unmet',
+        });
+      } else {
+        arr.push({
+          description: 'This block has a condition that will be run before its execution.',
+          title: capitalizeRemoveUnderscoreLower(TagEnum.CONDITION),
+        });
+      }
     } else {
       arr.push({
         title: tag,

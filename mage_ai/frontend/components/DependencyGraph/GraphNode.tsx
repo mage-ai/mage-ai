@@ -31,6 +31,7 @@ type GraphNodeProps = {
   height?: number;
   hideStatus?: boolean;
   isCancelled?: boolean;
+  isConditionFailed?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
@@ -50,6 +51,7 @@ function GraphNode({
   height,
   hideStatus,
   isCancelled,
+  isConditionFailed,
   isInProgress,
   isQueued,
   isSuccessful,
@@ -65,9 +67,19 @@ function GraphNode({
     type,
     uuid,
   } = block;
-  const tags = buildTags(block);
+  const tags = buildTags(
+    block,
+    { conditionFailed: isConditionFailed },
+  );
 
-  const noStatus = !(isInProgress || isQueued || hasFailed || isSuccessful || isCancelled);
+  const noStatus = !(
+    isInProgress ||
+    isQueued ||
+    hasFailed ||
+    isSuccessful ||
+    isCancelled ||
+    isConditionFailed
+  );
   const success = isSuccessful && !(isInProgress || isQueued);
   const failed = hasFailed && !(isInProgress || isQueued);
   let tooltipText = '';
@@ -105,6 +117,7 @@ function GraphNode({
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
+      isConditionFailed={isConditionFailed}
       key={uuid}
       selected={selected}
     >
