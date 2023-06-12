@@ -1,7 +1,10 @@
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Branches from './Branches';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Dashboard from '@components/Dashboard';
+import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
@@ -14,7 +17,14 @@ import {
   DIFF_STYLES,
   DiffContainerStyle,
 } from './index.style';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  TABS,
+  TAB_BRANCHES,
+} from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
+import { goToWithQuery } from '@utils/routing';
+import { queryFromUrl } from '@utils/url';
 import { useError } from '@context/Error';
 
 function VersionControl() {
@@ -26,6 +36,14 @@ function VersionControl() {
 
   const [branchBase, setBranchBase] = useState<string>('td--version_control');
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+  const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
+
+  const q: { tab?: string } = queryFromUrl();
+  useEffect(() => {
+    if (q?.tab) {
+      setSelectedTab(TABS.find(({ uuid }) => uuid === q?.tab));
+    }
+  }, [q]);
 
   const { data: dataBranches } = api.git_branches.list();
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
@@ -169,6 +187,18 @@ function VersionControl() {
     selectedFilePath,
   ]);
 
+  const mainContainerHeaderMemo = useMemo(() => (
+    <Spacing mt={1}>
+      <ButtonTabs
+        onClickTab={({ uuid }) => {
+          goToWithQuery({ tab: uuid });
+        }}
+        selectedTabUUID={selectedTab?.uuid}
+        tabs={TABS}
+      />
+    </Spacing>
+  ), [selectedTab]);
+
   return (
     <Dashboard
       // TODO (tommy dang): when we’re ready to show diffs, uncomment the below code.
@@ -177,20 +207,18 @@ function VersionControl() {
       // afterHidden
       before={fileBrowserMemo}
       // headerOffset={MAIN_CONTENT_TOP_OFFSET}
-      // mainContainerHeader={openFilePaths?.length >= 1 && (
-      //   <HeaderStyle>
-      //     <MenuStyle>
-      //       {menuMemo}
-      //     </MenuStyle>
-
-      //     <TabsStyle>
-      //       {fileTabsMemo}
-      //     </TabsStyle>
-      //   </HeaderStyle>
-      // )}
+      mainContainerHeader={mainContainerHeaderMemo}
       title="Version control"
       uuid="Version control/index"
     >
+      <Spacing p={PADDING_UNITS}>
+        {TAB_BRANCHES.uuid === selectedTab?.uuid && (
+          <Branches
+            branch={branch}
+            branches={branches}
+          />
+        )}
+      </Spacing>
     </Dashboard>
   );
 }

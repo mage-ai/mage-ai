@@ -95,7 +95,7 @@ function ButtonTabs({
               pauseEvent(e);
               onClickTab(tab);
             }}
-            paddingUnitsHorizontal={2}
+            paddingUnitsHorizontal={1.75}
             paddingUnitsVertical={1.25}
             small={small}
           >
