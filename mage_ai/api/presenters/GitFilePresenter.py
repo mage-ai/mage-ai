@@ -7,4 +7,5 @@ class GitFilePresenter(BasePresenter):
         'content_from_base',
         'content_from_compare',
         'filename',
+        'modified',
     ]
