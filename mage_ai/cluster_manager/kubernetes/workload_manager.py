@@ -36,14 +36,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        # try:
-        #     config.load_incluster_config()
-        #     return True
-        # except Exception:
-        #     pass
+        try:
+            config.load_incluster_config()
+            return True
+        except Exception:
+            pass
 
         try:
-            config.load_kube_config(config_file='/home/src/k8s_main_project/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -269,7 +269,7 @@ class WorkloadManager:
                 'persistentVolumeReclaimPolicy': 'Delete',
                 'storageClassName': f'{name}-storage',
                 'local': {
-                    'path': '/Users/david_yang/mage/mage-ai/k8s_main_project/projects/local-2',
+                    'path': volume_host_path,
                 },
                 'nodeAffinity': {
                     'required': {
