@@ -79,7 +79,10 @@ class PipelineResource(BaseResource):
                     a.status,
                     a.updated_at,
                 ]).
-                filter(a.pipeline_uuid.in_(pipeline_uuids))
+                filter(
+                    a.pipeline_uuid.in_(pipeline_uuids),
+                    a.repo_path == get_repo_path(),
+                )
             ).all()
             return group_by(lambda x: x.pipeline_uuid, result)
 
