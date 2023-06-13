@@ -58,7 +58,7 @@ class ApiDownloadHandler(BaseHandler):
                     self.write(csv_line.encode('UTF-8'))
                 except iostream.StreamClosedError:
                     break
-                if (line == 0 or (line % 5000 == 0 or is_last_line)):
+                if line % 5000 == 0 or is_last_line:
                     await self.flush()
                     # Sleep for a nanosecond so other handlers can run and avoid blocking
                     await gen.sleep(0.000000001)
