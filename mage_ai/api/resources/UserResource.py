@@ -7,7 +7,7 @@ from mage_ai.authentication.passwords import (
     generate_salt,
     verify_password,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_identifier
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.shared.hash import extract, ignore_keys
@@ -125,7 +125,7 @@ class UserResource(DatabaseResource):
             access = get_access_for_roles(
                 roles_new,
                 Permission.Entity.PROJECT,
-                get_repo_identifier(),
+                get_project_uuid(),
             )
 
             if self.current_user.is_admin:

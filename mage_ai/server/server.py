@@ -17,7 +17,6 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
-    get_repo_identifier,
     init_repo,
     set_repo_path,
 )
@@ -275,17 +274,6 @@ async def main(
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
-
-    def update_repo_identifier():
-        get_repo_identifier.cache_clear()
-        get_repo_identifier()
-
-    update_repo_identifier()
-    cache_callback = PeriodicCallback(
-        update_repo_identifier,
-        600_000,  # run every 10 minutes
-    )
-    cache_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

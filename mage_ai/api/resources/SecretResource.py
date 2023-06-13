@@ -1,7 +1,7 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_identifier
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import create_secret, get_valid_secrets
 from mage_ai.data_preparation.sync import (
     GIT_ACCESS_TOKEN_SECRET_NAME,
@@ -39,7 +39,7 @@ class SecretResource(DatabaseResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
-        repo_path = get_repo_identifier()
+        repo_path = get_repo_path()
         model = Secret.query.filter(Secret.repo_name == repo_path, Secret.name == pk).first()
 
         if not model:

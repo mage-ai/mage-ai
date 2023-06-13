@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
-from mage_ai.data_preparation.repo_manager import get_repo_identifier
+from mage_ai.data_preparation.repo_manager import get_project_uuid, get_repo_path
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
@@ -70,7 +70,7 @@ class User(BaseModel):
 
     @property
     def project_access(self) -> int:
-        return self.get_access(Permission.Entity.PROJECT, get_repo_identifier())
+        return self.get_access(Permission.Entity.PROJECT, get_project_uuid())
 
     def get_access(
         self,
@@ -121,7 +121,7 @@ class User(BaseModel):
     @property
     def git_settings(self) -> Union[Dict, None]:
         preferences = self.preferences or dict()
-        return preferences.get(get_repo_identifier(), {}).get('git_settings')
+        return preferences.get(get_repo_path(), {}).get('git_settings')
 
     @classmethod
     @safe_db_query
@@ -218,7 +218,7 @@ class Role(BaseModel):
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
         if entity == Permission.Entity.PIPELINE:
-            return self.get_access(Permission.Entity.PROJECT, get_repo_identifier())
+            return self.get_access(Permission.Entity.PROJECT, get_project_uuid())
         elif entity == Permission.Entity.PROJECT:
             return self.get_access(Permission.Entity.GLOBAL)
         else:

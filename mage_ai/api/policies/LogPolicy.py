@@ -3,7 +3,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.LogPresenter import LogPresenter
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_identifier
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Permission
 from mage_ai.orchestration.db.models.schedules import BlockRun
 
@@ -18,7 +18,7 @@ class LogPolicy(BasePolicy):
             elif issubclass(parent_model.__class__, Pipeline):
                 return Permission.Entity.PIPELINE, parent_model.uuid
 
-        return Permission.Entity.PROJECT, get_repo_identifier()
+        return Permission.Entity.PROJECT, get_project_uuid()
 
 
 LogPolicy.allow_actions([

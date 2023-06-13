@@ -7,9 +7,10 @@ export interface InstanceType {
 }
 
 export default interface WorkspaceType {
-  name: string;
   access?: number;
   cluster_type?: string;
-  repo_path?: string;
   instance: InstanceType;
+  name: string;
+  project_uuid?: string;
+  repo_path?: string;
 }

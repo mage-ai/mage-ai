@@ -29,6 +29,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
+from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 
 logger = Logger().new_server_logger(__name__)
 
@@ -68,8 +69,11 @@ class WorkspaceResource(GenericResource):
         for project in projects:
             if project in instance_map:
                 repo_path = os.path.join(projects_folder, project, project)
+                config = get_repo_config(repo_path=repo_path)
+                project_uuid = config.project_uuid
                 workspace = dict(
                     name=project,
+                    project_uuid=project_uuid,
                     repo_path=repo_path,
                     cluster_type=cluster_type,
                     instance=instance_map[project],
@@ -115,6 +119,7 @@ class WorkspaceResource(GenericResource):
         error = ApiError.RESOURCE_ERROR.copy()
 
         workspace_folder = None
+        project_uuid = None
         if get_project_type() == ProjectType.MAIN:
             workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
             if os.path.exists(workspace_folder):
@@ -122,7 +127,7 @@ class WorkspaceResource(GenericResource):
                 raise ApiError(error)
             project_folder = os.path.join(workspace_folder, workspace_name)
             try:
-                init_repo(project_folder, project_type=ProjectType.SUB)
+                project_uuid = init_repo(project_folder, project_type=ProjectType.SUB)
             except Exception as e:
                 error.update(message=f'Error creating project: {str(e)}')
                 raise ApiError(error)
@@ -196,10 +201,12 @@ class WorkspaceResource(GenericResource):
             error.update(message=str(e))
             raise ApiError(error)
 
-        if get_project_type() == ProjectType.MAIN:
+        if get_project_type() == ProjectType.MAIN and \
+                project_uuid is not None and \
+                REQUIRE_USER_AUTHENTICATION:
             Role.create_default_roles(
                 entity=Permission.Entity.PROJECT,
-                entity_id=project_folder,
+                entity_id=project_uuid,
                 prefix=workspace_name,
             )
 
