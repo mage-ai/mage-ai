@@ -1173,28 +1173,28 @@ class Block:
                 spark=self.__get_spark_session(),
             )
             if type(data) is pd.DataFrame:
-                try:
-                    analysis = variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        block_uuid,
-                        v,
-                        dataframe_analysis_keys=['metadata', 'statistics'],
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME_ANALYSIS,
-                    )
-                except Exception:
-                    analysis = None
-                if analysis is not None:
-                    stats = analysis.get('statistics', {})
-                    column_types = (analysis.get('metadata') or {}).get('column_types', {})
-                    row_count = stats.get('original_row_count', stats.get('count'))
-                    column_count = stats.get('original_column_count', len(column_types))
-                else:
-                    row_count, column_count = data.shape
-
                 if csv_lines_only:
                     data = data.to_csv(header=True, index=False).strip('\n')
                 else:
+                    try:
+                        analysis = variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            block_uuid,
+                            v,
+                            dataframe_analysis_keys=['metadata', 'statistics'],
+                            partition=execution_partition,
+                            variable_type=VariableType.DATAFRAME_ANALYSIS,
+                        )
+                    except Exception:
+                        analysis = None
+                    if analysis is not None:
+                        stats = analysis.get('statistics', {})
+                        column_types = (analysis.get('metadata') or {}).get('column_types', {})
+                        row_count = stats.get('original_row_count', stats.get('count'))
+                        column_count = stats.get('original_column_count', len(column_types))
+                    else:
+                        row_count, column_count = data.shape
+
                     columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
                     data = dict(
                         sample_data=dict(
