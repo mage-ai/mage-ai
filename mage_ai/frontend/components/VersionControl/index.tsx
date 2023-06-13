@@ -1,11 +1,9 @@
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Dashboard from '@components/Dashboard';
-import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
@@ -25,7 +23,6 @@ import {
 } from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
-import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useError } from '@context/Error';
 
@@ -47,7 +44,7 @@ function VersionControl() {
     }
   }, [q]);
 
-  const { data: dataBranches } = api.git_branches.list();
+  const { data: dataBranches, mutate: fetchBranches } = api.git_branches.list();
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('current');
@@ -62,20 +59,6 @@ function VersionControl() {
       base_branch: branchBase,
     });
   const fileGit: GitFileType = useMemo(() => dataFile?.git_file, [dataFile]);
-
-  const [createGitBranch] = useMutation(api.git_branches.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => fetchBranch(),
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
 
   useEffect(() => {
     if (dataFile?.error) {
@@ -232,16 +215,9 @@ function VersionControl() {
           <Branches
             branch={branch}
             branches={branches}
-            createBranch={(branchName: string) => createGitBranch({
-              git_branch: {
-                name: branchName,
-              },
-            })}
-            onChangeBranch={(branchName: string) => createGitBranch({
-              git_branch: {
-                name: branchName,
-              },
-            })}
+            fetchBranch={fetchBranch}
+            fetchBranches={fetchBranches}
+            showError={showError}
           />
         )}
       </Spacing>
