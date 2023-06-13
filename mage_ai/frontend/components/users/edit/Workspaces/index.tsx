@@ -34,7 +34,7 @@ function UserWorkspacesEdit({
     }
   }, [user]);
 
-  const workspaceEntityIDs = workspaces?.map(({ repo_path }) => repo_path);
+  const workspaceEntityIDs = workspaces?.map(({ project_uuid }: WorkspaceType) => project_uuid);
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
     entity: 'project',
     entity_ids: workspaceEntityIDs,
@@ -45,11 +45,11 @@ function UserWorkspacesEdit({
 
     return roles?.reduce(
       (obj, role) => {
-        const repoPath = role.permissions[0].entity_id;
-        const existingRoles = obj[repoPath] || [];
+        const projectUUID = role.permissions[0].entity_id;
+        const existingRoles = obj[projectUUID] || [];
         return {
           ...obj,
-          [repoPath]: [...existingRoles, role],
+          [projectUUID]: [...existingRoles, role],
         };
       },
       {},
@@ -61,10 +61,10 @@ function UserWorkspacesEdit({
     const roles = u?.roles_new;
     return roles?.reduce(
       (obj, role) => {
-        const repoPath = role?.permissions?.[0]?.entity_id;
+        const projectUUID = role?.permissions?.[0]?.entity_id;
         return {
           ...obj,
-          [repoPath]: role,
+          [projectUUID]: role,
         };
       },
       {},
@@ -123,10 +123,10 @@ function UserWorkspacesEdit({
         ]}
         rows={workspaces?.map(({
           name,
-          repo_path,
+          project_uuid,
         }: WorkspaceType) => {
-          const roles = rolesByWorkspace?.[repo_path] || [];
-          const userRole = userRoleByWorkspace?.[repo_path];
+          const roles = rolesByWorkspace?.[project_uuid] || [];
+          const userRole = userRoleByWorkspace?.[project_uuid];
           return [
             <Text bold key="name">
               {name}

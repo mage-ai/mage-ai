@@ -2,8 +2,8 @@ import os
 import shutil
 import sys
 import traceback
+import uuid
 from enum import Enum
-from functools import lru_cache
 from typing import Dict
 
 import ruamel.yaml
@@ -16,7 +16,6 @@ from mage_ai.data_preparation.shared.constants import (
 )
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.environments import is_test
-
 
 if is_test():
     DEFAULT_MAGE_DATA_DIR = './'
@@ -75,9 +74,6 @@ class RepoConfig:
             os.makedirs(self.variables_dir, exist_ok=True)
 
             self.project_type = repo_config.get('project_type')
-            self.subproject_path = None
-            if self.project_type == ProjectType.SUB:
-                self.subproject_path = repo_config.get('subproject_path')
             self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
 
@@ -159,13 +155,14 @@ class RepoConfig:
             yml.dump(data, f)
 
 
-def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> None:
+def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> str:
     """
     Initialize a repository under the current path.
     """
     if os.path.exists(repo_path):
         raise FileExistsError(f'Repository {repo_path} already exists')
 
+    new_config = dict()
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
     elif project_type == ProjectType.SUB:
@@ -174,21 +171,22 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
             exist_ok=True,
         )
         copy_template_directory('repo', repo_path)
-        new_repo_config = get_repo_config(repo_path)
         current_metadata = get_repo_config().metadata_path
-        new_metadata = new_repo_config.metadata_path
+        new_metadata = get_repo_config(repo_path).metadata_path
         if os.path.exists(current_metadata):
             shutil.copyfile(current_metadata, new_metadata)
-        new_repo_config.save(
-            project_type=ProjectType.SUB.value,
-            subproject_path=repo_path,
-        )
+        new_config.update(project_type=ProjectType.SUB.value)
     else:
         os.makedirs(
             os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
             exist_ok=True,
         )
         copy_template_directory('repo', repo_path)
+
+    project_uuid = uuid.uuid4().hex
+    new_config.update(project_uuid=project_uuid)
+    get_repo_config(repo_path).save(**new_config)
+    return project_uuid
 
 
 def get_data_dir() -> str:
@@ -201,15 +199,6 @@ def get_repo_name() -> str:
 
 def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
-
-
-@lru_cache(maxsize=1)
-def get_repo_identifier() -> str:
-    repo_config = get_repo_config()
-    if repo_config.project_type == ProjectType.SUB:
-        return repo_config.subproject_path
-    else:
-        return get_repo_path()
 
 
 def get_repo_config(repo_path=None) -> RepoConfig:
@@ -227,3 +216,10 @@ def set_repo_path(repo_path: str) -> None:
 
 def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
+
+
+project_uuid = get_repo_config().project_uuid
+
+
+def get_project_uuid() -> str:
+    return project_uuid

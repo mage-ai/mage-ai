@@ -216,7 +216,7 @@ function WorkspacePage() {
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     { cluster_type: clusterType },
     {
-      refreshInterval: 5000,
+      refreshInterval: 10000,
       revalidateOnFocus: true,
     },
   );

@@ -3,7 +3,7 @@ from typing import List
 
 from cryptography.fernet import Fernet, InvalidToken
 
-from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_identifier
+from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_path
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
@@ -29,7 +29,7 @@ def create_secret(name: str, value: str):
     kwargs = {
         'name': name,
         'value': encrypted_value.decode('utf-8'),
-        'repo_name': get_repo_identifier(),
+        'repo_name': get_repo_path(),
     }
 
     secret = Secret(**kwargs)
@@ -59,7 +59,7 @@ def get_valid_secrets() -> List:
 
     fernet = Fernet(key)
 
-    secrets = Secret.query.filter(Secret.repo_name == get_repo_identifier())
+    secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
     valid_secrets = []
     if secrets.count() > 0:
         for secret in secrets:
