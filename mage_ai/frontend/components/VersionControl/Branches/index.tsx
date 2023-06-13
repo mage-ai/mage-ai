@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -6,10 +7,13 @@ import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Branch } from '@oracle/icons';
+import api from '@api';
+import { Add, Branch, Lightning } from '@oracle/icons';
 import {
   ACTION_MERGE,
   ACTION_REBASE,
@@ -21,22 +25,60 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
 
 type BranchesProps = {
   branch: GitBranchType;
   branches: GitBranchType[];
-  createBranch: (branchName: string) => void;
-  onChangeBranch: (branchName: string) => void;
+  fetchBranch: () => void;
+  fetchBranches: () => void;
+  showError: (opts: any) => void;
 };
 
 function Branches({
   branch,
   branches,
-  createBranch,
-  onChangeBranch,
+  fetchBranch,
+  fetchBranches,
+  showError,
 }: BranchesProps) {
-  const [branchNameNew, setBranchNameNew] = useState<string>('');
+  const [actionMessage, setActionMessage] = useState<string>('');
   const [actionName, setActionName] = useState<string>(null);
+  const [branchBase, setBranchBase] = useState<string>(null);
+  const [branchNameNew, setBranchNameNew] = useState<string>('');
+
+  const [createGitBranch, { isLoading: isLoadingCreate }] = useMutation(api.git_branches.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+            fetchBranches();
+            setBranchNameNew('');
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const [changeGitBranch, { isLoading: isLoadingChange }] = useMutation(api.git_branches.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   return (
     <>
@@ -47,30 +89,42 @@ function Branches({
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Spacing mb={1}>
-            <Headline level={5} muted>
+            <Text bold muted>
               Current branch
-            </Headline>
+            </Text>
           </Spacing>
 
-          <Tooltip
-            fullSize
-            label="Choose a different branch to switch branches"
-            widthFitContent
-          >
-            <Select
-              beforeIcon={<Branch muted={false} />}
-              beforeIconSize={UNIT * 2}
-              monospace
-              onChange={e => onChangeBranch(e.target.value)}
-              value={branch?.name}
+          <FlexContainer alignItems="center">
+            <Tooltip
+              fullSize
+              label="Choose a different branch to switch branches"
+              widthFitContent
             >
-              {branch?.name && branches?.map(({ name }) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-          </Tooltip>
+              <Select
+                beforeIcon={<Branch muted={false} />}
+                beforeIconSize={UNIT * 2}
+                monospace
+                onChange={e => changeGitBranch({
+                  git_branch: {
+                    name: e.target.value,
+                  },
+                })}
+                value={branch?.name}
+              >
+                {branch?.name && branches?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </Tooltip>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            {isLoadingChange && (
+              <Spinner inverted />
+            )}
+          </FlexContainer>
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
@@ -85,21 +139,19 @@ function Branches({
             <Spacing mr={1} />
 
             <Button
+              beforeIcon={<Add size={UNIT * 2} />}
               disabled={!branchNameNew}
+              loading={isLoadingCreate}
               onClick={() => {
-                createBranch(branchNameNew);
+                createGitBranch({
+                  git_branch: {
+                    name: branchNameNew,
+                  },
+                });
               }}
               secondary
             >
-              <FlexContainer alignItems="center">
-                <Add />
-
-                <Spacing mr={1} />
-
-                <Text>
-                  Create new branch
-                </Text>
-              </FlexContainer>
+              Create new branch
             </Button>
           </FlexContainer>
         </Spacing>
@@ -114,21 +166,18 @@ function Branches({
           <FlexContainer alignItems="center">
             <div>
               <Spacing mb={1}>
-                <Headline level={5} muted>
+                <Text bold muted>
                   Base branch
-                </Headline>
+                </Text>
               </Spacing>
 
               <Select
                 beforeIcon={<Branch />}
                 beforeIconSize={UNIT * 1.5}
-                compact
                 monospace
-                onChange={() => {
-                  // Change branches
-                }}
-                small
-                // value={branch?.name}
+                onChange={e => setBranchBase(e.target.value)}
+                placeholder="Choose a branch"
+                value={branchBase}
               >
                 {branches?.map(({ name }) => (
                   <option key={name} value={name}>
@@ -142,18 +191,16 @@ function Branches({
 
             <div>
               <Spacing mb={1}>
-                <Headline level={5} muted>
+                <Text bold muted>
                   Compare branch
-                </Headline>
+                </Text>
               </Spacing>
 
               <Select
                 beforeIcon={<Branch />}
                 beforeIconSize={UNIT * 1.5}
-                compact
                 disabled
                 monospace
-                small
                 value={branch?.name}
               >
                 {branch?.name && (
@@ -168,18 +215,16 @@ function Branches({
 
             <div>
               <Spacing mb={1}>
-                <Headline level={5} muted>
+                <Text bold muted>
                   Action
-                </Headline>
+                </Text>
               </Spacing>
 
               <Select
-                compact
                 onChange={(e) => setActionName(e.target.value)}
-                small
-                value={actionName}
+                placeholder="Choose an action"
+                value={actionName || ''}
               >
-                <option value="" />
                 <option value={ACTION_MERGE}>
                   {capitalizeRemoveUnderscoreLower(ACTION_MERGE)}
                 </option>
@@ -190,11 +235,28 @@ function Branches({
             </div>
           </FlexContainer>
 
-          <Spacing mt={1}>
+          {actionName && ACTION_MERGE === actionName && (
+            <Spacing mt={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Message for {actionName}
+                </Text>
+              </Spacing>
+
+              <TextArea
+                monospace
+                onChange={e => setActionMessage(e.target.value)}
+                value={actionMessage || ''}
+              />
+            </Spacing>
+          )}
+
+          <Spacing mt={PADDING_UNITS}>
             <Button
-              disabled={!actionName}
+              beforeIcon={<Lightning size={UNIT * 2} />}
+              disabled={!actionName || !branchBase}
               onClick={() => {
-                // Execute action
+                setActionName(null);
               }}
               secondary
             >
