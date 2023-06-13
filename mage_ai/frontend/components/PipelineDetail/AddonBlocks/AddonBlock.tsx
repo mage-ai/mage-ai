@@ -299,7 +299,6 @@ function AddonBlock({
     interruptKernel,
     isLoadingUpdateBlock,
     messages,
-    onChangeCallbackBlock,
     onChangeCodeBlock,
     onSelectBlockFile,
     pipeline,
