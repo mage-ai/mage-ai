@@ -1160,6 +1160,8 @@ class Block:
         self,
         execution_partition: str = None,
         include_print_outputs: bool = True,
+        csv_lines_only: bool = False,
+        sample: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
@@ -1195,40 +1197,47 @@ class Block:
                 continue
 
             data = variable_object.read_data(
-                sample=True,
+                sample=sample,
                 sample_count=sample_count,
                 spark=self.__get_spark_session(),
             )
             if type(data) is pd.DataFrame:
-                try:
-                    analysis = variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        block_uuid,
-                        v,
-                        dataframe_analysis_keys=['metadata', 'statistics'],
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME_ANALYSIS,
+                if csv_lines_only:
+                    data = dict(
+                        table=data.to_csv(header=True, index=False).strip('\n').split('\n')
                     )
-                except Exception:
-                    analysis = None
-                if analysis is not None:
-                    stats = analysis.get('statistics', {})
-                    column_types = (analysis.get('metadata') or {}).get('column_types', {})
-                    row_count = stats.get('original_row_count', stats.get('count'))
-                    column_count = stats.get('original_column_count', len(column_types))
                 else:
-                    row_count, column_count = data.shape
+                    try:
+                        analysis = variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            block_uuid,
+                            v,
+                            dataframe_analysis_keys=['metadata', 'statistics'],
+                            partition=execution_partition,
+                            variable_type=VariableType.DATAFRAME_ANALYSIS,
+                        )
+                    except Exception:
+                        analysis = None
+                    if analysis is not None:
+                        stats = analysis.get('statistics', {})
+                        column_types = (analysis.get('metadata') or {}).get('column_types', {})
+                        row_count = stats.get('original_row_count', stats.get('count'))
+                        column_count = stats.get('original_column_count', len(column_types))
+                    else:
+                        row_count, column_count = data.shape
 
-                columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
-                    ),
-                    shape=[row_count, column_count],
-                    type=DataType.TABLE,
-                    variable_uuid=v,
-                )
+                    columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                    data = dict(
+                        sample_data=dict(
+                            columns=columns_to_display,
+                            rows=json.loads(
+                                data[columns_to_display].to_json(orient='split')
+                            )['data']
+                        ),
+                        shape=[row_count, column_count],
+                        type=DataType.TABLE,
+                        variable_uuid=v,
+                    )
                 data_products.append(data)
                 continue
             elif is_geo_dataframe(data):

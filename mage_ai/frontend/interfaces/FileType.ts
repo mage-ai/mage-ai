@@ -1,6 +1,7 @@
 import { BlockLanguageEnum } from './BlockType';
 
 export enum FileExtensionEnum {
+  CSV = 'csv',
   JSON = 'json',
   MD = 'md',
   PY = 'py',

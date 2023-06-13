@@ -19,6 +19,7 @@ export type TooltipWrapperProps = {
   children?: any;
   default?: boolean;
   description?: any | string;
+  forceVisible?: boolean;
   height?: number;
   fullSize?: boolean;
   inline?: boolean;
@@ -158,6 +159,7 @@ function TooltipWrapper({
   center,
   children,
   content,
+  forceVisible = false,
   fullSize,
   height,
   inline,
@@ -226,7 +228,7 @@ function TooltipWrapper({
     >
       {elRendered}
 
-      {visible && (
+      {(visible || forceVisible) && (
         <ContentStyle
           appearAbove={appearAbove}
           appearBefore={appearBefore}

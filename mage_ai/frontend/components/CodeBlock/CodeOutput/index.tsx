@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
@@ -12,6 +14,7 @@ import CodeEditor from '@components/CodeEditor';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -23,9 +26,10 @@ import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { BorderColorShareProps } from '../index.style';
-import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
+import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -42,6 +46,7 @@ import {
   INTERNAL_TEST_STRING,
 } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ResponseTypeEnum } from '@api/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   TAB_DBT_LINEAGE_UUID,
@@ -51,8 +56,9 @@ import {
 } from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
+import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -77,10 +83,26 @@ type CodeOutputProps = {
   runStartTime?: number;
   selectedTab?: TabType;
   setCollapsed?: (boolean) => void;
+  setErrors?: (errors: ErrorsType) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   setSelectedTab?: (tab: TabType) => void;
 } & BorderColorShareProps;
+
+const SHARED_TOOLTIP_PROPS = {
+  appearAbove: true,
+  appearBefore: true,
+  block: true,
+  size: null,
+  widthFitContent: true,
+};
+
+const SHARED_BUTTON_PROPS = {
+  basic: true,
+  iconOnly: true,
+  noPadding: true,
+  transparent: true,
+};
 
 function CodeOutput({
   block,
@@ -104,6 +126,7 @@ function CodeOutput({
   selected,
   selectedTab,
   setCollapsed,
+  setErrors,
   setOutputBlocks,
   setSelectedOutputBlock,
   setSelectedTab,
@@ -111,7 +134,8 @@ function CodeOutput({
   const {
     status,
     type: blockType,
-  } = block;
+    uuid: blockUUID,
+  } = block || {};
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const executedAndIdle = StatusTypeEnum.EXECUTED === status
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
@@ -119,6 +143,36 @@ function CodeOutput({
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
   const [progress, setProgress] = useState<number>();
+  const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
+
+  const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
+  const [
+    downloadBlockOutputAsCsvFile,
+    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
+  ]: any = useMutation(
+    () => api.block_outputs.pipelines.downloads.detailAsync(
+      pipeline?.uuid,
+      blockUUID,
+      { token },
+      {
+        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+        responseType: ResponseTypeEnum.BLOB,
+      },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+          response, {
+            callback: (blobResponse) => {
+              openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
+            },
+            onErrorCallback: (response, errors) => setErrors?.({
+              errors,
+              response,
+            }),
+          },
+        ),
+    },
+  );
 
   useEffect(() => {
     if (!isInProgress) {
@@ -591,11 +645,8 @@ function CodeOutput({
             {setCollapsed && (
               <Flex alignItems="center" px={1}>
                 <Button
-                  basic
-                  iconOnly
-                  noPadding
+                  {...SHARED_BUTTON_PROPS}
                   onClick={() => setCollapsed(!collapsed)}
-                  transparent
                 >
                   {collapsed ? (
                     <FlexContainer alignItems="center">
@@ -626,9 +677,7 @@ function CodeOutput({
                 justifyContent="flex-end"
               >
                 <Tooltip
-                  appearAbove
-                  appearBefore
-                  block
+                  {...SHARED_TOOLTIP_PROPS}
                   label={runCount >= 1 && runStartTime
                     ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
                     : (
@@ -637,8 +686,6 @@ function CodeOutput({
                         : 'Block executed successfully'
                     )
                   }
-                  size={null}
-                  widthFitContent
                 >
                   <FlexContainer alignItems="center">
                     {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
@@ -665,29 +712,54 @@ function CodeOutput({
                   </FlexContainer>
                 </Tooltip>
                 {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
-                  <Spacing pl={1}>
-                    <Button
-                      afterIcon={<Expand muted size={UNIT * 1.75} />}
-                      basic
-                      noPadding
-                      onClick={() => {
-                        addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                        openSidekickView?.(ViewKeyEnum.DATA);
-                        setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
-                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                            setSelectedOutputBlock?.(block);
-                            return prevOutputBlocks.concat(block);
-                          } else {
-                            return prevOutputBlocks;
-                          }
-                        });
-                      }}
-                      transparent
-                    >
-                      <Text default>
-                        Expand table
-                      </Text>
-                    </Button>
+                  <Spacing pl={2}>
+                    <FlexContainer alignItems="center">
+                      <Tooltip
+                        {...SHARED_TOOLTIP_PROPS}
+                        label="Expand table"
+                      >
+                        <Button
+                          {...SHARED_BUTTON_PROPS}
+                          onClick={() => {
+                            addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
+                            openSidekickView?.(ViewKeyEnum.DATA);
+                            setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
+                              if (!prevOutputBlocks.find(({ uuid }) => uuid === blockUUID)) {
+                                setSelectedOutputBlock?.(block);
+                                return prevOutputBlocks.concat(block);
+                              } else {
+                                return prevOutputBlocks;
+                              }
+                            });
+                          }}
+                        >
+                          <Expand muted size={UNIT * 1.75} />
+                        </Button>
+                      </Tooltip>
+
+                      <Spacing pl={2} />
+
+                      <Tooltip
+                        {...SHARED_TOOLTIP_PROPS}
+                        forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
+                        label={isLoadingDownloadBlockOutputAsCsvFile
+                          ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                          : 'Save output as CSV file'
+                        }
+                      >
+                        <Button
+                          {...SHARED_BUTTON_PROPS}
+                          compact
+                          loading={isLoadingDownloadBlockOutputAsCsvFile}
+                          onClick={() => {
+                            setBlockOutputDownloadProgress(null);
+                            downloadBlockOutputAsCsvFile();
+                          }}
+                        >
+                          <Save muted size={UNIT * 1.75} />
+                        </Button>
+                      </Tooltip>
+                    </FlexContainer>
                   </Spacing>
                 }
               </FlexContainer>
