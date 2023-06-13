@@ -395,9 +395,9 @@ mage create-spark-cluster demo_project
 
 ```bash
 docker run -it \
-  -v $(pwd):/home/src mageai/mageai \
   --env AWS_ACCESS_KEY_ID=your_key_id \
   --env AWS_SECRET_ACCESS_KEY=your_access_key \
+  -v $(pwd):/home/src mageai/mageai \
   mage create-spark-cluster demo_project
 ```
 

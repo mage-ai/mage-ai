@@ -1889,15 +1889,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def __get_spark_session(self):
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
-            print('Spark session already initialized.')
             return self.spark
         try:
             if self.pipeline and self.pipeline.spark_config:
-                print('Initiate Spark session with the pipeline spark_config.')
                 spark_config = SparkConfig.load(
                     config=self.pipeline.spark_config)
             else:
-                print('Initiate Spark session with the project spark_config.')
                 repo_config = RepoConfig(repo_path=self.repo_path)
                 spark_config = SparkConfig.load(
                     config=repo_config.spark_config)
