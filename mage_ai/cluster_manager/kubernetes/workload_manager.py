@@ -85,7 +85,8 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
+                'image': 'mageai/mage-local:latest',
+                'imagePullPolicy': 'Never',
                 'command': ['mage', 'start', name],
                 'ports': [
                     {
@@ -268,7 +269,7 @@ class WorkloadManager:
                 'persistentVolumeReclaimPolicy': 'Delete',
                 'storageClassName': f'{name}-storage',
                 'local': {
-                    'path': '/Users/david_yang/mage/mage-ai/k8s_main_project/projects/new-3',
+                    'path': '/Users/david_yang/mage/mage-ai/k8s_main_project/projects/local-2',
                 },
                 'nodeAffinity': {
                     'required': {
