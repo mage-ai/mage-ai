@@ -48,14 +48,17 @@ class ApiDownloadHandler(BaseHandler):
             sample=False,
             variable_type=VariableType.DATAFRAME,
         )
-        for table in tables:
+        for data in tables:
+            table = data.get('table', [])
             line_count = len(table)
             for line in range(0, line_count):
+                is_last_line = line == line_count - 1
                 try:
-                    self.write(table[line].encode('UTF-8'))
+                    csv_line = table[line] if is_last_line else table[line] + '\n'
+                    self.write(csv_line.encode('UTF-8'))
                 except iostream.StreamClosedError:
                     break
-                if (line == 0 or (line % 10000 == 0 or line == line_count - 1)):
+                if (line == 0 or (line % 5000 == 0 or is_last_line)):
                     await self.flush()
                     # Sleep for a nanosecond so other handlers can run and avoid blocking
                     await gen.sleep(0.000000001)
