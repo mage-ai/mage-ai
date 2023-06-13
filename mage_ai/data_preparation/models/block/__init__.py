@@ -1174,7 +1174,9 @@ class Block:
             )
             if type(data) is pd.DataFrame:
                 if csv_lines_only:
-                    data = data.to_csv(header=True, index=False).strip('\n')
+                    data = dict(
+                        table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+                    )
                 else:
                     try:
                         analysis = variable_manager.get_variable(
