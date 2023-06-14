@@ -4,7 +4,8 @@ import os
 import shutil
 import subprocess
 import uuid
-from typing import Any, List
+from datetime import datetime
+from typing import Any, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -227,6 +228,24 @@ class Git:
 
     def diff_file(self, filename: str) -> str:
         return self.repo.git.diff(filename)
+
+    def logs(self, commits: int = 40) -> List[Dict]:
+        arr = []
+
+        for idx, commit in enumerate(self.repo.iter_commits()):
+            if idx >= commits:
+                break
+
+            arr.append(dict(
+                author=dict(
+                    email=commit.author.email,
+                    name=commit.author.name,
+                ),
+                date=datetime.fromtimestamp(commit.authored_date).isoformat(),
+                message=commit.message,
+            ))
+
+        return arr
 
     def reset_file(self, filename: str) -> None:
         self.repo.git.reset(filename)
