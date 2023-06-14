@@ -21,7 +21,7 @@ RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-
 RUN ${PIP} install "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 COPY ./mage_ai/server/constants.py constants.py
 # RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
-RUN ${PIP} install git+https://github.com/mage-ai/mage-ai.git@workspace_final_docker_test
+RUN ${PIP} install git+https://github.com/mage-ai/mage-ai.git@revert-2769-revert-2760-dy--workspace_final
 
 # Install R
 RUN apt install -y r-base
