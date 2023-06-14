@@ -14,7 +14,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { Add, Branch, Lightning, PaginateArrowRight } from '@oracle/icons';
+import { Add, Branch, Lightning, PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
 import {
   ACTION_MERGE,
   ACTION_REBASE,
@@ -25,7 +25,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { TAB_FILES } from '../constants';
+import { TAB_FILES, TAB_REMOTE } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
@@ -274,6 +274,20 @@ function Branches({
         </Spacing>
 
         <FlexContainer>
+          <Button
+            beforeIcon={<PaginateArrowLeft />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_REMOTE.uuid}`,
+            }}
+            noBackground
+            noHoverUnderline
+            sameColorAsText
+          >
+            {TAB_REMOTE.uuid}
+          </Button>
+
+          <Spacing mr={1} />
+
           <Button
             afterIcon={<PaginateArrowRight />}
             linkProps={{

@@ -10,6 +10,7 @@ import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
+import Remote from './Remote';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -25,6 +26,7 @@ import {
   TAB_BRANCHES,
   TAB_COMMIT,
   TAB_FILES,
+  TAB_REMOTE,
 } from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
@@ -241,6 +243,11 @@ function VersionControl() {
         {!dataBranch && <Spinner inverted />}
         {dataBranch && (
           <>
+            {TAB_REMOTE.uuid === selectedTab?.uuid && (
+              <Remote
+              />
+            )}
+
             {TAB_BRANCHES.uuid === selectedTab?.uuid && (
               <Branches
                 branch={branch}
