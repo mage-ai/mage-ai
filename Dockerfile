@@ -20,7 +20,8 @@ RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 RUN ${PIP} install "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 COPY ./mage_ai/server/constants.py constants.py
-RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
+# RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
+RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git@test_workspace_final_docker"
 
 # Install R
 RUN apt install -y r-base
