@@ -145,6 +145,7 @@ function Commit({
                 updateGitBranch({
                   git_branch: {
                     action_type: 'commit',
+                    files: stagedFilesPaths,
                     message: commitMessage,
                   },
                 });
