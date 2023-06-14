@@ -1,28 +1,35 @@
+import asyncio
+import json
+import multiprocessing
+import os
+import re
+import traceback
+import uuid
 from datetime import datetime
 from distutils.file_util import copy_file
+from typing import Dict, List
+
+import tornado.websocket
+from jupyter_client import KernelClient
+
 from mage_ai.api.errors import ApiError
-from mage_ai.api.utils import (
-    authenticate_client_and_token,
-    has_at_least_editor_role,
-)
+from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
 from mage_ai.data_preparation.models.constants import (
-    BlockType,
-    PipelineType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
+    BlockType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.models.oauth import Oauth2Application
+from mage_ai.orchestration.db.models.oauth import Oauth2Application, Permission
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
     get_active_kernel_name,
     switch_active_kernel,
 )
-from mage_ai.shared.constants import ENV_DEV
-from mage_ai.server.logger import Logger
 from mage_ai.server.execution_manager import (
     cancel_pipeline_execution,
     check_pipeline_process_status,
@@ -34,31 +41,23 @@ from mage_ai.server.execution_manager import (
 )
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.logger import Logger
 from mage_ai.server.utils.output_display import (
-    add_internal_output_info,
     add_execution_code,
+    add_internal_output_info,
     get_block_output_process_code,
     get_pipeline_execution_code,
 )
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     HIDE_ENV_VAR_VALUES,
     REQUIRE_USER_AUTHENTICATION,
+    is_disable_pipeline_edit_access,
 )
+from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_env_var_values
 from mage_ai.utils.code import reload_all_repo_modules
-from jupyter_client import KernelClient
-from typing import Dict, List
-import asyncio
-import json
-import multiprocessing
-import os
-import re
-import tornado.websocket
-import traceback
-import uuid
 
 logger = Logger().new_server_logger(__name__)
 
@@ -175,6 +174,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         api_key = message.get('api_key')
         token = message.get('token')
 
+        pipeline_uuid = message.get('pipeline_uuid')
+
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = not REQUIRE_USER_AUTHENTICATION
 
@@ -187,7 +188,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     valid = valid and \
                         oauth_token and \
                         oauth_token.user and \
-                        has_at_least_editor_role(oauth_token.user)
+                        has_at_least_editor_role(
+                            oauth_token.user,
+                            Permission.Entity.PIPELINE,
+                            pipeline_uuid,
+                        )
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
@@ -209,7 +214,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execute_pipeline = message.get('execute_pipeline')
         check_if_pipeline_running = message.get('check_if_pipeline_running')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
-        pipeline_uuid = message.get('pipeline_uuid')
         pipeline = None
         if pipeline_uuid:
             pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
