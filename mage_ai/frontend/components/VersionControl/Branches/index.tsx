@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
@@ -13,7 +14,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { Add, Branch, Lightning } from '@oracle/icons';
+import { Add, Branch, Lightning, PaginateArrowRight } from '@oracle/icons';
 import {
   ACTION_MERGE,
   ACTION_REBASE,
@@ -24,6 +25,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { TAB_FILES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
@@ -264,6 +266,26 @@ function Branches({
             </Button>
           </Spacing>
         </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Divider light />
+        </Spacing>
+
+        <FlexContainer>
+          <Button
+            afterIcon={<PaginateArrowRight />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_FILES.uuid}`,
+            }}
+            noHoverUnderline
+            sameColorAsText
+            secondary
+          >
+            Next: {TAB_FILES.uuid}
+          </Button>
+        </FlexContainer>
       </Spacing>
     </>
   );

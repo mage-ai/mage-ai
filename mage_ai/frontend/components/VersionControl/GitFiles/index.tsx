@@ -12,8 +12,13 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
 import { SpacingStyle } from './index.style';
+import {
+  TAB_BRANCHES,
+  TAB_COMMIT,
+} from '../constants';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -150,7 +155,7 @@ function GitFiles({
 
             <Spacing mr={1} />
 
-            <Text bold small>
+            <Text bold>
               {atLeast1File && allFilesSelected ? 'Unselect all' : 'Select all'}
             </Text>
           </FlexContainer>
@@ -184,7 +189,7 @@ function GitFiles({
 
                 <Spacing mr={1} />
 
-                <Text default monospace small>
+                <Text default monospace>
                   {fullPath}
                 </Text>
               </FlexContainer>
@@ -197,119 +202,152 @@ function GitFiles({
 
   return (
     <>
-      <FlexContainer>
-        <Flex flex={1} flexDirection="column">
-          <Headline>
-            Not staged {unstagedFilePaths?.length >= 1 && `(${unstagedFilePaths?.length})`}
-          </Headline>
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <FlexContainer>
+          <Flex flex={1} flexDirection="column">
+            <Headline>
+              Not staged {unstagedFilePaths?.length >= 1 && `(${unstagedFilePaths?.length})`}
+            </Headline>
 
-          <Spacing my={1}>
-            <Divider light />
-          </Spacing>
+            <Spacing my={PADDING_UNITS}>
+              <Divider light />
+            </Spacing>
 
-          <Spacing mb={1}>
-            <FlexContainer flexDirection="row">
-              <Button
-                compact
-                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB || isLoadingUpdateCheckout}
-                loading={isLoadingUpdate}
-                onClick={() => {
-                  updateGitBranch({
-                    git_branch: {
-                      action_type: 'add',
-                      files: Object.keys(selectedFilesA),
-                    },
-                  });
-                }}
-                primary
-                small
-              >
-                Add files
-              </Button>
-
-              <Spacing mr={1} />
-
-              <Button
-                compact
-                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdate || isLoadingUpdateB}
-                loading={isLoadingUpdateCheckout}
-                onClick={() => {
-                  if (typeof window !== 'undefined'
-                    && typeof location !== 'undefined'
-                    && window.confirm(
-                      'Are you sure you want to undo all changes in the selected files?',
-                    )
-                  ) {
-                    updateGitBranchCheckout({
+            <Spacing mb={PADDING_UNITS}>
+              <FlexContainer flexDirection="row">
+                <Button
+                  compact
+                  disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB || isLoadingUpdateCheckout}
+                  loading={isLoadingUpdate}
+                  onClick={() => {
+                    updateGitBranch({
                       git_branch: {
-                        action_type: 'checkout',
+                        action_type: 'add',
                         files: Object.keys(selectedFilesA),
                       },
                     });
-                  }
-                }}
-                secondary
-                small
-              >
-                Checkout files
-              </Button>
-            </FlexContainer>
-          </Spacing>
+                  }}
+                  primary
+                >
+                  Add files
+                </Button>
 
-          {renderColumn(
-            unstagedFilePaths,
-            selectedFilesA,
-            setSelectedFilesA,
-            {
-              ...modifiedFiles,
-              ...untrackedFiles,
-            },
-            allFilesASelected,
-          )}
-        </Flex>
+                <Spacing mr={1} />
 
-        <Spacing mr={PADDING_UNITS} />
+                <Button
+                  compact
+                  disabled={isEmptyObject(selectedFilesA) || isLoadingUpdate || isLoadingUpdateB}
+                  loading={isLoadingUpdateCheckout}
+                  noBackground
+                  onClick={() => {
+                    if (typeof window !== 'undefined'
+                      && typeof location !== 'undefined'
+                      && window.confirm(
+                        'Are you sure you want to undo all changes in the selected files?',
+                      )
+                    ) {
+                      updateGitBranchCheckout({
+                        git_branch: {
+                          action_type: 'checkout',
+                          files: Object.keys(selectedFilesA),
+                        },
+                      });
+                    }
+                  }}
+                >
+                  Checkout files
+                </Button>
+              </FlexContainer>
+            </Spacing>
 
-        <Flex flex={1} flexDirection="column">
-          <Headline>
-            Staged files {stagedFilePaths?.length >= 1 && `(${stagedFilePaths?.length})`}
-          </Headline>
+            {renderColumn(
+              unstagedFilePaths,
+              selectedFilesA,
+              setSelectedFilesA,
+              {
+                ...modifiedFiles,
+                ...untrackedFiles,
+              },
+              allFilesASelected,
+            )}
+          </Flex>
 
-          <Spacing my={1}>
-            <Divider light />
-          </Spacing>
+          <Spacing mr={PADDING_UNITS} />
 
-          <Spacing mb={1}>
-            <FlexContainer flexDirection="row">
-              <Button
-                compact
-                disabled={isEmptyObject(selectedFilesB) || isLoadingUpdate || isLoadingUpdateCheckout}
-                loading={isLoadingUpdateB}
-                onClick={() => {
-                  updateGitBranchB({
-                    git_branch: {
-                      action_type: 'reset',
-                      files: Object.keys(selectedFilesB),
-                    },
-                  });
-                }}
-                secondary
-                small
-              >
-                Reset files
-              </Button>
-            </FlexContainer>
-          </Spacing>
+          <Flex flex={1} flexDirection="column">
+            <Headline>
+              Staged files {stagedFilePaths?.length >= 1 && `(${stagedFilePaths?.length})`}
+            </Headline>
 
-          {renderColumn(
-            stagedFilePaths,
-            selectedFilesB,
-            setSelectedFilesB,
-            stagedFiles,
-            allFilesBSelected,
-          )}
-        </Flex>
-      </FlexContainer>
+            <Spacing my={PADDING_UNITS}>
+              <Divider light />
+            </Spacing>
+
+            <Spacing mb={PADDING_UNITS}>
+              <FlexContainer flexDirection="row">
+                <Button
+                  compact
+                  disabled={isEmptyObject(selectedFilesB) || isLoadingUpdate || isLoadingUpdateCheckout}
+                  loading={isLoadingUpdateB}
+                  onClick={() => {
+                    updateGitBranchB({
+                      git_branch: {
+                        action_type: 'reset',
+                        files: Object.keys(selectedFilesB),
+                      },
+                    });
+                  }}
+                  secondary
+                >
+                  Reset files
+                </Button>
+              </FlexContainer>
+            </Spacing>
+
+            {renderColumn(
+              stagedFilePaths,
+              selectedFilesB,
+              setSelectedFilesB,
+              stagedFiles,
+              allFilesBSelected,
+            )}
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Divider light />
+        </Spacing>
+
+        <FlexContainer>
+          <Button
+            beforeIcon={<PaginateArrowLeft />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_BRANCHES.uuid}`,
+            }}
+            noBackground
+            noHoverUnderline
+            sameColorAsText
+          >
+            {TAB_BRANCHES.uuid}
+          </Button>
+
+          <Spacing mr={1} />
+
+          <Button
+            afterIcon={<PaginateArrowRight />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_COMMIT.uuid}`,
+            }}
+            noHoverUnderline
+            sameColorAsText
+            secondary
+          >
+            Next: {TAB_COMMIT.uuid}
+          </Button>
+        </FlexContainer>
+      </Spacing>
     </>
   );
 }

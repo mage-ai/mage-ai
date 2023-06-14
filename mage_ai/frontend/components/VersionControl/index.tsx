@@ -266,6 +266,7 @@ function VersionControl() {
               <Commit
                 branch={branch}
                 fetchBranch={fetchBranch}
+                modifiedFiles={modifiedFiles}
                 showError={showError}
                 stagedFiles={stagedFiles}
               />
