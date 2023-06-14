@@ -85,7 +85,7 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                'image': 'mageai/mage-local:latest',
+                'image': 'mageai/mageai:latest',
                 'imagePullPolicy': 'Never',
                 'command': ['mage', 'start', name],
                 'ports': [
