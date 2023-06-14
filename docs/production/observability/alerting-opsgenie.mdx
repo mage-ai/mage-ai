@@ -40,41 +40,41 @@ Follow these steps to add that Opsgenie Configuration to your project settings:
 4. In the `metadata.yaml` file, add a section with the following
    configuration or update the existing `notification_config` section:
 
-```yaml
-notification_config:
-  alert_on:
-    - trigger_failure
-    - trigger_passed_sla
-```
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
 
-If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
 
-Options:
+    Options:
 
-- `trigger_failure`: alert when a run of a trigger fails
-- `trigger_success`: alert when a run of a trigger succeeds
-- `trigger_passed_sla`: alert when a run of a trigger passes sla
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a run of a trigger passes sla
 
 5. In the `metadata.yaml` file, add the following values:
 
-```yaml
-notification_config:
-  alert_on:
-    ...
-  opsgenie_config:
-    url: "https://api.eu.opsgenie.com/v2/alerts"
-    api_key: "<your_api_key>"
-    priority: "P2" # Default P3
-    tags: # Default empty
-    - production
-    details: # Default empty
-      environment: production
-    responders: # Default empty
-    - id: "4513b7ea-3b91-438f-b7e4-e3e54af9147c"
-      type: "team"
-```
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      opsgenie_config:
+        url: "https://api.eu.opsgenie.com/v2/alerts"
+        api_key: "<your_api_key>"
+        priority: "P2" # Default P3
+        tags: # Default empty
+        - production
+        details: # Default empty
+          environment: production
+        responders: # Default empty
+        - id: "4513b7ea-3b91-438f-b7e4-e3e54af9147c"
+          type: "team"
+    ```
 
-1. Change the `your_api_key` value to be the API Key you created from Opsgenie.
+    Change the `your_api_key` value to be the API Key you created from Opsgenie.
 
 ---
 
