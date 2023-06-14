@@ -20,6 +20,26 @@ def load_data_from_api(**kwargs) -> DataFrame:
     )
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @test
 def test_output(df) -> None:
     """
