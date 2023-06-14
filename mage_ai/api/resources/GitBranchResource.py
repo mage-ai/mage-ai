@@ -85,6 +85,8 @@ class GitBranchResource(GenericResource):
     async def update(self, payload, **kwargs):
         git_manager = Git.get_manager(user=self.current_user)
         action_type = payload.get('action_type')
+        files = payload.get('files', None)
+
         if action_type == 'status':
             status = git_manager.status()
             untracked_files = git_manager.untracked_files()
@@ -97,7 +99,6 @@ class GitBranchResource(GenericResource):
             )
         elif action_type == 'commit':
             message = payload.get('message')
-            files = payload.get('files', None)
             if not message:
                 error = ApiError.RESOURCE_ERROR
                 error.update({
@@ -110,8 +111,18 @@ class GitBranchResource(GenericResource):
         elif action_type == 'pull':
             git_manager.pull()
         elif action_type == 'reset':
-            git_manager.reset()
+            if files and len(files) >= 1:
+                for file_path in files:
+                    git_manager.reset_file(file_path)
+            else:
+                git_manager.reset()
         elif action_type == 'clone':
             git_manager.clone()
+        elif action_type == 'add':
+            for file_path in files:
+                git_manager.add_file(file_path, ['-f'])
+        elif action_type == 'checkout':
+            for file_path in files:
+                git_manager.checkout_file(file_path)
 
         return self

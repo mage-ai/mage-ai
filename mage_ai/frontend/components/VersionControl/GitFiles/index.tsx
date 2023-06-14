@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
@@ -9,15 +11,19 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SpacingStyle } from './index.style';
 import { isEmptyObject } from '@utils/hash';
+import { onSuccess } from '@api/utils/response';
 
 type GitFilesProps = {
   branch: GitBranchType;
+  fetchBranch: () => void;
   modifiedFiles: {
     [fullPath: string]: boolean;
   };
+  showError: (opts: any) => void;
   stagedFiles: {
     [fullPath: string]: boolean;
   };
@@ -28,7 +34,9 @@ type GitFilesProps = {
 
 function GitFiles({
   branch,
+  fetchBranch,
   modifiedFiles,
+  showError,
   stagedFiles,
   untrackedFiles,
 }: GitFilesProps) {
@@ -62,6 +70,41 @@ function GitFiles({
       stagedFilePaths,
     ]);
 
+  const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
+    api.git_branches.useUpdate(branch?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+            setSelectedFilesA({});
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const [updateGitBranchB, { isLoading: isLoadingUpdateB }] = useMutation(
+    api.git_branches.useUpdate(branch?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+            setSelectedFilesB({});
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const renderColumn = useCallback((
     filePaths: string[],
     selectedFiles: {
@@ -72,89 +115,105 @@ function GitFiles({
       [fullPath: string]: boolean;
     },
     allFilesSelected: boolean,
-  ) => (
-    <>
-      <Link
-        block
-        noHoverUnderline
-        onClick={() => {
-          if (allFilesSelected) {
-            setSelectedFiles({});
-          } else {
-            setSelectedFiles(allFiles);
-          }
-        }}
-        preventDefault
-      >
-        <FlexContainer
-          alignItems="center"
-          flexDirection="row"
+  ) => {
+    const atLeast1File = filePaths?.length >= 1;
+
+    return (
+      <>
+        <Link
+          block
+          noHoverUnderline
+          onClick={() => {
+            if (allFilesSelected) {
+              setSelectedFiles({});
+            } else {
+              setSelectedFiles(allFiles);
+            }
+          }}
+          preventDefault
         >
-          <Checkbox
-            checked={allFilesSelected}
-          />
-
-          <Spacing mr={1} />
-
-          <Text bold small>
-            {allFilesSelected ? 'Unselect all' : 'Select all'}
-          </Text>
-        </FlexContainer>
-      </Link>
-
-      {filePaths.map((fullPath: string) => (
-        <SpacingStyle key={fullPath}>
-          <Link
-            block
-            noHoverUnderline
-            onClick={() => setSelectedFiles((prev) => {
-              const n = { ...prev };
-              const val = !n?.[fullPath];
-              if (val) {
-                n[fullPath] = true;
-              } else {
-                delete n[fullPath];
-              }
-
-              return n;
-            })}
-            preventDefault
+          <FlexContainer
+            alignItems="center"
+            flexDirection="row"
           >
-            <FlexContainer
-              alignItems="center"
-              flexDirection="row"
+            <Checkbox
+              checked={atLeast1File && allFilesSelected}
+              disabled={!atLeast1File}
+            />
+
+            <Spacing mr={1} />
+
+            <Text bold small>
+              {atLeast1File && allFilesSelected ? 'Unselect all' : 'Select all'}
+            </Text>
+          </FlexContainer>
+        </Link>
+
+        {filePaths.map((fullPath: string) => (
+          <SpacingStyle key={fullPath}>
+            <Link
+              block
+              noHoverUnderline
+              onClick={() => setSelectedFiles((prev) => {
+                const n = { ...prev };
+                const val = !n?.[fullPath];
+                if (val) {
+                  n[fullPath] = true;
+                } else {
+                  delete n[fullPath];
+                }
+
+                return n;
+              })}
+              preventDefault
             >
-              <Checkbox
-                checked={!!selectedFiles?.[fullPath]}
-              />
+              <FlexContainer
+                alignItems="center"
+                flexDirection="row"
+              >
+                <Checkbox
+                  checked={!!selectedFiles?.[fullPath]}
+                />
 
-              <Spacing mr={1} />
+                <Spacing mr={1} />
 
-              <Text default monospace small>
-                {fullPath}
-              </Text>
-            </FlexContainer>
-          </Link>
-        </SpacingStyle>
-      ))}
-    </>
-  ), []);
+                <Text default monospace small>
+                  {fullPath}
+                </Text>
+              </FlexContainer>
+            </Link>
+          </SpacingStyle>
+        ))}
+      </>
+    );
+  }, []);
 
   return (
     <>
       <FlexContainer>
-        <Flex flexDirection="column">
-          <Spacing mb={PADDING_UNITS}>
-            <Headline>
-              Not staged
-            </Headline>
+        <Flex flex={1} flexDirection="column">
+          <Headline>
+            Not staged
+          </Headline>
+
+          <Spacing my={1}>
+            <Divider light />
           </Spacing>
 
           <Spacing mb={1}>
             <FlexContainer flexDirection="row">
               <Button
                 compact
-                disabled={isEmptyObject(selectedFilesA)}
+                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB}
+                loading={isLoadingUpdate}
+                onClick={() => {
+                  updateGitBranch({
+                    git_branch: {
+                      action_type: 'add',
+                      files: Object.keys(selectedFilesA),
+                    },
+                  });
+                }}
                 primary
                 small
               >
@@ -165,7 +224,7 @@ function GitFiles({
 
               <Button
                 compact
-                disabled={isEmptyObject(selectedFilesA)}
+                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdate || isLoadingUpdateB}
                 secondary
                 small
               >
@@ -188,11 +247,13 @@ function GitFiles({
 
         <Spacing mr={PADDING_UNITS} />
 
-        <Flex flexDirection="column">
-          <Spacing mb={PADDING_UNITS}>
-            <Headline>
-              Staged files
-            </Headline>
+        <Flex flex={1} flexDirection="column">
+          <Headline>
+            Staged files
+          </Headline>
+
+          <Spacing my={1}>
+            <Divider light />
           </Spacing>
 
           <Spacing mb={1}>
@@ -200,6 +261,15 @@ function GitFiles({
               <Button
                 compact
                 disabled={isEmptyObject(selectedFilesB)}
+                loading={isLoadingUpdateB}
+                onClick={() => {
+                  updateGitBranchB({
+                    git_branch: {
+                      action_type: 'reset',
+                      files: Object.keys(selectedFilesB),
+                    },
+                  });
+                }}
                 secondary
                 small
               >

@@ -218,8 +218,9 @@ class Git:
     def status(self) -> str:
         return self.repo.git.status()
 
-    def add_file(self, filename: str) -> None:
-        self.repo.git.add(filename)
+    def add_file(self, filename: str, flags: List[str] = None) -> None:
+        arr = flags or []
+        self.repo.git.add(filename, *arr)
 
     def checkout_file(self, filename: str) -> None:
         self.repo.git.checkout(filename)
