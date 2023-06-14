@@ -97,6 +97,12 @@ class Git:
     def branches(self) -> List:
         return [branch.name for branch in self.repo.branches]
 
+    def staged_files(self) -> List[str]:
+        files_string = self.repo.git.diff('--name-only', '--cached')
+        if files_string:
+            return files_string.split('\n')
+        return []
+
     def untracked_files(self, untracked_files: bool = False) -> List[str]:
         from git.compat import defenc
 
