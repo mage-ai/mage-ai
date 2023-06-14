@@ -2,6 +2,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.git import Git
 from mage_ai.data_preparation.preferences import get_preferences
+from typing import Dict, List
 import os
 
 
@@ -126,3 +127,7 @@ class GitBranchResource(GenericResource):
                 git_manager.checkout_file(file_path)
 
         return self
+
+    def logs(self, commits: int = None) -> List[Dict]:
+        git_manager = Git.get_manager(user=self.current_user)
+        return git_manager.logs(commits=commits)

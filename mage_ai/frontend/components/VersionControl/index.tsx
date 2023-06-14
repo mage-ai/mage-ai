@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import Commit from './Commit';
 import Dashboard from '@components/Dashboard';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
@@ -10,6 +11,7 @@ import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
@@ -21,6 +23,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   TABS,
   TAB_BRANCHES,
+  TAB_COMMIT,
   TAB_FILES,
 } from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
@@ -235,25 +238,39 @@ function VersionControl() {
       uuid="Version control/index"
     >
       <Spacing p={PADDING_UNITS}>
-        {TAB_BRANCHES.uuid === selectedTab?.uuid && (
-          <Branches
-            branch={branch}
-            branches={branches}
-            fetchBranch={fetchBranch}
-            fetchBranches={fetchBranches}
-            showError={showError}
-          />
-        )}
+        {!dataBranch && <Spinner inverted />}
+        {dataBranch && (
+          <>
+            {TAB_BRANCHES.uuid === selectedTab?.uuid && (
+              <Branches
+                branch={branch}
+                branches={branches}
+                fetchBranch={fetchBranch}
+                fetchBranches={fetchBranches}
+                showError={showError}
+              />
+            )}
 
-        {TAB_FILES.uuid === selectedTab?.uuid && (
-          <GitFiles
-            branch={branch}
-            fetchBranch={fetchBranch}
-            modifiedFiles={modifiedFiles}
-            showError={showError}
-            stagedFiles={stagedFiles}
-            untrackedFiles={untrackedFiles}
-          />
+            {TAB_FILES.uuid === selectedTab?.uuid && (
+              <GitFiles
+                branch={branch}
+                fetchBranch={fetchBranch}
+                modifiedFiles={modifiedFiles}
+                showError={showError}
+                stagedFiles={stagedFiles}
+                untrackedFiles={untrackedFiles}
+              />
+            )}
+
+            {TAB_COMMIT.uuid === selectedTab?.uuid && (
+              <Commit
+                branch={branch}
+                fetchBranch={fetchBranch}
+                showError={showError}
+                stagedFiles={stagedFiles}
+              />
+            )}
+          </>
         )}
       </Spacing>
     </Dashboard>

@@ -22,7 +22,9 @@ GitBranchPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes, scopes=[
+GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes + [
+    'logs',
+], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
     constants.CREATE,

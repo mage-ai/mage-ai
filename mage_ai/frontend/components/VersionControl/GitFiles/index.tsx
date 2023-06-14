@@ -75,7 +75,7 @@ function GitFiles({
       errors,
       response,
     }),
-  }));
+  }), [showError]);
   const sharedUpdateAProps = useMemo(() => ({
     onSuccess: (response: any) => onSuccess(
       response, {
@@ -86,7 +86,7 @@ function GitFiles({
         ...sharedUpdateProps,
       },
     ),
-  }), [fetchBranch]);
+  }), [fetchBranch, sharedUpdateProps]);
   const updateEndpoint = useMemo(() => api.git_branches.useUpdate(branch?.name), [branch]);
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
@@ -200,7 +200,7 @@ function GitFiles({
       <FlexContainer>
         <Flex flex={1} flexDirection="column">
           <Headline>
-            Not staged
+            Not staged {unstagedFilePaths?.length >= 1 && `(${unstagedFilePaths?.length})`}
           </Headline>
 
           <Spacing my={1}>
@@ -272,7 +272,7 @@ function GitFiles({
 
         <Flex flex={1} flexDirection="column">
           <Headline>
-            Staged files
+            Staged files {stagedFilePaths?.length >= 1 && `(${stagedFilePaths?.length})`}
           </Headline>
 
           <Spacing my={1}>
