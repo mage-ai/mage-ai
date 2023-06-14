@@ -102,12 +102,12 @@ then
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker-compose -f docker-compose.yml up
+    docker-compose -f pg-docker-compose.yml up
 else
     # docker-compose does not exist
     HOST=$HOST \
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker compose -f docker-compose.yml up
+    docker compose -f pg-docker-compose.yml up
 fi
