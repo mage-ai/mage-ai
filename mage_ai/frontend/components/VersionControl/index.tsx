@@ -248,7 +248,9 @@ function VersionControl() {
         {TAB_FILES.uuid === selectedTab?.uuid && (
           <GitFiles
             branch={branch}
+            fetchBranch={fetchBranch}
             modifiedFiles={modifiedFiles}
+            showError={showError}
             stagedFiles={stagedFiles}
             untrackedFiles={untrackedFiles}
           />
