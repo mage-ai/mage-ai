@@ -70,25 +70,35 @@ function GitFiles({
       stagedFilePaths,
     ]);
 
-  const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchBranch();
-            setSelectedFilesA({});
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+  const sharedUpdateProps = useMemo(() => ({
+    onErrorCallback: (response, errors) => showError({
+      errors,
+      response,
+    }),
+  }));
+  const sharedUpdateAProps = useMemo(() => ({
+    onSuccess: (response: any) => onSuccess(
+      response, {
+        callback: () => {
+          fetchBranch();
+          setSelectedFilesA({});
         },
-      ),
-    },
+        ...sharedUpdateProps,
+      },
+    ),
+  }), [fetchBranch]);
+  const updateEndpoint = useMemo(() => api.git_branches.useUpdate(branch?.name), [branch]);
+
+  const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
+    updateEndpoint,
+    sharedUpdateAProps,
+  );
+  const [updateGitBranchCheckout, { isLoading: isLoadingUpdateCheckout }] = useMutation(
+    updateEndpoint,
+    sharedUpdateAProps,
   );
   const [updateGitBranchB, { isLoading: isLoadingUpdateB }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    updateEndpoint,
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -96,10 +106,7 @@ function GitFiles({
             fetchBranch();
             setSelectedFilesB({});
           },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+          ...sharedUpdateProps,
         },
       ),
     },
@@ -204,7 +211,7 @@ function GitFiles({
             <FlexContainer flexDirection="row">
               <Button
                 compact
-                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB}
+                disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB || isLoadingUpdateCheckout}
                 loading={isLoadingUpdate}
                 onClick={() => {
                   updateGitBranch({
@@ -225,6 +232,22 @@ function GitFiles({
               <Button
                 compact
                 disabled={isEmptyObject(selectedFilesA) || isLoadingUpdate || isLoadingUpdateB}
+                loading={isLoadingUpdateCheckout}
+                onClick={() => {
+                  if (typeof window !== 'undefined'
+                    && typeof location !== 'undefined'
+                    && window.confirm(
+                      'Are you sure you want to undo all changes in the selected files?',
+                    )
+                  ) {
+                    updateGitBranchCheckout({
+                      git_branch: {
+                        action_type: 'checkout',
+                        files: Object.keys(selectedFilesA),
+                      },
+                    });
+                  }
+                }}
                 secondary
                 small
               >
@@ -260,7 +283,7 @@ function GitFiles({
             <FlexContainer flexDirection="row">
               <Button
                 compact
-                disabled={isEmptyObject(selectedFilesB)}
+                disabled={isEmptyObject(selectedFilesB) || isLoadingUpdate || isLoadingUpdateCheckout}
                 loading={isLoadingUpdateB}
                 onClick={() => {
                   updateGitBranchB({
