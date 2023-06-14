@@ -682,10 +682,10 @@ class Block:
             result = True
             for conditional_block in self.conditional_blocks:
                 block_result = conditional_block.execute_conditional(
+                    self,
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
-                    parent_block=self,
                 )
                 conditional_message += \
                     f'Conditional block {conditional_block.uuid} evaluated to {block_result}.\n'
@@ -2305,13 +2305,13 @@ class AddonBlock(Block):
 class ConditionalBlock(AddonBlock):
     def execute_conditional(
         self,
+        parent_block: Block,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         execution_partition: str = None,
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
-        parent_block: Block = None,
         **kwargs
     ) -> bool:
         if logger is not None:
@@ -2333,22 +2333,24 @@ class ConditionalBlock(AddonBlock):
             )
             exec(self.content, results)
 
-            # Fetch input variables
-            input_vars, kwargs_vars, _ = self.fetch_input_variables(
-                None,
-                execution_partition,
-                global_vars,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-            )
-
             global_vars_copy = global_vars.copy()
-            for kwargs_var in kwargs_vars:
-                global_vars_copy.update(kwargs_var)
+            input_vars = []
+            # Fetch input variables for parent block
+            if parent_block is not None:
+                input_vars, kwargs_vars, _ = parent_block.fetch_input_variables(
+                    None,
+                    execution_partition,
+                    global_vars,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                )
+
+                for kwargs_var in kwargs_vars:
+                    global_vars_copy.update(kwargs_var)
 
             result = True
             for condition_function in condition_functions:
-                result = result and condition_function(*input_vars, **global_vars_copy)
+                result = condition_function(*input_vars, **global_vars_copy) and result
 
             return result
 

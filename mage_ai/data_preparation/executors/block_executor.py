@@ -244,13 +244,13 @@ class BlockExecutor:
         for conditional_block in self.block.conditional_blocks:
             try:
                 block_result = conditional_block.execute_conditional(
+                    self.block,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     execution_partition=self.execution_partition,
                     global_vars=global_vars,
                     logger=self.logger,
                     logging_tags=logging_tags,
-                    parent_block=self.block,
                     pipeline_run=pipeline_run,
                 )
                 if not block_result:
