@@ -184,19 +184,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 ).first()
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    if valid and oauth_token and oauth_token.user:
-                        if pipeline_uuid:
-                            valid = has_at_least_editor_role(
-                                oauth_token.user,
-                                Permission.Entity.PIPELINE,
-                                pipeline_uuid,
-                            )
-                        else:
-                            valid = has_at_least_editor_role(
-                                oauth_token.user,
-                                Permission.Entity.PROJECT,
-                                get_repo_path(),
-                            )
+                    valid = valid and \
+                        oauth_token and \
+                        oauth_token.user and \
+                        has_at_least_editor_role(
+                            oauth_token.user,
+                            Permission.Entity.PIPELINE,
+                            pipeline_uuid,
+                        )
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
