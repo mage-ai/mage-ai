@@ -139,8 +139,8 @@ function Commit({
                         >
                           <Link
                             bold
-                            warning
                             underline
+                            warning
                           >
                             staging
                           </Link>

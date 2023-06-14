@@ -14,8 +14,8 @@ export const TAB_REMOTE = {
 };
 
 export const TABS: TabType[] = [
+  TAB_REMOTE,
   TAB_BRANCHES,
   TAB_FILES,
   TAB_COMMIT,
-  TAB_REMOTE,
 ];
