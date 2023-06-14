@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
+    get_project_uuid,
     get_repo_config,
     get_repo_path,
 )
@@ -32,7 +33,8 @@ class StatusResource(GenericResource):
             KUBE_NAMESPACE,
         )
         instance_type = None
-        if get_project_type() == ProjectType.MAIN:
+        project_type = get_project_type()
+        if project_type == ProjectType.MAIN:
             instance_type = get_repo_config().cluster_type
         elif os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
@@ -56,5 +58,7 @@ class StatusResource(GenericResource):
             'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
             'max_print_output_lines': MAX_PRINT_OUTPUT_LINES,
             'require_user_authentication': REQUIRE_USER_AUTHENTICATION,
+            'project_type': project_type,
+            'project_uuid': get_project_uuid(),
         }
         return self.build_result_set([status], user, **kwargs)

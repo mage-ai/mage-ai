@@ -5,7 +5,8 @@ import terminado
 from tornado import gen
 
 from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
-from mage_ai.orchestration.db.models.oauth import Oauth2Application
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.db.models.oauth import Oauth2Application, Permission
 from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
@@ -112,10 +113,12 @@ class TerminalWebsocketServer(terminado.TermSocket):
                 ).first()
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    valid = valid and \
-                        oauth_token and \
-                        oauth_token.user and \
-                        has_at_least_editor_role(oauth_token.user)
+                    if valid and oauth_token and oauth_token.user:
+                        valid = has_at_least_editor_role(
+                            oauth_token.user,
+                            Permission.Entity.PROJECT,
+                            get_project_uuid(),
+                        )
             if not valid or is_disable_pipeline_edit_access():
                 return self.send_json_message(
                     ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
