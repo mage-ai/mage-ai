@@ -6,6 +6,7 @@ export default interface GitBranchType {
   message?: string;
   modified_files?: string[];
   name: string;
+  staged_files?: string[];
   status?: string;
   untracked_files?: string[];
 }

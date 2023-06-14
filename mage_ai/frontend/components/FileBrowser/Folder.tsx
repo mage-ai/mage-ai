@@ -11,6 +11,7 @@ import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
+  Ellipsis,
   ChevronDown,
   ChevronRight,
   FileFill,
@@ -41,6 +42,7 @@ import { singularize } from '@utils/string';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
+  allowEmptyFolders?: boolean;
   allowSelectingFolders?: boolean;
   disableContextMenu?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
@@ -77,6 +79,7 @@ type FolderProps = {
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
+  allowEmptyFolders,
   allowSelectingFolders,
   containerRef,
   disableContextMenu,
@@ -108,7 +111,8 @@ function Folder({
     name,
     parent: parentFile,
   } = file;
-  if (!name) {
+
+  if (!name && !allowEmptyFolders) {
     file.name = DEFAULT_NAME;
   }
   const filePathToUse: string = useRootFolder
@@ -159,6 +163,8 @@ function Folder({
     IconEl = NavGraph;
   } else if (children) {
     IconEl = FolderIcon;
+  } else if (!name && allowEmptyFolders) {
+    IconEl = Ellipsis;
   }
 
   let color;
@@ -168,6 +174,7 @@ function Folder({
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
+      allowEmptyFolders={allowEmptyFolders}
       allowSelectingFolders={allowSelectingFolders}
       containerRef={containerRef}
       disableContextMenu={disableContextMenu}
@@ -197,6 +204,7 @@ function Folder({
       useRootFolder={useRootFolder}
     />
   )), [
+    allowEmptyFolders,
     allowSelectingFolders,
     children,
     containerRef,
