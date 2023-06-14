@@ -109,6 +109,7 @@ def start(
     manage_instance: str = START_MANAGE_INSTANCE_DEFAULT,
     dbt_docs_instance: str = START_DBT_DOCS_INSTANCE_DEFAULT,
     instance_type: str = START_INSTANCE_TYPE_DEFAULT,
+    project_type: Union[str, None] = INIT_PROJECT_TYPE_DEFAULT,
 ):
     """
     Start Mage server and UI.
@@ -128,6 +129,7 @@ def start(
         manage=manage_instance == "1",
         dbt_docs=dbt_docs_instance == "1",
         instance_type=instance_type,
+        project_type=project_type,
     )
 
 

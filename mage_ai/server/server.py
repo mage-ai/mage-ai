@@ -291,6 +291,7 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
+    project_type: ProjectType = ProjectType.STANDALONE,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -303,7 +304,7 @@ def start_server(
         project = os.path.join(os.getcwd(), 'default_repo')
 
     if not os.path.exists(project):
-        init_repo(project)
+        init_repo(project, project_type=project_type)
     set_repo_path(project)
 
     asyncio.run(UsageStatisticLogger().project_impression())
