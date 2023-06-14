@@ -20,7 +20,7 @@ import {
   PADDING_UNITS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
+import { PaginateArrowLeft } from '@oracle/icons';
 import {
   TAB_FILES,
   TAB_REMOTE,
@@ -232,20 +232,6 @@ function Commit({
             sameColorAsText
           >
             {TAB_FILES.uuid}
-          </Button>
-
-          <Spacing mr={1} />
-
-          <Button
-            afterIcon={<PaginateArrowRight />}
-            linkProps={{
-              href: `/version-control?tab=${TAB_REMOTE.uuid}`,
-            }}
-            noHoverUnderline
-            sameColorAsText
-            secondary
-          >
-            Next: {TAB_REMOTE.uuid}
           </Button>
         </FlexContainer>
       </Spacing>
