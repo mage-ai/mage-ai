@@ -22,7 +22,11 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
+from mage_ai.data_preparation.repo_manager import (
+    get_project_uuid,
+    get_repo_config,
+    get_repo_path,
+)
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Permission
 from mage_ai.server.active_kernel import (
@@ -185,14 +189,19 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 ).first()
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    valid = valid and \
-                        oauth_token and \
-                        oauth_token.user and \
-                        has_at_least_editor_role(
-                            oauth_token.user,
-                            Permission.Entity.PIPELINE,
-                            pipeline_uuid,
-                        )
+                    if valid and oauth_token and oauth_token.user:
+                        if pipeline_uuid:
+                            valid = has_at_least_editor_role(
+                                oauth_token.user,
+                                Permission.Entity.PIPELINE,
+                                pipeline_uuid,
+                            )
+                        else:
+                            valid = has_at_least_editor_role(
+                                oauth_token.user,
+                                Permission.Entity.PROJECT,
+                                get_project_uuid(),
+                            )
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
