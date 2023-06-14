@@ -159,7 +159,7 @@ function Branches({
         </Spacing>
       </Spacing>
 
-      {/*<Spacing mb={UNITS_BETWEEN_SECTIONS}>
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
           Actions
         </Headline>
@@ -266,7 +266,7 @@ function Branches({
             </Button>
           </Spacing>
         </Spacing>
-      </Spacing>*/}
+      </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing mb={UNITS_BETWEEN_SECTIONS}>
