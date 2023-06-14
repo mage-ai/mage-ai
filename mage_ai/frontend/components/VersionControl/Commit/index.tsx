@@ -1,11 +1,15 @@
+import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
+import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -16,12 +20,20 @@ import {
   PADDING_UNITS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
+import {
+  TAB_FILES,
+  TAB_REMOTE,
+} from '../constants';
 import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
 type CommitProps = {
   branch: GitBranchType;
   fetchBranch: () => void;
+  modifiedFiles: {
+    [fullPath: string]: boolean;
+  };
   showError: (opts: any) => void;
   stagedFiles: {
     [fullPath: string]: boolean;
@@ -31,6 +43,7 @@ type CommitProps = {
 function Commit({
   branch,
   fetchBranch: fetchBranchProp,
+  modifiedFiles,
   showError,
   stagedFiles,
 }: CommitProps) {
@@ -99,30 +112,50 @@ function Commit({
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        {stagedFilesCount >= 1 && (
-          <Spacing mb={PADDING_UNITS}>
-            <Accordion>
-              <AccordionPanel
-                noPaddingContent
-                title={`Staged files (${stagedFilesCount})`}
-              >
-                {stagedFilesPaths?.map((filePath: string) => (
-                  <Spacing key={filePath} my={1} px={1}>
+        <Spacing mb={PADDING_UNITS}>
+          <Accordion>
+            <AccordionPanel
+              noPaddingContent
+              title={stagedFilesCount >= 1 ? `Staged files (${stagedFilesCount})` : 'No staged files'}
+            >
+              {stagedFilesPaths?.map((filePath: string) => (
+                <Spacing key={filePath} my={1} px={PADDING_UNITS}>
+                  <FlexContainer justifyContent="space-between">
                     <Text
                       default
                       monospace
-                      small
+                      warning={modifiedFiles?.[filePath]}
                     >
                       {filePath}
                     </Text>
-                  </Spacing>
-                ))}
-              </AccordionPanel>
-            </Accordion>
-          </Spacing>
-        )}
+
+                    <Spacing mr={1} />
+
+                    {modifiedFiles?.[filePath] && (
+                      <Text warning>
+                        Modified since <NextLink
+                          href={`/version-control?tab=${TAB_FILES.uuid}`}
+                          passHref
+                        >
+                          <Link
+                            bold
+                            warning
+                            underline
+                          >
+                            staging
+                          </Link>
+                        </NextLink>
+                      </Text>
+                    )}
+                  </FlexContainer>
+                </Spacing>
+              ))}
+            </AccordionPanel>
+          </Accordion>
+        </Spacing>
 
         <TextArea
+          disabled={stagedFilesCount === 0}
           label="Commit message"
           monospace
           onChange={e => setCommitMessage(e.target.value)}
@@ -130,16 +163,9 @@ function Commit({
         />
 
         <Spacing mt={PADDING_UNITS}>
-          {stagedFilesCount === 0 && (
-            <Text danger italic>
-              No files are staged.
-              <br />
-              Please stage at least 1 file before creating a commit message.
-            </Text>
-          )}
-          {stagedFilesCount >= 1 && (
+          <FlexContainer alignItems="center">
             <Button
-              disabled={!(commitMessage?.length >= 1)}
+              disabled={stagedFilesCount === 0 || !(commitMessage?.length >= 1)}
               loading={isLoadingUpdate}
               onClick={() => {
                 updateGitBranch({
@@ -154,7 +180,28 @@ function Commit({
             >
               Commit {pluralize('file', stagedFilesCount, true)} with message
             </Button>
-          )}
+
+            {stagedFilesCount === 0 && (
+              <>
+                <Spacing mr={1} />
+                <Text danger small>
+                  Please <NextLink
+                    href={`/version-control?tab=${TAB_FILES.uuid}`}
+                    passHref
+                  >
+                    <Link
+                      bold
+                      danger
+                      small
+                      underline
+                    >
+                      stage
+                    </Link>
+                  </NextLink> at least 1 file before committing.
+                </Text>
+              </>
+            )}
+          </FlexContainer>
         </Spacing>
       </Spacing>
 
@@ -167,6 +214,40 @@ function Commit({
 
         {!dataBranch && <Spinner inverted />}
         {dataBranch && logsMemo}
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Divider light />
+        </Spacing>
+
+        <FlexContainer>
+          <Button
+            beforeIcon={<PaginateArrowLeft />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_FILES.uuid}`,
+            }}
+            noBackground
+            noHoverUnderline
+            sameColorAsText
+          >
+            {TAB_FILES.uuid}
+          </Button>
+
+          <Spacing mr={1} />
+
+          <Button
+            afterIcon={<PaginateArrowRight />}
+            linkProps={{
+              href: `/version-control?tab=${TAB_REMOTE.uuid}`,
+            }}
+            noHoverUnderline
+            sameColorAsText
+            secondary
+          >
+            Next: {TAB_REMOTE.uuid}
+          </Button>
+        </FlexContainer>
       </Spacing>
     </>
   );
