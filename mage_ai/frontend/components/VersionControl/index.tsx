@@ -8,6 +8,7 @@ import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
+import GitFiles from './GitFiles';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -20,6 +21,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   TABS,
   TAB_BRANCHES,
+  TAB_FILES,
 } from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
@@ -71,9 +73,13 @@ function VersionControl() {
 
   const {
     modifiedFiles = {},
+    stagedFiles = {},
     untrackedFiles = {},
   }: {
     modifiedFiles: {
+      [fullPath: string]: boolean;
+    };
+    stagedFiles: {
       [fullPath: string]: boolean;
     };
     untrackedFiles: {
@@ -81,6 +87,10 @@ function VersionControl() {
     };
   } = useMemo(() => ({
     modifiedFiles: branch?.modified_files?.reduce((acc, fullPath) => ({
+      ...acc,
+      [fullPath]: true,
+    }), {}),
+    stagedFiles: branch?.staged_files?.reduce((acc, fullPath) => ({
       ...acc,
       [fullPath]: true,
     }), {}),
@@ -92,6 +102,7 @@ function VersionControl() {
 
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
+      allowEmptyFolders
       disableContextMenu
       fetchFileTree={fetchBranch}
       files={files}
@@ -105,15 +116,18 @@ function VersionControl() {
         const {
           children,
         } = file;
+        const isFolder = children?.length >= 1;
 
-        if (children?.length >= 1) {
-          return null;
+        let fullPath = getFullPath(file);
+        // When a folder is untracked, it has a / at the end.
+        // e.g. default_repo/transformers/
+        if (isFolder) {
+          fullPath = `${fullPath}/`;
         }
-
-        const fullPath = getFullPath(file);
         let displayText;
         let displayTitle;
         const colorProps: {
+          danger?: boolean;
           success?: boolean;
           warning?: boolean;
         } = {};
@@ -125,7 +139,15 @@ function VersionControl() {
         } else if (untrackedFiles?.[fullPath]) {
           displayText = 'U';
           displayTitle = 'Untracked';
+          colorProps.danger = true;
+        } else if (stagedFiles?.[fullPath]) {
+          displayText = 'S';
+          displayTitle = 'Staged';
           colorProps.success = true;
+        }
+
+        if (isFolder && !displayText) {
+          return null;
         }
 
         return (
@@ -138,6 +160,7 @@ function VersionControl() {
               <Text
                 {...colorProps}
                 monospace
+                rightAligned
                 small
               >
                 {displayText}
@@ -154,6 +177,7 @@ function VersionControl() {
     files,
     modifiedFiles,
     setSelectedFilePath,
+    stagedFiles,
     untrackedFiles,
   ]);
 
@@ -218,6 +242,15 @@ function VersionControl() {
             fetchBranch={fetchBranch}
             fetchBranches={fetchBranches}
             showError={showError}
+          />
+        )}
+
+        {TAB_FILES.uuid === selectedTab?.uuid && (
+          <GitFiles
+            branch={branch}
+            modifiedFiles={modifiedFiles}
+            stagedFiles={stagedFiles}
+            untrackedFiles={untrackedFiles}
           />
         )}
       </Spacing>

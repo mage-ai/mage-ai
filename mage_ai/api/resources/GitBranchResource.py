@@ -43,9 +43,10 @@ class GitBranchResource(GenericResource):
         files = {}
 
         modified_files = git_manager.modified_files
+        staged_files = git_manager.staged_files()
         untracked_files = git_manager.untracked_files()
 
-        for filename in modified_files + untracked_files:
+        for filename in modified_files + staged_files + untracked_files:
             # filename: default_repo/transformers/load.py
             parts = filename.split(os.sep)
             number_of_parts = len(parts)
@@ -77,6 +78,7 @@ class GitBranchResource(GenericResource):
             files=build_file_object(files),
             modified_files=modified_files,
             name=git_manager.current_branch,
+            staged_files=staged_files,
             untracked_files=untracked_files,
         ), user, **kwargs)
 
