@@ -32,6 +32,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_new_relic)
+    ENABLE_NEW_RELIC="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --gcp_project_id)
     GCP_PROJECT_ID="$3"
     shift # past argument
@@ -86,6 +91,7 @@ export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS

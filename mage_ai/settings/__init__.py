@@ -47,6 +47,9 @@ USE_UNIQUE_TERMINAL = os.getenv('USE_UNIQUE_TERMINAL', None)
 SENTRY_DSN = os.getenv('SENTRY_DSN', None)
 SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 
+# New relic enable environment variable
+ENABLE_NEW_RELIC = os.getenv('ENABLE_NEW_RELIC', False)
+
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
 

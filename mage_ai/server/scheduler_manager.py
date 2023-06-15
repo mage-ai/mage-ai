@@ -1,14 +1,16 @@
 import multiprocessing
 import time
 import traceback
+from contextlib import nullcontext
 from enum import Enum
 
+import newrelic.agent
 import sentry_sdk
 
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
-from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+from mage_ai.settings import ENABLE_NEW_RELIC, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
@@ -24,9 +26,14 @@ def run_scheduler():
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
+    if ENABLE_NEW_RELIC:
+        newrelic.agent.initialize('/home/src/newrelic.ini')
+        application = newrelic.agent.register_application(timeout=10)
 
     try:
-        database_manager.run_migrations()
+        with newrelic.agent.BackgroundTask(application, name="schedule-run", group='Task') \
+             if ENABLE_NEW_RELIC else nullcontext():
+            database_manager.run_migrations()
     except Exception:
         traceback.print_exc()
     try:
