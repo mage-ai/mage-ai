@@ -21,10 +21,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PaginateArrowLeft } from '@oracle/icons';
-import {
-  TAB_FILES,
-  TAB_REMOTE,
-} from '../constants';
+import { TAB_FILES } from '../constants';
 import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
@@ -72,7 +69,7 @@ function Commit({
         author,
         date,
         message,
-      }: UserType) => [
+      }) => [
         <Text default key="author" monospace small>
           {author?.name}
         </Text>,

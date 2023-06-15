@@ -98,6 +98,12 @@ class Git:
     def branches(self) -> List:
         return [branch.name for branch in self.repo.branches]
 
+    def add_remote(self, name: str, ulr: str) -> None:
+        self.repo.create_remote(name, url)
+
+    def remove_remote(self, name: str) -> None:
+        self.repo.remotes[name].remove(self.repo, name)
+
     def staged_files(self) -> List[str]:
         files_string = self.repo.git.diff('--name-only', '--cached')
         if files_string:
@@ -243,6 +249,35 @@ class Git:
                 ),
                 date=datetime.fromtimestamp(commit.authored_date).isoformat(),
                 message=commit.message,
+            ))
+
+        return arr
+
+    def remotes(self, limit: int = 40) -> List[Dict]:
+        arr = []
+
+        for idx, remote in enumerate(self.repo.remotes):
+            if idx >= limit:
+                break
+
+            refs = []
+            for ref in remote.refs:
+                refs.append(dict(
+                    name=ref.name,
+                    commit=dict(
+                        author=dict(
+                            email=ref.commit.author.email,
+                            name=ref.commit.author.name,
+                        ),
+                        date=datetime.fromtimestamp(ref.commit.authored_date).isoformat(),
+                        message=ref.commit.message,
+                    ),
+                ))
+
+            arr.append(dict(
+                name=remote.name,
+                refs=refs,
+                urls=[url for url in remote.urls],
             ))
 
         return arr
