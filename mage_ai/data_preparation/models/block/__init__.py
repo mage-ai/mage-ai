@@ -2144,9 +2144,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         3. Update upstream and downstream relationships
         """
         old_uuid = self.uuid
+        old_file_path = self.file_path # This has to be here
+
         new_uuid = clean_name(name)
         self.name = name
         self.uuid = new_uuid
+        new_file_path = self.file_path # This has to be here
+
         if self.pipeline is not None:
             if self.pipeline.has_block(
                 new_uuid,
@@ -2158,8 +2162,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 )
 
         if not self.replicated_block:
-            old_file_path = self.file_path
-            new_file_path = self.file_path
             if os.path.exists(new_file_path):
                 raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
