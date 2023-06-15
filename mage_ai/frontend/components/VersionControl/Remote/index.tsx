@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -22,6 +24,7 @@ import {
 import {
   Add,
   Branch,
+  ChevronRight,
   GitHubIcon,
   Lightning,
   MultiShare,
@@ -48,12 +51,22 @@ function Remote({
   branches,
   showError,
 }: RemoteProps) {
+  const refInputRepoPath = useRef(null);
+
   const [actionName, setActionName] = useState<string>(null);
   const [actionBranchName, setActionBranchName] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
   const [remoteURLNew, setRemoteURLNew] = useState<string>('');
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
+  const [repoPath, setRepoPath] = useState<string>(null);
+  const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (branch?.sync_config?.repo_path && repoPath === null) {
+      setRepoPath(branch?.sync_config?.repo_path);
+    }
+  }, [branch, repoPath]);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_remotes', {
     '_format': 'with_remotes',
@@ -61,6 +74,22 @@ function Remote({
   const branchGit = useMemo(() => dataBranch?.git_branch, [dataBranch]);
   const remotes = useMemo(() => branchGit?.remotes || [], [branchGit]);
 
+  const [createSyncs, { isLoading: isLoadingCreateSyncs }] = useMutation(
+    api.syncs.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
     api.git_branches.useUpdate(branch?.name),
     {
@@ -68,8 +97,6 @@ function Remote({
         response, {
           callback: () => {
             fetchBranch();
-            setRemoteNameNew('');
-            setRemoteURLNew('');
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -108,13 +135,27 @@ function Remote({
   }) => (
     <Spacing
       key={name}
-      mb={UNITS_BETWEEN_SECTIONS}
+      mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
     >
       <Spacing mb={1}>
         <FlexContainer alignItems="center" justifyContent="space-between">
-          <Headline level={5}>
-            {name}
-          </Headline>
+          <Flex alignItems="center">
+            <Text bold>
+              {name}
+            </Text>
+
+            <Spacing mx={1}>
+              <ChevronRight muted />
+            </Spacing>
+
+            {urls?.map(url => (
+              <Spacing key={url} mr={1}>
+                <Text default monospace small>
+                  {url}
+                </Text>
+              </Spacing>
+            ))}
+          </Flex>
 
           <Spacing mr={1} />
 
@@ -149,17 +190,10 @@ function Remote({
         </FlexContainer>
       </Spacing>
 
-      <Spacing mb={PADDING_UNITS}>
-        {urls?.map(url => (
-          <Text key={url} monospace>
-            {url}
-          </Text>
-        ))}
-      </Spacing>
-
       <Accordion>
         <AccordionPanel
           noPaddingContent
+          smallTitle
           title={`Refs (${refs?.length})`}
         >
           {refs?.length === 0 && (
@@ -209,6 +243,10 @@ function Remote({
           )}
         </AccordionPanel>
       </Accordion>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Divider light />
+      </Spacing>
     </Spacing>
   )), [
     isLoadingRemoveRemote,
@@ -230,6 +268,92 @@ function Remote({
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Setup
+        </Headline>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Spacing mb={1}>
+            <Text bold large>
+              Git init directory
+            </Text>
+            <Text muted>
+              If the directory below is blank,
+              then the current working directory will be used
+              to initialize git.
+              <br />
+              If git hasn’t been initialized in the directory below,
+              Mage will automatically run git init for you.
+            </Text>
+          </Spacing>
+
+          <FlexContainer alignItems="center">
+            <TextInput
+              disabled={!editRepoPathActive}
+              label="Git directory"
+              monospace
+              onChange={e => setRepoPath(e.target.value)}
+              ref={refInputRepoPath}
+              value={repoPath || ''}
+            />
+
+            <Spacing mr={1} />
+
+            {editRepoPathActive && (
+              <>
+                <Button
+                  compact
+                  loading={isLoadingCreateSyncs}
+                  onClick={() => {
+                    createSyncs({
+                      sync: {
+                        repo_path: repoPath,
+                      },
+                    }).then(() => {
+                      setEditRepoPathActive(false);
+                    });
+                  }}
+                  primary
+                  small
+                >
+                  Save
+                </Button>
+
+                <Spacing mr={1} />
+
+                <Link
+                  onClick={() => setEditRepoPathActive(false)}
+                  preventDefault
+                  sameColorAsText
+                  small
+                >
+                  Cancel
+                </Link>
+              </>
+            )}
+
+            {!editRepoPathActive && (
+              <Link
+                onClick={() => {
+                  setEditRepoPathActive(true);
+                  setTimeout(() => refInputRepoPath?.current?.focus(), 1);
+                }}
+                preventDefault
+                sameColorAsText
+                small
+              >
+                Edit
+              </Link>
+            )}
+          </FlexContainer>
+        </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Remotes{remotes ? ` (${remotes?.length})` : ''}
+        </Headline>
+
         {remotesMemo}
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
@@ -265,6 +389,9 @@ function Remote({
                       url: remoteURLNew,
                     },
                   },
+                }).then(() => {
+                  setRemoteNameNew('');
+                  setRemoteURLNew('');
                 });
               }}
               secondary

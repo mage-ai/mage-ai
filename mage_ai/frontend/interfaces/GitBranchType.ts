@@ -9,6 +9,17 @@ interface GitCommitType {
   message: string;
 }
 
+interface SyncConfigType {
+ auth_type?: string;
+ branch?: string;
+ email?: string;
+ remote_repo_link?: string;
+ repo_path?: string;
+ sync_on_pipeline_run?: boolean;
+ type?: string;
+ username?: string;
+}
+
 export default interface GitBranchType {
   action_type?: string;
   files?: FileType[];
@@ -26,5 +37,6 @@ export default interface GitBranchType {
   }[];
   staged_files?: string[];
   status?: string;
+  sync_config?: SyncConfigType;
   untracked_files?: string[];
 }

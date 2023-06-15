@@ -42,6 +42,7 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
 
 GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
     'remote',
+    'sync_config',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
