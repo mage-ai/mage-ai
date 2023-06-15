@@ -39,6 +39,6 @@ else
     elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
         mage start $PROJECT_PATH --manage-instance 1
     else
-        mage start $PROJECT_PATH --project_type $MAGE_PROJECT_TYPE
+        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE
     fi
 fi
