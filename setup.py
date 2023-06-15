@@ -10,8 +10,8 @@ def readme():
 requirements = []
 with open('requirements.txt') as f:
     for line in f.read().splitlines():
-        # if line.startswith('# extras'):
-        #     break
+        if line.startswith('# extras'):
+            break
         requirements.append(line)
 
 setuptools.setup(
