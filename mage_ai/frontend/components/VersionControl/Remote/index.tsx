@@ -90,6 +90,24 @@ function Remote({
       ),
     },
   );
+
+  const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
+    api.git_branches.useUpdate(branch?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBranch();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
     api.git_branches.useUpdate(branch?.name),
     {
@@ -351,7 +369,7 @@ function Remote({
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
-          Remotes{remotes ? ` (${remotes?.length})` : ''}
+          Remotes{dataBranch && remotes ? ` (${remotes?.length})` : ''}
         </Headline>
 
         {remotesMemo}
@@ -473,10 +491,9 @@ function Remote({
                 beforeIconSize={UNIT * 1.5}
                 monospace
                 onChange={e => setActionBranchName(e.target.value)}
-                placeholder="Choose all or a branch"
                 value={actionBranchName || ''}
               >
-                <option value="all">All branches</option>
+                <option value="">All branches</option>
                 {branches?.map(({ name }) => (
                   <option key={name} value={name}>
                     {name}
@@ -487,35 +504,49 @@ function Remote({
 
             <Spacing mr={1} />
 
-            <div>
-              <Spacing mb={1}>
-                <Text bold muted>
-                  Current branch
-                </Text>
-              </Spacing>
+            {actionBranchName?.length >= 1 && (
+              <div>
+                <Spacing mb={1}>
+                  <Text bold muted>
+                    Current branch
+                  </Text>
+                </Spacing>
 
-              <Select
-                beforeIcon={<Branch />}
-                beforeIconSize={UNIT * 1.5}
-                disabled
-                monospace
-                value={branch?.name}
-              >
-                {branch?.name && (
-                  <option key={branch?.name} value={branch?.name}>
-                    {branch?.name}
-                  </option>
-                )}
-              </Select>
-            </div>
+                <Select
+                  beforeIcon={<Branch />}
+                  beforeIconSize={UNIT * 1.5}
+                  disabled
+                  monospace
+                  value={branch?.name}
+                >
+                  {branch?.name && (
+                    <option key={branch?.name} value={branch?.name}>
+                      {branch?.name}
+                    </option>
+                  )}
+                </Select>
+              </div>
+            )}
           </FlexContainer>
 
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !actionRemoteName || !actionBranchName}
+              disabled={!actionName || !actionRemoteName}
+              loading={isLoadingAction}
               onClick={() => {
-                setActionName(null);
+                actionGitBranch({
+                  git_branch: {
+                    action_type: actionName,
+                    pull: {
+                      branch: actionBranchName,
+                      remote: actionRemoteName,
+                    },
+                  },
+                }).then(() => {
+                  setActionName(null);
+                  setActionRemoteName(null);
+                });
               }}
               secondary
             >

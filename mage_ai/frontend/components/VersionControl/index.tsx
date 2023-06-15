@@ -5,6 +5,7 @@ import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Commit from './Commit';
 import Dashboard from '@components/Dashboard';
+import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import GitBranchType from '@interfaces/GitBranchType';
@@ -20,7 +21,7 @@ import {
   DIFF_STYLES,
   DiffContainerStyle,
 } from './index.style';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   TABS,
   TAB_BRANCHES,
@@ -230,15 +231,24 @@ function VersionControl() {
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => (
-    <Spacing mt={1}>
-      <ButtonTabs
-        onClickTab={({ uuid }) => {
-          goToWithQuery({ tab: uuid });
+    <>
+      <div
+        style={{
+          marginBottom: UNIT * 0.5,
+          marginTop: UNIT * 0.5,
         }}
-        selectedTabUUID={selectedTab?.uuid}
-        tabs={TABS}
-      />
-    </Spacing>
+      >
+        <ButtonTabs
+          compact
+          onClickTab={({ uuid }) => {
+            goToWithQuery({ tab: uuid });
+          }}
+          selectedTabUUID={selectedTab?.uuid}
+          tabs={TABS}
+        />
+      </div>
+      <Divider light />
+    </>
   ), [selectedTab]);
 
   const remoteMemo = useMemo(() => (
