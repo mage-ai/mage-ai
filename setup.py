@@ -41,7 +41,7 @@ setuptools.setup(
     },
     extras_require={
         'azure': [
-            'azure-eventhub==5.10.1',
+            'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
@@ -99,7 +99,7 @@ setuptools.setup(
         ],
         'all': [
             'aws-secretsmanager-caching==1.1.1.5',
-            'azure-eventhub==5.10.1',
+            'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
