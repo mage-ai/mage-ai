@@ -2144,12 +2144,14 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         3. Update upstream and downstream relationships
         """
         old_uuid = self.uuid
-        old_file_path = self.file_path # This has to be here
+        # This has to be here
+        old_file_path = self.file_path
 
         new_uuid = clean_name(name)
         self.name = name
         self.uuid = new_uuid
-        new_file_path = self.file_path # This has to be here
+        # This has to be here
+        new_file_path = self.file_path
 
         if self.pipeline is not None:
             if self.pipeline.has_block(
