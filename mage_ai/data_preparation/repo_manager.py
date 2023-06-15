@@ -218,7 +218,12 @@ def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
 
 
-project_uuid = get_repo_config().project_uuid
+config = get_repo_config()
+project_uuid = config.project_uuid
+if project_uuid is None:
+    puuid = uuid.uuid4().hex
+    config.save(project_uuid=puuid)
+    project_uuid = puuid
 
 
 def get_project_uuid() -> str:

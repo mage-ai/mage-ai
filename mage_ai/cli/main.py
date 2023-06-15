@@ -36,6 +36,10 @@ START_MANAGE_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_INSTANCE_TYPE_DEFAULT = typer.Option(
     InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.')
+START_PROJECT_TYPE_DEFAULT = typer.Option(
+    'standalone',
+    help='create project of this type if does not exist, options are main, sub, or standalone',
+)
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the pipeline.'
@@ -109,7 +113,7 @@ def start(
     manage_instance: str = START_MANAGE_INSTANCE_DEFAULT,
     dbt_docs_instance: str = START_DBT_DOCS_INSTANCE_DEFAULT,
     instance_type: str = START_INSTANCE_TYPE_DEFAULT,
-    project_type: Union[str, None] = INIT_PROJECT_TYPE_DEFAULT,
+    project_type: Union[str, None] = START_PROJECT_TYPE_DEFAULT,
 ):
     """
     Start Mage server and UI.
