@@ -24,6 +24,7 @@ import {
   Branch,
   GitHubIcon,
   Lightning,
+  MultiShare,
   PaginateArrowRight,
 } from '@oracle/icons';
 import { TAB_BRANCHES } from '../constants';
@@ -38,14 +39,18 @@ import { onSuccess } from '@api/utils/response';
 
 type RemoteProps = {
   branch: GitBranchType;
+  branches: GitBranchType[];
   showError: (opts: any) => void;
 };
 
 function Remote({
   branch,
+  branches,
   showError,
 }: RemoteProps) {
   const [actionName, setActionName] = useState<string>(null);
+  const [actionBranchName, setActionBranchName] = useState<string>(null);
+  const [actionRemoteName, setActionRemoteName] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
   const [remoteURLNew, setRemoteURLNew] = useState<string>('');
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
@@ -107,7 +112,7 @@ function Remote({
     >
       <Spacing mb={1}>
         <FlexContainer alignItems="center" justifyContent="space-between">
-          <Headline>
+          <Headline level={5}>
             {name}
           </Headline>
 
@@ -152,12 +157,20 @@ function Remote({
         ))}
       </Spacing>
 
-      {refs?.length >= 1 && (
-        <Accordion>
-          <AccordionPanel
-            noPaddingContent
-            title="Refs"
-          >
+      <Accordion>
+        <AccordionPanel
+          noPaddingContent
+          title={`Refs (${refs?.length})`}
+        >
+          {refs?.length === 0 && (
+            <Spacing p={PADDING_UNITS}>
+              <Text muted>
+                This remote has no refs.
+              </Text>
+            </Spacing>
+          )}
+
+          {refs?.length >= 1 && (
             <Table
               columnFlex={[1, 1, 1]}
               columns={[
@@ -193,14 +206,15 @@ function Remote({
               ])}
               uuid="git-branch-remotes-refs"
             />
-          </AccordionPanel>
-        </Accordion>
-      )}
+          )}
+        </AccordionPanel>
+      </Accordion>
     </Spacing>
   )), [
     isLoadingRemoveRemote,
     remoteNameActive,
     remotes,
+    removeRemote,
   ]);
 
   return (
@@ -268,54 +282,6 @@ function Remote({
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <FlexContainer alignItems="center">
-            <div>
-              <Spacing mb={1}>
-                <Text bold muted>
-                  Base branch
-                </Text>
-              </Spacing>
-
-              <Select
-                beforeIcon={<Branch />}
-                beforeIconSize={UNIT * 1.5}
-                monospace
-                // onChange={e => setBranchBase(e.target.value)}
-                placeholder="Choose a branch"
-                // value={branchBase}
-              >
-                {/*{branches?.map(({ name }) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}*/}
-              </Select>
-            </div>
-
-            <Spacing mr={1} />
-
-            <div>
-              <Spacing mb={1}>
-                <Text bold muted>
-                  Compare branch
-                </Text>
-              </Spacing>
-
-              <Select
-                beforeIcon={<Branch />}
-                beforeIconSize={UNIT * 1.5}
-                disabled
-                monospace
-                // value={branch?.name}
-              >
-                {/*{branch?.name && (
-                  <option key={branch?.name} value={branch?.name}>
-                    {branch?.name}
-                  </option>
-                )}*/}
-              </Select>
-            </div>
-
-            <Spacing mr={1} />
 
             <div>
               <Spacing mb={1}>
@@ -340,28 +306,87 @@ function Remote({
                 </option>
               </Select>
             </div>
-          </FlexContainer>
 
-          {actionName && ACTION_MERGE === actionName && (
-            <Spacing mt={PADDING_UNITS}>
+            <Spacing mr={1} />
+
+            <div>
               <Spacing mb={1}>
                 <Text bold muted>
-                  Message for {actionName}
+                  Remote
                 </Text>
               </Spacing>
 
-              <TextArea
+              <Select
+                beforeIcon={<MultiShare />}
+                beforeIconSize={UNIT * 1.5}
                 monospace
-                onChange={e => setActionMessage(e.target.value)}
-                value={actionMessage || ''}
-              />
-            </Spacing>
-          )}
+                onChange={e => setActionRemoteName(e.target.value)}
+                placeholder="Choose a remote"
+                value={actionRemoteName || ''}
+              >
+                {remotes?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <Spacing mr={1} />
+
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Remote branch
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<Branch />}
+                beforeIconSize={UNIT * 1.5}
+                monospace
+                onChange={e => setActionBranchName(e.target.value)}
+                placeholder="Choose all or a branch"
+                value={actionBranchName || ''}
+              >
+                <option value="all">All branches</option>
+                {branches?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <Spacing mr={1} />
+
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Current branch
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<Branch />}
+                beforeIconSize={UNIT * 1.5}
+                disabled
+                monospace
+                value={branch?.name}
+              >
+                {branch?.name && (
+                  <option key={branch?.name} value={branch?.name}>
+                    {branch?.name}
+                  </option>
+                )}
+              </Select>
+            </div>
+          </FlexContainer>
 
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !branchBase}
+              disabled={!actionName || !actionRemoteName || !actionBranchName}
               onClick={() => {
                 setActionName(null);
               }}

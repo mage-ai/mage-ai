@@ -98,7 +98,7 @@ class Git:
     def branches(self) -> List:
         return [branch.name for branch in self.repo.branches]
 
-    def add_remote(self, name: str, ulr: str) -> None:
+    def add_remote(self, name: str, url: str) -> None:
         self.repo.create_remote(name, url)
 
     def remove_remote(self, name: str) -> None:
