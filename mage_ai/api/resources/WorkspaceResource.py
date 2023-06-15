@@ -123,7 +123,8 @@ class WorkspaceResource(GenericResource):
 
         workspace_folder = None
         project_uuid = None
-        if get_project_type() == ProjectType.MAIN:
+        project_type = get_project_type()
+        if project_type == ProjectType.MAIN:
             workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
             if os.path.exists(workspace_folder):
                 error.update(message=f'Project with name {workspace_name} already exists')
@@ -204,7 +205,7 @@ class WorkspaceResource(GenericResource):
             error.update(message=str(e))
             raise ApiError(error)
 
-        if get_project_type() == ProjectType.MAIN and \
+        if project_type == ProjectType.MAIN and \
                 project_uuid is not None and \
                 REQUIRE_USER_AUTHENTICATION:
             Role.create_default_roles(
