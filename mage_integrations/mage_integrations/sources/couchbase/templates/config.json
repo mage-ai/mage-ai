@@ -3,5 +3,8 @@
   "username": "",
   "password": "",
   "bucket": "",
-  "scope": ""
+  "scope": "",
+  "cert_path": "",
+  "trust_store_path": "",
+  "key_path": ""
 }
