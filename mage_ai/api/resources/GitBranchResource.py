@@ -80,6 +80,7 @@ class GitBranchResource(GenericResource):
             modified_files=modified_files,
             name=git_manager.current_branch,
             staged_files=staged_files,
+            sync_config=get_preferences().sync_config,
             untracked_files=untracked_files,
         ), user, **kwargs)
 

@@ -14,7 +14,7 @@ export const TAB_COMMIT = {
   uuid: 'Commit',
 };
 export const TAB_REMOTE = {
-  uuid: 'Remote',
+  uuid: 'Setup',
 };
 
 export const TABS: TabType[] = [

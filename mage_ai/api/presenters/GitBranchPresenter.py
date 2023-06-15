@@ -11,6 +11,7 @@ class GitBranchPresenter(BasePresenter):
         'name',
         'staged_files',
         'status',
+        'sync_config',
         'untracked_files',
     ]
 
