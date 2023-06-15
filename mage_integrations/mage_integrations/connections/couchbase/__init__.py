@@ -2,7 +2,7 @@ from couchbase.auth import CertificateAuthenticator, PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions
 from mage_integrations.connections.base import Connection
-
+from typing import Optional
 
 class Couchbase(Connection):
     def __init__(
