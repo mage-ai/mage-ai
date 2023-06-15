@@ -87,6 +87,7 @@ class GitBranchResource(GenericResource):
         git_manager = Git.get_manager(user=self.current_user)
         action_type = payload.get('action_type')
         files = payload.get('files', None)
+        remote = payload.get('remote', None)
 
         if action_type == 'status':
             status = git_manager.status()
@@ -125,9 +126,41 @@ class GitBranchResource(GenericResource):
         elif action_type == 'checkout':
             for file_path in files:
                 git_manager.checkout_file(file_path)
+        elif action_type in ['add_remote', 'remove_remote']:
+            if not remote:
+                error = ApiError.RESOURCE_ERROR
+                error.update({
+                    'message': 'Remote is empty, please add a remote.',
+                })
+                raise ApiError(error)
+
+            args = []
+            keys = ['name']
+
+            if action_type == 'add_remote':
+                keys.append('url')
+
+            for key in keys:
+                val = remote.get(key)
+                if not val:
+                    error = ApiError.RESOURCE_ERROR
+                    error.update({
+                        'message': f'Remote is missing {key}.',
+                    })
+                    raise ApiError(error)
+                args.append(val)
+
+            if action_type == 'add_remote':
+                git_manager.add_remote(*args)
+            elif action_type == 'remove_remote':
+                git_manager.remove_remote(*args)
 
         return self
 
     def logs(self, commits: int = None) -> List[Dict]:
         git_manager = Git.get_manager(user=self.current_user)
         return git_manager.logs(commits=commits)
+
+    def remotes(self, limit: int = None) -> List[Dict]:
+        git_manager = Git.get_manager(user=self.current_user)
+        return git_manager.remotes(limit=limit)

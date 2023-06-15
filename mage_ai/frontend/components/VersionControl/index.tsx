@@ -186,32 +186,46 @@ function VersionControl() {
     untrackedFiles,
   ]);
 
+  const isLoadingGitFile =
+    useMemo(() => !dataFile || !fileGit || (selectedFilePath && fileGit?.filename !== selectedFilePath), [
+      dataFile,
+      fileGit,
+      selectedFilePath,
+    ]);
 
   const fileDiffMemo = useMemo(() => {
-    if (!selectedFilePath || !fileGit) {
+    if (!selectedFilePath) {
       return null;
     }
 
     const {
       content,
       content_from_base: contentFromBase,
-    } = fileGit;
+    } = fileGit || {};
 
     return (
       <DiffContainerStyle>
-        <ReactDiffViewer
-          compareMethod={DiffMethod.WORDS}
-          newValue={content || ''}
-          oldValue={contentFromBase || ''}
-          renderContent={(str) => <Text monospace>{str}</Text>}
-          splitView={true}
-          styles={DIFF_STYLES}
-          useDarkTheme
-        />
+        {isLoadingGitFile && (
+          <Spacing p={PADDING_UNITS}>
+            <Spinner inverted />
+          </Spacing>
+        )}
+        {!isLoadingGitFile && (
+          <ReactDiffViewer
+            compareMethod={DiffMethod.WORDS}
+            newValue={content || ''}
+            oldValue={contentFromBase || ''}
+            renderContent={(str) => <Text monospace>{str}</Text>}
+            splitView={true}
+            styles={DIFF_STYLES}
+            useDarkTheme
+          />
+        )}
       </DiffContainerStyle>
     );
   }, [
     fileGit,
+    isLoadingGitFile,
     selectedFilePath,
   ]);
 
@@ -245,6 +259,8 @@ function VersionControl() {
           <>
             {TAB_REMOTE.uuid === selectedTab?.uuid && (
               <Remote
+                branch={branch}
+                showError={showError}
               />
             )}
 

@@ -18,6 +18,9 @@ class GitFileResource(GenericResource):
             file_path_without_repo_name = os.path.join(*file_path_parts[1:])
 
         file = File.from_path(file_path_without_repo_name, get_repo_path())
+        if not file.exists():
+            file = File.from_path(file_path_without_repo_name, '')
+
         git_manager = Git.get_manager(user=user)
 
         modified_files = git_manager.modified_files
