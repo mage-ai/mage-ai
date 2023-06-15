@@ -241,6 +241,66 @@ function VersionControl() {
     </Spacing>
   ), [selectedTab]);
 
+  const remoteMemo = useMemo(() => (
+    <Remote
+      branch={branch}
+      showError={showError}
+    />
+  ), [
+    branch,
+    showError,
+  ]);
+
+  const branchesMemo = useMemo(() => (
+    <Branches
+      branch={branch}
+      branches={branches}
+      fetchBranch={fetchBranch}
+      fetchBranches={fetchBranches}
+      showError={showError}
+    />
+  ), [
+    branch,
+    branches,
+    fetchBranch,
+    fetchBranches,
+    showError,
+  ]);
+
+  const filesMemo = useMemo(() => (
+    <GitFiles
+      branch={branch}
+      fetchBranch={fetchBranch}
+      modifiedFiles={modifiedFiles}
+      showError={showError}
+      stagedFiles={stagedFiles}
+      untrackedFiles={untrackedFiles}
+    />
+  ), [
+    branch,
+    fetchBranch,
+    modifiedFiles,
+    showError,
+    stagedFiles,
+    untrackedFiles,
+  ]);
+
+  const commitMemo = useMemo(() => (
+    <Commit
+      branch={branch}
+      fetchBranch={fetchBranch}
+      modifiedFiles={modifiedFiles}
+      showError={showError}
+      stagedFiles={stagedFiles}
+    />
+  ), [
+    branch,
+    fetchBranch,
+    modifiedFiles,
+    showError,
+    stagedFiles,
+  ]);
+
   return (
     <Dashboard
       // TODO (tommy dang): when we’re ready to show diffs, uncomment the below code.
@@ -257,43 +317,13 @@ function VersionControl() {
         {!dataBranch && <Spinner inverted />}
         {dataBranch && (
           <>
-            {TAB_REMOTE.uuid === selectedTab?.uuid && (
-              <Remote
-                branch={branch}
-                showError={showError}
-              />
-            )}
+            {TAB_REMOTE.uuid === selectedTab?.uuid && remoteMemo}
 
-            {TAB_BRANCHES.uuid === selectedTab?.uuid && (
-              <Branches
-                branch={branch}
-                branches={branches}
-                fetchBranch={fetchBranch}
-                fetchBranches={fetchBranches}
-                showError={showError}
-              />
-            )}
+            {TAB_BRANCHES.uuid === selectedTab?.uuid && branchesMemo}
 
-            {TAB_FILES.uuid === selectedTab?.uuid && (
-              <GitFiles
-                branch={branch}
-                fetchBranch={fetchBranch}
-                modifiedFiles={modifiedFiles}
-                showError={showError}
-                stagedFiles={stagedFiles}
-                untrackedFiles={untrackedFiles}
-              />
-            )}
+            {TAB_FILES.uuid === selectedTab?.uuid && filesMemo}
 
-            {TAB_COMMIT.uuid === selectedTab?.uuid && (
-              <Commit
-                branch={branch}
-                fetchBranch={fetchBranch}
-                modifiedFiles={modifiedFiles}
-                showError={showError}
-                stagedFiles={stagedFiles}
-              />
-            )}
+            {TAB_COMMIT.uuid === selectedTab?.uuid && commitMemo}
           </>
         )}
       </Spacing>

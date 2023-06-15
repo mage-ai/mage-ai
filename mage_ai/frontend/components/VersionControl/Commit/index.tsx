@@ -46,7 +46,7 @@ function Commit({
 }: CommitProps) {
   const [commitMessage, setCommitMessage] = useState<string>('');
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail(branch?.name, {
+  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_logs', {
     '_format': 'with_logs',
   });
   const logs = useMemo(() => dataBranch?.git_branch?.logs || [], [dataBranch]);

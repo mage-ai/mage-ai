@@ -18,7 +18,7 @@ import { Add, Branch, Lightning, PaginateArrowLeft, PaginateArrowRight } from '@
 import {
   ACTION_MERGE,
   ACTION_REBASE,
-} from './constants';
+} from '../constants';
 import {
   PADDING_UNITS,
   UNIT,

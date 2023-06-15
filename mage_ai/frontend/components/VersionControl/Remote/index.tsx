@@ -8,12 +8,24 @@ import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { Add, GitHubIcon, PaginateArrowRight } from '@oracle/icons';
+import {
+  ACTION_MERGE,
+  ACTION_PULL,
+  ACTION_REBASE,
+} from '../constants';
+import {
+  Add,
+  Branch,
+  GitHubIcon,
+  Lightning,
+  PaginateArrowRight,
+} from '@oracle/icons';
 import { TAB_BRANCHES } from '../constants';
 import {
   PADDING_UNITS,
@@ -21,6 +33,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
 type RemoteProps = {
@@ -32,11 +45,12 @@ function Remote({
   branch,
   showError,
 }: RemoteProps) {
+  const [actionName, setActionName] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
   const [remoteURLNew, setRemoteURLNew] = useState<string>('');
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail(branch?.name, {
+  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_remotes', {
     '_format': 'with_remotes',
   });
   const branchGit = useMemo(() => dataBranch?.git_branch, [dataBranch]);
@@ -244,6 +258,118 @@ function Remote({
               Create new remote
             </Button>
           </FlexContainer>
+        </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Actions
+        </Headline>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Base branch
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<Branch />}
+                beforeIconSize={UNIT * 1.5}
+                monospace
+                // onChange={e => setBranchBase(e.target.value)}
+                placeholder="Choose a branch"
+                // value={branchBase}
+              >
+                {/*{branches?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}*/}
+              </Select>
+            </div>
+
+            <Spacing mr={1} />
+
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Compare branch
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<Branch />}
+                beforeIconSize={UNIT * 1.5}
+                disabled
+                monospace
+                // value={branch?.name}
+              >
+                {/*{branch?.name && (
+                  <option key={branch?.name} value={branch?.name}>
+                    {branch?.name}
+                  </option>
+                )}*/}
+              </Select>
+            </div>
+
+            <Spacing mr={1} />
+
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Action
+                </Text>
+              </Spacing>
+
+              <Select
+                onChange={(e) => setActionName(e.target.value)}
+                placeholder="Choose an action"
+                value={actionName || ''}
+              >
+                <option value={ACTION_PULL}>
+                  {capitalizeRemoveUnderscoreLower(ACTION_PULL)}
+                </option>
+                <option value={ACTION_REBASE}>
+                  {capitalizeRemoveUnderscoreLower(ACTION_REBASE)}
+                </option>
+                <option value={ACTION_MERGE}>
+                  {capitalizeRemoveUnderscoreLower(ACTION_MERGE)}
+                </option>
+              </Select>
+            </div>
+          </FlexContainer>
+
+          {actionName && ACTION_MERGE === actionName && (
+            <Spacing mt={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Message for {actionName}
+                </Text>
+              </Spacing>
+
+              <TextArea
+                monospace
+                onChange={e => setActionMessage(e.target.value)}
+                value={actionMessage || ''}
+              />
+            </Spacing>
+          )}
+
+          <Spacing mt={PADDING_UNITS}>
+            <Button
+              beforeIcon={<Lightning size={UNIT * 2} />}
+              disabled={!actionName || !branchBase}
+              onClick={() => {
+                setActionName(null);
+              }}
+              secondary
+            >
+              Execute action{actionName ? ` ${actionName?.toLowerCase()}` : ''}
+            </Button>
+          </Spacing>
         </Spacing>
       </Spacing>
 
