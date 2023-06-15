@@ -24,9 +24,9 @@ services:
       - ENV=dev
       - GCP_PROJECT_ID=$GCP_PROJECT_ID
       - GCP_REGION=$GCP_REGION
-      - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:magetest@test-postgres-db.cxj4djmtpwkx.us-west-2.rds.amazonaws.com:5432/postgres
+      - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
       - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
-      - REQUIRE_USER_AUTHENTICATION=1
+      - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
       - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
       - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
       - LDAP_SERVER=$LDAP_SERVER
@@ -38,7 +38,6 @@ services:
       - LDAP_ADMIN_USERNAME=$LDAP_ADMIN_USERNAME
       - SERVER_VERBOSITY=$SERVER_VERBOSITY
       - DISABLE_NOTEBOOK_EDIT_ACCESS=$DISABLE_NOTEBOOK_EDIT_ACCESS
-      - KUBE_NAMESPACE=default
     ports:
       - 6789:6789
     volumes:
