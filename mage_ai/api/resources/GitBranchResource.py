@@ -112,7 +112,11 @@ class GitBranchResource(GenericResource):
         elif action_type == 'push':
             git_manager.push()
         elif action_type == 'pull':
-            git_manager.pull()
+            pull = payload.get('pull', None)
+            if pull and 'remote' in pull:
+                git_manager.pull_remote_branch(pull['remote'], pull.get('branch'))
+            else:
+                git_manager.pull()
         elif action_type == 'reset':
             if files and len(files) >= 1:
                 for file_path in files:

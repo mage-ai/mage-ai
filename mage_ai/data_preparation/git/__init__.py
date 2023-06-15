@@ -150,10 +150,11 @@ class Git:
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
-        self.__poll_process_with_timeout(
+        asyncio.run(self.__poll_process_with_timeout(
             proc,
-            error_message='Error connecting to remote, make sure your SSH key is set up properly.',
-        )
+            error_message='Error connecting to remote, make sure your access token or SSH key is ' +
+                'set up properly.',
+        ))
 
     def _run_command(self, command: str) -> None:
         proc = subprocess.Popen(args=command, shell=True)
@@ -221,6 +222,15 @@ class Git:
     def pull(self) -> None:
         self.origin.pull(self.current_branch)
         self.__pip_install()
+
+    @_remote_command
+    def pull_remote_branch(self, remote_name: str, branch_name: str = None) -> None:
+        self.set_origin(remote_name)
+        remote = self.repo.remotes[remote_name]
+        remote.pull(branch_name)
+
+    def set_origin(self, remote_name: str) -> None:
+        self.origin = self.repo.remotes[remote_name]
 
     def status(self) -> str:
         return self.repo.git.status()
