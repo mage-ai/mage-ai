@@ -280,7 +280,10 @@ class Git:
         return arr
 
     def merge_branch(self, base_branch_name: str) -> None:
-        self.repo.git.merge(self.repo.branches[base_branch_name])
+        self.repo.git.merge(self.repo.branches[base_branch_name], m='WTFFFFFFFFFFFFFF')
+
+    def rebase_branch(self, base_branch_name: str) -> None:
+        self.repo.git.rebase(self.repo.branches[base_branch_name])
 
     def remotes(self, limit: int = 40) -> List[Dict]:
         arr = []
