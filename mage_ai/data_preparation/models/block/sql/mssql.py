@@ -1,9 +1,10 @@
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     create_upstream_block_tables as create_upstream_block_tables_orig,
-    interpolate_input,
 )
+from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_input
 from mage_ai.io.config import ConfigKey
-from typing import Dict, List
 
 
 def create_upstream_block_tables(
@@ -30,8 +31,9 @@ def create_upstream_block_tables(
             ConfigKey.MSSQL_HOST,
             ConfigKey.MSSQL_PORT,
         ],
-        no_schema=True,
+        no_schema=False,
         query=query,
+        schema_name=loader.default_schema(),
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
