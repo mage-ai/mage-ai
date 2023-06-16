@@ -31,6 +31,7 @@ export interface GitRemoteType {
 
 export default interface GitBranchType {
   action_type?: string;
+  error?: string;
   files?: FileType[];
   logs?: GitCommitType[];
   message?: string;

@@ -113,29 +113,39 @@ class GitBranchResource(GenericResource):
             push = payload.get('push', None)
 
             if push and 'remote' in push and 'branch' in push:
-                custom_progress = git_manager.push_remote_branch(
-                    push['remote'],
-                    push['branch'],
-                )
-                if custom_progress.other_lines:
-                    lines = custom_progress.other_lines
-                    if type(lines) is list:
-                        lines = '\n'.join(lines)
-                    self.model['progress'] = lines
+                import git
+
+                try:
+                    custom_progress = git_manager.push_remote_branch(
+                        push['remote'],
+                        push['branch'],
+                    )
+                    if custom_progress.other_lines:
+                        lines = custom_progress.other_lines
+                        if type(lines) is list:
+                            lines = '\n'.join(lines)
+                        self.model['progress'] = lines
+                except git.exc.GitCommandError as err:
+                    self.model['error'] = str(err)
             else:
                 git_manager.push()
         elif action_type == 'pull':
             pull = payload.get('pull', None)
             if pull and 'remote' in pull:
-                custom_progress = git_manager.pull_remote_branch(
-                    pull['remote'],
-                    pull.get('branch'),
-                )
-                if custom_progress.other_lines:
-                    lines = custom_progress.other_lines
-                    if type(lines) is list:
-                        lines = '\n'.join(lines)
-                    self.model['progress'] = lines
+                import git
+
+                try:
+                    custom_progress = git_manager.pull_remote_branch(
+                        pull['remote'],
+                        pull.get('branch'),
+                    )
+                    if custom_progress.other_lines:
+                        lines = custom_progress.other_lines
+                        if type(lines) is list:
+                            lines = '\n'.join(lines)
+                        self.model['progress'] = lines
+                except git.exc.GitCommandError as err:
+                    self.model['error'] = str(err)
             else:
                 git_manager.pull()
         elif action_type == 'reset':

@@ -55,6 +55,7 @@ function Commit({
   stagedFiles,
 }: CommitProps) {
   const [actionBranchName, setActionBranchName] = useState<string>(branch?.name || '');
+  const [actionError, setActionError] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>('');
   const [commitMessage, setCommitMessage] = useState<string>('');
@@ -126,13 +127,20 @@ function Commit({
         response, {
           callback: ({
             git_branch: {
+              error,
               progress,
             },
           }) => {
-            fetchBranch();
-            setActionBranchName(null);
-            setActionRemoteName(null);
-            setActionProgress(progress);
+            if (error) {
+              setActionError(error);
+              setActionProgress(null);
+            } else {
+              fetchBranch();
+              setActionBranchName(null);
+              setActionError(null);
+              setActionRemoteName(null);
+              setActionProgress(progress);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -320,14 +328,15 @@ function Commit({
             </Button>
           </Spacing>
 
-          {actionProgress && (
+          {(actionProgress || actionError) && (
             <Spacing mt={PADDING_UNITS}>
               <Text
-                default
+                danger={!!actionError}
+                default={!!actionProgress}
                 monospace
                 preWrap
               >
-                {actionProgress}
+                {actionProgress || actionError}
               </Text>
             </Spacing>
           )}

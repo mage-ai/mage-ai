@@ -255,11 +255,9 @@ class Git:
         custom_progress = git.remote.RemoteProgress()
 
         self.set_origin(remote_name)
-        self.repo.git.push(
-            remote_name,
-            branch_name,
-            custom_progress,
-        )
+        remote = self.repo.remotes[remote_name]
+
+        remote.push(branch_name, custom_progress)
 
         return custom_progress
 

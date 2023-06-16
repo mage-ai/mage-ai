@@ -56,15 +56,16 @@ function Remote({
 }: RemoteProps) {
   const refInputRepoPath = useRef(null);
 
+  const [actionBranchName, setActionBranchName] = useState<string>(null);
+  const [actionError, setActionError] = useState<string>(null);
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionBranchName, setActionBranchName] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>(null);
+  const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
+  const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
   const [remoteURLNew, setRemoteURLNew] = useState<string>('');
-  const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [repoPath, setRepoPath] = useState<string>(null);
-  const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
 
   useEffect(() => {
     if (branch?.sync_config?.repo_path && repoPath === null) {
@@ -108,14 +109,21 @@ function Remote({
         response, {
           callback: ({
             git_branch: {
+              error,
               progress,
             },
           }) => {
-            fetchBranch();
-            setActionBranchName(null);
-            setActionName(null);
-            setActionRemoteName(null);
-            setActionProgress(progress);
+            if (error) {
+              setActionError(error);
+              setActionProgress(null);
+            } else {
+              fetchBranch();
+              setActionBranchName(null);
+              setActionError(null);
+              setActionName(null);
+              setActionProgress(progress);
+              setActionRemoteName(null);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -547,14 +555,15 @@ function Remote({
             </Button>
           </FlexContainer>
 
-          {actionProgress && (
+          {(actionProgress || actionError) && (
             <Spacing mt={PADDING_UNITS}>
               <Text
-                default
+                danger={!!actionError}
+                default={!!actionProgress}
                 monospace
                 preWrap
               >
-                {actionProgress}
+                {actionProgress || actionError}
               </Text>
             </Spacing>
           )}
