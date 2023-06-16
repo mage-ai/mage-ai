@@ -25,7 +25,7 @@ export interface GitRemoteType {
   refs: {
     commit: GitCommitType;
     name: string;
-  };
+  }[];
   urls: string[];
 };
 

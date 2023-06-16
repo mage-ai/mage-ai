@@ -166,6 +166,7 @@ function Commit({
                     <Link
                       default
                       monospace
+                      // @ts-ignore
                       onClick={() => setSelectedFilePath(prev => prev === filePath ? null : filePath)}
                       warning={modifiedFiles?.[filePath]}
                     >
@@ -210,6 +211,7 @@ function Commit({
               disabled={stagedFilesCount === 0 || !(commitMessage?.length >= 1)}
               loading={isLoadingUpdate}
               onClick={() => {
+                // @ts-ignore
                 updateGitBranch({
                   git_branch: {
                     action_type: 'commit',
@@ -312,6 +314,7 @@ function Commit({
               loading={isLoadingAction}
               onClick={() => {
                 setActionProgress(null);
+                // @ts-ignore
                 actionGitBranch({
                   git_branch: {
                     action_type: ACTION_PUSH,

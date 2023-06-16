@@ -133,6 +133,7 @@ function Branches({
                 beforeIcon={<Branch muted={false} />}
                 beforeIconSize={UNIT * 2}
                 monospace
+                // @ts-ignore
                 onChange={e => changeGitBranch({
                   git_branch: {
                     name: e.target.value,
@@ -172,6 +173,7 @@ function Branches({
               disabled={!branchNameNew}
               loading={isLoadingCreate}
               onClick={() => {
+                // @ts-ignore
                 createGitBranch({
                   git_branch: {
                     name: branchNameNew,
@@ -286,6 +288,7 @@ function Branches({
                       `Are you sure you want to delete branch ${branchBase}?`,
                     )
                 )) {
+                  // @ts-ignore
                   actionGitBranch({
                     git_branch: {
                       action_type: actionName,

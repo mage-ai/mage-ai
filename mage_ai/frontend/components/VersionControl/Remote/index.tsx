@@ -141,6 +141,8 @@ function Remote({
         response, {
           callback: () => {
             fetchBranch();
+            setRemoteNameNew('');
+            setRemoteURLNew('');
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -217,7 +219,7 @@ function Remote({
                 )
               ) {
                 setRemoteNameActive(name);
-
+                // @ts-ignore
                 removeRemote({
                   git_branch: {
                     action_type: 'remove_remote',
@@ -351,6 +353,7 @@ function Remote({
                   compact
                   loading={isLoadingCreateSyncs}
                   onClick={() => {
+                    // @ts-ignore
                     createSyncs({
                       sync: {
                         repo_path: repoPath,
@@ -430,6 +433,7 @@ function Remote({
               disabled={!remoteNameNew || !remoteURLNew}
               loading={isLoadingUpdate}
               onClick={() => {
+                // @ts-ignore
                 updateGitBranch({
                   git_branch: {
                     action_type: 'add_remote',
@@ -438,9 +442,6 @@ function Remote({
                       url: remoteURLNew,
                     },
                   },
-                }).then(() => {
-                  setRemoteNameNew('');
-                  setRemoteURLNew('');
                 });
               }}
               secondary
@@ -539,6 +540,7 @@ function Remote({
               loading={isLoadingAction}
               onClick={() => {
                 setActionProgress(null);
+                // @ts-ignore
                 actionGitBranch({
                   git_branch: {
                     action_type: actionName,

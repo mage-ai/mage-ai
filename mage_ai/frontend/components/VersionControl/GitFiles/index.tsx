@@ -220,6 +220,7 @@ function GitFiles({
                   disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB || isLoadingUpdateCheckout}
                   loading={isLoadingUpdate}
                   onClick={() => {
+                    // @ts-ignore
                     updateGitBranch({
                       git_branch: {
                         action_type: 'add',
@@ -246,6 +247,7 @@ function GitFiles({
                         'Are you sure you want to undo all changes in the selected files?',
                       )
                     ) {
+                      // @ts-ignore
                       updateGitBranchCheckout({
                         git_branch: {
                           action_type: 'checkout',
@@ -290,6 +292,7 @@ function GitFiles({
                   disabled={isEmptyObject(selectedFilesB) || isLoadingUpdate || isLoadingUpdateCheckout}
                   loading={isLoadingUpdateB}
                   onClick={() => {
+                    // @ts-ignore
                     updateGitBranchB({
                       git_branch: {
                         action_type: 'reset',
