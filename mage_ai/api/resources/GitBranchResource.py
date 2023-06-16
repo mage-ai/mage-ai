@@ -195,7 +195,7 @@ class GitBranchResource(GenericResource):
             'rebase',
         ]:
             data = payload.get('delete', None) or \
-                payload.get('rebase', None) or \
+                payload.get('merge', None) or \
                 payload.get('rebase', None)
 
             if data and 'base_branch' in data:

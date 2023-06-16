@@ -158,7 +158,7 @@ function Branches({
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer>
+          <FlexContainer alignItems="center">
             <TextInput
               label="New branch name"
               monospace
@@ -180,7 +180,7 @@ function Branches({
                   },
                 });
               }}
-              secondary
+              primary
             >
               Create new branch
             </Button>
@@ -300,7 +300,7 @@ function Branches({
                   });
                 }
               }}
-              secondary
+              primary
             >
               {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
             </Button>

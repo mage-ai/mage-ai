@@ -409,7 +409,7 @@ function Remote({
         {!loading && remotesMemo}
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer>
+          <FlexContainer alignItems="center">
             <TextInput
               label="New remote name"
               monospace
@@ -444,7 +444,7 @@ function Remote({
                   },
                 });
               }}
-              secondary
+              primary
             >
               Create new remote
             </Button>
@@ -532,8 +532,9 @@ function Remote({
               ))}
             </Select>
 
-            <Spacing mr={1} />
+          </FlexContainer>
 
+          <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
               disabled={!actionName || !actionRemoteName}
@@ -551,24 +552,24 @@ function Remote({
                   },
                 });
               }}
-              secondary
+              primary
             >
               {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
             </Button>
-          </FlexContainer>
 
-          {(actionProgress || actionError) && (
-            <Spacing mt={PADDING_UNITS}>
-              <Text
-                danger={!!actionError}
-                default={!!actionProgress}
-                monospace
-                preWrap
-              >
-                {actionProgress || actionError}
-              </Text>
-            </Spacing>
-          )}
+            {(actionProgress || actionError) && (
+              <Spacing mt={PADDING_UNITS}>
+                <Text
+                  danger={!!actionError}
+                  default={!!actionProgress}
+                  monospace
+                  preWrap
+                >
+                  {actionProgress || actionError}
+                </Text>
+              </Spacing>
+            )}
+          </Spacing>
         </Spacing>
       </Spacing>
 
