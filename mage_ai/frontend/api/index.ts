@@ -46,6 +46,7 @@ export const FILE_CONTENTS: 'file_contents' = 'file_contents';
 export const FILE_VERSIONS: 'file_versions' = 'file_versions';
 export const FOLDERS: 'folders' = 'folders';
 export const GIT_BRANCHES: 'git_branches' = 'git_branches';
+export const GIT_FILES: 'git_files' = 'git_files';
 export const INSTANCES: 'instances' = 'instances';
 export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
 export const INTEGRATION_SAMPLES = 'integration_samples';
@@ -99,6 +100,7 @@ const RESOURCES: any[][] = [
   [FILE_VERSIONS, FILES],
   [FOLDERS],
   [GIT_BRANCHES],
+  [GIT_FILES],
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],

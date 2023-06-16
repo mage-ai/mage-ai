@@ -4,7 +4,8 @@ import os
 import shutil
 import subprocess
 import uuid
-from typing import Any, List
+from datetime import datetime
+from typing import Any, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -25,49 +26,68 @@ GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig) -> None:
+    def __init__(self, git_config: GitConfig = None) -> None:
         import git
-        self.remote_repo_link = git_config.remote_repo_link
-        self.repo_path = git_config.repo_path or os.getcwd()
-        os.makedirs(self.repo_path, exist_ok=True)
+
+        self.auth_type = AuthType.SSH
         self.git_config = git_config
-        self.auth_type = git_config.auth_type or AuthType.SSH
+        self.remote_repo_link = None
+        self.repo_path = os.getcwd()
+
+        if self.git_config:
+            self.remote_repo_link = self.git_config.remote_repo_link
+
+            if self.git_config.repo_path:
+                self.repo_path = self.git_config.repo_path
+
+            if self.git_config.auth_type:
+                self.auth_type = self.git_config.auth_type
+
+        os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
-            url = urlsplit(self.remote_repo_link)
+            if self.remote_repo_link:
+                url = urlsplit(self.remote_repo_link)
+
             if os.getenv(GIT_ACCESS_TOKEN_VAR):
                 token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-            else:
+            elif self.git_config and self.git_config.access_token_secret_name:
                 token = get_secret_value(
-                    git_config.access_token_secret_name,
+                    self.git_config.access_token_secret_name,
                     repo_name=get_repo_path(),
                 )
-            user = git_config.username
-            url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-            self.remote_repo_link = urlunsplit(url)
+
+            if self.git_config:
+                user = self.git_config.username
+                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+                self.remote_repo_link = urlunsplit(url)
 
         try:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             self.__setup_repo()
 
-        self.__set_git_config()
+        if self.git_config:
+            self.__set_git_config()
 
-        try:
-            self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
-        except git.exc.GitCommandError:
-            # if the remote already exists
-            pass
+        if self.remote_repo_link:
+            try:
+                self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
+            except git.exc.GitCommandError:
+                # if the remote already exists
+                pass
 
-        # replace the existing remote url if it is different from the provided url
-        self.origin = self.repo.remotes[REMOTE_NAME]
-        if self.remote_repo_link not in self.origin.urls:
-            self.origin.set_url(self.remote_repo_link)
+            # replace the existing remote url if it is different from the provided url
+            self.origin = self.repo.remotes[REMOTE_NAME]
+            if self.remote_repo_link not in self.origin.urls:
+                self.origin.set_url(self.remote_repo_link)
 
     @classmethod
     def get_manager(self, user: User = None) -> 'Git':
         preferences = get_preferences(user=user)
-        git_config = GitConfig.load(config=preferences.sync_config)
+        git_config = None
+        if preferences and preferences.sync_config:
+            git_config = GitConfig.load(config=preferences.sync_config)
         return Git(git_config)
 
     @property
@@ -77,6 +97,18 @@ class Git:
     @property
     def branches(self) -> List:
         return [branch.name for branch in self.repo.branches]
+
+    def add_remote(self, name: str, url: str) -> None:
+        self.repo.create_remote(name, url)
+
+    def remove_remote(self, name: str) -> None:
+        self.repo.remotes[name].remove(self.repo, name)
+
+    def staged_files(self) -> List[str]:
+        files_string = self.repo.git.diff('--name-only', '--cached')
+        if files_string:
+            return files_string.split('\n')
+        return []
 
     def untracked_files(self, untracked_files: bool = False) -> List[str]:
         from git.compat import defenc
@@ -118,10 +150,11 @@ class Git:
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
-        self.__poll_process_with_timeout(
+        asyncio.run(self.__poll_process_with_timeout(
             proc,
-            error_message='Error connecting to remote, make sure your SSH key is set up properly.',
-        )
+            error_message='Error connecting to remote, make sure your access token or SSH key is ' +
+            'set up properly.',
+        ))
 
     def _run_command(self, command: str) -> None:
         proc = subprocess.Popen(args=command, shell=True)
@@ -162,10 +195,10 @@ class Git:
                                 "Connecting to remote timed out, make sure your SSH key is set up properly"  # noqa: E501
                                 " and your repository host is added as a known host. More information here:"  # noqa: E501
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
-                    func(self, *args, **kwargs)
+                    return func(self, *args, **kwargs)
             else:
                 asyncio.run(self.check_connection())
-                func(self, *args, **kwargs)
+                return func(self, *args, **kwargs)
 
         return wrapper
 
@@ -182,7 +215,7 @@ class Git:
         self.repo.git.push(
             '--set-upstream',
             self.origin.name,
-            self.current_branch
+            self.current_branch,
         )
 
     @_remote_command
@@ -190,17 +223,137 @@ class Git:
         self.origin.pull(self.current_branch)
         self.__pip_install()
 
+    @_remote_command
+    def pull_remote_branch(self, remote_name: str, branch_name: str = None):
+        import git
+
+        custom_progress = git.remote.RemoteProgress()
+
+        self.set_origin(remote_name)
+        remote = self.repo.remotes[remote_name]
+        if branch_name and len(branch_name) >= 1:
+            try:
+                remote.pull(branch_name, custom_progress)
+            except git.exc.GitCommandError as err:
+                raise err
+        else:
+            # The following error will occur when no branch name is passed in as the argument.
+            # Not sure why, but the pull command still completes.
+            # git.exc.GitCommandError: Cmd('git') failed due to: exit code(1)
+            # cmdline: git pull -v -- test2
+            try:
+                remote.pull(progress=custom_progress)
+            except git.exc.GitCommandError:
+                pass
+
+        return custom_progress
+
+    @_remote_command
+    def push_remote_branch(self, remote_name: str, branch_name: str) -> None:
+        import git
+
+        custom_progress = git.remote.RemoteProgress()
+
+        self.set_origin(remote_name)
+        remote = self.repo.remotes[remote_name]
+
+        remote.push(branch_name, custom_progress)
+
+        return custom_progress
+
+    def set_origin(self, remote_name: str) -> None:
+        self.origin = self.repo.remotes[remote_name]
+
     def status(self) -> str:
         return self.repo.git.status()
 
-    def commit(self, message, files: List[str] = None) -> None:
-        if self.repo.index.diff(None) or self.repo.untracked_files:
-            if files:
-                for file in files:
-                    self.repo.git.add(file)
-            else:
-                self.repo.git.add('.')
+    def add_file(self, filename: str, flags: List[str] = None) -> None:
+        arr = flags or []
+        self.repo.git.add(filename, *arr)
+
+    def checkout_file(self, filename: str) -> None:
+        self.repo.git.checkout(filename)
+
+    def diff_file(self, filename: str) -> str:
+        return self.repo.git.diff(filename)
+
+    def logs(self, commits: int = 40) -> List[Dict]:
+        arr = []
+
+        for idx, commit in enumerate(self.repo.iter_commits()):
+            if idx >= commits:
+                break
+
+            arr.append(dict(
+                author=dict(
+                    email=commit.author.email,
+                    name=commit.author.name,
+                ),
+                date=datetime.fromtimestamp(commit.authored_date).isoformat(),
+                message=commit.message,
+            ))
+
+        return arr
+
+    def delete_branch(self, base_branch_name: str) -> None:
+        self.repo.branches[base_branch_name].delete(self.repo, base_branch_name, '-D')
+
+    def merge_branch(self, base_branch_name: str, message: str = None) -> None:
+        self.repo.git.merge(self.repo.branches[base_branch_name])
+        if message:
             self.repo.index.commit(message)
+
+    def rebase_branch(self, base_branch_name: str, message: str = None) -> None:
+        self.repo.git.rebase(self.repo.branches[base_branch_name])
+        if message:
+            self.repo.index.commit(message)
+
+    def remotes(self, limit: int = 40) -> List[Dict]:
+        arr = []
+
+        for idx, remote in enumerate(self.repo.remotes):
+            if idx >= limit:
+                break
+
+            refs = []
+            for ref in remote.refs:
+                refs.append(dict(
+                    name=ref.name,
+                    commit=dict(
+                        author=dict(
+                            email=ref.commit.author.email,
+                            name=ref.commit.author.name,
+                        ),
+                        date=datetime.fromtimestamp(ref.commit.authored_date).isoformat(),
+                        message=ref.commit.message,
+                    ),
+                ))
+
+            arr.append(dict(
+                name=remote.name,
+                refs=refs,
+                urls=[url for url in remote.urls],
+            ))
+
+        return arr
+
+    def reset_file(self, filename: str) -> None:
+        self.repo.git.reset(filename)
+
+    def show_file_from_branch(self, branch: str, filename: str) -> str:
+        return self.repo.git.show(f'{branch}:{filename}')
+
+    def commit(self, message, files: List[str] = None) -> None:
+        if files:
+            for file in files:
+                self.repo.git.add(file)
+            self.repo.index.commit(message)
+        elif self.repo.index.diff(None) or self.repo.untracked_files:
+            self.repo.git.add('.')
+            self.repo.index.commit(message)
+
+    def commit_message(self, message: str) -> None:
+        self.repo.index.commit(message)
 
     def switch_branch(self, branch) -> None:
         if branch in self.repo.heads:

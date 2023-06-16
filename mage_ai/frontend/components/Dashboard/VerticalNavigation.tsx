@@ -12,6 +12,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
+  BranchAlt,
   DocumentIcon,
   Lightning,
   PipelineV3,
@@ -66,6 +67,14 @@ const DEFAULT_ITEMS = [
         label: () => 'Files',
         linkProps: {
           href: '/files',
+        },
+      },
+      {
+        Icon: BranchAlt,
+        id: 'version-control',
+        label: () => 'Version control (beta)',
+        linkProps: {
+          href: '/version-control',
         },
       },
       {

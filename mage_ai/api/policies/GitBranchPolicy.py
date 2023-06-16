@@ -22,7 +22,10 @@ GitBranchPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes, scopes=[
+GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes + [
+    'logs',
+    'remotes',
+], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
     constants.CREATE,
@@ -37,7 +40,15 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
+GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
+    'delete',
+    'merge',
+    'pull',
+    'push',
+    'rebase',
+    'remote',
+    'reset',
+], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
     constants.UPDATE,

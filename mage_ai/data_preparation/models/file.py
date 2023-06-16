@@ -104,9 +104,11 @@ class File:
         return file
 
     @classmethod
-    def from_path(self, file_path, repo_path=None):
-        repo_path = repo_path or get_repo_path()
-        return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path)
+    def from_path(self, file_path, repo_path: str = None):
+        repo_path_alt = repo_path
+        if repo_path_alt is None:
+            repo_path_alt = get_repo_path()
+        return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
     def get_all_files(self, repo_path):
