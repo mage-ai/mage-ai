@@ -15,7 +15,6 @@ from mage_ai.data_preparation.shared.constants import (
     REPO_PATH_ENV_VAR,
 )
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.server.api.clusters import ClusterType
 from mage_ai.shared.environments import is_test
 
 if is_test():
@@ -159,7 +158,8 @@ class RepoConfig:
 def init_repo(
     repo_path: str,
     project_type: str = ProjectType.STANDALONE,
-    cluster_type: str = ClusterType.K8S,
+    cluster_type: str = 'k8s',
+    project_uuid: str = None,
 ) -> None:
     """
     Initialize a repository under the current path.
@@ -170,6 +170,9 @@ def init_repo(
     new_config = dict()
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
+        new_config.update(
+            cluster_type=cluster_type,
+        )
     elif project_type == ProjectType.SUB:
         os.makedirs(
             os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
@@ -191,7 +194,8 @@ def init_repo(
         )
         copy_template_directory('repo', repo_path)
 
-    project_uuid = uuid.uuid4().hex
+    if project_uuid is None:
+        project_uuid = uuid.uuid4().hex
     new_config.update(project_uuid=project_uuid)
     get_repo_config(repo_path).save(**new_config)
     return project_uuid

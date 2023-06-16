@@ -36,14 +36,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        try:
-            config.load_incluster_config()
-            return True
-        except Exception:
-            pass
+        # try:
+        #     config.load_incluster_config()
+        #     return True
+        # except Exception:
+        #     pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/k8s_main_project/kubeconfig')
         except Exception:
             pass
 
@@ -73,20 +73,25 @@ class WorkloadManager:
         name,
         container_config: Dict = None,
         service_account_name: str = None,
-        storage_class_name: str = None,
-        volume_host_path: str = None,
+        storage_class_name: str = 'default',
+        project_type: str = 'standalone',
+        project_uuid: str = None,
     ):
         if container_config is None:
             container_config = dict()
 
-        env_vars = self.__populate_env_vars(container_config)
+        env_vars = self.__populate_env_vars(
+            name,
+            project_type=project_type,
+            project_uuid=project_uuid,
+            container_config=container_config,
+        )
         container_config['env'] = env_vars
 
         containers = [
             {
                 'name': f'{name}-container',
                 'image': 'mageai/mageai:latest',
-                'command': ['mage', 'start', name],
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -150,12 +155,12 @@ class WorkloadManager:
         if service_account_name:
             stateful_set_template_spec['serviceAccountName'] = service_account_name
 
-        if storage_class_name is None:
-            self.__create_persistent_volume(
-                name,
-                volume_host_path=volume_host_path,
-            )
-            storage_class_name = f'{name}-storage'
+        # if storage_class_name is None:
+        #     self.__create_persistent_volume(
+        #         name,
+        #         volume_host_path=volume_host_path,
+        #     )
+        #     storage_class_name = f'{name}-storage'
 
         stateful_set = {
             'apiVersion': 'apps/v1',
@@ -244,53 +249,74 @@ class WorkloadManager:
 
         return self.core_client.create_namespaced_service(self.namespace, service)
 
-    def __create_persistent_volume(
+    # def __create_persistent_volume(
+    #     self,
+    #     name,
+    #     volume_host_path=None,
+    # ):
+    #     nodes = self.core_client.list_node().items
+    #     hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
+    #     pv = {
+    #         'apiVersion': 'v1',
+    #         'kind': 'PersistentVolume',
+    #         'metadata': {
+    #             'name': f'{name}-pv'
+    #         },
+    #         'spec': {
+    #             'capacity': {
+    #                 'storage': '1Gi'
+    #             },
+    #             'volumeMode': 'Filesystem',
+    #             'accessModes': [
+    #                 'ReadWriteOnce'
+    #             ],
+    #             'persistentVolumeReclaimPolicy': 'Delete',
+    #             'storageClassName': f'{name}-storage',
+    #             'local': {
+    #                 'path': volume_host_path,
+    #             },
+    #             'nodeAffinity': {
+    #                 'required': {
+    #                     'nodeSelectorTerms': [
+    #                         {
+    #                             'matchExpressions': [
+    #                                 {
+    #                                     'key': 'kubernetes.io/hostname',
+    #                                     'operator': 'In',
+    #                                     'values': hostnames
+    #                                 }
+    #                             ]
+    #                         }
+    #                     ]
+    #                 }
+    #             }
+    #         }
+    #     }
+    #     self.core_client.create_persistent_volume(pv)
+
+    def __populate_env_vars(
         self,
         name,
-        volume_host_path=None,
-    ):
-        nodes = self.core_client.list_node().items
-        hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
-        pv = {
-            'apiVersion': 'v1',
-            'kind': 'PersistentVolume',
-            'metadata': {
-                'name': f'{name}-pv'
-            },
-            'spec': {
-                'capacity': {
-                    'storage': '1Gi'
-                },
-                'volumeMode': 'Filesystem',
-                'accessModes': [
-                    'ReadWriteOnce'
-                ],
-                'persistentVolumeReclaimPolicy': 'Delete',
-                'storageClassName': f'{name}-storage',
-                'local': {
-                    'path': volume_host_path,
-                },
-                'nodeAffinity': {
-                    'required': {
-                        'nodeSelectorTerms': [
-                            {
-                                'matchExpressions': [
-                                    {
-                                        'key': 'kubernetes.io/hostname',
-                                        'operator': 'In',
-                                        'values': hostnames
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
+        project_type: str = 'standalone',
+        project_uuid: str = None,
+        container_config: Dict = None
+    ) -> List:
+        env_vars = [
+            {
+                'name': 'USER_CODE_PATH',
+                'value': name,
             }
-        }
-        self.core_client.create_persistent_volume(pv)
-
-    def __populate_env_vars(self, container_config) -> List:
-        env_vars = []
+        ]
+        if project_type:
+            env_vars.append({
+                'name': 'PROJECT_TYPE',
+                'value': project_type,
+            })
+        if project_uuid:
+            env_vars.append({
+                'name': 'PROJECT_UUID',
+                'value': project_uuid,
+            })
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
         if connection_url_secrets_name:

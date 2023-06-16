@@ -3,6 +3,7 @@ set -eo pipefail
 
 PROJECT_PATH="default_repo"
 MAGE_PROJECT_TYPE="standalone"
+MAGE_PROJECT_UUID=""
 
 if [[ ! -z "${FILESTORE_IP_ADDRESS}" && ! -z "${FILE_SHARE_NAME}" ]]; then
     echo "Mounting Cloud Filestore ${FILESTORE_IP_ADDRESS}:/${FILE_SHARE_NAME}"
@@ -16,6 +17,10 @@ fi
 
 if [[ ! -z "${PROJECT_TYPE}" ]]; then
     MAGE_PROJECT_TYPE=$PROJECT_TYPE
+fi
+
+if [[ ! -z "${PROJECT_UUID}" ]]; then
+    MAGE_PROJECT_UUID=$PROJECT_UUID
 fi
 
 if [[ ! -z "${ULIMIT_NO_FILE}" ]]; then
@@ -38,6 +43,8 @@ else
         mage start $PROJECT_PATH --dbt-docs-instance 1
     elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
         mage start $PROJECT_PATH --manage-instance 1
+    elif [[ ! -z "${MAGE_PROJECT_UUID}" ]]; then
+        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE --project-uuid $MAGE_PROJECT_UUID
     else
         mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE
     fi

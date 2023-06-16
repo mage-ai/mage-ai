@@ -48,6 +48,10 @@ START_CLUSTER_TYPE_DEFAULT = typer.Option(
     'k8s',
     help='type of instance to create for workspace management',
 )
+START_PROJECT_UUID_DEFAULT = typer.Option(
+    None,
+    help='type of instance to create for workspace management',
+)
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the pipeline.'
@@ -124,6 +128,7 @@ def start(
     instance_type: str = START_INSTANCE_TYPE_DEFAULT,
     project_type: str = START_PROJECT_TYPE_DEFAULT,
     cluster_type: str = START_CLUSTER_TYPE_DEFAULT,
+    project_uuid: str = START_CLUSTER_TYPE_DEFAULT,
 ):
     """
     Start Mage server and UI.
@@ -145,6 +150,7 @@ def start(
         instance_type=instance_type,
         project_type=project_type,
         cluster_type=cluster_type,
+        project_uuid=project_uuid,
     )
 
 

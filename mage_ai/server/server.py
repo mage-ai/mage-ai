@@ -294,6 +294,7 @@ def start_server(
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
     project_type: ProjectType = ProjectType.STANDALONE,
     cluster_type: ClusterType = ClusterType.K8S,
+    project_uuid: str = None,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
