@@ -3,6 +3,7 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 export const ACTION_DELETE = 'delete';
 export const ACTION_MERGE = 'merge';
 export const ACTION_PULL = 'pull';
+export const ACTION_PUSH = 'push';
 export const ACTION_REBASE = 'rebase';
 export const ACTION_RESET = 'reset';
 

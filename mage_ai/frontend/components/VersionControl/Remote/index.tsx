@@ -8,11 +8,12 @@ import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import GitBranchType from '@interfaces/GitBranchType';
+import GitBranchType, { GitRemoteType } from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -40,11 +41,17 @@ import { onSuccess } from '@api/utils/response';
 
 type RemoteProps = {
   branch: GitBranchType;
+  fetchBranch: () => void;
+  loading?: boolean;
+  remotes: GitRemoteType[];
   showError: (opts: any) => void;
 };
 
 function Remote({
   branch,
+  fetchBranch,
+  loading,
+  remotes,
   showError,
 }: RemoteProps) {
   const refInputRepoPath = useRef(null);
@@ -65,11 +72,6 @@ function Remote({
     }
   }, [branch, repoPath]);
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_remotes', {
-    '_format': 'with_remotes',
-  });
-  const branchGit = useMemo(() => dataBranch?.git_branch, [dataBranch]);
-  const remotes = useMemo(() => branchGit?.remotes || [], [branchGit]);
   const branches = useMemo(() => remotes?.find(({
     name,
   }) => name === actionRemoteName)?.refs?.map(({
@@ -385,10 +387,15 @@ function Remote({
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
-          Remotes{dataBranch && remotes ? ` (${remotes?.length})` : ''}
+          Remotes{!loading && remotes ? ` (${remotes?.length})` : ''}
         </Headline>
 
-        {remotesMemo}
+        {loading && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Spinner inverted />
+          </Spacing>
+        )}
+        {!loading && remotesMemo}
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <FlexContainer>

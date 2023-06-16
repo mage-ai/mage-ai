@@ -215,7 +215,7 @@ class Git:
         self.repo.git.push(
             '--set-upstream',
             self.origin.name,
-            self.current_branch
+            self.current_branch,
         )
 
     @_remote_command
@@ -232,7 +232,10 @@ class Git:
         self.set_origin(remote_name)
         remote = self.repo.remotes[remote_name]
         if branch_name and len(branch_name) >= 1:
-            remote.pull(branch_name, custom_progress)
+            try:
+                remote.pull(branch_name, custom_progress)
+            except git.exc.GitCommandError as err:
+                raise err
         else:
             # The following error will occur when no branch name is passed in as the argument.
             # Not sure why, but the pull command still completes.
@@ -242,6 +245,21 @@ class Git:
                 remote.pull(progress=custom_progress)
             except git.exc.GitCommandError:
                 pass
+
+        return custom_progress
+
+    @_remote_command
+    def push_remote_branch(self, remote_name: str, branch_name: str) -> None:
+        import git
+
+        custom_progress = git.remote.RemoteProgress()
+
+        self.set_origin(remote_name)
+        self.repo.git.push(
+            remote_name,
+            branch_name,
+            custom_progress,
+        )
 
         return custom_progress
 

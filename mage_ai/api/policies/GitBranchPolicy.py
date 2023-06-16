@@ -44,6 +44,7 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
     'delete',
     'merge',
     'pull',
+    'push',
     'rebase',
     'remote',
     'reset',

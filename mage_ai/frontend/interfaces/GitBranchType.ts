@@ -20,6 +20,15 @@ interface SyncConfigType {
  username?: string;
 }
 
+export interface GitRemoteType {
+  name: string;
+  refs: {
+    commit: GitCommitType;
+    name: string;
+  };
+  urls: string[];
+};
+
 export default interface GitBranchType {
   action_type?: string;
   files?: FileType[];
@@ -27,14 +36,7 @@ export default interface GitBranchType {
   message?: string;
   modified_files?: string[];
   name: string;
-  remotes?: {
-    name: string;
-    refs: {
-      commit: GitCommitType;
-      name: string;
-    };
-    urls: string[];
-  }[];
+  remotes?: GitRemoteType[];
   staged_files?: string[];
   status?: string;
   sync_config?: SyncConfigType;

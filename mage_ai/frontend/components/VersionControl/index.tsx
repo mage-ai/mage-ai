@@ -59,6 +59,15 @@ function VersionControl() {
   const branch: GitBranchType = useMemo(() => dataBranch?.git_branch || {}, [dataBranch]);
   const files: FileType[] = useMemo(() => branch?.files || [], [branch]);
 
+  const {
+    data: dataBranchRemotes,
+    mutate: fetchBranchRemotes,
+  } = api.git_branches.detail('with_remotes', {
+    '_format': 'with_remotes',
+  });
+  const branchGit = useMemo(() => dataBranchRemotes?.git_branch, [dataBranchRemotes]);
+  const remotes = useMemo(() => branchGit?.remotes || [], [branchGit]);
+
   const { data: dataFile, mutate: fetchFileGit } = api.git_files.detail(
     selectedFilePath
       ? encodeURIComponent(selectedFilePath)
@@ -254,10 +263,16 @@ function VersionControl() {
   const remoteMemo = useMemo(() => (
     <Remote
       branch={branch}
+      fetchBranch={fetchBranchRemotes}
+      loading={!dataBranchRemotes}
+      remotes={remotes}
       showError={showError}
     />
   ), [
     branch,
+    dataBranchRemotes,
+    fetchBranchRemotes,
+    remotes,
     showError,
   ]);
 
@@ -298,15 +313,21 @@ function VersionControl() {
   const commitMemo = useMemo(() => (
     <Commit
       branch={branch}
+      branches={branches}
       fetchBranch={fetchBranch}
       modifiedFiles={modifiedFiles}
+      remotes={remotes}
+      setSelectedFilePath={setSelectedFilePath}
       showError={showError}
       stagedFiles={stagedFiles}
     />
   ), [
     branch,
+    branches,
     fetchBranch,
     modifiedFiles,
+    remotes,
+    setSelectedFilePath,
     showError,
     stagedFiles,
   ]);

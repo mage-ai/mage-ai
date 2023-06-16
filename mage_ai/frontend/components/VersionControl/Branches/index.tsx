@@ -19,7 +19,6 @@ import {
   ACTION_DELETE,
   ACTION_MERGE,
   ACTION_REBASE,
-  ACTION_RESET,
 } from '../constants';
 import {
   PADDING_UNITS,
@@ -251,9 +250,6 @@ function Branches({
                 <option value={ACTION_REBASE}>
                   {capitalizeRemoveUnderscoreLower(ACTION_REBASE)}
                 </option>
-                <option value={ACTION_RESET}>
-                  {capitalizeRemoveUnderscoreLower(ACTION_RESET)}
-                </option>
                 <option value={ACTION_DELETE}>
                   {capitalizeRemoveUnderscoreLower(ACTION_DELETE)}
                 </option>
@@ -359,3 +355,6 @@ function Branches({
 }
 
 export default Branches;
+
+
+

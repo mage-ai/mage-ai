@@ -7,30 +7,37 @@ import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
-import GitBranchType from '@interfaces/GitBranchType';
+import GitBranchType, { GitRemoteType } from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import api from '@api';
+import { ACTION_PUSH, TAB_BRANCHES, TAB_FILES } from '../constants';
+import { Branch, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { PaginateArrowLeft } from '@oracle/icons';
-import { TAB_FILES } from '../constants';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
 type CommitProps = {
   branch: GitBranchType;
+  branches: GitBranchType[];
   fetchBranch: () => void;
   modifiedFiles: {
     [fullPath: string]: boolean;
   };
+  remotes: GitRemoteType[];
+  setSelectedFilePath: (filePath: string) => void;
   showError: (opts: any) => void;
   stagedFiles: {
     [fullPath: string]: boolean;
@@ -39,11 +46,17 @@ type CommitProps = {
 
 function Commit({
   branch,
+  branches,
   fetchBranch: fetchBranchProp,
   modifiedFiles,
+  remotes,
+  setSelectedFilePath,
   showError,
   stagedFiles,
 }: CommitProps) {
+  const [actionBranchName, setActionBranchName] = useState<string>(branch?.name || '');
+  const [actionProgress, setActionProgress] = useState<string>(null);
+  const [actionRemoteName, setActionRemoteName] = useState<string>('');
   const [commitMessage, setCommitMessage] = useState<string>('');
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_logs', {
@@ -106,6 +119,30 @@ function Commit({
     },
   );
 
+  const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
+    api.git_branches.useUpdate(branch?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            git_branch: {
+              progress,
+            },
+          }) => {
+            fetchBranch();
+            setActionBranchName(null);
+            setActionRemoteName(null);
+            setActionProgress(progress);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -118,24 +155,24 @@ function Commit({
               {stagedFilesPaths?.map((filePath: string) => (
                 <Spacing key={filePath} my={1} px={PADDING_UNITS}>
                   <FlexContainer justifyContent="space-between">
-                    <Text
+                    <Link
                       default
                       monospace
+                      onClick={() => setSelectedFilePath(prev => prev === filePath ? null : filePath)}
                       warning={modifiedFiles?.[filePath]}
                     >
                       {filePath}
-                    </Text>
+                    </Link>
 
                     <Spacing mr={1} />
 
                     {modifiedFiles?.[filePath] && (
                       <Text warning>
-                        Modified since <NextLink
+                        Modified after <NextLink
                           href={`/version-control?tab=${TAB_FILES.uuid}`}
                           passHref
                         >
                           <Link
-                            bold
                             underline
                             warning
                           >
@@ -204,12 +241,110 @@ function Commit({
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing mb={1}>
           <Headline>
+            {capitalizeRemoveUnderscoreLower(ACTION_PUSH)}
+          </Headline>
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer>
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Remote
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<MultiShare />}
+                beforeIconSize={UNIT * 1.5}
+                monospace
+                onChange={e => setActionRemoteName(e.target.value)}
+                placeholder="Choose remote"
+                value={actionRemoteName || ''}
+              >
+                {remotes?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <Spacing mr={1} />
+
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Branch
+                </Text>
+              </Spacing>
+
+              <Select
+                beforeIcon={<Branch />}
+                beforeIconSize={UNIT * 1.5}
+                monospace
+                onChange={e => setActionBranchName(e.target.value)}
+                placeholder="Choose branch"
+                value={actionBranchName || ''}
+              >
+                <option value="" />
+                {branches?.map(({ name }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </FlexContainer>
+
+          <Spacing mt={PADDING_UNITS}>
+            <Button
+              beforeIcon={<Lightning size={UNIT * 2} />}
+              disabled={!actionRemoteName || !actionBranchName}
+              loading={isLoadingAction}
+              onClick={() => {
+                setActionProgress(null);
+                actionGitBranch({
+                  git_branch: {
+                    action_type: ACTION_PUSH,
+                    [ACTION_PUSH]: {
+                      branch: actionBranchName,
+                      remote: actionRemoteName,
+                    },
+                  },
+                });
+              }}
+              primary
+            >
+              {capitalizeRemoveUnderscoreLower(ACTION_PUSH)} {actionRemoteName} {actionRemoteName && actionBranchName}
+            </Button>
+          </Spacing>
+
+          {actionProgress && (
+            <Spacing mt={PADDING_UNITS}>
+              <Text
+                default
+                monospace
+                preWrap
+              >
+                {actionProgress}
+              </Text>
+            </Spacing>
+          )}
+        </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing mb={1}>
+          <Headline>
             Logs
           </Headline>
         </Spacing>
 
-        {!dataBranch && <Spinner inverted />}
-        {dataBranch && logsMemo}
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          {!dataBranch && <Spinner inverted />}
+          {dataBranch && logsMemo}
+        </Spacing>
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>

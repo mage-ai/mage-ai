@@ -110,7 +110,20 @@ class GitBranchResource(GenericResource):
                 raise ApiError(error)
             git_manager.commit(message, files)
         elif action_type == 'push':
-            git_manager.push()
+            push = payload.get('push', None)
+
+            if push and 'remote' in push and 'branch' in push:
+                custom_progress = git_manager.push_remote_branch(
+                    push['remote'],
+                    push['branch'],
+                )
+                if custom_progress.other_lines:
+                    lines = custom_progress.other_lines
+                    if type(lines) is list:
+                        lines = '\n'.join(lines)
+                    self.model['progress'] = lines
+            else:
+                git_manager.push()
         elif action_type == 'pull':
             pull = payload.get('pull', None)
             if pull and 'remote' in pull:
