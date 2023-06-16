@@ -261,7 +261,7 @@ function Branches({
             </div>
           </FlexContainer>
 
-          {actionName && ACTION_REBASE === actionName && (
+          {false && actionName && ACTION_REBASE === actionName && (
             <Spacing mt={PADDING_UNITS}>
               <Spacing mb={1}>
                 <Text bold muted>
@@ -280,7 +280,7 @@ function Branches({
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !branchBase || (actionName && ACTION_REBASE === actionName && !actionMessage)}
+              disabled={!actionName || !branchBase}
               loading={isLoadingAction}
               onClick={() => {
                 if (ACTION_DELETE !== actionName || (
