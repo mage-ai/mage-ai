@@ -254,12 +254,10 @@ function VersionControl() {
   const remoteMemo = useMemo(() => (
     <Remote
       branch={branch}
-      branches={branches}
       showError={showError}
     />
   ), [
     branch,
-    branches,
     showError,
   ]);
 
