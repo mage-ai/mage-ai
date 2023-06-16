@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -195,10 +195,10 @@ class Git:
                                 "Connecting to remote timed out, make sure your SSH key is set up properly"  # noqa: E501
                                 " and your repository host is added as a known host. More information here:"  # noqa: E501
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
-                    func(self, *args, **kwargs)
+                    return func(self, *args, **kwargs)
             else:
                 asyncio.run(self.check_connection())
-                func(self, *args, **kwargs)
+                return func(self, *args, **kwargs)
 
         return wrapper
 
@@ -224,10 +224,26 @@ class Git:
         self.__pip_install()
 
     @_remote_command
-    def pull_remote_branch(self, remote_name: str, branch_name: str = None) -> None:
+    def pull_remote_branch(self, remote_name: str, branch_name: str = None):
+        import git
+
+        custom_progress = git.remote.RemoteProgress()
+
         self.set_origin(remote_name)
         remote = self.repo.remotes[remote_name]
-        remote.pull(branch_name)
+        if branch_name and len(branch_name) >= 1:
+            remote.pull(branch_name, custom_progress)
+        else:
+            # The following error will occur when no branch name is passed in as the argument.
+            # Not sure why, but the pull command still completes.
+            # git.exc.GitCommandError: Cmd('git') failed due to: exit code(1)
+            # cmdline: git pull -v -- test2
+            try:
+                remote.pull(progress=custom_progress)
+            except git.exc.GitCommandError:
+                pass
+
+        return custom_progress
 
     def set_origin(self, remote_name: str) -> None:
         self.origin = self.repo.remotes[remote_name]

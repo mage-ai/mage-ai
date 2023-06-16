@@ -114,7 +114,15 @@ class GitBranchResource(GenericResource):
         elif action_type == 'pull':
             pull = payload.get('pull', None)
             if pull and 'remote' in pull:
-                git_manager.pull_remote_branch(pull['remote'], pull.get('branch'))
+                custom_progress = git_manager.pull_remote_branch(
+                    pull['remote'],
+                    pull.get('branch'),
+                )
+                if custom_progress.other_lines:
+                    lines = custom_progress.other_lines
+                    if type(lines) is list:
+                        lines = '\n'.join(lines)
+                    self.model['progress'] = lines
             else:
                 git_manager.pull()
         elif action_type == 'reset':
