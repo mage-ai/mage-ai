@@ -340,12 +340,12 @@ class Git:
         return self.repo.git.show(f'{branch}:{filename}')
 
     def commit(self, message, files: List[str] = None) -> None:
-        if self.repo.index.diff(None) or self.repo.untracked_files:
-            if files:
-                for file in files:
-                    self.repo.git.add(file)
-            else:
-                self.repo.git.add('.')
+        if files:
+            for file in files:
+                self.repo.git.add(file)
+            self.repo.index.commit(message)
+        elif self.repo.index.diff(None) or self.repo.untracked_files:
+            self.repo.git.add('.')
             self.repo.index.commit(message)
 
     def commit_message(self, message: str) -> None:
