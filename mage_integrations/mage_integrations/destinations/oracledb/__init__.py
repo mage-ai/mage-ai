@@ -11,6 +11,7 @@ from mage_integrations.destinations.oracledb.utils import (
     build_create_table_command,
     clean_column_name,
     convert_column_type,
+    convert_column_to_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
@@ -64,7 +65,7 @@ class OracleDB(Destination):
         conn = self.build_connection().build_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute("""SELECT name FROM v$database""")
+            cursor.execute("SELECT name FROM v$database")
         except Exception as exc:
             self.logger.error(f"test_connection exception: {exc}")
             raise exc
@@ -84,7 +85,7 @@ class OracleDB(Destination):
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'VARRAY(5)',
+                    lambda item_type_converted: 'CHAR(255)',
                 ),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{table_name}',
@@ -123,7 +124,7 @@ WHERE TABLE_NAME = '{table_name.upper()}'
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'TEXT',
+                    lambda item_type_converted: 'CHAR(255)',
                 ),
                 columns=new_columns,
                 full_table_name=f'{table_name}',
@@ -145,10 +146,11 @@ WHERE TABLE_NAME = '{table_name.upper()}'
             column_type_mapping=column_type_mapping(
                 schema,
                 convert_column_type,
-                lambda item_type_converted: 'LONGTEXT',
+                lambda item_type_converted: 'CHAR(255)',
             ),
             columns=columns,
             records=records,
+            convert_column_to_type_func=convert_column_to_type,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
@@ -206,7 +208,7 @@ END;
         cursor = connection.cursor()
         cursor.execute(
             f'SELECT COUNT(*) FROM user_tables WHERE table_name = \'{table_name.upper()}\'')
-        (number_of_rows,) = cursor.fetchone()
+        number_of_rows = cursor.fetchone()[0]
         if number_of_rows > 0:
             return True
         return False

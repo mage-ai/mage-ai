@@ -1,7 +1,5 @@
 from typing import Dict, List
 
-import singer
-
 from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS
 from mage_integrations.destinations.utils import (
     clean_column_name as clean_column_name_orig,
@@ -15,8 +13,6 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
-
-LOGGER = singer.get_logger()
 
 
 def clean_column_name(col, lower_case: bool = True, handle_leading_underscore: bool = True):
@@ -49,6 +45,12 @@ def build_alter_table_command(
     ]
     # TODO: support add new unique constraints
     return f"ALTER TABLE {full_table_name} ADD ({', '.join(columns_and_types)})"
+
+
+def convert_column_to_type(value, column_type) -> str:
+    if column_type == 'NCLOB':
+        return f"to_nclob('{value}')"
+    return f"CAST('{value}' AS {column_type})"
 
 
 def build_create_table_command(
