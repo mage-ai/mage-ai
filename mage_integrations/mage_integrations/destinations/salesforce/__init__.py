@@ -8,15 +8,14 @@ from mage_integrations.destinations.salesforce.target_salesforce.target import (
 
 
 class Salesforce(Destination):
-
     def process(self, input_buffer) -> None:
-        TargetSalesforce(config=self.config).listen_override(file_input=open(self.input_file_path,
-                                                             'r'))
+        TargetSalesforce(config=self.config, logger=self.logger).listen_override(
+            file_input=open(self.input_file_path, 'r'))
 
 
 if __name__ == '__main__':
     destination = Salesforce(
         argument_parser=argparse.ArgumentParser(),
-        batch_processing=True,
+        batch_processing=True
     )
     destination.process(sys.stdin.buffer)

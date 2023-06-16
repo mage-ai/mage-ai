@@ -7,8 +7,9 @@ from collections import Counter, defaultdict
 from singer_sdk import typing as th
 from singer_sdk.exceptions import ConfigValidationError
 from singer_sdk.io_base import SingerMessageType
-from singer_sdk.target_base import Target
 from target_salesforce.sinks import SalesforceSink
+
+from mage_integrations.destinations.target import Target
 
 
 class TargetSalesforce(Target):
@@ -81,7 +82,9 @@ class TargetSalesforce(Target):
     default_sink_class = SalesforceSink
 
     def __init__(self, *, config=None, parse_env_config: bool = False,
-                 validate_config: bool = True) -> None:
+                 validate_config: bool = True, logger) -> None:
+
+        self.loggers = logger
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
@@ -90,6 +93,18 @@ class TargetSalesforce(Target):
         if self.config.get("is_sandbox") is not None:
             raise ConfigValidationError("is_sandbox has been deprecated, use domain.\
                                          is_sandbox-False = 'login', is_sandbox-True = 'test'")
+
+    @property
+    def logger(self):
+        """Get logger.
+
+        Returns:
+            Plugin logger.
+        """
+
+        logger = self.loggers
+
+        return logger
 
     def listen_override(self, file_input: t.IO[str] | None = None) -> None:
         if not file_input:
@@ -107,19 +122,16 @@ class TargetSalesforce(Target):
         Returns:
             A counter object for the processed lines.
         """
-        self.logger.info("Target '%s' is listening for input from tap.", "test")
+        self.logger.info(f"Target {self.name} is listening for input from tap.")
         counter = self._process_lines_internal(file_input)
 
         line_count = sum(counter.values())
 
         self.logger.info(
-            "Target '%s' completed reading %d lines of input "
-            "(%d records, %d batch manifests, %d state messages).",
-            self.name,
-            line_count,
-            counter[SingerMessageType.RECORD],
-            counter[SingerMessageType.BATCH],
-            counter[SingerMessageType.STATE],
+            f"Target {self.name} completed reading {line_count} lines of input "
+            f"({counter[SingerMessageType.RECORD]} records"
+            f"{counter[SingerMessageType.BATCH]} batch manifests"
+            f"{counter[SingerMessageType.STATE]} state messages)."
         )
 
         return counter
