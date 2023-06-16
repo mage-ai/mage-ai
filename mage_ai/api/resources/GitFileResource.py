@@ -24,7 +24,6 @@ class GitFileResource(GenericResource):
         git_manager = Git.get_manager(user=user)
 
         modified_files = git_manager.modified_files
-        untracked_files = git_manager.untracked_files()
         is_modified = file_path in modified_files
 
         query = kwargs.get('query', {})

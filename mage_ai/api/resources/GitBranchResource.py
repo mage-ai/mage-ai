@@ -38,7 +38,6 @@ class GitBranchResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        branch = None
         git_manager = Git.get_manager(user=user)
 
         files = {}
@@ -211,7 +210,7 @@ class GitBranchResource(GenericResource):
                 error = ApiError.RESOURCE_ERROR
                 error.update({
                     'message': 'Please select a base branch to ' +
-                        f'{action_type} into the current branch.',
+                    f'{action_type} into the current branch.',
                 })
                 raise ApiError(error)
 

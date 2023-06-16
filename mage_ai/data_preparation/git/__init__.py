@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -153,7 +153,7 @@ class Git:
         asyncio.run(self.__poll_process_with_timeout(
             proc,
             error_message='Error connecting to remote, make sure your access token or SSH key is ' +
-                'set up properly.',
+            'set up properly.',
         ))
 
     def _run_command(self, command: str) -> None:
