@@ -168,28 +168,11 @@ class GitBranchResource(GenericResource):
             elif action_type == 'remove_remote':
                 git_manager.remove_remote(*args)
         elif action_type == 'merge':
-            print("WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF!!!!!!!!!!!!!!!!!!!!!!!!!")
-
-
-
-
-
-
-
-
-            error = ApiError.RESOURCE_ERROR
-
-            message = payload.get('message')
-            if not message:
-                error.update({
-                    'message': 'Message is empty, please add a message for your merge.',
-                })
-                raise ApiError(error)
-
             merge = payload.get('merge', None)
             if merge and 'base_branch' in merge:
                 git_manager.merge_branch(merge['base_branch'])
             else:
+                error = ApiError.RESOURCE_ERROR
                 error.update({
                     'message': 'Please select a base branch to merge into the current branch.',
                 })
