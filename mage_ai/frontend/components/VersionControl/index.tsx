@@ -32,6 +32,7 @@ import {
 } from './constants';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
+import { isEmptyObject } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
 import { useError } from '@context/Error';
 
@@ -43,7 +44,7 @@ function VersionControl() {
     uuid: 'VersionControlPage',
   });
 
-  const [branchBase, setBranchBaseState] = useState<string>(null);
+  const [branchBase, setBranchBase] = useState<string>(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
 
@@ -79,10 +80,11 @@ function VersionControl() {
     });
   const fileGit: GitFileType = useMemo(() => dataFile?.git_file, [dataFile]);
 
-  const setBranchBase = useCallback((value: string) => {
-    fetchFileGit();
-    setBranchBaseState(value);
-  }, [fetchFileGit]);
+  useEffect(() => {
+    if (branchBase) {
+      fetchFileGit();
+    }
+  }, [branchBase, fetchFileGit]);
 
   useEffect(() => {
     if (dataFile?.error) {
@@ -121,6 +123,21 @@ function VersionControl() {
       [fullPath]: true,
     }), {}),
   }), [branch]);
+
+  useEffect(() => {
+    if (selectedFilePath
+      && isEmptyObject(modifiedFiles)
+      && isEmptyObject(stagedFiles)
+      && isEmptyObject(untrackedFiles)
+    ) {
+      setSelectedFilePath(null);
+    }
+  }, [
+    modifiedFiles,
+    selectedFilePath,
+    stagedFiles,
+    untrackedFiles,
+  ]);
 
   const fileBrowserMemo = useMemo(() => {
     if (files?.length >= 1) {
