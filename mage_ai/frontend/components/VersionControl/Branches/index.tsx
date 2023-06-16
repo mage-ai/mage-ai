@@ -95,10 +95,10 @@ function Branches({
             },
           }) => {
             fetchBranch();
-            setActionMessage(null);
-            setActionName(null);
+            setActionMessage('');
+            setActionName('');
             setActionProgress(progress);
-            setBranchBase(null);
+            setBranchBase('');
           },
           onErrorCallback: (response, errors) => showError({
             errors,
