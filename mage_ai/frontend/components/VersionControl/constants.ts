@@ -1,5 +1,6 @@
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 
+export const ACTION_DELETE = 'delete';
 export const ACTION_MERGE = 'merge';
 export const ACTION_PULL = 'pull';
 export const ACTION_REBASE = 'rebase';

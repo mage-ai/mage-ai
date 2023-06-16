@@ -279,6 +279,9 @@ class Git:
 
         return arr
 
+    def delete_branch(self, base_branch_name: str) -> None:
+        self.repo.branches[base_branch_name].delete(self.repo, base_branch_name, '-D')
+
     def merge_branch(self, base_branch_name: str) -> None:
         self.repo.git.merge(self.repo.branches[base_branch_name])
 
