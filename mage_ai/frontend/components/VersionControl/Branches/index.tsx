@@ -18,6 +18,7 @@ import { Add, Branch, Lightning, PaginateArrowLeft, PaginateArrowRight } from '@
 import {
   ACTION_MERGE,
   ACTION_REBASE,
+  ACTION_RESET,
 } from '../constants';
 import {
   PADDING_UNITS,
@@ -46,6 +47,7 @@ function Branches({
 }: BranchesProps) {
   const [actionMessage, setActionMessage] = useState<string>('');
   const [actionName, setActionName] = useState<string>(null);
+  const [actionProgress, setActionProgress] = useState<string>(null);
   const [branchBase, setBranchBase] = useState<string>(null);
   const [branchNameNew, setBranchNameNew] = useState<string>('');
 
@@ -72,6 +74,31 @@ function Branches({
         response, {
           callback: () => {
             fetchBranch();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
+    api.git_branches.useUpdate(branch?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            git_branch: {
+              progress,
+            },
+          }) => {
+            fetchBranch();
+            setActionMessage(null);
+            setActionName(null);
+            setActionProgress(progress);
+            setBranchBase(null);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -165,6 +192,20 @@ function Branches({
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Spacing mb={1}>
+              <Text bold muted>
+                Compare branch
+              </Text>
+            </Spacing>
+
+            {branch?.name && (
+              <Text monospace>
+                {branch?.name}
+              </Text>
+            )}
+          </Spacing>
+
           <FlexContainer alignItems="center">
             <div>
               <Spacing mb={1}>
@@ -194,37 +235,13 @@ function Branches({
             <div>
               <Spacing mb={1}>
                 <Text bold muted>
-                  Compare branch
-                </Text>
-              </Spacing>
-
-              <Select
-                beforeIcon={<Branch />}
-                beforeIconSize={UNIT * 1.5}
-                disabled
-                monospace
-                value={branch?.name}
-              >
-                {branch?.name && (
-                  <option key={branch?.name} value={branch?.name}>
-                    {branch?.name}
-                  </option>
-                )}
-              </Select>
-            </div>
-
-            <Spacing mr={1} />
-
-            <div>
-              <Spacing mb={1}>
-                <Text bold muted>
                   Action
                 </Text>
               </Spacing>
 
               <Select
                 onChange={(e) => setActionName(e.target.value)}
-                placeholder="Choose an action"
+                placeholder="Choose action"
                 value={actionName || ''}
               >
                 <option value={ACTION_MERGE}>
@@ -232,6 +249,9 @@ function Branches({
                 </option>
                 <option value={ACTION_REBASE}>
                   {capitalizeRemoveUnderscoreLower(ACTION_REBASE)}
+                </option>
+                <option value={ACTION_RESET}>
+                  {capitalizeRemoveUnderscoreLower(ACTION_RESET)}
                 </option>
               </Select>
             </div>
@@ -256,14 +276,35 @@ function Branches({
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !branchBase}
+              disabled={!actionName || !branchBase || (actionName && ACTION_MERGE === actionName && !actionMessage)}
+              loading={isLoadingAction}
               onClick={() => {
-                setActionName(null);
+                actionGitBranch({
+                  git_branch: {
+                    action_type: actionName,
+                    message: actionMessage,
+                    [actionName]: {
+                      base_branch: branchBase,
+                    },
+                  },
+                });
               }}
               secondary
             >
-              Execute action{actionName ? ` ${actionName?.toLowerCase()}` : ''}
+              {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
             </Button>
+
+            {actionProgress && (
+              <Spacing mt={PADDING_UNITS}>
+                <Text
+                  default
+                  monospace
+                  preWrap
+                >
+                  {actionProgress}
+                </Text>
+              </Spacing>
+            )}
           </Spacing>
         </Spacing>
       </Spacing>

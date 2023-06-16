@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -449,9 +450,24 @@ function Remote({
             </Spacing>
 
             {branch?.name && (
-              <Text monospace>
-                {branch?.name}
-              </Text>
+              <FlexContainer alignItems="center">
+                <Text monospace>
+                  {branch?.name}
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <NextLink
+                  href={`/version-control?tab=${TAB_BRANCHES.uuid}`}
+                  passHref
+                >
+                  <Link
+                    small
+                  >
+                    Switch branch
+                  </Link>
+                </NextLink>
+              </FlexContainer>
             )}
           </Spacing>
 
