@@ -1,5 +1,5 @@
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -12,6 +12,7 @@ import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
 import Remote from './Remote';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -36,12 +37,13 @@ import { useError } from '@context/Error';
 
 function VersionControl() {
   const fileTreeRef = useRef(null);
+  const refSelectBaseBranch = useRef(null);
 
   const [showError] = useError(null, {}, [], {
     uuid: 'VersionControlPage',
   });
 
-  const [branchBase, setBranchBase] = useState<string>('td--version_control');
+  const [branchBase, setBranchBaseState] = useState<string>(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
 
@@ -76,6 +78,11 @@ function VersionControl() {
       base_branch: branchBase,
     });
   const fileGit: GitFileType = useMemo(() => dataFile?.git_file, [dataFile]);
+
+  const setBranchBase = useCallback((value: string) => {
+    fetchFileGit();
+    setBranchBaseState(value);
+  }, [fetchFileGit]);
 
   useEffect(() => {
     if (dataFile?.error) {
@@ -124,10 +131,20 @@ function VersionControl() {
           fetchFileTree={fetchBranch}
           files={files}
           isFileDisabled={() => false}
-          onClickFile={(path: string) => setSelectedFilePath(prev => !prev || prev !== path
-            ? path
-            : null,
-          )}
+          onClickFile={(path: string) => {
+            // @ts-ignore
+            setSelectedFilePath((prev) => {
+              if (!prev || prev !== path) {
+                if (!branchBase) {
+                  refSelectBaseBranch?.current?.focus();
+                }
+
+                return path;
+              }
+
+              return null;
+            });
+          }}
           ref={fileTreeRef}
           renderAfterContent={(file: FileType) => {
             const {
@@ -199,10 +216,12 @@ function VersionControl() {
       </Spacing>
     );
   }, [
+    branchBase,
     fetchBranch,
     fileTreeRef,
     files,
     modifiedFiles,
+    refSelectBaseBranch,
     setSelectedFilePath,
     stagedFiles,
     untrackedFiles,
@@ -227,25 +246,51 @@ function VersionControl() {
 
     return (
       <DiffContainerStyle>
-        {isLoadingGitFile && (
+        {!branchBase && (
           <Spacing p={PADDING_UNITS}>
-            <Spinner inverted />
+            <Text muted>
+              Please select a base branch to see the file diffs.
+            </Text>
           </Spacing>
         )}
-        {!isLoadingGitFile && (
-          <ReactDiffViewer
-            compareMethod={DiffMethod.WORDS}
-            newValue={content || ''}
-            oldValue={contentFromBase || ''}
-            renderContent={(str) => <Text monospace>{str}</Text>}
-            splitView={true}
-            styles={DIFF_STYLES}
-            useDarkTheme
-          />
+
+        {fileGit?.error && (
+          <Spacing p={PADDING_UNITS}>
+            <Text
+              danger
+              monospace
+              preWrap
+            >
+              {fileGit?.error}
+            </Text>
+          </Spacing>
+        )}
+
+        {branchBase && !fileGit?.error && (
+          <>
+            {isLoadingGitFile && (
+              <Spacing p={PADDING_UNITS}>
+                <Spinner inverted />
+              </Spacing>
+            )}
+
+            {!isLoadingGitFile && (
+              <ReactDiffViewer
+                compareMethod={DiffMethod.WORDS}
+                newValue={content || ''}
+                oldValue={contentFromBase || ''}
+                renderContent={(str) => <Text monospace>{str}</Text>}
+                splitView={true}
+                styles={DIFF_STYLES}
+                useDarkTheme
+              />
+            )}
+          </>
         )}
       </DiffContainerStyle>
     );
   }, [
+    branchBase,
     fileGit,
     isLoadingGitFile,
     selectedFilePath,
@@ -348,7 +393,26 @@ function VersionControl() {
     <Dashboard
       after={fileDiffMemo}
       afterHidden={!selectedFilePath}
-      before={fileBrowserMemo}
+      before={(
+        <>
+          <Spacing p={1}>
+            <Select
+              compact
+              label="Base branch"
+              onChange={e => setBranchBase(e.target.value)}
+              ref={refSelectBaseBranch}
+              small
+              value={branchBase || ''}
+            >
+              {branches?.map(({ name }) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </Select>
+          </Spacing>
+
+          {fileBrowserMemo}
+        </>
+      )}
       mainContainerHeader={mainContainerHeaderMemo}
       title="Version control"
       uuid="Version control/index"

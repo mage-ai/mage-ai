@@ -36,17 +36,28 @@ class GitFileResource(GenericResource):
 
         content_from_base = None
         content_from_compare = None
+        error = None
+
         if is_modified:
-            content_from_base = git_manager.show_file_from_branch(base_branch, file_path)
-            if base_branch == compare_branch:
-                content_from_compare = content_from_base
-            else:
-                content_from_compare = git_manager.show_file_from_branch(compare_branch, file_path)
+            import git
+
+            try:
+                content_from_base = git_manager.show_file_from_branch(base_branch, file_path)
+                if base_branch == compare_branch:
+                    content_from_compare = content_from_base
+                else:
+                    content_from_compare = git_manager.show_file_from_branch(
+                        compare_branch,
+                        file_path,
+                    )
+            except git.exc.GitCommandError as err:
+                error = str(err)
 
         return self(dict(
             content=file.content(),
             content_from_base=content_from_base,
             content_from_compare=content_from_compare,
+            error=error,
             filename=file_path,
             modified=is_modified,
         ), user, **kwargs)

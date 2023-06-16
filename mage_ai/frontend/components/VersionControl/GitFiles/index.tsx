@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -45,6 +46,8 @@ function GitFiles({
   stagedFiles,
   untrackedFiles,
 }: GitFilesProps) {
+  const router = useRouter();
+
   const [selectedFilesA, setSelectedFilesA] = useState<{
     [fullPath: string]: boolean;
   }>({});
@@ -200,6 +203,8 @@ function GitFiles({
     );
   }, []);
 
+  const noFilesASelected: boolean = useMemo(() => isEmptyObject(selectedFilesA), [selectedFilesA]);
+
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -217,7 +222,7 @@ function GitFiles({
               <FlexContainer flexDirection="row">
                 <Button
                   compact
-                  disabled={isEmptyObject(selectedFilesA) || isLoadingUpdateB || isLoadingUpdateCheckout}
+                  disabled={noFilesASelected || isLoadingUpdateB || isLoadingUpdateCheckout}
                   loading={isLoadingUpdate}
                   onClick={() => {
                     // @ts-ignore
@@ -237,7 +242,7 @@ function GitFiles({
 
                 <Button
                   compact
-                  disabled={isEmptyObject(selectedFilesA) || isLoadingUpdate || isLoadingUpdateB}
+                  disabled={noFilesASelected || isLoadingUpdate || isLoadingUpdateB}
                   loading={isLoadingUpdateCheckout}
                   noBackground
                   onClick={() => {
@@ -340,14 +345,32 @@ function GitFiles({
 
           <Button
             afterIcon={<PaginateArrowRight />}
-            linkProps={{
-              href: `/version-control?tab=${TAB_COMMIT.uuid}`,
-            }}
+            linkProps={noFilesASelected
+              ? {
+                href: `/version-control?tab=${TAB_COMMIT.uuid}`,
+              }
+              : null
+            }
             noHoverUnderline
+            onClick={noFilesASelected
+              ? null
+              : () => {
+                // @ts-ignore
+                updateGitBranch({
+                  git_branch: {
+                    action_type: 'add',
+                    files: Object.keys(selectedFilesA),
+                  },
+                }).then(() => {
+                  router.push(`/version-control?tab=${TAB_COMMIT.uuid}`);
+                });
+              }
+            }
+            primary={noFilesASelected}
             sameColorAsText
-            secondary
+            secondary={!noFilesASelected}
           >
-            Next: {TAB_COMMIT.uuid}
+            {noFilesASelected ? `Next: ${TAB_COMMIT.uuid}` : `Add files and go to ${TAB_COMMIT.uuid}`}
           </Button>
         </FlexContainer>
       </Spacing>

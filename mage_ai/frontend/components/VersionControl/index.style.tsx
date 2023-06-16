@@ -12,10 +12,6 @@ export const DiffContainerStyle = styled.div`
   pre {
     font-family: ${MONO_FONT_FAMILY_REGULAR};
   }
-
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).codeArea};
-  `}
 `;
 
 export const DIFF_STYLES = {
