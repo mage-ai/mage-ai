@@ -115,78 +115,90 @@ function VersionControl() {
     }), {}),
   }), [branch]);
 
-  const fileBrowserMemo = useMemo(() => (
-    <FileBrowser
-      allowEmptyFolders
-      disableContextMenu
-      fetchFileTree={fetchBranch}
-      files={files}
-      isFileDisabled={() => false}
-      onClickFile={(path: string) => setSelectedFilePath(prev => !prev || prev !== path
-        ? path
-        : null,
-      )}
-      ref={fileTreeRef}
-      renderAfterContent={(file: FileType) => {
-        const {
-          children,
-        } = file;
-        const isFolder = children?.length >= 1;
+  const fileBrowserMemo = useMemo(() => {
+    if (files?.length >= 1) {
+      return (
+        <FileBrowser
+          allowEmptyFolders
+          disableContextMenu
+          fetchFileTree={fetchBranch}
+          files={files}
+          isFileDisabled={() => false}
+          onClickFile={(path: string) => setSelectedFilePath(prev => !prev || prev !== path
+            ? path
+            : null,
+          )}
+          ref={fileTreeRef}
+          renderAfterContent={(file: FileType) => {
+            const {
+              children,
+            } = file;
+            const isFolder = children?.length >= 1;
 
-        let fullPath = getFullPath(file);
-        // When a folder is untracked, it has a / at the end.
-        // e.g. default_repo/transformers/
-        if (isFolder) {
-          fullPath = `${fullPath}/`;
-        }
-        let displayText;
-        let displayTitle;
-        const colorProps: {
-          danger?: boolean;
-          success?: boolean;
-          warning?: boolean;
-        } = {};
+            let fullPath = getFullPath(file);
+            // When a folder is untracked, it has a / at the end.
+            // e.g. default_repo/transformers/
+            if (isFolder) {
+              fullPath = `${fullPath}/`;
+            }
+            let displayText;
+            let displayTitle;
+            const colorProps: {
+              danger?: boolean;
+              success?: boolean;
+              warning?: boolean;
+            } = {};
 
-        if (modifiedFiles?.[fullPath]) {
-          displayText = 'M';
-          displayTitle = 'Modified';
-          colorProps.warning = true;
-        } else if (untrackedFiles?.[fullPath]) {
-          displayText = 'U';
-          displayTitle = 'Untracked';
-          colorProps.danger = true;
-        } else if (stagedFiles?.[fullPath]) {
-          displayText = 'S';
-          displayTitle = 'Staged';
-          colorProps.success = true;
-        }
+            if (modifiedFiles?.[fullPath]) {
+              displayText = 'M';
+              displayTitle = 'Modified';
+              colorProps.warning = true;
+            } else if (untrackedFiles?.[fullPath]) {
+              displayText = 'U';
+              displayTitle = 'Untracked';
+              colorProps.danger = true;
+            } else if (stagedFiles?.[fullPath]) {
+              displayText = 'S';
+              displayTitle = 'Staged';
+              colorProps.success = true;
+            }
 
-        if (isFolder && !displayText) {
-          return null;
-        }
+            if (isFolder && !displayText) {
+              return null;
+            }
 
-        return (
-          <Spacing mx={1}>
-            <Tooltip
-              appearBefore
-              label={displayTitle}
-              widthFitContent
-            >
-              <Text
-                {...colorProps}
-                monospace
-                rightAligned
-                small
-              >
-                {displayText}
-              </Text>
-            </Tooltip>
-          </Spacing>
-        );
-      }}
-      useRootFolder
-    />
-  ), [
+            return (
+              <Spacing mx={1}>
+                <Tooltip
+                  appearBefore
+                  label={displayTitle}
+                  widthFitContent
+                >
+                  <Text
+                    {...colorProps}
+                    monospace
+                    rightAligned
+                    small
+                  >
+                    {displayText}
+                  </Text>
+                </Tooltip>
+              </Spacing>
+            );
+          }}
+          useRootFolder
+        />
+      );
+    }
+
+    return (
+      <Spacing p={1}>
+        <Text monospace muted>
+          No files modified
+        </Text>
+      </Spacing>
+    );
+  }, [
     fetchBranch,
     fileTreeRef,
     files,
@@ -334,12 +346,9 @@ function VersionControl() {
 
   return (
     <Dashboard
-      // TODO (tommy dang): when we’re ready to show diffs, uncomment the below code.
       after={fileDiffMemo}
       afterHidden={!selectedFilePath}
-      // afterHidden
       before={fileBrowserMemo}
-      // headerOffset={MAIN_CONTENT_TOP_OFFSET}
       mainContainerHeader={mainContainerHeaderMemo}
       title="Version control"
       uuid="Version control/index"
