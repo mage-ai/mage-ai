@@ -31,11 +31,11 @@ class Couchbase(Source):
             bucket=self.config['bucket'],
             scope=self.config['scope'],
             connection_string=self.config['connection_string'],
-            password=self.config['password'],
-            username=self.config['username'],
-            cert_path=self.config['cert_path'],
-            trust_store_path=self.config['trust_store_path'],
-            key_path=self.config['key_path'],
+            password=self.config.get('password'),
+            username=self.config.get('username'),
+            cert_path=self.config.get('cert_path'),
+            trust_store_path=self.config.get('trust_store_path'),
+            key_path=self.config.get('key_path'),
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
