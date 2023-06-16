@@ -259,7 +259,7 @@ function Branches({
             </div>
           </FlexContainer>
 
-          {false && actionName && ACTION_REBASE === actionName && (
+          {actionName && [ACTION_MERGE, ACTION_REBASE].includes(actionName) && (
             <Spacing mt={PADDING_UNITS}>
               <Spacing mb={1}>
                 <Text bold muted>

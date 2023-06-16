@@ -87,6 +87,7 @@ class GitBranchResource(GenericResource):
         git_manager = Git.get_manager(user=self.current_user)
         action_type = payload.get('action_type')
         files = payload.get('files', None)
+        message = payload.get('message', None)
         remote = payload.get('remote', None)
 
         if action_type == 'status':
@@ -100,7 +101,6 @@ class GitBranchResource(GenericResource):
                 modified_files=modified_files,
             )
         elif action_type == 'commit':
-            message = payload.get('message')
             if not message:
                 error = ApiError.RESOURCE_ERROR
                 error.update({
@@ -197,15 +197,16 @@ class GitBranchResource(GenericResource):
             data = payload.get('delete', None) or \
                 payload.get('rebase', None) or \
                 payload.get('rebase', None)
+
             if data and 'base_branch' in data:
                 base_branch = data['base_branch']
 
                 if 'delete' == action_type:
                     git_manager.delete_branch(base_branch)
                 elif 'merge' == action_type:
-                    git_manager.merge_branch(base_branch)
+                    git_manager.merge_branch(base_branch, message=message)
                 elif 'rebase' == action_type:
-                    git_manager.rebase_branch(base_branch)
+                    git_manager.rebase_branch(base_branch, message=message)
             else:
                 error = ApiError.RESOURCE_ERROR
                 error.update({

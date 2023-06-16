@@ -192,7 +192,7 @@ function VersionControl() {
     }
 
     return (
-      <Spacing p={1}>
+      <Spacing p={PADDING_UNITS}>
         <Text monospace muted>
           No files modified
         </Text>

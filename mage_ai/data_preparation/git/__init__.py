@@ -298,11 +298,15 @@ class Git:
     def delete_branch(self, base_branch_name: str) -> None:
         self.repo.branches[base_branch_name].delete(self.repo, base_branch_name, '-D')
 
-    def merge_branch(self, base_branch_name: str) -> None:
+    def merge_branch(self, base_branch_name: str, message: str = None) -> None:
         self.repo.git.merge(self.repo.branches[base_branch_name])
+        if message:
+            self.repo.index.commit(message)
 
-    def rebase_branch(self, base_branch_name: str) -> None:
+    def rebase_branch(self, base_branch_name: str, message: str = None) -> None:
         self.repo.git.rebase(self.repo.branches[base_branch_name])
+        if message:
+            self.repo.index.commit(message)
 
     def remotes(self, limit: int = 40) -> List[Dict]:
         arr = []
