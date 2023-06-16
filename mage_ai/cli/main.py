@@ -27,6 +27,10 @@ app = typer.Typer(
 INIT_PROJECT_PATH_DEFAULT = typer.Argument(..., help='path of the Mage project to be created.')
 INIT_PROJECT_TYPE_DEFAULT = typer.Option(
     'standalone', help='type of project to create, options are main, sub, or standalone')
+INIT_CLUSTER_TYPE_DEFAULT = typer.Option(
+    'k8s',
+    help='type of instance to create for workspace management',
+)
 
 START_PROJECT_PATH_DEFAULT = typer.Argument(
     os.getcwd(), help='path of the Mage project to be loaded.')
@@ -39,6 +43,10 @@ START_INSTANCE_TYPE_DEFAULT = typer.Option(
 START_PROJECT_TYPE_DEFAULT = typer.Option(
     'standalone',
     help='create project of this type if does not exist, options are main, sub, or standalone',
+)
+START_CLUSTER_TYPE_DEFAULT = typer.Option(
+    'k8s',
+    help='type of instance to create for workspace management',
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
@@ -94,6 +102,7 @@ CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
 def init(
     project_path: str = INIT_PROJECT_PATH_DEFAULT,
     project_type: Union[str, None] = INIT_PROJECT_TYPE_DEFAULT,
+    cluster_type: str = INIT_CLUSTER_TYPE_DEFAULT,
 ):
     """
     Initialize Mage project.
@@ -101,7 +110,7 @@ def init(
     from mage_ai.data_preparation.repo_manager import init_repo
 
     repo_path = os.path.join(os.getcwd(), project_path)
-    init_repo(repo_path, project_type=project_type)
+    init_repo(repo_path, project_type=project_type, cluster_type=cluster_type)
     print(f'Initialized Mage project at {repo_path}')
 
 
@@ -113,7 +122,8 @@ def start(
     manage_instance: str = START_MANAGE_INSTANCE_DEFAULT,
     dbt_docs_instance: str = START_DBT_DOCS_INSTANCE_DEFAULT,
     instance_type: str = START_INSTANCE_TYPE_DEFAULT,
-    project_type: Union[str, None] = START_PROJECT_TYPE_DEFAULT,
+    project_type: str = START_PROJECT_TYPE_DEFAULT,
+    cluster_type: str = START_CLUSTER_TYPE_DEFAULT,
 ):
     """
     Start Mage server and UI.
@@ -134,6 +144,7 @@ def start(
         dbt_docs=dbt_docs_instance == "1",
         instance_type=instance_type,
         project_type=project_type,
+        cluster_type=cluster_type,
     )
 
 

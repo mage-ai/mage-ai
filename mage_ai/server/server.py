@@ -27,6 +27,7 @@ from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
+from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.api.downloads import ApiDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
@@ -292,6 +293,7 @@ def start_server(
     dbt_docs: bool = False,
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
     project_type: ProjectType = ProjectType.STANDALONE,
+    cluster_type: ClusterType = ClusterType.K8S,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -304,7 +306,7 @@ def start_server(
         project = os.path.join(os.getcwd(), 'default_repo')
 
     if not os.path.exists(project):
-        init_repo(project, project_type=project_type)
+        init_repo(project, project_type=project_type, cluster_type=cluster_type)
     set_repo_path(project)
 
     asyncio.run(UsageStatisticLogger().project_impression())

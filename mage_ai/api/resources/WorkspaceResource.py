@@ -129,9 +129,12 @@ class WorkspaceResource(GenericResource):
             if os.path.exists(workspace_folder):
                 error.update(message=f'Project with name {workspace_name} already exists')
                 raise ApiError(error)
-            project_folder = os.path.join(workspace_folder, workspace_name)
             try:
-                project_uuid = init_repo(project_folder, project_type=ProjectType.SUB)
+                project_uuid = init_repo(
+                    workspace_folder,
+                    project_type=ProjectType.SUB,
+                    cluster_type=cluster_type,
+                )
             except Exception as e:
                 error.update(message=f'Error creating project: {str(e)}')
                 raise ApiError(error)
@@ -253,7 +256,7 @@ class WorkspaceResource(GenericResource):
 
         if get_project_type() == ProjectType.MAIN:
             shutil.rmtree(project_folder)
-        if cluster_type == 'ecs':
+        if cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             task_arn = instance.get('task_arn')
             cluster_name = os.getenv(ECS_CLUSTER_NAME)
