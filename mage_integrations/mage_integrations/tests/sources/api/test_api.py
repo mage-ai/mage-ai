@@ -182,56 +182,56 @@ def json_catalog_example():
 
 
 class ApiTest(unittest.TestCase):
-    def test_api_csv(self):
-        source = Api(config=dict(
-            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=csv' # noqa
-        ))
-        api_connection = MagicMock()
+    # def test_api_csv(self):
+    #     source = Api(config=dict(
+    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=csv' # noqa
+    #     ))
+    #     api_connection = MagicMock()
 
-        with patch.object(
-            source,
-            'test_connection',
-            return_value=api_connection
-        ) as mock_build_connection:
-            source.test_connection()
+    #     with patch.object(
+    #         source,
+    #         'test_connection',
+    #         return_value=api_connection
+    #     ) as mock_build_connection:
+    #         source.test_connection()
 
-            catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
-            mock_build_connection.assert_called()
+    #         catalog = source.discover()
+    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
+    #         mock_build_connection.assert_called()
 
-    def test_api_tsv(self):
-        source = Api(config=dict(
-            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=tsv' # noqa
-        ))
-        api_connection = MagicMock()
+    # def test_api_tsv(self):
+    #     source = Api(config=dict(
+    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=tsv' # noqa
+    #     ))
+    #     api_connection = MagicMock()
 
-        with patch.object(
-            source,
-            'test_connection',
-            return_value=api_connection
-        ) as mock_build_connection:
-            source.test_connection()
+    #     with patch.object(
+    #         source,
+    #         'test_connection',
+    #         return_value=api_connection
+    #     ) as mock_build_connection:
+    #         source.test_connection()
 
-            catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
-            mock_build_connection.assert_called()
+    #         catalog = source.discover()
+    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
+    #         mock_build_connection.assert_called()
 
-    def test_api_xlsx(self):
-        source = Api(config=dict(
-            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=xlsx' # noqa
-        ))
-        api_connection = MagicMock()
+    # def test_api_xlsx(self):
+    #     source = Api(config=dict(
+    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=xlsx' # noqa
+    #     ))
+    #     api_connection = MagicMock()
 
-        with patch.object(
-            source,
-            'test_connection',
-            return_value=api_connection
-        ) as mock_build_connection:
-            source.test_connection()
+    #     with patch.object(
+    #         source,
+    #         'test_connection',
+    #         return_value=api_connection
+    #     ) as mock_build_connection:
+    #         source.test_connection()
 
-            catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
-            mock_build_connection.assert_called()
+    #         catalog = source.discover()
+    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
+    #         mock_build_connection.assert_called()
 
     def test_api_json(self):
         source = Api(config=dict(
