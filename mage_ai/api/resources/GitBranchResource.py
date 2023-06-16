@@ -167,10 +167,23 @@ class GitBranchResource(GenericResource):
                 git_manager.add_remote(*args)
             elif action_type == 'remove_remote':
                 git_manager.remove_remote(*args)
-        elif action_type in ['merge', 'rebase']:
-            merge = payload.get('merge', None) or payload.get('rebase', None)
-            if merge and 'base_branch' in merge:
-                git_manager.merge_branch(merge['base_branch'])
+        elif action_type in [
+            'delete',
+            'merge',
+            'rebase',
+        ]:
+            data = payload.get('delete', None) or \
+                payload.get('rebase', None) or \
+                payload.get('rebase', None)
+            if data and 'base_branch' in data:
+                base_branch = data['base_branch']
+
+                if 'delete' == action_type:
+                    git_manager.delete_branch(base_branch)
+                elif 'merge' == action_type:
+                    git_manager.merge_branch(base_branch)
+                elif 'rebase' == action_type:
+                    git_manager.rebase_branch(base_branch)
             else:
                 error = ApiError.RESOURCE_ERROR
                 error.update({

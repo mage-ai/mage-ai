@@ -16,6 +16,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { Add, Branch, Lightning, PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
 import {
+  ACTION_DELETE,
   ACTION_MERGE,
   ACTION_REBASE,
   ACTION_RESET,
@@ -253,6 +254,9 @@ function Branches({
                 <option value={ACTION_RESET}>
                   {capitalizeRemoveUnderscoreLower(ACTION_RESET)}
                 </option>
+                <option value={ACTION_DELETE}>
+                  {capitalizeRemoveUnderscoreLower(ACTION_DELETE)}
+                </option>
               </Select>
             </div>
           </FlexContainer>
@@ -279,15 +283,23 @@ function Branches({
               disabled={!actionName || !branchBase || (actionName && ACTION_REBASE === actionName && !actionMessage)}
               loading={isLoadingAction}
               onClick={() => {
-                actionGitBranch({
-                  git_branch: {
-                    action_type: actionName,
-                    message: actionMessage,
-                    [actionName]: {
-                      base_branch: branchBase,
+                if (ACTION_DELETE !== actionName || (
+                  typeof window !== 'undefined'
+                    && typeof location !== 'undefined'
+                    && window.confirm(
+                      `Are you sure you want to delete branch ${branchBase}?`,
+                    )
+                )) {
+                  actionGitBranch({
+                    git_branch: {
+                      action_type: actionName,
+                      message: actionMessage,
+                      [actionName]: {
+                        base_branch: branchBase,
+                      },
                     },
-                  },
-                });
+                  });
+                }
               }}
               secondary
             >
