@@ -170,7 +170,6 @@ class GitBranchResource(GenericResource):
         elif action_type == 'merge':
             error = ApiError.RESOURCE_ERROR
 
-
             message = payload.get('message')
             if not message:
                 error.update({
