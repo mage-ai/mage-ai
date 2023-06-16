@@ -168,7 +168,15 @@ class GitBranchResource(GenericResource):
             elif action_type == 'remove_remote':
                 git_manager.remove_remote(*args)
         elif action_type == 'merge':
-            print("WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+            print("WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+
+
+
+
+
+
+
             error = ApiError.RESOURCE_ERROR
 
             message = payload.get('message')
