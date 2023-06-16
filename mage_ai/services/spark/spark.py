@@ -61,14 +61,13 @@ def get_spark_session(spark_config: SparkConfig):
             if spark_config.spark_home:
                 conf.setSparkHome(spark_config.spark_home)
             if spark_config.executor_env:
-                list_kv_pairs = []
-                for key, value in spark_config.executor_env.items():
-                    list_kv_pairs.append((key, value))
-                conf.setExecutorEnv(key=None, value=None, pairs=list_kv_pairs)
+                env_kv_pairs = list(spark_config.executor_env.items())
+                conf.setExecutorEnv(key=None, value=None, pairs=env_kv_pairs)
             if spark_config.spark_jars:
                 conf.set('spark.jars', ','.join(spark_config.spark_jars))
             if spark_config.others:
-                conf.setAll(spark_config.others)
+                others_kv_pairs = list(spark_config.others.items())
+                conf.setAll(others_kv_pairs)
 
             return SparkSession.builder.config(conf=conf).getOrCreate()
     else:
