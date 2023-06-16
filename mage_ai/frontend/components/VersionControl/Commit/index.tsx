@@ -187,7 +187,6 @@ function Commit({
                     passHref
                   >
                     <Link
-                      bold
                       danger
                       small
                       underline
