@@ -25,6 +25,7 @@ import {
   Lightning,
   MultiShare,
   PaginateArrowRight,
+  Trash,
 } from '@oracle/icons';
 import { TAB_BRANCHES } from '../constants';
 import {
@@ -194,6 +195,7 @@ function Remote({
           <Button
             compact
             disabled={isLoadingRemoveRemote && remoteNameActive !== name}
+            iconOnly
             loading={isLoadingRemoveRemote && remoteNameActive === name}
             noBackground
             onClick={() => {
@@ -216,8 +218,9 @@ function Remote({
               }
             }}
             small
+            title={`Remote remote ${name}`}
           >
-            Remove remote
+            <Trash />
           </Button>
         </FlexContainer>
       </Spacing>
@@ -295,7 +298,7 @@ function Remote({
           disabled
           primary
         >
-          Sign in with GitHub
+          Authenticate with GitHub
         </Button>
       </Spacing>
 
@@ -517,7 +520,7 @@ function Remote({
               }}
               secondary
             >
-              Execute action{actionName ? ` ${actionName?.toLowerCase()}` : ''}
+              {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
             </Button>
           </FlexContainer>
 
