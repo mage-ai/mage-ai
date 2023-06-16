@@ -122,3 +122,9 @@ Add the new destination to the `DESTINATIONS` list constant in this file: https:
 ## 5. Test your desination
 
 Follow this [doc](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations) to test your new destination.
+
+To test the destination in the UI, you can install your updated `mage_integrations` module by running the following commands in Mage terminal:
+```bash
+pip uninstall -y mage_integrations
+pip install "git+https://github.com/your_repo.git@your_branch#egg=mage-integrations&subdirectory=mage_integrations"
+```
