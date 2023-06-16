@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
+    PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -468,8 +469,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 )
                 os.makedirs(new_pipeline_directory, exist_ok=True)
                 copy_file(
-                    os.path.join(pipeline.dir_path, 'metadata.yaml'),
-                    os.path.join(new_pipeline_directory, 'metadata.yaml'),
+                    os.path.join(pipeline.dir_path, PIPELINE_CONFIG_FILE),
+                    os.path.join(new_pipeline_directory, PIPELINE_CONFIG_FILE),
                 )
                 set_previous_config_path(new_pipeline_directory)
                 return new_pipeline_directory

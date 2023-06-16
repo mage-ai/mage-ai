@@ -36,7 +36,6 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
-from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
@@ -52,7 +51,6 @@ from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.shared.array import find
-from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import index_by, merge_dict
@@ -222,7 +220,11 @@ class PipelineScheduler:
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
         block = self.pipeline.get_block(block_uuid)
         if block and is_dynamic_block(block):
-            create_block_runs_from_dynamic_block(block, self.pipeline_run, block_uuid=block_uuid)
+            create_block_runs_from_dynamic_block(
+                block,
+                self.pipeline_run,
+                block_uuid=block.uuid if block.replicated_block else block_uuid,
+            )
 
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
@@ -304,7 +306,7 @@ class PipelineScheduler:
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
-            message=msg,
+            summary=msg,
         )
 
         if PipelineType.INTEGRATION == self.pipeline.type:
@@ -335,15 +337,28 @@ class PipelineScheduler:
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
-        completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
-        finished_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.COMPLETED,
-                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-                BlockRun.BlockRunStatus.FAILED,
-            ]
-        )
+        def _build_block_uuids(block_runs: List[BlockRun]) -> List[str]:
+            arr = set()
+
+            for block_run in block_runs:
+                if block_run.status in [
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                    BlockRun.BlockRunStatus.FAILED,
+                ]:
+                    block_uuid = block_run.block_uuid
+                    block = self.pipeline.get_block(block_uuid)
+                    arr.add(block_uuid)
+
+                    # Block runs for replicated blocks have the following block UUID convention:
+                    # [block.uuid]:[block.replicated_block]
+                    if block and block.replicated_block:
+                        arr.add(block.uuid)
+
+            return arr
+
+        completed_block_uuids = _build_block_uuids(self.completed_block_runs)
+        finished_block_uuids = _build_block_uuids(self.pipeline_run.block_runs)
 
         executable_block_runs = list()
         for block_run in self.initial_block_runs:
@@ -378,6 +393,17 @@ class PipelineScheduler:
                 BlockRun.BlockRunStatus.FAILED,
             ]
         )
+        condition_failed_block_uuids = set(
+            b.block_uuid for b in self.pipeline_run.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.CONDITION_FAILED,
+            ]
+        )
+
+        statuses = {
+            BlockRun.BlockRunStatus.CONDITION_FAILED: condition_failed_block_uuids,
+            BlockRun.BlockRunStatus.UPSTREAM_FAILED: failed_block_uuids,
+        }
         not_updated_block_runs = []
         for block_run in block_runs:
             updated_status = False
@@ -385,23 +411,22 @@ class PipelineScheduler:
                 'dynamic_upstream_block_uuids',
             )
 
-            if dynamic_upstream_block_uuids:
-                if all(
-                    b in failed_block_uuids
-                    for b in dynamic_upstream_block_uuids
-                ):
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
-                    updated_status = True
-            else:
-                block = self.pipeline.get_block(block_run.block_uuid)
-                if any(
-                    b in failed_block_uuids
-                    for b in block.upstream_block_uuids
-                ):
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
-                    updated_status = True
+            for status, block_uuids in statuses.items():
+                if dynamic_upstream_block_uuids:
+                    if all(
+                        b in block_uuids
+                        for b in dynamic_upstream_block_uuids
+                    ):
+                        block_run.update(status=status)
+                        updated_status = True
+                else:
+                    block = self.pipeline.get_block(block_run.block_uuid)
+                    if any(
+                        b in block_uuids
+                        for b in block.upstream_block_uuids
+                    ):
+                        block_run.update(status=status)
+                        updated_status = True
 
             if not updated_status:
                 not_updated_block_runs.append(block_run)
@@ -436,7 +461,7 @@ class PipelineScheduler:
                 # args
                 self.pipeline_run.id,
                 b.id,
-                get_variables(self.pipeline_run),
+                self.pipeline_run.get_variables(),
                 self.__build_tags(**tags),
             )
 
@@ -460,7 +485,7 @@ class PipelineScheduler:
                 # args
                 self.pipeline_run.id,
                 [b.id for b in block_runs_to_schedule],
-                get_variables(self.pipeline_run, dict(
+                self.pipeline_run.get_variables(extra_variables=dict(
                     pipeline_uuid=self.pipeline.uuid,
                 )),
                 self.__build_tags(),
@@ -479,7 +504,7 @@ class PipelineScheduler:
             run_pipeline,
             # args
             self.pipeline_run.id,
-            get_variables(self.pipeline_run),
+            self.pipeline_run.get_variables(),
             self.__build_tags(),
         )
 
@@ -937,11 +962,6 @@ def configure_pipeline_run_payload(
 
 
 def start_scheduler(pipeline_run: PipelineRun) -> None:
-    from mage_ai.orchestration.pipeline_scheduler import (
-        PipelineScheduler,
-        get_variables,
-    )
-
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
 
@@ -949,7 +969,7 @@ def start_scheduler(pipeline_run: PipelineRun) -> None:
         initialize_state_and_runs(
             pipeline_run,
             pipeline_scheduler.logger,
-            get_variables(pipeline_run),
+            pipeline_run.get_variables(),
         )
     else:
         pipeline_run.create_block_runs()
@@ -1129,7 +1149,7 @@ def schedule_all():
                         initialize_state_and_runs(
                             pipeline_run,
                             pipeline_scheduler.logger,
-                            get_variables(pipeline_run),
+                            pipeline_run.get_variables(),
                         )
 
                 pipeline_scheduler.start(should_schedule=False)
@@ -1183,38 +1203,3 @@ def sync_schedules(pipeline_uuids: List[str]):
             if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
                 continue
             PipelineSchedule.create_or_update(pipeline_trigger)
-
-
-def get_variables(pipeline_run, extra_variables: Dict = None) -> Dict:
-    if extra_variables is None:
-        extra_variables = dict()
-    if not pipeline_run:
-        return {}
-
-    pipeline_run_variables = pipeline_run.variables or {}
-    event_variables = pipeline_run.event_variables or {}
-
-    variables = merge_dict(
-        merge_dict(
-            get_global_variables(pipeline_run.pipeline_uuid) or dict(),
-            pipeline_run.pipeline_schedule.variables or dict(),
-        ),
-        pipeline_run_variables,
-    )
-
-    # For backwards compatibility
-    for k, v in event_variables.items():
-        if k not in variables:
-            variables[k] = v
-
-    if pipeline_run.execution_date:
-        variables['ds'] = pipeline_run.execution_date.strftime('%Y-%m-%d')
-        variables['hr'] = pipeline_run.execution_date.strftime('%H')
-
-    variables['env'] = ENV_PROD
-    variables['event'] = merge_dict(variables.get('event', {}), event_variables)
-    variables['execution_date'] = pipeline_run.execution_date
-    variables['execution_partition'] = pipeline_run.execution_partition
-    variables.update(extra_variables)
-
-    return variables

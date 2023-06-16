@@ -16,9 +16,9 @@ To enable this feature set the following environment variable:
 
 The available values are 
 * 0: this is the same as omitting the variable
-* 1: no edit/execute access to the notebook within Mage. Users will not be able to use the notebook to edit pipeline content, execute blocks,
+* 1 (most restrictive): no edit/execute access to the notebook within Mage. Users will not be able to use the notebook to edit pipeline content, execute blocks,
   create secrets, or create variables.
-* 2: no edit access for pipelines. Users will not be able to edit pipeline/block metadata or content.
+* 2 (less restrictive): only disables edits for pipelines and blocks. Users will not be able to edit pipeline/block metadata or content.
 
 ### Databases
 
@@ -26,11 +26,14 @@ By default, Mage uses sqlite to store orchestration data (trigger, pipeline run,
 
 In production, you can set the environment variable in the corresponding Terraform script.
 
-#### Postgres
+#### PostgreSQL
 `export MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://user:password@host:port/dbname`
 
+#### MySQL
+`export MAGE_DATABASE_CONNECTION_URL=mysql+mysqlconnector://user:password@host:port/dbname`
+
 #### MSSQL
-`export MAGE_DATABASE_CONNECTION_URL=mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;`
+`export MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;"`
 
 ### ulimit
 

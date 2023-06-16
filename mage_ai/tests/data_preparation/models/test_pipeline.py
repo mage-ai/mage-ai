@@ -37,6 +37,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -105,6 +106,7 @@ class PipelineTest(DBTestCase):
                 ),
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[
                 dict(
@@ -135,7 +137,7 @@ class PipelineTest(DBTestCase):
             'test_pipeline_b',
             repo_path=self.repo_path,
         )
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Pipeline test_pipeline_a already exists.'):
             asyncio.run(pipeline2.update(dict(name='test_pipeline_a', uuid='test_pipeline_b')))
         self.assertEqual(pipeline1.name, 'test_pipeline_a')
         self.assertEqual(pipeline2.name, 'test_pipeline_b')
@@ -172,6 +174,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 3',
             uuid='test_pipeline_3',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -224,6 +227,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -250,6 +254,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 4',
             uuid='test_pipeline_4',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -318,6 +323,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -350,6 +356,7 @@ class PipelineTest(DBTestCase):
             executor_type=None,
             name='test pipeline 5',
             uuid='test_pipeline_5',
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -466,6 +473,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -578,6 +586,7 @@ class PipelineTest(DBTestCase):
                     "executor_type": None,
                     "extensions": {},
                     "name": "test_pipeline_9",
+                    "spark_config": {},
                     "type": "integration",
                     "updated_at": None,
                     "uuid": "test_pipeline_9",
@@ -616,6 +625,7 @@ class PipelineTest(DBTestCase):
                         },
                     ],
                     "callbacks": [],
+                    "conditionals": [],
                     "widgets": [],
                 },
             )

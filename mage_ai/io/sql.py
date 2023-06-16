@@ -39,6 +39,12 @@ class BaseSQL(BaseSQLConnection):
         """
         raise Exception('Subclasses must override this method.')
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return f'CREATE SCHEMA IF NOT EXISTS {schema_name};'
+
     def build_create_table_command(
         self,
         dtypes: Mapping[str, str],
@@ -256,7 +262,8 @@ class BaseSQL(BaseSQLConnection):
 
             with self.conn.cursor() as cur:
                 if schema_name:
-                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+                    query = self.build_create_schema_command(schema_name)
+                    cur.execute(query)
 
                 should_create_table = not table_exists
 

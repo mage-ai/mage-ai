@@ -81,12 +81,40 @@ Mage uses SQLite as the default database engine. To use PostgreSQL as the databa
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
       -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
       mageai/mageai \
-      /app/run_app.sh mage start <project_name>
+      /app/run_app.sh mage start [project_name]
+   ```
+
+### Using MySQL as database
+
+Mage uses SQLite as the default database engine. To use MySQL as the database engine, you'll need to run your Docker container slightly differently:
+
+1. Create Docker network
+
+   ```bash
+   docker network create mage-app
+   ```
+
+2. Start MySQL Docker container in a separate window
+
+   ```bash
+   docker run --network mage-app --network-alias mysql_db \
+      -it -p 3306:3306 -e MYSQL_DATABASE=test_database \
+      -e MYSQL_USER=test_username -e MYSQL_PASSWORD=test_password \
+      -e MYSQL_ALLOW_EMPTY_PASSWORD=yes mysql:8.0
+   ```
+
+3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+
+   ```bash
+   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+      -e MAGE_DATABASE_CONNECTION_URL="mysql+mysqlconnector://test_username:test_password@mysql_db:3306/test_database" \
+      mageai/mageai \
+      /app/run_app.sh mage start [project_name]
    ```
 
 ### Using MSSQL as database
 
-Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
+MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
 
 1. Create Docker network
 
@@ -111,18 +139,18 @@ Besides SQLite and PostgreSQL, MSSQL can also be used as the database engine, as
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
    -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Password123;ENCRYPT=yes;TrustServerCertificate=yes;" \
    mageai/mageai \
-   /app/run_app.sh mage start <project_name>
+   /app/run_app.sh mage start [project_name]
    ```
 
    The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
 
-   * "DRIVER={ODBC Driver 18 for SQL Server}" - a formatted string with a version number matching that of the SQL server
-   * "SERVER=database_server" - the name or IP address of the database server
-   * "DATABASE=database" - the name of the database
-   * "UID=user" - the user ID for the database
-   * "PWD=password" - the password for the user
-   * "ENCRYPT=yes" - whether to use encryption
-   * "TrustServerCertificate=yes" - whether to trust the server certificate
+   * `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
+   * `SERVER=database_server`: the name or IP address of the database server
+   * `DATABASE=database`: the name of the database
+   * `UID=user`: the user ID for the database
+   * `PWD=password`: the password for the user
+   * `ENCRYPT=yes`: whether to use encryption
+   * `TrustServerCertificate=yes`: whether to trust the server certificate
 
 ---
 
@@ -245,7 +273,7 @@ The command to run Mage using Docker could look like this:
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src \
     -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    mageai/mageai /app/run_app.sh mage start demo_project
+    mageai/mageai /app/run_app.sh mage start [project_name]
 ```
 
 See [here](/development/environment-variables) for a list of environment variables you can configure.
@@ -266,7 +294,7 @@ then run the following Docker command to start Mage and add files in the `secret
 docker run -it -p 6789:6789
     -v /Users/dragon/secrets:/home/secrets \
     -v $(pwd):/home/src mageai/mageai \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
 ```
 
 This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets`
@@ -302,7 +330,7 @@ Your Docker run command could look like this:
 docker run -it -p 6789:6789 \
     -v $(pwd):/home/src mageai/mageai \
     -m 2048m \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
 ```
 
 ---

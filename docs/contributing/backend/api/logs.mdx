@@ -13,7 +13,7 @@ description: "Log entries."
       "name": "export_titanic_clean.log",
       "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/54/20230308T045259/export_titanic_clean.log",
       "content": ""
-    }s
+    }
   ],
   "pipeline_run_logs": [
     {
@@ -103,7 +103,7 @@ description: "Log entries."
 ```curl cURL
 curl --request GET \
   --url 'http://localhost:6789/api/pipelines/example_pipeline/logs?_limit=20&_offset=0&start_timestamp=1677648116&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
-  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
+  --header 'OAUTH-TOKEN=some_really_long_string' \
 ```
 </CodeGroup>
 

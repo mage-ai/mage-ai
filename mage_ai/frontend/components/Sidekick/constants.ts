@@ -9,6 +9,7 @@ import {
   Table,
   Terminal,
   Tree,
+  Union,
   Variables,
 } from '@oracle/icons';
 import { indexBy } from '@utils/array';
@@ -17,6 +18,7 @@ export const VIEW_QUERY_PARAM = 'sideview';
 export const VH_PERCENTAGE = 90;
 
 export enum ViewKeyEnum {
+  ADDON_BLOCKS = 'addon_blocks',
   CALLBACKS = 'callbacks',
   CHARTS = 'charts',
   DATA = 'data',
@@ -104,16 +106,8 @@ export const SIDEKICK_VIEWS: {
   {
     buildLabel: ({
       pipeline,
-    }) => {
-      const { callbacks = [] } = pipeline || {};
-
-      if (callbacks?.length >= 1) {
-        return `Callbacks (${callbacks.length})`;
-      }
-
-      return 'Callbacks';
-    },
-    key: ViewKeyEnum.CALLBACKS,
+    }) => 'Add-on blocks',
+    key: ViewKeyEnum.ADDON_BLOCKS,
   },
   {
     buildLabel: ({
@@ -146,6 +140,7 @@ export const SIDEKICK_VIEWS: {
 export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
 
 export const NAV_ICON_MAPPING = {
+  [ViewKeyEnum.ADDON_BLOCKS]: Union,
   [ViewKeyEnum.CALLBACKS]: Callback,
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,

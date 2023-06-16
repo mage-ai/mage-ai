@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.8.88',
+    version='0.8.95',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -41,7 +41,7 @@ setuptools.setup(
     },
     extras_require={
         'azure': [
-            'azure-eventhub==5.10.1',
+            'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
@@ -99,7 +99,7 @@ setuptools.setup(
         ],
         'all': [
             'aws-secretsmanager-caching==1.1.1.5',
-            'azure-eventhub==5.10.1',
+            'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',

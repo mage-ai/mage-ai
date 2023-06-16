@@ -46,32 +46,32 @@ Follow these steps to add that webhook URL to your project settings:
 4. In the `metadata.yaml` file, add a section with the following
    configuration or update the existing `notification_config` section:
 
-```yaml
-notification_config:
-  alert_on:
-    - trigger_failure
-    - trigger_passed_sla
-```
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
 
-If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
 
-Options:
+    Options:
 
-- `trigger_failure`: alert when a run of a trigger fails
-- `trigger_success`: alert when a run of a trigger succeeds
-- `trigger_passed_sla`: alert when a run of a trigger passes sla
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a run of a trigger passes sla
 
 5. In the `metadata.yaml` file, add the following values:
 
-```yaml
-notification_config:
-  alert_on:
-    ...
-  teams_config:
-    webhook_url: 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lk'
-```
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      teams_config:
+        webhook_url: 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lk'
+    ```
 
-1. Change the `webhook_url` value to be the webhook URL you created from Teams.
+    Change the `webhook_url` value to be the webhook URL you created from Teams.
 
 ---
 

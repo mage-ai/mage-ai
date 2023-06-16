@@ -27,6 +27,7 @@ from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
+from mage_ai.server.api.downloads import ApiDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -156,6 +157,13 @@ def make_app():
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
             ApiTriggerPipelineHandler,
+        ),
+
+        # Download block output
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
+            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            ApiDownloadHandler,
         ),
 
         # API v1 routes

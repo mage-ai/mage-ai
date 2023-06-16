@@ -4,6 +4,8 @@ export enum RunStatus {
   FAILED = 'failed',
   INITIAL = 'initial',
   RUNNING = 'running',
+  UPSTREAM_FAILED = 'upstream_failed',
+  CONDITION_FAILED = 'condition_failed',
 }
 
 export default interface BlockRunType {

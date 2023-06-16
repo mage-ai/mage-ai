@@ -6,8 +6,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useMutation } from 'react-query';
 
 import BlockTemplateType from '@interfaces/BlockTemplateType';
@@ -31,6 +29,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ICON_SIZE, IconContainerStyle } from '../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { capitalize, lowercase, pluralize } from '@utils/string';
 import {
   getdataSourceMenuItems,
   groupBlockTemplates,
@@ -41,15 +40,22 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
 
-export type CallbacksProps = {} & ExtensionProps;
+export type AddonBlockProps = {
+  addOnBlocks: BlockType[];
+  addOnBlockType: BlockTypeEnum;
+  displayBlockName: string;
+} & ExtensionProps;
 
-function Callbacks({
+function AddonBlock({
   addNewBlockAtIndex,
+  addOnBlocks,
+  addOnBlockType,
   autocompleteItems,
   blockRefs,
   blocks,
   blocksInNotebook,
   deleteBlock,
+  displayBlockName,
   fetchFileTree,
   fetchPipeline,
   interruptKernel,
@@ -68,7 +74,7 @@ function Callbacks({
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
-}: CallbacksProps) {
+}: AddonBlockProps) {
   const refParent = useRef(null);
   const [dropdownMenuVisible, setDropdownMenuVisible] = useState<boolean>(false);
 
@@ -102,9 +108,8 @@ function Callbacks({
     type: pipelineType,
   } = pipeline || {};
 
-  const callbackBlocks = useMemo(() => pipeline?.callbacks || [], [pipeline]);
-  const callbackBlocksByUUID = useMemo(() => indexBy(callbackBlocks, ({ uuid }) => uuid), [
-    callbackBlocks,
+  const addOnBlocksByUUID = useMemo(() => indexBy(addOnBlocks || [], ({ uuid }) => uuid), [
+    addOnBlocks,
   ]);
 
   const { data: dataBlockTemplates } = api.block_templates.list({}, {
@@ -117,10 +122,10 @@ function Callbacks({
 
   const addNewBlock = useCallback(payload => addNewBlockAtIndex(
     payload,
-    callbackBlocks?.length || 0,
+    addOnBlocksByUUID?.length || 0,
   ), [
     addNewBlockAtIndex,
-    callbackBlocks,
+    addOnBlocksByUUID,
   ]);
   const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
     blockTemplates,
@@ -129,9 +134,9 @@ function Callbacks({
     addNewBlock,
     blockTemplates,
   ]);
-  const callbackItems = useMemo(() => getdataSourceMenuItems(
+  const addOnItems = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
-    BlockTypeEnum.CALLBACK,
+    addOnBlockType,
     pipelineType,
     {
       blockTemplatesByBlockType,
@@ -139,12 +144,13 @@ function Callbacks({
     },
   ), [
     addNewBlock,
+    addOnBlockType,
     blockTemplatesByBlockType,
     pipelineType,
   ]);
 
-  const isSelected = useMemo(() => callbackBlocksByUUID[selectedBlock?.uuid], [
-    callbackBlocksByUUID,
+  const isSelected = useMemo(() => addOnBlocksByUUID?.[selectedBlock?.uuid], [
+    addOnBlocksByUUID,
     selectedBlock,
   ]);
 
@@ -197,7 +203,7 @@ function Callbacks({
     },
   );
 
-  const codeBlocks = useMemo(() => callbackBlocks.map((block: BlockType, idx: number) => {
+  const codeBlocks = useMemo(() => addOnBlocks?.map((block: BlockType, idx: number) => {
     const {
       type,
       uuid,
@@ -236,7 +242,7 @@ function Callbacks({
             <CodeBlockExtraContent
               block={block}
               blocks={blocksInNotebook}
-              inputPlaceholder="Select blocks to add callbacks to"
+              inputPlaceholder={`Select blocks to add ${pluralize(displayBlockName, null)} to`}
               loading={isLoadingUpdateBlock}
               onClickTag={(block: BlockType) => {
                 // @ts-ignore
@@ -264,7 +270,7 @@ function Callbacks({
           interruptKernel={interruptKernel}
           messages={messages[uuid]}
           noDivider
-          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+          // onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
           onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
           pipeline={pipeline}
           ref={blockRefs.current[path]}
@@ -281,18 +287,18 @@ function Callbacks({
       </Spacing>
     );
   }), [
+    addOnBlocks,
     autocompleteItems,
     blockRefs,
     blocks,
     blocksInNotebook,
-    callbackBlocks,
     deleteBlock,
+    displayBlockName,
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
     isLoadingUpdateBlock,
     messages,
-    onChangeCallbackBlock,
     onChangeCodeBlock,
     onSelectBlockFile,
     pipeline,
@@ -310,7 +316,7 @@ function Callbacks({
     updateBlock,
   ]);
 
-  const uuidKeyboard = 'Callbacks/index';
+  const uuidKeyboard = `${displayBlockName}/index`;
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -342,60 +348,60 @@ function Callbacks({
   );
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <Spacing p={PADDING_UNITS}>
-        <Spacing mb={PADDING_UNITS}>
+    <>
+      <Spacing mb={PADDING_UNITS}>
+        <Text default>
+          Run 1 or more {lowercase(displayBlockName)} block functions whenever another block succeeds or fails.
+        </Text>
+        <Spacing mt={1}>
           <Text default>
-            Run 1 or more callback block functions whenever another block succeeds or fails.
-          </Text>
-          <Spacing mt={1}>
-            <Text default>
-              Learn more about <Link
-                href="https://docs.mage.ai/development/blocks/callbacks/overview"
-                openNewWindow
-              >
-                callbacks
-              </Link>.
-            </Text>
-          </Spacing>
-        </Spacing>
-
-        {codeBlocks}
-
-        <Spacing mt={PADDING_UNITS}>
-          <ClickOutside
-            onClickOutside={() => setDropdownMenuVisible(false)}
-            open
-          >
-            <FlyoutMenuWrapper
-              disableKeyboardShortcuts
-              items={callbackItems}
-              onClickCallback={() => setDropdownMenuVisible(false)}
-              open={dropdownMenuVisible}
-              parentRef={refParent}
-              uuid="Callback"
+            Learn more about <Link
+              href={`https://docs.mage.ai/development/blocks/${lowercase(pluralize(displayBlockName, null))}/overview`}
+              openNewWindow
             >
-              <KeyboardShortcutButton
-                beforeElement={
-                  <IconContainerStyle rose>
-                    <Add size={ICON_SIZE} />
-                  </IconContainerStyle>
-                }
-                inline
-                onClick={(e) => {
-                  e.preventDefault();
-                  setDropdownMenuVisible(true);
-                }}
-                uuid="AddNewBlocks/Callback"
-              >
-                Callback block
-              </KeyboardShortcutButton>
-            </FlyoutMenuWrapper>
-          </ClickOutside>
+              {lowercase(pluralize(displayBlockName, null))}
+            </Link>.
+          </Text>
         </Spacing>
       </Spacing>
-    </DndProvider>
+
+      {codeBlocks}
+
+      <Spacing mt={PADDING_UNITS}>
+        <ClickOutside
+          onClickOutside={() => setDropdownMenuVisible(false)}
+          open
+        >
+          <FlyoutMenuWrapper
+            disableKeyboardShortcuts
+            items={addOnItems}
+            onClickCallback={() => setDropdownMenuVisible(false)}
+            open={dropdownMenuVisible}
+            parentRef={refParent}
+            uuid={displayBlockName}
+          >
+            <KeyboardShortcutButton
+              beforeElement={
+                <IconContainerStyle
+                  rose={addOnBlockType === BlockTypeEnum.CALLBACK}
+                >
+                  <Add size={ICON_SIZE} />
+                </IconContainerStyle>
+              }
+              inline
+              onClick={(e) => {
+                e.preventDefault();
+                setDropdownMenuVisible(true);
+              }}
+              uuid={`AddNewBlocks/${displayBlockName}`}
+            >
+              {capitalize(displayBlockName)} block
+            </KeyboardShortcutButton>
+          </FlyoutMenuWrapper>
+        </ClickOutside>
+      </Spacing>
+    </>
   );
 }
 
-export default Callbacks;
+export default AddonBlock;

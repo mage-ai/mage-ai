@@ -6,8 +6,11 @@ By default, Mage uses sqlite to store orchestration data (trigger, pipeline run,
 
 In production, you can set the environment variable in the corresponding Terraform script.
 
-## Postgres
+## PostgreSQL
 `export MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://user:password@host:port/dbname`
 
+## MySQL
+`export MAGE_DATABASE_CONNECTION_URL=mysql+mysqlconnector://user:password@host:port/dbname`
+
 ## MSSQL
-`export MAGE_DATABASE_CONNECTION_URL=mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;`
+`export MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;"`

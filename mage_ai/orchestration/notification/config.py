@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import List
+
 from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.google_chat.config import GoogleChatConfig
+from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
-from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.shared.config import BaseConfig
-from typing import Dict, List
-import traceback
 
 
 class AlertOn(str, Enum):
@@ -23,6 +23,20 @@ DEFAULT_ALERT_ON = [
 
 
 @dataclass
+class MessageTemplate(BaseConfig):
+    title: str = None
+    summary: str = None
+    details: str = None
+
+
+@dataclass
+class MessageTemplates(BaseConfig):
+    success: MessageTemplate = None
+    failure: MessageTemplate = None
+    passed_sla: MessageTemplate = None
+
+
+@dataclass
 class NotificationConfig(BaseConfig):
     alert_on: List[AlertOn] = field(default_factory=lambda: DEFAULT_ALERT_ON)
     email_config: EmailConfig = None
@@ -30,53 +44,4 @@ class NotificationConfig(BaseConfig):
     opsgenie_config: OpsgenieConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
-
-    @classmethod
-    def load(self, config_path: str = None, config: Dict = None):
-        notification_config = super().load(config_path=config_path, config=config)
-        if notification_config.slack_config is not None and \
-                type(notification_config.slack_config) is dict:
-            try:
-                notification_config.slack_config = SlackConfig.load(
-                    config=notification_config.slack_config,
-                )
-            except Exception:
-                traceback.print_exc()
-                notification_config.slack_config = None
-        if notification_config.teams_config is not None and \
-                type(notification_config.teams_config) is dict:
-            try:
-                notification_config.teams_config = TeamsConfig.load(
-                    config=notification_config.teams_config,
-                )
-            except Exception:
-                traceback.print_exc()
-                notification_config.teams_config = None
-        if notification_config.google_chat_config is not None and \
-                type(notification_config.google_chat_config) is dict:
-            try:
-                notification_config.google_chat_config = GoogleChatConfig.load(
-                    config=notification_config.google_chat_config,
-                )
-            except Exception:
-                traceback.print_exc()
-                notification_config.google_chat_config = None
-        if notification_config.email_config is not None and \
-                type(notification_config.email_config) is dict:
-            try:
-                notification_config.email_config = EmailConfig.load(
-                    config=notification_config.email_config,
-                )
-            except Exception:
-                traceback.print_exc()
-                notification_config.email_config = None
-        if notification_config.opsgenie_config is not None and \
-                type(notification_config.opsgenie_config) is dict:
-            try:
-                notification_config.opsgenie_config = OpsgenieConfig.load(
-                    config=notification_config.opsgenie_config,
-                )
-            except Exception:
-                traceback.print_exc()
-                notification_config.opsgenie_config = None
-        return notification_config
+    message_templates: MessageTemplates = None

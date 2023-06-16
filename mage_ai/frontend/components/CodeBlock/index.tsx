@@ -896,6 +896,7 @@ function CodeBlock({
           return val;
         });
       }}
+      setErrors={setErrors}
       setOutputBlocks={setOutputBlocks}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedTab={setSelectedTab}
@@ -918,6 +919,7 @@ function CodeBlock({
     runStartTime,
     selected,
     selectedTab,
+    setErrors,
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,
@@ -2079,6 +2081,7 @@ function CodeBlock({
 
               {!codeCollapsed && ![
                 BlockTypeEnum.CALLBACK,
+                BlockTypeEnum.CONDITIONAL,
                 BlockTypeEnum.EXTENSION,
               ].includes(blockType) && (
                 <BlockExtras

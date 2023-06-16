@@ -37,6 +37,7 @@ PipelinePolicy.allow_actions([
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -46,6 +47,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -56,6 +58,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -65,6 +68,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
     'schedules',
 ], scopes=[
@@ -75,6 +79,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_write([
     'callbacks',
+    'conditionals',
     'clone_pipeline_uuid',
     'extensions',
     'name',
@@ -88,6 +93,7 @@ PipelinePolicy.allow_write([
 PipelinePolicy.allow_write([
     'add_upstream_for_block_uuid',
     'callbacks',
+    'conditionals',
     'extensions',
     'schedules',
 ] + PipelinePresenter.default_attributes, scopes=[

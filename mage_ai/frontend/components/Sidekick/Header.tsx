@@ -23,6 +23,7 @@ import {
 import { getFormattedVariables } from './utils';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 
 type SidekickHeaderProps = {
@@ -72,6 +73,8 @@ function SidekickHeader({
   const extensionOptionsByUUID = useMemo(() => indexBy(extensionOptions, ({ uuid }) => uuid), [
     extensionOptions,
   ]);
+
+  const showAddonDetails = ViewKeyEnum.ADDON_BLOCKS === activeView && query?.addon;
 
   if (!activeView) {
     return <div />;
@@ -151,6 +154,26 @@ function SidekickHeader({
         </Text>
         <Text bold>
           {extensionOption?.name}
+        </Text>
+      </FlexContainer>
+    );
+  } else if (showAddonDetails) {
+    el = (
+      <FlexContainer>
+        <NextLink
+          as={`/pipelines/${pipelineUUID}/edit?${VIEW_QUERY_PARAM}=${ViewKeyEnum.ADDON_BLOCKS}`}
+          href={'/pipelines/[pipeline]/edit'}
+          passHref
+        >
+          <Link default>
+            {sidekickLabel}
+          </Link>
+        </NextLink>
+        <Text monospace muted>
+          &nbsp;/&nbsp;
+        </Text>
+        <Text bold>
+          {capitalizeRemoveUnderscoreLower(query?.addon)}
         </Text>
       </FlexContainer>
     );

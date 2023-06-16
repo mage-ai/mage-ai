@@ -8,7 +8,7 @@ if 'sensor' not in globals():
 
 
 @sensor
-def check_condition(**kwargs) -> bool:
+def check_condition(*args, **kwargs) -> bool:
     """
     Template code for checking if a file or folder exists in a S3 bucket
 

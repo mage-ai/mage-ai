@@ -89,6 +89,7 @@ class UtilsTest(DBTestCase):
         access = user.get_access(Permission.Entity.PIPELINE, 'not_test')
         self.assertEqual(0, access)
 
+        self.assertTrue(has_at_least_viewer_role(user, Permission.Entity.PIPELINE, 'test'))
         self.assertTrue(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test'))
 
     def test_get_user_access_for_role_with_multiple_permissions(self):

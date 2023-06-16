@@ -12,7 +12,6 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Callbacks, { CallbacksProps } from '@components/PipelineDetail/Callbacks';
 import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -59,6 +58,7 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { useWindowSize } from '@utils/sizes';
+import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
 const MAX_COLUMNS = 100;
 
@@ -114,7 +114,7 @@ export type SidekickProps = {
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
-} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & CallbacksProps;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
   activeView,
@@ -277,7 +277,7 @@ function Sidekick({
     secrets,
   ]);
 
-  const extensionsAndCallbacksProps = {
+  const extensionsAndAddonsProps = {
     addNewBlockAtIndex,
     autocompleteItems,
     blockRefs,
@@ -563,13 +563,13 @@ function Sidekick({
 
         {ViewKeyEnum.EXTENSIONS === activeView && (
           <Extensions
-            {...extensionsAndCallbacksProps}
+            {...extensionsAndAddonsProps}
           />
         )}
 
-        {ViewKeyEnum.CALLBACKS === activeView && (
-          <Callbacks
-            {...extensionsAndCallbacksProps}
+        {ViewKeyEnum.ADDON_BLOCKS === activeView && (
+          <AddonBlocks
+            {...extensionsAndAddonsProps}
           />
         )}
       </SidekickContainerStyle>

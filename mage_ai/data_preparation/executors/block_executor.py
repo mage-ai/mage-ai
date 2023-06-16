@@ -64,6 +64,31 @@ class BlockExecutor:
                 on_start(self.block_uuid)
             pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
                 if 'pipeline_run_id' in kwargs else None
+
+            conditional_result = self._execute_conditional(
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                global_vars=global_vars,
+                logging_tags=tags,
+                pipeline_run=pipeline_run,
+            )
+            if not conditional_result:
+                self.logger.info(
+                    f'Conditional block(s) returned false for {self.block.uuid}. '
+                    'This block run and downstream blocks will set as CONDITION_FAILED.',
+                    **merge_dict(tags, dict(
+                        block_type=self.block.type,
+                        block_uuid=self.block.uuid,
+                    )),
+                )
+                self.__update_block_run_status(
+                    'condition_failed',
+                    block_run_id=kwargs.get('block_run_id'),
+                    callback_url=callback_url,
+                    tags=tags,
+                )
+                return dict(output=[])
+
             try:
                 from mage_ai.shared.retry import retry
 
@@ -207,12 +232,52 @@ class BlockExecutor:
 
         return result
 
+    def _execute_conditional(
+        self,
+        global_vars: Dict,
+        logging_tags: Dict,
+        pipeline_run: PipelineRun,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
+    ):
+        result = True
+        for conditional_block in self.block.conditional_blocks:
+            try:
+                block_result = conditional_block.execute_conditional(
+                    self.block,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    execution_partition=self.execution_partition,
+                    global_vars=global_vars,
+                    logger=self.logger,
+                    logging_tags=logging_tags,
+                    pipeline_run=pipeline_run,
+                )
+                if not block_result:
+                    self.logger.info(
+                        f'Conditional block {conditional_block.uuid} evaluated as False ' +
+                        f'for block {self.block.uuid}',
+                        logging_tags,
+                    )
+                result = result and block_result
+            except Exception as conditional_err:
+                self.logger.exception(
+                    f'Failed to execute conditional block {conditional_block.uuid} ' +
+                    f'for block {self.block.uuid}.',
+                    **merge_dict(logging_tags, dict(
+                        error=conditional_err,
+                    )),
+                )
+                result = False
+
+        return result
+
     def _execute_callback(
         self,
         callback: str,
-        global_vars,
-        logging_tags,
-        pipeline_run,
+        global_vars: Dict,
+        logging_tags: Dict,
+        pipeline_run: PipelineRun,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):

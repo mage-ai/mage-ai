@@ -1,9 +1,11 @@
+import os
 from datetime import datetime
+from typing import Dict, List, Tuple
+
+import aiofiles
+
 from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from typing import Dict, List, Tuple
-import aiofiles
-import os
 
 FILE_VERSIONS_DIR = '.file_versions'
 BLACKLISTED_DIRS = frozenset([
@@ -183,7 +185,7 @@ class File:
                 self.create_parent_directories(file_path)
 
             write_type = 'wb' if content and type(content) is bytes else 'w'
-            yield file_path, write_type, content
+            yield file_path, write_type
 
     @classmethod
     def write(
@@ -196,7 +198,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
-        for file_path, write_type, content in self.write_preprocess(
+        for file_path, write_type in self.write_preprocess(
             repo_path,
             dir_path,
             filename,
@@ -205,7 +207,12 @@ class File:
             file_version_only=file_version_only,
             overwrite=overwrite,
         ):
-            with open(file_path, write_type, encoding='utf-8') as f:
+            kwargs = dict(
+                mode=write_type,
+            )
+            if write_type != 'wb':
+                kwargs['encoding'] = 'utf-8'
+            with open(file_path, **kwargs) as f:
                 if content:
                     f.write(content)
         self.validate_content(dir_path, filename, content)
@@ -221,7 +228,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
-        for file_path, write_type, content in self.write_preprocess(
+        for file_path, write_type in self.write_preprocess(
             repo_path,
             dir_path,
             filename,
@@ -230,7 +237,12 @@ class File:
             file_version_only=file_version_only,
             overwrite=overwrite,
         ):
-            async with aiofiles.open(file_path, mode=write_type, encoding='utf-8') as fp:
+            kwargs = dict(
+                mode=write_type,
+            )
+            if write_type != 'wb':
+                kwargs['encoding'] = 'utf-8'
+            async with aiofiles.open(file_path, **kwargs) as fp:
                 await fp.write(content)
 
     def exists(self) -> bool:
@@ -242,6 +254,7 @@ class File:
                 file_content = fp.read()
             return file_content
         except FileNotFoundError as err:
+            print('file.content')
             print(err)
         return ''
 

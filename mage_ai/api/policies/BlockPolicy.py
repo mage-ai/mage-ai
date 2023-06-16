@@ -81,6 +81,7 @@ BlockPolicy.allow_write([
     'bookmark_values',
     'callback_blocks',
     'color',
+    'conditional_blocks',
     'configuration',
     'content',
     'destination_table',

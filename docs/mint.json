@@ -187,6 +187,13 @@
               ]
             },
             {
+              "group": "Conditionals",
+              "pages": [
+                "development/blocks/conditionals/overview",
+                "development/blocks/conditionals/templates"
+              ]
+            },
+            {
               "group": "SQL",
               "pages": [
                 "guides/sql-blocks",
@@ -228,6 +235,7 @@
                 "guides/streaming/destinations/dummy",
                 "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
+                "guides/streaming/destinations/mongodb",
                 "guides/streaming/destinations/opensearch",
                 "guides/streaming/destinations/redshift"
               ]
@@ -302,7 +310,8 @@
         {
           "group": "Pipeline runs",
           "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs"
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
         }
       ]

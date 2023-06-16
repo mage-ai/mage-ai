@@ -22,6 +22,7 @@ export const NodeStyle = styled.div<{
   disabled: boolean;
   height?: number;
   isCancelled: boolean;
+  isConditionFailed: boolean;
   selected: boolean;
 }>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
@@ -40,6 +41,11 @@ export const NodeStyle = styled.div<{
     // opacity doesn’t work on Safari
     border-color: ${(props.theme.content || dark.content).active};
     border-style: dashed;
+    cursor: not-allowed;
+  `}
+
+  ${props => props.isConditionFailed && `
+    background-color: ${(props.theme.content || dark.content).disabled};
     cursor: not-allowed;
   `}
 

@@ -1,0 +1,11 @@
+{% block imports %}
+if 'condition' not in globals():
+    from mage_ai.data_preparation.decorators import condition
+{% endblock %}
+
+
+{% block content %}
+@condition
+def evaluate_condition(*args, **kwargs) -> bool:
+    return True
+{% endblock %}

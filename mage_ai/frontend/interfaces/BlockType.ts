@@ -6,6 +6,7 @@ import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
 export enum TagEnum {
+  CONDITION = 'condition',
   DBT_SNAPSHOT = 'snapshot',
   DYNAMIC = 'dynamic',
   DYNAMIC_CHILD = 'dynamic_child',
@@ -32,6 +33,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
 export enum BlockTypeEnum {
   CALLBACK = 'callback',
   CHART = 'chart',
+  CONDITIONAL = 'conditional',
   CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
@@ -42,6 +44,12 @@ export enum BlockTypeEnum {
   MARKDOWN = 'markdown',
   TRANSFORMER = 'transformer',
 }
+
+export const SIDEKICK_BLOCK_TYPES = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CONDITIONAL,
+  BlockTypeEnum.EXTENSION,
+];
 
 export enum BlockColorEnum {
   BLUE = 'blue',
@@ -164,6 +172,7 @@ export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
   callback_content?: string;
+  conditional_blocks?: string[];
   color?: BlockColorEnum;
   configuration?: ConfigurationType;
   content?: string;
