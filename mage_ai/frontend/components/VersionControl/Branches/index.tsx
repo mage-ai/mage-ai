@@ -257,7 +257,7 @@ function Branches({
             </div>
           </FlexContainer>
 
-          {actionName && ACTION_MERGE === actionName && (
+          {actionName && ACTION_REBASE === actionName && (
             <Spacing mt={PADDING_UNITS}>
               <Spacing mb={1}>
                 <Text bold muted>
@@ -276,7 +276,7 @@ function Branches({
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !branchBase || (actionName && ACTION_MERGE === actionName && !actionMessage)}
+              disabled={!actionName || !branchBase || (actionName && ACTION_REBASE === actionName && !actionMessage)}
               loading={isLoadingAction}
               onClick={() => {
                 actionGitBranch({
