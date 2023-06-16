@@ -179,13 +179,13 @@ class GitBranchResource(GenericResource):
                 raise ApiError(error)
 
             merge = payload.get('merge', None)
-            if not merge or 'base_branch' not in merge:
+            if merge and 'base_branch' in merge:
+                git_manager.merge_branch(merge['base_branch'])
+            else:
                 error.update({
                     'message': 'Please select a base branch to merge into the current branch.',
                 })
                 raise ApiError(error)
-
-                git_manager.merge_branch(merge['base_branch'])
 
         return self
 
