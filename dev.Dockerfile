@@ -44,7 +44,8 @@ RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cu
 
 # Install node modules used in front-end
 RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
-RUN apt install nodejs
+RUN apt install -y nodejs
+RUN apt install -y npm
 RUN npm install --global yarn
 RUN yarn global add next
 RUN cd /home/src/mage_ai/frontend && yarn install
