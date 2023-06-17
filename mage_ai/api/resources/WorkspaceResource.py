@@ -129,7 +129,10 @@ class WorkspaceResource(GenericResource):
         project_uuid = None
         project_type = get_project_type()
         if project_type == ProjectType.MAIN:
-            workspace_file = os.path.join(get_repo_path(), 'projects', f'{workspace_name}.yaml')
+            project_folder = os.path.join(get_repo_path(), 'projects')
+            if not os.path.exists(project_folder):
+                os.makedirs(project_folder)
+            workspace_file = os.path.join(project_folder, f'{workspace_name}.yaml')
             if os.path.exists(workspace_file):
                 error.update(message=f'Project with name {workspace_name} already exists')
                 raise ApiError(error)
