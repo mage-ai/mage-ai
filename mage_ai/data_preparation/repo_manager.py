@@ -194,7 +194,6 @@ def init_repo(
         project_uuid = uuid.uuid4().hex
     new_config.update(project_uuid=project_uuid)
     get_repo_config(repo_path).save(**new_config)
-    return project_uuid
 
 
 def get_data_dir() -> str:

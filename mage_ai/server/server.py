@@ -302,7 +302,7 @@ def start_server(
 
     # Set project path in environment variable
     if project:
-        project = project = os.path.abspath(project)
+        project = os.path.abspath(project)
     else:
         project = os.path.join(os.getcwd(), 'default_repo')
 

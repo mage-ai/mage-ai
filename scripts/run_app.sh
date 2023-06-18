@@ -38,7 +38,7 @@ if [ "$#" -gt 0 ]; then
     echo "Execute command: ${@}"
     "$@"
 else
-    echo "Starting project at ${PROJECT_PATH}"
+    echo "Starting project at ${PROJECT_PATH}, project type ${MAGE_PROJECT_TYPE}, uuid ${MAGE_PROJECT_UUID}"
     if [[ ! -z "${DBT_DOCS_INSTANCE}" ]]; then
         mage start $PROJECT_PATH --dbt-docs-instance 1
     elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
