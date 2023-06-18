@@ -307,7 +307,12 @@ def start_server(
         project = os.path.join(os.getcwd(), 'default_repo')
 
     if not os.path.exists(project):
-        init_repo(project, project_type=project_type, cluster_type=cluster_type)
+        init_repo(
+            project,
+            project_type=project_type,
+            cluster_type=cluster_type,
+            project_uuid=project_uuid,
+        )
     set_repo_path(project)
 
     asyncio.run(UsageStatisticLogger().project_impression())

@@ -1,5 +1,4 @@
 import os
-import shutil
 import sys
 import traceback
 import uuid
@@ -179,13 +178,10 @@ def init_repo(
             exist_ok=True,
         )
         copy_template_directory('repo', repo_path)
-        current_metadata = get_repo_config().metadata_path
-        new_metadata = get_repo_config(repo_path).metadata_path
-        if os.path.exists(current_metadata):
-            shutil.copyfile(current_metadata, new_metadata)
         new_config.update(
             project_type=ProjectType.SUB.value,
             cluster_type=cluster_type,
+            project_uuid=project_uuid,
         )
     else:
         os.makedirs(

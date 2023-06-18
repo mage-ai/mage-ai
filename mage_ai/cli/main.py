@@ -128,7 +128,7 @@ def start(
     instance_type: str = START_INSTANCE_TYPE_DEFAULT,
     project_type: str = START_PROJECT_TYPE_DEFAULT,
     cluster_type: str = START_CLUSTER_TYPE_DEFAULT,
-    project_uuid: str = START_CLUSTER_TYPE_DEFAULT,
+    project_uuid: str = START_PROJECT_UUID_DEFAULT,
 ):
     """
     Start Mage server and UI.

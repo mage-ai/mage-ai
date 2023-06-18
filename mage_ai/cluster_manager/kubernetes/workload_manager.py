@@ -91,7 +91,7 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
+                'image': 'mageai/mageai-manage-instance-test:latest',
                 'ports': [
                     {
                         'containerPort': 6789,

@@ -9,4 +9,5 @@ class WorkspacePresenter(BasePresenter):
         'access',
         'repo_path',
         'project_uuid',
+        'success',
     ]
