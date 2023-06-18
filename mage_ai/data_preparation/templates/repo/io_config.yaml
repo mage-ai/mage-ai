@@ -71,9 +71,9 @@ default:
   SNOWFLAKE_USER: username
   SNOWFLAKE_PASSWORD: password
   SNOWFLAKE_ACCOUNT: account_id.region
-  SNOWFLAKE_DEFAULT_WH: optional_default_warehouse
-  SNOWFLAKE_DEFAULT_DB: optional_default_database
-  SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
+  SNOWFLAKE_DEFAULT_WH: null                  # Optional default warehouse
+  SNOWFLAKE_DEFAULT_DB: null                  # Optional default database
+  SNOWFLAKE_DEFAULT_SCHEMA: null              # Optional default schema
   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
   SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
   SNOWFLAKE_ROLE: null                        # Optional role name
