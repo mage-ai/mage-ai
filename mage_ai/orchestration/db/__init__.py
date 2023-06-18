@@ -52,21 +52,22 @@ if db_connection_url.startswith('postgresql'):
 
 engine = create_engine(
     db_connection_url,
+    query_cache_size=0,
     **db_kwargs,
 )
 session_factory = sessionmaker(bind=engine)
 
 
 class DBConnection:
-    def __init__(self):
+    def __init__(self) -> None:
         self.session = None
 
-    def start_session(self, force: bool = False):
+    def start_session(self, force: bool = False) -> None:
         if self.session is not None and self.session.is_active and not force:
             return
         self.session = scoped_session(session_factory)
 
-    def close_session(self):
+    def close_session(self) -> None:
         self.session.close()
         self.session = None
 
@@ -74,8 +75,8 @@ class DBConnection:
 db_connection = DBConnection()
 
 
-def safe_db_query(func):
-    def func_with_rollback(*args, **kwargs):
+def safe_db_query(func) -> callable:
+    def func_with_rollback(*args, **kwargs) -> callable:
         retry_count = 0
         while True:
             try:
