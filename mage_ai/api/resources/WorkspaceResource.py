@@ -221,7 +221,7 @@ class WorkspaceResource(GenericResource):
                 cloud_run_service_manager.create_service(workspace_name)
         except Exception as e:
             if workspace_file and os.path.exists(workspace_file):
-                shutil.rmtree(workspace_file)
+                os.remove(workspace_file)
             error.update(message=str(e))
             raise ApiError(error)
 

@@ -36,14 +36,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        # try:
-        #     config.load_incluster_config()
-        #     return True
-        # except Exception:
-        #     pass
+        try:
+            config.load_incluster_config()
+            return True
+        except Exception:
+            pass
 
         try:
-            config.load_kube_config('/home/src/k8s_main_project/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
