@@ -181,3 +181,31 @@ response_parser: "user"
 ```
 
 <br />
+
+
+### Example XLSX or CSV
+
+```yaml
+url: https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?output=xlsx
+method: GET
+has_header: True
+```
+The response from the above endpoint is:
+
+```
+teste,first_name,second_name,email
+1,Sadella,Tythacott,stythacott0@sina.com.cn
+2,Melessa,Flaune,mflaune1@si.edu
+3,Caroljean,Filipowicz,cfilipowicz2@guardian.co.uk
+4,Doll,Wannan,dwannan3@people.com.cn
+5,Nancy,Giraudy,ngiraudy4@pagesperso-orange.fr
+6,Dominic,Bimson,dbimson5@vinaora.com
+7,Kikelia,Bishopp,kbishopp6@cdc.gov
+8,Andrus,Pomfrett,apomfrett7@wikipedia.org
+9,Wildon,Fillingham,wfillingham8@google.co.uk
+10,Alfonse,Leechman,aleechman9@jalbum.net
+11,Phil,Emblem,pemblema@opera.com
+12,Eyde,Brewer,ebrewerb@istockphoto.com
+....
+```
+Data can also be checked by clicking on the "Load Sample data" button.
