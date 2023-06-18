@@ -71,10 +71,12 @@ default:
   SNOWFLAKE_USER: username
   SNOWFLAKE_PASSWORD: password
   SNOWFLAKE_ACCOUNT: account_id.region
-  SNOWFLAKE_DEFAULT_WH: default_warehouse
+  SNOWFLAKE_DEFAULT_WH: optional_default_warehouse
   SNOWFLAKE_DEFAULT_DB: optional_default_database
   SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
-  SNOWFLAKE_ROLE: role
+  SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
+  SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
+  SNOWFLAKE_ROLE: null                        # Optional role name
   SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
   trino:
     catalog: postgresql                       # Change this to the catalog of your choice
