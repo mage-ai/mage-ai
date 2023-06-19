@@ -21,6 +21,7 @@ description: "Configure Mage settings through environment variables."
 | `GIT_SSH_PRIVATE_KEY`         | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `GIT_ACCESS_TOKEN`            | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `HIDE_ENV_VAR_VALUES` | Filter out environment variables in notebook output. | 1 |
+| `JWT_SECRET` | Modify the json web token secret used for encoding and decoding access tokens. Defaults to `materia`. | `your_jwt_secret` |
 | `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
 | `LDAP_SERVER`          | [More information](/production/authentication/overview#ldap) | See link          |
 | `LDAP_BIND_DN`         | [More information](/production/authentication/overview#ldap) | See link |
@@ -30,7 +31,7 @@ description: "Configure Mage settings through environment variables."
 | `LDAP_AUTHORIZATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
 | `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
 | `MAGE_PUBLIC_HOST` | The public host url that can be used to access the Mage app. This value will be used in emails or other notifications. | `http://localhost:6789` |
-| `MAX_PRINT_OUTPUT_LINES` | The max number of `stdout` lines, such as from `print` statements, included in a message from the websocket server. (Defaults to `1000`) | `100` |
+| `MAX_PRINT_OUTPUT_LINES` | The max number of `stdout` lines, such as from `print` statements, included in a message from the websocket server. Defaults to `1000`. | `100` |
 | `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
 | `SERVER_VERBOSITY` | [More information](/production/observability/logging#server-logging) | See link |
 | `SHELL_COMMAND` | Set shell command to use for the Mage terminal. Default command is `bash` for macOS/Unix and `cmd` for Windows. | `bash`, `cmd`, ... |
