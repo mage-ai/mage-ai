@@ -265,7 +265,7 @@ class BasePolicy():
 
     def __current_scope(self):
         # If edit access is disabled and user authentication is not enabled, we want to
-        # treat the user as if they are logged in, so we can stop users from hitting
+        # treat the user as if they are logged in, so we can stop users from accessing
         # certain endpoints.
         if self.current_user or \
                 (DISABLE_NOTEBOOK_EDIT_ACCESS and not REQUIRE_USER_AUTHENTICATION):
@@ -299,7 +299,7 @@ class BasePolicy():
 
     def __validate_scopes(self, val, scopes):
         error = ApiError.UNAUTHORIZED_ACCESS
-        if self.is_owner():
+        if not REQUIRE_USER_AUTHENTICATION:
             return
         if OauthScope.CLIENT_ALL in scopes:
             return

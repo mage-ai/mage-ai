@@ -21,4 +21,4 @@ FileVersionPolicy.allow_read(FileVersionPresenter.default_attributes + [], scope
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
