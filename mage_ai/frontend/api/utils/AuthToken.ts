@@ -72,7 +72,7 @@ export default class AuthToken {
         await redirectToUrl('/sign-in');
       }
     } catch {
-      console.log('Sign out error.')
+      console.log('Sign out error.');
     }
   }
 
