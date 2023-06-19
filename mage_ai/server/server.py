@@ -19,6 +19,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_type,
     init_repo,
     set_repo_path,
+    update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
@@ -313,6 +314,7 @@ def start_server(
             cluster_type=cluster_type,
             project_uuid=project_uuid,
         )
+    update_project_uuid()
     set_repo_path(project)
 
     asyncio.run(UsageStatisticLogger().project_impression())
