@@ -18,7 +18,7 @@ from mage_ai.api.utils import (
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.oauth import Permission
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS
+from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import extract
 
 ALL_ACTIONS = 'all'
@@ -264,7 +264,11 @@ class BasePolicy():
         return self.parent_resource_attr
 
     def __current_scope(self):
-        if self.current_user or DISABLE_NOTEBOOK_EDIT_ACCESS:
+        # If edit access is disabled and user authentication is not enabled, we want to
+        # treat the user as if they are logged in, so we can stop users from accessing
+        # certain endpoints.
+        if self.current_user or \
+                (DISABLE_NOTEBOOK_EDIT_ACCESS and not REQUIRE_USER_AUTHENTICATION):
             return OauthScope.CLIENT_PRIVATE
         else:
             return OauthScope.CLIENT_PUBLIC
@@ -295,7 +299,7 @@ class BasePolicy():
 
     def __validate_scopes(self, val, scopes):
         error = ApiError.UNAUTHORIZED_ACCESS
-        if self.is_owner():
+        if not REQUIRE_USER_AUTHENTICATION:
             return
         if OauthScope.CLIENT_ALL in scopes:
             return

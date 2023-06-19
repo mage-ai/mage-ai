@@ -34,6 +34,35 @@ class SessionOperationTests(BaseApiTestCase):
             encode_token(access_token.token, access_token.expires),
         )
 
+    @freeze_time(datetime(3333, 12, 12))
+    async def test_execute_create_with_disable_notebook_edits(self):
+        password = 'password'
+        user = create_user(password=password)
+
+        with patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1):
+            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
+                operation = self.build_operation(
+                    action=constants.CREATE,
+                    payload=dict(session=dict(
+                        email=user.email,
+                        password=password,
+                    )),
+                    resource='sessions',
+                    user=None,
+                )
+                response = await operation.execute()
+
+                access_token = Oauth2AccessToken.query.filter(
+                    Oauth2AccessToken.user_id == user.id
+                ).first()
+
+                print(response)
+
+                self.assertEqual(
+                    response['session']['token'],
+                    encode_token(access_token.token, access_token.expires),
+                )
+
     async def test_execute_create_failed(self):
         password = 'password'
         user = create_user(password=password)
