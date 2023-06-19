@@ -1,9 +1,15 @@
-from mage_integrations.destinations.constants import COLUMN_TYPE_ARRAY, COLUMN_TYPE_OBJECT
+from typing import Dict, List
+
+from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_ARRAY,
+    COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
+)
+from mage_integrations.destinations.sql.utils import clean_column_name
 from mage_integrations.destinations.sql.utils import (
-    clean_column_name,
     convert_column_type as convert_column_type_og,
 )
-from typing import Dict, List
 
 
 def build_alter_table_command(
@@ -30,5 +36,8 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
     elif COLUMN_TYPE_ARRAY == column_settings.get('type_converted') or \
             COLUMN_TYPE_ARRAY == column_type:
         return 'ARRAY'
+    elif COLUMN_TYPE_STRING == column_type \
+            and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+        return 'TIMESTAMP_TZ'
 
     return convert_column_type_og(column_type, column_settings)
