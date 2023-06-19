@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 from typing import Dict, List
 
@@ -175,7 +174,7 @@ class WorkspaceResource(GenericResource):
                         'project_type': ProjectType.SUB,
                         'project_uuid': project_uuid,
                     }
-                k8s_workload_manager.create_stateful_set(
+                k8s_workload_manager.create_workload(
                     workspace_name,
                     container_config=container_config,
                     service_account_name=service_account_name,
@@ -269,17 +268,32 @@ class WorkspaceResource(GenericResource):
         instance = self.model.get('instance')
 
         repo_path = get_repo_path()
-        project_folder = os.path.join(repo_path, 'projects', workspace_name)
+        workspace_file = os.path.join(repo_path, 'projects', f'{workspace_name}.yaml')
+
+        error = ApiError.RESOURCE_ERROR.copy()
+
+        try:
+            if cluster_type == ClusterType.ECS:
+                from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+                task_arn = instance.get('task_arn')
+                cluster_name = os.getenv(ECS_CLUSTER_NAME)
+
+                ecs_instance_manager = EcsTaskManager(cluster_name)
+                ecs_instance_manager.delete_task(workspace_name, task_arn)
+            elif cluster_type == ClusterType.K8S:
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
+                namespace = os.getenv(KUBE_NAMESPACE)
+
+                k8s_workload_manager = WorkloadManager(namespace)
+                k8s_workload_manager.delete_workload(workspace_name)
+        except Exception as e:
+            error.update(message=str(e))
+            raise ApiError(error)
 
         if get_project_type() == ProjectType.MAIN:
-            shutil.rmtree(project_folder)
-        if cluster_type == ClusterType.ECS:
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            task_arn = instance.get('task_arn')
-            cluster_name = os.getenv(ECS_CLUSTER_NAME)
-
-            ecs_instance_manager = EcsTaskManager(cluster_name)
-            ecs_instance_manager.delete_task(workspace_name, task_arn)
+            os.remove(workspace_file)
 
         return self
 
@@ -294,7 +308,7 @@ class WorkspaceResource(GenericResource):
         if project_type == ProjectType.MAIN and subproject:
             repo_path = get_repo_path()
             projects_folder = os.path.join(repo_path, 'projects')
-            projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
+            projects = [f.name.split('.')[0] for f in os.scandir(projects_folder) if not f.is_dir()]
             if subproject not in projects:
                 error = ApiError.RESOURCE_NOT_FOUND.copy()
                 error.update(message=f'Project {subproject} was not found.')

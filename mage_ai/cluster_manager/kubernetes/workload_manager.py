@@ -68,7 +68,7 @@ class WorkloadManager:
 
         return services_list
 
-    def create_stateful_set(
+    def create_workload(
         self,
         name,
         container_config: Dict = None,
@@ -154,13 +154,6 @@ class WorkloadManager:
         stateful_set_template_spec = dict()
         if service_account_name:
             stateful_set_template_spec['serviceAccountName'] = service_account_name
-
-        # if storage_class_name is None:
-        #     self.__create_persistent_volume(
-        #         name,
-        #         volume_host_path=volume_host_path,
-        #     )
-        #     storage_class_name = f'{name}-storage'
 
         stateful_set = {
             'apiVersion': 'apps/v1',
@@ -249,50 +242,9 @@ class WorkloadManager:
 
         return self.core_client.create_namespaced_service(self.namespace, service)
 
-    # def __create_persistent_volume(
-    #     self,
-    #     name,
-    #     volume_host_path=None,
-    # ):
-    #     nodes = self.core_client.list_node().items
-    #     hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
-    #     pv = {
-    #         'apiVersion': 'v1',
-    #         'kind': 'PersistentVolume',
-    #         'metadata': {
-    #             'name': f'{name}-pv'
-    #         },
-    #         'spec': {
-    #             'capacity': {
-    #                 'storage': '1Gi'
-    #             },
-    #             'volumeMode': 'Filesystem',
-    #             'accessModes': [
-    #                 'ReadWriteOnce'
-    #             ],
-    #             'persistentVolumeReclaimPolicy': 'Delete',
-    #             'storageClassName': f'{name}-storage',
-    #             'local': {
-    #                 'path': volume_host_path,
-    #             },
-    #             'nodeAffinity': {
-    #                 'required': {
-    #                     'nodeSelectorTerms': [
-    #                         {
-    #                             'matchExpressions': [
-    #                                 {
-    #                                     'key': 'kubernetes.io/hostname',
-    #                                     'operator': 'In',
-    #                                     'values': hostnames
-    #                                 }
-    #                             ]
-    #                         }
-    #                     ]
-    #                 }
-    #             }
-    #         }
-    #     }
-    #     self.core_client.create_persistent_volume(pv)
+    def delete_workload(self, name: str):
+        self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
+        self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
 
     def __populate_env_vars(
         self,

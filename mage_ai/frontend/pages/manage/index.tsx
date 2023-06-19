@@ -99,42 +99,45 @@ function MoreActions({
         uuid: 'delete_workspace',
       },
     ];
-
-    if (status === 'STOPPED') {
-      items.unshift({
-        label: () => <Text>Resume instance</Text>,
-        // @ts-ignore
-        onClick: () => updateWorkspace({
-          workspace: {
-            action: 'resume',
-            cluster_type: clusterType,
-            name: instance.name,
-            task_arn: instance.task_arn,
-          },
-        }),
-        uuid: 'resume_instance',
-      });
-    } else if (status === 'RUNNING') {
-      items.unshift({
-        label: () => <Text>Stop instance</Text>,
-        // @ts-ignore
-        onClick: () => updateWorkspace({
-          workspace: {
-            action: 'stop',
-            cluster_type: clusterType,
-            name: instance.name,
-            task_arn: instance.task_arn,
-          },
-        }),
-        uuid: 'stop_instance',
-      });
+    
+    if (clusterType === 'ecs') {
+      if (status === 'STOPPED') {
+        items.unshift({
+          label: () => <Text>Resume instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'resume',
+              cluster_type: clusterType,
+              name: instance.name,
+              task_arn: instance.task_arn,
+            },
+          }),
+          uuid: 'resume_instance',
+        });
+      } else if (status === 'RUNNING') {
+        items.unshift({
+          label: () => <Text>Stop instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'stop',
+              cluster_type: clusterType,
+              name: instance.name,
+              task_arn: instance.task_arn,
+            },
+          }),
+          uuid: 'stop_instance',
+        });
+      }
     }
+    
     return items;
   }, [clusterType, instance, updateWorkspace]);
 
   return (
     <>
-      {clusterType === 'ecs' && (
+      {['ecs', 'k8s'].includes(clusterType) && (
         <div
           ref={refMoreActions}
           style={{
