@@ -198,6 +198,7 @@ const AccordionPanel = ({
   onEntered,
   onExited,
   singlePanel,
+  smallTitle,
   title,
   titleXPadding,
   visible,
@@ -241,7 +242,7 @@ const AccordionPanel = ({
             <Text
               bold
               default={!visible}
-              large
+              large={!smallTitle}
               wind={highlighted}
             >
               {title}

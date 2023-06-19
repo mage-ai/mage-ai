@@ -162,7 +162,7 @@ def make_app():
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
-            r'(?P<block_uuid>[\w\%2f\.]+)/downloads',
+            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
         ),
 

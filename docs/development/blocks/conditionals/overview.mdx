@@ -6,7 +6,7 @@ The conditional block will be executed before the parent block,
 and will influence whether or not the parent block gets executed."
 ---
 
-<Note>Requires version `0.8.92` or greater.</Note>
+<Note>Requires version `0.8.93` or greater.</Note>
 
 Conditional blocks are part of your pipeline but don’t run as individual steps in your pipeline
 like data loader blocks, transformer blocks, etc.
@@ -55,7 +55,7 @@ The `save_data` data exporter block is also not executed, and is set as `conditi
 1. Edit the pipeline.
 1. On the right side of the page, click the <b>Add-ons</b> icon in the navigation.
     If you don’t see it, try expanding the right area of the page.
-1. Click the button <b>Conditionals<b>.
+1. Click the button <b>Conditionals</b>.
 1. Click the button <b>+ Conditional block</b>.
 1. In the conditional block’s code, add a function that returns a boolean value and
    decorate it with `@condition`.
@@ -64,3 +64,18 @@ The `save_data` data exporter block is also not executed, and is set as `conditi
 
 The positional arguments to the conditional block will be the same as the positional
 arguments to the parent block.
+
+### Keyword arguments
+
+Here are the keyword arguments that are available in each conditional function:
+
+| Name | Description | Sample value |
+| --- | --- | --- |
+| `block_uuid` | Conditional block UUID. | `'fireball_conditional'` |
+| `ds` | Date string when the parent block started executing. | `'2023-12-25'` |
+| `event` | A dictionary containing metadata from an event triggered pipeline. | `{}` |
+| `execution_date` | Python datetime object for when the trigger run started executing. | `datetime.datetime(2023, 4, 26, 20, 28, 17, 335254, tzinfo=datetime.timezone.utc)` |
+| `execution_partition` | Partition used for the trigger run when it was executed. | `'207/20230426T202817'` |
+| `hr` | Hour string when the trigger run started executing. | `'20'` |
+| `pipeline_run` | Python pipeline run object associated to the current run. | `PipelineRun(id=2357, pipeline_uuid=fire_etl, execution_date=2023-04-26 20:28:17.335254+00:00)` |
+| `pipeline_uuid` | UUID of the current pipeline. | `'fire_etl'` |

@@ -1,12 +1,14 @@
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import PandasTypes
-from mage_ai.io.base import QUERY_ROW_LIMIT
-from mage_ai.io.sql import BaseSQL
-from pandas import DataFrame, Series
-from typing import Any, IO, List, Union
 import json
+from typing import IO, Any, List, Union
+
 import numpy as np
 import pyodbc
+from pandas import DataFrame, Series
+
+from mage_ai.io.base import QUERY_ROW_LIMIT
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.export_utils import PandasTypes
+from mage_ai.io.sql import BaseSQL
 
 
 class MSSQL(BaseSQL):
@@ -46,6 +48,9 @@ class MSSQL(BaseSQL):
             port=config[ConfigKey.MSSQL_PORT],
             user=config[ConfigKey.MSSQL_USER],
         )
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema') or 'dbo'
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to MSSQL database'):
@@ -117,7 +122,7 @@ class MSSQL(BaseSQL):
                 PandasTypes.COMPLEX,
             ):
                 df_[col] = df_[col].astype('string')
-        for i, row in df_.iterrows():
+        for _, row in df_.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'

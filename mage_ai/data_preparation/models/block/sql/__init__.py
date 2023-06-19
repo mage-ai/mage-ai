@@ -1,4 +1,9 @@
+import re
 from datetime import datetime
+from os import path
+from time import sleep
+from typing import Any, Dict, List
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
@@ -18,16 +23,8 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.base import (
-    DataSource,
-    ExportWritePolicy,
-    QUERY_ROW_LIMIT,
-)
+from mage_ai.io.base import QUERY_ROW_LIMIT, DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
-from os import path
-from time import sleep
-from typing import Any, Dict, List
-import re
 
 MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 PREVIEWABLE_BLOCK_TYPES = [
@@ -255,6 +252,8 @@ def execute_sql_code(
                 query,
                 **interpolate_input_data_kwargs,
             )
+
+            schema = schema or loader.default_schema()
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -268,7 +267,7 @@ def execute_sql_code(
             else:
                 loader.export(
                     None,
-                    None,
+                    schema,
                     table_name,
                     query_string=query_string,
                     drop_table_on_replace=True,
@@ -551,7 +550,7 @@ def split_query_string(query_string: str) -> List[str]:
 
     previous_idx = 0
 
-    for idx, match in enumerate(matches):
+    for _, match in enumerate(matches):
         matched_string = match.group()
         updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
 
@@ -588,9 +587,11 @@ def execute_raw_sql(
     loader,
     block: 'Block',
     query_string: str,
-    configuration: Dict = {},
+    configuration: Dict = None,
     should_query: bool = False,
 ) -> List[Any]:
+    if configuration is None:
+        configuration = {}
     queries = []
     fetch_query_at_indexes = []
 

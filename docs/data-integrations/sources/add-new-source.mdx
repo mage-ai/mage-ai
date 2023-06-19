@@ -7,8 +7,8 @@ In this guide, we'll build a sample source for Titanic. When you're building you
 1. Create a directory for the new source
 1. Define custom source class
 1. Add main function
-1. Test your source
 1. Add your source to the UI (optional)
+1. Test your source
 
 <br />
 
@@ -224,4 +224,18 @@ class Titanic(Source):
 
 if __name__ == '__main__':
     main(Titanic)
+```
+
+## 4. Add your source to the UI (optional)
+
+Add the new source to the `SOURCES` list constant in this file: https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_integrations/sources/constants.py
+
+## 5. Test your desination
+
+Follow this [doc](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations) to test your new source.
+
+To test the source in the UI, you can install your updated `mage_integrations` module by running the following commands in Mage terminal:
+```bash
+pip uninstall -y mage_integrations
+pip install "git+https://github.com/your_repo.git@your_branch#egg=mage-integrations&subdirectory=mage_integrations"
 ```
