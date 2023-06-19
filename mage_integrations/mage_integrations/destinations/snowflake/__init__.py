@@ -251,15 +251,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 drop_temp_table_command,
             ]
 
-        commands = [
+        return [
             '\n'.join([
                 f'INSERT INTO {full_table_name} ({insert_columns})',
                 f'SELECT {select_values}',
                 f'FROM VALUES {insert_values}',
             ]),
         ]
-        self.logger.info(commands[0])
-        return commands
 
     def build_create_schema_commands(
         self,
