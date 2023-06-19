@@ -379,7 +379,7 @@ class Target(PluginBase, SingerReader, metaclass=abc.ABCMeta):
             do_registration = True
 
         if not do_registration:
-            self.logger.debug(
+            self.logger.info(
                 "No changes detected in SCHEMA message for stream '%s'. Ignoring.",
                 stream_name,
             )

@@ -1,15 +1,18 @@
+import sys
+import uuid
 from datetime import datetime
+from typing import Any
+
+import simplejson
+
 from mage_integrations.utils.logger.constants import (
+    LOG_LEVEL_DEBUG,
     LOG_LEVEL_ERROR,
     LOG_LEVEL_EXCEPTION,
     LOG_LEVEL_INFO,
     TYPE_LOG,
 )
 from mage_integrations.utils.parsers import encode_complex
-from typing import Any
-import simplejson
-import sys
-import uuid
 
 
 class Logger():
@@ -36,6 +39,9 @@ class Logger():
 
     def info(self, message, tags={}, **kwargs):
         self.__log(LOG_LEVEL_INFO, message, tags, **kwargs)
+
+    def debug(self, message, tags={}, **kwargs):
+        self.__log(LOG_LEVEL_DEBUG, message, tags, **kwargs)
 
     def __log(self, level, message, tags, **kwargs) -> None:
         if self.verbose == 0:
@@ -80,6 +86,8 @@ class Logger():
                 method = 'exception'
             elif LOG_LEVEL_INFO == level:
                 method = 'info'
+            elif LOG_LEVEL_DEBUG == level:
+                method = 'debug'
 
             getattr(self.logger, method)(f'[{now.isoformat()}] {json_string}')
         else:

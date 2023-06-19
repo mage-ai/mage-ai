@@ -28,8 +28,6 @@ from singer_sdk.helpers._typing import (
 )
 
 if t.TYPE_CHECKING:
-    from logging import Logger
-
     from singer_sdk.plugin_base import PluginBase
 
 JSONSchemaValidator = Draft7Validator
@@ -39,8 +37,6 @@ class Sink(metaclass=abc.ABCMeta):
     """Abstract base class for target sinks."""
 
     # max timestamp/datetime supported, used to reset invalid dates
-
-    logger: Logger
 
     MAX_SIZE_DEFAULT = 10000
 
