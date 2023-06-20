@@ -9,13 +9,18 @@ JWT_ALGORITHM = 'HS256'
 JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
 
 
-def generate_access_token(user: User, application: Oauth2Application = None) -> Oauth2AccessToken:
-    token = secrets.token_urlsafe()
-
-    token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
-    while token_count >= 1:
+def generate_access_token(
+    user: User,
+    application: Oauth2Application = None,
+    token: str = None,
+) -> Oauth2AccessToken:
+    if not token:
         token = secrets.token_urlsafe()
+
         token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
+        while token_count >= 1:
+            token = secrets.token_urlsafe()
+            token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
 
     attributes_data = dict(
         expires=datetime.utcnow() + timedelta(days=30),

@@ -1,6 +1,7 @@
 import NextLink from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -29,15 +30,17 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { TAB_BRANCHES } from '../constants';
+import { OathProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { queryFromUrl } from '@utils/url';
 
 type RemoteProps = {
   branch: GitBranchType;
@@ -54,6 +57,8 @@ function Remote({
   remotes,
   showError,
 }: RemoteProps) {
+  const router = useRouter();
+
   const refInputRepoPath = useRef(null);
 
   const [actionBranchName, setActionBranchName] = useState<string>(null);
@@ -173,6 +178,46 @@ function Remote({
       ),
     },
   );
+
+  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OathProviderEnum.GITHUB, {
+    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
+  });
+  const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
+
+  const [createOauth, { isLoading: isLoadingCreateOauth }] = useMutation(
+    api.oauths.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchOauth();
+          },
+          onErrorCallback: (response, errors) => {
+            showError({
+              errors,
+              response,
+            });
+          },
+        },
+      ),
+    },
+  );
+  const { access_token: accessTokenFromURL } = queryFromUrl() || {};
+  useEffect(() => {
+    if (oauth && !oauth?.authenticated && accessTokenFromURL) {
+      // @ts-ignore
+      createOauth({
+        oauth: {
+          provider: OathProviderEnum.GITHUB,
+          token: accessTokenFromURL,
+        },
+      });
+    }
+  }, [
+    accessTokenFromURL,
+    createOauth,
+    oauth,
+  ]);
 
   const remotesMemo = useMemo(() => remotes?.map(({
     name,
@@ -305,15 +350,45 @@ function Remote({
 
   return (
     <>
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Button
-          beforeIcon={<GitHubIcon size={UNIT * 2} />}
-          disabled
-          primary
-        >
-          Authenticate with GitHub
-        </Button>
-      </Spacing>
+      {dataOauth && (
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          {oauth?.authenticated && (
+            <>
+              <Button
+                beforeIcon={<GitHubIcon size={UNIT * 2} />}
+                disabled
+              >
+                Successfully authenticated with GitHub
+              </Button>
+
+              <Spacing mt={1}>
+                <Text muted>
+                  You can pull, push, and create pull requests on GitHub.
+                </Text>
+              </Spacing>
+            </>
+          )}
+          {!oauth?.authenticated && oauth?.url && (
+            <>
+              <Button
+                beforeIcon={<GitHubIcon size={UNIT * 2} />}
+                loading={isLoadingCreateOauth}
+                onClick={() => router.push(oauth?.url)}
+                primary
+              >
+                Authenticate with GitHub
+              </Button>
+
+              <Spacing mt={1}>
+                <Text muted>
+                  Authenticating with GitHub will allow you to pull, push,
+                  and create pull requests on GitHub.
+                </Text>
+              </Spacing>
+            </>
+          )}
+        </Spacing>
+      )}
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
