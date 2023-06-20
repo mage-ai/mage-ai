@@ -5,19 +5,53 @@ from mage_integrations.sources.api import Api
 
 
 def csv_catalog_example():
-    return {'streams':
-            [{'tap_stream_id': 'api', 'replication_method': 'FULL_TABLE', 'key_properties': [],
-             'schema': {'properties': {'column_1': {'type': ['null', 'string']}, 'column_2':
-              {'type': ['null', 'integer']}}, 'type': 'object'},
-              'stream': 'api',
-              'metadata': [{'breadcrumb': (), 'metadata': {'table-key-properties': [],
+    return {'streams': [
+        {
+            'tap_stream_id': 'api',
+            'replication_method': 'FULL_TABLE',
+            'key_properties': [],
+            'schema': {
+                'properties': {
+                    'teste': {'type': ['null', 'integer']},
+                    'first_name': {'type': ['null', 'string']},
+                    'second_name': {'type': ['null', 'string']},
+                    'email': {'type': ['null', 'string']}
+                        },
+                    'type': 'object'
+                    },
+                'stream': 'api',
+                'metadata': [
+                    {
+                        'breadcrumb': (),
+                        'metadata': {
+                            'table-key-properties': [],
                             'forced-replication-method': 'FULL_TABLE',
-                           'inclusion': 'available', 'schema-name': 'api'}},
-                           {'breadcrumb': ('properties', 'column_1'),
-                           'metadata': {'inclusion': 'available'}},
-                           {'breadcrumb': ('properties', 'column_2'),
-                           'metadata': {'inclusion': 'available'}}],
-                'auto_add_new_fields': False, 'unique_conflict_method': 'UPDATE'}]}
+                            'inclusion': 'available',
+                            'schema-name': 'api'
+                                }
+                            },
+                    {
+                        'breadcrumb': ('properties', 'teste'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'first_name'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'second_name'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'email'),
+                        'metadata': {'inclusion': 'available'}
+                    }
+                            ],
+                'auto_add_new_fields': False,
+                'unique_conflict_method': 'UPDATE'
+                    }
+                ]
+            }
 
 
 def json_catalog_example():
@@ -182,56 +216,59 @@ def json_catalog_example():
 
 
 class ApiTest(unittest.TestCase):
-    # def test_api_csv(self):
-    #     source = Api(config=dict(
-    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=csv' # noqa
-    #     ))
-    #     api_connection = MagicMock()
+    def test_api_csv(self):
+        source = Api(config=dict(
+            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?gid=1322931542&single=true&output=csv', # noqa
+            has_header=True
+        ))
+        api_connection = MagicMock()
 
-    #     with patch.object(
-    #         source,
-    #         'test_connection',
-    #         return_value=api_connection
-    #     ) as mock_build_connection:
-    #         source.test_connection()
+        with patch.object(
+            source,
+            'test_connection',
+            return_value=api_connection
+        ) as mock_build_connection:
+            source.test_connection()
 
-    #         catalog = source.discover()
-    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
-    #         mock_build_connection.assert_called()
+            catalog = source.discover()
+            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            mock_build_connection.assert_called()
 
-    # def test_api_tsv(self):
-    #     source = Api(config=dict(
-    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=tsv' # noqa
-    #     ))
-    #     api_connection = MagicMock()
+    def test_api_tsv(self):
+        source = Api(config=dict(
+            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?gid=1322931542&single=true&output=tsv', # noqa
+            has_header=True
+        ))
+        api_connection = MagicMock()
 
-    #     with patch.object(
-    #         source,
-    #         'test_connection',
-    #         return_value=api_connection
-    #     ) as mock_build_connection:
-    #         source.test_connection()
+        with patch.object(
+            source,
+            'test_connection',
+            return_value=api_connection
+        ) as mock_build_connection:
+            source.test_connection()
 
-    #         catalog = source.discover()
-    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
-    #         mock_build_connection.assert_called()
+            catalog = source.discover()
+            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            mock_build_connection.assert_called()
 
-    # def test_api_xlsx(self):
-    #     source = Api(config=dict(
-    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlHOAjgtOk99kDCjamRToX3Jm4p5HQc4ren6QXQIePZvVnrrVZWmIbMuRQ6m41mzuFpvHHLTjFuYCK/pub?output=xlsx' # noqa
-    #     ))
-    #     api_connection = MagicMock()
+    def test_api_xlsx(self):
+        source = Api(config=dict(
+            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?output=xlsx', # noqa
+            has_header=True
+        ))
+        api_connection = MagicMock()
 
-    #     with patch.object(
-    #         source,
-    #         'test_connection',
-    #         return_value=api_connection
-    #     ) as mock_build_connection:
-    #         source.test_connection()
+        with patch.object(
+            source,
+            'test_connection',
+            return_value=api_connection
+        ) as mock_build_connection:
+            source.test_connection()
 
-    #         catalog = source.discover()
-    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
-    #         mock_build_connection.assert_called()
+            catalog = source.discover()
+            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            mock_build_connection.assert_called()
 
     def test_api_json(self):
         source = Api(config=dict(
