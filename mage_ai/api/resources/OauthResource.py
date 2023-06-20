@@ -70,7 +70,7 @@ class OauthResource(GenericResource):
             raise ApiError(error)
 
         access_tokens = access_tokens_for_provider(pk)
-        authenticated = access_tokens.count() >= 1
+        authenticated = len(access_tokens) >= 1
         if authenticated:
             model['authenticated'] = authenticated
             model['expires'] = max([access_token.expires for access_token in access_tokens])

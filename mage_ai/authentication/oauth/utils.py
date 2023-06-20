@@ -15,4 +15,4 @@ def access_tokens_for_provider(provider: str) -> List[Oauth2AccessToken]:
             Oauth2AccessToken.oauth2_application_id == oauth_client.id,
         )
 
-    return access_tokens
+    return [row for row in access_tokens]
