@@ -1003,7 +1003,7 @@ function CodeBlock({
         // @ts-ignore
         setAnyInputFocused(true);
         updateDataProviderConfig({
-          [CONFIG_KEY_LIMIT]: e.target.value,
+          [CONFIG_KEY_LIMIT]: +e.target.value,
         });
         e.preventDefault();
       }}
