@@ -1,9 +1,15 @@
-from datetime import datetime, timedelta
-from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application, User
-from typing import Dict
-import jwt
 import os
 import secrets
+from datetime import datetime, timedelta
+from typing import Dict
+
+import jwt
+
+from mage_ai.orchestration.db.models.oauth import (
+    Oauth2AccessToken,
+    Oauth2Application,
+    User,
+)
 
 JWT_ALGORITHM = 'HS256'
 JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
