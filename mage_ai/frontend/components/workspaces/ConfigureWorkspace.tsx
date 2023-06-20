@@ -42,11 +42,11 @@ function ConfigureWorkspace({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: (res) => {
-            if (res['success']) {
+            if (res['error_message']) {
+              setError(res['error_message']);
+            } else {
               fetchWorkspaces();
               setCreate(false);
-            } else {
-              setError(res['error_message']);
             }
           },
           onErrorCallback: ({
@@ -55,6 +55,7 @@ function ConfigureWorkspace({
               message,
             },
           }) => {
+            setError(message);
             console.log(errors, message);
           },
         },

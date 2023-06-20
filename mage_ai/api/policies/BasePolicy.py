@@ -155,10 +155,18 @@ class BasePolicy():
         )
 
     def has_at_least_editor_role_and_notebook_edit_access(self) -> bool:
-        return has_at_least_editor_role_and_notebook_edit_access(self.current_user)
+        return has_at_least_editor_role_and_notebook_edit_access(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def has_at_least_editor_role_and_pipeline_edit_access(self) -> bool:
-        return has_at_least_editor_role_and_pipeline_edit_access(self.current_user)
+        return has_at_least_editor_role_and_pipeline_edit_access(
+            self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        )
 
     def has_at_least_viewer_role(self) -> bool:
         return has_at_least_viewer_role(

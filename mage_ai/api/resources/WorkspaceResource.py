@@ -67,19 +67,22 @@ class WorkspaceResource(GenericResource):
         workspaces = []
         for project in projects:
             if project in instance_map:
-                repo_path = os.path.join(projects_folder, project)
-                workspace = dict(
-                    name=project,
-                    repo_path=repo_path,
-                    cluster_type=cluster_type,
-                    instance=instance_map[project],
-                )
-                if is_main_project and query_user:
-                    workspace['access'] = query_user.get_access(
-                        Permission.Entity.PROJECT,
-                        repo_path,
+                try:
+                    repo_path = os.path.join(projects_folder, project)
+                    workspace = dict(
+                        name=project,
+                        repo_path=repo_path,
+                        cluster_type=cluster_type,
+                        instance=instance_map[project],
                     )
-                workspaces.append(workspace)
+                    if is_main_project and query_user:
+                        workspace['access'] = query_user.get_access(
+                            Permission.Entity.PROJECT,
+                            repo_path,
+                        )
+                    workspaces.append(workspace)
+                except Exception as e:
+                    print(f'Error fetching workspace: {str(e)}')
 
         return self.build_result_set(workspaces, user, **kwargs)
 
@@ -206,7 +209,7 @@ class WorkspaceResource(GenericResource):
     def update(self, payload, **kwargs):
         cluster_type = self.model.get('cluster_type')
         instance_name = self.model.get('name')
-        if cluster_type == 'ecs':
+        if cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             task_arn = payload.get('task_arn')
             cluster_name = payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
