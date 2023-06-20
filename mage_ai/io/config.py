@@ -380,6 +380,10 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
         ConfigKey.SNOWFLAKE_DEFAULT_WH: (VerboseConfigKey.SNOWFLAKE, 'warehouse'),
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
+        ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: (
+            VerboseConfigKey.SNOWFLAKE, 'private_key_passphrase'),
+        ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH: (VerboseConfigKey.SNOWFLAKE, 'private_key_path'),
+        ConfigKey.SNOWFLAKE_ROLE: (VerboseConfigKey.SNOWFLAKE, 'role'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
         ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SPARK, 'cluster'),

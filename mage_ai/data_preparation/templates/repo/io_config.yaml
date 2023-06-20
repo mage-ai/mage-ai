@@ -2,26 +2,31 @@ version: 0.1.1
 default:
   # Default profile created for data IO access.
   # Add your credentials for the source you use, and delete the rest.
+  # AWS
   AWS_ACCESS_KEY_ID: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
   AWS_SECRET_ACCESS_KEY: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
   AWS_SESSION_TOKEN: session_token (Used to generate Redshift credentials)
   AWS_REGION: region
+  # Azure
   AZURE_CLIENT_ID: "{{ env_var('AZURE_CLIENT_ID') }}"
   AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
   AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
   AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
+  # Clickhouse
   CLICKHOUSE_DATABASE: default
   CLICKHOUSE_HOST: host.docker.internal
   CLICKHOUSE_INTERFACE: http
   CLICKHOUSE_PASSWORD: null
   CLICKHOUSE_PORT: 8123
   CLICKHOUSE_USERNAME: null
+  # Druid
   DRUID_HOST: hostname
   DRUID_PASSWORD: password
   DRUID_PATH: /druid/v2/sql/
   DRUID_PORT: 8082
   DRUID_SCHEME: http
   DRUID_USER: user
+  # Google
   GOOGLE_SERVICE_ACC_KEY:
     type: service_account
     project_id: project-id
@@ -34,12 +39,14 @@ default:
     client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/your_service_account_email"
   GOOGLE_SERVICE_ACC_KEY_FILEPATH: "/path/to/your/service/account/key.json"
   GOOGLE_LOCATION: US # Optional
+  # MongoDB
   MONGODB_DATABASE: database
   MONGODB_HOST: host
   MONGODB_PASSWORD: password
   MONGODB_PORT: 27017
   MONGODB_COLLECTION: collection
   MONGODB_USER: user
+  # MSSQL
   MSSQL_DATABASE: database
   MSSQL_SCHEMA: schema
   MSSQL_DRIVER: "ODBC Driver 18 for SQL Server"
@@ -47,19 +54,22 @@ default:
   MSSQL_PASSWORD: password
   MSSQL_PORT: 1433
   MSSQL_USER: SA
+  # MySQL
   MYSQL_DATABASE: database
   MYSQL_HOST: host
   MYSQL_PASSWORD: password
   MYSQL_PORT: 3306
   MYSQL_USER: root
+  # PostgresSQL
   POSTGRES_CONNECT_TIMEOUT: 10
   POSTGRES_DBNAME: postgres
   POSTGRES_SCHEMA: public # Optional
   POSTGRES_USER: username
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
-  REDSHIFT_SCHEMA: public # Optional
   POSTGRES_PORT: 5432
+  # Redshift
+  REDSHIFT_SCHEMA: public # Optional
   REDSHIFT_DBNAME: redshift_db_name
   REDSHIFT_HOST: redshift_cluster_id.identifier.region.redshift.amazonaws.com
   REDSHIFT_PORT: 5439
@@ -68,14 +78,18 @@ default:
   REDSHIFT_DBUSER: redshift_db_user
   REDSHIFT_CLUSTER_ID: redshift_cluster_id
   REDSHIFT_IAM_PROFILE: default
+  # Snowflake
   SNOWFLAKE_USER: username
   SNOWFLAKE_PASSWORD: password
   SNOWFLAKE_ACCOUNT: account_id.region
-  SNOWFLAKE_DEFAULT_WH: default_warehouse
-  SNOWFLAKE_DEFAULT_DB: optional_default_database
-  SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
-  SNOWFLAKE_ROLE: role
+  SNOWFLAKE_DEFAULT_WH: null                  # Optional default warehouse
+  SNOWFLAKE_DEFAULT_DB: null                  # Optional default database
+  SNOWFLAKE_DEFAULT_SCHEMA: null              # Optional default schema
+  SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
+  SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
+  SNOWFLAKE_ROLE: null                        # Optional role name
   SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
+  # Trino
   trino:
     catalog: postgresql                       # Change this to the catalog of your choice
     host: 127.0.0.1

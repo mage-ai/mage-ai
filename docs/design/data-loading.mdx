@@ -825,13 +825,16 @@ Sample data from a table in the MySQL database. Sample is not guaranteed to be r
 Handles data transfer between a Snowflake data warehouse and the Mage app. The `Snowflake` client utilizes the following keys to authenticate access and connect to Snowflake servers.
 
 ```yaml
-SNOWFLAKE_USER: Snowflake username
-SNOWFLAKE_PASSWORD: Snowflake password
-SNOWFLAKE_ACCOUNT: Snowflake account ID (including region, excluding "snowflake-computing.com")
-SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional, if unspecified warehouse not chosen.
-SNOWFLAKE_DEFAULT_DB: Default database to use. Optional, if unspecified database not chosen
-SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional, if unspecified schema not chosen
-SNOWFLAKE_ROLE: Snowflake role
+SNOWFLAKE_USER: username
+SNOWFLAKE_PASSWORD: password
+SNOWFLAKE_ACCOUNT: account_id.region
+SNOWFLAKE_DEFAULT_WH: null                  # Optional default warehouse
+SNOWFLAKE_DEFAULT_DB: null                  # Optional default database
+SNOWFLAKE_DEFAULT_SCHEMA: null              # Optional default schema
+SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
+SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
+SNOWFLAKE_ROLE: null                        # Optional role name
+SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
 ```
 
 <h3> Constructor </h3>
