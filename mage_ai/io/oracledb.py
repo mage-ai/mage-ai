@@ -1,10 +1,12 @@
+import warnings
+from typing import Union
+
+import oracledb
+from pandas import DataFrame, read_sql
+
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.sql import BaseSQL
-import oracledb
-from pandas import DataFrame, read_sql
-from typing import Union
-import warnings
 
 
 class OracleDB(BaseSQL):
