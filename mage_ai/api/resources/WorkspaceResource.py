@@ -84,7 +84,7 @@ class WorkspaceResource(GenericResource):
                         if query_user:
                             workspace['access'] = query_user.get_access(
                                 Permission.Entity.PROJECT,
-                                repo_path,
+                                project_uuid,
                             )
                     workspaces.append(workspace)
 
