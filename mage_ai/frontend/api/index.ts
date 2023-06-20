@@ -55,6 +55,7 @@ export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
 export const KERNELS: 'kernels' = 'kernels';
 export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
+export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
@@ -109,6 +110,7 @@ const RESOURCES: any[][] = [
   [KERNELS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
+  [OAUTHS],
   [OUTPUTS, BLOCK_RUNS],
   [PIPELINES],
   [PIPELINE_RUNS],
