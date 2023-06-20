@@ -5,7 +5,53 @@ from mage_integrations.sources.api import Api
 
 
 def csv_catalog_example():
-    return {'streams': [{'tap_stream_id': 'api', 'replication_method': 'FULL_TABLE', 'key_properties': [], 'schema': {'properties': {'teste': {'type': ['null', 'integer']}, 'first_name': {'type': ['null', 'string']}, 'second_name': {'type': ['null', 'string']}, 'email': {'type': ['null', 'string']}}, 'type': 'object'}, 'stream': 'api', 'metadata': [{'breadcrumb': (), 'metadata': {'table-key-properties': [], 'forced-replication-method': 'FULL_TABLE', 'inclusion': 'available', 'schema-name': 'api'}}, {'breadcrumb': ('properties', 'teste'), 'metadata': {'inclusion': 'available'}}, {'breadcrumb': ('properties', 'first_name'), 'metadata': {'inclusion': 'available'}}, {'breadcrumb': ('properties', 'second_name'), 'metadata': {'inclusion': 'available'}}, {'breadcrumb': ('properties', 'email'), 'metadata': {'inclusion': 'available'}}], 'auto_add_new_fields': False, 'unique_conflict_method': 'UPDATE'}]} # noqa
+    return {'streams': [
+        {
+            'tap_stream_id': 'api',
+            'replication_method': 'FULL_TABLE',
+            'key_properties': [],
+            'schema': {
+                'properties': {
+                    'teste': {'type': ['null', 'integer']},
+                    'first_name': {'type': ['null', 'string']},
+                    'second_name': {'type': ['null', 'string']},
+                    'email': {'type': ['null', 'string']}
+                        },
+                    'type': 'object'
+                    },
+                'stream': 'api',
+                'metadata': [
+                    {
+                        'breadcrumb': (),
+                        'metadata': {
+                            'table-key-properties': [],
+                            'forced-replication-method': 'FULL_TABLE',
+                            'inclusion': 'available',
+                            'schema-name': 'api'
+                                }
+                            },
+                    {
+                        'breadcrumb': ('properties', 'teste'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'first_name'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'second_name'),
+                        'metadata': {'inclusion': 'available'}
+                    },
+                    {
+                        'breadcrumb': ('properties', 'email'),
+                        'metadata': {'inclusion': 'available'}
+                    }
+                            ],
+                'auto_add_new_fields': False,
+                'unique_conflict_method': 'UPDATE'
+                    }
+                ]
+            }
 
 
 def json_catalog_example():
