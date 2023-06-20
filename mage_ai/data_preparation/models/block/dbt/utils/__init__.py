@@ -194,14 +194,21 @@ def add_blocks_upstream_from_refs(
             )
             added_blocks += new_block.upstream_blocks
         else:
-            new_block = block.__class__.create(
+            existing_block = block.pipeline.get_block(
                 uuid,
                 block.type,
-                get_repo_path(),
-                configuration=configuration,
-                language=block.language,
-                pipeline=block.pipeline,
             )
+            if existing_block is None:
+                new_block = block.__class__.create(
+                    uuid,
+                    block.type,
+                    get_repo_path(),
+                    configuration=configuration,
+                    language=block.language,
+                    pipeline=block.pipeline,
+                )
+            else:
+                new_block = existing_block
 
         added_blocks.append(new_block)
         current_upstream_blocks.append(new_block)
