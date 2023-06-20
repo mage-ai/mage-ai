@@ -1,6 +1,7 @@
 import os
 from typing import Dict, List
 
+import yaml
 from kubernetes import client, config
 
 from mage_ai.cluster_manager.constants import (
@@ -9,8 +10,10 @@ from mage_ai.cluster_manager.constants import (
     DB_SECRETS_NAME,
     GCP_BACKEND_CONFIG_ANNOTATION,
     KUBE_NAMESPACE,
+    KUBE_SERVICE_ACCOUNT_NAME,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
+    KUBE_STORAGE_CLASS_NAME,
     NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME,
@@ -70,15 +73,23 @@ class WorkloadManager:
 
     def create_workload(
         self,
-        name,
-        container_config: Dict = None,
-        service_account_name: str = None,
-        storage_class_name: str = 'default',
+        name: str,
         project_type: str = 'standalone',
         project_uuid: str = None,
+        **kwargs,
     ):
-        if container_config is None:
-            container_config = dict()
+        container_config_yaml = kwargs.get('container_config')
+        container_config = dict()
+        if container_config_yaml:
+            container_config = yaml.full_load(container_config_yaml)
+
+        service_account_name = kwargs.get(
+            'service_account_name',
+            os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
+        )
+        storage_class_name = kwargs.get('storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME))
+        access_mode = kwargs.get('access_mode', 'ReadWriteOnce')
+        storage_request_size = kwargs.get('storage_request_size', 2)
 
         env_vars = self.__populate_env_vars(
             name,
@@ -191,13 +202,11 @@ class WorkloadManager:
                             'name': 'mage-data'
                         },
                         'spec': {
-                            'accessModes': [
-                                'ReadWriteOnce'
-                            ],
+                            'accessModes': [access_mode],
                             'storageClassName': storage_class_name,
                             'resources': {
                                 'requests': {
-                                    'storage': '1Gi'
+                                    'storage': f'{storage_request_size}Gi'
                                 }
                             }
                         }

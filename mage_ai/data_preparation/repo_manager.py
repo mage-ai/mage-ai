@@ -157,7 +157,7 @@ class RepoConfig:
 def init_repo(
     repo_path: str,
     project_type: str = ProjectType.STANDALONE,
-    cluster_type: str = 'k8s',
+    cluster_type: str = None,
     project_uuid: str = None,
 ) -> None:
     """
@@ -190,7 +190,7 @@ def init_repo(
         )
         copy_template_directory('repo', repo_path)
 
-    if project_uuid is None:
+    if not project_uuid:
         project_uuid = uuid.uuid4().hex
     new_config.update(project_uuid=project_uuid)
     get_repo_config(repo_path).save(**new_config)
@@ -232,7 +232,7 @@ project_uuid = config.project_uuid
 def update_project_uuid():
     global project_uuid
     project_uuid = get_repo_config().project_uuid
-    if project_uuid is None:
+    if not project_uuid:
         puuid = uuid.uuid4().hex
         config.save(project_uuid=puuid)
         project_uuid = puuid

@@ -3,7 +3,6 @@ import os
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
 from mage_ai.data_preparation.repo_manager import (
-    ProjectType,
     get_project_type,
     get_project_uuid,
     get_repo_config,
@@ -34,8 +33,9 @@ class StatusResource(GenericResource):
         )
         instance_type = None
         project_type = get_project_type()
-        if project_type == ProjectType.MAIN:
-            instance_type = get_repo_config().cluster_type
+        repo_config = get_repo_config()
+        if repo_config.cluster_type:
+            instance_type = repo_config.cluster_type
         elif os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
         elif os.getenv(GCP_PROJECT_ID):

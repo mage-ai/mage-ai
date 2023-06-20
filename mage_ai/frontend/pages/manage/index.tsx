@@ -6,6 +6,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -13,13 +14,15 @@ import Text from '@oracle/elements/Text';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 import api from '@api';
-import { Ellipsis, Expand } from '@oracle/icons';
+import { Add, Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
+import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { useModal } from '@context/Modal';
 
 function MoreActions({
   fetchWorkspaces,
@@ -229,6 +232,24 @@ function WorkspacePage() {
     [dataWorkspaces],
   );
 
+  const [showModal, hideModal] = useModal(() => (
+    <ConfigureWorkspace
+      clusterType={clusterType}
+      onCancel={hideModal}
+      onCreate={() => {
+        fetchWorkspaces();
+        hideModal();
+      }}
+    />
+  ), {
+  }, [
+    clusterType,
+    fetchWorkspaces,
+  ], {
+    background: true,
+    uuid: 'configure_workspace',
+  });
+
   return (
     <WorkspacesDashboard  
       breadcrumbs={[
@@ -239,10 +260,16 @@ function WorkspacePage() {
       ]}
       pageName={WorkspacesPageNameEnum.WORKSPACES}
       subheaderChildren={
-        <ConfigureWorkspace
-          clusterType={clusterType}
-          fetchWorkspaces={fetchWorkspaces}
-        />
+        <KeyboardShortcutButton
+          background={BUTTON_GRADIENT}
+          beforeElement={<Add size={2.5 * UNIT} />}
+          bold
+          inline
+          onClick={() => showModal()}
+          uuid="workspaces/new"
+        >
+          Create new workspace
+        </KeyboardShortcutButton>
       }
     >
       <Table

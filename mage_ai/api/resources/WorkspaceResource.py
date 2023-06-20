@@ -15,8 +15,6 @@ from mage_ai.cluster_manager.constants import (
     GCP_PROJECT_ID,
     GCP_REGION,
     KUBE_NAMESPACE,
-    KUBE_SERVICE_ACCOUNT_NAME,
-    KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -120,9 +118,11 @@ class WorkspaceResource(GenericResource):
         if not cluster_type:
             cluster_type = payload.get('cluster_type')
 
-        workspace_name = payload.get('name')
-
         error = ApiError.RESOURCE_ERROR.copy()
+        workspace_name = payload.pop('name')
+        if not workspace_name:
+            error.update(message='Please enter a valid workspace name.')
+            raise ApiError(error)
 
         workspace_file = None
         project_uuid = None
@@ -153,19 +153,7 @@ class WorkspaceResource(GenericResource):
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
                     WorkloadManager,
                 )
-                namespace = payload.get('namespace', os.getenv(KUBE_NAMESPACE))
-                storage_class_name = payload.get(
-                    'storage_class_name',
-                    os.getenv(KUBE_STORAGE_CLASS_NAME),
-                )
-                service_account_name = payload.get(
-                    'service_account_name',
-                    os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
-                )
-                container_config_yaml = payload.get('container_config')
-                container_config = None
-                if container_config_yaml:
-                    container_config = yaml.full_load(container_config_yaml)
+                namespace = payload.pop('namespace', os.getenv(KUBE_NAMESPACE))
 
                 k8s_workload_manager = WorkloadManager(namespace)
                 extra_args = {}
@@ -176,9 +164,7 @@ class WorkspaceResource(GenericResource):
                     }
                 k8s_workload_manager.create_workload(
                     workspace_name,
-                    container_config=container_config,
-                    service_account_name=service_account_name,
-                    storage_class_name=storage_class_name,
+                    **payload,
                     **extra_args,
                 )
             elif cluster_type == ClusterType.ECS:

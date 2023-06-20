@@ -294,7 +294,7 @@ def start_server(
     dbt_docs: bool = False,
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
     project_type: ProjectType = ProjectType.STANDALONE,
-    cluster_type: ClusterType = ClusterType.K8S,
+    cluster_type: ClusterType = None,
     project_uuid: str = None,
 ):
     host = host if host else None

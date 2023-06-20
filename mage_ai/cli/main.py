@@ -9,6 +9,7 @@ from rich import print
 from typer.core import TyperGroup
 
 from mage_ai.cli.utils import parse_runtime_variables
+from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.shared.constants import InstanceType
 
 
@@ -26,10 +27,16 @@ app = typer.Typer(
 
 INIT_PROJECT_PATH_DEFAULT = typer.Argument(..., help='path of the Mage project to be created.')
 INIT_PROJECT_TYPE_DEFAULT = typer.Option(
-    'standalone', help='type of project to create, options are main, sub, or standalone')
+    ProjectType.STANDALONE,
+    help='type of project to create, options are main, sub, or standalone'
+)
 INIT_CLUSTER_TYPE_DEFAULT = typer.Option(
-    'k8s',
+    None,
     help='type of instance to create for workspace management',
+)
+INIT_PROJECT_UUID_DEFAULT = typer.Option(
+    None,
+    help='project uuid for the new project',
 )
 
 START_PROJECT_PATH_DEFAULT = typer.Argument(
@@ -41,16 +48,16 @@ START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_INSTANCE_TYPE_DEFAULT = typer.Option(
     InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.')
 START_PROJECT_TYPE_DEFAULT = typer.Option(
-    'standalone',
+    ProjectType.STANDALONE,
     help='create project of this type if does not exist, options are main, sub, or standalone',
 )
 START_CLUSTER_TYPE_DEFAULT = typer.Option(
-    'k8s',
+    None,
     help='type of instance to create for workspace management',
 )
 START_PROJECT_UUID_DEFAULT = typer.Option(
     None,
-    help='type of instance to create for workspace management',
+    help='set project uuid if it has not been set for the project already',
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
@@ -107,6 +114,7 @@ def init(
     project_path: str = INIT_PROJECT_PATH_DEFAULT,
     project_type: Union[str, None] = INIT_PROJECT_TYPE_DEFAULT,
     cluster_type: str = INIT_CLUSTER_TYPE_DEFAULT,
+    project_uuid: str = INIT_PROJECT_UUID_DEFAULT,
 ):
     """
     Initialize Mage project.
@@ -114,7 +122,12 @@ def init(
     from mage_ai.data_preparation.repo_manager import init_repo
 
     repo_path = os.path.join(os.getcwd(), project_path)
-    init_repo(repo_path, project_type=project_type, cluster_type=cluster_type)
+    init_repo(
+        repo_path,
+        project_type=project_type,
+        cluster_type=cluster_type,
+        project_uuid=project_uuid,
+    )
     print(f'Initialized Mage project at {repo_path}')
 
 
