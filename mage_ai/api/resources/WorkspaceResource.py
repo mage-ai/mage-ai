@@ -195,7 +195,8 @@ class WorkspaceResource(GenericResource):
         except Exception as e:
             if workspace_folder and os.path.exists(workspace_folder):
                 shutil.rmtree(workspace_folder)
-            return self(dict(success=False, error=str(e)), user, **kwargs)
+            error.update(message=str(e))
+            raise ApiError(error)
 
         if get_project_type() == ProjectType.MAIN:
             Role.create_default_roles(
