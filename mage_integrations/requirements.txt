@@ -34,3 +34,4 @@ tzlocal==4.2
 xmltodict==0.13.0
 zenpy==2.0.25
 xlsx2csv==0.8.1
+python-magic==0.4.27

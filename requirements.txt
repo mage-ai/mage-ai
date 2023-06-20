@@ -40,7 +40,6 @@ terminado==0.17.1
 tornado==6.1
 typer[all]==0.7.0
 typing-extensions==4.5.0
-python-magic==0.4.27
 
 # extras
 aws-secretsmanager-caching==1.1.1.5
