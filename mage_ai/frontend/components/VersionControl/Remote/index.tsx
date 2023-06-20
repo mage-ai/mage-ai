@@ -205,6 +205,7 @@ function Remote({
   const { access_token: accessTokenFromURL } = queryFromUrl() || {};
   useEffect(() => {
     if (oauth && !oauth?.authenticated && accessTokenFromURL) {
+      // @ts-ignore
       createOauth({
         oauth: {
           provider: OathProviderEnum.GITHUB,
