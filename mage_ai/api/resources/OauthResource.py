@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 from datetime import datetime, timedelta
 
@@ -7,7 +8,9 @@ from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
+    OAUTH_PROVIDER_ACTIVE_DIRECTORY,
     OAUTH_PROVIDER_GITHUB,
+    VALID_OAUTH_PROVIDERS,
 )
 from mage_ai.authentication.oauth.utils import access_tokens_for_provider
 from mage_ai.orchestration.db import safe_db_query
@@ -23,7 +26,7 @@ class OauthResource(GenericResource):
         provider = payload.get('provider')
         token = payload.get('token')
 
-        if not provider or provider not in [OAUTH_PROVIDER_GITHUB]:
+        if not provider or provider not in VALID_OAUTH_PROVIDERS:
             error.update(dict(message='Invalid provider.'))
             raise ApiError(error)
 
@@ -66,7 +69,7 @@ class OauthResource(GenericResource):
         model = dict(provider=pk)
 
         error = ApiError.RESOURCE_INVALID.copy()
-        if pk not in [OAUTH_PROVIDER_GITHUB]:
+        if pk not in VALID_OAUTH_PROVIDERS:
             error.update(dict(message='Invalid provider.'))
             raise ApiError(error)
 
@@ -95,5 +98,12 @@ class OauthResource(GenericResource):
                     query_strings.append(f'{k}={v}')
 
                 model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
+            elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
+                ad_client_id = os.getenv('ACTIVE_DIRECTORY_CLIENT_ID')
+                query = dict(
+                    client_id=ad_client_id,
+                    scope='Global'
+                )
+                model['url'] = f"https://login.microsoftonline.com/d97992b6-01d7-4c9f-8207-07d2cf675520/oauth2/v2.0/authorize?{'&'.join(query_strings)}"
 
         return self(model, user, **kwargs)
