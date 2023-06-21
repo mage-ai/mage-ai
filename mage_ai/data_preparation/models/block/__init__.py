@@ -1710,6 +1710,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 self.uuid,
                 variable,
                 partition=execution_partition,
+                spark=(global_vars or dict()).get('spark'),
             )
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
