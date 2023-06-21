@@ -1,11 +1,12 @@
 from datetime import datetime
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
+from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
-from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import AUTHENTICATION_MODE
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -50,10 +51,18 @@ class SessionResource(BaseResource):
                 user = User.query.filter(User.username == email).first()
             if not user:  # noqa: E712
                 print('first user login, creating user.')
-                user = User.create(
-                    roles=2,
-                    username=email,
-                )
+                default_viewer_role = Role.get_role('Viewer')
+                if default_viewer_role:
+                    user = User.create(
+                        roles_new=[Role.get_role('Viewer')],
+                        username=email,
+                    )
+                else:
+                    user = User.create(
+                        roles=4,
+                        username=email,
+                    )
+
             oauth_token = generate_access_token(user, kwargs['oauth_client'])
             return self(oauth_token, user, **kwargs)
 
