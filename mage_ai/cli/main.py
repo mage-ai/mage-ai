@@ -201,7 +201,12 @@ def run(
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
     from mage_ai.orchestration.db.models.schedules import PipelineRun
-    from mage_ai.settings import ENABLE_NEW_RELIC, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+    from mage_ai.settings import (
+        ENABLE_NEW_RELIC,
+        SENTRY_DSN,
+        SENTRY_TRACES_SAMPLE_RATE,
+        NEW_RELIC_CONFIG_PATH
+    )
     from mage_ai.shared.hash import merge_dict
 
     sentry_dsn = SENTRY_DSN
@@ -210,11 +215,18 @@ def run(
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
+    disable_new_relic = False
     if ENABLE_NEW_RELIC:
-        newrelic.agent.initialize('/home/src/newrelic.ini')
-        application = newrelic.agent.register_application(timeout=10)
+        try:
+            newrelic.agent.initialize(NEW_RELIC_CONFIG_PATH)
+            application = newrelic.agent.register_application(timeout=10)
+        except newrelic.api.exceptions.ConfigurationError as error:
+            print("Error with new relic initialization. Disable "
+                  f"new relic reporting. Message: {error}")
+            disable_new_relic = True
+
     with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
-         if ENABLE_NEW_RELIC else nullcontext():
+         if ENABLE_NEW_RELIC and not disable_new_relic else nullcontext():
         runtime_variables = dict()
         if runtime_vars is not None:
             runtime_variables = parse_runtime_variables(runtime_vars)

@@ -407,7 +407,8 @@
           "pages": [
             "production/observability/monitoring",
             "production/observability/datadog",
-            "production/observability/sentry"
+            "production/observability/sentry",
+            "production/observability/newrelic"
           ]
         },
         {
@@ -552,7 +553,8 @@
   },
   "api": {
     "playground": {
-       "mode": "hide"
+      "mode": "hide"
     }
   }
 }
+

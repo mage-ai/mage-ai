@@ -10,7 +10,13 @@ import sentry_sdk
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
-from mage_ai.settings import ENABLE_NEW_RELIC, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+from mage_ai.settings import (
+    ENABLE_NEW_RELIC,
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+    NEW_RELIC_CONFIG_PATH
+)
+
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
@@ -26,13 +32,19 @@ def run_scheduler():
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
+    disable_new_relic = False
     if ENABLE_NEW_RELIC:
-        newrelic.agent.initialize('/home/src/newrelic.ini')
-        application = newrelic.agent.register_application(timeout=10)
+        try:
+            newrelic.agent.initialize(NEW_RELIC_CONFIG_PATH)
+            application = newrelic.agent.register_application(timeout=10)
+        except newrelic.api.exceptions.ConfigurationError as error:
+            print("Error with new relic initialization. Disable "
+                  f"new relic reporting. Message: {error}")
+            disable_new_relic = True
 
     try:
-        with newrelic.agent.BackgroundTask(application, name="schedule-run", group='Task') \
-             if ENABLE_NEW_RELIC else nullcontext():
+        with newrelic.agent.BackgroundTask(application, name="db-migration", group='Task') \
+             if ENABLE_NEW_RELIC and not disable_new_relic else nullcontext():
             database_manager.run_migrations()
     except Exception:
         traceback.print_exc()
