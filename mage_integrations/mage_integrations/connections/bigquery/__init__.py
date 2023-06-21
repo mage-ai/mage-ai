@@ -15,19 +15,15 @@ class BigQuery(Connection):
         location: str = None,
         **kwargs,
     ):
-        if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('BigQuery connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
         super().__init__(**kwargs)
         self.credentials_info = credentials_info
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.location = location
 
-        if self.credentials_info is None:
-            if self.path_to_credentials_json_file is not None:
-                self.credentials_info = service_account.Credentials.from_service_account_file(
-                    self.path_to_credentials_json_file,
-                )
+        if self.credentials_info is None and self.path_to_credentials_json_file is not None:
+            self.credentials_info = service_account.Credentials.from_service_account_file(
+                self.path_to_credentials_json_file,
+            )
         self.client = Client(credentials=self.credentials_info, location=self.location)
 
     def build_connection(self):
