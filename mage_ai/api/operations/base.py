@@ -1,4 +1,11 @@
+import importlib
+import inspect
 from collections import UserList
+from typing import Dict
+
+import dateutil.parser
+import inflection
+
 from mage_ai import settings
 from mage_ai.api.api_context import ApiContext
 from mage_ai.api.errors import ApiError
@@ -17,12 +24,7 @@ from mage_ai.api.operations.constants import (
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import merge_dict, ignore_keys
-from typing import Dict
-import dateutil.parser
-import importlib
-import inflection
-import inspect
+from mage_ai.shared.hash import ignore_keys, merge_dict
 
 
 def classify(name):
@@ -101,6 +103,10 @@ class BaseOperation():
                     },
                 }
         except ApiError as err:
+            if err.code == 403 and \
+                    self.user and self.user.project_access == 0 and not self.user.roles:
+                err.message = 'You do not have access to this project. ' + \
+                    'Please ask an admin or owner for permissions.'
             if settings.DEBUG:
                 raise err
             else:

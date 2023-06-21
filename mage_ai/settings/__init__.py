@@ -35,6 +35,8 @@ LDAP_AUTHENTICATION_FILTER = os.getenv('LDAP_AUTHENTICATION_FILTER',
 LDAP_AUTHORIZATION_FILTER = os.getenv('LDAP_AUTHORIZATION_FILTER',
                                       '(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))')
 LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
+# values: Viewer, Editor, Admin
+LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
 
 SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 

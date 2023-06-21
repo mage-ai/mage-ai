@@ -1,12 +1,13 @@
 from datetime import datetime
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
+from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
-from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.settings import AUTHENTICATION_MODE
+from mage_ai.orchestration.db.models.oauth import Role, User
+from mage_ai.settings import AUTHENTICATION_MODE, LDAP_DEFAULT_ACCESS
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -48,12 +49,19 @@ class SessionResource(BaseResource):
                 raise ApiError(error)
             if email:
                 user = User.query.filter(User.username == email).first()
-            if not user:  # noqa: E712
+            if not user:
                 print('first user login, creating user.')
+                roles = []
+                if LDAP_DEFAULT_ACCESS is not None and \
+                        LDAP_DEFAULT_ACCESS in [r for r in Role.DefaultRole]:
+                    default_role = Role.get_role(LDAP_DEFAULT_ACCESS)
+                    if default_role:
+                        roles.append(default_role)
                 user = User.create(
-                    roles=2,
+                    roles_new=roles,
                     username=email,
                 )
+
             oauth_token = generate_access_token(user, kwargs['oauth_client'])
             return self(oauth_token, user, **kwargs)
 

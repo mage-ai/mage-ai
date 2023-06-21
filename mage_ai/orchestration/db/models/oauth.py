@@ -129,13 +129,13 @@ class User(BaseModel):
         for user in User.query.all():
             roles_new = []
             if user._owner:
-                roles_new = [Role.get_role('Owner')]
+                roles_new = [Role.get_role(Role.DefaultRole.OWNER)]
             elif user.roles and user.roles & 1 != 0:
-                roles_new = [Role.get_role('Admin')]
+                roles_new = [Role.get_role(Role.DefaultRole.ADMIN)]
             elif user.roles and user.roles & 2 != 0:
-                roles_new = [Role.get_role('Editor')]
+                roles_new = [Role.get_role(Role.DefaultRole.EDITOR)]
             elif user.roles and user.roles & 4 != 0:
-                roles_new = [Role.get_role('Viewer')]
+                roles_new = [Role.get_role(Role.DefaultRole.VIEWER)]
             user.roles_new = roles_new
         db_connection.session.commit()
 
@@ -144,6 +144,13 @@ class Role(BaseModel):
     name = Column(String(255), index=True, unique=True)
     permissions = relationship('Permission', back_populates='role')
     users = relationship('User', secondary='user_role', back_populates='roles_new')
+
+    # Default global roles created by Mage
+    class DefaultRole(str, enum.Enum):
+        OWNER = 'Owner'
+        ADMIN = 'Admin'
+        EDITOR = 'Editor'
+        VIEWER = 'Viewer'
 
     @classmethod
     @safe_db_query
@@ -157,10 +164,10 @@ class Role(BaseModel):
             entity = Permission.Entity.GLOBAL
         Permission.create_default_permissions(entity=entity, entity_id=entity_id)
         mapping = {
-            'Owner': Permission.Access.OWNER,
-            'Admin': Permission.Access.ADMIN,
-            'Editor': Permission.Access.EDITOR,
-            'Viewer': Permission.Access.VIEWER,
+            self.DefaultRole.OWNER: Permission.Access.OWNER,
+            self.DefaultRole.ADMIN: Permission.Access.ADMIN,
+            self.DefaultRole.EDITOR: Permission.Access.EDITOR,
+            self.DefaultRole.VIEWER: Permission.Access.VIEWER,
         }
         for name, access in mapping.items():
             role_name = name
