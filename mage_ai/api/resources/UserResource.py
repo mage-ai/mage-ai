@@ -58,9 +58,6 @@ class UserResource(DatabaseResource):
             if not payload.get(key):
                 missing_values.append(key)
 
-        if len(roles_new) == 0:
-            missing_values.append('roles')
-
         if len(missing_values) >= 1:
             error.update(
                 {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
