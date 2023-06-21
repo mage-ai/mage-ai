@@ -757,20 +757,23 @@ function CodeBlock({
         selected={selected}
         setSelected={setSelected}
         setTextareaFocused={setTextareaFocused}
-        shortcuts={[
-          (monaco, editor) => executeCode(monaco, () => {
-            if (!hideRunButton) {
-              runBlockAndTrack({
-                /*
-                 * This block doesn't get updated when the upstream dependencies change,
-                 * so we need to update the shortcuts in the CodeEditor component.
-                 */
-                block,
-                code: editor.getValue(),
-              });
-            }
-          }),
-        ]}
+        shortcuts={hideRunButton
+          ? []
+          : [
+            (monaco, editor) => executeCode(monaco, () => {
+              if (!hideRunButton) {
+                runBlockAndTrack({
+                  /*
+                  * This block doesn't get updated when the upstream dependencies change,
+                  * so we need to update the shortcuts in the CodeEditor component.
+                  */
+                  block,
+                  code: editor.getValue(),
+                });
+              }
+            }),
+          ]
+        }
         textareaFocused={textareaFocused}
         value={content}
         width="100%"
