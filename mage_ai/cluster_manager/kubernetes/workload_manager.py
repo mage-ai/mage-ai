@@ -18,6 +18,7 @@ from mage_ai.cluster_manager.constants import (
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME,
 )
+from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
@@ -74,7 +75,7 @@ class WorkloadManager:
     def create_workload(
         self,
         name: str,
-        project_type: str = 'standalone',
+        project_type: str = ProjectType.STANDALONE,
         project_uuid: str = None,
         **kwargs,
     ):
@@ -88,7 +89,7 @@ class WorkloadManager:
             os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
         )
         storage_class_name = kwargs.get('storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME))
-        access_mode = kwargs.get('access_mode', 'ReadWriteOnce')
+        storage_access_mode = kwargs.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = kwargs.get('storage_request_size', 2)
 
         env_vars = self.__populate_env_vars(
@@ -202,7 +203,7 @@ class WorkloadManager:
                             'name': 'mage-data'
                         },
                         'spec': {
-                            'accessModes': [access_mode],
+                            'accessModes': [storage_access_mode],
                             'storageClassName': storage_class_name,
                             'resources': {
                                 'requests': {

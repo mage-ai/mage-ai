@@ -27,7 +27,7 @@ app = typer.Typer(
 
 INIT_PROJECT_PATH_DEFAULT = typer.Argument(..., help='path of the Mage project to be created.')
 INIT_PROJECT_TYPE_DEFAULT = typer.Option(
-    ProjectType.STANDALONE,
+    ProjectType.STANDALONE.value,
     help='type of project to create, options are main, sub, or standalone'
 )
 INIT_CLUSTER_TYPE_DEFAULT = typer.Option(
@@ -48,7 +48,7 @@ START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_INSTANCE_TYPE_DEFAULT = typer.Option(
     InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.')
 START_PROJECT_TYPE_DEFAULT = typer.Option(
-    ProjectType.STANDALONE,
+    ProjectType.STANDALONE.value,
     help='create project of this type if does not exist, options are main, sub, or standalone',
 )
 START_CLUSTER_TYPE_DEFAULT = typer.Option(

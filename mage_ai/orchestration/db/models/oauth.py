@@ -195,11 +195,13 @@ class Role(BaseModel):
 
     def get_access(
         self,
-        entity: Union['Permission.Entity', None] = None,
+        entity: Union['Permission.Entity', None],
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
-        if entity == Permission.Entity.ANY:
+        if entity is None:
+            return 0
+        elif entity == Permission.Entity.ANY:
             permissions.extend(self.permissions)
         else:
             entity_permissions = list(filter(

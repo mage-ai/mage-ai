@@ -314,8 +314,8 @@ def start_server(
             cluster_type=cluster_type,
             project_uuid=project_uuid,
         )
-    update_project_uuid()
     set_repo_path(project)
+    update_project_uuid()
 
     asyncio.run(UsageStatisticLogger().project_impression())
 

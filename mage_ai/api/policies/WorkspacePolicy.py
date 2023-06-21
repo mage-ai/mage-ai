@@ -48,7 +48,7 @@ WorkspacePolicy.allow_write([
     'storage_class_name',
     'service_account_name',
     'container_config',
-    'access_mode',
+    'storage_access_mode',
     'storage_request_size',
     'cluster_name',
     'task_definition',

@@ -117,11 +117,11 @@ function ConfigureWorkspace({
             e.preventDefault();
             setWorkspaceConfig(prev => ({
               ...prev,
-              access_mode: e.target.value,
+              storage_access_mode: e.target.value,
             }));
           }}
           placeholder="Access mode"
-          value={workspaceConfig?.['access_mode']}
+          value={workspaceConfig?.['storage_access_mode']}
         >
           {ACCESS_MODES.map(val => (
             <option key={val} value={val}>
