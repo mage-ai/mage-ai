@@ -221,7 +221,7 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 ];
 
 export const BLOCK_TYPE_NAME_MAPPING = {
-  [BlockTypeEnum.EXTENSION]: 'Callback',
+  [BlockTypeEnum.CALLBACK]: 'Callback',
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',

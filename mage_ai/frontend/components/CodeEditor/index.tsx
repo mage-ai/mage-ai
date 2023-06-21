@@ -271,6 +271,10 @@ function CodeEditor({
    * if a block originally had 1 upstream dependency but we add an additional dependency
    * and then try to execute the block via editor shortcut, the code execution only includes
    * the initial single upstream dependency because the shortcut's scope doesn't change.
+   *
+   * We don't need to include shortcutsProp in the dependency array because we only want to
+   * re-add the keyboard shortcuts when the upstream or downstream connections change.
+   * Including shortcutsProp in the dependency array may lead to unnecessary re-renders.
    */
   }, [block?.downstream_blocks, block?.upstream_blocks]);
 
@@ -299,6 +303,7 @@ function CodeEditor({
 
   return (
     <ContainerStyle
+      hideDuplicateMenuItems
       padding={padding}
       style={{
         display: mounted ? null : 'none',
@@ -339,6 +344,7 @@ function CodeEditor({
             alwaysConsumeMouseWheel: false,
             vertical: 'hidden',
           },
+          useShadowDOM: false,
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
         }}
