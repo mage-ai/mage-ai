@@ -40,12 +40,12 @@ if [ "$#" -gt 0 ]; then
 else
     echo "Starting project at ${PROJECT_PATH}, project type ${MAGE_PROJECT_TYPE}, uuid ${MAGE_PROJECT_UUID}"
     if [[ ! -z "${DBT_DOCS_INSTANCE}" ]]; then
-        mage start $PROJECT_PATH --dbt-docs-instance 1
+        mage start $PROJECT_PATH --dbt-docs-instance 1 --cluster-type $CLUSTER_TYPE
     elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
-        mage start $PROJECT_PATH --manage-instance 1
+        mage start $PROJECT_PATH --manage-instance 1 --cluster-type $CLUSTER_TYPE
     elif [[ ! -z "${MAGE_PROJECT_UUID}" ]]; then
-        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE --project-uuid $MAGE_PROJECT_UUID
+        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE --project-uuid $MAGE_PROJECT_UUID --cluster-type $CLUSTER_TYPE
     else
-        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE
+        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE --cluster-type $CLUSTER_TYPE
     fi
 fi

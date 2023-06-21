@@ -30,7 +30,7 @@ class UserResource(DatabaseResource):
             order_by(User.username.asc())
         )
 
-        if user.is_admin:
+        if user and user.is_admin:
             results = list(filter(lambda user: user.project_access & 3 == 0, results))
 
         return results
