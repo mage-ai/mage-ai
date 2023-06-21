@@ -256,6 +256,7 @@ function ConfigureWorkspace({
                     createWorkspace({
                       workspace: {
                         ...updatedConfig,
+                        cluster_type: clusterType,
                       },
                     });
                   }

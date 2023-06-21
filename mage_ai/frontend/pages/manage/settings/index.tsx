@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
 import ErrorsType from '@interfaces/ErrorsType';
+import FileEditor from '@components/FileEditor';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
-import FileEditor from '@components/FileEditor';
 
 function SettingsPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
