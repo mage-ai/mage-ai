@@ -35,9 +35,6 @@ class Commercetools(Source):
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         return STREAMS[stream_id].KEY_PROPERTIES
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Commercetools)

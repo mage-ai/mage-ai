@@ -601,9 +601,11 @@ class Source:
 
     def test_connection(self) -> None:
         """
-        Test connection with source
+        Test connection with source.
+        Subclasses must implement the test_connection method.
         """
-        raise Exception('Subclasses must implement the test_connection method.')
+        raise Exception('Testing the connection is not currently supported for this source. ' +
+                        'You can request it as a feature by creating a new Github issue.')
 
     def count_records(
         self,

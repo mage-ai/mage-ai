@@ -33,9 +33,6 @@ class Pipedrive(Source):
                                      self.state)
         pipedrive_tap.do_sync(catalog)
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Pipedrive, schemas_folder='tap_pipedrive/schemas')
