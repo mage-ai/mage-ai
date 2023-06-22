@@ -212,6 +212,8 @@ class IntegrationPipeline(Pipeline):
                         error = dig(json_object, 'tags.error')
                     except Exception:
                         error = line
+                elif not error and line.startswith('CRITICAL'):
+                    error = line
             raise Exception(error)
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
