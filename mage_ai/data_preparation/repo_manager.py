@@ -1,7 +1,7 @@
 import os
-import shutil
 import sys
 import traceback
+import uuid
 from enum import Enum
 from typing import Dict
 
@@ -15,7 +15,6 @@ from mage_ai.data_preparation.shared.constants import (
 )
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.environments import is_test
-
 
 if is_test():
     DEFAULT_MAGE_DATA_DIR = './'
@@ -155,28 +154,34 @@ class RepoConfig:
             yml.dump(data, f)
 
 
-def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> None:
+def init_repo(
+    repo_path: str,
+    project_type: str = ProjectType.STANDALONE,
+    cluster_type: str = None,
+    project_uuid: str = None,
+) -> None:
     """
     Initialize a repository under the current path.
     """
     if os.path.exists(repo_path):
         raise FileExistsError(f'Repository {repo_path} already exists')
 
+    new_config = dict()
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
+        new_config.update(
+            cluster_type=cluster_type,
+        )
     elif project_type == ProjectType.SUB:
         os.makedirs(
             os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
             exist_ok=True,
         )
         copy_template_directory('repo', repo_path)
-        new_repo_config = get_repo_config(repo_path)
-        current_metadata = get_repo_config().metadata_path
-        new_metadata = new_repo_config.metadata_path
-        if os.path.exists(current_metadata):
-            shutil.copyfile(current_metadata, new_metadata)
-        new_repo_config.save(
+        new_config.update(
             project_type=ProjectType.SUB.value,
+            cluster_type=cluster_type,
+            project_uuid=project_uuid,
         )
     else:
         os.makedirs(
@@ -184,6 +189,11 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
             exist_ok=True,
         )
         copy_template_directory('repo', repo_path)
+
+    if not project_uuid:
+        project_uuid = uuid.uuid4().hex
+    new_config.update(project_uuid=project_uuid)
+    get_repo_config(repo_path).save(**new_config)
 
 
 def get_data_dir() -> str:
@@ -213,3 +223,20 @@ def set_repo_path(repo_path: str) -> None:
 
 def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
+
+
+config = get_repo_config()
+project_uuid = config.project_uuid
+
+
+def update_project_uuid():
+    global project_uuid
+    project_uuid = get_repo_config().project_uuid
+    if not project_uuid:
+        puuid = uuid.uuid4().hex
+        config.save(project_uuid=puuid)
+        project_uuid = puuid
+
+
+def get_project_uuid() -> str:
+    return project_uuid

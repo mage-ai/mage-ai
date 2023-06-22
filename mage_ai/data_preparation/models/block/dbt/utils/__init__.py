@@ -1,11 +1,26 @@
+import os
+import re
+import shutil
+import subprocess
+import sys
+import uuid
 from contextlib import redirect_stdout
 from datetime import datetime
-from jinja2 import Template
 from logging import Logger
+from typing import Callable, Dict, List, Tuple
+
+import aiofiles
+import simplejson
+import yaml
+from jinja2 import Template
+from pandas import DataFrame
+
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.sql import bigquery
 from mage_ai.data_preparation.models.block.sql import (
-    bigquery,
     execute_sql_code as execute_sql_code_orig,
+)
+from mage_ai.data_preparation.models.block.sql import (
     mssql,
     mysql,
     postgres,
@@ -27,18 +42,6 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name, files_in_path
-from pandas import DataFrame
-from typing import Callable, Dict, List, Tuple
-import aiofiles
-import os
-import re
-import shutil
-import simplejson
-import subprocess
-import sys
-import uuid
-import yaml
-
 
 PROFILES_FILE_NAME = 'profiles.yml'
 

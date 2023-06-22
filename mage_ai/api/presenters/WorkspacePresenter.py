@@ -8,4 +8,6 @@ class WorkspacePresenter(BasePresenter):
         'cluster_type',
         'access',
         'repo_path',
+        'project_uuid',
+        'success',
     ]

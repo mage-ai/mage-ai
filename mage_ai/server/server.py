@@ -19,6 +19,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_type,
     init_repo,
     set_repo_path,
+    update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
@@ -27,6 +28,7 @@ from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
+from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.api.downloads import ApiDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
@@ -119,7 +121,8 @@ def make_app():
         (r'/sign-in', MainPageHandler),
         (r'/terminal', MainPageHandler),
         (r'/triggers', MainPageHandler),
-        (r'/manage', ManagePageHandler),
+        (r'/manage', MainPageHandler),
+        (r'/manage/(.*)', MainPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -290,6 +293,9 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
+    project_type: ProjectType = ProjectType.STANDALONE,
+    cluster_type: ClusterType = None,
+    project_uuid: str = None,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -297,13 +303,19 @@ def start_server(
 
     # Set project path in environment variable
     if project:
-        project = project = os.path.abspath(project)
+        project = os.path.abspath(project)
     else:
         project = os.path.join(os.getcwd(), 'default_repo')
 
     if not os.path.exists(project):
-        init_repo(project)
+        init_repo(
+            project,
+            project_type=project_type,
+            cluster_type=cluster_type,
+            project_uuid=project_uuid,
+        )
     set_repo_path(project)
+    update_project_uuid()
 
     asyncio.run(UsageStatisticLogger().project_impression())
 

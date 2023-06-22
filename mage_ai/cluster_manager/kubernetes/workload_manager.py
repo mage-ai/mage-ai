@@ -1,6 +1,7 @@
 import os
 from typing import Dict, List
 
+import yaml
 from kubernetes import client, config
 
 from mage_ai.cluster_manager.constants import (
@@ -8,18 +9,23 @@ from mage_ai.cluster_manager.constants import (
     CONNECTION_URL_SECRETS_NAME,
     DB_SECRETS_NAME,
     GCP_BACKEND_CONFIG_ANNOTATION,
+    KUBE_NAMESPACE,
+    KUBE_SERVICE_ACCOUNT_NAME,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
+    KUBE_STORAGE_CLASS_NAME,
     NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME,
 )
+from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
     DB_PASS,
     DB_USER,
 )
+from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 
 
 class WorkloadManager:
@@ -55,10 +61,8 @@ class WorkloadManager:
                 labels = service.metadata.labels
                 if not labels.get('dev-instance'):
                     continue
-                ip_address = service.status.load_balancer.ingress[0].ip
                 conditions = service.status.conditions or list()
                 services_list.append(dict(
-                    ip=ip_address,
                     name=labels.get('app'),
                     status='RUNNING' if len(conditions) == 0 else conditions[0].status,
                     type='kubernetes',
@@ -68,25 +72,38 @@ class WorkloadManager:
 
         return services_list
 
-    def create_deployment(
+    def create_workload(
         self,
-        deployment_name,
-        container_config: Dict = None,
-        service_account_name: str = None,
-        storage_class_name: str = None,
-        volume_host_path: str = None,
+        name: str,
+        project_type: str = ProjectType.STANDALONE,
+        project_uuid: str = None,
+        **kwargs,
     ):
-        if container_config is None:
-            container_config = dict()
+        container_config_yaml = kwargs.get('container_config')
+        container_config = dict()
+        if container_config_yaml:
+            container_config = yaml.full_load(container_config_yaml)
 
-        env_vars = self.__populate_env_vars(container_config)
+        service_account_name = kwargs.get(
+            'service_account_name',
+            os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
+        )
+        storage_class_name = kwargs.get('storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME))
+        storage_access_mode = kwargs.get('storage_access_mode', 'ReadWriteOnce')
+        storage_request_size = kwargs.get('storage_request_size', 2)
+
+        env_vars = self.__populate_env_vars(
+            name,
+            project_type=project_type,
+            project_uuid=project_uuid,
+            container_config=container_config,
+        )
         container_config['env'] = env_vars
 
         containers = [
             {
-                'name': f'{deployment_name}-container',
+                'name': f'{name}-container',
                 'image': 'mageai/mageai:latest',
-                'command': ['mage', 'start', deployment_name],
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -146,32 +163,23 @@ class WorkloadManager:
                 }
             )
 
-        if volume_host_path:
-            volumes.append(
-                {
-                    'name': 'mage-data',
-                    'hostPath': {
-                        'path': volume_host_path
-                    },
-                }
-            )
-        deployment_template_spec = dict()
+        stateful_set_template_spec = dict()
         if service_account_name:
-            deployment_template_spec['serviceAccountName'] = service_account_name
+            stateful_set_template_spec['serviceAccountName'] = service_account_name
 
-        deployment = {
+        stateful_set = {
             'apiVersion': 'apps/v1',
-            'kind': 'Deployment',
+            'kind': 'StatefulSet',
             'metadata': {
-                'name': deployment_name,
+                'name': name,
                 'labels': {
-                    'app': deployment_name
+                    'app': name
                 }
             },
             'spec': {
                 'selector': {
                     'matchLabels': {
-                        'app': deployment_name
+                        'app': name
                     }
                 },
                 'replicas': 1,
@@ -179,22 +187,38 @@ class WorkloadManager:
                 'template': {
                     'metadata': {
                         'labels': {
-                            'app': deployment_name
+                            'app': name
                         }
                     },
                     'spec': {
                         'terminationGracePeriodSeconds': 10,
                         'containers': containers,
                         'volumes': volumes,
-                        **deployment_template_spec
+                        **stateful_set_template_spec
                     }
                 },
+                'volumeClaimTemplates': [
+                    {
+                        'metadata': {
+                            'name': 'mage-data'
+                        },
+                        'spec': {
+                            'accessModes': [storage_access_mode],
+                            'storageClassName': storage_class_name,
+                            'resources': {
+                                'requests': {
+                                    'storage': f'{storage_request_size}Gi'
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         }
 
-        self.apps_client.create_namespaced_deployment(self.namespace, deployment)
+        self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
 
-        service_name = f'{deployment_name}-service'
+        service_name = f'{name}-service'
 
         annotations = {}
         if os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG):
@@ -207,7 +231,7 @@ class WorkloadManager:
             'metadata': {
                 'name': service_name,
                 'labels': {
-                    'app': deployment_name,
+                    'app': name,
                     'dev-instance': '1',
                 },
                 'annotations': annotations
@@ -220,7 +244,7 @@ class WorkloadManager:
                     }
                 ],
                 'selector': {
-                    'app': deployment_name
+                    'app': name
                 },
                 'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE)
             }
@@ -228,8 +252,33 @@ class WorkloadManager:
 
         return self.core_client.create_namespaced_service(self.namespace, service)
 
-    def __populate_env_vars(self, container_config) -> List:
-        env_vars = []
+    def delete_workload(self, name: str):
+        self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
+        self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
+
+    def __populate_env_vars(
+        self,
+        name,
+        project_type: str = 'standalone',
+        project_uuid: str = None,
+        container_config: Dict = None
+    ) -> List:
+        env_vars = [
+            {
+                'name': 'USER_CODE_PATH',
+                'value': name,
+            }
+        ]
+        if project_type:
+            env_vars.append({
+                'name': 'PROJECT_TYPE',
+                'value': project_type,
+            })
+        if project_uuid:
+            env_vars.append({
+                'name': 'PROJECT_UUID',
+                'value': project_uuid,
+            })
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
         if connection_url_secrets_name:
@@ -244,6 +293,16 @@ class WorkloadManager:
                     }
                 }
             )
+
+        for var in MAGE_SETTINGS_ENVIRONMENT_VARIABLES + [
+            DATABASE_CONNECTION_URL_ENV_VAR,
+            KUBE_NAMESPACE,
+        ]:
+            if os.getenv(var) is not None:
+                env_vars.append({
+                    'name': var,
+                    'value': str(os.getenv(var)),
+                })
 
         # For connecting to CloudSQL PostgreSQL database.
         db_secrets_name = os.getenv(DB_SECRETS_NAME)

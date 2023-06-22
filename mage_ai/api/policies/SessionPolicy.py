@@ -1,12 +1,13 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
+from mage_ai.orchestration.db.models.oauth import Permission
 
 
 class SessionPolicy(BasePolicy):
     @property
     def entity(self):
-        return None, None
+        return Permission.Entity.ANY, None
 
 
 SessionPolicy.allow_actions([

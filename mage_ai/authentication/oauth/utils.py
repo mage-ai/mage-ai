@@ -1,6 +1,7 @@
 from datetime import datetime
-from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
 from typing import List
+
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
 
 
 def access_tokens_for_provider(provider: str) -> List[Oauth2AccessToken]:

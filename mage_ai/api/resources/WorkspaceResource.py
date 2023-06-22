@@ -1,7 +1,8 @@
 import os
-import shutil
+import uuid
 from typing import Dict, List
 
+import ruamel.yaml
 import yaml
 
 from mage_ai.api.errors import ApiError
@@ -14,21 +15,19 @@ from mage_ai.cluster_manager.constants import (
     GCP_PROJECT_ID,
     GCP_REGION,
     KUBE_NAMESPACE,
-    KUBE_SERVICE_ACCOUNT_NAME,
-    KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     get_repo_config,
     get_repo_path,
-    init_repo,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
+from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 
 logger = Logger().new_server_logger(__name__)
 
@@ -60,7 +59,7 @@ class WorkspaceResource(GenericResource):
         repo_path = get_repo_path()
         projects_folder = os.path.join(repo_path, 'projects')
         if is_main_project:
-            projects = [f.name for f in os.scandir(projects_folder) if f.is_dir()]
+            projects = [f.name.split('.')[0] for f in os.scandir(projects_folder) if not f.is_dir()]
         else:
             projects = [instance.get('name') for instance in instances]
 
@@ -68,19 +67,25 @@ class WorkspaceResource(GenericResource):
         for project in projects:
             if project in instance_map:
                 try:
-                    repo_path = os.path.join(projects_folder, project)
                     workspace = dict(
                         name=project,
-                        repo_path=repo_path,
                         cluster_type=cluster_type,
                         instance=instance_map[project],
                     )
-                    if is_main_project and query_user:
-                        workspace['access'] = query_user.get_access(
-                            Permission.Entity.PROJECT,
-                            repo_path,
-                        )
+                    if is_main_project:
+                        workspace_file = os.path.join(projects_folder, f'{project}.yaml')
+                        config = {}
+                        with open(workspace_file) as f:
+                            config = yaml.full_load(f.read())
+                        project_uuid = config['project_uuid']
+                        workspace['project_uuid'] = project_uuid
+                        if query_user:
+                            workspace['access'] = query_user.get_access(
+                                Permission.Entity.PROJECT,
+                                project_uuid,
+                            )
                     workspaces.append(workspace)
+
                 except Exception as e:
                     print(f'Error fetching workspace: {str(e)}')
 
@@ -113,18 +118,33 @@ class WorkspaceResource(GenericResource):
         if not cluster_type:
             cluster_type = payload.get('cluster_type')
 
-        workspace_name = payload.get('name')
-
         error = ApiError.RESOURCE_ERROR.copy()
+        workspace_name = payload.pop('name')
+        if not workspace_name:
+            error.update(message='Please enter a valid workspace name.')
+            raise ApiError(error)
 
-        workspace_folder = None
-        if get_project_type() == ProjectType.MAIN:
-            workspace_folder = os.path.join(get_repo_path(), 'projects', workspace_name)
-            if os.path.exists(workspace_folder):
+        workspace_file = None
+        project_uuid = None
+        project_type = get_project_type()
+        if project_type == ProjectType.MAIN:
+            project_folder = os.path.join(get_repo_path(), 'projects')
+            if not os.path.exists(project_folder):
+                os.makedirs(project_folder)
+            workspace_file = os.path.join(project_folder, f'{workspace_name}.yaml')
+            if os.path.exists(workspace_file):
                 error.update(message=f'Project with name {workspace_name} already exists')
                 raise ApiError(error)
             try:
-                init_repo(workspace_folder, project_type=ProjectType.SUB)
+                yml = ruamel.yaml.YAML()
+                yml.preserve_quotes = True
+                yml.indent(mapping=2, sequence=2, offset=0)
+
+                project_uuid = uuid.uuid4().hex
+                data = dict(project_uuid=project_uuid)
+
+                with open(workspace_file, 'w') as f:
+                    yml.dump(data, f)
             except Exception as e:
                 error.update(message=f'Error creating project: {str(e)}')
                 raise ApiError(error)
@@ -133,27 +153,19 @@ class WorkspaceResource(GenericResource):
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
                     WorkloadManager,
                 )
-                namespace = payload.get('namespace', os.getenv(KUBE_NAMESPACE))
-                storage_class_name = payload.get(
-                    'storage_class_name',
-                    os.getenv(KUBE_STORAGE_CLASS_NAME),
-                )
-                service_account_name = payload.get(
-                    'service_account_name',
-                    os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
-                )
-                container_config_yaml = payload.get('container_config')
-                container_config = None
-                if container_config_yaml:
-                    container_config = yaml.full_load(container_config_yaml)
+                namespace = payload.pop('namespace', os.getenv(KUBE_NAMESPACE))
 
                 k8s_workload_manager = WorkloadManager(namespace)
-                k8s_workload_manager.create_deployment(
+                extra_args = {}
+                if project_type == ProjectType.MAIN:
+                    extra_args = {
+                        'project_type': ProjectType.SUB,
+                        'project_uuid': project_uuid,
+                    }
+                k8s_workload_manager.create_workload(
                     workspace_name,
-                    container_config=container_config,
-                    service_account_name=service_account_name,
-                    storage_class_name=storage_class_name,
-                    volume_host_path=workspace_folder,
+                    **payload,
+                    **extra_args,
                 )
             elif cluster_type == ClusterType.ECS:
                 from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
@@ -193,15 +205,17 @@ class WorkspaceResource(GenericResource):
 
                 cloud_run_service_manager.create_service(workspace_name)
         except Exception as e:
-            if workspace_folder and os.path.exists(workspace_folder):
-                shutil.rmtree(workspace_folder)
+            if workspace_file and os.path.exists(workspace_file):
+                os.remove(workspace_file)
             error.update(message=str(e))
             raise ApiError(error)
 
-        if get_project_type() == ProjectType.MAIN:
+        if project_type == ProjectType.MAIN and \
+                project_uuid is not None and \
+                REQUIRE_USER_AUTHENTICATION:
             Role.create_default_roles(
                 entity=Permission.Entity.PROJECT,
-                entity_id=workspace_folder,
+                entity_id=project_uuid,
                 prefix=workspace_name,
             )
 
@@ -240,17 +254,32 @@ class WorkspaceResource(GenericResource):
         instance = self.model.get('instance')
 
         repo_path = get_repo_path()
-        project_folder = os.path.join(repo_path, 'projects', workspace_name)
+        workspace_file = os.path.join(repo_path, 'projects', f'{workspace_name}.yaml')
+
+        error = ApiError.RESOURCE_ERROR.copy()
+
+        try:
+            if cluster_type == ClusterType.ECS:
+                from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+                task_arn = instance.get('task_arn')
+                cluster_name = os.getenv(ECS_CLUSTER_NAME)
+
+                ecs_instance_manager = EcsTaskManager(cluster_name)
+                ecs_instance_manager.delete_task(workspace_name, task_arn)
+            elif cluster_type == ClusterType.K8S:
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
+                namespace = os.getenv(KUBE_NAMESPACE)
+
+                k8s_workload_manager = WorkloadManager(namespace)
+                k8s_workload_manager.delete_workload(workspace_name)
+        except Exception as e:
+            error.update(message=str(e))
+            raise ApiError(error)
 
         if get_project_type() == ProjectType.MAIN:
-            shutil.rmtree(project_folder)
-        if cluster_type == 'ecs':
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            task_arn = instance.get('task_arn')
-            cluster_name = os.getenv(ECS_CLUSTER_NAME)
-
-            ecs_instance_manager = EcsTaskManager(cluster_name)
-            ecs_instance_manager.delete_task(workspace_name, task_arn)
+            os.remove(workspace_file)
 
         return self
 
@@ -265,7 +294,7 @@ class WorkspaceResource(GenericResource):
         if project_type == ProjectType.MAIN and subproject:
             repo_path = get_repo_path()
             projects_folder = os.path.join(repo_path, 'projects')
-            projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
+            projects = [f.name.split('.')[0] for f in os.scandir(projects_folder) if not f.is_dir()]
             if subproject not in projects:
                 error = ApiError.RESOURCE_NOT_FOUND.copy()
                 error.update(message=f'Project {subproject} was not found.')

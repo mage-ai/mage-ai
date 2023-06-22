@@ -33,9 +33,7 @@ WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes, scopes=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_admin_role())
 
-WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes + [
-    'success',
-], scopes=[
+WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -50,6 +48,8 @@ WorkspacePolicy.allow_write([
     'storage_class_name',
     'service_account_name',
     'container_config',
+    'storage_access_mode',
+    'storage_request_size',
     'cluster_name',
     'task_definition',
     'container_name',
