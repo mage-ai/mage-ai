@@ -632,8 +632,10 @@ class Source:
             bookmarks (Dict): Bookmarks for the stream id.
             query (Dict): query
             start_date (datetime): start_date
+
+        Subclasses must implement the load_data method.
         """
-        raise Exception('Subclasses must implement the load_data method.')
+        raise Exception('Loading sample data is not currently supported for this source.')
 
     def get_forced_replication_method(self, stream_id: str) -> str:
         """
