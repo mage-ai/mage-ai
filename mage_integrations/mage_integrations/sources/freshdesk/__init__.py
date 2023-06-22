@@ -20,9 +20,6 @@ class Freshdesk(Source):
         update_state(self.state)
         do_sync(catalog.to_dict())
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Freshdesk, schemas_folder='tap_freshdesk/schemas')

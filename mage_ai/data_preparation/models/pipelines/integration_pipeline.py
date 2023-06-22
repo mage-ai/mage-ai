@@ -212,6 +212,8 @@ class IntegrationPipeline(Pipeline):
                         error = dig(json_object, 'tags.error')
                     except Exception:
                         error = line
+                elif not error and line.startswith('CRITICAL'):
+                    error = line
             raise Exception(error)
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
@@ -286,9 +288,11 @@ class IntegrationPipeline(Pipeline):
                     except Exception:
                         error = line
             if not error:
-                raise Exception('The sample data was not able to be loaded. Please check \
-                                if the stream still exists. If it does not, click the "View and \
-                                select streams" button and confirm the valid streams.')
+                raise Exception('The sample data was not able to be loaded. Please check if the ' +
+                                'stream still exists. If it does not, click the "View and select ' +
+                                'streams" button and confirm the valid streams. If it does, ' +
+                                'loading sample data for this source may not currently ' +
+                                'be supported.')
             raise Exception(error)
 
     def count_records(self) -> List[Dict]:

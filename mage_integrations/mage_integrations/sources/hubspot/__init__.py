@@ -36,9 +36,6 @@ class Hubspot(Source):
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         return BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(stream_id, ['N/A'])
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Hubspot, schemas_folder='tap_hubspot/schemas')

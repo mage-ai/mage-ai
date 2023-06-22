@@ -34,9 +34,6 @@ class Monday(Source):
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         return STREAMS[stream_id].replication_key
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Monday)
