@@ -18,7 +18,12 @@ import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { ACTION_PUSH, LOCAL_STORAGE_GIT_REMOTE_NAME, TAB_FILES } from '../constants';
+import {
+  ACTION_PUSH,
+  LOCAL_STORAGE_GIT_REMOTE_NAME,
+  LOCAL_STORAGE_GIT_REPOSITORY_NAME,
+  TAB_FILES,
+} from '../constants';
 import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
@@ -73,7 +78,12 @@ function Commit({
     setActionRemoteNameState(value);
   }, []);
   const [pullRequest, setPullRequest] = useState<PullRequestPayloadType>(EMPTY_PULL_REQUEST);
-  const [repositoryName, setRepositoryName] = useState<string>(null);
+  const [repositoryName, setRepositoryNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REPOSITORY_NAME, ''));
+  const setRepositoryName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REPOSITORY_NAME, value);
+    setRepositoryNameState(value);
+  }, []);
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
     api.git_branches.useUpdate(branch?.name),
