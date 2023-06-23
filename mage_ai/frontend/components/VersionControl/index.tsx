@@ -371,6 +371,7 @@ function VersionControl() {
       branch={branch}
       fetchBranch={fetchBranch}
       modifiedFiles={modifiedFiles}
+      setSelectedFilePath={setSelectedFilePath}
       showError={showError}
       stagedFiles={stagedFiles}
       untrackedFiles={untrackedFiles}
@@ -379,6 +380,7 @@ function VersionControl() {
     branch,
     fetchBranch,
     modifiedFiles,
+    setSelectedFilePath,
     showError,
     stagedFiles,
     untrackedFiles,
@@ -392,7 +394,6 @@ function VersionControl() {
       loading={!dataBranchRemotes}
       modifiedFiles={modifiedFiles}
       remotes={remotes}
-      setSelectedFilePath={setSelectedFilePath}
       showError={showError}
       stagedFiles={stagedFiles}
     />
@@ -403,7 +404,6 @@ function VersionControl() {
     fetchBranch,
     modifiedFiles,
     remotes,
-    setSelectedFilePath,
     showError,
     stagedFiles,
   ]);
