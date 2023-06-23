@@ -2,7 +2,6 @@ import asyncio
 import requests
 import subprocess
 from datetime import datetime
-from git.exc import GitCommandError
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
