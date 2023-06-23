@@ -9,7 +9,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType, { GitRemoteType } from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
-import PullRequestType from '@interfaces/PullRequestType';
+import PullRequestType, { PullRequestPayloadType } from '@interfaces/PullRequestType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -30,6 +30,14 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { unique } from '@utils/array';
 
+const EMPTY_PULL_REQUEST = {
+  base_branch: null,
+  body: null,
+  compare_branch: null,
+  repository: null,
+  title: null,
+};
+
 type CommitProps = {
   branch: GitBranchType;
   branches: GitBranchType[];
@@ -49,6 +57,7 @@ type CommitProps = {
 function Commit({
   branch,
   branches,
+  fetchBranch,
   loading,
   remotes,
   showError,
@@ -57,7 +66,7 @@ function Commit({
   const [actionError, setActionError] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>('');
-  const [pullRequest, setPullRequest] = useState<PullRequestType>({});
+  const [pullRequest, setPullRequest] = useState<PullRequestPayloadType>(EMPTY_PULL_REQUEST);
   const [repositoryName, setRepositoryName] = useState<string>(null);
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
@@ -176,8 +185,6 @@ function Commit({
   const branchesForRepository: GitBranchType[] =
     useMemo(() => dataGitBranches?.git_branches || [], [dataGitBranches]);
 
-  console.log(branch?.name, branchesForRepository)
-
   useEffect(() => {
     if (!pullRequest?.compare_branch && branchesForRepository?.find(({ name }) => name === branch?.name)) {
       // @ts-ignore
@@ -199,7 +206,7 @@ function Commit({
         response, {
           callback: () => {
             fetchPullRequests();
-            setPullRequest({});
+            setPullRequest(EMPTY_PULL_REQUEST);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -461,6 +468,7 @@ function Commit({
                   }
                   loading={isLoadingCreatePullRequest}
                   onClick={() => {
+                    // @ts-ignore
                     createPullRequest({
                       pull_request: {
                         ...pullRequest,
