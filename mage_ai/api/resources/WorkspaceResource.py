@@ -46,7 +46,8 @@ class WorkspaceResource(GenericResource):
         query_user = None
         if user_id:
             user_id = user_id[0]
-            query_user = User.query.get(user_id)
+            if user_id:
+                query_user = User.query.get(user_id)
 
         instances = self.get_instances(cluster_type)
         instance_map = {
@@ -313,7 +314,7 @@ class WorkspaceResource(GenericResource):
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
-            instances = workload_manager.list_services()
+            instances = workload_manager.list_workloads()
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
 

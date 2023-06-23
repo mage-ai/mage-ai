@@ -26,6 +26,7 @@ from mage_ai.orchestration.constants import (
     DB_USER,
 )
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
+from mage_ai.shared.array import find
 
 
 class WorkloadManager:
@@ -52,6 +53,55 @@ class WorkloadManager:
             pass
 
         return False
+
+    def list_workloads(self):
+        services = self.core_client.list_namespaced_service(self.namespace).items
+        workloads_list = []
+
+        pods = self.core_client.list_namespaced_pod(self.namespace).items
+        pod_map = dict()
+        for pod in pods:
+            try:
+                name = pod.metadata.labels.get('app')
+                pod_map[name] = pod
+            except Exception:
+                pass
+        for service in services:
+            try:
+                labels = service.metadata.labels
+                if not labels.get('dev-instance'):
+                    continue
+                name = labels.get('app')
+                print('app name:', name)
+                pod = pod_map[name]
+                node_name = pod.spec.node_name
+                ip = None
+                try:
+                    print('node name:', node_name)
+                    if node_name:
+                        items = self.core_client.list_node(
+                            field_selector=f'metadata.name={node_name}').items
+                        print('items:', items)
+                        node = items[0]
+                        ip = find(lambda a: a.type == 'ExternalIP', node.status.addresses).address
+                except Exception:
+                    pass
+                if pod:
+                    status = pod.status.phase
+                    workload = dict(
+                        name=labels.get('app'),
+                        status=status.upper(),
+                        type='kubernetes',
+                    )
+                    if ip:
+                        workload['ip'] = f'{ip}:1234'
+
+                    workloads_list.append(workload)
+            except Exception as e:
+                print('error occurred:', str(e))
+                pass
+
+        return workloads_list
 
     def list_services(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
@@ -88,7 +138,10 @@ class WorkloadManager:
             'service_account_name',
             os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
         )
-        storage_class_name = kwargs.get('storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME))
+        storage_class_name = kwargs.get(
+            'storage_class_name',
+            os.getenv(KUBE_STORAGE_CLASS_NAME, 'default'),
+        )
         storage_access_mode = kwargs.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = kwargs.get('storage_request_size', 2)
 
