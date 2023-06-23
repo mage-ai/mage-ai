@@ -76,7 +76,12 @@ class PipelineScheduler:
         )
         self.logger = DictLogger(self.logger_manager.logger)
         self.notification_sender = NotificationSender(
-            NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
+            NotificationConfig.load(
+                config=merge_dict(
+                    self.pipeline.repo_config.notification_config,
+                    self.pipeline.notification_config,
+                )
+            )
         )
 
         self.allow_blocks_to_fail = (
@@ -1060,10 +1065,6 @@ def check_sla():
     pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
 
     if pipeline_runs:
-        notification_sender = NotificationSender(
-             NotificationConfig.load(config=get_repo_config(get_repo_path()).notification_config),
-        )
-
         current_time = datetime.now(tz=pytz.UTC)
         # TODO: combine all SLA alerts in one notification
         for pipeline_run in pipeline_runs:
@@ -1076,8 +1077,17 @@ def check_sla():
                 else pipeline_run.created_at
             if compare(start_date, current_time - timedelta(seconds=sla)) == 1:
                 # passed SLA for pipeline_run
+                pipeline = Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid)
+                notification_sender = NotificationSender(
+                    NotificationConfig.load(
+                        config=merge_dict(
+                            pipeline.repo_config.notification_config,
+                            pipeline.notification_config,
+                        ),
+                    ),
+                )
                 notification_sender.send_pipeline_run_sla_passed_message(
-                    Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid),
+                    pipeline,
                     pipeline_run,
                 )
 
