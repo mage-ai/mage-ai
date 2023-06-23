@@ -610,9 +610,9 @@ function Remote({
               beforeIconSize={UNIT * 1.5}
               monospace
               onChange={e => setActionBranchName(e.target.value)}
+              placeholder="Branch"
               value={actionBranchName || ''}
             >
-              <option value="">All branches</option>
               {branches?.map(({ name }) => (
                 <option key={name} value={name}>
                   {name}
@@ -625,7 +625,7 @@ function Remote({
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !actionRemoteName}
+              disabled={!actionName || !actionRemoteName || !actionBranchName}
               loading={isLoadingAction}
               onClick={() => {
                 setActionProgress(null);

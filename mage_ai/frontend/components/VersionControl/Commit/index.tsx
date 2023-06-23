@@ -101,7 +101,6 @@ function Commit({
               setActionProgress(null);
             } else {
               fetchBranch();
-              setActionBranchName(null);
               setActionError(null);
               setActionProgress(progress);
             }
