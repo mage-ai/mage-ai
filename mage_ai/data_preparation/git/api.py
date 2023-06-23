@@ -6,7 +6,6 @@ from git.exc import GitCommandError
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
-from mage_ai.data_preparation.git import Git
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application, User
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
@@ -29,33 +28,56 @@ def get_access_token_for_user(user: User) -> Oauth2AccessToken:
         return access_token
 
 
-def pull(remote_url: str, branch_name: str, token: str) -> RemoteProgress:
+def pull(remote_name: str, remote_url: str, branch_name: str, token: str) -> RemoteProgress:
+    from mage_ai.data_preparation.git import Git
+
     custom_progress = RemoteProgress()
     username = get_username(token)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    repo = Git.get_manager().repo
+    git_manager = Git.get_manager()
 
-    check_connection(repo, url)
+    remote_name_temp = f'{remote_name}__mage_temp'
 
     try:
-        repo.git.pull(url, branch_name, custom_progress)
-    except GitCommandError as err:
+        git_manager.add_remote(remote_name_temp, url)
+        git_manager.set_origin(remote_name_temp)
+
+        check_connection(git_manager.repo, url)
+
+        remote = git_manager.repo.remotes[remote_name_temp]
+        remote.pull(branch_name, custom_progress)
+    except Exception as err:
         raise err
+    finally:
+        git_manager.remove_remote(remote_name_temp)
 
     return custom_progress
 
 
-def push(remote_url: str, branch_name: str, token: str) -> RemoteProgress:
+def push(remote_name: str, remote_url: str, branch_name: str, token: str) -> RemoteProgress:
+    from mage_ai.data_preparation.git import Git
+
     custom_progress = RemoteProgress()
     username = get_username(token)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    repo = Git.get_manager().repo
+    git_manager = Git.get_manager()
 
-    check_connection(repo, url)
+    remote_name_temp = f'{remote_name}__mage_temp'
 
-    repo.git.push(url, branch_name, custom_progress)
+    try:
+        git_manager.add_remote(remote_name_temp, url)
+        git_manager.set_origin(remote_name_temp)
+
+        check_connection(git_manager.repo, url)
+
+        remote = git_manager.repo.remotes[remote_name_temp]
+        remote.push(branch_name, custom_progress)
+    except Exception as err:
+        raise err
+    finally:
+        git_manager.remove_remote(remote_name_temp)
 
     return custom_progress
 

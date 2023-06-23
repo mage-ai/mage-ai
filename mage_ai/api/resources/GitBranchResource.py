@@ -118,8 +118,9 @@ class GitBranchResource(GenericResource):
                 try:
                     access_token = api.get_access_token_for_user(self.current_user)
                     if access_token:
-                        remote = git_manager.repo.remotes[pull['remote']]
+                        remote = git_manager.repo.remotes[push['remote']]
                         custom_progress = api.push(
+                            remote.name,
                             [url for url in remote.urls][0],
                             push['branch'],
                             access_token.token,
@@ -131,7 +132,7 @@ class GitBranchResource(GenericResource):
                             self.model['progress'] = lines
                     else:
                         self.model['error'] = \
-                            'Please authenticate with GitHub before trying to pull'
+                            'Please authenticate with GitHub before trying to push.'
 
                 except GitCommandError as err:
                     self.model['error'] = str(err)
@@ -147,6 +148,7 @@ class GitBranchResource(GenericResource):
                     if access_token:
                         remote = git_manager.repo.remotes[pull['remote']]
                         custom_progress = api.pull(
+                            remote.name,
                             [url for url in remote.urls][0],
                             pull.get('branch'),
                             access_token.token,
@@ -158,7 +160,7 @@ class GitBranchResource(GenericResource):
                             self.model['progress'] = lines
                     else:
                         self.model['error'] = \
-                            'Please authenticate with GitHub before trying to pull'
+                            'Please authenticate with GitHub before trying to pull.'
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
@@ -239,4 +241,4 @@ class GitBranchResource(GenericResource):
 
     def remotes(self, limit: int = None) -> List[Dict]:
         git_manager = Git.get_manager(user=self.current_user)
-        return git_manager.remotes(limit=limit)
+        return git_manager.remotes(limit=limit, user=self.current_user)
