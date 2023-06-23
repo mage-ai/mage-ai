@@ -1,5 +1,5 @@
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -26,7 +26,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   TABS,
   TAB_BRANCHES,
-  TAB_COMMIT,
+  TAB_PUSH,
   TAB_FILES,
   TAB_REMOTE,
 } from './constants';
@@ -371,6 +371,7 @@ function VersionControl() {
       branch={branch}
       fetchBranch={fetchBranch}
       modifiedFiles={modifiedFiles}
+      setSelectedFilePath={setSelectedFilePath}
       showError={showError}
       stagedFiles={stagedFiles}
       untrackedFiles={untrackedFiles}
@@ -379,6 +380,7 @@ function VersionControl() {
     branch,
     fetchBranch,
     modifiedFiles,
+    setSelectedFilePath,
     showError,
     stagedFiles,
     untrackedFiles,
@@ -389,19 +391,19 @@ function VersionControl() {
       branch={branch}
       branches={branches}
       fetchBranch={fetchBranch}
+      loading={!dataBranchRemotes}
       modifiedFiles={modifiedFiles}
       remotes={remotes}
-      setSelectedFilePath={setSelectedFilePath}
       showError={showError}
       stagedFiles={stagedFiles}
     />
   ), [
     branch,
     branches,
+    dataBranchRemotes,
     fetchBranch,
     modifiedFiles,
     remotes,
-    setSelectedFilePath,
     showError,
     stagedFiles,
   ]);
@@ -444,7 +446,7 @@ function VersionControl() {
 
             {TAB_FILES.uuid === selectedTab?.uuid && filesMemo}
 
-            {TAB_COMMIT.uuid === selectedTab?.uuid && commitMemo}
+            {TAB_PUSH.uuid === selectedTab?.uuid && commitMemo}
           </>
         )}
       </Spacing>

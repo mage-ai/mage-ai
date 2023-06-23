@@ -102,7 +102,7 @@ class Git:
         self.repo.create_remote(name, url)
 
     def remove_remote(self, name: str) -> None:
-        self.repo.remotes[name].remove(self.repo, name)
+        self.repo.git.remote('remove', name)
 
     def staged_files(self) -> List[str]:
         files_string = self.repo.git.diff('--name-only', '--cached')
@@ -312,36 +312,56 @@ class Git:
         arr = []
 
         for idx, remote in enumerate(self.repo.remotes):
+            from git.exc import GitCommandError
+
             if idx >= limit:
                 break
 
+            error = None
             remote_name_temp = f'{remote.name}__mage_temp'
 
             try:
                 remote_refs = remote.refs
                 if len(remote_refs) == 0 and remote_name_temp not in self.repo.remotes and user:
-                    from git.exc import GitCommandError
                     from mage_ai.data_preparation.git import api
 
                     access_token = api.get_access_token_for_user(user)
                     if access_token:
-                        token = access_token.token
-                        username = api.get_username(token)
-                        url = api.build_authenticated_remote_url(
-                            [url for url in remote.urls][0],
-                            username,
-                            token,
-                        )
-
-                        self.add_remote(remote_name_temp, url)
-                        remote_temp = self.repo.remotes[remote_name_temp]
-
+                        remote_exists = False
                         try:
-                            remote_temp.fetch()
-                            remote_refs = remote_temp.refs
+                            remote_url = [url for url in remote.urls][0]
+                            remote_exists = True
                         except GitCommandError as err:
                             print('WARNING (mage_ai.data_preparation.git.remotes):')
                             print(err)
+
+                        if remote_exists:
+                            token = access_token.token
+                            username = api.get_username(token)
+                            url = api.build_authenticated_remote_url(
+                                remote_url,
+                                username,
+                                token,
+                            )
+
+                            self.add_remote(remote_name_temp, url)
+                            remote_temp = self.repo.remotes[remote_name_temp]
+
+                            authenticated = False
+                            try:
+                                api.check_connection(self.repo, url)
+                                authenticated = True
+                            except Exception as err:
+                                print('WARNING (mage_ai.data_preparation.git.remotes):')
+                                print(err)
+
+                            if authenticated:
+                                try:
+                                    remote_temp.fetch()
+                                    remote_refs = remote_temp.refs
+                                except Exception as err:
+                                    print('WARNING (mage_ai.data_preparation.git.remotes):')
+                                    print(err)
 
                 refs = []
                 for ref in remote_refs:
@@ -357,15 +377,33 @@ class Git:
                         ),
                     ))
             except Exception as err:
-                raise err
-            finally:
-                if remote_name_temp in self.repo.remotes:
-                    self.remove_remote(remote_name_temp)
+                error = err
+
+            try:
+                self.remove_remote(remote_name_temp)
+            except GitCommandError as err:
+                print('WARNING (mage_ai.data_preparation.git.remotes):')
+                print(err)
+
+            if error:
+                raise error
+
+            repository_names = []
+            urls = []
+            try:
+                for url in remote.urls:
+                    if url.lower().startswith('https'):
+                        repository_names.append('/'.join(url.split('/')[-2:]).replace('.git', ''))
+                    urls.append(url)
+            except GitCommandError as err:
+                print('WARNING (mage_ai.data_preparation.git.remotes):')
+                print(err)
 
             arr.append(dict(
                 name=remote.name,
                 refs=refs,
-                urls=[url for url in remote.urls],
+                repository_names=repository_names,
+                urls=urls,
             ))
 
         return arr

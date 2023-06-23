@@ -487,7 +487,7 @@ function Remote({
         {!loading && remotesMemo}
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
+          <FlexContainer alignItems="flex-start">
             <TextInput
               label="New remote name"
               monospace
@@ -497,12 +497,22 @@ function Remote({
 
             <Spacing mr={1} />
 
-            <TextInput
-              label="Remote URL"
-              monospace
-              onChange={e => setRemoteURLNew(e?.target?.value)}
-              value={remoteURLNew || ''}
-            />
+            <FlexContainer flexDirection="column">
+              <TextInput
+                label="Remote URL"
+                monospace
+                onChange={e => setRemoteURLNew(e?.target?.value)}
+                value={remoteURLNew || ''}
+              />
+
+              <Spacing mt={1}>
+                <Text muted small>
+                  Use the https URL if you
+                  <br />
+                  authenticated with GitHub above.
+                </Text>
+              </Spacing>
+            </FlexContainer>
 
             <Spacing mr={1} />
 

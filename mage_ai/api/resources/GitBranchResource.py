@@ -1,4 +1,5 @@
 import os
+from github import Auth, Github
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.git import Git
@@ -22,9 +23,27 @@ def build_file_object(obj):
 class GitBranchResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        git_manager = Git.get_manager(user=user)
+        arr = []
+
+        repository = query.get('repository', None)
+        if repository:
+            repository = repository[0]
+
+            access_token = api.get_access_token_for_user(user)
+            if access_token:
+                auth = Auth.Token(access_token.token)
+                g = Github(auth=auth)
+                repo = g.get_repo(repository)
+                branches = repo.get_branches()
+
+                for branch in branches:
+                    arr.append(dict(name=branch.name))
+        else:
+            git_manager = Git.get_manager(user=user)
+            arr += [dict(name=branch) for branch in git_manager.branches]
+
         return self.build_result_set(
-            [dict(name=branch) for branch in git_manager.branches],
+            arr,
             user,
             **kwargs,
         )
