@@ -48,6 +48,7 @@ function GitFiles({
   branch,
   fetchBranch: fetchBranchProp,
   modifiedFiles,
+  setSelectedFilePath,
   showError,
   stagedFiles,
   untrackedFiles,
@@ -396,8 +397,41 @@ function GitFiles({
           </Headline>
         </Spacing>
 
+        <Spacing mb={PADDING_UNITS}>
+          <Accordion>
+            <AccordionPanel
+              noPaddingContent
+              title={stagedFilesCount >= 1 ? `Staged files (${stagedFilesCount})` : 'No staged files'}
+            >
+              {stagedFilePaths?.map((filePath: string) => (
+                <Spacing key={filePath} my={1} px={PADDING_UNITS}>
+                  <FlexContainer justifyContent="space-between">
+                    <Link
+                      default
+                      monospace
+                      // @ts-ignore
+                      onClick={() => setSelectedFilePath(prev => prev === filePath ? null : filePath)}
+                      warning={modifiedFiles?.[filePath]}
+                    >
+                      {filePath}
+                    </Link>
+
+                    <Spacing mr={1} />
+
+                    {modifiedFiles?.[filePath] && (
+                      <Text warning>
+                        Modified after staging
+                      </Text>
+                    )}
+                  </FlexContainer>
+                </Spacing>
+              ))}
+            </AccordionPanel>
+          </Accordion>
+        </Spacing>
+
         <TextArea
-          disabled={stagedFilesCount === 0}
+          // disabled={stagedFilesCount === 0}
           label="Commit message"
           monospace
           onChange={e => setCommitMessage(e.target.value)}
