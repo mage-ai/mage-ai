@@ -53,3 +53,11 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+GitBranchPolicy.allow_query([
+    'repository',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

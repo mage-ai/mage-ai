@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -17,6 +17,7 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { ACTION_PUSH, TAB_FILES } from '../constants';
 import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
@@ -62,6 +63,7 @@ function Commit({
   const [actionProgress, setActionProgress] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>('');
   const [commitMessage, setCommitMessage] = useState<string>('');
+  const [pullRequest, setPullRequest] = useState<PullRequestType>({});
   const [repositoryName, setRepositoryName] = useState<string>(null);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_logs', {
@@ -170,7 +172,7 @@ function Commit({
       [remotes],
   );
 
-  const { data: dataPullRequests } = api.pull_requests.list({
+  const { data: dataPullRequests, mutate: fetchPullRequests } = api.pull_requests.list({
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,
@@ -185,10 +187,13 @@ function Commit({
           uuid: 'Title',
         },
         {
+          uuid: 'Author',
+        },
+        {
           uuid: 'Created',
         },
         {
-          uuid: 'Author',
+          uuid: 'Last modified',
         },
       ]}
       onClickRow={(rowIndex: number) => {
@@ -200,6 +205,7 @@ function Commit({
       }}
       rows={pullRequests?.map(({
         created_at: createdAt,
+        last_modified: lastModified,
         title,
         url,
         user,
@@ -214,16 +220,59 @@ function Commit({
         >
           {title}
         </Link>,
+        <Text default key="user" monospace small>
+          {user}
+        </Text>,
         <Text default key="createdAt" monospace small>
           {createdAt}
         </Text>,
-        <Text default key="user" monospace small>
-          {user}
+        <Text default key="lastModified" monospace small>
+          {lastModified || '-'}
         </Text>,
       ])}
       uuid="pull-requests"
     />
   ), [pullRequests]);
+
+  const { data: dataGitBranches } = api.git_branches.list({
+    repository: repositoryName,
+  }, {}, {
+    pauseFetch: !repositoryName,
+  });
+  const branchesForRepository: GitBranchType[] =
+    useMemo(() => dataGitBranches?.git_branches || [], [dataGitBranches]);
+
+  useEffect(() => {
+    if (!pullRequest?.compare_branch && branchesForRepository?.includes(branch?.name)) {
+      // @ts-ignore
+      setPullRequest(prev => ({
+        ...prev,
+        compare_branch: branch?.name,
+      }));
+    }
+  }, [
+    branch,
+    branchesForRepository,
+    pullRequest,
+  ]);
+
+  const [createPullRequest, { isLoading: isLoadingCreatePullRequest }] = useMutation(
+    api.pull_requests.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPullRequests();
+            setPullRequest({});
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   return (
     <>
@@ -354,20 +403,23 @@ function Commit({
                 </Text>
               </Spacing>
 
-              <Select
-                beforeIcon={<MultiShare />}
-                beforeIconSize={UNIT * 1.5}
-                monospace
-                onChange={e => setActionRemoteName(e.target.value)}
-                placeholder="Choose remote"
-                value={actionRemoteName || ''}
-              >
-                {remotes?.map(({ name }) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
+              {loading && <Spinner inverted />}
+              {!loading && (
+                <Select
+                  beforeIcon={<MultiShare />}
+                  beforeIconSize={UNIT * 1.5}
+                  monospace
+                  onChange={e => setActionRemoteName(e.target.value)}
+                  placeholder="Choose remote"
+                  value={actionRemoteName || ''}
+                >
+                  {remotes?.map(({ name }) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
 
             <Spacing mr={1} />
@@ -439,7 +491,7 @@ function Commit({
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing mb={1}>
           <Headline>
-            Pull requests
+            Create pull request
           </Headline>
         </Spacing>
 
@@ -447,43 +499,179 @@ function Commit({
           {loading && (
             <Spinner inverted />
           )}
+
           {!loading && (
-            <Select
-              beforeIcon={<GitHubIcon />}
-              beforeIconSize={UNIT * 1.5}
-              monospace
-              onChange={e => setRepositoryName(e.target.value)}
-              placeholder="Choose repository"
-              value={repositoryName || ''}
-            >
-              {repositories?.map(({
-                name,
-              }) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
+            <>
+              <FlexContainer>
+                <div>
+                  <Spacing mb={1}>
+                    <Text bold muted>
+                      Repository
+                    </Text>
+                  </Spacing>
+
+                  <Select
+                    beforeIcon={<GitHubIcon />}
+                    beforeIconSize={UNIT * 1.5}
+                    monospace
+                    onChange={e => setRepositoryName(e.target.value)}
+                    placeholder="Choose repository"
+                    value={repositoryName || ''}
+                  >
+                    {repositories?.map(({
+                      name,
+                    }) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <Spacing mr={1} />
+
+                <div>
+                  <Spacing mb={1}>
+                    <Text bold muted>
+                      Base branch
+                    </Text>
+                  </Spacing>
+
+                  {repositoryName && !dataGitBranches && <Spinner inverted />}
+                  {(!repositoryName || dataGitBranches) && (
+                    <Select
+                      beforeIcon={<Branch />}
+                      beforeIconSize={UNIT * 1.5}
+                      disabled={!repositoryName}
+                      monospace
+                      // @ts-ignore
+                      onChange={e => setPullRequest(prev => ({
+                        ...prev,
+                        base_branch: e.target.value,
+                      }))}
+                      placeholder="Choose branch"
+                      value={pullRequest?.base_branch || ''}
+                    >
+                      {branchesForRepository?.map(({ name }) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </div>
+
+                <Spacing mr={1} />
+
+                <div>
+                  <Spacing mb={1}>
+                    <Text bold muted>
+                      Compare branch
+                    </Text>
+                  </Spacing>
+
+                  {repositoryName && !dataGitBranches && <Spinner inverted />}
+                  {(!repositoryName || dataGitBranches || pullRequest?.compare_branch) && (
+                    <Select
+                      beforeIcon={<Branch />}
+                      beforeIconSize={UNIT * 1.5}
+                      disabled={!repositoryName}
+                      monospace
+                      // @ts-ignore
+                      onChange={e => setPullRequest(prev => ({
+                        ...prev,
+                        compare_branch: e.target.value,
+                      }))}
+                      placeholder="Choose branch"
+                      value={pullRequest?.compare_branch || ''}
+                    >
+                      {!branchesForRepository?.length && pullRequest?.compare_branch && (
+                        <option value={pullRequest?.compare_branch}>
+                          {pullRequest?.compare_branch}
+                        </option>
+                      )}
+                      {branchesForRepository?.map(({ name }) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </div>
+              </FlexContainer>
+
+              <Spacing mt={1}>
+                <TextInput
+                  label="Title"
+                  monospace
+                  // @ts-ignore
+                  onChange={e => setPullRequest(prev => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))}
+                  value={pullRequest?.title || ''}
+                />
+              </Spacing>
+
+              <Spacing mt={1}>
+                <TextArea
+                  label="Description"
+                  monospace
+                  // @ts-ignore
+                  onChange={e => setPullRequest(prev => ({
+                    ...prev,
+                    body: e.target.value,
+                  }))}
+                  value={pullRequest?.body || ''}
+                />
+              </Spacing>
+
+              <Spacing mt={PADDING_UNITS}>
+                <Button
+                  beforeIcon={<Lightning size={UNIT * 2} />}
+                  disabled={!repositoryName || !pullRequest?.title || !pullRequest?.base_branch || !pullRequest?.compare_branch}
+                  loading={isLoadingCreatePullRequest}
+                  onClick={() => {
+                    createPullRequest({
+                      pull_request: pullRequest,
+                    });
+                  }}
+                  primary
+                >
+                  Create new pull request
+                </Button>
+              </Spacing>
+            </>
           )}
         </Spacing>
 
-        {repositoryName && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <Accordion>
-              <AccordionPanel
-                noPaddingContent
-                title="Pull requests"
-              >
-                {!dataPullRequests && (
-                  <Spacing p={PADDING_UNITS}>
-                    <Spinner inverted />
-                  </Spacing>
-                )}
-                {dataPullRequests && pullRequestsMemo}
-              </AccordionPanel>
-            </Accordion>
-          </Spacing>
-        )}
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Accordion visibleMapping={{ 0: !repositoryName }}>
+            <AccordionPanel
+              noPaddingContent
+              title={dataPullRequests ? `Pull requests (${pullRequests?.length})` : 'Pull requests'}
+            >
+              {!repositoryName && (
+                <Spacing p={PADDING_UNITS}>
+                  <Text muted>
+                    Please select a repository to view open pull requests.
+                  </Text>
+                </Spacing>
+              )}
+
+              {repositoryName && (
+                <>
+                  {!dataPullRequests && (
+                    <Spacing p={PADDING_UNITS}>
+                      <Spinner inverted />
+                    </Spacing>
+                  )}
+                  {dataPullRequests && pullRequestsMemo}
+                </>
+              )}
+            </AccordionPanel>
+          </Accordion>
+        </Spacing>
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
