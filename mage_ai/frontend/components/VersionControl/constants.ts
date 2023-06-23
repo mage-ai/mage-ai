@@ -13,8 +13,8 @@ export const TAB_BRANCHES = {
 export const TAB_FILES = {
   uuid: 'Files',
 };
-export const TAB_COMMIT = {
-  uuid: 'Commit',
+export const TAB_PUSH = {
+  uuid: 'Push',
 };
 export const TAB_REMOTE = {
   uuid: 'Setup',
@@ -24,5 +24,5 @@ export const TABS: TabType[] = [
   TAB_REMOTE,
   TAB_BRANCHES,
   TAB_FILES,
-  TAB_COMMIT,
+  TAB_PUSH,
 ];

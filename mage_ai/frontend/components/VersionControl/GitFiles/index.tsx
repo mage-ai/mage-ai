@@ -1,4 +1,3 @@
-import NextLink from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
@@ -24,7 +23,7 @@ import { PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
 import { SpacingStyle } from './index.style';
 import {
   TAB_BRANCHES,
-  TAB_COMMIT,
+  TAB_PUSH,
 } from '../constants';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -474,30 +473,16 @@ function GitFiles({
             afterIcon={<PaginateArrowRight />}
             linkProps={noFilesASelected
               ? {
-                href: `/version-control?tab=${TAB_COMMIT.uuid}`,
+                href: `/version-control?tab=${TAB_PUSH.uuid}`,
               }
               : null
             }
             noHoverUnderline
-            onClick={noFilesASelected
-              ? null
-              : () => {
-                // @ts-ignore
-                updateGitBranch({
-                  git_branch: {
-                    action_type: 'add',
-                    files: Object.keys(selectedFilesA),
-                  },
-                }).then(() => {
-                  router.push(`/version-control?tab=${TAB_COMMIT.uuid}`);
-                });
-              }
-            }
             primary={noFilesASelected}
             sameColorAsText
             secondary={!noFilesASelected}
           >
-            {noFilesASelected ? `Next: ${TAB_COMMIT.uuid}` : `Add files and go to ${TAB_COMMIT.uuid}`}
+            Next: {TAB_PUSH.uuid}
           </Button>
         </FlexContainer>
       </Spacing>
