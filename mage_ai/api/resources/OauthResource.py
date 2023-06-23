@@ -1,3 +1,4 @@
+import json
 import os
 import urllib.parse
 from datetime import datetime, timedelta
@@ -6,6 +7,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
+    ACTIVE_DIRECTORY_CLIENT_ID,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
@@ -99,11 +101,23 @@ class OauthResource(GenericResource):
 
                 model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
-                ad_client_id = os.getenv('ACTIVE_DIRECTORY_CLIENT_ID')
+                ad_directory_id = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID')
                 query = dict(
-                    client_id=ad_client_id,
-                    scope='Global'
+                    client_id=ACTIVE_DIRECTORY_CLIENT_ID,
+                    redirect_uri=f'https://api.mage.ai/v1/oauth/{pk}',
+                    response_type='code',
+                    scope='User.Read',
+                    state=json.dumps(dict(
+                        redirect_uri='?'.join([
+                            redirect_uri,
+                            f'provider={pk}',
+                        ]),
+                        tenant_id=ad_directory_id,
+                    )),
                 )
-                model['url'] = f"https://login.microsoftonline.com/d97992b6-01d7-4c9f-8207-07d2cf675520/oauth2/v2.0/authorize?{'&'.join(query_strings)}"
+                query_strings = []
+                for k, v in query.items():
+                    query_strings.append(f'{k}={v}')
+                model['url'] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
 
         return self(model, user, **kwargs)

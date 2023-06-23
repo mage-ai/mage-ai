@@ -13,11 +13,13 @@ OauthPolicy.allow_actions([
     constants.DETAIL,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
+    OauthScope.CLIENT_PUBLIC,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 
 OauthPolicy.allow_read(OauthPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
+    OauthScope.CLIENT_PUBLIC,
 ], on_action=[
     constants.CREATE,
     constants.DETAIL,
@@ -29,6 +31,7 @@ OauthPolicy.allow_write([
     'token',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
+    OauthScope.CLIENT_PUBLIC,
 ], on_action=[
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
@@ -40,4 +43,5 @@ OauthPolicy.allow_query([
     constants.DETAIL,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
+    OauthScope.CLIENT_PUBLIC,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

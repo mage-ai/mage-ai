@@ -46,6 +46,8 @@ SessionPolicy.allow_write([
     'email',
     'password',
     'username',
+    'token',
+    'provider',
 ], scopes=[
     OauthScope.CLIENT_PUBLIC,
 ], on_action=[

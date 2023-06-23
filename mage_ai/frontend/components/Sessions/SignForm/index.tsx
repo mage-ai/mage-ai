@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -17,15 +17,19 @@ import {
   KEY_CODE_ENTER,
   KEY_SYMBOL_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { PADDING_HORIZONTAL_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_HORIZONTAL_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
 import { setUser } from '@utils/session';
+import { MicrosoftIcon } from '@oracle/icons';
+import { OathProviderEnum } from '@interfaces/OauthType';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
+const KEY_TOKEN = 'token';
+const KEY_PROVIDER = 'provider';
 
 type SignFormProps = {
   title: string;
@@ -75,6 +79,32 @@ function SignForm({
 
   const create = useCallback(payload => AuthToken.logout(() => createRequest(payload)), [
     createRequest,
+  ]);
+
+  const { data: dataOauth } = api.oauths.detail(OathProviderEnum.ACTIVE_DIRECTORY, {
+    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
+  });
+  const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
+
+  const { 
+    access_token: accessTokenFromURL,
+    provider,
+  } = queryFromUrl() || {};
+  useEffect(() => {
+    if (accessTokenFromURL && provider) {
+      // @ts-ignore
+      create({
+        session: {
+          [KEY_PROVIDER]: provider,
+          [KEY_TOKEN]: accessTokenFromURL,
+        },
+      });
+      // });
+    }
+  }, [
+    accessTokenFromURL,
+    create,
+    provider,
   ]);
 
   return (
@@ -167,6 +197,20 @@ function SignForm({
                     wind
                   >
                     Sign into Mage
+                  </KeyboardShortcutButton>
+                </Spacing>
+
+                <Spacing mt={3}>
+                  <KeyboardShortcutButton
+                    beforeElement={<MicrosoftIcon size={UNIT * 2} />}
+                    inline
+                    loading={!oauth?.url}
+                    onClick={() => {
+                      router.push(oauth?.url);
+                    }}
+                    uuid="SignForm/active_directory"
+                  >
+                    Sign in with Microsoft
                   </KeyboardShortcutButton>
                 </Spacing>
               </form>
