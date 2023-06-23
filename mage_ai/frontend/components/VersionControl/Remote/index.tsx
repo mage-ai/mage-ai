@@ -625,7 +625,7 @@ function Remote({
           <Spacing mt={PADDING_UNITS}>
             <Button
               beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !actionRemoteName || !actionBranchName}
+              disabled={!actionName || !actionRemoteName}
               loading={isLoadingAction}
               onClick={() => {
                 setActionProgress(null);
