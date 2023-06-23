@@ -392,7 +392,8 @@
         {
           "group": "Version control",
           "pages": [
-            "production/data-sync/git"
+            "production/data-sync/git",
+            "production/data-sync/github"
           ]
         }
       ]
