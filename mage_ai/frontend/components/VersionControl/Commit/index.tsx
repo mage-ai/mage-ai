@@ -176,8 +176,10 @@ function Commit({
   const branchesForRepository: GitBranchType[] =
     useMemo(() => dataGitBranches?.git_branches || [], [dataGitBranches]);
 
+  console.log(branch?.name, branchesForRepository)
+
   useEffect(() => {
-    if (!pullRequest?.compare_branch && branchesForRepository?.includes(branch?.name)) {
+    if (!pullRequest?.compare_branch && branchesForRepository?.find(({ name }) => name === branch?.name)) {
       // @ts-ignore
       setPullRequest(prev => ({
         ...prev,

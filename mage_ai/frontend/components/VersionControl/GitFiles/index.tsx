@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -53,7 +52,7 @@ function GitFiles({
   stagedFiles,
   untrackedFiles,
 }: GitFilesProps) {
-  const router = useRouter();
+  const refCommitMessageTextArea = useRef(null);
 
   const [commitMessage, setCommitMessage] = useState<string>('');
   const [selectedFilesA, setSelectedFilesA] = useState<{
@@ -294,6 +293,10 @@ function GitFiles({
                         action_type: 'add',
                         files: Object.keys(selectedFilesA),
                       },
+                    }).then(({ data }) => {
+                      if (data?.git_branch) {
+                        refCommitMessageTextArea?.current?.focus();
+                      }
                     });
                   }}
                   primary
@@ -398,6 +401,7 @@ function GitFiles({
           label="Commit message"
           monospace
           onChange={e => setCommitMessage(e.target.value)}
+          ref={refCommitMessageTextArea}
           value={commitMessage || ''}
         />
 
