@@ -25,6 +25,10 @@ class GitBranchResource(GenericResource):
     def collection(self, query, meta, user, **kwargs):
         arr = []
 
+        include_remote_branches = query.get('include_remote_branches', None)
+        if include_remote_branches:
+            include_remote_branches = include_remote_branches[0]
+
         repository = query.get('repository', None)
         if repository:
             repository = repository[0]
@@ -41,6 +45,9 @@ class GitBranchResource(GenericResource):
         else:
             git_manager = Git.get_manager(user=user)
             arr += [dict(name=branch) for branch in git_manager.branches]
+
+            if include_remote_branches:
+                pass
 
         return self.build_result_set(
             arr,
@@ -164,14 +171,26 @@ class GitBranchResource(GenericResource):
                 try:
                     access_token = api.get_access_token_for_user(self.current_user)
                     if access_token:
+                        branch_name = payload.get('branch')
                         remote = git_manager.repo.remotes[pull['remote']]
-                        custom_progress = api.pull(
-                            remote.name,
-                            [url for url in remote.urls][0],
-                            pull.get('branch'),
-                            access_token.token,
-                        )
-                        if custom_progress.other_lines:
+                        url = list(remote.urls)[0]
+
+                        custom_progress = None
+                        if branch_name:
+                            custom_progress = api.pull(
+                                remote.name,
+                                url,
+                                pull.get('branch'),
+                                access_token.token,
+                            )
+                        else:
+                            custom_progress = api.fetch(
+                                remote.name,
+                                url,
+                                access_token.token,
+                            )
+
+                        if custom_progress and custom_progress.other_lines:
                             lines = custom_progress.other_lines
                             if type(lines) is list:
                                 lines = '\n'.join(lines)

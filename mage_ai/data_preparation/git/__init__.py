@@ -318,22 +318,22 @@ class Git:
                 break
 
             error = None
-            remote_name_temp = f'{remote.name}__mage_temp'
+            remote_url = None
+            remote_exists = False
+            try:
+                remote_url = [url for url in remote.urls][0]
+                remote_exists = True
+            except GitCommandError as err:
+                print('WARNING (mage_ai.data_preparation.git.remotes):')
+                print(err)
 
             try:
                 remote_refs = remote.refs
-                if len(remote_refs) == 0 and remote_name_temp not in self.repo.remotes and user:
+                if len(remote_refs) == 0 and user:
                     from mage_ai.data_preparation.git import api
 
                     access_token = api.get_access_token_for_user(user)
                     if access_token:
-                        remote_exists = False
-                        try:
-                            remote_url = [url for url in remote.urls][0]
-                            remote_exists = True
-                        except GitCommandError as err:
-                            print('WARNING (mage_ai.data_preparation.git.remotes):')
-                            print(err)
 
                         if remote_exists:
                             token = access_token.token
@@ -344,8 +344,7 @@ class Git:
                                 token,
                             )
 
-                            self.add_remote(remote_name_temp, url)
-                            remote_temp = self.repo.remotes[remote_name_temp]
+                            remote.set_url(url)
 
                             authenticated = False
                             try:
@@ -357,8 +356,8 @@ class Git:
 
                             if authenticated:
                                 try:
-                                    remote_temp.fetch()
-                                    remote_refs = remote_temp.refs
+                                    remote.fetch()
+                                    remote_refs = remote.refs
                                 except Exception as err:
                                     print('WARNING (mage_ai.data_preparation.git.remotes):')
                                     print(err)
@@ -380,7 +379,7 @@ class Git:
                 error = err
 
             try:
-                self.remove_remote(remote_name_temp)
+                remote.set_url(remote_url)
             except GitCommandError as err:
                 print('WARNING (mage_ai.data_preparation.git.remotes):')
                 print(err)
