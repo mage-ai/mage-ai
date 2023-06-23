@@ -32,7 +32,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localstorage';
+import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { unique } from '@utils/array';
 
