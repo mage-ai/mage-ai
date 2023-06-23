@@ -34,7 +34,11 @@ class PullRequestResource(GenericResource):
                 auth = Auth.Token(access_token.token)
                 g = Github(auth=auth)
                 repo = g.get_repo(repository)
-                pulls = repo.get_pulls(state='open', sort='created')
+                pulls = repo.get_pulls(
+                    direction='desc',
+                    sort='created',
+                    state='open',
+                ).get_page(0)
 
                 for pr in pulls:
                     arr.append(pull_request_to_dict(pr))
