@@ -46,6 +46,7 @@ def pull(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
             print(err)
         git_manager.set_origin(remote_name_temp)
 
+        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
         # check_connection(git_manager.repo, url)
 
         remote = git_manager.repo.remotes[remote_name_temp]
@@ -81,6 +82,7 @@ def push(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
             print(err)
         git_manager.set_origin(remote_name_temp)
 
+        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
         # check_connection(git_manager.repo, url)
 
         remote = git_manager.repo.remotes[remote_name_temp]
