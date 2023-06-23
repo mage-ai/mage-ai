@@ -1,4 +1,5 @@
 export enum OathProviderEnum {
+  ACTIVE_DIRECTORY = 'active_directory',
   GITHUB = 'github',
 }
 
