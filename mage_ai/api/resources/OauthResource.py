@@ -102,22 +102,23 @@ class OauthResource(GenericResource):
                 model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
                 ad_directory_id = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID')
-                query = dict(
-                    client_id=ACTIVE_DIRECTORY_CLIENT_ID,
-                    redirect_uri=f'https://api.mage.ai/v1/oauth/{pk}',
-                    response_type='code',
-                    scope='User.Read',
-                    state=json.dumps(dict(
-                        redirect_uri='?'.join([
-                            redirect_uri,
-                            f'provider={pk}',
-                        ]),
-                        tenant_id=ad_directory_id,
-                    )),
-                )
-                query_strings = []
-                for k, v in query.items():
-                    query_strings.append(f'{k}={v}')
-                model['url'] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
+                if ad_directory_id:
+                    query = dict(
+                        client_id=ACTIVE_DIRECTORY_CLIENT_ID,
+                        redirect_uri=f'https://api.mage.ai/v1/oauth/{pk}',
+                        response_type='code',
+                        scope='User.Read',
+                        state=json.dumps(dict(
+                            redirect_uri='?'.join([
+                                redirect_uri,
+                                f'provider={pk}',
+                            ]),
+                            tenant_id=ad_directory_id,
+                        )),
+                    )
+                    query_strings = []
+                    for k, v in query.items():
+                        query_strings.append(f'{k}={v}')
+                    model['url'] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
 
         return self(model, user, **kwargs)

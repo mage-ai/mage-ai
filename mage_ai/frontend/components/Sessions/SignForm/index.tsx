@@ -81,10 +81,10 @@ function SignForm({
     createRequest,
   ]);
 
-  const { data: dataOauth } = api.oauths.detail(OathProviderEnum.ACTIVE_DIRECTORY, {
+  const { data: dataOauthAD } = api.oauths.detail(OathProviderEnum.ACTIVE_DIRECTORY, {
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
-  const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
+  const adOauthUrl = useMemo(() => dataOauthAD?.oauth?.url, [dataOauthAD]);
 
   const { 
     access_token: accessTokenFromURL,
@@ -199,20 +199,20 @@ function SignForm({
                     Sign into Mage
                   </KeyboardShortcutButton>
                 </Spacing>
-
-                <Spacing mt={3}>
-                  <KeyboardShortcutButton
-                    beforeElement={<MicrosoftIcon size={UNIT * 2} />}
-                    inline
-                    loading={!oauth?.url}
-                    onClick={() => {
-                      router.push(oauth?.url);
-                    }}
-                    uuid="SignForm/active_directory"
-                  >
-                    Sign in with Microsoft
-                  </KeyboardShortcutButton>
-                </Spacing>
+                
+                {adOauthUrl && (
+                  <Spacing mt={4}>
+                    <KeyboardShortcutButton
+                      beforeElement={<MicrosoftIcon size={UNIT * 2} />}
+                      bold
+                      inline
+                      onClick={() => router.push(adOauthUrl)}
+                      uuid="SignForm/active_directory"
+                    >
+                      Sign in with Microsoft
+                    </KeyboardShortcutButton>
+                  </Spacing>
+                )}
               </form>
             </ContainerStyle>
           </Spacing>
