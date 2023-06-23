@@ -362,10 +362,18 @@ class Git:
                 if remote_name_temp in self.repo.remotes:
                     self.remove_remote(remote_name_temp)
 
+            repository_names = []
+            urls = []
+            for url in remote.urls:
+                if url.lower().startswith('https'):
+                    repository_names.append('/'.join(url.split('/')[-2:]).replace('.git', ''))
+                urls.append(url)
+
             arr.append(dict(
                 name=remote.name,
                 refs=refs,
-                urls=[url for url in remote.urls],
+                repository_names=repository_names,
+                urls=urls,
             ))
 
         return arr

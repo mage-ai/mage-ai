@@ -1,6 +1,7 @@
 Faker==4.14.0
 GitPython==3.1.31
 Jinja2==3.1.2
+PyGithub==1.59.0
 PyJWT==2.6.0
 aiofiles==22.1.0
 alembic>=1.7.5

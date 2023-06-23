@@ -389,6 +389,7 @@ function VersionControl() {
       branch={branch}
       branches={branches}
       fetchBranch={fetchBranch}
+      loading={!dataBranchRemotes}
       modifiedFiles={modifiedFiles}
       remotes={remotes}
       setSelectedFilePath={setSelectedFilePath}
@@ -398,6 +399,7 @@ function VersionControl() {
   ), [
     branch,
     branches,
+    dataBranchRemotes,
     fetchBranch,
     modifiedFiles,
     remotes,

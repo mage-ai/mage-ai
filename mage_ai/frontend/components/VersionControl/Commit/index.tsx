@@ -10,6 +10,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType, { GitRemoteType } from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import PullRequestType from '@interfaces/PullRequestType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -17,22 +18,23 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import api from '@api';
-import { ACTION_PUSH, TAB_BRANCHES, TAB_FILES } from '../constants';
-import { Branch, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
+import { ACTION_PUSH, TAB_FILES } from '../constants';
+import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import { pluralize } from '@utils/string';
+import { unique } from '@utils/array';
 
 type CommitProps = {
   branch: GitBranchType;
   branches: GitBranchType[];
   fetchBranch: () => void;
+  loading?: boolean;
   modifiedFiles: {
     [fullPath: string]: boolean;
   };
@@ -48,6 +50,7 @@ function Commit({
   branch,
   branches,
   fetchBranch: fetchBranchProp,
+  loading,
   modifiedFiles,
   remotes,
   setSelectedFilePath,
@@ -59,6 +62,7 @@ function Commit({
   const [actionProgress, setActionProgress] = useState<string>(null);
   const [actionRemoteName, setActionRemoteName] = useState<string>('');
   const [commitMessage, setCommitMessage] = useState<string>('');
+  const [repositoryName, setRepositoryName] = useState<string>(null);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_logs', {
     '_format': 'with_logs',
@@ -150,6 +154,76 @@ function Commit({
       ),
     },
   );
+
+  const repositories: {
+    name: string;
+    url: string;
+  }[] =
+    useMemo(
+      () => unique(
+        remotes.reduce((acc, remote) => acc.concat(remote?.repository_names?.map(name => ({
+          name,
+          url: remote?.urls?.[0],
+        })) || []), []),
+        ({ name }) => name,
+      ),
+      [remotes],
+  );
+
+  const { data: dataPullRequests } = api.pull_requests.list({
+    repository: repositoryName,
+  }, {}, {
+    pauseFetch: !repositoryName,
+  });
+  const pullRequests: PullRequestType[] =
+    useMemo(() => dataPullRequests?.pull_requests || [], [dataPullRequests]);
+  const pullRequestsMemo = useMemo(() => (
+    <Table
+      columnFlex={[null, null, null, null]}
+      columns={[
+        {
+          uuid: 'Title',
+        },
+        {
+          uuid: 'Created',
+        },
+        {
+          uuid: 'Author',
+        },
+      ]}
+      onClickRow={(rowIndex: number) => {
+        const url = pullRequests?.[rowIndex]?.url;
+
+        if (url && typeof window !== 'undefined') {
+          window.open(url, '_blank');
+        }
+      }}
+      rows={pullRequests?.map(({
+        created_at: createdAt,
+        title,
+        url,
+        user,
+      }) => [
+        <Link
+          default
+          href={url}
+          key="title"
+          monospace
+          openNewWindow
+          small
+        >
+          {title}
+        </Link>,
+        <Text default key="createdAt" monospace small>
+          {createdAt}
+        </Text>,
+        <Text default key="user" monospace small>
+          {user}
+        </Text>,
+      ])}
+      uuid="pull-requests"
+    />
+  ), [pullRequests]);
 
   return (
     <>
@@ -246,6 +320,22 @@ function Commit({
             )}
           </FlexContainer>
         </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Accordion>
+          <AccordionPanel
+            noPaddingContent
+            title="Logs"
+          >
+            {!dataBranch && (
+              <Spacing p={PADDING_UNITS}>
+                <Spinner inverted />
+              </Spacing>
+            )}
+            {dataBranch && logsMemo}
+          </AccordionPanel>
+        </Accordion>
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -349,14 +439,51 @@ function Commit({
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing mb={1}>
           <Headline>
-            Logs
+            Pull requests
           </Headline>
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          {!dataBranch && <Spinner inverted />}
-          {dataBranch && logsMemo}
+          {loading && (
+            <Spinner inverted />
+          )}
+          {!loading && (
+            <Select
+              beforeIcon={<GitHubIcon />}
+              beforeIconSize={UNIT * 1.5}
+              monospace
+              onChange={e => setRepositoryName(e.target.value)}
+              placeholder="Choose repository"
+              value={repositoryName || ''}
+            >
+              {repositories?.map(({
+                name,
+              }) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          )}
         </Spacing>
+
+        {repositoryName && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Accordion>
+              <AccordionPanel
+                noPaddingContent
+                title="Pull requests"
+              >
+                {!dataPullRequests && (
+                  <Spacing p={PADDING_UNITS}>
+                    <Spinner inverted />
+                  </Spacing>
+                )}
+                {dataPullRequests && pullRequestsMemo}
+              </AccordionPanel>
+            </Accordion>
+          </Spacing>
+        )}
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
