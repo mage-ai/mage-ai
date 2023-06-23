@@ -53,6 +53,7 @@ class Pipeline:
         self.executor_type = None
         self.executor_config = dict()
         self.name = None
+        self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
         self.schedules = []
         self.uuid = uuid
@@ -425,7 +426,8 @@ class Pipeline:
         self.callback_configs = config.get('callbacks') or []
         self.conditional_configs = config.get('conditionals') or []
         self.executor_type = config.get('executor_type')
-        self.executor_config = config.get('executor_confid') or dict()
+        self.executor_config = config.get('executor_config') or dict()
+        self.notification_config = config.get('notification_config') or dict()
         self.spark_config = config.get('spark_config') or dict()
         self.widget_configs = config.get('widgets') or []
 
@@ -543,6 +545,7 @@ class Pipeline:
             executor_count=self.executor_count,
             executor_type=self.executor_type,
             name=self.name,
+            notification_config=self.notification_config,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
             uuid=self.uuid,
