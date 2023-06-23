@@ -308,26 +308,59 @@ class Git:
         if message:
             self.repo.index.commit(message)
 
-    def remotes(self, limit: int = 40) -> List[Dict]:
+    def remotes(self, limit: int = 40, user: User = None) -> List[Dict]:
         arr = []
 
         for idx, remote in enumerate(self.repo.remotes):
             if idx >= limit:
                 break
 
-            refs = []
-            for ref in remote.refs:
-                refs.append(dict(
-                    name=ref.name,
-                    commit=dict(
-                        author=dict(
-                            email=ref.commit.author.email,
-                            name=ref.commit.author.name,
+            remote_name_temp = f'{remote.name}__mage_temp'
+
+            try:
+                remote_refs = remote.refs
+                if len(remote_refs) == 0 and remote_name_temp not in self.repo.remotes and user:
+                    from git.exc import GitCommandError
+                    from mage_ai.data_preparation.git import api
+
+                    access_token = api.get_access_token_for_user(user)
+                    if access_token:
+                        token = access_token.token
+                        username = api.get_username(token)
+                        url = api.build_authenticated_remote_url(
+                            [url for url in remote.urls][0],
+                            username,
+                            token,
+                        )
+
+                        self.add_remote(remote_name_temp, url)
+                        remote_temp = self.repo.remotes[remote_name_temp]
+
+                        try:
+                            remote_temp.fetch()
+                            remote_refs = remote_temp.refs
+                        except GitCommandError as err:
+                            print('WARNING (mage_ai.data_preparation.git.remotes):')
+                            print(err)
+
+                refs = []
+                for ref in remote_refs:
+                    refs.append(dict(
+                        name=ref.name,
+                        commit=dict(
+                            author=dict(
+                                email=ref.commit.author.email,
+                                name=ref.commit.author.name,
+                            ),
+                            date=datetime.fromtimestamp(ref.commit.authored_date).isoformat(),
+                            message=ref.commit.message,
                         ),
-                        date=datetime.fromtimestamp(ref.commit.authored_date).isoformat(),
-                        message=ref.commit.message,
-                    ),
-                ))
+                    ))
+            except Exception as err:
+                raise err
+            finally:
+                if remote_name_temp in self.repo.remotes:
+                    self.remove_remote(remote_name_temp)
 
             arr.append(dict(
                 name=remote.name,

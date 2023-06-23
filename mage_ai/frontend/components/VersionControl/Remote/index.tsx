@@ -82,9 +82,12 @@ function Remote({
     name,
   }) => name === actionRemoteName)?.refs?.map(({
     name,
-  }) => ({
-    name: name.split(`${actionRemoteName}/`)[1],
-  })), [
+  }) => {
+    const parts = name.split('/');
+    return {
+      name: parts[parts.length - 1],
+    };
+  }), [
     actionRemoteName,
     remotes,
   ]);
