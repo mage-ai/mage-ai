@@ -55,6 +55,7 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 GitBranchPolicy.allow_query([
+    'include_remote_branches',
     'repository',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

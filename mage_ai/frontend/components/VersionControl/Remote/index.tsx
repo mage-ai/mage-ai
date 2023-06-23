@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -30,6 +30,7 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
+import { LOCAL_STORAGE_GIT_REMOTE_NAME, TAB_BRANCHES } from '../constants';
 import { OathProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
@@ -37,8 +38,8 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 
@@ -65,7 +66,12 @@ function Remote({
   const [actionError, setActionError] = useState<string>(null);
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionRemoteName, setActionRemoteName] = useState<string>(null);
+  const [actionRemoteName, setActionRemoteNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
+  const setActionRemoteName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
+    setActionRemoteNameState(value);
+  }, []);
   const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
@@ -130,7 +136,6 @@ function Remote({
               setActionError(null);
               setActionName(null);
               setActionProgress(progress);
-              setActionRemoteName(null);
             }
           },
           onErrorCallback: (response, errors) => showError({
@@ -275,6 +280,10 @@ function Remote({
                       name,
                     },
                   },
+                }).then(() => {
+                  if (actionRemoteName === name) {
+                    setActionRemoteName(null);
+                  }
                 });
               }
             }}

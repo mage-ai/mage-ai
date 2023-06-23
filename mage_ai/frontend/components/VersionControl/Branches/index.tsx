@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
-import GitBranchType from '@interfaces/GitBranchType';
+import GitBranchType, { GitRemoteType } from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -14,11 +14,19 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { Add, Branch, Lightning, PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
+import {
+  Add,
+  Branch,
+  Lightning,
+  MultiShare,
+  PaginateArrowLeft,
+  PaginateArrowRight,
+} from '@oracle/icons';
 import {
   ACTION_DELETE,
   ACTION_MERGE,
   ACTION_REBASE,
+  LOCAL_STORAGE_GIT_REMOTE_NAME,
 } from '../constants';
 import {
   PADDING_UNITS,
@@ -28,6 +36,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { TAB_FILES, TAB_REMOTE } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 
 type BranchesProps = {
@@ -35,21 +44,38 @@ type BranchesProps = {
   branches: GitBranchType[];
   fetchBranch: () => void;
   fetchBranches: () => void;
+  remotes: GitRemoteType[];
   showError: (opts: any) => void;
 };
 
 function Branches({
   branch,
-  branches,
+  branches: branchesProp,
   fetchBranch,
   fetchBranches,
+  remotes,
   showError,
 }: BranchesProps) {
   const [actionMessage, setActionMessage] = useState<string>('');
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
+  const [actionRemoteName, setActionRemoteNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
+  const setActionRemoteName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
+    setActionRemoteNameState(value);
+  }, []);
   const [branchBase, setBranchBase] = useState<string>(null);
   const [branchNameNew, setBranchNameNew] = useState<string>('');
+
+  const selectedRemote = useMemo(() => remotes?.find(({ name }) => name === actionRemoteName), [
+    actionRemoteName,
+    remotes,
+  ]);
+  const branches = useMemo(() => branchesProp?.concat(selectedRemote?.refs || []) || [], [
+    branchesProp,
+    selectedRemote,
+  ]);
 
   const [createGitBranch, { isLoading: isLoadingCreate }] = useMutation(api.git_branches.useCreate(),
     {
@@ -117,43 +143,72 @@ function Branches({
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Spacing mb={1}>
-            <Text bold muted>
-              Current branch
-            </Text>
-          </Spacing>
+          <FlexContainer>
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Remote
+                </Text>
+              </Spacing>
 
-          <FlexContainer alignItems="center">
-            <Tooltip
-              fullSize
-              label="Choose a different branch to switch branches"
-              widthFitContent
-            >
               <Select
-                beforeIcon={<Branch muted={false} />}
-                beforeIconSize={UNIT * 2}
+                beforeIcon={<MultiShare />}
+                beforeIconSize={UNIT * 1.5}
                 monospace
-                // @ts-ignore
-                onChange={e => changeGitBranch({
-                  git_branch: {
-                    name: e.target.value,
-                  },
-                })}
-                value={branch?.name}
+                onChange={e => setActionRemoteName(e.target.value)}
+                placeholder="Choose a remote"
+                value={actionRemoteName || ''}
               >
-                {branch?.name && branches?.map(({ name }) => (
+                {remotes?.map(({ name }) => (
                   <option key={name} value={name}>
                     {name}
                   </option>
                 ))}
               </Select>
-            </Tooltip>
+            </div>
 
-            <Spacing mr={PADDING_UNITS} />
+            <Spacing mr={1} />
 
-            {isLoadingChange && (
-              <Spinner inverted />
-            )}
+            <div>
+              <Spacing mb={1}>
+                <Text bold muted>
+                  Current branch
+                </Text>
+              </Spacing>
+
+              <FlexContainer alignItems="center">
+                <Tooltip
+                  fullSize
+                  label="Choose a different branch to switch branches"
+                  widthFitContent
+                >
+                  <Select
+                    beforeIcon={<Branch muted={false} />}
+                    beforeIconSize={UNIT * 2}
+                    monospace
+                    // @ts-ignore
+                    onChange={e => changeGitBranch({
+                      git_branch: {
+                        name: e.target.value,
+                      },
+                    })}
+                    value={branch?.name}
+                  >
+                    {branch?.name && branches?.map(({ name }) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </Select>
+                </Tooltip>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                {isLoadingChange && (
+                  <Spinner inverted />
+                )}
+              </FlexContainer>
+            </div>
           </FlexContainer>
         </Spacing>
 

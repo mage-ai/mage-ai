@@ -55,7 +55,9 @@ function VersionControl() {
     }
   }, [q]);
 
-  const { data: dataBranches, mutate: fetchBranches } = api.git_branches.list();
+  const { data: dataBranches, mutate: fetchBranches } = api.git_branches.list({
+    include_remote_branches: 1,
+  });
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('current');
@@ -356,6 +358,7 @@ function VersionControl() {
       branches={branches}
       fetchBranch={fetchBranch}
       fetchBranches={fetchBranches}
+      remotes={remotes}
       showError={showError}
     />
   ), [
@@ -363,6 +366,7 @@ function VersionControl() {
     branches,
     fetchBranch,
     fetchBranches,
+    remotes,
     showError,
   ]);
 

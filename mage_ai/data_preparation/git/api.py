@@ -27,6 +27,33 @@ def get_access_token_for_user(user: User) -> Oauth2AccessToken:
         return access_token
 
 
+def fetch(remote_name: str, remote_url: str, token: str) -> RemoteProgress:
+    from mage_ai.data_preparation.git import Git
+
+    custom_progress = RemoteProgress()
+    username = get_username(token)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager()
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    try:
+        remote.fetch(progress=custom_progress)
+    except Exception as err:
+        raise err
+    finally:
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
+
+    return custom_progress
+
+
 def pull(remote_name: str, remote_url: str, branch_name: str, token: str) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
@@ -36,26 +63,17 @@ def pull(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
     url = build_authenticated_remote_url(remote_url, username, token)
     git_manager = Git.get_manager()
 
-    remote_name_temp = f'{remote_name}__mage_temp'
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
 
     try:
-        try:
-            git_manager.add_remote(remote_name_temp, url)
-        except Exception as err:
-            print('WARNING (mage_ai.data_preparation.git.api):')
-            print(err)
-        git_manager.set_origin(remote_name_temp)
-
-        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
-        # check_connection(git_manager.repo, url)
-
-        remote = git_manager.repo.remotes[remote_name_temp]
         remote.pull(branch_name, custom_progress)
     except Exception as err:
         raise err
     finally:
         try:
-            git_manager.remove_remote(remote_name_temp)
+            remote.set_url(url_original)
         except Exception as err:
             print('WARNING (mage_ai.data_preparation.git.api):')
             print(err)
@@ -72,26 +90,17 @@ def push(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
     url = build_authenticated_remote_url(remote_url, username, token)
     git_manager = Git.get_manager()
 
-    remote_name_temp = f'{remote_name}__mage_temp'
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
 
     try:
-        try:
-            git_manager.add_remote(remote_name_temp, url)
-        except Exception as err:
-            print('WARNING (mage_ai.data_preparation.git.api):')
-            print(err)
-        git_manager.set_origin(remote_name_temp)
-
-        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
-        # check_connection(git_manager.repo, url)
-
-        remote = git_manager.repo.remotes[remote_name_temp]
         remote.push(branch_name, custom_progress)
     except Exception as err:
         raise err
     finally:
         try:
-            git_manager.remove_remote(remote_name_temp)
+            remote.set_url(url_original)
         except Exception as err:
             print('WARNING (mage_ai.data_preparation.git.api):')
             print(err)
