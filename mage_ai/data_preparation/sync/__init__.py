@@ -17,7 +17,7 @@ class AuthType(str, Enum):
 
 @dataclass
 class GitConfig(BaseConfig):
-    remote_repo_link: str
+    remote_repo_link: str = None
     repo_path: str = os.getcwd()
     branch: str = 'main'
     sync_on_pipeline_run: bool = False
