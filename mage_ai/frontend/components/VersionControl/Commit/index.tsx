@@ -629,11 +629,18 @@ function Commit({
               <Spacing mt={PADDING_UNITS}>
                 <Button
                   beforeIcon={<Lightning size={UNIT * 2} />}
-                  disabled={!repositoryName || !pullRequest?.title || !pullRequest?.base_branch || !pullRequest?.compare_branch}
+                  disabled={!repositoryName
+                    || !pullRequest?.title
+                    || !pullRequest?.base_branch
+                    || !pullRequest?.compare_branch
+                  }
                   loading={isLoadingCreatePullRequest}
                   onClick={() => {
                     createPullRequest({
-                      pull_request: pullRequest,
+                      pull_request: {
+                        ...pullRequest,
+                        repository: repositoryName,
+                      },
                     });
                   }}
                   primary

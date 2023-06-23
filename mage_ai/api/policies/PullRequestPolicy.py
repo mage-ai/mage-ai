@@ -46,6 +46,7 @@ PullRequestPolicy.allow_write([
     'base_branch',
     'body',
     'compare_branch',
+    'repository',
     'title',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE
