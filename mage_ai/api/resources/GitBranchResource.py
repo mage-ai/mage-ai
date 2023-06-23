@@ -152,7 +152,6 @@ class GitBranchResource(GenericResource):
                     else:
                         self.model['error'] = \
                             'Please authenticate with GitHub before trying to push.'
-
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:

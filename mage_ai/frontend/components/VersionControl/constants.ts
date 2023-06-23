@@ -7,6 +7,9 @@ export const ACTION_PUSH = 'push';
 export const ACTION_REBASE = 'rebase';
 export const ACTION_RESET = 'reset';
 
+export const LOCAL_STORAGE_GIT_REMOTE_NAME = 'git_remote_name';
+export const LOCAL_STORAGE_GIT_REPOSITORY_NAME = 'git_repository_name';
+
 export const TAB_BRANCHES = {
   uuid: 'Branches',
 };

@@ -412,6 +412,7 @@ function VersionControl() {
     <Dashboard
       after={fileDiffMemo}
       afterHidden={!selectedFilePath}
+      afterWidth={UNIT * 40}
       before={(
         <>
           <Spacing p={1}>

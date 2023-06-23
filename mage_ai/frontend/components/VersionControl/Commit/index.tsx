@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -18,7 +18,12 @@ import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { ACTION_PUSH, TAB_FILES } from '../constants';
+import {
+  ACTION_PUSH,
+  LOCAL_STORAGE_GIT_REMOTE_NAME,
+  LOCAL_STORAGE_GIT_REPOSITORY_NAME,
+  TAB_FILES,
+} from '../constants';
 import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
@@ -27,6 +32,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { unique } from '@utils/array';
 
@@ -65,9 +71,19 @@ function Commit({
   const [actionBranchName, setActionBranchName] = useState<string>(branch?.name || '');
   const [actionError, setActionError] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionRemoteName, setActionRemoteName] = useState<string>('');
+  const [actionRemoteName, setActionRemoteNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
+  const setActionRemoteName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
+    setActionRemoteNameState(value);
+  }, []);
   const [pullRequest, setPullRequest] = useState<PullRequestPayloadType>(EMPTY_PULL_REQUEST);
-  const [repositoryName, setRepositoryName] = useState<string>(null);
+  const [repositoryName, setRepositoryNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REPOSITORY_NAME, ''));
+  const setRepositoryName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REPOSITORY_NAME, value);
+    setRepositoryNameState(value);
+  }, []);
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
     api.git_branches.useUpdate(branch?.name),
@@ -87,7 +103,6 @@ function Commit({
               fetchBranch();
               setActionBranchName(null);
               setActionError(null);
-              setActionRemoteName(null);
               setActionProgress(progress);
             }
           },

@@ -39,17 +39,26 @@ def pull(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
     remote_name_temp = f'{remote_name}__mage_temp'
 
     try:
-        git_manager.add_remote(remote_name_temp, url)
+        try:
+            git_manager.add_remote(remote_name_temp, url)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
         git_manager.set_origin(remote_name_temp)
 
-        check_connection(git_manager.repo, url)
+        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
+        # check_connection(git_manager.repo, url)
 
         remote = git_manager.repo.remotes[remote_name_temp]
         remote.pull(branch_name, custom_progress)
     except Exception as err:
         raise err
     finally:
-        git_manager.remove_remote(remote_name_temp)
+        try:
+            git_manager.remove_remote(remote_name_temp)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
 
     return custom_progress
 
@@ -66,17 +75,26 @@ def push(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
     remote_name_temp = f'{remote_name}__mage_temp'
 
     try:
-        git_manager.add_remote(remote_name_temp, url)
+        try:
+            git_manager.add_remote(remote_name_temp, url)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
         git_manager.set_origin(remote_name_temp)
 
-        check_connection(git_manager.repo, url)
+        # TODO (tommy dang): we need to remove this because it doesn’t work for some reason.
+        # check_connection(git_manager.repo, url)
 
         remote = git_manager.repo.remotes[remote_name_temp]
         remote.push(branch_name, custom_progress)
     except Exception as err:
         raise err
     finally:
-        git_manager.remove_remote(remote_name_temp)
+        try:
+            git_manager.remove_remote(remote_name_temp)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
 
     return custom_progress
 
@@ -145,4 +163,4 @@ async def __poll_process_with_timeout(
 
     if return_code is None:
         proc.kill()
-        raise TimeoutError
+        raise TimeoutError(error_message)
