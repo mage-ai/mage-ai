@@ -213,7 +213,11 @@ def get_repo_config(repo_path=None) -> RepoConfig:
 
 
 def get_project_type(repo_path=None) -> ProjectType:
-    return get_repo_config(repo_path=repo_path).project_type
+    try:
+        return get_repo_config(repo_path=repo_path).project_type
+    except Exception:
+        # default to standalone project type
+        return ProjectType.STANDALONE
 
 
 def set_repo_path(repo_path: str) -> None:
