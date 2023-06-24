@@ -1,5 +1,6 @@
-from mage_ai.streaming.constants import SourceType
 from typing import Dict
+
+from mage_ai.streaming.constants import SourceType
 
 
 class SourceFactory:
@@ -23,13 +24,19 @@ class SourceFactory:
 
             return AzureEventHubSource(config, **kwargs)
         elif connector_type == SourceType.GOOGLE_CLOUD_PUBSUB:
-            from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
+            from mage_ai.streaming.sources.google_cloud_pubsub import (
+                GoogleCloudPubSubSource,
+            )
 
             return GoogleCloudPubSubSource(config, **kwargs)
         elif connector_type == SourceType.RABBITMQ:
             from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 
             return RabbitMQSource(config, **kwargs)
+        elif connector_type == SourceType.SALESFORCE:
+            from mage_ai.streaming.sources.salesforce import SalesforceSource
+
+            return SalesforceSource(config, **kwargs)
         raise Exception(
             f'Consuming data from {connector_type} is not supported in streaming pipelines yet.',
         )

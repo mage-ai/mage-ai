@@ -10,6 +10,7 @@ class SourceType(str, Enum):
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
     RABBITMQ = 'rabbitmq'
+    SALESFORCE = 'salesforce'
 
 
 class SinkType(str, Enum):
