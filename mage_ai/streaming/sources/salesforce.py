@@ -2,15 +2,10 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Callable
 
-from aiocometd.constants import ConnectionType
-from aiocometd.transports.registry import register_transport
 from aiosfstream import SalesforceStreamingClient
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
-from mage_ai.utils.salesforce_update import UpdatedLongPollingTransport
-
-register_transport(ConnectionType.LONG_POLLING)(UpdatedLongPollingTransport)
 
 
 @dataclass
