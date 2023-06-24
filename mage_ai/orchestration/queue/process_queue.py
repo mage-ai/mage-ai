@@ -13,12 +13,8 @@ from sentry_sdk import capture_exception
 from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
-from mage_ai.settings import (
-    ENABLE_NEW_RELIC,
-    SENTRY_DSN,
-    SENTRY_TRACES_SAMPLE_RATE,
-    NEW_RELIC_CONFIG_PATH
-)
+from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 
 class JobStatus(str, Enum):
@@ -94,12 +90,7 @@ class Worker(mp.Process):
                 self.dsn,
                 traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             )
-        if ENABLE_NEW_RELIC:
-            try:
-                newrelic.agent.initialize(NEW_RELIC_CONFIG_PATH)
-            except newrelic.api.exceptions.ConfigurationError as error:
-                print("Error with new relic initialization. Disable "
-                      f"new relic reporting. Message: {error}")
+        initialize_new_relic()
 
     @newrelic.agent.background_task(name='worker-run', group='Task')
     def run(self):
