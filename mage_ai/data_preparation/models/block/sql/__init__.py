@@ -137,8 +137,9 @@ def execute_sql_code(
                 NotFound: 404 Not found: Table database:schema.table_name
                     was not found in location XX
                 """
+                total_retries = 5
                 tries = 0
-                while tries < 10:
+                while tries < total_retries:
                     sleep(tries)
                     tries += 1
                     try:
@@ -149,7 +150,7 @@ def execute_sql_code(
                         )
                         return [result]
                     except Exception as err:
-                        if '404' not in str(err):
+                        if '404' not in str(err) or tries == total_retries:
                             raise err
     elif DataSource.CLICKHOUSE.value == data_provider:
         from mage_ai.io.clickhouse import ClickHouse
