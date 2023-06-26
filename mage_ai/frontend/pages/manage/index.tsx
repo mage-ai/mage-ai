@@ -337,6 +337,7 @@ function WorkspacePage() {
               {ip}
             </Text>,
             <Button
+              disabled={!ip}
               iconOnly
               key="open_button"
               onClick={() => window.open(link)}

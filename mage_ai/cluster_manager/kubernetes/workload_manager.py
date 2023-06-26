@@ -26,6 +26,7 @@ from mage_ai.orchestration.constants import (
     DB_USER,
 )
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
+from mage_ai.shared.array import find
 
 
 class WorkloadManager:
@@ -53,24 +54,57 @@ class WorkloadManager:
 
         return False
 
-    def list_services(self):
+    def list_workloads(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
-        services_list = []
+        workloads_list = []
+
+        pods = self.core_client.list_namespaced_pod(self.namespace).items
+        pod_map = dict()
+        for pod in pods:
+            try:
+                name = pod.metadata.labels.get('app')
+                pod_map[name] = pod
+            except Exception:
+                pass
         for service in services:
             try:
                 labels = service.metadata.labels
                 if not labels.get('dev-instance'):
                     continue
-                conditions = service.status.conditions or list()
-                services_list.append(dict(
+                name = labels.get('app')
+                pod = pod_map[name]
+                service_type = service.spec.type
+                workload = dict(
                     name=labels.get('app'),
-                    status='RUNNING' if len(conditions) == 0 else conditions[0].status,
-                    type='kubernetes',
-                ))
+                    type=service_type,
+                )
+                if pod:
+                    status = pod.status.phase
+                    workload['status'] = status.upper()
+
+                    node_name = pod.spec.node_name
+                    ip = None
+                    if service_type == 'NodePort':
+                        try:
+                            if node_name:
+                                items = self.core_client.list_node(
+                                    field_selector=f'metadata.name={node_name}').items
+                                node = items[0]
+                                ip = find(
+                                    lambda a: a.type == 'ExternalIP',
+                                    node.status.addresses
+                                ).address
+                                if ip:
+                                    node_port = service.spec.ports[0].node_port
+                                    workload['ip'] = f'{ip}:{node_port}'
+                        except Exception:
+                            pass
+
+                workloads_list.append(workload)
             except Exception:
                 pass
 
-        return services_list
+        return workloads_list
 
     def create_workload(
         self,
@@ -88,7 +122,10 @@ class WorkloadManager:
             'service_account_name',
             os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
         )
-        storage_class_name = kwargs.get('storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME))
+        storage_class_name = kwargs.get(
+            'storage_class_name',
+            os.getenv(KUBE_STORAGE_CLASS_NAME, 'default'),
+        )
         storage_access_mode = kwargs.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = kwargs.get('storage_request_size', 2)
 

@@ -61,7 +61,7 @@ class ApiInstancesHandler(BaseHandler):
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
-            instances = workload_manager.list_services()
+            instances = workload_manager.list_workloads()
 
         self.write(dict(instances=instances))
 
