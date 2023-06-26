@@ -22,13 +22,23 @@ class PipelineRunPresenter(BasePresenter):
 
     async def present(self, **kwargs):
         if constants.LIST == kwargs['format']:
-            return self.model.to_dict(include_attributes=[
+            query = kwargs.get('query', {})
+
+            additional_attributes = [
                 'block_runs',
                 'block_runs_count',
                 'pipeline_schedule_name',
                 'pipeline_schedule_token',
                 'pipeline_schedule_type',
-            ])
+            ]
+
+            include_pipeline_type = query.get('include_pipeline_type', [False])
+            if include_pipeline_type:
+                include_pipeline_type = include_pipeline_type[0]
+            if include_pipeline_type:
+                additional_attributes.append('pipeline_type')
+
+            return self.model.to_dict(include_attributes=additional_attributes)
         elif constants.DETAIL == kwargs['format']:
             block_runs = self.model.block_runs
             data = self.model.to_dict()

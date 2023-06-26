@@ -28,7 +28,7 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
 )
-from mage_ai.data_preparation.models.constants import ExecutorType
+from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -256,6 +256,10 @@ class PipelineRun(BaseModel):
     @property
     def pipeline(self) -> 'Pipeline':
         return Pipeline.get(self.pipeline_uuid)
+
+    @property
+    def pipeline_type(self) -> PipelineType:
+        return self.pipeline.type
 
     @property
     def logs(self):

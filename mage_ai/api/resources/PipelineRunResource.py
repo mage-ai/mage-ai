@@ -68,9 +68,9 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
         if status is not None:
             results = results.filter(PipelineRun.status == status)
-        if start_timestamp:
+        if start_timestamp is not None:
             results = results.filter(PipelineRun.created_at >= start_timestamp)
-        if end_timestamp:
+        if end_timestamp is not None:
             results = results.filter(PipelineRun.created_at <= end_timestamp)
 
         if order_by:
