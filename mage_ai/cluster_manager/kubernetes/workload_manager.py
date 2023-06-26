@@ -72,55 +72,39 @@ class WorkloadManager:
                 if not labels.get('dev-instance'):
                     continue
                 name = labels.get('app')
-                print('app name:', name)
                 pod = pod_map[name]
-                node_name = pod.spec.node_name
-                ip = None
-                try:
-                    print('node name:', node_name)
-                    if node_name:
-                        items = self.core_client.list_node(
-                            field_selector=f'metadata.name={node_name}').items
-                        print('items:', items)
-                        node = items[0]
-                        ip = find(lambda a: a.type == 'ExternalIP', node.status.addresses).address
-                except Exception:
-                    pass
+                service_type = service.spec.type
+                workload = dict(
+                    name=labels.get('app'),
+                    type=service_type,
+                )
                 if pod:
                     status = pod.status.phase
-                    workload = dict(
-                        name=labels.get('app'),
-                        status=status.upper(),
-                        type='kubernetes',
-                    )
-                    if ip:
-                        workload['ip'] = f'{ip}:1234'
+                    workload['status'] = status.upper()
 
-                    workloads_list.append(workload)
-            except Exception as e:
-                print('error occurred:', str(e))
-                pass
+                    node_name = pod.spec.node_name
+                    ip = None
+                    if service_type == 'NodePort':
+                        try:
+                            if node_name:
+                                items = self.core_client.list_node(
+                                    field_selector=f'metadata.name={node_name}').items
+                                node = items[0]
+                                ip = find(
+                                    lambda a: a.type == 'ExternalIP',
+                                    node.status.addresses
+                                ).address
+                                if ip:
+                                    node_port = service.spec.ports[0].node_port
+                                    workload['ip'] = f'{ip}:{node_port}'
+                        except Exception:
+                            pass
 
-        return workloads_list
-
-    def list_services(self):
-        services = self.core_client.list_namespaced_service(self.namespace).items
-        services_list = []
-        for service in services:
-            try:
-                labels = service.metadata.labels
-                if not labels.get('dev-instance'):
-                    continue
-                conditions = service.status.conditions or list()
-                services_list.append(dict(
-                    name=labels.get('app'),
-                    status='RUNNING' if len(conditions) == 0 else conditions[0].status,
-                    type='kubernetes',
-                ))
+                workloads_list.append(workload)
             except Exception:
                 pass
 
-        return services_list
+        return workloads_list
 
     def create_workload(
         self,
