@@ -287,6 +287,7 @@ function SyncData() {
                       ...prevSync,
                       branch: null,
                       sync_on_pipeline_run: false,
+                      sync_on_start: false,
                     }));
                   }
                   return newVal;
@@ -308,7 +309,7 @@ function SyncData() {
           <>
             <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <Text bold>
-                Sync with a specified branch when requested or on every trigger run. These settings
+                Sync with a specified branch. These settings
                 will be saved at the project level.
               </Text>
             </Spacing>
@@ -351,6 +352,20 @@ function SyncData() {
                     setSync(prev => ({
                       ...prev,
                       sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
+                    }));
+                  }}
+                />
+              </Spacing>
+            </FlexContainer>
+            <FlexContainer alignItems="center">
+              <Spacing mt={2}>
+                <Checkbox
+                  checked={sync?.sync_on_start}
+                  label="Sync on server start up"
+                  onClick={() => {
+                    setSync(prev => ({
+                      ...prev,
+                      sync_on_start: !sync?.sync_on_start,
                     }));
                   }}
                 />

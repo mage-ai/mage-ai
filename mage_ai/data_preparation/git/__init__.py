@@ -486,7 +486,7 @@ class Git:
                     self._run_command(cmd)
                 print(f'Installing {requirements_file} completed successfully.')
             except Exception as err:
-                print(f'Skip installing {requirements_file} due to error: {err}')
+                print(f'Skip installing {requirements_file} due to error: {str(err)}')
                 pass
 
     def __create_ssh_keys(self) -> str:

@@ -11,12 +11,9 @@ class GitSync(BaseSync):
         self.git_manager = Git(sync_config)
 
     def sync_data(self):
-        with VerboseFunctionExec(
-            f'Syncing data with remote repo {self.remote_repo_link}',
-            verbose=True,
-        ):
-            self.git_manager.reset(self.branch)
+        self.git_manager.reset(self.branch)
 
+    # Reset git sync by cloning the remote repo
     def reset(self):
         with VerboseFunctionExec(
             f'Attempting to clone from remote repo {self.remote_repo_link}',
