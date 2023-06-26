@@ -28,6 +28,7 @@ from mage_ai.data_preparation.models.block.sql import (
     snowflake,
     spark,
     trino,
+    clickhouse,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -597,6 +598,23 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.CLICKHOUSE == profile_type:
+        database = profile.get('schema')
+        interface = profile.get('driver')
+
+        config_file_loader = ConfigFileLoader(config=dict(
+            CLICKHOUSE_DATABASE=database,
+            CLICKHOUSE_HOST=profile.get('host'),
+            CLICKHOUSE_INTERFACE=interface,
+            CLICKHOUSE_PASSWORD=profile.get('password'),
+            CLICKHOUSE_PORT=profile.get('port'),
+            CLICKHOUSE_USERNAME=profile.get('user'),
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
 
     if not config_file_loader or not configuration:
         attr = parse_attributes(block)
@@ -733,6 +751,15 @@ def create_upstream_tables(
                 block,
                 **kwargs_shared,
             )
+    elif DataSource.CLICKHOUSE == data_provider:
+        from mage_ai.io.clickhouse import ClickHouse
+
+        loader = ClickHouse.with_config(config_file_loader)
+        clickhouse.create_upstream_block_tables(
+            loader,
+            block,
+            **kwargs_shared,
+        )
 
     block.upstream_blocks = upstream_blocks_init
 
@@ -930,6 +957,11 @@ def execute_query(
 
         with Trino.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
+    elif DataSource.CLICKHOUSE == data_provider:
+        from mage_ai.io.clickhouse import ClickHouse
+
+        loader = ClickHouse.with_config(config_file_loader)
+        return loader.load(query_string, **shared_kwargs)
 
 
 def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
