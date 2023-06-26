@@ -322,7 +322,8 @@
         {
           "group": "Authentication",
           "pages": [
-            "production/authentication/overview"
+            "production/authentication/overview",
+            "production/authentication/microsoft"
           ]
         },
         {
