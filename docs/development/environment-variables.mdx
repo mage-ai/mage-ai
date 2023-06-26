@@ -6,6 +6,7 @@ description: "Configure Mage settings through environment variables."
 
 | Variable name             | Description                   | Example values     |
 | ------------------------- | ----------------------------- | ----------------- |
+| `ACTIVE_DIRECTORY_DIRECTORY_ID` | Set this value to your organization's tenant id to enable signing in with Microsoft account. | [More info](/production/authentication/microsoft) |
 | `AUTHENTICATION_MODE` | Set the authentication mode in Mage. Omitting the variable will default to basic password authentication. | `ldap` |
 | `DEBUG` | Turn on "debug" mode. Mage will output more logs that could be useful for debugging issues. | 1 |
 | `DISABLE_NOTEBOOK_EDIT_ACCESS` | Setting this variable will disable edit access based on the value. [More information](/production/configuring-production-settings/overview#read-only-access) | 1 |

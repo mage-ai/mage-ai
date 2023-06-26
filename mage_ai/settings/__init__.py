@@ -23,6 +23,7 @@ def is_disable_pipeline_edit_access():
     return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
 
 
+# ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
@@ -38,6 +39,10 @@ LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
 # values: Viewer, Editor, Admin
 LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
 
+ACTIVE_DIRECTORY_DIRECTORY_ID = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID', None)
+
+# ----------------------------------------------------------
+
 SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 
 SHELL_COMMAND = os.getenv('SHELL_COMMAND', None)
@@ -49,7 +54,6 @@ SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
-
 
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
@@ -71,4 +75,5 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'SENTRY_DSN',
     'SENTRY_TRACES_SAMPLE_RATE',
     'MAGE_PUBLIC_HOST',
+    'ACTIVE_DIRECTORY_DIRECTORY_ID',
 ]
