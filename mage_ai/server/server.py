@@ -227,20 +227,22 @@ async def main(
     db_connection.start_session(force=True)
 
     # Git sync if option is enabled
-    sync_config = GitConfig.load(config=get_preferences().sync_config)
-    if sync_config.sync_on_start:
-        sync = GitSync(sync_config)
-        try:
-            sync.sync_data()
-            print(
-                f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
-                f', branch: {sync_config.branch}'
-            )
-        except Exception as err:
-            print(
-                f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                f', branch: {sync_config.branch} with error: {str(err)}'
-            )
+    preferences = get_preferences()
+    if preferences.sync_config:
+        sync_config = GitConfig.load(config=preferences.sync_config)
+        if sync_config.sync_on_start:
+            try:
+                sync = GitSync(sync_config)
+                sync.sync_data()
+                print(
+                    f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch}'
+                )
+            except Exception as err:
+                print(
+                    f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch} with error: {str(err)}'
+                )
 
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
