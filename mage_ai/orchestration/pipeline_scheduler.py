@@ -90,12 +90,13 @@ class PipelineScheduler:
         )
 
     def start(self, should_schedule: bool = True) -> None:
-        if get_preferences().sync_config:
+        preferences = get_preferences()
+        if preferences.sync_config:
             tags = dict(
                 pipeline_run_id=self.pipeline_run.id,
                 pipeline_uuid=self.pipeline.uuid,
             )
-            sync_config = GitConfig.load(config=get_preferences().sync_config)
+            sync_config = GitConfig.load(config=preferences.sync_config)
             if sync_config.sync_on_pipeline_run:
                 sync = GitSync(sync_config)
                 try:

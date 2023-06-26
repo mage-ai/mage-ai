@@ -15,6 +15,7 @@ export default interface SyncType {
   repo_path?: string;
   branch?: string;
   sync_on_pipeline_run?: boolean;
+  sync_on_start?: boolean;
   user_git_settings?: UserGitSettingsType;
 }
 

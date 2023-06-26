@@ -14,6 +14,7 @@ from tornado.log import enable_pretty_logging
 from tornado.options import options
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
@@ -22,6 +23,8 @@ from mage_ai.data_preparation.repo_manager import (
     update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.data_preparation.sync import GitConfig
+from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
@@ -222,6 +225,24 @@ async def main(
     print(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
+
+    # Git sync if option is enabled
+    preferences = get_preferences()
+    if preferences.sync_config:
+        sync_config = GitConfig.load(config=preferences.sync_config)
+        if sync_config.sync_on_start:
+            try:
+                sync = GitSync(sync_config)
+                sync.sync_data()
+                print(
+                    f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch}'
+                )
+            except Exception as err:
+                print(
+                    f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch} with error: {str(err)}'
+                )
 
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
