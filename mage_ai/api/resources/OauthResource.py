@@ -1,5 +1,4 @@
 import json
-import os
 import urllib.parse
 from datetime import datetime, timedelta
 
@@ -17,6 +16,7 @@ from mage_ai.authentication.oauth.constants import (
 from mage_ai.authentication.oauth.utils import access_tokens_for_provider
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
+from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
 
 
 class OauthResource(GenericResource):
@@ -101,7 +101,7 @@ class OauthResource(GenericResource):
 
                 model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
-                ad_directory_id = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID')
+                ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
                 if ad_directory_id:
                     query = dict(
                         client_id=ACTIVE_DIRECTORY_CLIENT_ID,
