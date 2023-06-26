@@ -85,8 +85,10 @@ to Github, unless you want them to.
    (this is a separate Git feature):
     1. `Branch name`: This field is only used when running a Git sync. Git syncs can be run either from this
         Git settings page, or before every trigger run.
-    2. `Sync before each trigger run`: If this field is checked, then Mage will sync with Github before
+    2. `Sync before each trigger run`: If this field is checked, then Mage will sync with the Git repo before
         each trigger is run.
+    2. `Sync on server start up`: If this field is checked, then Mage will sync with the Git repo when
+        Mage is started.
 8. Save your Git settings
 
 ## Git sync
@@ -116,7 +118,8 @@ Git settings
 
 Git sync settings (optional)
 * GIT_BRANCH: corresponds to `Branch name`
-* GIT_SYNC_ON_PIPELINE_RUN: corresponds to `Sync before each triggger run`, options: 0 or 1
+* GIT_SYNC_ON_PIPELINE_RUN: corresponds to `Sync before each trigger run`, options: 0 or 1
+* GIT_SYNC_ON_START: corresponds to `Sync on server start up`, options: 0 or 1
 
 Authentication environment variables (optional). Mage will use your saved git secrets if they are available.
 * GIT_SSH_PUBLIC_KEY: SSH public key encoded in base64, used for ssh auth type
