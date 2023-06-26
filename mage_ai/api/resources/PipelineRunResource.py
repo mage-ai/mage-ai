@@ -2,6 +2,7 @@ from sqlalchemy.orm import selectinload
 
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.api.utils import get_query_timestamps
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -25,6 +26,7 @@ class PipelineRunResource(DatabaseResource):
         if parent_model:
             pipeline_schedule_id = parent_model.id
 
+        start_timestamp, end_timestamp = get_query_timestamps(query_arg)
         backfill_id = query_arg.get('backfill_id', [None])
         if backfill_id:
             backfill_id = backfill_id[0]
@@ -66,6 +68,10 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
         if status is not None:
             results = results.filter(PipelineRun.status == status)
+        if start_timestamp:
+            results = results.filter(PipelineRun.created_at >= start_timestamp)
+        if end_timestamp:
+            results = results.filter(PipelineRun.created_at <= end_timestamp)
 
         if order_by:
             arr = []

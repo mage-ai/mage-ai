@@ -88,8 +88,10 @@ PipelineRunPolicy.allow_write([
 
 PipelineRunPolicy.allow_query([
     'backfill_id',
+    'end_timestamp',
     'order_by[]',
     'pipeline_uuid',
+    'start_timestamp',
     'status',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
