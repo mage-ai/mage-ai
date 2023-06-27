@@ -17,8 +17,7 @@ from mage_integrations.sources.mode.client import (
 from mage_integrations.sources.mode.transform import (
     transform_json,
     transform_times,
-    find_datetimes_in_schema,
-    test_transform_spaces
+    find_datetimes_in_schema
 )
 
 LOGGER = singer.get_logger()
@@ -213,10 +212,6 @@ class FullTableStream(BaseStream):
 
 
 class SpaceList(FullTableStream):
-    """
-    This stream is not replicated and only used by the Spaces stream.
-
-    """
     tap_stream_id = 'space_list'
     key_properties = ['id']
     to_replicate = False
@@ -267,7 +262,6 @@ class ReportList(FullTableStream):
     parent = SpaceList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
-        # response = self.client.get(self.path)
         counter = 0
 
         for space_token in self.get_parent_data():
@@ -304,10 +298,63 @@ class Reports(FullTableStream):
 
         yield from reports
 
+class QueryList(FullTableStream):
+    tap_stream_id = 'query_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'reports/{}/queries'
+    data_key = 'queries'
+    parent = ReportList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        counter = 0
+
+        for report_token in self.get_parent_data():
+            call_path = self.path.format(report_token)
+            response = self.client.get(call_path)
+
+            queries_in_response = response.get(self.default_data_key).get(self.data_key)
+
+            # Only yield records when called by child streams
+            if is_parent and queries_in_response != []:
+                counter += 1
+                for record in queries_in_response:
+                    yield {
+                        'query_token': record.get('token'),
+                        'report_token': report_token
+                    }
+
+        if counter == 0:
+            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+            raise ModeError
+
+class Queries(FullTableStream):
+    tap_stream_id = 'queries'
+    key_properties = ['id']
+    path = 'reports/{}/queries/{}'
+    parent = QueryList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        queries = []
+
+        for tokens in self.get_parent_data():
+            query_token = tokens.get("query_token")
+            report_token = tokens.get("report_token")
+
+            call_path = self.path.format(report_token, query_token)
+            results = self.client.get(call_path)
+
+            queries.append(results)
+
+        yield from queries
+
 
 STREAMS = {
     'space_list': SpaceList,
     'spaces': Spaces,
     'report_list': ReportList,
-    'reports': Reports
+    'reports': Reports,
+    'query_list': QueryList,
+    'queries': Queries
 }

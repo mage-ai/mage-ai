@@ -2,7 +2,6 @@ import math as m
 
 from singer.utils import strptime_to_utc
 
-
 # De-nest each list node up to record level
 def denest_list_nodes(this_json, data_key, list_nodes):
     new_json = this_json
@@ -15,26 +14,6 @@ def denest_list_nodes(this_json, data_key, list_nodes):
             else:
                 new_json[data_key][i].pop(list_node, None)
         i = i + 1
-    return new_json
-
-
-def test_transform_spaces(list_of_spaces):
-    new_json = []
-    for record in list_of_spaces:
-        new_space = {}
-
-        new_space["token"] = record.get('token')
-        new_space["id"] = record.get('id')
-        new_space["space_type"] = record.get('space_type')
-        new_space["name"] = record.get('name')
-        new_space["description"] = record.get('description')
-        new_space["state"] = record.get('state')
-        new_space["restricted"] = record.get('restricted')
-        new_space["free_default"] = record.get('free_default')
-        new_space["viewable"] = record.get('viewable?')
-        new_space["default_access_level"] = record.get('default_access_level')
-
-        new_json.append(new_space)
     return new_json
         
 
