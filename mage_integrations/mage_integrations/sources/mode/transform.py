@@ -17,24 +17,6 @@ def denest_list_nodes(this_json, data_key, list_nodes):
         i = i + 1
     return new_json
 
-# De-nest conversation_parts from conversations w/ key conversation fields
-def transform_conversation_parts(this_json, data_key):
-    new_json = []
-    for record in list(this_json.get(data_key, [])):
-        conv_id = record.get('id')
-        conv_created = record.get('created_at')
-        conv_updated = record.get('updated_at')
-        conv_total_parts = record.get('conversation_parts', {}).get('total_parts')
-        conv_parts = record.get('conversation_parts', {}).get('conversation_parts', [])
-        for conv_part in conv_parts:
-            part = conv_part
-            part['conversation_id'] = conv_id
-            part['conversation_total_parts'] = conv_total_parts
-            part['conversation_created_at'] = conv_created
-            part['conversation_updated_at'] = conv_updated
-            new_json.append(part)
-    return new_json
-
 
 def test_transform_spaces(list_of_spaces):
     new_json = []
@@ -70,9 +52,6 @@ def transform_json(this_json, stream_name, data_key):
     elif stream_name == 'conversations':
         list_nodes = ['tags', 'contacts']
         denested_json = denest_list_nodes(new_json, data_key, list_nodes)
-        new_json = denested_json
-    elif stream_name == 'conversation_parts':
-        denested_json = transform_conversation_parts(new_json, data_key)
         new_json = denested_json
     if data_key in new_json:
         return new_json[data_key]

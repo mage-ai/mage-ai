@@ -250,18 +250,64 @@ class Spaces(FullTableStream):
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
         spaces = []
 
-        for record in self.get_parent_data():
-            call_path = self.path.format(record)
+        for space_token in self.get_parent_data():
+            call_path = self.path.format(space_token)
             results = self.client.get(call_path)
 
             spaces.append(results)
 
-        new_spaces_list = test_transform_spaces(spaces)
-        # self.logger.info(f"This is the new spaces list: {new_spaces_list}")
-        yield from new_spaces_list
+        yield from spaces
+
+class ReportList(FullTableStream):
+    tap_stream_id = 'report_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'spaces/{}/reports'
+    data_key = 'reports'
+    parent = SpaceList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        # response = self.client.get(self.path)
+        counter = 0
+
+        for space_token in self.get_parent_data():
+            call_path = self.path.format(space_token)
+            response = self.client.get(call_path)
+
+            reports_in_response = response.get(self.default_data_key).get(self.data_key)
+
+            # Only yield records when called by child streams
+            if is_parent and reports_in_response != []:
+                counter += 1
+                for record in reports_in_response:
+                    yield record.get('token')
+
+        if counter == 0:
+            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+            raise ModeError
+
+class Reports(FullTableStream):
+    tap_stream_id = 'reports'
+    key_properties = ['id']
+    path = 'reports/{}'
+    parent = ReportList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        reports = []
+
+        for report_token in self.get_parent_data():
+            call_path = self.path.format(report_token)
+            results = self.client.get(call_path)
+
+            reports.append(results)
+
+        yield from reports
 
 
 STREAMS = {
     'space_list': SpaceList,
     'spaces': Spaces,
+    'report_list': ReportList,
+    'reports': Reports
 }
