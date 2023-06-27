@@ -349,6 +349,62 @@ class Queries(FullTableStream):
 
         yield from queries
 
+class ChartList(FullTableStream):
+    tap_stream_id = 'chart_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'reports/{}/queries/{}/charts'
+    data_key = 'charts'
+    parent = QueryList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        counter = 0
+
+        for tokens in self.get_parent_data():
+            report_token = tokens.get("report_token")
+            query_token = tokens.get("query_token")
+
+            call_path = self.path.format(report_token, query_token)
+            response = self.client.get(call_path)
+
+            charts_in_response = response.get(self.default_data_key).get(self.data_key)
+
+            # Only yield records when called by child streams
+            if is_parent and charts_in_response != []:
+                counter += 1
+                for record in charts_in_response:
+                    yield {
+                        'chart_token': record.get('token'),
+                        'report_token': report_token,
+                        'query_token': query_token
+                    }
+
+        if counter == 0:
+            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+            raise ModeError
+
+class Charts(FullTableStream):
+    tap_stream_id = 'charts'
+    key_properties = ['id']
+    path = 'reports/{}/queries/{}/charts/{}'
+    parent = ChartList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        charts = []
+
+        for tokens in self.get_parent_data():
+            query_token = tokens.get("query_token")
+            report_token = tokens.get("report_token")
+            chart_token = tokens.get("chart_token")
+
+            call_path = self.path.format(report_token, query_token, chart_token)
+            results = self.client.get(call_path)
+
+            charts.append(results)
+
+        yield from charts
+
 
 STREAMS = {
     'space_list': SpaceList,
@@ -356,5 +412,7 @@ STREAMS = {
     'report_list': ReportList,
     'reports': Reports,
     'query_list': QueryList,
-    'queries': Queries
+    'queries': Queries,
+    'chart_list': ChartList,
+    'charts': Charts
 }
