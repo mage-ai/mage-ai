@@ -1,5 +1,6 @@
 import asyncio
 
+from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
 from mage_ai.api.operations.constants import DELETE
@@ -81,7 +82,10 @@ class PipelineResource(BaseResource):
                 ]).
                 filter(
                     a.pipeline_uuid.in_(pipeline_uuids),
-                    a.repo_path == get_repo_path(),
+                    or_(
+                        a.repo_path == get_repo_path(),
+                        a.repo_path.is_(None),
+                    )
                 )
             ).all()
             return group_by(lambda x: x.pipeline_uuid, result)
