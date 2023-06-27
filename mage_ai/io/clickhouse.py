@@ -1,6 +1,11 @@
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from pandas import DataFrame
+from mage_ai.io.export_utils import infer_dtypes
+from mage_ai.shared.utils import (
+    convert_pandas_dtype_to_python_type,
+    convert_python_type_to_clickhouse_type,
+)
+from pandas import DataFrame, Series
 from typing import Dict, List, Union
 import clickhouse_connect
 
@@ -143,6 +148,30 @@ class ClickHouse(BaseSQLDatabase):
                 self._enforce_limit(query_string, limit), **kwargs
             )
 
+    def get_type(self, column: Series, dtype: str) -> str:
+        return convert_python_type_to_clickhouse_type(
+            convert_pandas_dtype_to_python_type(dtype)
+        )
+
+    def build_create_table_command(
+        self,
+        df: DataFrame,
+        table_name: str,
+        database: str = 'default',
+    ):
+        dtypes = infer_dtypes(df)
+        db_dtypes = {
+            col: self.get_type(df[col], dtypes[col])
+            for col in dtypes
+        }
+        query = []
+        for cname in db_dtypes:
+            query.append(f'{cname} {db_dtypes[cname]}')
+
+        command = f'CREATE TABLE {database}.{table_name} (' + \
+            ', '.join(query) + ') ENGINE = Memory'
+        return command
+
     def export(
         self,
         df: DataFrame,
@@ -214,7 +243,17 @@ INSERT INTO {database}.{table_name}
 """)
             else:
                 if should_create_table:
-                    self.client.command(create_table_statement)
+                    create_table_stmt = create_table_statement
+                    if not create_table_stmt:
+                        create_table_stmt = self.build_create_table_command(
+                            df=df,
+                            table_name=table_name,
+                            database=database,
+                        )
+                        print('*' * 100)
+                        print(f'Creating a new table: {create_table_stmt}')
+                        print('*' * 100)
+                    self.client.command(create_table_stmt)
 
                 self.client.insert_df(f'{database}.{table_name}', df)
 
