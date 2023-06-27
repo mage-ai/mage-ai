@@ -32,6 +32,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_new_relic)
+    ENABLE_NEW_RELIC="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --gcp_project_id)
     GCP_PROJECT_ID="$3"
     shift # past argument
@@ -62,6 +67,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --new_relic_config_path)
+    NEW_RELIC_CONFIG_PATH="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --require-user-authentication)
     REQUIRE_USER_AUTHENTICATION=1
     shift # past argument
@@ -86,6 +96,7 @@ export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
@@ -93,6 +104,7 @@ export GCP_REGION=$GCP_REGION
 
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
+export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 
 if command -v docker-compose &> /dev/null

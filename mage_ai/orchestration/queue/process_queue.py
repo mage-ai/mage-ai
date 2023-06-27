@@ -1,19 +1,20 @@
+import multiprocessing as mp
+import os
+import signal
+import time
 from enum import Enum
+from multiprocessing import Manager
+from typing import Callable
+
+import newrelic.agent
+import sentry_sdk
+from sentry_sdk import capture_exception
+
 from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
-from mage_ai.settings import (
-    SENTRY_DSN,
-    SENTRY_TRACES_SAMPLE_RATE,
-)
-from multiprocessing import Manager
-from sentry_sdk import capture_exception
-from typing import Callable
-import multiprocessing as mp
-import os
-import sentry_sdk
-import signal
-import time
+from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 
 class JobStatus(str, Enum):
@@ -89,7 +90,9 @@ class Worker(mp.Process):
                 self.dsn,
                 traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             )
+        initialize_new_relic()
 
+    @newrelic.agent.background_task(name='worker-run', group='Task')
     def run(self):
         if not self.queue.empty():
             args = self.queue.get()

@@ -10,6 +10,7 @@ from typer.core import TyperGroup
 
 from mage_ai.cli.utils import parse_runtime_variables
 from mage_ai.data_preparation.repo_manager import ProjectType
+from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.shared.constants import InstanceType
 
 
@@ -191,6 +192,9 @@ def run(
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
 
+    from contextlib import nullcontext
+
+    import newrelic.agent
     import sentry_sdk
 
     from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
@@ -207,55 +211,58 @@ def run(
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
+    (enable_new_relic, application) = initialize_new_relic()
 
-    runtime_variables = dict()
-    if runtime_vars is not None:
-        runtime_variables = parse_runtime_variables(runtime_vars)
+    with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
+         if enable_new_relic else nullcontext():
+        runtime_variables = dict()
+        if runtime_vars is not None:
+            runtime_variables = parse_runtime_variables(runtime_vars)
 
-    sys.path.append(os.path.dirname(project_path))
-    pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
+        sys.path.append(os.path.dirname(project_path))
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
-    db_connection.start_session()
+        db_connection.start_session()
 
-    if pipeline_run_id is None:
-        default_variables = get_global_variables(pipeline_uuid)
-        global_vars = merge_dict(default_variables, runtime_variables)
-    else:
-        pipeline_run = PipelineRun.query.get(pipeline_run_id)
-        global_vars = pipeline_run.get_variables(extra_variables=runtime_variables)
+        if pipeline_run_id is None:
+            default_variables = get_global_variables(pipeline_uuid)
+            global_vars = merge_dict(default_variables, runtime_variables)
+        else:
+            pipeline_run = PipelineRun.query.get(pipeline_run_id)
+            global_vars = pipeline_run.get_variables(extra_variables=runtime_variables)
 
-    if template_runtime_configuration is not None:
-        template_runtime_configuration = json.loads(template_runtime_configuration)
+        if template_runtime_configuration is not None:
+            template_runtime_configuration = json.loads(template_runtime_configuration)
 
-    if block_uuid is None:
-        ExecutorFactory.get_pipeline_executor(
-            pipeline,
-            execution_partition=execution_partition,
-            executor_type=executor_type,
-        ).execute(
-            analyze_outputs=False,
-            global_vars=global_vars,
-            pipeline_run_id=pipeline_run_id,
-            run_sensors=not skip_sensors,
-            run_tests=test,
-            update_status=False,
-        )
-    else:
-        ExecutorFactory.get_block_executor(
-            pipeline,
-            block_uuid,
-            execution_partition=execution_partition,
-            executor_type=executor_type,
-        ).execute(
-            analyze_outputs=False,
-            block_run_id=block_run_id,
-            callback_url=callback_url,
-            global_vars=global_vars,
-            pipeline_run_id=pipeline_run_id,
-            template_runtime_configuration=template_runtime_configuration,
-            update_status=False,
-        )
-    print('Pipeline run completed.')
+        if block_uuid is None:
+            ExecutorFactory.get_pipeline_executor(
+                pipeline,
+                execution_partition=execution_partition,
+                executor_type=executor_type,
+            ).execute(
+                analyze_outputs=False,
+                global_vars=global_vars,
+                pipeline_run_id=pipeline_run_id,
+                run_sensors=not skip_sensors,
+                run_tests=test,
+                update_status=False,
+            )
+        else:
+            ExecutorFactory.get_block_executor(
+                pipeline,
+                block_uuid,
+                execution_partition=execution_partition,
+                executor_type=executor_type,
+            ).execute(
+                analyze_outputs=False,
+                block_run_id=block_run_id,
+                callback_url=callback_url,
+                global_vars=global_vars,
+                pipeline_run_id=pipeline_run_id,
+                template_runtime_configuration=template_runtime_configuration,
+                update_status=False,
+            )
+        print('Pipeline run completed.')
 
 
 @app.command()
