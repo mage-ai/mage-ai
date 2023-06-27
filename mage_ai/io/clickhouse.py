@@ -164,12 +164,12 @@ class ClickHouse(BaseSQLDatabase):
             col: self.get_type(df[col], dtypes[col])
             for col in dtypes
         }
-        query = []
+        fields = []
         for cname in db_dtypes:
-            query.append(f'{cname} {db_dtypes[cname]}')
+            fields.append(f'{cname} {db_dtypes[cname]}')
 
         command = f'CREATE TABLE {database}.{table_name} (' + \
-            ', '.join(query) + ') ENGINE = Memory'
+            ', '.join(fields) + ') ENGINE = Memory'
         return command
 
     def export(
