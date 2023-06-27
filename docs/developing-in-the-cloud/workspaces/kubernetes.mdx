@@ -7,7 +7,8 @@ description: "Creating workspaces in Kubernetes"
 ### Setup
 
 We recommend using Helm to set up your Kubernetes cluster. You can find our Mage Helm
-documentation [here](/production/deploying-to-cloud/using-helm).
+documentation [here](/production/deploying-to-cloud/using-helm). You will need to create
+a persistent volume for your cluster
 
 You will need to include your Kubernetes namespace as an environment variable when setting
 up your Kubernetes deployment. Here is a sample config for the `values.yaml` file for the
@@ -32,3 +33,55 @@ env:
   - name: REQUIRE_USER_AUTHENTICATION
     value: "1"
 ```
+
+### Permissions
+
+Once your cluster and initial deployment is created, you will also need to give your
+Kubernetes service account some permissions in order to create the necessary resources.
+You can run the folliwng `kubectl` command to create the `ClusterRole` required for 
+managing the Kubernetes resources.
+
+```bash
+cat <<EOF | kubectl apply -f -
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manage-role
+rules:
+  - apiGroups:
+      - ""
+      - apps
+    resources:
+      - services
+      - statefulsets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+EOF
+```
+
+Once the cluster role is created, you will need to bind the role to the 
+service account. You will need to change the service account name if it is not `default`:
+
+```bash
+kubectl create clusterrolebinding manage-role-binding \
+  --clusterrole=manage-role  \
+  --serviceaccount=default:default
+```
+
+### Usage
+
+Once you start Mage and log in, you should land on the workspaces dashboard (/manage).
+
+[put picture]
+
+To create a new workspace, you can press the "Create new workspace" button in the top left. A modal
+should appear where you can configure some workspace settings.
+
+[put picture]
+
+Here are the fields you can currently customize through the Mage UI for Kubernetes.
+
+| Field | Description |
+| --- | --- |
+| Name | `PROJECT_TYPE` |
+| Value | `main` | `1` |

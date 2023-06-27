@@ -1,5 +1,5 @@
 ---
-title: "Workspace management"
+title: "Workspace management (in Beta)"
 sidebarTitle: "Overview"
 description: "Use Mage in multiple workspaces in the cloud"
 ---
@@ -23,16 +23,17 @@ still to come...
 
 In order to start using workspace management, you will first need to create a "main project". The
 main project is the parent project that will handle the management of all the workspaces. To create
-a main project, you will need to set the following environment variable:
-
-`export PROJECT_TYPE="main"`
+a main project, you will need to set the `PROJECT_TYPE` environment variable.
 
 If you want to use workspace level permissions, you will also need to enable user authentication
 and [provide an external database](/production/configuring-production-settings/overview#databases)
 (not the default SQLite DB) that will be shared among your workspaces. To enable user authentication,
-you will need to set the following environment variable:
+you will need to set the `REQUIRE_USER_AUTHENTICATION` variable.
 
-`export REQUIRE_USER_AUTHENTICATION="1"`
+|   |   |   |   |
+| --- | --- | --- | --- |
+| Name | `PROJECT_TYPE` | `REQUIRE_USER_AUTHENTICATION` | `MAGE_DATABASE_CONNECTION_URL` |
+| Value | `main` | `1` | `postgresql+psycopg2://...` |
 
 Depending on your cloud environment, Mage may expect additional environment variables.
 
