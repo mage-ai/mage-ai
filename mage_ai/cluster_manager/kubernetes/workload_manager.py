@@ -43,6 +43,11 @@ class WorkloadManager:
         if not self.namespace:
             self.namespace = DEFAULT_NAMESPACE
 
+        self.pod_config = self.core_client.read_namespaced_pod(
+            name=os.getenv(KUBE_POD_NAME_ENV_VAR),
+            namespace=self.namespace,
+        )
+
     @classmethod
     def load_config(cls) -> bool:
         try:
@@ -236,6 +241,7 @@ class WorkloadManager:
                     },
                     'spec': {
                         'terminationGracePeriodSeconds': 10,
+                        'imagePullSecrets': self.pod_config.spec.image_pull_secrets,
                         'containers': containers,
                         'volumes': volumes,
                         **stateful_set_template_spec
@@ -392,15 +398,11 @@ class WorkloadManager:
         storage_access_mode_default = None
         storage_request_size_default = None
         try:
-            pod_config = self.core_client.read_namespaced_pod(
-                name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-                namespace=self.namespace,
-            )
-            service_account_name_default = pod_config.spec.service_account_name
+            service_account_name_default = self.pod_config.spec.service_account_name
 
             pvc_name = find(
                 lambda v: v.persistent_volume_claim is not None,
-                pod_config.spec.volumes,
+                self.pod_config.spec.volumes,
             ).persistent_volume_claim.claim_name
 
             pvc = self.core_client.read_namespaced_persistent_volume_claim(

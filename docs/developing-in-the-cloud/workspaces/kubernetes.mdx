@@ -53,6 +53,8 @@ rules:
       - ""
       - apps
     resources:
+      - nodes
+      - persistentvolumeclaims
       - services
       - statefulsets
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -72,16 +74,30 @@ kubectl create clusterrolebinding manage-role-binding \
 
 Once you start Mage and log in, you should land on the workspaces dashboard (/manage).
 
-[put picture]
+<Frame>
+    <img
+        alt="Workspaces dashboard"
+        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces.png?raw=true"
+		/>
+</Frame>
 
 To create a new workspace, you can press the "Create new workspace" button in the top left. A modal
 should appear where you can configure some workspace settings.
 
-[put picture]
+<Frame>
+    <img
+        alt="Kubernetes configuration"
+        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces-k8s-settings.png?raw=true"
+		/>
+</Frame>
 
 Here are the fields you can currently customize through the Mage UI for Kubernetes.
 
 | Field | Description |
 | --- | --- |
-| Name | `PROJECT_TYPE` |
-| Value | `main` | `1` |
+| Workspace name | Name of workspace. This name will be used to create all resources for the workspace. |
+| Service account name | Kubernetes service account to use to create the resources. Defaults to current pod's service account name. |
+| Storage class name | Name of storage class to provision storage from for the stateful set. Defaults to current pvc's storage class name. |
+| Storage request size | Amount of storage to provision for the persistent volume claim (in GB). Defaults to current pvc's storage request. |
+| Access mode | Access mode for persistent volume claim. [More info in Kubernetes docs.](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) Defaults to current pvc's access mode. |
+| Configure container | Customize the configuration for the pod container. [Configuration options](https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md) |
