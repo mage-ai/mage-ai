@@ -182,7 +182,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
             else:
                 asyncio.run(source.read_async(handler=handle_event_async))
 
-    def __excute_in_flink(self):
+    def __execute_in_flink(self):
         """
         TODO: Implement this method
         """

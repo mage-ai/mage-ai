@@ -25,19 +25,20 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER,
 )
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
 
 
 class WorkloadManager:
-    def __init__(self, namespace: str = 'default'):
+    def __init__(self, namespace: str = DEFAULT_NAMESPACE):
         self.load_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
 
         self.namespace = namespace
         if not self.namespace:
-            self.namespace = 'default'
+            self.namespace = DEFAULT_NAMESPACE
 
     @classmethod
     def load_config(cls) -> bool:
