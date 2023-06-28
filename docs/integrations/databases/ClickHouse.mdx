@@ -19,6 +19,7 @@ title: "ClickHouse"
 ```yaml
 version: 0.1.1
 default:
+  # ClickHouse
   CLICKHOUSE_DATABASE: ...
   CLICKHOUSE_HOST: ...
   CLICKHOUSE_INTERFACE: http
@@ -75,3 +76,14 @@ def load_data_from_clickhouse(**kwargs) -> DataFrame:
 ```
 
 5. Run the block.
+
+---
+
+## Destination table for Data Exporter
+
+For a `Data Exporter` with ClickHouse, if the destination table does not exist and
+the `Write policy` option is set to `Replace`, a table with `Engine = Memory` and an
+inferred schema with some default field types would be created, which might not be
+optimum for many use cases. As creating a table could involve [a lot of details](https://clickhouse.com/docs/en/sql-reference/statements/create/table),
+it is highly recommended that the destination table be created first on ClickHouse
+before loading data to the table.
