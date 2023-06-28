@@ -10,10 +10,8 @@ from mage_ai.cluster_manager.constants import (
     DB_SECRETS_NAME,
     GCP_BACKEND_CONFIG_ANNOTATION,
     KUBE_NAMESPACE,
-    KUBE_SERVICE_ACCOUNT_NAME,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
-    KUBE_STORAGE_CLASS_NAME,
     NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME,
@@ -25,7 +23,12 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER,
 )
-from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
+from mage_ai.services.k8s.constants import (
+    DEFAULT_NAMESPACE,
+    DEFAULT_SERVICE_ACCOUNT_NAME,
+    DEFAULT_STORAGE_CLASS_NAME,
+    KUBE_POD_NAME_ENV_VAR,
+)
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
 
@@ -60,11 +63,11 @@ class WorkloadManager:
         workloads_list = []
 
         pods = self.core_client.list_namespaced_pod(self.namespace).items
-        pod_map = dict()
+        pod_mapping = dict()
         for pod in pods:
             try:
                 name = pod.metadata.labels.get('app')
-                pod_map[name] = pod
+                pod_mapping[name] = pod
             except Exception:
                 pass
         for service in services:
@@ -73,12 +76,12 @@ class WorkloadManager:
                 if not labels.get('dev-instance'):
                     continue
                 name = labels.get('app')
-                pod = pod_map[name]
                 service_type = service.spec.type
                 workload = dict(
-                    name=labels.get('app'),
+                    name=name,
                     type=service_type,
                 )
+                pod = pod_mapping.get(name)
                 if pod:
                     status = pod.status.phase
                     workload['status'] = status.upper()
@@ -100,6 +103,8 @@ class WorkloadManager:
                                     workload['ip'] = f'{ip}:{node_port}'
                         except Exception:
                             pass
+                else:
+                    workload['status'] = 'UNAVAILABLE'
 
                 workloads_list.append(workload)
             except Exception:
@@ -119,16 +124,17 @@ class WorkloadManager:
         if container_config_yaml:
             container_config = yaml.full_load(container_config_yaml)
 
-        service_account_name = kwargs.get(
+        parameters = self.__get_configurable_parameters(**kwargs)
+        service_account_name = parameters.get(
             'service_account_name',
-            os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
+            DEFAULT_SERVICE_ACCOUNT_NAME,
         )
-        storage_class_name = kwargs.get(
+        storage_class_name = parameters.get(
             'storage_class_name',
-            os.getenv(KUBE_STORAGE_CLASS_NAME, 'default'),
+            DEFAULT_STORAGE_CLASS_NAME,
         )
-        storage_access_mode = kwargs.get('storage_access_mode', 'ReadWriteOnce')
-        storage_request_size = kwargs.get('storage_request_size', 2)
+        storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
+        storage_request_size = parameters.get('storage_request_size', '2Gi')
 
         env_vars = self.__populate_env_vars(
             name,
@@ -245,7 +251,7 @@ class WorkloadManager:
                             'storageClassName': storage_class_name,
                             'resources': {
                                 'requests': {
-                                    'storage': f'{storage_request_size}Gi'
+                                    'storage': storage_request_size
                                 }
                             }
                         }
@@ -379,3 +385,44 @@ class WorkloadManager:
             env_vars += container_config['env']
 
         return env_vars
+
+    def __get_configurable_parameters(self, **kwargs) -> Dict:
+        service_account_name_default = None
+        storage_class_name_default = None
+        storage_access_mode_default = None
+        storage_request_size_default = None
+        try:
+            pod_config = self.core_client.read_namespaced_pod(
+                name=os.getenv(KUBE_POD_NAME_ENV_VAR),
+                namespace=self.namespace,
+            )
+            service_account_name_default = pod_config.spec.service_account_name
+
+            pvc_name = find(
+                lambda v: v.persistent_volume_claim is not None,
+                pod_config.spec.volumes,
+            ).persistent_volume_claim.claim_name
+
+            pvc = self.core_client.read_namespaced_persistent_volume_claim(
+                name=pvc_name,
+                namespace=self.namespace,
+            )
+
+            storage_class_name_default = pvc.spec.storage_class_name
+            storage_access_mode_default = pvc.spec.access_modes[0]
+            storage_request_size_default = pvc.spec.resources.requests.get('storage')
+        except Exception:
+            pass
+
+        storage_request_size = kwargs.get('storage_request_size')
+        if storage_request_size is None:
+            storage_request_size = storage_request_size_default
+        else:
+            storage_request_size = f'{storage_request_size}Gi'
+
+        return dict(
+            service_account_name=kwargs.get('service_account_name', service_account_name_default),
+            storage_class_name=kwargs.get('storage_class_name', storage_class_name_default),
+            storage_access_mode=kwargs.get('storage_access_mode', storage_access_mode_default),
+            storage_request_size=storage_request_size,
+        )

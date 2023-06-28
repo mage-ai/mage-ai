@@ -26,14 +26,20 @@ function ManageUserDetail({
   const userID = userProp?.id;
 
   const { data: dataUser, mutate: fetchUser } = api.users.detail(userID);
+  const { data: dataStatus } = api.statuses.list();
+  const clusterType = useMemo(
+    () => dataStatus?.statuses?.[0]?.instance_type,
+    [dataStatus],
+  );
   const user = useMemo(() => dataUser?.user, [dataUser]);
 
   useEffect(() => {
     displayErrorFromReadResponse(dataUser, setErrors);
   }, [dataUser]);
 
-  const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
+  const { data: dataWorkspaces } = api.workspaces.list(
     {
+      cluster_type: clusterType,
       user_id: userID,
     },
     {
