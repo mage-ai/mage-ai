@@ -16,7 +16,6 @@ import { onSuccess } from '@api/utils/response';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
-  newUser?: boolean;
   user: UserType;
   workspaces: WorkspaceType[];
 };
