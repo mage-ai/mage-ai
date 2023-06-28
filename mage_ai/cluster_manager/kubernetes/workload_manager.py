@@ -25,7 +25,7 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER,
 )
-from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE, KUBE_POD_NAME_ENV_VAR
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
 
@@ -118,11 +118,6 @@ class WorkloadManager:
         container_config = dict()
         if container_config_yaml:
             container_config = yaml.full_load(container_config_yaml)
-
-        pod_config = self.core_client.read_namespaced_pod(
-            name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-            namespace=self.namespace,
-        )
 
         service_account_name = kwargs.get(
             'service_account_name',

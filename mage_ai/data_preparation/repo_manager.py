@@ -230,7 +230,11 @@ def get_variables_dir(repo_path: str = None) -> str:
 
 
 config = get_repo_config()
-project_uuid = config.project_uuid
+project_uuid = None
+try:
+    project_uuid = config.project_uuid
+except Exception:
+    pass
 
 
 def update_project_uuid():

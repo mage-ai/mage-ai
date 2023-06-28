@@ -150,11 +150,11 @@ class Git:
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
-        asyncio.run(self.__poll_process_with_timeout(
+        await self.__poll_process_with_timeout(
             proc,
             error_message='Error connecting to remote, make sure your access token or SSH key is ' +
             'set up properly.',
-        ))
+        )
 
     def _run_command(self, command: str) -> None:
         proc = subprocess.Popen(args=command, shell=True)
@@ -166,9 +166,16 @@ class Git:
         will configure and test SSH settings before executing the Git command.
         '''
         def wrapper(self, *args, **kwargs):
+            def run_check_connection():
+                loop = asyncio.get_event_loop()
+                if loop is not None:
+                    loop.run_until_complete(self.check_connection())
+                else:
+                    asyncio.run(self.check_connection())
+
             def add_host_to_known_hosts():
                 self.__add_host_to_known_hosts()
-                asyncio.run(self.check_connection())
+                run_check_connection()
 
             if self.auth_type == AuthType.SSH:
                 url = f'ssh://{self.git_config.remote_repo_link}'
@@ -180,7 +187,7 @@ class Git:
                     if not os.path.exists(DEFAULT_KNOWN_HOSTS_FILE):
                         self.__add_host_to_known_hosts()
                     try:
-                        asyncio.run(self.check_connection())
+                        run_check_connection()
                     except ChildProcessError as err:
                         if 'Host key verification failed' in str(err):
                             if hostname:
@@ -197,7 +204,7 @@ class Git:
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     return func(self, *args, **kwargs)
             else:
-                asyncio.run(self.check_connection())
+                run_check_connection()
                 return func(self, *args, **kwargs)
 
         return wrapper
