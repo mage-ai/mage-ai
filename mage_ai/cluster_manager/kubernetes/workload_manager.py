@@ -43,10 +43,13 @@ class WorkloadManager:
         if not self.namespace:
             self.namespace = DEFAULT_NAMESPACE
 
-        self.pod_config = self.core_client.read_namespaced_pod(
-            name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-            namespace=self.namespace,
-        )
+        try:
+            self.pod_config = self.core_client.read_namespaced_pod(
+                name=os.getenv(KUBE_POD_NAME_ENV_VAR),
+                namespace=self.namespace,
+            )
+        except Exception:
+            self.pod_config = None
 
     @classmethod
     def load_config(cls) -> bool:
@@ -212,7 +215,13 @@ class WorkloadManager:
                 }
             )
 
-        stateful_set_template_spec = dict()
+        pod_spec = self.pod_config.spec.to_dict() if self.pod_config else dict()
+        stateful_set_template_spec = dict(
+            imagePullSecrets=pod_spec.get('image_pull_secrets'),
+            terminationGracePeriodSeconds=10,
+            containers=containers,
+            volumes=volumes,
+        )
         if service_account_name:
             stateful_set_template_spec['serviceAccountName'] = service_account_name
 
@@ -239,13 +248,7 @@ class WorkloadManager:
                             'app': name
                         }
                     },
-                    'spec': {
-                        'terminationGracePeriodSeconds': 10,
-                        'imagePullSecrets': self.pod_config.spec.image_pull_secrets,
-                        'containers': containers,
-                        'volumes': volumes,
-                        **stateful_set_template_spec
-                    }
+                    'spec': stateful_set_template_spec
                 },
                 'volumeClaimTemplates': [
                     {
