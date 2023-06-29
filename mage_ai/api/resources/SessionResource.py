@@ -54,7 +54,7 @@ class SessionResource(BaseResource):
         if AUTHENTICATION_MODE.lower() == 'ldap':
             # we can use just the method verify here authz=verify(username,password)
             conn = new_ldap_connection()
-            auth, user_dn = conn.authenticate(email, password)
+            auth, user_dn, user_attributes = conn.authenticate(email, password)
             if not auth:
                 if user_dn != "":
                     error.update({'message': 'wrong password.'})
@@ -70,7 +70,11 @@ class SessionResource(BaseResource):
             if not user:
                 print('first user login, creating user.')
                 roles = []
-                if LDAP_DEFAULT_ACCESS is not None and \
+                role_names = conn.get_user_roles(user_attributes)
+                if role_names:
+                    roles = Role.query.filter(Role.name.in_(role_names)).all()
+                if not roles and \
+                        LDAP_DEFAULT_ACCESS is not None and \
                         LDAP_DEFAULT_ACCESS in [r for r in Role.DefaultRole]:
                     default_role = Role.get_role(LDAP_DEFAULT_ACCESS)
                     if default_role:
