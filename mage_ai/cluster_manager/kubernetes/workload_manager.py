@@ -43,6 +43,14 @@ class WorkloadManager:
         if not self.namespace:
             self.namespace = DEFAULT_NAMESPACE
 
+        try:
+            self.pod_config = self.core_client.read_namespaced_pod(
+                name=os.getenv(KUBE_POD_NAME_ENV_VAR),
+                namespace=self.namespace,
+            )
+        except Exception:
+            self.pod_config = None
+
     @classmethod
     def load_config(cls) -> bool:
         try:
@@ -207,7 +215,13 @@ class WorkloadManager:
                 }
             )
 
-        stateful_set_template_spec = dict()
+        pod_spec = self.pod_config.spec.to_dict() if self.pod_config else dict()
+        stateful_set_template_spec = dict(
+            imagePullSecrets=pod_spec.get('image_pull_secrets'),
+            terminationGracePeriodSeconds=10,
+            containers=containers,
+            volumes=volumes,
+        )
         if service_account_name:
             stateful_set_template_spec['serviceAccountName'] = service_account_name
 
@@ -234,12 +248,7 @@ class WorkloadManager:
                             'app': name
                         }
                     },
-                    'spec': {
-                        'terminationGracePeriodSeconds': 10,
-                        'containers': containers,
-                        'volumes': volumes,
-                        **stateful_set_template_spec
-                    }
+                    'spec': stateful_set_template_spec
                 },
                 'volumeClaimTemplates': [
                     {
@@ -392,15 +401,11 @@ class WorkloadManager:
         storage_access_mode_default = None
         storage_request_size_default = None
         try:
-            pod_config = self.core_client.read_namespaced_pod(
-                name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-                namespace=self.namespace,
-            )
-            service_account_name_default = pod_config.spec.service_account_name
+            service_account_name_default = self.pod_config.spec.service_account_name
 
             pvc_name = find(
                 lambda v: v.persistent_volume_claim is not None,
-                pod_config.spec.volumes,
+                self.pod_config.spec.volumes,
             ).persistent_volume_claim.claim_name
 
             pvc = self.core_client.read_namespaced_persistent_volume_claim(
