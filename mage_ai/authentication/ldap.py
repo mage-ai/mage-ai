@@ -45,7 +45,7 @@ class LDAPConnection(LDAPAuthenticator):
         authentication_filter: str,
         authorization_filter: str,
         group_field: str = None,
-        role_mapping: Union[Dict, str] = None,
+        roles_mapping: Union[Dict, str] = None,
     ):
         self.server_url = server_url
         self.bind_dn = bind_dn
@@ -55,13 +55,13 @@ class LDAPConnection(LDAPAuthenticator):
         self.authorization_filter = authorization_filter
         self.group_field = group_field
 
-        if type(role_mapping) is str:
+        if type(roles_mapping) is str:
             try:
-                self.role_mapping = json.loads(role_mapping)
+                self.roles_mapping = json.loads(roles_mapping)
             except json.JSONDecodeError:
-                self.role_mapping = None
+                self.roles_mapping = None
         else:
-            self.role_mapping = role_mapping
+            self.roles_mapping = roles_mapping
 
         self.conn = None
 
@@ -106,13 +106,13 @@ class LDAPConnection(LDAPAuthenticator):
             return False
 
     def get_user_roles(self, user_attributes: Dict[str, List]) -> List[str]:
-        if not self.role_mapping:
+        if not self.roles_mapping:
             return []
         groups = user_attributes.get(self.group_field, [])
         roles = set()
         for group in groups:
-            if group in self.role_mapping:
-                roles.update(self.role_mapping[group])
+            if group in self.roles_mapping:
+                roles.update(self.roles_mapping[group])
             else:
                 print(f"Can't find group {group} in LDAP role mapping")
         return list(roles)
@@ -127,7 +127,7 @@ def new_ldap_connection() -> LDAPConnection:
         authentication_filter=LDAP_AUTHENTICATION_FILTER,
         authorization_filter=LDAP_AUTHORIZATION_FILTER,
         group_field=LDAP_GROUP_FIELD,
-        role_mapping=LDAP_ROLES_MAPPING,
+        roles_mapping=LDAP_ROLES_MAPPING,
     )
     try:
         ldap_config = get_repo_config().ldap_config
