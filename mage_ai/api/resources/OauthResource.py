@@ -103,17 +103,16 @@ class OauthResource(GenericResource):
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
                 ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
                 if ad_directory_id:
-                    mage_redirect_uri = '?'.join([
-                        redirect_uri,
-                        f'provider={pk}',
-                    ])
+                    from requests.models import PreparedRequest
+                    req = PreparedRequest()
+                    req.prepare_url(redirect_uri, dict(provider=pk))
                     query = dict(
                         client_id=ACTIVE_DIRECTORY_CLIENT_ID,
                         redirect_uri=f'https://api.mage.ai/v1/oauth/{pk}',
                         response_type='code',
                         scope='User.Read',
                         state=urllib.parse.quote_plus(json.dumps(dict(
-                            redirect_uri=mage_redirect_uri,
+                            redirect_uri=req.url,
                             tenant_id=ad_directory_id,
                         ))),
                     )
