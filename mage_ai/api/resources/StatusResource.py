@@ -6,7 +6,6 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_type,
     get_project_uuid,
     get_repo_config,
-    get_repo_path,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
@@ -16,6 +15,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
 )
+from mage_ai.settings.repo import get_repo_path
 
 
 class StatusResource(GenericResource):

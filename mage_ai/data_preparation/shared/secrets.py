@@ -3,15 +3,19 @@ from typing import List
 
 from cryptography.fernet import Fernet, InvalidToken
 
-from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_path
+from mage_ai.settings.repo import get_data_dir, get_repo_path
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
 
+def get_secrets_dir():
+    return os.path.join(
+        get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
+
+
 def create_secret(name: str, value: str):
     from mage_ai.orchestration.db.models.secrets import Secret
-    secrets_dir = os.path.join(
-        get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
+    secrets_dir = get_secrets_dir()
     key_file = os.path.join(secrets_dir, 'key')
 
     if os.path.exists(key_file):
@@ -38,8 +42,7 @@ def create_secret(name: str, value: str):
 
 
 def get_encryption_key() -> str:
-    secrets_dir = os.path.join(
-        get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
+    secrets_dir = get_secrets_dir()
     key_file = os.path.join(secrets_dir, 'key')
 
     try:
@@ -72,19 +75,20 @@ def get_valid_secrets() -> List:
     return valid_secrets
 
 
-def get_secret_value(name: str, repo_name: str = None) -> str:
+def get_secret_value(name: str, repo_name: str = get_repo_path()) -> str:
     from mage_ai.orchestration.db.models.secrets import Secret
     key = get_encryption_key()
     if key:
         fernet = Fernet(key)
 
-        conditions = [Secret.name == name]
-        if repo_name:
-            conditions.append(Secret.repo_name == repo_name)
         secret = None
         try:
-            secret = Secret.query.filter(*conditions).one_or_none()
-        except Exception:
+            secret = Secret.query.filter(
+                Secret.name == name,
+                Secret.repo_name == repo_name,
+            ).one_or_none()
+        except Exception as err:
+            print(str(err))
             print(f'WARNING: Could not find secret value for secret {name}')
 
         if secret:
@@ -96,7 +100,10 @@ def delete_secret(name: str) -> None:
 
     secret = None
     try:
-        secret = Secret.query.filter(Secret.name == name).one_or_none()
+        secret = Secret.query.filter(
+            Secret.name == name,
+            Secret.repo_name == get_repo_path(),
+        ).one_or_none()
     except Exception:
         print(f'WARNING: Secret {name} does not exist')
 

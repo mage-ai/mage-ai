@@ -8,7 +8,7 @@ from typing import Dict, List
 import yaml
 
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 
 TRIGGER_FILE_NAME = 'triggers.yaml'

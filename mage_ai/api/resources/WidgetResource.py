@@ -1,10 +1,11 @@
+import asyncio
+from typing import Dict
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.orchestration.db import safe_db_query
 from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from typing import Dict
-import asyncio
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 
 
 class WidgetResource(GenericResource):

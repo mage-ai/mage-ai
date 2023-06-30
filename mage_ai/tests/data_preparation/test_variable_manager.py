@@ -1,15 +1,17 @@
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import get_repo_config, set_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     get_global_variable,
     set_global_variable,
 )
+from mage_ai.settings.repo import set_repo_path
 from mage_ai.tests.base_test import DBTestCase
-from pandas.testing import assert_frame_equal
-import pandas as pd
 
 
 class VariableManagerTest(DBTestCase):

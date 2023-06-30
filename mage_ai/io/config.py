@@ -7,8 +7,8 @@ from typing import Any, Dict, Union
 import yaml
 from jinja2 import Template
 
-from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.settings.repo import get_repo_path
 
 
 class ConfigKey(str, Enum):
@@ -431,7 +431,7 @@ class ConfigFileLoader(BaseConfigLoader):
             self.config = config
         else:
             if filepath is None:
-                filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
+                filepath = get_repo_path() / 'io_config.yaml'
             self.filepath = Path(filepath)
             self.profile = profile
             with self.filepath.open('r') as fin:

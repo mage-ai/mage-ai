@@ -9,10 +9,10 @@ from typing import Any, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
 DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')

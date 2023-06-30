@@ -11,7 +11,6 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 from mage_ai.data_preparation.models.constants import PipelineStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import (
@@ -20,6 +19,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
 )
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by, ignore_keys
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 

@@ -18,7 +18,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     update_model_settings,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
 

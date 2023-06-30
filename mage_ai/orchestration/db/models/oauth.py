@@ -15,10 +15,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
-from mage_ai.data_preparation.repo_manager import get_project_uuid, get_repo_path
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
+from mage_ai.settings.repo import get_repo_path
 
 
 class User(BaseModel):

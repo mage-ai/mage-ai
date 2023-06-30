@@ -33,7 +33,7 @@ from mage_ai.data_preparation.models.triggers import (
     get_triggers_by_pipeline,
 )
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -50,6 +50,7 @@ from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env

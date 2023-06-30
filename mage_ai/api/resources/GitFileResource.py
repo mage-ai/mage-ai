@@ -1,9 +1,10 @@
+import os
+import urllib.parse
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.git import Git
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.repo_manager import get_repo_name, get_repo_path
-import urllib.parse
-import os
+from mage_ai.settings.repo import get_repo_name, get_repo_path
 
 
 class GitFileResource(GenericResource):

@@ -1,14 +1,14 @@
+import json
+import re
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.constants import (
-    BlockType,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    BlockType,
 )
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.code import is_pyspark_code
-from typing import Dict, List
-import json
-import re
-
 
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
@@ -262,7 +262,7 @@ spark = SparkSession.builder.getOrCreate()
 
     return f"""{magic_header}
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict

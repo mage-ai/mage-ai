@@ -10,9 +10,9 @@ from mage_ai.data_preparation.models.block.sql.constants import (
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
+from mage_ai.settings.repo import get_repo_path
 
 
 def build_variable_pattern(variable_name: str):

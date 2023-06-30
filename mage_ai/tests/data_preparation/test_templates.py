@@ -1,5 +1,4 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.io.base import DataSource
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -9,6 +8,7 @@ from mage_ai.data_preparation.templates.template import (
     build_template_from_suggestion,
     fetch_template_source,
 )
+from mage_ai.io.base import DataSource
 from mage_ai.tests.base_test import TestCase
 
 
@@ -124,7 +124,7 @@ def test_output(output, *args) -> None:
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_loader_specific(self):
-        redshift_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        redshift_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from os import path
@@ -157,7 +157,7 @@ def test_output(output, *args) -> None:
     \"\"\"
     assert output is not None, 'The output is undefined'
 """
-        s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        s3_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
@@ -517,7 +517,7 @@ def export_data(data, *args, **kwargs):
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_exporter_specific(self):
-        bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        bigquery_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
 from pandas import DataFrame
@@ -545,7 +545,7 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
         if_exists='replace',  # Specify resolution policy if table name already exists
     )
 """
-        snowflake_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        snowflake_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
@@ -610,7 +610,7 @@ index_name: test_index
         self.assertEqual(opensearch_template, new_opensearch_template)
 
     def test_template_generation_transformer_dwh(self):
-        postgres_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        postgres_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from os import path
@@ -653,7 +653,7 @@ def test_output(output, *args) -> None:
     assert output is not None, 'The output is undefined'
 """
 
-        bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+        bigquery_template = """from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.bigquery import BigQuery
 from os import path
