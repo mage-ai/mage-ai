@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from mage_ai.streaming.sources.kafka import KafkaSource
-from mage_ai.tests.test_base import TestCase
+from mage_ai.tests.base_test import TestCase
 
 
 class KafkaTests(TestCase):
@@ -59,10 +59,10 @@ class KafkaTests(TestCase):
                 topic='test_topic',
                 serde_config=dict(
                     serialization_method='PROTOBUF',
-                    schema_classpath='mage_ai.tests.test_base.TestCase',
+                    schema_classpath='mage_ai.tests.base_test.TestCase',
                 )
             ))
             mock_init_client.assert_called_once()
             self.assertEqual(source.config.serde_config.serialization_method, 'PROTOBUF')
             self.assertEqual(
-                source.config.serde_config.schema_classpath, 'mage_ai.tests.test_base.TestCase')
+                source.config.serde_config.schema_classpath, 'mage_ai.tests.base_test.TestCase')

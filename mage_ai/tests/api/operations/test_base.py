@@ -7,7 +7,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
-from mage_ai.tests.test_base import AsyncDBTestCase as TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 
 
 class BaseApiTestCase(TestCase):
