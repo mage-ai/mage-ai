@@ -58,7 +58,7 @@ class SyncOperationTests(BaseApiTestCase):
 
         self.assertEqual(user.git_settings['username'], 'username1')
         self.assertEqual(
-            get_secret_value(user.git_settings['access_token_secret_name']),
+            get_secret_value(user.git_settings['access_token_secret_name'], self.repo_path),
             'abc123',
         )
 
@@ -91,7 +91,10 @@ class SyncOperationTests(BaseApiTestCase):
         self.assertEqual(project_preferences['username'], 'username')
         self.assertEqual(user.git_settings['email'], email)
         self.assertEqual(
-            get_secret_value(project_preferences['access_token_secret_name']),
+            get_secret_value(project_preferences['access_token_secret_name'], self.repo_path),
             'abc123',
         )
-        self.assertEqual(get_secret_value(user.git_settings['access_token_secret_name']), 'def456')
+        self.assertEqual(
+            get_secret_value(user.git_settings['access_token_secret_name'], self.repo_path),
+            'def456',
+        )
