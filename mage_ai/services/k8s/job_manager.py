@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Dict
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -15,7 +16,7 @@ class JobManager():
         job_name: str = 'mage-job',
         namespace: str = DEFAULT_NAMESPACE,
         logger=None,
-        logging_tags=dict(),
+        logging_tags: Dict = None,
     ):
         self.job_name = job_name
         self.namespace = namespace
@@ -114,9 +115,10 @@ class JobManager():
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={'name': self.job_name}),
             spec=client.V1PodSpec(
-                restart_policy='Never',
                 containers=[container],
                 image_pull_secrets=self.pod_config.spec.image_pull_secrets,
+                restart_policy='Never',
+                service_account_name=k8s_config.service_account_name,
                 volumes=self.pod_config.spec.volumes,
             ),
         )
