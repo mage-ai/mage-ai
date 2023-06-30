@@ -250,9 +250,7 @@ INSERT INTO {database}.{table_name}
                             table_name=table_name,
                             database=database,
                         )
-                        print('*' * 100)
-                        print(f'Creating a new table: {create_table_stmt}')
-                        print('*' * 100)
+                        self.printer.print_msg(f'Creating a new table: {create_table_stmt}')
                     self.client.command(create_table_stmt)
 
                 self.client.insert_df(f'{database}.{table_name}', df)
