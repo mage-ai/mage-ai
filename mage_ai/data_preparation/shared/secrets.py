@@ -88,8 +88,7 @@ def get_secret_value(name: str, repo_name: str = get_repo_path()) -> str:
                 Secret.repo_name == repo_name,
             ).one_or_none()
         except Exception as err:
-            print(str(err))
-            print(f'WARNING: Could not find secret value for secret {name}')
+            print(f'WARNING: Could not find secret value for secret {name} with error: {str(err)}')
 
         if secret:
             return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
@@ -104,8 +103,8 @@ def delete_secret(name: str) -> None:
             Secret.name == name,
             Secret.repo_name == get_repo_path(),
         ).one_or_none()
-    except Exception:
-        print(f'WARNING: Secret {name} does not exist')
+    except Exception as err:
+        print(f'WARNING: Could not find secret {name} with error: {str(err)}')
 
     if secret:
         secret.delete()
