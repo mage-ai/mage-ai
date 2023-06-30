@@ -63,7 +63,13 @@ function SignForm({
               const query = queryFromUrl(window.location.href);
 
               if (typeof window !== 'undefined' && query.redirect_url) {
-                url = `${query.redirect_url}?${queryString(ignoreKeys(query, ['redirect_url']))}`;
+                const qs = queryString(
+                  ignoreKeys(
+                    query,
+                    ['redirect_url', 'access_token', 'provider'],
+                  ),
+                );
+                url = `${query.redirect_url}?${qs}`;
               }
 
               router.push(url);
@@ -90,20 +96,20 @@ function SignForm({
     access_token: accessTokenFromURL,
     provider,
   } = queryFromUrl() || {};
+
   useEffect(() => {
     if (accessTokenFromURL && provider) {
       // @ts-ignore
-      create({
+      createRequest({
         session: {
           [KEY_PROVIDER]: provider,
           [KEY_TOKEN]: accessTokenFromURL,
         },
       });
-      // });
     }
   }, [
     accessTokenFromURL,
-    create,
+    createRequest,
     provider,
   ]);
 
@@ -206,7 +212,7 @@ function SignForm({
                       beforeElement={<MicrosoftIcon size={UNIT * 2} />}
                       bold
                       inline
-                      onClick={() => router.push(adOauthUrl)}
+                      onClick={() => AuthToken.logout(() => router.push(adOauthUrl))}
                       uuid="SignForm/active_directory"
                     >
                       Sign in with Microsoft
