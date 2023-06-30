@@ -75,8 +75,10 @@ def get_valid_secrets() -> List:
     return valid_secrets
 
 
-def get_secret_value(name: str, repo_name: str = get_repo_path()) -> str:
+def get_secret_value(name: str, repo_name: str = None) -> str:
     from mage_ai.orchestration.db.models.secrets import Secret
+    if repo_name is None:
+        repo_name = get_repo_path()
     key = get_encryption_key()
     if key:
         fernet = Fernet(key)

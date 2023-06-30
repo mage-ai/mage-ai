@@ -1,5 +1,4 @@
 import os
-import sys
 import traceback
 import uuid
 from enum import Enum
@@ -12,6 +11,10 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
+from mage_ai.settings.repo import get_data_dir as get_data_dir_new
+from mage_ai.settings.repo import get_repo_name as get_repo_name_new
+from mage_ai.settings.repo import get_repo_path as get_repo_path_new
+from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 
 
 class ProjectType(str, Enum):
@@ -23,8 +26,7 @@ class ProjectType(str, Enum):
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
         from mage_ai.data_preparation.shared.utils import get_template_vars
-        from mage_ai.settings.repo import get_repo_path
-        self.repo_path = repo_path or get_repo_path()
+        self.repo_path = repo_path or get_repo_path_new()
         self.repo_name = os.path.basename(self.repo_path)
         try:
             if not config_dict:
@@ -238,7 +240,7 @@ def get_repo_path() -> str:
         DeprecationWarning,
         stacklevel=2
     )
-    return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
+    return get_repo_path_new()
 
 
 def set_repo_path(repo_path: str) -> None:
@@ -247,8 +249,7 @@ def set_repo_path(repo_path: str) -> None:
         DeprecationWarning,
         stacklevel=2,
     )
-    os.environ[REPO_PATH_ENV_VAR] = repo_path
-    sys.path.append(os.path.dirname(repo_path))
+    set_repo_path_new(repo_path)
 
 
 def get_repo_name() -> str:
@@ -257,7 +258,7 @@ def get_repo_name() -> str:
         DeprecationWarning,
         stacklevel=2,
     )
-    return os.path.basename(get_repo_path())
+    return get_repo_name_new()
 
 
 def get_data_dir() -> str:
@@ -266,4 +267,4 @@ def get_data_dir() -> str:
         DeprecationWarning,
         stacklevel=2,
     )
-    return os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR
+    return get_data_dir_new()
