@@ -166,16 +166,9 @@ class Git:
         will configure and test SSH settings before executing the Git command.
         '''
         def wrapper(self, *args, **kwargs):
-            def run_check_connection():
-                loop = asyncio.get_event_loop()
-                if loop is not None:
-                    loop.run_until_complete(self.check_connection())
-                else:
-                    asyncio.run(self.check_connection())
-
             def add_host_to_known_hosts():
                 self.__add_host_to_known_hosts()
-                run_check_connection()
+                asyncio.run(self.check_connection())
 
             if self.auth_type == AuthType.SSH:
                 url = f'ssh://{self.git_config.remote_repo_link}'
@@ -187,7 +180,7 @@ class Git:
                     if not os.path.exists(DEFAULT_KNOWN_HOSTS_FILE):
                         self.__add_host_to_known_hosts()
                     try:
-                        run_check_connection()
+                        asyncio.run(self.check_connection())
                     except ChildProcessError as err:
                         if 'Host key verification failed' in str(err):
                             if hostname:
@@ -204,7 +197,7 @@ class Git:
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     return func(self, *args, **kwargs)
             else:
-                run_check_connection()
+                asyncio.run(self.check_connection())
                 return func(self, *args, **kwargs)
 
         return wrapper
