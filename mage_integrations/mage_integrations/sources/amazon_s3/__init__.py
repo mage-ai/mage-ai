@@ -1,9 +1,18 @@
-from botocore.config import Config
+import io
+import re
 from collections import Counter
+from typing import Dict, Generator, List
+
+import boto3
+import pandas as pd
+from botocore.config import Config
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
-    COLUMN_TYPE_ARRAY,
     COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
     FILE_TYPE_CSV,
@@ -11,15 +20,8 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.transformers.utils import convert_data_type, infer_dtypes
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import boto3
-import io
-import pandas as pd
-import re
 
 COLUMN_LAST_MODIFIED = '_s3_last_modified'
 
@@ -59,9 +61,14 @@ class AmazonS3(Source):
         return False if val is None else val
 
     @property
+    def endpoint(self) -> str:
+        return self.config.get('aws_endpoint')
+
+    @property
     def table_configs(self):
         """
-        Used for multiple streams. Each table config has the keys: prefix, search_pattern, table_name
+        Used for multiple streams. Each table config has the keys: prefix, search_pattern,
+        table_name
         """
         configs = self.config.get('table_configs', [])
         configs = [c for c in configs if all(k in c for k in REQUIRED_TABLE_CONFIG_KEYS)]
@@ -107,6 +114,7 @@ class AmazonS3(Source):
             aws_secret_access_key=self.config.get('aws_secret_access_key'),
             config=config,
             region_name=self.region,
+            endpoint_url=self.endpoint
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:

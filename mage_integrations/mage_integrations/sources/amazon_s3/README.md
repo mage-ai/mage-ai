@@ -20,5 +20,6 @@ You must enter the following credentials when configuring this source:
 | `search_pattern` | Search files with the regular expression syntax. | `test_table\\/.*\\.csv` |
 | `single_stream_in_prefix` | If `true`, then this source will treat all files in the prefix as part of the same stream. | `false` (default value) |
 | `table_configs` | A list of table configs to configure multiple streams. Each table config must have three keys: `prefix`, `search_pattern` and `table_name`| `[{"prefix": "users/", "search_pattern": "test_table\\/.*\\.csv", "table_name": "test_table"}]` |
+| `aws_endpoint` | (Optional) Allow for MinIO support | `https://play.min.io` |
 
 <br />
