@@ -53,6 +53,11 @@ class IntegrationBlock(Block):
             dict(tags=tags),
         )
 
+        variables_dictionary_for_config = merge_dict(global_vars, {
+            'pipeline.name': self.pipeline.name if self.pipeline else None,
+            'pipeline.uuid': self.pipeline.uuid if self.pipeline else None,
+        })
+
         if index is not None:
             source_state_file_path = self.pipeline.source_state_file_path(
                 destination_table=destination_table,
@@ -94,7 +99,7 @@ class IntegrationBlock(Block):
                     '--config_json',
                     build_config_json(
                         self.pipeline.data_loader.file_path,
-                        global_vars,
+                        variables_dictionary_for_config,
                     ),
                     '--log_to_stdout',
                     '1',
@@ -279,7 +284,7 @@ class IntegrationBlock(Block):
                 '--config_json',
                 build_config_json(
                     self.pipeline.data_exporter.file_path,
-                    global_vars,
+                    variables_dictionary_for_config,
                     override=override,
                 ),
                 '--log_to_stdout',

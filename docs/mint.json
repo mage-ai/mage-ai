@@ -116,7 +116,8 @@
             "data-integrations/destinations/add-new-destination",
             "data-integrations/destinations/adapt-existing-destination"
           ]
-        }
+        },
+        "data-integrations/configuration"
       ]
     },
     {
