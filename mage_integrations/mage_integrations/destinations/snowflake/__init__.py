@@ -316,24 +316,29 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 **kwargs,
             )
         else:
-            self.logger.info('Using batch load for Snowflake...')
-            table_name = tags.get('table_name')
-            schema = tags.get('schema_name')
-            database = tags.get('database_name')
-            tries = tags.get('tries', 0)
             results = []
+
+            if self.debug:
+                for qs in query_strings:
+                    print(qs, '\n')
+
+            results += self.build_connection().execute(query_strings, commit=True)
+
+            self.logger.info('Using batch load for Snowflake...')
+            tries = tags.get('tries', 0)
 
             try:
                 df = pd.DataFrame([d['record'] for d in record_data])
                 results += write_pandas(
                     self.build_connection().connection,
                     df,
-                    table_name,
-                    database=database,
-                    schema=schema,
+                    tags.get('table_name'),
+                    database=tags.get('database_name'),
+                    schema=tags.get('schema_name'),
                     auto_create_table=False,
                 )
             except Exception as err:
+                self.logger.error(f'Encountered exception: {err}')
                 if tries < 2:
                     tries += 1
                     tags2 = merge_dict(tags, dict(tries=tries))
