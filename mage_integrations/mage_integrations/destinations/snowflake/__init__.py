@@ -320,7 +320,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             table_name = tags.get('table_name')
             schema = tags.get('schema_name')
             database = tags.get('database_name')
-            tries = kwargs.get('tries', 0)
+            tries = tags.get('tries', 0)
             results = []
 
             try:
@@ -332,7 +332,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     database=database,
                     schema=schema,
                     auto_create_table=False,
-                    **kwargs,
                 )
             except Exception as err:
                 if tries < 2:
@@ -348,7 +347,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                         record_data=record_data,
                         stream=stream,
                         tags=tags,
-                        tries=tries,
+                        **kwargs,
                     )
                 else:
                     raise err
