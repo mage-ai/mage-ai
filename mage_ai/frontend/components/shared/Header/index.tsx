@@ -77,8 +77,8 @@ function Header({
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_branches.detail('test', {}, { revalidateOnFocus: false });
-  const branch = useMemo(() => dataGitBranch?.['git_branch']?.['name'], [dataGitBranch]);
+  } = api.git_custom_branches.detail('test', {}, { revalidateOnFocus: false });
+  const branch = useMemo(() => dataGitBranch?.['git_custom_branch']?.['name'], [dataGitBranch]);
 
   const {
     data: dataProjects,
@@ -283,7 +283,7 @@ function Header({
                   noHoverUnderline
                   onClick={showModal}
                   sameColorAsText
-                  uuid="Header/git_branch"
+                  uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
                     <Branch size={1.5 * UNIT} />

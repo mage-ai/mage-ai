@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -26,7 +26,6 @@ import {
   ACTION_DELETE,
   ACTION_MERGE,
   ACTION_REBASE,
-  LOCAL_STORAGE_GIT_REMOTE_NAME,
 } from '../constants';
 import {
   PADDING_UNITS,
@@ -36,35 +35,32 @@ import {
 } from '@oracle/styles/units/spacing';
 import { TAB_FILES, TAB_REMOTE } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 
 type BranchesProps = {
+  actionRemoteName: string;
   branch: GitBranchType;
   branches: GitBranchType[];
   fetchBranch: () => void;
   fetchBranches: () => void;
   remotes: GitRemoteType[];
+  setActionRemoteName: (actionRemoteName: string) => void;
   showError: (opts: any) => void;
 };
 
 function Branches({
+  actionRemoteName,
   branch,
   branches: branchesProp,
   fetchBranch,
   fetchBranches,
   remotes,
+  setActionRemoteName,
   showError,
 }: BranchesProps) {
   const [actionMessage, setActionMessage] = useState<string>('');
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionRemoteName, setActionRemoteNameState] =
-    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
-  const setActionRemoteName = useCallback((value: string) => {
-    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
-    setActionRemoteNameState(value);
-  }, []);
   const [branchBase, setBranchBase] = useState<string>(null);
   const [branchNameNew, setBranchNameNew] = useState<string>('');
 
@@ -77,7 +73,7 @@ function Branches({
     selectedRemote,
   ]);
 
-  const [createGitBranch, { isLoading: isLoadingCreate }] = useMutation(api.git_branches.useCreate(),
+  const [createGitBranch, { isLoading: isLoadingCreate }] = useMutation(api.git_custom_branches.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -94,7 +90,7 @@ function Branches({
       ),
     },
   );
-  const [changeGitBranch, { isLoading: isLoadingChange }] = useMutation(api.git_branches.useCreate(),
+  const [changeGitBranch, { isLoading: isLoadingChange }] = useMutation(api.git_custom_branches.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -111,12 +107,12 @@ function Branches({
   );
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            git_branch: {
+            git_custom_branch: {
               progress,
             },
           }) => {
@@ -188,7 +184,7 @@ function Branches({
                     monospace
                     // @ts-ignore
                     onChange={e => changeGitBranch({
-                      git_branch: {
+                      git_custom_branch: {
                         name: e.target.value,
                       },
                     })}
@@ -230,7 +226,7 @@ function Branches({
               onClick={() => {
                 // @ts-ignore
                 createGitBranch({
-                  git_branch: {
+                  git_custom_branch: {
                     name: branchNameNew,
                   },
                 });
@@ -345,7 +341,7 @@ function Branches({
                 )) {
                   // @ts-ignore
                   actionGitBranch({
-                    git_branch: {
+                    git_custom_branch: {
                       action_type: actionName,
                       message: actionMessage,
                       [actionName]: {

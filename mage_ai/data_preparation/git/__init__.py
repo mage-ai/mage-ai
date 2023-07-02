@@ -26,12 +26,14 @@ GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig = None) -> None:
+    def __init__(self, git_config: GitConfig = None, setup_repo: bool = True) -> None:
         import git
 
         self.auth_type = AuthType.SSH
         self.git_config = git_config
+        self.origin = None
         self.remote_repo_link = None
+        self.repo = None
         self.repo_path = os.getcwd()
 
         if self.git_config:
@@ -65,9 +67,10 @@ class Git:
         try:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
-            self.__setup_repo()
+            if setup_repo:
+                self.__setup_repo()
 
-        if self.git_config:
+        if self.repo and self.git_config:
             self.__set_git_config()
 
         if self.remote_repo_link:
@@ -83,19 +86,25 @@ class Git:
                 self.origin.set_url(self.remote_repo_link)
 
     @classmethod
-    def get_manager(self, user: User = None) -> 'Git':
+    def get_manager(self, user: User = None, setup_repo: bool = True) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
         if preferences and preferences.sync_config:
             git_config = GitConfig.load(config=preferences.sync_config)
-        return Git(git_config)
+        return Git(git_config, setup_repo=setup_repo)
 
     @property
     def current_branch(self) -> Any:
+        if not self.repo:
+            return None
+
         return self.repo.git.branch('--show-current')
 
     @property
     def branches(self) -> List:
+        if not self.repo:
+            return []
+
         return [branch.name for branch in self.repo.branches]
 
     def add_remote(self, name: str, url: str) -> None:
@@ -105,12 +114,17 @@ class Git:
         self.repo.git.remote('remove', name)
 
     def staged_files(self) -> List[str]:
-        files_string = self.repo.git.diff('--name-only', '--cached')
-        if files_string:
-            return files_string.split('\n')
+        if self.repo:
+            files_string = self.repo.git.diff('--name-only', '--cached')
+            if files_string:
+                return files_string.split('\n')
+
         return []
 
     def untracked_files(self, untracked_files: bool = False) -> List[str]:
+        if not self.repo:
+            return []
+
         from git.compat import defenc
 
         # ---------- Taken from GitPython source code -----------
@@ -145,6 +159,9 @@ class Git:
 
     @property
     def modified_files(self) -> List[str]:
+        if not self.repo:
+            return []
+
         return [item.a_path for item in self.repo.index.diff(None)]
 
     async def check_connection(self) -> None:
@@ -310,6 +327,9 @@ class Git:
 
     def remotes(self, limit: int = 40, user: User = None) -> List[Dict]:
         arr = []
+
+        if not self.repo:
+            return arr
 
         for idx, remote in enumerate(self.repo.remotes):
             from git.exc import GitCommandError
