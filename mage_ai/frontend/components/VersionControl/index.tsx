@@ -1,5 +1,5 @@
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -22,18 +22,22 @@ import {
   DIFF_STYLES,
   DiffContainerStyle,
 } from './index.style';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
+  LOCAL_STORAGE_GIT_REMOTE_NAME,
+  LOCAL_STORAGE_GIT_REPOSITORY_NAME,
   TABS,
   TAB_BRANCHES,
   TAB_PUSH,
   TAB_FILES,
   TAB_REMOTE,
 } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { get, set } from '@storage/localStorage';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { unique } from '@utils/array';
 import { useError } from '@context/Error';
 
 function VersionControl() {
@@ -55,23 +59,83 @@ function VersionControl() {
     }
   }, [q]);
 
-  const { data: dataBranches, mutate: fetchBranches } = api.git_branches.list({
+  const { data: dataBranches, mutate: fetchBranches } = api.git_custom_branches.list({
     include_remote_branches: 1,
   });
-  const branches: GitBranchType[] = useMemo(() => dataBranches?.git_branches, [dataBranches]);
+  const branches: GitBranchType[] = useMemo(() => dataBranches?.git_custom_branches, [dataBranches]);
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('current');
-  const branch: GitBranchType = useMemo(() => dataBranch?.git_branch || {}, [dataBranch]);
+  const { data: dataBranch, mutate: fetchBranch } = api.git_custom_branches.detail('current');
+  const branch: GitBranchType = useMemo(() => dataBranch?.git_custom_branch || {}, [dataBranch]);
   const files: FileType[] = useMemo(() => branch?.files || [], [branch]);
 
   const {
     data: dataBranchRemotes,
     mutate: fetchBranchRemotes,
-  } = api.git_branches.detail('with_remotes', {
+  } = api.git_custom_branches.detail('with_remotes', {
     '_format': 'with_remotes',
   });
-  const branchGit = useMemo(() => dataBranchRemotes?.git_branch, [dataBranchRemotes]);
+  const branchGit = useMemo(() => dataBranchRemotes?.git_custom_branch, [dataBranchRemotes]);
   const remotes = useMemo(() => branchGit?.remotes || [], [branchGit]);
+
+  const [actionRemoteName, setActionRemoteNameState] = useState<string>(null);
+  const setActionRemoteName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
+    setActionRemoteNameState(value);
+  }, []);
+
+  useEffect(() => {
+    const nameLS = get(LOCAL_STORAGE_GIT_REMOTE_NAME, null);
+    if (dataBranchRemotes && nameLS) {
+      const obj = remotes?.find(({ name }) => name === nameLS);
+      if (obj) {
+        setActionRemoteName(obj?.name);
+      } else {
+        setActionRemoteName(null);
+      }
+    }
+  }, [
+    dataBranchRemotes,
+    remotes,
+    setActionRemoteName,
+  ]);
+
+  const [repositoryName, setRepositoryNameState] =
+    useState<string>(get(LOCAL_STORAGE_GIT_REPOSITORY_NAME, ''));
+  const setRepositoryName = useCallback((value: string) => {
+    set(LOCAL_STORAGE_GIT_REPOSITORY_NAME, value);
+    setRepositoryNameState(value);
+  }, []);
+
+  const repositories: {
+    name: string;
+    url: string;
+  }[] =
+    useMemo(
+      () => unique(
+        remotes.reduce((acc, remote) => acc.concat(remote?.repository_names?.map(name => ({
+          name,
+          url: remote?.urls?.[0],
+        })) || []), []),
+        ({ name }) => name,
+      ),
+      [remotes],
+  );
+
+  useEffect(() => {
+    const nameLS = get(LOCAL_STORAGE_GIT_REPOSITORY_NAME, null);
+    if (dataBranchRemotes && nameLS) {
+      const obj = repositories?.find(({ name }) => name === nameLS);
+      if (obj) {
+        setRepositoryName(obj?.name);
+      } else {
+        setRepositoryName(null);
+      }
+    }
+  }, [
+    dataBranchRemotes,
+    repositories,
+    setRepositoryName,
+  ]);
 
   const { data: dataFile, mutate: fetchFileGit } = api.git_files.detail(
     selectedFilePath
@@ -315,6 +379,10 @@ function VersionControl() {
     selectedFilePath,
   ]);
 
+  const tabsToUse = useMemo(() => dataBranch && branch?.name ? TABS : TABS.slice(0, 1), [
+    branch,
+    dataBranch,
+  ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <>
       <div
@@ -329,44 +397,56 @@ function VersionControl() {
             goToWithQuery({ tab: uuid });
           }}
           selectedTabUUID={selectedTab?.uuid}
-          tabs={TABS}
+          tabs={tabsToUse}
         />
       </div>
       <Divider light />
     </>
-  ), [selectedTab]);
+  ), [selectedTab, tabsToUse]);
 
   const remoteMemo = useMemo(() => (
     <Remote
+      actionRemoteName={actionRemoteName}
       branch={branch}
-      fetchBranch={fetchBranchRemotes}
+      fetchBranch={() => {
+        fetchBranch();
+        fetchBranchRemotes();
+      }}
       loading={!dataBranchRemotes}
       remotes={remotes}
+      setActionRemoteName={setActionRemoteName}
       showError={showError}
     />
   ), [
+    actionRemoteName,
     branch,
     dataBranchRemotes,
+    fetchBranch,
     fetchBranchRemotes,
     remotes,
+    setActionRemoteName,
     showError,
   ]);
 
   const branchesMemo = useMemo(() => (
     <Branches
+      actionRemoteName={actionRemoteName}
       branch={branch}
       branches={branches}
       fetchBranch={fetchBranch}
       fetchBranches={fetchBranches}
       remotes={remotes}
+      setActionRemoteName={setActionRemoteName}
       showError={showError}
     />
   ), [
+    actionRemoteName,
     branch,
     branches,
     fetchBranch,
     fetchBranches,
     remotes,
+    setActionRemoteName,
     showError,
   ]);
 
@@ -392,22 +472,32 @@ function VersionControl() {
 
   const commitMemo = useMemo(() => (
     <Commit
+      actionRemoteName={actionRemoteName}
       branch={branch}
       branches={branches}
       fetchBranch={fetchBranch}
       loading={!dataBranchRemotes}
       modifiedFiles={modifiedFiles}
       remotes={remotes}
+      repositories={repositories}
+      repositoryName={repositoryName}
+      setActionRemoteName={setActionRemoteName}
+      setRepositoryName={setRepositoryName}
       showError={showError}
       stagedFiles={stagedFiles}
     />
   ), [
+    actionRemoteName,
     branch,
     branches,
     dataBranchRemotes,
     fetchBranch,
     modifiedFiles,
     remotes,
+    repositories,
+    repositoryName,
+    setActionRemoteName,
+    setRepositoryName,
     showError,
     stagedFiles,
   ]);

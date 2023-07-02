@@ -31,7 +31,7 @@ def generate_access_token(
     attributes_data = dict(
         expires=datetime.utcnow() + timedelta(days=30),
         token=token,
-        user_id=user.id,
+        user_id=user.id if user else None,
     )
 
     if application:

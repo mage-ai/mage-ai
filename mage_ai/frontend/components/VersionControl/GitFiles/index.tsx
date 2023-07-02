@@ -101,7 +101,7 @@ function GitFiles({
       },
     ),
   }), [fetchBranchProp, sharedUpdateProps]);
-  const updateEndpoint = useMemo(() => api.git_branches.useUpdate(branch?.name), [branch]);
+  const updateEndpoint = useMemo(() => api.git_custom_branches.useUpdate(branch?.name), [branch]);
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
     updateEndpoint,
@@ -211,13 +211,13 @@ function GitFiles({
 
   const noFilesASelected: boolean = useMemo(() => isEmptyObject(selectedFilesA), [selectedFilesA]);
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_branches.detail('with_logs', {
+  const { data: dataBranch, mutate: fetchBranch } = api.git_custom_branches.detail('with_logs', {
     '_format': 'with_logs',
   });
-  const logs = useMemo(() => dataBranch?.git_branch?.logs || [], [dataBranch]);
+  const logs = useMemo(() => dataBranch?.git_custom_branch?.logs || [], [dataBranch]);
 
   const [updateGitBranchCommit, { isLoading: isLoadingUpdateCommit }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -290,12 +290,12 @@ function GitFiles({
                   onClick={() => {
                     // @ts-ignore
                     updateGitBranch({
-                      git_branch: {
+                      git_custom_branch: {
                         action_type: 'add',
                         files: Object.keys(selectedFilesA),
                       },
                     }).then(({ data }) => {
-                      if (data?.git_branch) {
+                      if (data?.git_custom_branch) {
                         refCommitMessageTextArea?.current?.focus();
                       }
                     });
@@ -321,7 +321,7 @@ function GitFiles({
                     ) {
                       // @ts-ignore
                       updateGitBranchCheckout({
-                        git_branch: {
+                        git_custom_branch: {
                           action_type: 'checkout',
                           files: Object.keys(selectedFilesA),
                         },
@@ -366,7 +366,7 @@ function GitFiles({
                   onClick={() => {
                     // @ts-ignore
                     updateGitBranchB({
-                      git_branch: {
+                      git_custom_branch: {
                         action_type: 'reset',
                         files: Object.keys(selectedFilesB),
                       },
@@ -447,7 +447,7 @@ function GitFiles({
               onClick={() => {
                 // @ts-ignore
                 updateGitBranchCommit({
-                  git_branch: {
+                  git_custom_branch: {
                     action_type: 'commit',
                     files: stagedFilePaths,
                     message: commitMessage,

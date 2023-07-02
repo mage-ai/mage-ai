@@ -22,6 +22,10 @@ def build_file_object(obj):
 
 class GitBranchResource(GenericResource):
     @classmethod
+    def get_git_manager(self, user) -> Git:
+        return Git.get_manager(setup_repo=True, user=user)
+
+    @classmethod
     def collection(self, query, meta, user, **kwargs):
         arr = []
 
@@ -43,7 +47,7 @@ class GitBranchResource(GenericResource):
                 for branch in branches:
                     arr.append(dict(name=branch.name))
         else:
-            git_manager = Git.get_manager(user=user)
+            git_manager = self.get_git_manager(user=user)
             arr += [dict(name=branch) for branch in git_manager.branches]
 
             if include_remote_branches:
@@ -58,14 +62,14 @@ class GitBranchResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         branch = payload.get('name')
-        git_manager = Git.get_manager(user=user)
+        git_manager = self.get_git_manager(user=user)
         git_manager.switch_branch(branch)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        git_manager = Git.get_manager(user=user)
+        git_manager = self.get_git_manager(user=user)
 
         files = {}
 
@@ -111,7 +115,7 @@ class GitBranchResource(GenericResource):
         ), user, **kwargs)
 
     async def update(self, payload, **kwargs):
-        git_manager = Git.get_manager(user=self.current_user)
+        git_manager = self.get_git_manager(user=self.current_user)
         action_type = payload.get('action_type')
         files = payload.get('files', None)
         message = payload.get('message', None)
@@ -273,9 +277,9 @@ class GitBranchResource(GenericResource):
         return self
 
     def logs(self, commits: int = None) -> List[Dict]:
-        git_manager = Git.get_manager(user=self.current_user)
+        git_manager = self.get_git_manager(user=self.current_user)
         return git_manager.logs(commits=commits)
 
     def remotes(self, limit: int = None) -> List[Dict]:
-        git_manager = Git.get_manager(user=self.current_user)
+        git_manager = self.get_git_manager(user=self.current_user)
         return git_manager.remotes(limit=limit, user=self.current_user)

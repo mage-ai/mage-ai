@@ -44,7 +44,7 @@ class OauthResource(GenericResource):
                 client_id=provider,
                 client_type=Oauth2Application.ClientType.PRIVATE,
                 name=provider,
-                user_id=user.id,
+                user_id=user.id if user else None,
             )
 
         access_token = Oauth2AccessToken.query.filter(

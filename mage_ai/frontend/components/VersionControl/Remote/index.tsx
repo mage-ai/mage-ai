@@ -30,7 +30,6 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { LOCAL_STORAGE_GIT_REMOTE_NAME, TAB_BRANCHES } from '../constants';
 import { OathProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
@@ -38,24 +37,28 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 
 type RemoteProps = {
+  actionRemoteName: string;
   branch: GitBranchType;
   fetchBranch: () => void;
   loading?: boolean;
   remotes: GitRemoteType[];
+  setActionRemoteName: (actionRemoteName: string) => void;
   showError: (opts: any) => void;
 };
 
 function Remote({
+  actionRemoteName,
   branch,
   fetchBranch,
   loading,
   remotes,
+  setActionRemoteName,
   showError,
 }: RemoteProps) {
   const router = useRouter();
@@ -66,17 +69,13 @@ function Remote({
   const [actionError, setActionError] = useState<string>(null);
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionRemoteName, setActionRemoteNameState] =
-    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
-  const setActionRemoteName = useCallback((value: string) => {
-    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
-    setActionRemoteNameState(value);
-  }, []);
   const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
   const [remoteURLNew, setRemoteURLNew] = useState<string>('');
   const [repoPath, setRepoPath] = useState<string>(null);
+
+  const gitInitialized = useMemo(() => !!branch?.name, [branch]);
 
   useEffect(() => {
     if (branch?.sync_config?.repo_path && repoPath === null) {
@@ -117,12 +116,12 @@ function Remote({
   );
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            git_branch: {
+            git_custom_branch: {
               error,
               progress,
             },
@@ -148,7 +147,7 @@ function Remote({
   );
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -167,7 +166,7 @@ function Remote({
   );
 
   const [removeRemote, { isLoading: isLoadingRemoveRemote }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -274,7 +273,7 @@ function Remote({
                 setRemoteNameActive(name);
                 // @ts-ignore
                 removeRemote({
-                  git_branch: {
+                  git_custom_branch: {
                     action_type: 'remove_remote',
                     remote: {
                       name,
@@ -410,21 +409,33 @@ function Remote({
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Spacing mb={1}>
             <Text bold large>
-              Git init directory
+              {gitInitialized ? 'Git init directory' : 'Initialize Git directory'}
             </Text>
-            <Text muted>
-              If the directory below is blank,
-              then the current working directory will be used
-              to initialize git.
-              <br />
-              If git hasn’t been initialized in the directory below,
-              Mage will automatically run git init for you.
-            </Text>
+
+            {!gitInitialized && (
+              <Text muted>
+                Enter the directory you want to initialize git in.
+                For example, <Text bold inline monospace muted>
+                  /home/src/default_repo
+                </Text>.
+              </Text>
+            )}
+
+            {gitInitialized && (
+              <Text muted>
+                If the directory below is blank,
+                then the current working directory will be used
+                to initialize git.
+                <br />
+                If git hasn’t been initialized in the directory below,
+                Mage will automatically run git init for you.
+              </Text>
+            )}
           </Spacing>
 
           <FlexContainer alignItems="center">
             <TextInput
-              disabled={!editRepoPathActive}
+              disabled={gitInitialized && !editRepoPathActive}
               label="Git directory"
               monospace
               onChange={e => setRepoPath(e.target.value)}
@@ -434,10 +445,11 @@ function Remote({
 
             <Spacing mr={1} />
 
-            {editRepoPathActive && (
+            {(!gitInitialized || editRepoPathActive) && (
               <>
                 <Button
                   compact
+                  disabled={!gitInitialized && !repoPath}
                   loading={isLoadingCreateSyncs}
                   onClick={() => {
                     // @ts-ignore
@@ -453,20 +465,24 @@ function Remote({
                   Save
                 </Button>
 
-                <Spacing mr={1} />
+                {gitInitialized && (
+                  <>
+                    <Spacing mr={1} />
 
-                <Link
-                  onClick={() => setEditRepoPathActive(false)}
-                  preventDefault
-                  sameColorAsText
-                  small
-                >
-                  Cancel
-                </Link>
+                    <Link
+                      onClick={() => setEditRepoPathActive(false)}
+                      preventDefault
+                      sameColorAsText
+                      small
+                    >
+                      Cancel
+                    </Link>
+                  </>
+                )}
               </>
             )}
 
-            {!editRepoPathActive && (
+            {gitInitialized && !editRepoPathActive && (
               <Link
                 onClick={() => {
                   setEditRepoPathActive(true);
@@ -483,212 +499,216 @@ function Remote({
         </Spacing>
       </Spacing>
 
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Headline>
-          Remotes{!loading && remotes ? ` (${remotes?.length})` : ''}
-        </Headline>
+      {gitInitialized && (
+        <>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Headline>
+              Remotes{!loading && remotes ? ` (${remotes?.length})` : ''}
+            </Headline>
 
-        {loading && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <Spinner inverted />
-          </Spacing>
-        )}
-        {!loading && remotesMemo}
-
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="flex-start">
-            <TextInput
-              label="New remote name"
-              monospace
-              onChange={e => setRemoteNameNew(e?.target?.value)}
-              value={remoteNameNew || ''}
-            />
-
-            <Spacing mr={1} />
-
-            <FlexContainer flexDirection="column">
-              <TextInput
-                label="Remote URL"
-                monospace
-                onChange={e => setRemoteURLNew(e?.target?.value)}
-                value={remoteURLNew || ''}
-              />
-
-              <Spacing mt={1}>
-                <Text muted small>
-                  Use the https URL if you
-                  <br />
-                  authenticated with GitHub above.
-                </Text>
+            {loading && (
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Spinner inverted />
               </Spacing>
-            </FlexContainer>
+            )}
+            {!loading && remotesMemo}
 
-            <Spacing mr={1} />
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <FlexContainer alignItems="flex-start">
+                <TextInput
+                  label="New remote name"
+                  monospace
+                  onChange={e => setRemoteNameNew(e?.target?.value)}
+                  value={remoteNameNew || ''}
+                />
 
-            <Button
-              beforeIcon={<Add size={UNIT * 2} />}
-              disabled={!remoteNameNew || !remoteURLNew}
-              loading={isLoadingUpdate}
-              onClick={() => {
-                // @ts-ignore
-                updateGitBranch({
-                  git_branch: {
-                    action_type: 'add_remote',
-                    remote: {
-                      name: remoteNameNew,
-                      url: remoteURLNew,
-                    },
-                  },
-                });
-              }}
-              primary
-            >
-              Create new remote
-            </Button>
-          </FlexContainer>
-        </Spacing>
-      </Spacing>
+                <Spacing mr={1} />
 
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Headline>
-          Actions
-        </Headline>
+                <FlexContainer flexDirection="column">
+                  <TextInput
+                    label="Remote URL"
+                    monospace
+                    onChange={e => setRemoteURLNew(e?.target?.value)}
+                    value={remoteURLNew || ''}
+                  />
 
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <Spacing mb={1}>
-              <Text bold muted>
-                Current branch
-              </Text>
+                  <Spacing mt={1}>
+                    <Text muted small>
+                      Use the https URL if you
+                      <br />
+                      authenticated with GitHub above.
+                    </Text>
+                  </Spacing>
+                </FlexContainer>
+
+                <Spacing mr={1} />
+
+                <Button
+                  beforeIcon={<Add size={UNIT * 2} />}
+                  disabled={!remoteNameNew || !remoteURLNew}
+                  loading={isLoadingUpdate}
+                  onClick={() => {
+                    // @ts-ignore
+                    updateGitBranch({
+                      git_custom_branch: {
+                        action_type: 'add_remote',
+                        remote: {
+                          name: remoteNameNew,
+                          url: remoteURLNew,
+                        },
+                      },
+                    });
+                  }}
+                  primary
+                >
+                  Create new remote
+                </Button>
+              </FlexContainer>
+            </Spacing>
+          </Spacing>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Headline>
+              Actions
+            </Headline>
+
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Spacing mb={1}>
+                  <Text bold muted>
+                    Current branch
+                  </Text>
+                </Spacing>
+
+                {branch?.name && (
+                  <FlexContainer alignItems="center">
+                    <Text monospace>
+                      {branch?.name}
+                    </Text>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <NextLink
+                      href={`/version-control?tab=${TAB_BRANCHES.uuid}`}
+                      passHref
+                    >
+                      <Link
+                        small
+                      >
+                        Switch branch
+                      </Link>
+                    </NextLink>
+                  </FlexContainer>
+                )}
+              </Spacing>
+
+              <FlexContainer>
+                <Select
+                  onChange={(e) => setActionName(e.target.value)}
+                  placeholder="Action"
+                  value={actionName || ''}
+                >
+                  <option value={ACTION_PULL}>
+                    {capitalizeRemoveUnderscoreLower(ACTION_PULL)}
+                  </option>
+                </Select>
+
+                <Spacing mr={1} />
+
+                <Select
+                  beforeIcon={<MultiShare />}
+                  beforeIconSize={UNIT * 1.5}
+                  monospace
+                  onChange={e => setActionRemoteName(e.target.value)}
+                  placeholder="Remote"
+                  value={actionRemoteName || ''}
+                >
+                  {remotes?.map(({ name }) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+
+                <Spacing mr={1} />
+
+                <Select
+                  beforeIcon={<Branch />}
+                  beforeIconSize={UNIT * 1.5}
+                  monospace
+                  onChange={e => setActionBranchName(e.target.value)}
+                  value={actionBranchName || ''}
+                >
+                  <option value="">All branches</option>
+                  {branches?.map(({ name }) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+
+              </FlexContainer>
+
+              <Spacing mt={PADDING_UNITS}>
+                <Button
+                  beforeIcon={<Lightning size={UNIT * 2} />}
+                  disabled={!actionName || !actionRemoteName}
+                  loading={isLoadingAction}
+                  onClick={() => {
+                    setActionProgress(null);
+                    // @ts-ignore
+                    actionGitBranch({
+                      git_custom_branch: {
+                        action_type: actionName,
+                        pull: {
+                          branch: actionBranchName,
+                          remote: actionRemoteName,
+                        },
+                      },
+                    });
+                  }}
+                  primary
+                >
+                  {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
+                </Button>
+
+                {(actionProgress || actionError) && (
+                  <Spacing mt={PADDING_UNITS}>
+                    <Text
+                      danger={!!actionError}
+                      default={!!actionProgress}
+                      monospace
+                      preWrap
+                    >
+                      {actionProgress || actionError}
+                    </Text>
+                  </Spacing>
+                )}
+              </Spacing>
+            </Spacing>
+          </Spacing>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <Divider light />
             </Spacing>
 
-            {branch?.name && (
-              <FlexContainer alignItems="center">
-                <Text monospace>
-                  {branch?.name}
-                </Text>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <NextLink
-                  href={`/version-control?tab=${TAB_BRANCHES.uuid}`}
-                  passHref
-                >
-                  <Link
-                    small
-                  >
-                    Switch branch
-                  </Link>
-                </NextLink>
-              </FlexContainer>
-            )}
+            <FlexContainer>
+              <Button
+                afterIcon={<PaginateArrowRight />}
+                linkProps={{
+                  href: `/version-control?tab=${TAB_BRANCHES.uuid}`,
+                }}
+                noHoverUnderline
+                sameColorAsText
+                secondary
+              >
+                Next: {TAB_BRANCHES.uuid}
+              </Button>
+            </FlexContainer>
           </Spacing>
-
-          <FlexContainer>
-            <Select
-              onChange={(e) => setActionName(e.target.value)}
-              placeholder="Action"
-              value={actionName || ''}
-            >
-              <option value={ACTION_PULL}>
-                {capitalizeRemoveUnderscoreLower(ACTION_PULL)}
-              </option>
-            </Select>
-
-            <Spacing mr={1} />
-
-            <Select
-              beforeIcon={<MultiShare />}
-              beforeIconSize={UNIT * 1.5}
-              monospace
-              onChange={e => setActionRemoteName(e.target.value)}
-              placeholder="Remote"
-              value={actionRemoteName || ''}
-            >
-              {remotes?.map(({ name }) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-
-            <Spacing mr={1} />
-
-            <Select
-              beforeIcon={<Branch />}
-              beforeIconSize={UNIT * 1.5}
-              monospace
-              onChange={e => setActionBranchName(e.target.value)}
-              value={actionBranchName || ''}
-            >
-              <option value="">All branches</option>
-              {branches?.map(({ name }) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-
-          </FlexContainer>
-
-          <Spacing mt={PADDING_UNITS}>
-            <Button
-              beforeIcon={<Lightning size={UNIT * 2} />}
-              disabled={!actionName || !actionRemoteName}
-              loading={isLoadingAction}
-              onClick={() => {
-                setActionProgress(null);
-                // @ts-ignore
-                actionGitBranch({
-                  git_branch: {
-                    action_type: actionName,
-                    pull: {
-                      branch: actionBranchName,
-                      remote: actionRemoteName,
-                    },
-                  },
-                });
-              }}
-              primary
-            >
-              {actionName ? capitalizeRemoveUnderscoreLower(actionName) : 'Execute action'}
-            </Button>
-
-            {(actionProgress || actionError) && (
-              <Spacing mt={PADDING_UNITS}>
-                <Text
-                  danger={!!actionError}
-                  default={!!actionProgress}
-                  monospace
-                  preWrap
-                >
-                  {actionProgress || actionError}
-                </Text>
-              </Spacing>
-            )}
-          </Spacing>
-        </Spacing>
-      </Spacing>
-
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-          <Divider light />
-        </Spacing>
-
-        <FlexContainer>
-          <Button
-            afterIcon={<PaginateArrowRight />}
-            linkProps={{
-              href: `/version-control?tab=${TAB_BRANCHES.uuid}`,
-            }}
-            noHoverUnderline
-            sameColorAsText
-            secondary
-          >
-            Next: {TAB_BRANCHES.uuid}
-          </Button>
-        </FlexContainer>
-      </Spacing>
+        </>
+      )}
     </>
   );
 }

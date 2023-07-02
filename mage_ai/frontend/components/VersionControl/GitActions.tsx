@@ -55,9 +55,9 @@ function GitActions({
   const {
     data: dataAllGitBranches,
     mutate: fetchAllBranches,
-  } = api.git_branches.list();
+  } = api.git_custom_branches.list();
   const allBranches = useMemo(
-    () => dataAllGitBranches?.['git_branches'],
+    () => dataAllGitBranches?.['git_custom_branches'],
     [dataAllGitBranches],
   );
 
@@ -151,7 +151,7 @@ function GitActions({
       ),
     },
   );
-  
+
   const [status, setStatus] = useState<string>();
   const [untrackedFiles, setUntrackedFiles] = useState<string[]>([]);
   const [modifiedFiles, setModifiedFiles] = useState<string[]>([]);
@@ -179,7 +179,7 @@ function GitActions({
       isLoadingPerformActionWithRefresh,
     ],
   );
-  
+
   useEffect(() => updateStatus(), [action, updateStatus]);
 
   const token = useMemo(() => new AuthToken(), []);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -20,8 +20,6 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import {
   ACTION_PUSH,
-  LOCAL_STORAGE_GIT_REMOTE_NAME,
-  LOCAL_STORAGE_GIT_REPOSITORY_NAME,
   TAB_FILES,
 } from '../constants';
 import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
@@ -32,9 +30,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
-import { unique } from '@utils/array';
 
 const EMPTY_PULL_REQUEST = {
   base_branch: null,
@@ -45,6 +41,7 @@ const EMPTY_PULL_REQUEST = {
 };
 
 type CommitProps = {
+  actionRemoteName: string;
   branch: GitBranchType;
   branches: GitBranchType[];
   fetchBranch: () => void;
@@ -53,7 +50,13 @@ type CommitProps = {
     [fullPath: string]: boolean;
   };
   remotes: GitRemoteType[];
-
+  repositories: {
+    name: string;
+    url: string;
+  }[];
+  repositoryName: string;
+  setActionRemoteName: (actionRemoteName: string) => void;
+  setRepositoryName: (repositoryName: string) => void;
   showError: (opts: any) => void;
   stagedFiles: {
     [fullPath: string]: boolean;
@@ -61,37 +64,30 @@ type CommitProps = {
 };
 
 function Commit({
+  actionRemoteName,
   branch,
   branches,
   fetchBranch,
   loading,
   remotes,
+  repositories,
+  repositoryName,
+  setActionRemoteName,
+  setRepositoryName,
   showError,
 }: CommitProps) {
   const [actionBranchName, setActionBranchName] = useState<string>(branch?.name || '');
   const [actionError, setActionError] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
-  const [actionRemoteName, setActionRemoteNameState] =
-    useState<string>(get(LOCAL_STORAGE_GIT_REMOTE_NAME, ''));
-  const setActionRemoteName = useCallback((value: string) => {
-    set(LOCAL_STORAGE_GIT_REMOTE_NAME, value);
-    setActionRemoteNameState(value);
-  }, []);
   const [pullRequest, setPullRequest] = useState<PullRequestPayloadType>(EMPTY_PULL_REQUEST);
-  const [repositoryName, setRepositoryNameState] =
-    useState<string>(get(LOCAL_STORAGE_GIT_REPOSITORY_NAME, ''));
-  const setRepositoryName = useCallback((value: string) => {
-    set(LOCAL_STORAGE_GIT_REPOSITORY_NAME, value);
-    setRepositoryNameState(value);
-  }, []);
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(branch?.name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            git_branch: {
+            git_custom_branch: {
               error,
               progress,
             },
@@ -112,21 +108,6 @@ function Commit({
         },
       ),
     },
-  );
-
-  const repositories: {
-    name: string;
-    url: string;
-  }[] =
-    useMemo(
-      () => unique(
-        remotes.reduce((acc, remote) => acc.concat(remote?.repository_names?.map(name => ({
-          name,
-          url: remote?.urls?.[0],
-        })) || []), []),
-        ({ name }) => name,
-      ),
-      [remotes],
   );
 
   const { data: dataPullRequests, mutate: fetchPullRequests } = api.pull_requests.list({
@@ -191,13 +172,13 @@ function Commit({
     />
   ), [pullRequests]);
 
-  const { data: dataGitBranches } = api.git_branches.list({
+  const { data: dataGitBranches } = api.git_custom_branches.list({
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,
   });
   const branchesForRepository: GitBranchType[] =
-    useMemo(() => dataGitBranches?.git_branches || [], [dataGitBranches]);
+    useMemo(() => dataGitBranches?.git_custom_branches || [], [dataGitBranches]);
 
   useEffect(() => {
     if (!pullRequest?.compare_branch && branchesForRepository?.find(({ name }) => name === branch?.name)) {
@@ -304,7 +285,7 @@ function Commit({
                 setActionProgress(null);
                 // @ts-ignore
                 actionGitBranch({
-                  git_branch: {
+                  git_custom_branch: {
                     action_type: ACTION_PUSH,
                     [ACTION_PUSH]: {
                       branch: actionBranchName,
