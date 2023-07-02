@@ -317,13 +317,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             )
         else:
             results = []
-
-            if self.debug:
-                for qs in query_strings:
-                    print(qs, '\n')
-
-            results += self.build_connection().execute(query_strings, commit=True)
-
             self.logger.info('Using batch load for Snowflake...')
             tries = tags.get('tries', 0)
 
@@ -335,7 +328,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     tags.get('table_name'),
                     database=tags.get('database_name'),
                     schema=tags.get('schema_name'),
-                    auto_create_table=False,
+                    auto_create_table=True,
                 )
             except Exception as err:
                 self.logger.error(f'Encountered exception: {err}')
