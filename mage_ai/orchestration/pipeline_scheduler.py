@@ -491,9 +491,11 @@ class PipelineScheduler:
                 # args
                 self.pipeline_run.id,
                 [b.id for b in block_runs_to_schedule],
-                self.pipeline_run.get_variables(extra_variables=dict(
-                    pipeline_uuid=self.pipeline.uuid,
-                )),
+                self.pipeline_run.get_variables(extra_variables={
+                    'pipeline.name': self.pipeline.name,
+                    'pipeline.uuid': self.pipeline.uuid,
+                    'pipeline_uuid': self.pipeline.uuid,
+                }),
                 self.__build_tags(),
             )
 
