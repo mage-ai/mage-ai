@@ -659,7 +659,7 @@ function PipelineDetail({
         const block = blocks[blocks.length - 1];
 
         let content = null;
-        let configuration = {};
+        let configuration = newBlock.configuration || {};
         const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
         if (block) {

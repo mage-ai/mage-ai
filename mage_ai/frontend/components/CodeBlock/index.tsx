@@ -89,6 +89,8 @@ import {
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
   CONFIG_KEY_DATA_PROVIDER_TABLE,
+  CONFIG_KEY_DBT,
+  CONFIG_KEY_DBT_COMMAND,
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
@@ -291,6 +293,7 @@ function CodeBlock({
     [CONFIG_KEY_LIMIT]: defaultLimitValue,
     [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: blockConfiguration[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
+    [CONFIG_KEY_DBT]: blockConfiguration[CONFIG_KEY_DBT] || {},
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
@@ -1490,15 +1493,46 @@ function CodeBlock({
                   {BlockLanguageEnum.YAML === blockLanguage && (
                     <Spacing mt={1}>
                       <FlexContainer alignItems="center">
-                        <Flex flex={1}>
+                        <Flex alignItems="center" flex={1}>
                           <Text default monospace small>
-                            dbt run <Text
-                              inline
-                              monospace
-                              small
-                            >
-                              [type your --select and --exclude syntax below]
-                            </Text>
+                            dbt
+                          </Text>
+
+                          <Spacing mr={1} />
+
+                          <TextInput
+                            compact
+                            monospace
+                            onBlur={() => setTimeout(() => {
+                              setAnyInputFocused(false);
+                            }, 300)}
+                            onChange={(e) => {
+                              // @ts-ignore
+                              updateDataProviderConfig({
+                                [CONFIG_KEY_DBT]: {
+                                  ...dataProviderConfig?.[CONFIG_KEY_DBT],
+                                  [CONFIG_KEY_DBT_COMMAND]: e.target.value,
+                                },
+                              });
+                              e.preventDefault();
+                            }}
+                            onClick={pauseEvent}
+                            onFocus={() => {
+                              setAnyInputFocused(true);
+                            }}
+                            placeholder="command"
+                            small
+                            value={dataProviderConfig?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND] || ''}
+                            width={UNIT * 10}
+                          />
+
+                          <Spacing mr={1} />
+
+                          <Text
+                            monospace
+                            small
+                          >
+                            [type your --select and --exclude syntax below]
                           </Text>
 
                           <Spacing mr={1} />
