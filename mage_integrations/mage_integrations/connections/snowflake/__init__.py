@@ -20,6 +20,10 @@ class Snowflake(Connection):
         self.username = username
         self.warehouse = warehouse
 
+    @property
+    def connection(self):
+        return self.build_connection()
+
     def build_connection(self):
         return connect(
             account=self.account,

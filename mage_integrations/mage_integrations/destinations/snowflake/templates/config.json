@@ -6,5 +6,6 @@
   "schema": "",
   "table": "",
   "username": "",
-  "warehouse": ""
+  "warehouse": "",
+  "use_batch_load": false
 }

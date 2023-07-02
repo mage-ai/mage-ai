@@ -1,17 +1,14 @@
-import json
-from typing import Dict, List, Tuple
-
+from mage_ai.shared.hash import merge_dict
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from mage_integrations.destinations.snowflake.constants import (
-    SNOWFLAKE_COLUMN_TYPE_VARIANT,
-)
 from mage_integrations.destinations.snowflake.utils import (
     build_alter_table_command,
+    convert_array,
+    convert_column_if_json,
     convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
@@ -20,51 +17,18 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     clean_column_name,
     column_type_mapping,
-    convert_column_to_type,
 )
 from mage_integrations.utils.array import batch
-from mage_integrations.utils.strings import is_number
-
-
-def convert_array(value, column_settings):
-    def format_value(val):
-        val_str = str(val)
-        if type(val) is list or type(val) is dict:
-            return f"'{json.dumps(val)}'"
-        elif is_number(val_str):
-            return val_str
-        else:
-            val_str = val_str.replace("'", "\\'")
-            return f"'{val_str}'"
-
-    if type(value) is list and value:
-        value_string = ', '.join([format_value(i) for i in value])
-        return f'({value_string})'
-
-    return 'NULL'
-
-
-def convert_column_if_json(value, column_type):
-    if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
-        value = (
-            value.
-            replace('\\n', '\\\\n').
-            encode('unicode_escape').
-            decode().
-            replace("'", "\\'").
-            replace('\\"', '\\\\"')
-        )
-        # Arrêté N°2018-61
-        # Arr\u00eat\u00e9 N\u00b02018-61
-        # b'Arr\\xeat\\xe9 N\\xb02018-61'
-        # Arr\\xeat\\xe9 N\\xb02018-61
-
-        return f"'{value}'"
-
-    return convert_column_to_type(value, column_type)
+from snowflake.connector.pandas_tools import write_pandas
+from typing import Dict, List, Tuple
+import pandas as pd
 
 
 class Snowflake(Destination):
+    def __init__(self, **kwargs):
+        Destination.__init__(self, **kwargs)
+        self.use_batch_load = self.config.get('use_batch_load')
+
     @property
     def quote(self) -> str:
         if self.disable_double_quotes:
@@ -334,6 +298,62 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
         return records_inserted, records_updated
 
+    def process_queries(
+        self,
+        query_strings: List[str],
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = None,
+        **kwargs,
+    ) -> List[List[Tuple]]:
+        if not self.use_batch_load:
+            self.logger.info('Using default SQL insertion load for Snowflake...')
+            return super(Snowflake, self).process_queries(
+                query_strings,
+                record_data,
+                stream,
+                tags,
+                **kwargs,
+            )
+        else:
+            self.logger.info('Using batch load for Snowflake...')
+            table_name = tags.get('table_name')
+            schema = tags.get('schema_name')
+            database = tags.get('database_name')
+            tries = kwargs.get('tries', 0)
+            results = []
+
+            try:
+                df = pd.DataFrame([d['record'] for d in record_data])
+                results += write_pandas(
+                    self.build_connection().connection,
+                    df,
+                    table_name,
+                    database=database,
+                    schema=schema,
+                    auto_create_table=False,
+                    **kwargs,
+                )
+            except Exception as err:
+                if tries < 2:
+                    tries += 1
+                    tags2 = merge_dict(tags, dict(tries=tries))
+                    self.logger.info(
+                        f'Batch upload to Snowflake failed, retry {tries}.',
+                        tags=tags2,
+                    )
+
+                    return self.process_queries(
+                        query_strings=query_strings,
+                        record_data=record_data,
+                        stream=stream,
+                        tags=tags,
+                        tries=tries,
+                    )
+                else:
+                    raise err
+
+            return results
 
 if __name__ == '__main__':
     main(Snowflake)
