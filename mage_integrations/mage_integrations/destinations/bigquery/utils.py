@@ -108,6 +108,13 @@ def convert_array_for_batch_load(value, column_type_dict: Dict) -> str:
     return value_next
 
 
+def convert_column_if_json(value, column_type):
+    if column_type == 'JSON' and 'TO_JSON' not in value:
+        return f"TO_JSON('{value}')"
+
+    return value
+
+
 def convert_column_type(
     column_type: str,
     column_settings: Dict,
@@ -159,6 +166,7 @@ def convert_datetime_for_batch_load(value: str) -> str:
         final_value = value
 
     return dateutil.parser.parse(final_value).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
 
 def convert_converted_type_to_parameter_type(converted_type):
     """
