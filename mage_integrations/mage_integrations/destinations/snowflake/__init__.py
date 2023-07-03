@@ -322,7 +322,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
             try:
                 df = pd.DataFrame([d['record'] for d in record_data])
-                results += write_pandas(
+                success, num_chunks, num_rows, output = write_pandas(
                     self.build_connection().connection,
                     df,
                     tags.get('table_name'),
@@ -330,6 +330,10 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     schema=tags.get('schema_name'),
                     auto_create_table=True,
                 )
+                self.logger.info(
+                    f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
+                self.logger.info(f'write_pandas output: {output}')
+                results.append([(num_rows, num_rows)])
             except Exception as err:
                 self.logger.error(f'Encountered exception: {err}')
                 if tries < 2:
