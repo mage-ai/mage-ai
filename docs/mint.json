@@ -127,6 +127,7 @@
         "dbt/add-existing-dbt",
         "dbt/run-single-model",
         "dbt/run-selected-model",
+        "dbt/snapshots",
         "dbt/run-dbt-spark",
         "dbt/running-dbt-tests",
         "dbt/sources",

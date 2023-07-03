@@ -47,6 +47,26 @@ from mage_ai.shared.utils import clean_name, files_in_path
 PROFILES_FILE_NAME = 'profiles.yml'
 
 
+def get_dbt_project_name_from_settings(project_folder_name: str) -> Dict:
+    project_full_path = os.path.join(get_repo_path(), 'dbt', project_folder_name)
+    dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
+
+    dbt_project = None
+    project_name = project_folder_name
+    profile_name = project_folder_name
+
+    if os.path.isfile(dbt_project_full_path):
+        with open(dbt_project_full_path, 'r') as f:
+            dbt_project = yaml.safe_load(f)
+            project_name = dbt_project.get('name') or project_folder_name
+            profile_name = dbt_project.get('profile') or project_name
+
+    return dict(
+        profile_name=profile_name,
+        project_name=project_name,
+    )
+
+
 def parse_attributes(block) -> Dict:
     configuration = block.configuration
 
@@ -981,7 +1001,7 @@ def build_command_line_arguments(
         variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
-    dbt_command = 'run'
+    dbt_command = (block.configuration or {}).get('dbt', {}).get('command', 'run')
 
     if run_tests:
         dbt_command = 'test'

@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     create_temporary_profile,
     create_upstream_tables,
     fetch_model_data,
+    get_dbt_project_name_from_settings,
     load_profiles_async,
     parse_attributes,
     query_from_compiled_sql,
@@ -66,15 +67,20 @@ class DBTBlock(Block):
             project_names = [
                 name for name in os.listdir(dbt_dir) if os.path.isdir(os.path.join(dbt_dir, name))
             ]
-            for project_name in project_names:
-                profiles_full_path = os.path.join(dbt_dir, project_name, 'profiles.yml')
+            for project_name_init in project_names:
+                profiles_full_path = os.path.join(dbt_dir, project_name_init, 'profiles.yml')
+
+                info = get_dbt_project_name_from_settings(project_name_init)
+                project_name = info.get('project_name', project_name_init)
+
                 targets = []
                 profiles = await load_profiles_async(project_name, profiles_full_path)
                 outputs = profiles.get('outputs')
                 if outputs:
                     targets += sorted(list(outputs.keys()))
 
-                projects[project_name] = dict(
+                projects[project_name_init] = dict(
+                    project_name=project_name,
                     target=profiles.get('target'),
                     targets=targets,
                 )
@@ -113,6 +119,13 @@ class DBTBlock(Block):
                     TAG_DBT_SNAPSHOT,
                 )
                 arr.append(TAG_DBT_SNAPSHOT)
+
+        if BlockLanguage.YAML == self.language:
+            settings = self.configuration.get('dbt', None)
+            if settings:
+                command = settings.get('command', 'run')
+                if command:
+                    arr.append(command)
 
         return arr
 
@@ -234,7 +247,7 @@ class DBTBlock(Block):
                     attributes_dict = parse_attributes(self)
                     target_path = attributes_dict['target_path']
 
-                if snapshot:
+                if snapshot and BlockLanguage.SQL == self.language:
                     query_string = compiled_query_string(self)
                     if query_string:
 

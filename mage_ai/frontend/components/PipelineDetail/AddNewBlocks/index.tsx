@@ -345,10 +345,28 @@ function AddNewBlocks({
                   {
                     label: () => 'All models (w/ optional exclusion)',
                     onClick: () => addNewBlock({
+                      configuration: {
+                        dbt: {
+                          command: 'run',
+                        },
+                      },
                       language: BlockLanguageEnum.YAML,
                       type: BlockTypeEnum.DBT,
                     }),
                     uuid: 'dbt/all_models',
+                  },
+                  {
+                    label: () => 'Generic dbt command',
+                    onClick: () => addNewBlock({
+                      configuration: {
+                        dbt: {
+                          command: null,
+                        },
+                      },
+                      language: BlockLanguageEnum.YAML,
+                      type: BlockTypeEnum.DBT,
+                    }),
+                    uuid: 'dbt/generic_command',
                   },
                 ]}
                 onClickCallback={closeButtonMenu}
