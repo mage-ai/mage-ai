@@ -120,6 +120,13 @@ class DBTBlock(Block):
                 )
                 arr.append(TAG_DBT_SNAPSHOT)
 
+        if BlockLanguage.YAML == self.language:
+            settings = self.configuration.get('dbt', None)
+            if settings:
+                command = settings.get('command', 'run')
+                if command:
+                    arr.append(command)
+
         return arr
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
