@@ -27,7 +27,7 @@ import pandas as pd
 class Snowflake(Destination):
     def __init__(self, **kwargs):
         Destination.__init__(self, **kwargs)
-        self.use_batch_load = self.config.get('use_batch_load')
+        self.use_batch_load = self.config.get('use_batch_load', False)
 
     @property
     def quote(self) -> str:
