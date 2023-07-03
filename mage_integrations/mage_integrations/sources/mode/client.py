@@ -5,9 +5,6 @@ import singer
 
 LOGGER = singer.get_logger()
 
-# TODO we might need to remove this sicne we might not need to put it in the header
-API_VERSION = '2.0'
-
 REQUEST_TIMEOUT = 300
 
 
@@ -79,7 +76,6 @@ class ModeInternalServiceError(ModeError):
     pass
 
 
-# Error codes: https://developers.Mode.com/Mode-api-reference/reference#http-responses
 ERROR_CODE_EXCEPTION_MAPPING = {
     400: ModeBadRequestError,
     401: ModeUnauthorizedError,
@@ -110,16 +106,12 @@ def raise_for_error(response):
         try:
             content_length = len(response.content)
             if content_length == 0:
-                # There is nothing we can do here since Intercom has neither sent
+                # There is nothing we can do here since Mode has neither sent
                 # us a 2xx response nor a response content.
-                # TODO maybe we need to fill this 
                 return
             response_json = response.json()
             status_code = response.status_code
             LOGGER.error('RESPONSE: {}'.format(response_json))
-            # Error Message format:
-            # https://developers.intercom.com/intercom-api-reference/reference#error-objects
-            # TODO error message format - low prio
             if response_json.get('type') == 'error.list':
                 message = ''
                 for err in response_json['errors']:
@@ -184,10 +176,8 @@ class ModeClient(object):
         
         headers['Authorization'] = 'Basic {}'.format(encrypted_credentials)
         headers['Accept'] = 'application/json'
-        # headers['Mode-Version'] = API_VERSION
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
-            # TODO need to change the url
             url='{}/{}'.format(self.base_url, 'spaces'),
             timeout=self.__request_timeout, # Pass request timeout
             headers=headers)
@@ -200,8 +190,6 @@ class ModeClient(object):
                 return True
             return False
 
-    # Rate limiting:
-    #  https://developers.intercom.com/intercom-api-reference/reference#rate-limiting
     @utils.ratelimit(1000, 60)
     def request(self, method, path=None, url=None, **kwargs):
         if not self.__verified:
@@ -231,7 +219,6 @@ class ModeClient(object):
         kwargs['headers']['Authorization'] = 'Basic {}'.format(encrypted_credentials)
         
         kwargs['headers']['Accept'] = 'application/json'
-        # kwargs['headers']['Mode-Version'] = API_VERSION
 
         if self.__user_agent:
             kwargs['headers']['User-Agent'] = self.__user_agent

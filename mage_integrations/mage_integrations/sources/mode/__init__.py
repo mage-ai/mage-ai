@@ -7,8 +7,6 @@ from mage_integrations.sources.mode.client import ModeClient
 from mage_integrations.sources.mode.streams import STREAMS
 from typing import Dict, Generator, List
 import singer
-# from singer import logger
-# logger.log_info("hello")
 
 
 class Mode(Source):
@@ -20,7 +18,6 @@ class Mode(Source):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        # TODO Create the access token from the token and password and encode it in base64
         access_token = self.config.get('access_token')
         password = self.config.get('password')
         workspace = self.config.get('workspace')

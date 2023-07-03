@@ -14,11 +14,6 @@ from mage_integrations.sources.mode.client import (
     ModeClient,
     ModeError,
 )
-from mage_integrations.sources.mode.transform import (
-    transform_json,
-    transform_times,
-    find_datetimes_in_schema
-)
 
 LOGGER = singer.get_logger()
 
@@ -96,63 +91,6 @@ class IncrementalStream(BaseStream):
     """
     replication_method = 'INCREMENTAL'
 
-    # Disabled `unused-argument` as it causing pylint error.
-    # Method which call this `sync` method is passing unused argument.So, removing argument would not work.
-    # pylint: disable=too-many-arguments,unused-argument
-    def sync(self,
-             state: dict,
-             stream_schema: dict,
-             stream_metadata: dict,
-             config: dict,
-             transformer: Transformer) -> dict:
-        """
-        The sync logic for an incremental stream.
-
-        :param state: A dictionary representing singer state
-        :param stream_schema: A dictionary containing the stream schema
-        :param stream_metadata: A dictionnary containing stream metadata
-        :param config: A dictionary containing tap config data
-        :return: State data in the form of a dictionary
-        """
-        start_date = singer.get_bookmark(state,
-                                         self.tap_stream_id,
-                                         self.replication_key,
-                                         config['start_date'])
-
-        self.logger.info(f'Stream: {self.tap_stream_id}, initial max_bookmark_value: {start_date}')
-        bookmark_datetime = singer.utils.strptime_to_utc(start_date)
-        max_datetime = bookmark_datetime
-
-        schema_datetimes = find_datetimes_in_schema(stream_schema)
-
-        with metrics.record_counter(self.tap_stream_id) as counter:
-            for record in self.get_records(bookmark_datetime):
-                transform_times(record, schema_datetimes)
-
-                record_datetime = singer.utils.strptime_to_utc(
-                    self.epoch_milliseconds_to_dt_str(
-                        record[self.replication_key])
-                )
-
-                if record_datetime >= bookmark_datetime:
-                    transformed_record = transform(record,
-                                                   stream_schema,
-                                                   integer_datetime_fmt=UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING,
-                                                   metadata=stream_metadata)
-                    # Write records with time_extracted field
-                    singer.write_record(self.tap_stream_id, transformed_record, time_extracted=singer.utils.now())
-                    counter.increment()
-                    max_datetime = max(record_datetime, max_datetime)
-            bookmark_date = singer.utils.strftime(max_datetime)
-            self.logger.info(f'FINISHED Syncing: {self.tap_stream_id}, total_records: {counter.value}.')
-
-        self.logger.info(f'Stream: {self.tap_stream_id}, writing final bookmark')
-        state = singer.write_bookmark(state,
-                                      self.tap_stream_id,
-                                      self.replication_key,
-                                      bookmark_date)
-        return state
-
 
 # pylint: disable=abstract-method
 class FullTableStream(BaseStream):
@@ -163,52 +101,6 @@ class FullTableStream(BaseStream):
     :param client: The API client used extract records from the external source
     """
     replication_method = 'FULL_TABLE'
-
-    # Disabled `unused-argument` as it causing pylint error.
-    # Method which call this `sync` method is passing unused argument. So, removing argument would not work.
-    # pylint: disable=too-many-arguments,unused-argument
-    def sync(self,
-             state: dict,
-             stream_schema: dict,
-             stream_metadata: dict,
-             config: dict,
-             transformer: Transformer) -> dict:
-        """
-        The sync logic for an full table stream.
-
-        :param state: A dictionary representing singer state
-        :param stream_schema: A dictionary containing the stream schema
-        :param stream_metadata: A dictionnary containing stream metadata
-        :param config: A dictionary containing tap config data
-        :return: State data in the form of a dictionary
-        """
-
-        schema_datetimes = find_datetimes_in_schema(stream_schema)
-        records = self.get_records()
-        self.logger.info(f"Starting syncing from inside FullTableStream, the records: {records}")
-
-        with metrics.record_counter(self.tap_stream_id) as counter:
-            for record in records:
-                transform_times(record, schema_datetimes)
-
-                transformed_record = transform(
-                    record,
-                    stream_schema,
-                    integer_datetime_fmt=UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING,
-                    metadata=stream_metadata,
-                )
-                # Write records with time_extracted field
-                singer.write_record(
-                    self.tap_stream_id,
-                    transformed_record,
-                    time_extracted=singer.utils.now(),
-                )
-                counter.increment()
-
-            self.logger.info(
-                f'FINISHED Syncing: {self.tap_stream_id}, total_records: {counter.value}.')
-
-        return state
 
 
 class SpaceList(FullTableStream):

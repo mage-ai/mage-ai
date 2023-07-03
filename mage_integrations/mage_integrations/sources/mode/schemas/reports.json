@@ -71,9 +71,6 @@
       "drilldowns_enabled": {
         "type": ["boolean", "null"]
       },
-      "layout": {
-        "type": ["string", "null"]
-      },
       "is_embedded": {
         "type": ["boolean", "null"]
       },
