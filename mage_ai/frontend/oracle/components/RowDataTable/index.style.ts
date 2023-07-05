@@ -39,8 +39,9 @@ export const TableStyle = styled.div<{ width: number }>`
   `}
 
   ${props => `
-    background-color: ${(props.theme || dark).background.dashboard};
+    background-color: ${(props.theme || dark).background.page};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBorder};
+    box-shadow: ${(props.theme || dark).shadow.frame};
   `}
 `;
 

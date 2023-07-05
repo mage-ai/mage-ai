@@ -7,16 +7,17 @@ import PipelineRunType from '@interfaces/PipelineRunType';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+
 import {
   ALL_PIPELINE_RUNS_TYPE,
   PipelineTypeEnum,
   PIPELINE_TYPE_ICON_MAPPING,
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
+import { ImageStyle } from '@components/Dashboard/index.style';
 import { RowStyle } from '@oracle/components/RowDataTable/index.style';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
-import { TIME_PERIOD_DISPLAY_MAPPING } from '@components/Dashboard/constants';
-import { TimePeriodEnum } from '@utils/date';
+import { TIME_PERIOD_DISPLAY_MAPPING, TimePeriodEnum } from '@utils/date';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, lowercase } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -83,46 +84,49 @@ function Widget({
             fullWidth
             justifyContent="center"
           >
-            <Spacing p={17}>
-              <Text large>
-                No {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
-              </Text>
+            <Spacing px={5} py={10}>
+              <FlexContainer alignItems="center" flexDirection="column">
+                <ImageStyle
+                  imageUrl="/images/blocks/grey_block.webp"
+                />
+                <Spacing mb={3} />
+                <Text large>
+                  No {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
+                </Text>
+              </FlexContainer>
             </Spacing>
           </FlexContainer>
         ) : pipelineRuns.map(({
-          block_runs: blockRuns,
           created_at: createdAt,
           id: pipelineRunId,
           pipeline_uuid: pipelineUUID,
-        }) => {
-          return (
-            <RowStyle key={`pipeline_run_${pipelineRunId}`}>
-              <FlexContainer alignItems="center">
-                <NextLink
-                  as={`/pipelines/${pipelineUUID}`}
-                  href="/pipelines/[pipeline]"
-                  passHref
-                >
-                  <Link monospace sameColorAsText small>
-                    Pipeline {pipelineUUID}
-                  </Link>
-                </NextLink>
-                <Text monospace small>
-                  &nbsp;&#62;&nbsp;
-                </Text>
-                <NextLink
-                  as={`/pipelines/${pipelineUUID}/runs/${pipelineRunId}`}
-                  href="/pipelines/[pipeline]/runs/[run]"
-                  passHref
-                >
-                  <Link danger monospace sameColorAsText small>
-                    Run created on {createdAt}
-                  </Link>
-                </NextLink>
-              </FlexContainer>
-            </RowStyle>
-          );
-        })}
+        }) => (
+          <RowStyle key={`pipeline_run_${pipelineRunId}`}>
+            <FlexContainer alignItems="center">
+              <NextLink
+                as={`/pipelines/${pipelineUUID}`}
+                href="/pipelines/[pipeline]"
+                passHref
+              >
+                <Link monospace sameColorAsText small>
+                  {pipelineUUID}
+                </Link>
+              </NextLink>
+              <Text monospace small>
+                &nbsp;&#62;&nbsp;
+              </Text>
+              <NextLink
+                as={`/pipelines/${pipelineUUID}/runs/${pipelineRunId}`}
+                href="/pipelines/[pipeline]/runs/[run]"
+                passHref
+              >
+                <Link danger monospace sameColorAsText small>
+                  Run created on {createdAt}
+                </Link>
+              </NextLink>
+            </FlexContainer>
+          </RowStyle>
+        ))}
     </RowDataTable>
   );
 }

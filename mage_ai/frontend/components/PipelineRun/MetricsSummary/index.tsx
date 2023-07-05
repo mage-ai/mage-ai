@@ -12,11 +12,8 @@ import {
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
-import { TimePeriodEnum } from '@utils/date';
-import { TIME_PERIOD_DISPLAY_MAPPING } from '@components/Dashboard/constants';
 import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
-import { queryFromUrl } from '@utils/url';
 import { sortTuplesArrayByFirstItem } from '@utils/array';
 
 type MetricsSummaryProps = {
@@ -26,8 +23,6 @@ type MetricsSummaryProps = {
 function MetricsSummary({
   pipelineRunCountByPipelineType,
 }: MetricsSummaryProps) {
-  const q = queryFromUrl();
-  const timePeriod: TimePeriodEnum = q?.tab || TimePeriodEnum.TODAY;
   const pipelineRunCounts = sortTuplesArrayByFirstItem(
     Object.entries(pipelineRunCountByPipelineType)
       .filter(([pipelineType, countsObj]) => Object.keys(countsObj).length !== 0),
@@ -36,7 +31,7 @@ function MetricsSummary({
   return (
     <MetricsSummaryContainerStyle>
       <Text bold large>
-        Pipeline run metrics for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
+        Pipeline run metrics
       </Text>
 
       <Spacing mb={2} />
@@ -44,7 +39,7 @@ function MetricsSummary({
       <FlexContainer alignItems="center" justifyContent="space-between">
         {pipelineRunCounts.map((
           [pipelineType, countsObj],
-          idx,
+          idx: number,
         ) => (
           <Flex
             alignItems="center"
@@ -64,7 +59,7 @@ function MetricsSummary({
             </Spacing>
 
             {sortTuplesArrayByFirstItem(Object.entries(countsObj))
-              .map(([runStatus, count], idx) => (
+              .map(([runStatus, count], idx: number) => (
                 <Flex
                   flexDirection="column"
                   key={`${runStatus}_${idx}`}
@@ -80,7 +75,7 @@ function MetricsSummary({
                     {formatNumber(count)}
                   </Text>
                 </Flex>
-              )
+              ),
             )}
 
             <Spacing pr={idx !== pipelineRunCounts.length - 1 ? 2 : 0} />

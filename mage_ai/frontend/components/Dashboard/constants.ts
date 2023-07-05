@@ -1,33 +1,21 @@
 import { CalendarRounded, Smiley, WeekDots } from '@oracle/icons';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import { TimePeriodEnum } from '@utils/date';
+import { TIME_PERIOD_DISPLAY_MAPPING, TimePeriodEnum } from '@utils/date';
 import { capitalize } from '@utils/string';
-
-export const TIME_PERIOD_DISPLAY_MAPPING = {
-  [TimePeriodEnum.TODAY]: 'today',
-  [TimePeriodEnum.WEEK]: 'last 7 days',
-  [TimePeriodEnum.MONTH]: 'last 30 days',
-};
-
-export const TIME_PERIOD_INTERVAL_MAPPING = {
-  [TimePeriodEnum.TODAY]: 0,
-  [TimePeriodEnum.WEEK]: 7,
-  [TimePeriodEnum.MONTH]: 30,
-};
 
 export const TAB_TODAY = {
   Icon: Smiley,
-  label: () => capitalize(TimePeriodEnum.TODAY),
+  label: () => capitalize(TIME_PERIOD_DISPLAY_MAPPING[TimePeriodEnum.TODAY]),
   uuid: TimePeriodEnum.TODAY,
 };
 export const TAB_WEEK = {
   Icon: WeekDots,
-  label: () => capitalize(TimePeriodEnum.WEEK),
+  label: () => capitalize(TIME_PERIOD_DISPLAY_MAPPING[TimePeriodEnum.WEEK]),
   uuid: TimePeriodEnum.WEEK,
 };
 export const TAB_MONTH = {
   Icon: CalendarRounded,
-  label: () => capitalize(TimePeriodEnum.MONTH),
+  label: () => capitalize(TIME_PERIOD_DISPLAY_MAPPING[TimePeriodEnum.MONTH]),
   uuid: TimePeriodEnum.MONTH,
 };
 

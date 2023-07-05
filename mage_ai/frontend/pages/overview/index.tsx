@@ -30,21 +30,26 @@ import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
   TIME_PERIOD_INTERVAL_MAPPING,
-  TIME_PERIOD_TABS,
-  TAB_TODAY,
-} from '@components/Dashboard/constants';
-import {
   TimePeriodEnum,
   getDateRange,
   getFullDateRangeString,
   getStartDateStringFromPeriod,
   unixTimestampFromDate,
 } from '@utils/date';
+import {
+  TIME_PERIOD_TABS,
+  TAB_TODAY,
+} from '@components/Dashboard/constants';
 import { capitalize } from '@utils/string';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
 import { goToWithQuery } from '@utils/routing';
 import { groupBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
+
+const SHARED_WIDGET_SPACING_PROPS = {
+  mt: 2,
+  mx: 3,
+};
 
 function OverviewPage() {
   const q = queryFromUrl();
@@ -83,7 +88,6 @@ function OverviewPage() {
 
   const {
     data: dataPipelineRuns,
-    mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list(
     {
       _limit: 50,
@@ -121,6 +125,11 @@ function OverviewPage() {
     dataMonitor?.monitor_stat?.stats,
     dateRange,
   ]);
+  const {
+    pipelineRunCountByPipelineType,
+    totalPipelineRunCount,
+    ungroupedPipelineRunData,
+  } = allPipelineRunData;
   const selectedDateRange = useMemo(() =>
     getFullDateRangeString(
       TIME_PERIOD_INTERVAL_MAPPING[timePeriod],
@@ -149,9 +158,9 @@ function OverviewPage() {
       <Spacing mx={3} my={2}>
         <Headline level={4}>
           {timePeriod === TimePeriodEnum.TODAY &&
-            `${capitalize(TimePeriodEnum.TODAY)} (UTC time): ${selectedDateRange}`}
+            `${capitalize(TimePeriodEnum.TODAY)}: ${selectedDateRange}`}
           {timePeriod !== TimePeriodEnum.TODAY &&
-            `${capitalize(TIME_PERIOD_DISPLAY_MAPPING[timePeriod])} (UTC time): ${selectedDateRange}`}
+            `${capitalize(TIME_PERIOD_DISPLAY_MAPPING[timePeriod])}: ${selectedDateRange}`}
         </Headline>
 
         <Spacing mt={2}>
@@ -162,7 +171,7 @@ function OverviewPage() {
               </Spacing>
             ) : (
               <MetricsSummary
-                pipelineRunCountByPipelineType={allPipelineRunData.pipelineRunCountByPipelineType}
+                pipelineRunCountByPipelineType={pipelineRunCountByPipelineType}
               />
             )
           }
@@ -171,13 +180,14 @@ function OverviewPage() {
         <Spacing mt={2}>
           <Spacing ml={2}>
             <Text bold large>
-              {allPipelineRunData.totalPipelineRunCount} total pipeline runs for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
+              {isValidatingMonitorStats ? '--' : totalPipelineRunCount} total pipeline runs
             </Text>
           </Spacing>
           <Spacing mt={1}>
             <BarStackChart
+              backgroundColor={dark.background.panel}
               colors={BAR_STACK_COLORS}
-              data={allPipelineRunData.ungroupedPipelineRunData}
+              data={ungroupedPipelineRunData}
               getXValue={(data) => data['date']}
               height={200}
               keys={BAR_STACK_STATUSES}
@@ -194,7 +204,7 @@ function OverviewPage() {
         </Spacing>
       </Spacing>
 
-      <Spacing mt={2} mx={2}>
+      <Spacing {...SHARED_WIDGET_SPACING_PROPS}>
         <FlexContainer alignItems="center" justifyContent="center">
           <Widget
             pipelineRuns={dataPipelineRuns?.pipeline_runs || []}
@@ -208,7 +218,7 @@ function OverviewPage() {
         </FlexContainer>
       </Spacing>
 
-      <Spacing mt={2} mx={2}>
+      <Spacing {...SHARED_WIDGET_SPACING_PROPS}>
         <FlexContainer alignItems="center" justifyContent="center">
           <Widget
             pipelineRuns={integrationPipelineRuns}

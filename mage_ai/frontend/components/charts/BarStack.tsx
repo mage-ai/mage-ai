@@ -30,6 +30,7 @@ type TooltipData = {
 };
 
 type BarStackChartProps = {
+  backgroundColor?: string;
   colors: string[];
   data: any[];
   getXValue?: (opts: any) => any;
@@ -53,6 +54,7 @@ export type BarStackContainerProps = {
 } & BarStackChartProps;
 
 function BarStackChart({
+  backgroundColor,
   colors,
   data,
   getXValue,
@@ -110,10 +112,10 @@ function BarStackChart({
   });
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', zIndex: 2 }}>
       <svg height={height} width={width}>
         <rect
-          fill="#2E3036"
+          fill={backgroundColor || dark.background.chartBlock}
           height={height}
           rx={14}
           width={width}
