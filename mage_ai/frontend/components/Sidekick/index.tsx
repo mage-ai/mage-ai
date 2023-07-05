@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
-import BlockCharts from '@components/BlockCharts';
 import BlockType, {
   BlockRequestPayloadType,
   InsightType,
@@ -18,7 +17,6 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
-import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
@@ -29,7 +27,6 @@ import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Secrets from './GlobalVariables/Secrets';
 import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
-import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
 
@@ -48,13 +45,11 @@ import {
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
-  PaddingContainerStyle,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
-import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { useWindowSize } from '@utils/sizes';
@@ -190,10 +185,6 @@ function Sidekick({
   const columns = (sampleData?.columns || []).slice(0, MAX_COLUMNS);
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
-  const features = columns?.map(uuid => ({
-    columnType: columnTypes[uuid],
-    uuid,
-  }));
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
@@ -203,11 +194,6 @@ function Sidekick({
     insights,
   ]);
 
-  const qualityMetrics: StatRowType[] = createMetricsSample({ statistics });
-  const statsSample: StatRowType[] = createStatisticsSample({
-    columnTypes,
-    statistics,
-  });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
@@ -415,44 +401,6 @@ function Sidekick({
             width={afterWidth}
           />
         )}
-        {activeView === ViewKeyEnum.REPORTS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <FlexContainer flexDirection="column" fullWidth>
-              {qualityMetrics && (
-                <StatsTable
-                  stats={qualityMetrics}
-                  title="Quality metrics"
-                />
-              )}
-              {statsSample && (
-                <Spacing mt={PADDING_UNITS}>
-                  <StatsTable
-                    stats={statsSample}
-                    title="Statistics"
-                  />
-                </Spacing>
-              )}
-              {features.length > 0 && (
-                <Spacing mt={PADDING_UNITS}>
-                  <FeatureProfiles
-                    features={features}
-                    statistics={statistics}
-                  />
-                </Spacing>
-              )}
-            </FlexContainer>
-          </PaddingContainerStyle>
-        }
-        {activeView === ViewKeyEnum.GRAPHS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <BlockCharts
-              afterWidth={afterWidth}
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
-          </PaddingContainerStyle>
-        }
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
         {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
         {ViewKeyEnum.FILE_VERSIONS === activeView && (

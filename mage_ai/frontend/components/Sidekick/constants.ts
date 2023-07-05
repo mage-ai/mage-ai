@@ -38,14 +38,11 @@ export const FULL_WIDTH_VIEWS = [
   ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
   ViewKeyEnum.EXTENSIONS,
-  ViewKeyEnum.REPORTS,
   ViewKeyEnum.TREE,
 ];
 
 export const MESSAGE_VIEWS = [
   ViewKeyEnum.DATA,
-  ViewKeyEnum.REPORTS,
-  ViewKeyEnum.GRAPHS,
 ];
 
 export const SIDEKICK_VIEWS: {
@@ -145,8 +142,6 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,
   [ViewKeyEnum.EXTENSIONS]: Lightning,
-  [ViewKeyEnum.GRAPHS]: Charts,
-  [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.SECRETS]: Secrets,
   [ViewKeyEnum.SETTINGS]: Settings,
   [ViewKeyEnum.TERMINAL]: Terminal,
