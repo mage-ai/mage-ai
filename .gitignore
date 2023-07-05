@@ -146,7 +146,6 @@ testfiles/
 .jupyter/
 .local/
 .npm/
-.npmrc
 .python_history
 mage_ai/frontend/package-lock.json
 docker-compose.override.yml
