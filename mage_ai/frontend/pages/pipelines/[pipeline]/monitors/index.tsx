@@ -20,6 +20,8 @@ import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/consta
 import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
+import { getAllPipelineRunData } from '@components/PipelineRun/shared/utils';
+import { getDateRange } from '@utils/date';
 
 const GradientTextStyle = styled.div<any>`
   background: linear-gradient(90deg, #7D55EC 28.12%, #2AB2FE 100%);
@@ -87,53 +89,8 @@ function PipelineRunsMonitor({
     stats: monitorStats,
   } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    const date = new Date();
-    const dateRange = [];
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
-
-  const totalPipelineRunData = useMemo(() => {
-    if (monitorStats) {
-      const allPipelineRunData = Object.entries(monitorStats).reduce(
-        // @ts-ignore
-        (obj, [id, { data: scheduleStats }]) => {
-          const updated = {};
-          Object.entries(scheduleStats).forEach(([date, dateStats]) => {
-            let currentStats = {};
-            if (date in obj) {
-              currentStats = obj[date];
-            }
-            const updatedStats = {};
-            Object.entries(dateStats).forEach(([status, num]) => {
-              const currentNum = currentStats?.[status] ? currentStats[status] : 0;
-              updatedStats[status] = currentNum + num;
-            });
-            updated[date] = {
-              ...currentStats,
-              ...updatedStats,
-            };
-          });
-
-          return {
-            ...obj,
-            ...updated,
-          };
-        },
-        {},
-      );
-      return dateRange.map(date => ({
-        date,
-        ...(allPipelineRunData[date] || {}),
-      }));
-    } else {
-      return [];
-    }
-  }, [
+  const dateRange = useMemo(() => getDateRange(), []);
+  const totalPipelineRunData = useMemo(() => getAllPipelineRunData(monitorStats, dateRange), [
     dateRange,
     monitorStats,
   ]);

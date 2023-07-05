@@ -17,6 +17,7 @@ import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
 import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';
 
 type BlockRunsMonitorProps = {
@@ -69,15 +70,7 @@ function BlockRunsMonitor({
     stats: monitorStats,
   } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    const date = new Date();
-    const dateRange = [];
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
+  const dateRange = useMemo(() => getDateRange(), []);
 
   const blockRunData = useMemo(() => {
     if (monitorStats) {

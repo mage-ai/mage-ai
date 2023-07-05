@@ -1,5 +1,11 @@
 import moment from 'moment';
 
+export enum TimePeriodEnum {
+  TODAY = 'today',
+  WEEK = 'week',
+  MONTH = 'month',
+}
+
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
@@ -101,6 +107,35 @@ export function getDatePartsFromUnixTimestamp(
     hour: String(dateMoment.hour()),
     minute: String(dateMoment.minute()),
   };
+}
+
+export function getStartDateStringFromPeriod(
+  period: TimePeriodEnum | string,
+  isoString?: boolean,
+): string {
+  let dateMoment = moment().local();
+  if (period === TimePeriodEnum.WEEK) {
+    dateMoment = moment().local().subtract(7, 'days');
+  } else if (period === TimePeriodEnum.MONTH) {
+    dateMoment = moment().local().subtract(1, 'months');
+  }
+
+  return isoString
+    ? dateMoment.startOf('day').toISOString()
+    : dateMoment.startOf('day').format(DATE_FORMAT_LONG);
+}
+
+export function getDateRange(
+  daysInterval: number = 90,
+): string[] {
+  const date = new Date();
+  const dateRange = [];
+  for (let i = 0; i < daysInterval; i++) {
+    dateRange.unshift(date.toISOString().split('T')[0]);
+    date.setDate(date.getDate() - 1);
+  }
+
+  return dateRange;
 }
 
 export function padTime(time: string) {
