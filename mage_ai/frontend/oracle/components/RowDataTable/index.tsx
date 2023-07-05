@@ -12,6 +12,7 @@ export type RowDataTableProps = {
   children: any;
   footer?: JSX.Element;
   header: JSX.Element;
+  maxHeight?: number;
   minHeight?: number;
   scrollable?: boolean;
   width?: number;
@@ -22,6 +23,7 @@ function RowDataTable({
   children,
   footer,
   header,
+  maxHeight,
   minHeight,
   scrollable,
   width,
@@ -33,14 +35,15 @@ function RowDataTable({
       </HeaderStyle>
 
       <RowContainerStyle
+        maxHeight={maxHeight}
         minHeight={minHeight}
         scrollable={scrollable}
       >
         {React.Children.map(children, (row, idx) => row && React.cloneElement(
           row,
           {
-            footer: !!footer,
             last: idx === children.length - 1,
+            noBorder: !!footer,
             secondary: alternating && idx % 2 === 1,
           },
         ))}

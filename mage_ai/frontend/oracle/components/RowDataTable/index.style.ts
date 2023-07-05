@@ -6,7 +6,7 @@ import {
   BORDER_STYLE,
   BORDER_RADIUS,
 } from '@oracle/styles/units/borders';
-import { RowCardProps } from '@oracle/components/RowCard';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const PADDING_SIZE = UNIT * 1.5;
@@ -16,17 +16,23 @@ export const SCROLL_PADDING_SIZE = 3;
 export const ROW_PADDING_HORIZONTAL_UNITS = 2;
 
 type RowContainerStyleProps = {
+  maxHeight?: number;
   minHeight?: number;
   scrollable?: boolean;
 };
 
-type RowStyleProps = Pick<
-  RowCardProps,
-  'condensed' | 'last' | 'noBorder' | 'secondary' | 'noHorizontalPadding'
->;
+type RowStyleProps = {
+  condensed?: boolean;
+  last?: boolean;
+  noBorder?: boolean;
+  noHorizontalPadding?: boolean;
+  secondary?: boolean;
+};
 
 export const TableStyle = styled.div<{ width: number }>`
   border-radius: ${BORDER_RADIUS}px;
+  overflow: hidden;
+  width: 100%;
 
   ${props => props.width && `
     width: ${props.width}px;
@@ -39,8 +45,15 @@ export const TableStyle = styled.div<{ width: number }>`
 `;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
+  overflow: auto;
   border-bottom-left-radius: ${BORDER_RADIUS}px;
   border-bottom-right-radius: ${BORDER_RADIUS}px;
+
+  ${ScrollbarStyledCss}
+
+  ${props => props.maxHeight > 0 && `
+    max-height: ${props.maxHeight}px;
+  `}
 
   ${props => props.minHeight > 0 && `
     min-height: ${props.minHeight}px;
@@ -97,4 +110,8 @@ export const FooterStyle = styled.div`
   border-bottom-left-radius: ${BORDER_RADIUS}px;
   border-bottom-right-radius: ${BORDER_RADIUS}px;
   padding: ${PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
+
+  ${props => `
+    border-top: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+  `}
 `;

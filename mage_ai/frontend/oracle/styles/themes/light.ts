@@ -48,6 +48,7 @@ export default {
     codeArea: '#161617',
     danger: RED_XLIGHT,
     dark: GRAY,
+    dashboard: SILVER,
     header: SILVER,
     menu: NAVY,
     muted: SILVER,

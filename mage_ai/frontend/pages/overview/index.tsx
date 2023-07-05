@@ -13,10 +13,12 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import Widget from '@components/PipelineRun/Widget';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 
+import { ALL_PIPELINE_RUNS_TYPE, PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BAR_STACK_COLORS,
   BAR_STACK_STATUSES,
@@ -92,7 +94,7 @@ function OverviewPage() {
     },
   );
   const groupedPipelineRuns: {
-    [key: string]:  PipelineRunType,
+    [key: string]:  PipelineRunType[],
   } = useMemo(() => groupBy(dataPipelineRuns?.pipeline_runs || [], run => run.pipeline_type), [
     dataPipelineRuns?.pipeline_runs,
   ]);
@@ -167,7 +169,7 @@ function OverviewPage() {
         </Spacing>
 
         <Spacing mt={2}>
-          <Spacing ml={1}>
+          <Spacing ml={2}>
             <Text bold large>
               {allPipelineRunData.totalPipelineRunCount} total pipeline runs for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
             </Text>
@@ -191,6 +193,36 @@ function OverviewPage() {
           </Spacing>
         </Spacing>
       </Spacing>
+
+      <Spacing mt={2} mx={2}>
+        <FlexContainer alignItems="center" justifyContent="center">
+          <Widget
+            pipelineRuns={dataPipelineRuns?.pipeline_runs || []}
+            pipelineType={ALL_PIPELINE_RUNS_TYPE}
+          />
+          <Spacing ml={2} />
+          <Widget
+            pipelineRuns={standardPipelineRuns}
+            pipelineType={PipelineTypeEnum.PYTHON}
+          />
+        </FlexContainer>
+      </Spacing>
+
+      <Spacing mt={2} mx={2}>
+        <FlexContainer alignItems="center" justifyContent="center">
+          <Widget
+            pipelineRuns={integrationPipelineRuns}
+            pipelineType={PipelineTypeEnum.INTEGRATION}
+          />
+          <Spacing ml={2} />
+          <Widget
+            pipelineRuns={streamingPipelineRuns}
+            pipelineType={PipelineTypeEnum.STREAMING}
+          />
+        </FlexContainer>
+      </Spacing>
+
+      <Spacing mb={2} />
     </Dashboard>
   );
 }
