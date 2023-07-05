@@ -1,6 +1,6 @@
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import {
   BORDER_WIDTH,
   BORDER_STYLE,
@@ -22,25 +22,25 @@ type RowContainerStyleProps = {
 
 type RowStyleProps = Pick<
   RowCardProps,
-  'border' | 'condensed' | 'last' | 'secondary' | 'noHorizontalPadding'
+  'condensed' | 'last' | 'noBorder' | 'secondary' | 'noHorizontalPadding'
 >;
 
 export const TableStyle = styled.div<{ width: number }>`
+  border-radius: ${BORDER_RADIUS}px;
+
   ${props => props.width && `
     width: ${props.width}px;
+  `}
+
+  ${props => `
+    background-color: ${(props.theme || dark).background.dashboard};
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBorder};
   `}
 `;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
   border-bottom-left-radius: ${BORDER_RADIUS}px;
   border-bottom-right-radius: ${BORDER_RADIUS}px;
-  margin-bottom: ${PADDING_SIZE}px;
-
-  ${props => `
-    background-color: ${(props.theme.background || light.background).page};
-    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.interactive || light.interactive).defaultBorder};
-    border-top: none;
-  `}
 
   ${props => props.minHeight > 0 && `
     min-height: ${props.minHeight}px;
@@ -55,19 +55,22 @@ export const RowContainerStyle = styled.div<RowContainerStyleProps>`
   `}
 `;
 
-export const TitleStyle = styled.div`
+export const HeaderStyle = styled.div`
   border-top-left-radius: ${BORDER_RADIUS}px;
   border-top-right-radius: ${BORDER_RADIUS}px;
   padding: ${PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).header};
-    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 `;
 
 export const RowStyle = styled.div<RowStyleProps>`
   padding: ${ROW_VERTICAL_PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
+
+  ${props => `
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+  `}
 
   ${props => props.noHorizontalPadding && `
     padding-left: 0;
@@ -79,21 +82,19 @@ export const RowStyle = styled.div<RowStyleProps>`
     padding-bottom: ${CONDENSED_VERTICAL_ROW_PADDING}px;
   `}
 
-  ${props => !props.secondary && `
-    background-color: ${(props.theme.background || light.background).row};
-  `}
-
   ${props => props.secondary && `
-    background-color: ${(props.theme.background || light.background).row2};
+    background-color: ${(props.theme.background || dark.background).row2};
   `}
 
-  ${props => props.last && `
+  ${props => props.last && props.noBorder && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
+    border-bottom: none;
   `}
+`;
 
-  ${props => props.border && `
-    border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
-    border-radius: ${BORDER_RADIUS}px;
-  `}
+export const FooterStyle = styled.div`
+  border-bottom-left-radius: ${BORDER_RADIUS}px;
+  border-bottom-right-radius: ${BORDER_RADIUS}px;
+  padding: ${PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
 `;

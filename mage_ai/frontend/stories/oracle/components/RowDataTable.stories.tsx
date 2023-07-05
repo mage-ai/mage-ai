@@ -24,8 +24,23 @@ const Template: Story<RowDataTableProps> = (args) => <TemplateWithTheme {...args
 
 export const Regular = Template.bind({});
 Regular.args = {
-  headerTitle: 'datasets',
-  headerDetails: '5 datasets',
+  header: (
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <Text bold default>
+        Datasets
+      </Text>
+      <Text>
+        5 datasets
+      </Text>
+    </FlexContainer>
+  ),
+  footer: (
+    <FlexContainer alignItems="center" justifyContent="center">
+      <Text>
+        View more
+      </Text>
+    </FlexContainer>
+  ),
   children: [
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}

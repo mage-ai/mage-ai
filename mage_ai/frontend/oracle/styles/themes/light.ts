@@ -67,7 +67,7 @@ export default {
     info: YELLOW,
     light: '#2F3034',
     medium: '#D5D7DC',
-    medium2: '#141414',
+    medium2: '#CFCBCB',
     success: GREEN,
   },
   brand: {

@@ -1,19 +1,17 @@
 import React from 'react';
 
-import FlexContainer from '@oracle/components/FlexContainer';
-import Text from '@oracle/elements/Text';
-
 import {
+  FooterStyle,
+  HeaderStyle,
   RowContainerStyle,
   TableStyle,
-  TitleStyle,
 } from './index.style';
 
 export type RowDataTableProps = {
   alternating?: boolean;
   children: any;
-  headerDetails?: string;
-  headerTitle: string;
+  footer?: JSX.Element;
+  header: JSX.Element;
   minHeight?: number;
   scrollable?: boolean;
   width?: number;
@@ -22,26 +20,17 @@ export type RowDataTableProps = {
 function RowDataTable({
   alternating,
   children,
-  headerDetails,
-  headerTitle,
+  footer,
+  header,
   minHeight,
   scrollable,
   width,
 }: RowDataTableProps) {
   return (
     <TableStyle width={width}>
-      <TitleStyle>
-        <FlexContainer alignItems="center" justifyContent="space-between">
-          <Text bold default>
-            {headerTitle}
-          </Text>
-          {headerDetails &&
-            <Text>
-              {headerDetails}
-            </Text>
-          }
-        </FlexContainer>
-      </TitleStyle>
+      <HeaderStyle>
+        {header}
+      </HeaderStyle>
 
       <RowContainerStyle
         minHeight={minHeight}
@@ -50,11 +39,16 @@ function RowDataTable({
         {React.Children.map(children, (row, idx) => row && React.cloneElement(
           row,
           {
+            footer: !!footer,
             last: idx === children.length - 1,
             secondary: alternating && idx % 2 === 1,
           },
         ))}
       </RowContainerStyle>
+
+      <FooterStyle>
+        {footer}
+      </FooterStyle>
     </TableStyle>
   );
 }
