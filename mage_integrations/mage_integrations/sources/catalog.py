@@ -1,9 +1,9 @@
-from mage_integrations.sources.constants import (
-    METADATA_KEY_SELECTED,
-)
-from singer import catalog
-from typing import List
 import json
+from typing import List
+
+from singer import catalog
+
+from mage_integrations.sources.constants import METADATA_KEY_SELECTED
 
 
 class CatalogEntry(catalog.CatalogEntry):
@@ -109,3 +109,9 @@ class Catalog(catalog.Catalog):
             arr.append(stream if type(stream) is dict else stream.to_dict())
 
         return dict(streams=arr)
+
+    def get_stream(self, tap_stream_id):
+        for stream in self.streams:
+            if stream.tap_stream_id == tap_stream_id:
+                return stream
+        return None
