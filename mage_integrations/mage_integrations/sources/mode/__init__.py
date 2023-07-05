@@ -53,9 +53,6 @@ class Mode(Source):
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].valid_replication_keys
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Mode)

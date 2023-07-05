@@ -3,6 +3,5 @@
   "password": "", 
   "workspace": "",
   "user_agent": null,
-  "start_date": null,
-  "logger_level": "DEBUG"
+  "start_date": null
 }
