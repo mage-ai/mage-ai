@@ -1,6 +1,7 @@
 import BlockType from './BlockType';
 import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
+import { Batch, Integration, Streaming } from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
 import { PipelineMetadataType } from './MetadataType';
 
@@ -16,6 +17,18 @@ export const PIPELINE_TYPE_LABEL_MAPPING = {
   [PipelineTypeEnum.PYTHON]: 'Standard',
   [PipelineTypeEnum.PYSPARK]: 'PySpark',
   [PipelineTypeEnum.STREAMING]: 'Streaming',
+};
+
+export const PIPELINE_TYPES_TO_DISPLAY = [
+  PipelineTypeEnum.PYTHON,
+  PipelineTypeEnum.INTEGRATION,
+  PipelineTypeEnum.STREAMING,
+];
+
+export const PIPELINE_TYPE_ICON_MAPPING = {
+  [PipelineTypeEnum.INTEGRATION]: Integration,
+  [PipelineTypeEnum.PYTHON]: Batch,
+  [PipelineTypeEnum.STREAMING]: Streaming,
 };
 
 /*
