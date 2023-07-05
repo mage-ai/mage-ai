@@ -86,6 +86,8 @@ class RepoConfig:
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.retry_config = repo_config.get('retry_config')
 
+            self.ldap_config = repo_config.get('ldap_config')
+
             self.s3_bucket = None
             self.s3_path_prefix = None
             if self.remote_variables_dir is not None and \
