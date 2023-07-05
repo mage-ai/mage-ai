@@ -8,6 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import MetricsSummary from '@components/PipelineRun/MetricsSummary';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
+import PipelineRunType from '@interfaces/PipelineRunType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -22,6 +23,7 @@ import {
   TOOLTIP_LEFT_OFFSET,
 } from '@components/Monitor/constants';
 import { MonitorStatsEnum, RunCountStatsType } from '@interfaces/MonitorStatsType';
+import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
@@ -34,10 +36,12 @@ import {
   getDateRange,
   getFullDateRangeString,
   getStartDateStringFromPeriod,
+  unixTimestampFromDate,
 } from '@utils/date';
 import { capitalize } from '@utils/string';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
 import { goToWithQuery } from '@utils/routing';
+import { groupBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 
 function OverviewPage() {
@@ -57,10 +61,14 @@ function OverviewPage() {
     selectedTabPrev,
   ]);
 
+  const startDateString = useMemo(() =>
+    getStartDateStringFromPeriod(timePeriod, { isoString: true }),
+    [timePeriod],
+  );
   const monitorStatsQueryParams = useMemo(() => ({
     group_by_pipeline_type: 1,
-    start_time: getStartDateStringFromPeriod(timePeriod, { isoString: true }),
-  }), [timePeriod]);
+    start_time: startDateString,
+  }), [startDateString]);
   const {
     data: dataMonitor,
     isValidating: isValidatingMonitorStats,
@@ -70,6 +78,29 @@ function OverviewPage() {
     monitorStatsQueryParams,
     { revalidateOnFocus: false },
   );
+
+  const {
+    data: dataPipelineRuns,
+    mutate: fetchPipelineRuns,
+  } = api.pipeline_runs.list(
+    {
+      _limit: 50,
+      include_pipeline_type: 1,
+      'order_by[]': 'created_at desc',
+      start_timestamp: unixTimestampFromDate(startDateString),
+      status: RunStatusEnum.FAILED,
+    },
+  );
+  const groupedPipelineRuns: {
+    [key: string]:  PipelineRunType,
+  } = useMemo(() => groupBy(dataPipelineRuns?.pipeline_runs || [], run => run.pipeline_type), [
+    dataPipelineRuns?.pipeline_runs,
+  ]);
+  const {
+    integration: integrationPipelineRuns = [],
+    python: standardPipelineRuns = [],
+    streaming: streamingPipelineRuns = [],
+  } = groupedPipelineRuns;
 
   useEffect(() => {
     if (selectedTabPrev && selectedTab?.uuid !== selectedTabPrev?.uuid) {
