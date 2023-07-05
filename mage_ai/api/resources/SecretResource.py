@@ -1,7 +1,6 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import create_secret, get_valid_secrets
 from mage_ai.data_preparation.sync import (
     GIT_ACCESS_TOKEN_SECRET_NAME,
@@ -11,6 +10,7 @@ from mage_ai.data_preparation.sync import (
 )
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.secrets import Secret
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import extract
 
 ALLOWED_PAYLOAD_KEYS = [

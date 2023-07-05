@@ -19,7 +19,6 @@ from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     init_repo,
-    set_repo_path,
     update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
@@ -70,6 +69,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
+from mage_ai.settings.repo import set_repo_path
 from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use

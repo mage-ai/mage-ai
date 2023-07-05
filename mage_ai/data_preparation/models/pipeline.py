@@ -26,14 +26,11 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import (
-    RepoConfig,
-    get_repo_config,
-    get_repo_path,
-)
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async

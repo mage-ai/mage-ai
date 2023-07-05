@@ -147,7 +147,7 @@ def start(
     """
     Start Mage server and UI.
     """
-    from mage_ai.data_preparation.repo_manager import set_repo_path
+    from mage_ai.settings.repo import set_repo_path
 
     # Set repo_path before intializing the DB so that we can get correct db_connection_url
     project_path = os.path.abspath(project_path)
@@ -186,7 +186,7 @@ def run(
     """
     Run pipeline.
     """
-    from mage_ai.data_preparation.repo_manager import set_repo_path
+    from mage_ai.settings.repo import set_repo_path
 
     # Set repo_path before intializing the DB so that we can get correct db_connection_url
     project_path = os.path.abspath(project_path)
@@ -270,7 +270,7 @@ def clean_cached_variables(
     project_path: str = CLEAN_VARIABLES_PROJECT_PATH_DEFAULT,
     pipeline_uuid: str = CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT,
 ):
-    from mage_ai.data_preparation.repo_manager import set_repo_path
+    from mage_ai.settings.repo import set_repo_path
 
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)

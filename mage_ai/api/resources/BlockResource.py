@@ -1,17 +1,18 @@
+import urllib.parse
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
     BlockType,
-    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
-import urllib.parse
+from mage_ai.settings.repo import get_repo_path
 
 
 class BlockResource(GenericResource):

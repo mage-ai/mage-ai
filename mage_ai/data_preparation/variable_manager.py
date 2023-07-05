@@ -1,25 +1,21 @@
+import os
 from datetime import datetime
-from mage_ai.data_cleaner.shared.utils import (
-    is_geo_dataframe,
-    is_spark_dataframe,
-)
+from typing import Any, Dict, List
+
+import pandas as pd
+
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.variable import (
+    VARIABLE_DIR,
     Variable,
     VariableType,
-    VARIABLE_DIR,
 )
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_variables_dir
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from mage_ai.data_preparation.repo_manager import (
-    get_repo_config,
-    get_repo_path,
-    get_variables_dir,
-)
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.utils import clean_name
-from typing import Any, Dict, List
-import os
-import pandas as pd
 
 
 class VariableManager:

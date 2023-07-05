@@ -3,8 +3,8 @@ import os
 import inflection
 
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.shared.constants import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.data_preparation.shared.secrets import get_secret_value
+from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
@@ -58,7 +58,7 @@ class SyncOperationTests(BaseApiTestCase):
 
         self.assertEqual(user.git_settings['username'], 'username1')
         self.assertEqual(
-            get_secret_value(user.git_settings['access_token_secret_name']),
+            get_secret_value(user.git_settings['access_token_secret_name'], self.repo_path),
             'abc123',
         )
 
@@ -91,7 +91,10 @@ class SyncOperationTests(BaseApiTestCase):
         self.assertEqual(project_preferences['username'], 'username')
         self.assertEqual(user.git_settings['email'], email)
         self.assertEqual(
-            get_secret_value(project_preferences['access_token_secret_name']),
+            get_secret_value(project_preferences['access_token_secret_name'], self.repo_path),
             'abc123',
         )
-        self.assertEqual(get_secret_value(user.git_settings['access_token_secret_name']), 'def456')
+        self.assertEqual(
+            get_secret_value(user.git_settings['access_token_secret_name'], self.repo_path),
+            'def456',
+        )

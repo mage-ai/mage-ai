@@ -20,7 +20,6 @@ from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     get_repo_config,
-    get_repo_path,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
@@ -28,6 +27,7 @@ from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
 from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings.repo import get_repo_path
 
 logger = Logger().new_server_logger(__name__)
 

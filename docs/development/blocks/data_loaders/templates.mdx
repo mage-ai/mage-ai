@@ -101,7 +101,7 @@ def test_output(output, *args) -> None:
 ## Azure Blob Storage
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.azure_blob_storage import AzureBlobStorage
 from os import path
@@ -142,7 +142,7 @@ def test_output(output, *args) -> None:
 ## Google BigQuery
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
 from os import path
@@ -178,7 +178,7 @@ def test_output(output, *args) -> None:
 ## Google Cloud Storage
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.google_cloud_storage import GoogleCloudStorage
 from os import path
@@ -219,7 +219,7 @@ def test_output(output, *args) -> None:
 ## MySQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.mysql import MySQL
 from os import path
@@ -256,7 +256,7 @@ def test_output(output, *args) -> None:
 ## PostgreSQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from os import path
@@ -293,7 +293,7 @@ def test_output(output, *args) -> None:
 ## Amazon Redshift
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from os import path
@@ -330,7 +330,7 @@ def test_output(output, *args) -> None:
 ## Amazon S3
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
@@ -371,7 +371,7 @@ def test_output(output, *args) -> None:
 ## Snowflake
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from os import path

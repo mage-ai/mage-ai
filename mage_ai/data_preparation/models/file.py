@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 import aiofiles
 
 from mage_ai.data_preparation.models.errors import FileExistsError
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 
 FILE_VERSIONS_DIR = '.file_versions'
 BLACKLISTED_DIRS = frozenset([

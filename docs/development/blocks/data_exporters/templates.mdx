@@ -49,7 +49,7 @@ def export_data_to_file(df: DataFrame, **kwargs) -> None:
 ## Azure Blob Storage
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.azure_blob_storage import AzureBlobStorage
 from mage_ai.io.config import ConfigFileLoader
 from pandas import DataFrame
@@ -83,7 +83,7 @@ def export_data_to_azure_blob_storage(df: DataFrame, **kwargs) -> None:
 ## Google BigQuery
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
 from pandas import DataFrame
@@ -115,7 +115,7 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
 ## Google Cloud Storage
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.google_cloud_storage import GoogleCloudStorage
 from pandas import DataFrame
@@ -149,7 +149,7 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
 ## MySQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.mysql import MySQL
 from pandas import DataFrame
@@ -185,7 +185,7 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
 ## PostgreSQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from pandas import DataFrame
@@ -221,7 +221,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
 ## Amazon Redshift
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
@@ -254,7 +254,7 @@ def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
 ## Amazon S3
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from pandas import DataFrame
@@ -289,7 +289,7 @@ def export_data_to_s3(df: DataFrame, **kwargs) -> None:
 ## Snowflake
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
