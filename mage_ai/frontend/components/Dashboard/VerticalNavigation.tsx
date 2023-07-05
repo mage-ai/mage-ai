@@ -15,6 +15,7 @@ import {
   BranchAlt,
   DocumentIcon,
   Lightning,
+  NavDashboard,
   PipelineV3,
   Schedule,
   Settings,
@@ -32,6 +33,14 @@ const DEFAULT_ITEMS = [
   {
     id: 'main',
     items: [
+      {
+        Icon: NavDashboard,
+        id: 'overview',
+        label: () => 'Overview',
+        linkProps: {
+          href: '/overview',
+        },
+      },
       {
         Icon: PipelineV3,
         id: 'pipelines',
