@@ -14,9 +14,14 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import dark from '@oracle/styles/themes/dark';
+
+import {
+  BAR_STACK_COLORS,
+  BAR_STACK_STATUSES,
+  MonitorTypeEnum,
+  TOOLTIP_LEFT_OFFSET,
+} from '@components/Monitor/constants';
 import { ChevronRight } from '@oracle/icons';
-import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/constants';
 import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
@@ -34,15 +39,6 @@ const GradientTextStyle = styled.div<any>`
 type PipelineRunsMonitorProps = {
   pipeline: PipelineType;
 };
-
-export const BAR_STACK_COLORS = [
-  dark.accent.warning,
-  dark.background.success,
-  dark.accent.negative,
-  dark.content.active,
-  dark.interactive.linkPrimary,
-];
-export const BAR_STACK_STATUSES = ['cancelled', 'completed', 'failed', 'initial', 'running'];
 
 function PipelineRunsMonitor({
   pipeline: pipelineProp,

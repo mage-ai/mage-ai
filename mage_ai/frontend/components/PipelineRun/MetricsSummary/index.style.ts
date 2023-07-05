@@ -6,7 +6,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const MetricsSummaryContainerStyle = styled.div`
   width: 100%;
-  padding: ${UNIT * 3}px;
+  padding: ${UNIT * 2}px;
   border-radius: ${BORDER_RADIUS}px;
 
   ${props => `

@@ -10,9 +10,9 @@ export const TIME_PERIOD_DISPLAY_MAPPING = {
 };
 
 export const TIME_PERIOD_INTERVAL_MAPPING = {
-  [TimePeriodEnum.TODAY]: 2,
-  [TimePeriodEnum.WEEK]: 8,
-  [TimePeriodEnum.MONTH]: 31,
+  [TimePeriodEnum.TODAY]: 0,
+  [TimePeriodEnum.WEEK]: 7,
+  [TimePeriodEnum.MONTH]: 30,
 };
 
 export const TAB_TODAY = {

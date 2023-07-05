@@ -13,9 +13,14 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
+
+import {
+  BAR_STACK_COLORS,
+  BAR_STACK_STATUSES,
+  MonitorTypeEnum,
+  TOOLTIP_LEFT_OFFSET,
+} from '@components/Monitor/constants';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';

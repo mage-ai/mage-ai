@@ -9,7 +9,7 @@ import { RunStatus } from '@interfaces/BlockRunType';
 
 export type PipelineRunDataType = {
   date: string;
-} & RunStatusCountType & GroupedPipelineRunCountType;
+} & RunStatusCountType;
 
 export type GroupedPipelineRunDataType = {
   date: string;
@@ -72,11 +72,15 @@ export const getAllPipelineRunDataGrouped = (
 ): {
   groupedPipelineRunData: GroupedPipelineRunDataType[];
   pipelineRunCountByPipelineType: GroupedPipelineRunCountType;
+  totalPipelineRunCount: number;
+  ungroupedPipelineRunData: PipelineRunDataType[];
 } => {
   if (!monitorStats) {
     return {
       groupedPipelineRunData: [],
       pipelineRunCountByPipelineType: {},
+      totalPipelineRunCount: 0,
+      ungroupedPipelineRunData: [],
     };
   }
 
@@ -86,58 +90,96 @@ export const getAllPipelineRunDataGrouped = (
     [PipelineTypeEnum.PYTHON]: { ...INITIAL_RUN_COUNT_STATS },
     [PipelineTypeEnum.STREAMING]: { ...INITIAL_RUN_COUNT_STATS },
   };
+  let totalPipelineRunCount = 0;
 
   const allPipelineRunData = Object.entries(monitorStats).reduce(
     (obj, [id, { data: scheduleStats }]) => {
-      const updated = {};
+      const updatedGrouped = {};
+      const updatedUngrouped = {};
 
       Object.entries(scheduleStats).forEach(([date, dateStats]) => {
-        let currentStats = {};
-        if (date in obj) {
-          currentStats = { ...obj[date] };
-          updated[date] = { ...currentStats };
+        let currentStatsGrouped = {};
+        let currentStatsUngrouped = {};
+        if (date in obj.grouped) {
+          currentStatsGrouped = { ...obj.grouped[date] };
+          updatedGrouped[date] = { ...currentStatsGrouped };
         } else {
-          updated[date] = {};
+          updatedGrouped[date] = {};
         }
-        const updatedStats = {};
+        if (date in obj.ungrouped) {
+          currentStatsUngrouped = { ...obj.ungrouped[date] };
+        }
+        const updatedStatsGrouped = {};
+        const updatedStatsUngrouped = {};
 
         Object.entries(dateStats).forEach(([pipelineType, pipelineTypeStats]) => {
-          if (date in obj && pipelineType in obj[date]) {
-            currentStats[pipelineType] = { ...obj[date][pipelineType] };
+          if (date in obj.grouped && pipelineType in obj.grouped[date]) {
+            currentStatsGrouped[pipelineType] = { ...obj.grouped[date][pipelineType] };
           }
-          updatedStats[pipelineType] = {};
+          updatedStatsGrouped[pipelineType] = {};
           Object.entries(pipelineTypeStats).forEach(([status, num]: [RunStatus, number]) => {
-            const currentNum = currentStats?.[pipelineType]?.[status]
-              ? currentStats[pipelineType][status]
+            const currentNumGrouped = currentStatsGrouped?.[pipelineType]?.[status]
+              ? currentStatsGrouped[pipelineType][status]
               : 0;
-            updatedStats[pipelineType][status] = currentNum + num;
+            updatedStatsGrouped[pipelineType][status] = currentNumGrouped + num;
+              
+            const currentNumUngrouped = currentStatsUngrouped?.[status]
+              ? currentStatsUngrouped[status]
+              : 0;
+            updatedStatsUngrouped[status] = currentNumUngrouped + num;
+
             if (runStatusesToDisplaySet.has(status)) {
               totalPipelineRunCountByPipelineType[pipelineType][status] =
                 (totalPipelineRunCountByPipelineType[pipelineType][status] || 0) + num;
             }
+            totalPipelineRunCount += num;
           });
-          updated[date][pipelineType] = {
-            ...currentStats[pipelineType],
-            ...updatedStats[pipelineType],
+          updatedGrouped[date][pipelineType] = {
+            ...currentStatsGrouped[pipelineType],
+            ...updatedStatsGrouped[pipelineType],
+          };
+          updatedUngrouped[date] = {
+            ...currentStatsUngrouped,
+            ...updatedStatsUngrouped,
           };
         });
       });
 
       return {
-        ...obj,
-        ...updated,
-      };
+        grouped: {
+          ...obj.grouped,
+          ...updatedGrouped,
+        },
+        ungrouped: {
+          ...obj.ungrouped,
+          ...updatedUngrouped,
+        },
+      }
+      ;
     },
-    {},
+    {
+      grouped: {},
+      ungrouped: {},
+    },
   );
 
-  const pipelineRunCountsByDate = dateRange.map(date => ({
-    date,
-    ...(allPipelineRunData[date] || {}),
-  }));
+  const groupedPipelineRunCountsByDate = [];
+  const ungroupedPipelineRunCountsByDate = [];
+  dateRange.forEach(date => {
+    groupedPipelineRunCountsByDate.push({
+      date,
+      ...(allPipelineRunData.grouped[date] || {}),
+    });
+    ungroupedPipelineRunCountsByDate.push({
+      date,
+      ...(allPipelineRunData.ungrouped[date] || {}),
+    });
+  });
 
   return {
-    groupedPipelineRunData: pipelineRunCountsByDate,
+    groupedPipelineRunData: groupedPipelineRunCountsByDate,
     pipelineRunCountByPipelineType: totalPipelineRunCountByPipelineType,
+    totalPipelineRunCount,
+    ungroupedPipelineRunData: ungroupedPipelineRunCountsByDate,
   };
 };

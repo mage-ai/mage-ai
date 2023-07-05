@@ -35,7 +35,7 @@ function MetricsSummary({
 
   return (
     <MetricsSummaryContainerStyle>
-      <Text bold>
+      <Text bold large>
         Pipeline run metrics for {TIME_PERIOD_DISPLAY_MAPPING[timePeriod]}
       </Text>
 

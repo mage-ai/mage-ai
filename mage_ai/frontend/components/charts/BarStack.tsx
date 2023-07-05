@@ -129,7 +129,7 @@ function BarStackChart({
           top={margin.top}
           width={xMax}
         />
-        <Group top={margin.top}>
+        <Group left={margin.left} top={margin.top}>
           <BarStack<any, string>
             color={colorScale}
             data={data}
@@ -239,7 +239,7 @@ function BarStackChart({
         </Tooltip>
       )}
     </div>
-  )
+  );
 }
 
 function BarStackContainer({
@@ -294,7 +294,7 @@ function BarStackContainer({
         )}
       </div>
     </>
-  )
+  );
 }
 
 export default BarStackContainer;

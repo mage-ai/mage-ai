@@ -9,6 +9,7 @@ export enum TimePeriodEnum {
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
+export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);
@@ -109,18 +110,45 @@ export function getDatePartsFromUnixTimestamp(
   };
 }
 
-export function getStartDateStringFromPeriod(
-  period: TimePeriodEnum | string,
-  isoString?: boolean,
-): string {
-  let dateMoment = moment().local();
-  if (period === TimePeriodEnum.WEEK) {
-    dateMoment = moment().local().subtract(7, 'days');
-  } else if (period === TimePeriodEnum.MONTH) {
-    dateMoment = moment().local().subtract(1, 'months');
+export function getFullDateRangeString(
+  daysAgo: number,
+  options?: {
+    endDateOnly?: boolean;
+    localTime?: boolean;
+  },
+) {
+  let dateMomentStart = moment.utc();
+  let dateMomentEnd = moment.utc();
+
+  if (options?.localTime) {
+    dateMomentStart = moment().local();
+    dateMomentEnd = moment().local();
   }
 
-  return isoString
+  dateMomentStart = dateMomentStart.subtract(daysAgo, 'days');
+  const dateStartString = dateMomentStart.format(DATE_FORMAT_FULL);
+  const dateEndString = dateMomentEnd.format(DATE_FORMAT_FULL);
+
+  return options?.endDateOnly
+    ? dateEndString
+    : `${dateStartString} - ${dateEndString}`;
+}
+
+export function getStartDateStringFromPeriod(
+  period: TimePeriodEnum | string,
+  options?: {
+    isoString?: boolean;
+    localTime?: boolean;
+  },
+): string {
+  let dateMoment = options?.localTime ? moment().local() : moment.utc();
+  if (period === TimePeriodEnum.WEEK) {
+    dateMoment = dateMoment.subtract(7, 'days');
+  } else if (period === TimePeriodEnum.MONTH) {
+    dateMoment = dateMoment.subtract(1, 'months');
+  }
+
+  return options?.isoString
     ? dateMoment.startOf('day').toISOString()
     : dateMoment.startOf('day').format(DATE_FORMAT_LONG);
 }
