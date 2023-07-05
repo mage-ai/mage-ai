@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from mage_ai.shared.hash import group_by, merge_dict
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from sqlalchemy.orm import joinedload
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 import dateutil.parser
 import enum
 
@@ -50,6 +50,7 @@ class MonitorStats:
         pipeline_uuid: str = None,
         start_time: datetime = None,
         end_time: datetime = None,
+        group_by_pipeline_type: Union[str, bool] = False,
         **kwargs,
     ) -> Dict:
         pipeline_runs = self.__filter_pipeline_runs(
@@ -72,10 +73,18 @@ class MonitorStats:
             data = stats_by_schedule_id[p.pipeline_schedule_id]['data']
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
-            if p.status not in data[created_at_formatted]:
-                data[created_at_formatted][p.status] = 1
+            if group_by_pipeline_type:
+                if p.pipeline_type not in data[created_at_formatted]:
+                    data[created_at_formatted][p.pipeline_type] = dict()
+                if p.status not in data[created_at_formatted][p.pipeline_type]:
+                    data[created_at_formatted][p.pipeline_type][p.status] = 1
+                else:
+                    data[created_at_formatted][p.pipeline_type][p.status] += 1
             else:
-                data[created_at_formatted][p.status] += 1
+                if p.status not in data[created_at_formatted]:
+                    data[created_at_formatted][p.status] = 1
+                else:
+                    data[created_at_formatted][p.status] += 1
         return stats_by_schedule_id
 
     def get_pipeline_run_time(
