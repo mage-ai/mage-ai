@@ -26,6 +26,9 @@ class OracleDB(Source):
     def password(self) -> str:
         return self.config['password']
 
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return list(map(lambda column: f'"{column}"', columns))
+
     def _limit_query_string(self, limit, offset):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
 
