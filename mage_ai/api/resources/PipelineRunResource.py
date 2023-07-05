@@ -96,7 +96,23 @@ class PipelineRunResource(DatabaseResource):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
 
-        results = total_results.limit(limit + 1).offset(offset).all()
+        pipeline_type = query_arg.get('pipeline_type', [None])
+        if pipeline_type:
+            pipeline_type = pipeline_type[0]
+
+        if pipeline_type is not None:
+            try:
+                results = list(filter(
+                    lambda pipeline_run: pipeline_run.pipeline_type == pipeline_type,
+                    total_results.all(),
+                ))
+                total_count = len(results)
+                results = results[offset:(offset + limit)]
+            except Exception as err:
+                print('ERROR filtering pipeline runs:', err)
+                results = total_results.limit(limit + 1).offset(offset).all()
+        else:
+            results = total_results.limit(limit + 1).offset(offset).all()
 
         pipeline_schedule_id = None
         parent_model = kwargs.get('parent_model')

@@ -35,7 +35,11 @@ class PipelineRunPresenter(BasePresenter):
             include_pipeline_type = query.get('include_pipeline_type', [False])
             if include_pipeline_type:
                 include_pipeline_type = include_pipeline_type[0]
-            if include_pipeline_type:
+            pipeline_type = query.get('pipeline_type', [None])
+            if pipeline_type:
+                pipeline_type = pipeline_type[0]
+
+            if include_pipeline_type or pipeline_type is not None:
                 additional_attributes.append('pipeline_type')
 
             return self.model.to_dict(include_attributes=additional_attributes)

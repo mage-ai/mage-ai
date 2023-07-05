@@ -91,6 +91,7 @@ PipelineRunPolicy.allow_query([
     'end_timestamp',
     'include_pipeline_type',
     'order_by[]',
+    'pipeline_type',
     'pipeline_uuid',
     'start_timestamp',
     'status',
