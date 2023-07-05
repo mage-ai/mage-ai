@@ -6,7 +6,6 @@ block dependencies."
 
 ## Pipeline object
 
-
 ```json
 {
   "blocks": [
@@ -205,11 +204,21 @@ block dependencies."
 </ParamField>
 
 <CodeGroup>
-```curl cURL
-curl --request GET \
-  --url 'http://localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
-  --header 'OAUTH-TOKEN=some_really_long_string'
-```
+  ```curl cURL
+  curl --request GET \
+    --url 'http://localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+    --header 'OAUTH-TOKEN=some_really_long_string'
+  ```
+  ```python Python
+    import requests
+    headers = {
+      "Content-Type": "application/json",
+      "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+      "Cookie": "oauth_token=some_really_long_string"
+    }
+    
+    r = requests.get('http://localhost:6789/api/pipelines', headers=headers)
+  ```
 </CodeGroup>
 
 ```json
@@ -241,29 +250,262 @@ curl --request GET \
   "metadata": {}
 }
 ```
+---
+## Read pipeline
+
+`GET /api/pipelines/:uuid`
+
+<ParamField query="include_schedules" type="integer">
+  If `1`, the pipeline object will include associated triggers.
+</ParamField>
+
+<CodeGroup>
+  ```curl cURL
+  curl --request GET \
+    --url 'http://localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+    --header 'OAUTH-TOKEN=some_really_long_string'
+  ```
+  ```python Python
+  import requests
+
+  headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+    "Cookie": "oauth_token=some_really_long_string"
+  }
+  
+  r = requests.get('http://localhost:6789/api/pipelines/arwen_starlight', headers=headers)
+  ```
+</CodeGroup>
+
+```json
+{
+    "pipeline": {
+        "data_integration": null,
+        "description": null,
+        "executor_config": {},
+        "executor_count": 1,
+        "executor_type": null,
+        "name": "arwen-starlight",
+        "notification_config": {},
+        "type": "python",
+        "updated_at": null,
+        "uuid": "arwen_starlight",
+        "spark_config": {},
+        "blocks": [],
+        "callbacks": [],
+        "conditionals": [],
+        "widgets": [],
+        "extensions": {}
+    }
+}
+```
 
 ---
 
 ## Create pipeline
 
-*WIP*
+`POST /api/pipelines`
 
----
+<ParamField query="callbacks" type="array of objects">
+  Array of [callback](/development/blocks/callbacks) block objects.  Same shape as `blocks`.
+</ParamField>
 
-## Read pipeline
+<ParamField query="conditionals" type="array of objects">
+  Array of [conditional](/development/blocks/conditionals/) block objects.  Same shape as `blocks`.
+</ParamField>
 
-*WIP*
+<ParamField query="name" type="string" required>
+  Human readable name of block.
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Type of block:
+    `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
+</ParamField>
+
+<ParamField query="clone_pipeline_uuid" type="string">
+  If supplied, the uuid of a pipeline to clone.
+</ParamField>
+
+<ParamField query="extensions" type="array of objects">
+  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
+</ParamField>
+
+<CodeGroup>
+  ```curl cURL
+  curl --request POST 
+    -H 'Content-Type: application/json' 
+    -H 'Cookie: oauth_token=some_really_long_string'
+    -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
+    -d '{"pipeline": {"name": "arwen-starlight", "type": "python"}}' 
+    --url http://localhost:6789/api/pipelines
+  ```
+  ```python Python
+    import requests
+
+    headers = {
+      "Content-Type": "application/json",
+      "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+      "Cookie": "oauth_token=some_really_long_string"
+    }
+
+    json_data = {
+      'pipeline': {
+            "name": "arwen-starlight",
+            "type": 'python'
+            }
+    }
+    
+    r = requests.get('http://localhost:6789/api/pipelines', headers=headers, json=json_data)
+  ```
+</CodeGroup>
+
+```json
+{
+    "pipeline": {
+        "data_integration": null,
+        "description": null,
+        "executor_config": {},
+        "executor_count": 1,
+        "executor_type": null,
+        "name": "arwen-starlight",
+        "notification_config": {},
+        "type": "python",
+        "updated_at": null,
+        "uuid": "arwen_starlight",
+        "spark_config": {},
+        "blocks": [],
+        "callbacks": [],
+        "conditionals": [],
+        "widgets": []
+    }
+}
+```
 
 ---
 
 ## Update pipeline
 
-*WIP*
+`PUT /api/pipelines/:uuid`
+
+All default attributes for a pipeline may be updated in addittion to the following:
+<ParamField query="add_upstream_for_block_uuid" type="string">
+  The uuid for a block upstream of the pipeline.
+</ParamField>
+
+<ParamField query="callbacks" type="array of objects">
+  Array of [callback](/development/blocks/callbacks) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="conditionals" type="array of objects">
+  Array of [conditional](/development/blocks/conditionals/) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="extensions" type="array of objects">
+  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="schedules" type="array of objects">
+  Array of [schedule](/guides/triggering-pipelines/) trigger objects.
+</ParamField>
+
+<CodeGroup>
+  ```curl cURL
+  curl --request PUT 
+    --url http://localhost:6789/api/pipelines/arwen_starlight
+    -H 'Content-Type: application/json' 
+    -H 'Cookie: oauth_token=some_really_long_string'
+    -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
+    -d '{"pipeline": {"type": "integration"}}'
+  ```
+  ```python Python
+  import requests
+
+  headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+    "Cookie": "oauth_token=some_really_long_string"
+  }
+
+  json_data = {
+    'pipeline': {
+            "type": 'integration'
+            }
+  }
+  
+  r = requests.put('http://localhost:6789/api/pipelines/arwen_starlight', headers=headers, json=json_data)
+  ```
+</CodeGroup>
+
+```json
+{
+    "pipeline": {
+        "data_integration": null,
+        "description": null,
+        "executor_config": {},
+        "executor_count": 1,
+        "executor_type": null,
+        "name": "arwen-starlight",
+        "notification_config": {},
+        "type": "integration",
+        "updated_at": null,
+        "uuid": "arwen_starlight",
+        "spark_config": {},
+        "blocks": [],
+        "callbacks": [],
+        "conditionals": [],
+        "widgets": [],
+        "extensions": {}
+    }
+}
+```
 
 ---
 
 ## Delete pipeline
 
-*WIP*
+`DELETE /api/pipelines/:uuid`
+
+<CodeGroup>
+  ```curl cURL
+  curl -X DELETE 
+    --url http://localhost:6789/api/pipelines/arwen_starlight
+    -H 'Content-Type: application/json' 
+    -H 'Cookie: oauth_token=some_really_long_string' 
+    -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' 
+  ```
+  ```python Python
+  headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+    "Cookie": "oauth_token=some_really_long_string"
+  }
+  
+  r = requests.delete('http://localhost:6789/api/pipelines/arwen_starlight', headers=headers)
+  ```
+</CodeGroup>
+
+```json
+{
+    "pipeline": {
+        "data_integration": null,
+        "description": null,
+        "executor_config": {},
+        "executor_count": 1,
+        "executor_type": null,
+        "name": "arwen-starlight",
+        "notification_config": {},
+        "type": "integration",
+        "updated_at": null,
+        "uuid": "arwen_starlight",
+        "spark_config": {},
+        "blocks": [],
+        "callbacks": [],
+        "conditionals": [],
+        "widgets": []
+    }
+}
+```
 
 ---
