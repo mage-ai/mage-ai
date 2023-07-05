@@ -43,7 +43,6 @@ function RowDataTable({
           row,
           {
             last: idx === children.length - 1,
-            noBorder: !!footer,
             secondary: alternating && idx % 2 === 1,
           },
         ))}

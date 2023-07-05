@@ -1,5 +1,4 @@
 import NextLink from 'next/link';
-import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -34,7 +33,6 @@ function Widget({
   pipelineType,
   pipelineRuns = [],
 }: WidgetProps) {
-  const router = useRouter();
   const q = queryFromUrl();
   const timePeriod = q?.[TAB_URL_PARAM] || TimePeriodEnum.TODAY;
   const isAllRuns = pipelineType === ALL_PIPELINE_RUNS_TYPE;
@@ -47,11 +45,17 @@ function Widget({
     <RowDataTable
       footer={
         <FlexContainer alignItems="center" justifyContent="center">
-          <Link
-            onClick={() => router.push('/pipeline-runs?status=failed')}
+          <NextLink
+            as={'/pipeline-runs?status=failed'}
+            href="/pipeline-runs"
+            passHref
           >
-            View more
-          </Link>
+            <Link
+              sameColorAsText
+            >
+              View more
+            </Link>
+          </NextLink>
         </FlexContainer>
       }
       header={
@@ -64,7 +68,7 @@ function Widget({
             {capitalize(pipelineTypeLabel)}
           </Button>
           <Spacing ml={2} />
-          <Text bold large>
+          <Text bold>
             Latest {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures
           </Text>
         </FlexContainer>
@@ -112,7 +116,7 @@ function Widget({
                   passHref
                 >
                   <Link danger monospace sameColorAsText small>
-                    Run created at {createdAt}
+                    Run created on {createdAt}
                   </Link>
                 </NextLink>
               </FlexContainer>
