@@ -146,6 +146,7 @@ testfiles/
 .jupyter/
 .local/
 .npm/
+.npmrc
 .python_history
 mage_ai/frontend/package-lock.json
 docker-compose.override.yml
@@ -163,4 +164,9 @@ docker-compose.override.yml
 
 # front-end
 node_modules
+.npmrc
+
+# Scratch files
+scratch*
+
 

@@ -1,8 +1,5 @@
 {
-    "dependencies": {
-        "react-dropzone": "^14.2.3"
-    },
-    "engines": {
-        "node": ">=19.0.0 <20.0.0"
-    }
+  "dependencies": {
+    "react-dropzone": "^14.2.3"
+  }
 }
