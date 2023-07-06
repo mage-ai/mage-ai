@@ -50,7 +50,6 @@ class Connection(BaseConnection):
             now1 = datetime.utcnow().timestamp()
 
             try:
-                self.logger.info(f'Query string: {query_string}')
                 cursor.execute(clean_query(query_string))
                 description = cursor.description
                 if description:
