@@ -325,9 +325,9 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 success, num_chunks, num_rows, output = write_pandas(
                     self.build_connection().connection,
                     df,
-                    tags.get('table_name'),
-                    database=tags.get('database_name'),
-                    schema=tags.get('schema_name'),
+                    self.config.get('table'),
+                    database=self.config['database'],
+                    schema=self.config['schema'],
                     auto_create_table=True,
                 )
                 self.logger.info(
