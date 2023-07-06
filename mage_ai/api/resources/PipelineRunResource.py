@@ -101,6 +101,7 @@ class PipelineRunResource(DatabaseResource):
             pipeline_type = pipeline_type[0]
 
         if pipeline_type is not None:
+            # NOTE: This may not be the most efficient way to filter by pipeline_type.
             try:
                 results = list(filter(
                     lambda pipeline_run: pipeline_run.pipeline_type == pipeline_type,

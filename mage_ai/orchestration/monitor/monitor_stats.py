@@ -74,12 +74,13 @@ class MonitorStats:
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
             if group_by_pipeline_type:
-                if p.pipeline_type not in data[created_at_formatted]:
-                    data[created_at_formatted][p.pipeline_type] = dict()
-                if p.status not in data[created_at_formatted][p.pipeline_type]:
-                    data[created_at_formatted][p.pipeline_type][p.status] = 1
+                pipeline_type = p.pipeline_type
+                if pipeline_type not in data[created_at_formatted]:
+                    data[created_at_formatted][pipeline_type] = dict()
+                if p.status not in data[created_at_formatted][pipeline_type]:
+                    data[created_at_formatted][pipeline_type][p.status] = 1
                 else:
-                    data[created_at_formatted][p.pipeline_type][p.status] += 1
+                    data[created_at_formatted][pipeline_type][p.status] += 1
             else:
                 if p.status not in data[created_at_formatted]:
                     data[created_at_formatted][p.status] = 1
