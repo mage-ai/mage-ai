@@ -22,7 +22,7 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.sql.utils import (
     build_comparison_statement,
     column_type_mapping,
-    wrap_column_in_quotes,
+    wrap_column_in_quotes_orig,
 )
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
@@ -253,6 +253,9 @@ WHERE table_schema = '{schema}'
 
         return f'{self.table_prefix}{table_name}'
 
+    def wrap_column_in_quotes(self, column: str) -> str:
+        return wrap_column_in_quotes_orig(column)
+
     def _after_load_data(self, stream):
         pass
 
@@ -405,7 +408,7 @@ WHERE table_schema = '{schema}'
             properties,
             self.column_type_mapping,
             operator=operator,
-            column_cleaned=wrap_column_in_quotes(col),
+            column_cleaned=self.wrap_column_in_quotes(col),
             convert_datetime_func=self.convert_datetime,
         )
 

@@ -49,7 +49,13 @@ WHERE table_schema = '{database}'
         return super().column_type_mapping(column_type, column_format)
 
     def update_column_names(self, columns: List[str]) -> List[str]:
-        return list(map(lambda column: f'`{column}`', columns))
+        return list(map(lambda column: self.wrap_column_in_quotes(column), columns))
+
+    def wrap_column_in_quotes(column: str) -> str:
+        if "`" not in column:
+            return f'`{column}`'
+
+        return column
 
 
 if __name__ == '__main__':
