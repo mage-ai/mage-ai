@@ -6,6 +6,7 @@ from google.api.launch_stage_pb2 import LaunchStage
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import run_v2
 from google.oauth2 import service_account
+from google.protobuf.duration_pb2 import Duration
 
 from mage_ai.server.logger import Logger
 from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
@@ -56,7 +57,8 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
             service_account=service_template.service_account,
             execution_environment=service_template.execution_environment,
             encryption_key=service_template.encryption_key,
-            vpc_access=service_template.vpc_access
+            timeout=Duration(seconds=cloud_run_config.timeout_seconds),
+            vpc_access=service_template.vpc_access,
         )
     )
     job = run_v2.Job(
