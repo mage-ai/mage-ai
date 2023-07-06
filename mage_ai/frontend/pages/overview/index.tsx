@@ -83,7 +83,7 @@ function OverviewPage() {
   } = api.monitor_stats.detail(
     MonitorStatsEnum.PIPELINE_RUN_COUNT,
     monitorStatsQueryParams,
-    { revalidateOnFocus: false },
+    { refreshInterval: 60000, revalidateOnFocus: false },
   );
 
   const {

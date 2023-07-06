@@ -16,7 +16,6 @@ import {
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
-import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';

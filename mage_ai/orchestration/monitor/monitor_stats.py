@@ -61,6 +61,7 @@ class MonitorStats:
         )
         pipeline_runs = pipeline_runs.all()
         stats_by_schedule_id = dict()
+        pipeline_type_by_pipeline_uuid = dict()
         for p in pipeline_runs:
             if p.pipeline_schedule is None:
                 continue
@@ -74,7 +75,9 @@ class MonitorStats:
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
             if group_by_pipeline_type:
-                pipeline_type = p.pipeline_type
+                if p.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
+                    pipeline_type_by_pipeline_uuid[p.pipeline_uuid] = p.pipeline_type
+                pipeline_type = pipeline_type_by_pipeline_uuid[p.pipeline_uuid]
                 if pipeline_type not in data[created_at_formatted]:
                     data[created_at_formatted][pipeline_type] = dict()
                 if p.status not in data[created_at_formatted][pipeline_type]:
