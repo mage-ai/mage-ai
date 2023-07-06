@@ -1,0 +1,41 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "token": {
+        "type": "string"
+      },
+      "raw_query": {
+        "type": "string"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "name": {
+        "type": "string"
+      },
+      "last_run_id": {
+        "type": "integer"
+      },
+      "data_source_id": {
+        "type": "integer"
+      },
+      "explorations_count": {
+        "type": "integer"
+      },
+      "report_imports_count": {
+        "type": "integer"
+      },
+      "dbt_metric_id": {
+        "type": ["null", "integer"]
+      }
+    }
+  }
