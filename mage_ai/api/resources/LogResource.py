@@ -4,6 +4,9 @@ from sqlalchemy.orm import aliased
 from mage_ai.api.operations.constants import META_KEY_LIMIT
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.utils import get_query_timestamps
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.constants import LOG_PARTITION_EDIT_PIPELINE
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
@@ -236,11 +239,36 @@ class LogResource(GenericResource):
             if len(block_run_logs) >= MAX_LOG_FILES:
                 break
 
+        for block in pipeline.blocks_by_uuid.values():
+            logger = LoggerManagerFactory.get_logger_manager(
+                partition=LOG_PARTITION_EDIT_PIPELINE,
+                pipeline_uuid=pipeline_uuid,
+                subpartition=block.uuid,
+            )
+
+            def __filter(file: File) -> bool:
+                should_add = True
+
+                try:
+                    dsts = datetime.strptime(file.filename.split('.')[0], '%Y%m%dT%H%M%S')
+
+                    if start_timestamp:
+                        should_add = should_add and start_timestamp <= dsts
+                    if end_timestamp:
+                        should_add = should_add and dsts <= end_timestamp
+                except ValueError as err:
+                    print(f'[WARNING] LogResource.__filter: {err}')
+                    should_add = False
+
+                return should_add
+
+            block_run_logs += await logger.get_logs_in_subpartition_async(filter_func=__filter)
+
         return [
-            dict(
-                block_run_logs=block_run_logs,
-                pipeline_run_logs=pipeline_run_logs,
-                total_block_run_log_count=total_block_run_log_count,
-                total_pipeline_run_log_count=total_pipeline_run_log_count,
-            ),
+            {
+                'block_run_logs': block_run_logs,
+                'pipeline_run_logs': pipeline_run_logs,
+                'total_block_run_log_count': total_block_run_log_count,
+                'total_pipeline_run_log_count': total_pipeline_run_log_count,
+            },
         ]

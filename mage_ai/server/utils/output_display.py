@@ -224,6 +224,7 @@ def add_execution_code(
     block_type: BlockType = None,
     extension_uuid: str = None,
     kernel_name: str = None,
+    output_messages_to_logs: bool = False,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
     run_settings: Dict = None,
@@ -306,6 +307,7 @@ def execute_custom_code():
     block_output = block.execute_with_callback(
         custom_code=code,
         global_vars=global_vars,
+        output_messages_to_logs={output_messages_to_logs},
         run_settings=json.loads('{run_settings_json}'),
         test_execution=True,
         update_status={update_status},

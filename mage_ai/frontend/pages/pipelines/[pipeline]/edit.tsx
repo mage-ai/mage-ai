@@ -66,6 +66,7 @@ import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
 } from '@storage/constants';
 import {
@@ -1751,10 +1752,14 @@ function PipelineDetailPage({
     const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
+      const localStorageBlockOutputLogsKey =
+        `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS}_${pipeline?.uuid}`;
+
       sendMessage(JSON.stringify({
         ...sharedWebsocketData,
         code,
         extension_uuid: extensionUUID,
+        output_messages_to_logs: !!get(localStorageBlockOutputLogsKey),
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream, // This will only run downstream blocks that are charts/widgets
         run_settings: runSettings,
