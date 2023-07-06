@@ -545,7 +545,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 end_idx = idx
 
         # Replace hard-to-read dark blue font with yellow font
-        error = [e.replace('[0;34m', '[0;93m') for e in error]
+        error = [e.replace('[0;34m', '[0;33m') for e in error]
 
         try:
             if initial_idx and end_idx:
