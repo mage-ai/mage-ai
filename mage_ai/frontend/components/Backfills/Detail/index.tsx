@@ -16,6 +16,7 @@ import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineRunType, {
+  PIPELINE_RUN_STATUSES,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
   RunStatus,
@@ -604,7 +605,7 @@ function BackfillDetail({
                 <option key="all_statuses" value="all">
                   All statuses
                 </option>
-                {Object.values(RunStatus).map(status => (
+                {PIPELINE_RUN_STATUSES.map(status => (
                   <option key={status} value={status}>
                     {RUN_STATUS_TO_LABEL[status]}
                   </option>
