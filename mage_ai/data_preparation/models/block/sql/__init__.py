@@ -26,7 +26,6 @@ from mage_ai.io.base import QUERY_ROW_LIMIT, DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.settings.repo import get_repo_path
 
-MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
