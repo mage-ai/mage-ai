@@ -24,11 +24,27 @@ const Template: Story<RowDataTableProps> = (args) => <TemplateWithTheme {...args
 
 export const Regular = Template.bind({});
 Regular.args = {
-  headerTitle: 'datasets',
-  headerDetails: '5 datasets',
+  header: (
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <Text bold default>
+        Datasets
+      </Text>
+      <Text>
+        5 datasets
+      </Text>
+    </FlexContainer>
+  ),
+  footer: (
+    <FlexContainer alignItems="center" justifyContent="center">
+      <Text>
+        View more
+      </Text>
+    </FlexContainer>
+  ),
   children: [
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}
+      key={1}
     >
       <FlexContainer alignItems="center">
         <Copy primary />&nbsp;
@@ -40,6 +56,7 @@ Regular.args = {
     </RowCard>,
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}
+      key={2}
       secondary
     >
       <Text>dataset_B</Text>
@@ -49,6 +66,7 @@ Regular.args = {
     </RowCard>,
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}
+      key={3}
     >
       <Text>dataset_C</Text>
       <Text>112 features</Text>
@@ -57,6 +75,7 @@ Regular.args = {
     </RowCard>,
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}
+      key={4}
       secondary
     >
       <Text>dataset_D</Text>
@@ -66,12 +85,13 @@ Regular.args = {
     </RowCard>,
     <RowCard
       columnFlexNumbers={[4, 1, 1, 1]}
+      key={5}
       last
     >
       <Text>dataset_E</Text>
       <Text>1 feature</Text>
       <Text>100 rows</Text>
       <Text bold danger>Bad</Text>
-    </RowCard>
+    </RowCard>,
   ],
 };

@@ -16,6 +16,8 @@ import pandas as pd
 import simplejson
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -756,6 +758,7 @@ class Block:
         dynamic_block_uuid: str = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        output_messages_to_logs: bool = False,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -776,6 +779,24 @@ class Block:
                         'before running the current block.'
                     )
             global_vars = self.__enrich_global_vars(global_vars)
+
+            if output_messages_to_logs and not logger:
+                from mage_ai.data_preparation.models.block.constants import (
+                    LOG_PARTITION_EDIT_PIPELINE,
+                )
+
+                logger_manager = LoggerManagerFactory.get_logger_manager(
+                    block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
+                    partition=LOG_PARTITION_EDIT_PIPELINE,
+                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                    subpartition=clean_name(self.uuid),
+                )
+                logger = DictLogger(logger_manager.logger)
+                logging_tags = dict(
+                    block_type=self.type,
+                    block_uuid=self.uuid,
+                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                )
 
             output = self.execute_block(
                 build_block_output_stdout=build_block_output_stdout,

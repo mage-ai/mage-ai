@@ -350,6 +350,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_uuid = message.get('uuid')
         custom_code = message.get('code')
         extension_uuid = message.get('extension_uuid')
+        output_messages_to_logs = message.get('output_messages_to_logs', False)
         run_downstream = message.get('run_downstream')
         run_settings = message.get('run_settings')
         run_tests = message.get('run_tests')
@@ -406,6 +407,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_type=block_type,
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
+                    output_messages_to_logs=output_messages_to_logs,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_settings=run_settings,
@@ -541,6 +543,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 initial_idx = idx
             if re.match(end_regex, line_without_ansi):
                 end_idx = idx
+
+        # Replace hard-to-read dark blue font with yellow font
+        error = [e.replace('[0;34m', '[0;33m') for e in error]
 
         try:
             if initial_idx and end_idx:

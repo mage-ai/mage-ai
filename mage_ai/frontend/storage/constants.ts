@@ -5,3 +5,6 @@ export const LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED =
 
 export const LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS =
   'pipeline_edit_hidden_blocks';
+
+export const LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS =
+  'pipeline_edit_block_output_logs';

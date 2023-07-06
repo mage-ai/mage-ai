@@ -1,0 +1,116 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "view": {
+        "type": ["null", "object"],
+        "additionalProperties": false,
+        "properties": {
+          "bar": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "bigNumber": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "line": {
+            "type": ["null", "object"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": ["null", "string"]
+              },
+              "x": {
+                "type": ["null", "string"]
+              },
+              "y": {
+                "type": ["null", "array"],
+                "items": {
+                  "type": ["null", "string"]
+                }
+              },
+              "aggregate": {
+                "type": ["null", "string"]
+              },
+              "yminFromData": {
+                "type": ["null", "integer"]
+              },
+              "ymaxFromData": {
+                "type": ["null", "integer"]
+              },
+              "yminTotal": {
+                "type": ["null", "integer"]
+              },
+              "ymaxTotal": {
+                "type": ["null", "integer"]
+              }
+            }
+          },
+          "linePlusBar": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "scatter": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "pie": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "area": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "pivotTable": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "selectedChart": {
+            "type": ["null", "string"]
+          },
+          "chartTitle": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "view_version": {
+        "type": ["null", "integer"]
+      },
+      "view_vegas": {
+        "type": ["null", "object"],
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": ["null", "string"]
+          },
+          "chartType": {
+            "type": ["null", "string"]
+          },
+          "encoding": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "format": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "colors": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          }
+        }
+      },
+      "token": {
+        "type": ["null", "string"]
+      },
+      "created_at": {
+        "type": ["null", "string"],
+        "format": "date-time"
+      },
+      "color_palette_token": {
+        "type": ["null", "string"]
+      }
+    }
+  }

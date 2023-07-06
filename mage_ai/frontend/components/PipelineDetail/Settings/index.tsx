@@ -11,8 +11,15 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS } from '@storage/constants';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
+} from '@storage/constants';
+import {
+  PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { isJsonString } from '@utils/string';
 
@@ -38,6 +45,10 @@ function PipelineSettings({
     [uuid: string]: boolean;
   }>({});
 
+  const localStorageBlockOutputLogsKey =
+    `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS}_${pipelineUUID}`;
+  const [blockOutputLogs, setBlockOutputLogsState] = useState<boolean>(false);
+
   const setHiddenBlocks = useCallback((callback) => {
     setHiddenBlocksState((prev) => {
       const data = callback(prev);
@@ -50,6 +61,18 @@ function PipelineSettings({
     setHiddenBlocksState,
   ]);
 
+  const setBlockOutputLogs = useCallback((callback) => {
+    setBlockOutputLogsState((prev) => {
+      const data = callback(prev);
+      set(localStorageBlockOutputLogsKey, data);
+
+      return data;
+    });
+  }, [
+    localStorageBlockOutputLogsKey,
+    setBlockOutputLogsState,
+  ]);
+
   useEffect(() => {
     const hiddenBlocksInitString = get(localStorageHiddenBlocksKey);
     if (hiddenBlocksInitString && isJsonString(hiddenBlocksInitString)) {
@@ -58,6 +81,16 @@ function PipelineSettings({
   }, [
     localStorageHiddenBlocksKey,
     setHiddenBlocksState,
+  ]);
+
+  useEffect(() => {
+    const initValue = get(localStorageBlockOutputLogsKey);
+    if (initValue) {
+      setBlockOutputLogsState(initValue);
+    }
+  }, [
+    localStorageBlockOutputLogsKey,
+    setBlockOutputLogsState,
   ]);
 
   const allBlocksHidden = useMemo(() => {
@@ -82,7 +115,7 @@ function PipelineSettings({
         value={newPipelineName}
       />
 
-      <Spacing mt={5}>
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <FlexContainer>
           <Button
             disabled={newPipelineName === pipeline?.name}
@@ -98,7 +131,7 @@ function PipelineSettings({
         </FlexContainer>
       </Spacing>
 
-      <Spacing mt={5}>
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Checkbox
           checked={allBlocksHidden && !noBlocks}
           disabled={noBlocks}
@@ -113,6 +146,15 @@ function PipelineSettings({
               [uuid]: true,
             }), {});
           })}
+        />
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Checkbox
+          checked={blockOutputLogs}
+          label="When running a block while editing a pipeline, output the block messages to the logs"
+          // @ts-ignore
+          onClick={() => setBlockOutputLogs(prev => !prev)}
         />
       </Spacing>
     </Spacing>

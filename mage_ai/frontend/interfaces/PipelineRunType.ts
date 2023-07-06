@@ -3,6 +3,14 @@ import { ScheduleTypeEnum } from './PipelineScheduleType';
 
 export const RunStatus = RunStatusEnum;
 
+export const PIPELINE_RUN_STATUSES = [
+  RunStatus.FAILED,
+  RunStatus.COMPLETED,
+  RunStatus.RUNNING,
+  RunStatus.CANCELLED,
+  RunStatus.INITIAL,
+];
+
 export const RUNNING_STATUSES = [
   RunStatus.INITIAL,
   RunStatus.RUNNING,

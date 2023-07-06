@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "id": {
+      "type": "integer"
+    },
+    "space_type": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "state": {
+      "type": "string"
+    },
+    "restricted": {
+      "type": "boolean"
+    },
+    "free_default": {
+      "type": "boolean"
+    },
+    "viewable?": {
+      "type": "boolean"
+    },
+    "default_access_level": {
+      "type": "string"
+    }
+  }
+}

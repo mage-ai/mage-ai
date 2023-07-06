@@ -7,120 +7,22 @@ import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
 
 import {
-  CATEGORICAL_TYPES,
-  DATE_TYPES,
   DISTRIBUTION_COLUMNS,
   DISTRIBUTION_STATS,
-  HUMAN_READABLE_MAPPING,
-  METRICS_KEYS,
-  METRICS_RATE_KEY_MAPPING,
-  METRICS_SORTED_MAPPING,
-  METRICS_SUCCESS_DIRECTION_MAPPING,
-  METRICS_WARNING_MAPPING,
-  NUMBER_TYPES,
-  PERCENTAGE_KEYS,
-  STAT_KEYS,
 } from '../constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
-import { StatRow } from '../StatsTable';
 import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
-import { calculateChange, transformNumber } from '@utils/number';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
-
-export function createMetricsSample({
-  latestStatistics,
-  versionStatistics,
-}) {
-  const stats = Object.keys(latestStatistics);
-  const metricRows = Array(METRICS_KEYS.length).fill(0);
-
-  stats.forEach((key) => {
-    if (METRICS_KEYS.includes(key)) {
-      const name = HUMAN_READABLE_MAPPING[key];
-      let value = latestStatistics[key];
-      let rate = value;
-      let progress = false;
-      let columnFlexNumbers = [2, 3];
-      const index = METRICS_SORTED_MAPPING[key];
-      const successDirection = METRICS_SUCCESS_DIRECTION_MAPPING[key];
-      const warning = METRICS_WARNING_MAPPING[key];
-      let change = versionStatistics
-        ? latestStatistics[key] - versionStatistics?.[key]
-        : 0;
-
-      if (PERCENTAGE_KEYS.includes(key)){
-        progress = true;
-        columnFlexNumbers = [2, 1, 2];
-      } else if (key in METRICS_RATE_KEY_MAPPING) {
-        value = transformNumber(value, 0);
-        const rateKey = METRICS_RATE_KEY_MAPPING[key];
-        rate = latestStatistics[rateKey];
-        change = versionStatistics
-          ? (latestStatistics[rateKey] ?? 0) - (versionStatistics?.[rateKey] ?? 0)
-          : 0;
-      }
-
-      const qualityMetricObj: StatRow = {
-        change,
-        columnFlexNumbers,
-        name,
-        progress,
-        rate,
-        successDirection,
-        warning,
-      };
-      if (!PERCENTAGE_KEYS.includes(key)) {
-        qualityMetricObj.value = value;
-      }
-
-      metricRows[index] = qualityMetricObj;
-    }
-  });
-  return metricRows;
-}
-
-export function getColumnTypeCounts(
-  columnTypes: string[],
-): {
-  countCategory?: number,
-  countDatetime?: number,
-  countNumerical?: number,
-} {
-  if (typeof columnTypes === 'undefined') {
-    return {};
-  }
-
-  let countCategory = 0;
-  let countDatetime = 0;
-  let countNumerical = 0;
-
-  columnTypes.forEach((val: string) => {
-    if (CATEGORICAL_TYPES.includes(val)) {
-      countCategory += 1;
-    } else if (NUMBER_TYPES.includes(val)) {
-      countNumerical += 1;
-    } else if (DATE_TYPES.includes(val)) {
-      countDatetime += 1;
-    }
-  });
-
-  return {
-    countCategory,
-    countDatetime,
-    countNumerical,
-  };
-}
 
 export function getColumnSuggestions(
   allSuggestions: SuggestionType[],
@@ -141,76 +43,6 @@ export function getColumnSuggestions(
 
     return acc;
   }, []);
-}
-
-export function createStatisticsSample({
-  latestColumnTypes = {},
-  latestStatistics,
-  versionColumnTypes,
-  versionStatistics,
-}) {
-  const currentStats = Object.keys(latestStatistics);
-  const currentTypes: string[] = Object.values(latestColumnTypes);
-  const previousTypes: string[] = versionColumnTypes
-    ? Object.values(versionColumnTypes)
-    : undefined;
-  const currentTotal = currentTypes.length;
-  const previousColumnTotal = previousTypes?.length;
-  const rowData: StatRow[] = [];
-
-  rowData.push({
-    change: calculateChange(currentTotal, previousColumnTotal),
-    name: 'Column count',
-    successDirection: METRICS_SUCCESS_DIRECTION_MAPPING.column_count,
-    value: numberWithCommas(currentTotal),
-  });
-
-  currentStats.forEach((key) => {
-    if (STAT_KEYS.includes(key)) {
-      const name = HUMAN_READABLE_MAPPING[key];
-      const currentValue = latestStatistics[key];
-      const previousValue = versionStatistics?.[key];
-      const warning = METRICS_WARNING_MAPPING[key];
-      const change = calculateChange((currentValue ?? 0), previousValue);
-      rowData.push({
-        change,
-        name,
-        successDirection: METRICS_SUCCESS_DIRECTION_MAPPING[key],
-        value: numberWithCommas(currentValue),
-        warning,
-      });
-    }
-  });
-
-  const {
-    countCategory: currentCountCategory,
-    countDatetime: currentCountDatetime,
-    countNumerical: currentCountNumerical,
-  } = getColumnTypeCounts(currentTypes);
-  const {
-    countCategory: previousCountCategory,
-    countDatetime: previousCountDatetime,
-    countNumerical: previousCountNumerical,
-  } = getColumnTypeCounts(previousTypes);
-
-  rowData.push({
-    change: calculateChange(currentCountCategory, previousCountCategory),
-    name: 'Categorical Features',
-    rate: currentCountCategory / currentTotal,
-    value: numberWithCommas(currentCountCategory),
-  }, {
-    change: calculateChange(currentCountNumerical, previousCountNumerical),
-    name: 'Numerical Features',
-    rate: currentCountNumerical / currentTotal,
-    value: numberWithCommas(currentCountNumerical),
-  }, {
-    change: calculateChange(currentCountDatetime, previousCountDatetime),
-    name: 'Datetime Features',
-    rate: currentCountDatetime / currentTotal,
-    value: numberWithCommas(currentCountDatetime),
-  });
-
-  return rowData;
 }
 
 export function buildRenderColumnHeader({

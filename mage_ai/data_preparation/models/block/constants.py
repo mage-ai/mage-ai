@@ -29,3 +29,5 @@ TAG_REDUCE_OUTPUT = 'reduce_output'
 TAG_REPLICA = 'replica'
 
 TAG_DBT_SNAPSHOT = 'snapshot'
+
+LOG_PARTITION_EDIT_PIPELINE = 'edit_pipeline'
