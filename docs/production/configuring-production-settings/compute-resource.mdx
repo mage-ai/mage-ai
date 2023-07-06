@@ -130,6 +130,8 @@ How to configure pipeline to use GCP cloud run executor:
 ```yaml
 gcp_cloud_run_config:
   path_to_credentials_json_file: "/path/to/credentials_json_file"
+  project_id: project_id
+  timeout_seconds: 600
 ```
 
 2. Update the `executor_type` of block to `gcp_cloud_run` in pipeline's metadata.yaml:
