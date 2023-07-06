@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from os import path
 from time import sleep
@@ -19,6 +18,7 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
     interpolate_vars,
+    split_query_string,
     table_name_parts_from_query,
 )
 from mage_ai.data_preparation.models.constants import BlockType
@@ -258,7 +258,7 @@ def execute_sql_code(
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
-                return execute_raw_sql(
+                return mssql.execute_raw_sql(
                     loader,
                     block,
                     query_string,
@@ -542,46 +542,6 @@ def execute_sql_code(
                             verbose=False,
                         ),
                     ]
-
-
-def split_query_string(query_string: str) -> List[str]:
-    text_parts = []
-
-    matches = re.finditer(r"'(.*?)'|\"(.*?)\"", query_string, re.IGNORECASE)
-
-    previous_idx = 0
-
-    for _, match in enumerate(matches):
-        matched_string = match.group()
-        updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
-
-        start_idx, end_idx = match.span()
-
-        previous_chunk = query_string[previous_idx:start_idx]
-        text_parts.append(previous_chunk)
-        text_parts.append(updated_string)
-        previous_idx = end_idx
-
-    text_parts.append(query_string[previous_idx:])
-
-    text_combined = ''.join(text_parts)
-    queries = text_combined.split(';')
-
-    arr = []
-    for query in queries:
-        query = query.strip()
-        if not query:
-            continue
-
-        lines = query.split('\n')
-        query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
-        query = query.strip()
-        query = re.sub(MAGE_SEMI_COLON, ';', query)
-
-        if query:
-            arr.append(query)
-
-    return arr
 
 
 def execute_raw_sql(

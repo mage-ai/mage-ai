@@ -1,14 +1,15 @@
-import json
 from typing import IO, Any, List, Union
 
 import numpy as np
 import pyodbc
+import simplejson
 from pandas import DataFrame, Series
 
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.parsers import encode_complex
 
 
 class MSSQL(BaseSQL):
@@ -108,6 +109,21 @@ class MSSQL(BaseSQL):
         buffer: Union[IO, None] = None,
         **kwargs,
     ) -> None:
+        def serialize_obj(val):
+            if type(val) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
         values_placeholder = ', '.join(["?" for i in range(len(df.columns))])
         values = []
         df_ = df.copy()
@@ -115,7 +131,7 @@ class MSSQL(BaseSQL):
         for col in columns:
             dtype = df_[col].dtype
             if dtype == PandasTypes.OBJECT:
-                df_[col] = df_[col].apply(lambda x: json.dumps(x))
+                df_[col] = df_[col].apply(lambda x: serialize_obj(x))
             elif dtype in (
                 PandasTypes.MIXED,
                 PandasTypes.UNKNOWN_ARRAY,
