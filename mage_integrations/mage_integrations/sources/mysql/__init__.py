@@ -51,7 +51,7 @@ WHERE table_schema = '{database}'
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: self.wrap_column_in_quotes(column), columns))
 
-    def wrap_column_in_quotes(column: str) -> str:
+    def wrap_column_in_quotes(self, column: str) -> str:
         if "`" not in column:
             return f'`{column}`'
 
