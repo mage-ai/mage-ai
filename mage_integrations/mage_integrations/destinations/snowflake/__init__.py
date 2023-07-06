@@ -308,7 +308,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
     ) -> List[List[Tuple]]:
         if not self.use_batch_load:
             self.logger.info('Using default SQL insertion load for Snowflake...')
-            return super(Snowflake, self).process_queries(
+            return super().process_queries(
                 query_strings,
                 record_data,
                 stream,
@@ -319,6 +319,10 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             results = []
             self.logger.info('Using batch load for Snowflake...')
             tries = tags.get('tries', 0)
+
+            # Execute the query_strings before inserting the data, i.e., passed-in
+            # query_strings including create table command or alter table command
+            results += self.build_connection().execute(query_strings, commit=True)
 
             try:
                 df = pd.DataFrame([d['record'] for d in record_data])
