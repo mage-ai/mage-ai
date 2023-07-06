@@ -1,6 +1,10 @@
+from typing import Dict, List
+
 from mage_integrations.destinations.mysql.constants import RESERVED_WORDS
 from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS
-from mage_integrations.destinations.utils import clean_column_name as clean_column_name_orig
+from mage_integrations.destinations.utils import (
+    clean_column_name as clean_column_name_orig,
+)
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -10,7 +14,6 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
-from typing import Dict, List
 
 
 def clean_column_name(col, lower_case: bool = True):
@@ -94,7 +97,7 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
     elif COLUMN_TYPE_INTEGER == column_type:
         return 'UNSIGNED'
     elif COLUMN_TYPE_NUMBER == column_type:
-        return 'DOUBLE PRECISION'
+        return 'DOUBLE'
     elif COLUMN_TYPE_OBJECT == column_type:
         return 'JSON'
     elif COLUMN_TYPE_STRING == column_type:
