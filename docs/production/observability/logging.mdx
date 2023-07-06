@@ -55,4 +55,22 @@ logging_config:
     prefix: <prefix path>
 ```
 
-### More destinations coming...
+<br />
+
+*More destinations coming...*
+
+<br />
+
+---
+
+## Edit pipeline logging
+
+When you’re editing a pipeline (e.g. `/pipelines/[uuid]/edit`), you can execute the code for an
+individual block and see the output. Any `print` statements in the block of code is displayed
+in the block’s output.
+
+However, you can redirect those `print` statements to output to logs.
+
+To toggle this feature, go to the pipeline settings page (e.g. `/pipelines/[uuid]/settings`)
+and check the box labeled
+<b>When running a block while editing a pipeline, output the block messages to the logs</b>.
