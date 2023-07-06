@@ -22,7 +22,9 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.sql.utils import (
     build_comparison_statement,
     column_type_mapping,
-    wrap_column_in_quotes_orig,
+)
+from mage_integrations.sources.sql.utils import (
+    wrap_column_in_quotes as wrap_column_in_quotes_orig,
 )
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
