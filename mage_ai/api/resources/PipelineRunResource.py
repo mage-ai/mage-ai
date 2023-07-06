@@ -101,12 +101,16 @@ class PipelineRunResource(DatabaseResource):
             pipeline_type = pipeline_type[0]
 
         if pipeline_type is not None:
-            # NOTE: This may not be the most efficient way to filter by pipeline_type.
+            pipeline_type_by_pipeline_uuid = dict()
             try:
-                results = list(filter(
-                    lambda pipeline_run: pipeline_run.pipeline_type == pipeline_type,
-                    total_results.all(),
-                ))
+                pipeline_runs = total_results.all()
+                results = []
+                for run in pipeline_runs:
+                    if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
+                        pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
+                    run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
+                    if run_pipeline_type == pipeline_type:
+                        results.append(run)
                 total_count = len(results)
                 results = results[offset:(offset + limit)]
             except Exception as err:
