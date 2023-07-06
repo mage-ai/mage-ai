@@ -223,6 +223,14 @@ function Header({
     uuid: 'git_actions',
   });
 
+  const branchName = useMemo(() => {
+    if (branch?.length >= 21) {
+      return `${branch.slice(0, 21)}...`;
+    }
+
+    return branch;
+  }, [branch]);
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -289,7 +297,7 @@ function Header({
                     <Branch size={1.5 * UNIT} />
                     <Spacing ml={1} />
                     <Text monospace small>
-                      {branch}
+                      {branchName}
                     </Text>
                   </FlexContainer>
                 </KeyboardShortcutButton>
