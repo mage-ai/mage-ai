@@ -87,6 +87,7 @@ export default {
     content: '#1B1C20',
     danger: RED_XLIGHT,
     dark: GRAY,
+    dashboard: '#18181C',
     header: '#1B1B1B',
     menu: NAVY,
     muted: SILVER,

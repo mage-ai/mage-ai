@@ -16,7 +16,7 @@ const Home = () => {
       const manage = dataStatus?.is_instance_manager;
       let pathname = completePath;
       if (basePath === '/') {
-        pathname = manage ? '/manage' : '/pipelines';
+        pathname = manage ? '/manage' : '/overview';
       }
       router.replace(pathname);
     }

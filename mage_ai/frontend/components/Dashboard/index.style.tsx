@@ -200,3 +200,23 @@ export const NavigationLinkStyle = styled.a<{
     background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
   `}
 `;
+
+export const ImageStyle = styled.div<{
+  imageUrl: string;
+  size?: number;
+}>`
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: contain;
+  height: ${UNIT * 12}px;
+  width: ${UNIT * 12}px;
+
+  ${props => `
+    background-image: url(${props.imageUrl});
+  `}
+
+  ${props => props.size && `
+    height: ${props.size}px;
+    width: ${props.size}px;
+  `}
+`;

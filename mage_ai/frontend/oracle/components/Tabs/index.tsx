@@ -13,6 +13,8 @@ import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
+export const TAB_URL_PARAM = 'tab';
+
 export type TabsProps = {
   actionEl?: JSX.Element;
   active?: boolean;

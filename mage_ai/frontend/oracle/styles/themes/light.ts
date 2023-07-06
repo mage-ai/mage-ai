@@ -48,6 +48,7 @@ export default {
     codeArea: '#161617',
     danger: RED_XLIGHT,
     dark: GRAY,
+    dashboard: SILVER,
     header: SILVER,
     menu: NAVY,
     muted: SILVER,
@@ -67,7 +68,7 @@ export default {
     info: YELLOW,
     light: '#2F3034',
     medium: '#D5D7DC',
-    medium2: '#141414',
+    medium2: '#CFCBCB',
     success: GREEN,
   },
   brand: {
