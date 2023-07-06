@@ -489,7 +489,22 @@ Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. Th
 
 
 ## AzureBlobStorage
-WIP
+
+Handles data transfer between a Azure Blob Storage bucket and the Mage app. Supports loading files of any of the following types:
+
+-   CSV
+-   JSON
+-   Parquet
+
+To authenticate with Azure, define the following environment variables in your [configuration loader](#configuration-settings):
+
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+- `AZURE_TENANT_ID`
+
+<h3> Constructor </h3>
+<h3> Factory Methods </h3>
+<h3> Methods </h3>
 
 ## BigQuery
 
