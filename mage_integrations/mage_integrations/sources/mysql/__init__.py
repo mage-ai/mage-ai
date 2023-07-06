@@ -1,10 +1,10 @@
-from mage_integrations.connections.mysql import (
-    ConnectionMethod,
-    MySQL as MySQLConnection
-)
-from mage_integrations.sources.base import main
-from mage_integrations.sources.sql.base import Source
 from typing import List
+
+from mage_integrations.connections.mysql import ConnectionMethod
+from mage_integrations.connections.mysql import MySQL as MySQLConnection
+from mage_integrations.sources.base import main
+from mage_integrations.sources.constants import COLUMN_FORMAT_DATETIME
+from mage_integrations.sources.sql.base import Source
 
 
 class MySQL(Source):
@@ -42,6 +42,11 @@ WHERE table_schema = '{database}'
             table_names = ', '.join([f"'{n}'" for n in streams])
             query = f'{query}\nAND TABLE_NAME IN ({table_names})'
         return query
+
+    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
+        if COLUMN_FORMAT_DATETIME == column_format:
+            return 'DATETIME'
+        return super().column_type_mapping(column_type, column_format)
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'`{column}`', columns))

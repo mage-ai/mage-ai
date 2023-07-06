@@ -19,7 +19,6 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from mage_integrations.sources.constants import COLUMN_FORMAT_DATETIME
 
 
 class MySQL(Destination):
@@ -169,11 +168,6 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
 
     def clean_column_name(self, column_name: str):
         return clean_column_name(column_name, lower_case=self.use_lowercase)
-
-    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
-        if COLUMN_FORMAT_DATETIME == column_format:
-            return 'DATETIME'
-        return super().column_type_mapping(column_type, column_format)
 
     def does_table_exist(
         self,
