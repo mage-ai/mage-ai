@@ -2,6 +2,9 @@ from typing import Dict, List
 
 from mage_integrations.destinations.mysql.constants import RESERVED_WORDS
 from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS
+from mage_integrations.destinations.sql.utils import (
+    convert_column_to_type as convert_column_to_type_orig,
+)
 from mage_integrations.destinations.utils import (
     clean_column_name as clean_column_name_orig,
 )
@@ -89,6 +92,13 @@ def build_create_table_command(
         columns_and_types.append(f'PRIMARY KEY ({col})')
 
     return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
+
+
+def convert_column_to_type(value, column_type: str):
+    if 'DOUBLE' in column_type:
+        return f'{value}'
+
+    return convert_column_to_type_orig(value, column_type)
 
 
 def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
