@@ -108,10 +108,14 @@ function OverviewPage() {
       status: RunStatusEnum.FAILED,
     },
   );
+  const pipelineRunsWithoutDeletedPipelines = useMemo(() =>
+    (dataPipelineRuns?.pipeline_runs || [])
+      .filter(run => run.pipeline_type !== null)
+  , [dataPipelineRuns?.pipeline_runs]);
   const groupedPipelineRuns: {
     [key: string]:  PipelineRunType[],
-  } = useMemo(() => groupBy(dataPipelineRuns?.pipeline_runs || [], run => run.pipeline_type), [
-    dataPipelineRuns?.pipeline_runs,
+  } = useMemo(() => groupBy(pipelineRunsWithoutDeletedPipelines, run => run.pipeline_type), [
+    pipelineRunsWithoutDeletedPipelines,
   ]);
   const {
     integration: integrationPipelineRuns = [],
@@ -267,7 +271,7 @@ function OverviewPage() {
       <Spacing {...SHARED_WIDGET_SPACING_PROPS}>
         <FlexContainer alignItems="center" justifyContent="center">
           <Widget
-            pipelineRuns={dataPipelineRuns?.pipeline_runs || []}
+            pipelineRuns={pipelineRunsWithoutDeletedPipelines}
             pipelineType={ALL_PIPELINE_RUNS_TYPE}
           />
           <Spacing ml={2} />
