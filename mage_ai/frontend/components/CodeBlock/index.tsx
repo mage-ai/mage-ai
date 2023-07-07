@@ -20,6 +20,7 @@ import BlockType, {
   BLOCK_TYPES_WITH_NO_PARENTS,
   BLOCK_TYPES_WITH_UPSTREAM_INPUTS,
   BLOCK_TYPE_NAME_MAPPING,
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -74,13 +75,11 @@ import {
 import {
   BlockDivider,
   BlockDividerInner,
-  CodeHelperStyle,
-  TimeTrackerStyle,
-} from './index.style';
-import {
   BlockHeaderStyle,
-  ContainerStyle,
   CodeContainerStyle,
+  CodeHelperStyle,
+  ContainerStyle,
+  TimeTrackerStyle,
   getColorsForBlockType,
 } from './index.style';
 import {
@@ -723,6 +722,41 @@ function CodeBlock({
 
   const buildBlockMenu = useCallback((b: BlockType) => {
     const blockMenuItems = {
+      [BlockTypeEnum.CUSTOM]: Object.values(BlockColorEnum).reduce((acc, color: BlockColorEnum) => {
+        if (b?.color !== color) {
+          acc.push({
+            label: () => (
+              <Flex alignItems="center">
+                <Text noWrapping>
+                  Change color to <Text
+                    color={getColorsForBlockType(
+                      BlockTypeEnum.CUSTOM,
+                      {
+                        blockColor: color,
+                      },
+                    ).accent}
+                    inline
+                  >
+                    {color}
+                  </Text>
+                </Text>
+              </Flex>
+            ),
+            onClick: () => {
+              // @ts-ignore
+              updateBlock({
+                block: {
+                  ...b,
+                  color,
+                },
+              });
+            },
+            uuid: color,
+          });
+        }
+
+        return acc;
+      }, []),
       [BlockTypeEnum.SCRATCHPAD]: [
         ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', addNewBlock),
       ].map((config) => ({
@@ -1096,7 +1130,7 @@ function CodeBlock({
                     </Text>
                   </FlyoutMenuWrapper>
 
-                  {BlockTypeEnum.SCRATCHPAD === blockType && (
+                  {[BlockTypeEnum.CUSTOM, BlockTypeEnum.SCRATCHPAD].includes(blockType) && (
                     <>
                       &nbsp;
                       <Button
