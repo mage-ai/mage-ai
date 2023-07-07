@@ -12,7 +12,7 @@ class EcsBlockExecutor(BlockExecutor):
         if self.block.executor_config is not None:
             self.executor_config = merge_dict(self.executor_config, self.block.executor_config)
 
-    def execute(
+    def _execute(
         self,
         block_run_id: int = None,
         global_vars: Dict = None,
