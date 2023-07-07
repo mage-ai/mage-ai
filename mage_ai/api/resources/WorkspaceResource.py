@@ -318,15 +318,9 @@ class WorkspaceResource(GenericResource):
             instances = workload_manager.list_workloads()
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-
-            try:
-                cluster_name = os.getenv(ECS_CLUSTER_NAME)
-                ecs_instance_manager = EcsTaskManager(cluster_name)
-                instances = ecs_instance_manager.list_tasks()
-            except Exception as e:
-                error = ApiError.RESOURCE_ERROR.copy()
-                error.update(message=str(e))
-                raise ApiError(error)
+            cluster_name = os.getenv(ECS_CLUSTER_NAME)
+            ecs_instance_manager = EcsTaskManager(cluster_name)
+            instances = ecs_instance_manager.list_tasks()
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
                 CloudRunServiceManager,

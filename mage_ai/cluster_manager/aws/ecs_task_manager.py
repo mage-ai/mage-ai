@@ -41,7 +41,7 @@ class EcsTaskManager:
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
-        response = list_tasks(self.cluster_name)['tasks']
+        response = list_tasks(self.cluster_name)
         network_interfaces = self.__get_network_interfaces(response, ec2_client)
 
         tasks = []
@@ -51,13 +51,14 @@ class EcsTaskManager:
             tags = task['tags']
             name = find(lambda tag: tag.get('key') == 'name', tags)
 
-            tasks.append(dict(
-                ip=public_ip,
-                name=name.get('value') if name is not None else None,
-                status=task['lastStatus'],
-                task_arn=task['taskArn'],
-                type=task['launchType'],
-            ))
+            if name is not None:
+                tasks.append(dict(
+                    ip=public_ip,
+                    name=name.get('value'),
+                    status=task['lastStatus'],
+                    task_arn=task['taskArn'],
+                    type=task['launchType'],
+                ))
 
         running_instance_names = set(map(lambda x: x['name'], tasks))
 

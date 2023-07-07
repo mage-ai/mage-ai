@@ -7,11 +7,6 @@ from botocore.config import Config
 
 from mage_ai.services.aws.ecs.config import EcsConfig
 
-import boto3
-from botocore.config import Config
-
-from mage_ai.services.aws.ecs.config import EcsConfig
-
 
 def run_task(
     command: str,
