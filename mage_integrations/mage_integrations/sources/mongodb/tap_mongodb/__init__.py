@@ -3,19 +3,16 @@ import copy
 import json
 import ssl
 import sys
-import time
-import pymongo
-from bson import timestamp
 
+import pymongo
 import singer
 from singer import metadata, metrics, utils
 
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.full_table as full_table
-import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.oplog as oplog
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.incremental as incremental
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.oplog as oplog
 from mage_integrations.sources.messages import write_schema
-
 
 LOGGER = singer.get_logger()
 
@@ -104,6 +101,7 @@ def get_roles(client, config):
                         roles.append(sub_role)
     return roles
 
+
 def get_databases(client, config):
     roles = get_roles(client, config)
     LOGGER.info('Roles: %s', roles)
@@ -183,7 +181,7 @@ def do_discover(client, config, databases=[], return_streams: bool = False):
     if return_streams:
         return streams
 
-    json.dump({'streams' : streams}, sys.stdout, indent=2)
+    json.dump({'streams': streams}, sys.stdout, indent=2)
 
 
 def is_stream_selected(stream):
@@ -191,7 +189,7 @@ def is_stream_selected(stream):
     is_selected = metadata.get(mdata, (), 'selected')
 
     # pylint: disable=singleton-comparison
-    return is_selected == True
+    return is_selected is True
 
 
 def get_streams_to_sync(streams, state):
@@ -243,6 +241,7 @@ def write_schema_message(stream):
         unique_constraints=stream.get('unique_constraints'),
     )
 
+
 def load_stream_projection(stream):
     md_map = metadata.to_map(stream['metadata'])
     stream_projection = metadata.get(md_map, (), 'tap-mongodb.projection')
@@ -258,10 +257,11 @@ def load_stream_projection(stream):
 
     if stream_projection and stream_projection.get('_id') == 0:
         raise common.InvalidProjectionException(
-            "Projection blacklists key property id for collection {}" \
+            "Projection blacklists key property id for collection {}"
             .format(stream['tap_stream_id']))
 
     return stream_projection
+
 
 def clear_state_on_replication_change(stream, state):
     md_map = metadata.to_map(stream['metadata'])
@@ -270,7 +270,8 @@ def clear_state_on_replication_change(stream, state):
     # replication method changed
     current_replication_method = metadata.get(md_map, (), 'replication-method')
     last_replication_method = singer.get_bookmark(state, tap_stream_id, 'last_replication_method')
-    if last_replication_method is not None and (current_replication_method != last_replication_method):
+    if last_replication_method is not None and \
+            (current_replication_method != last_replication_method):
         log_msg = 'Replication method changed from %s to %s, will re-replicate entire collection %s'
         LOGGER.info(log_msg, last_replication_method, current_replication_method, tap_stream_id)
         state = singer.reset_stream(state, tap_stream_id)
@@ -280,14 +281,21 @@ def clear_state_on_replication_change(stream, state):
         last_replication_key = singer.get_bookmark(state, tap_stream_id, 'replication_key_name')
         current_replication_key = metadata.get(md_map, (), 'replication-key')
         if last_replication_key is not None and (current_replication_key != last_replication_key):
-            log_msg = 'Replication Key changed from %s to %s, will re-replicate entire collection %s'
+            log_msg = 'Replication Key changed from %s to %s,will re-replicate entire collection %s'
             LOGGER.info(log_msg, last_replication_key, current_replication_key, tap_stream_id)
             state = singer.reset_stream(state, tap_stream_id)
-        state = singer.write_bookmark(state, tap_stream_id, 'replication_key_name', current_replication_key)
+        state = singer.write_bookmark(state,
+                                      tap_stream_id,
+                                      'replication_key_name',
+                                      current_replication_key)
 
-    state = singer.write_bookmark(state, tap_stream_id, 'last_replication_method', current_replication_method)
+    state = singer.write_bookmark(state,
+                                  tap_stream_id,
+                                  'last_replication_method',
+                                  current_replication_method)
 
     return state
+
 
 def sync_stream(client, stream, state):
     tap_stream_id = stream['tap_stream_id']
@@ -296,7 +304,6 @@ def sync_stream(client, stream, state):
     common.TIMES[tap_stream_id] = 0
     common.SCHEMA_COUNT[tap_stream_id] = 0
     common.SCHEMA_TIMES[tap_stream_id] = 0
-
 
     md_map = metadata.to_map(stream['metadata'])
     replication_method = metadata.get(md_map, (), 'replication-method')
@@ -376,14 +383,15 @@ def build_client(config):
                          # "authSource": config['database'],
                          "ssl": use_ssl,
                          "replicaset": config.get('replica_set', None),
-                         "readPreference": 'secondaryPreferred'}
+                         "readPreference": 'secondaryPreferred',
+                         "authSource": config.get('authSource', None),
+                         "authMechanism": config.get('authMechanism', None)}
 
     # NB: "ssl_cert_reqs" must ONLY be supplied if `SSL` is true.
     if not verify_mode and use_ssl:
         connection_params["ssl_cert_reqs"] = ssl.CERT_NONE
 
     client = pymongo.MongoClient(**connection_params)
-
 
     LOGGER.info('Connected to MongoDB host: %s, version: %s',
                 config['host'],
@@ -406,6 +414,7 @@ def main_impl():
     elif args.catalog:
         state = args.state or {}
         do_sync(client, args.catalog.to_dict(), state)
+
 
 def main():
     try:
