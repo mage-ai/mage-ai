@@ -1,8 +1,10 @@
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { randomNameGenerator } from '@utils/string';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 
 export const getNewPipelineButtonMenuItems = (
-  createPipeline: (reqBody: { pipeline: PipelineType }) => void,
+  createPipeline: (
+    reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
+  ) => void,
 ) => [
   {
     label: () => 'Standard (batch)',
