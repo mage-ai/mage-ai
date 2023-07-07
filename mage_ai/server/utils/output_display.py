@@ -227,6 +227,7 @@ def add_execution_code(
     output_messages_to_logs: bool = False,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
+    run_incomplete_upstream: bool = False,
     run_settings: Dict = None,
     run_tests: bool = False,
     run_upstream: bool = False,
@@ -251,6 +252,7 @@ def add_execution_code(
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
         ):
             magic_header = '%%local'
+            run_incomplete_upstream = False
             run_upstream = False
         else:
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
@@ -277,6 +279,7 @@ db_connection.start_session()
 
 def execute_custom_code():
     block_uuid=\'{block_uuid}\'
+    run_incomplete_upstream={str(run_incomplete_upstream)}
     run_upstream={str(run_upstream)}
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
@@ -301,8 +304,8 @@ def execute_custom_code():
     except Exception:
         pass
 
-    if run_upstream:
-        block.run_upstream_blocks(global_vars=global_vars)
+    if run_incomplete_upstream or run_upstream:
+        block.run_upstream_blocks(global_vars=global_vars, incomplete_only=run_incomplete_upstream)
 
     block_output = block.execute_with_callback(
         custom_code=code,

@@ -140,7 +140,6 @@ function UserWorkspacesEdit({
                 if (newRole) {
                   setProfile(prev => {
                     const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
-                    console.log('prev roles:', prevRoles);
                     const updatedProfile: UserType = {
                       roles_new: [...prevRoles, newRole],
                     };

@@ -352,6 +352,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         extension_uuid = message.get('extension_uuid')
         output_messages_to_logs = message.get('output_messages_to_logs', False)
         run_downstream = message.get('run_downstream')
+        run_incomplete_upstream = message.get('run_incomplete_upstream')
         run_settings = message.get('run_settings')
         run_tests = message.get('run_tests')
         run_upstream = message.get('run_upstream')
@@ -410,6 +411,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     output_messages_to_logs=output_messages_to_logs,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    run_incomplete_upstream=run_incomplete_upstream,
                     run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
