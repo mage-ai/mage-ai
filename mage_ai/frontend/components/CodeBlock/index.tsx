@@ -722,7 +722,7 @@ function CodeBlock({
 
   const buildBlockMenu = useCallback((b: BlockType) => {
     const blockMenuItems = {
-      [BlockTypeEnum.CUSTOM]: Object.values(BlockColorEnum).reduce((acc, color: string) => {
+      [BlockTypeEnum.CUSTOM]: Object.values(BlockColorEnum).reduce((acc, color: BlockColorEnum) => {
         if (b?.color !== color) {
           acc.push({
             label: () => (
