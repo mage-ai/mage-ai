@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { MutateFunction, useMutation } from 'react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import moment from 'moment';
 
+import AddButton from '@components/shared/AddButton';
 import BarStackChart from '@components/charts/BarStack';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Dashboard from '@components/Dashboard';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import MetricsSummary from '@components/PipelineRun/MetricsSummary';
@@ -42,8 +46,10 @@ import {
 } from '@components/Dashboard/constants';
 import { capitalize } from '@utils/string';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
+import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { groupBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 
 const SHARED_WIDGET_SPACING_PROPS = {
@@ -53,7 +59,12 @@ const SHARED_WIDGET_SPACING_PROPS = {
 
 function OverviewPage() {
   const q = queryFromUrl();
+  const router = useRouter();
+  const newPipelineButtonMenuRef = useRef(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_TODAY);
+  const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
+  const [errors, setErrors] = useState<ErrorsType>(null);
+
   const timePeriod = selectedTab?.uuid;
 
   const selectedTabPrev = usePrevious(selectedTab);
@@ -138,20 +149,69 @@ function OverviewPage() {
     [timePeriod],
   );
 
+  const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            onSuccessCallback?.(uuid);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const [createPipeline, { isLoading: isLoadingCreatePipeline }]: [
+    MutateFunction<any>,
+    { isLoading: boolean },
+  ] = useCreatePipelineMutation((pipelineUUID: string) => router.push(
+    '/pipelines/[pipeline]/edit',
+    `/pipelines/${pipelineUUID}/edit`,
+  ));
+  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(createPipeline), [
+    createPipeline,
+  ]);
+  const addButtonEl = useMemo(() => (
+    <AddButton
+      addButtonMenuOpen={addButtonMenuOpen}
+      addButtonMenuRef={newPipelineButtonMenuRef}
+      isLoading={isLoadingCreatePipeline}
+      label="New pipeline"
+      menuItems={newPipelineButtonMenuItems}
+      onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
+      onClickCallback={() => setAddButtonMenuOpen(false)}
+    />
+  ), [addButtonMenuOpen, isLoadingCreatePipeline, newPipelineButtonMenuItems]);
+
   return (
     <Dashboard
+      errors={errors}
+      setErrors={setErrors}
       title="Overview"
       uuid="overview/index"
     >
       <PageSectionHeader backgroundColor={dark.background.panel}>
         <Spacing py={2}>
-          <ButtonTabs
-            onClickTab={({ uuid }) => {
-              goToWithQuery({ [TAB_URL_PARAM]: uuid }, { replaceParams: true });
-            }}
-            selectedTabUUID={timePeriod}
-            tabs={TIME_PERIOD_TABS}
-          />
+          <FlexContainer alignItems="center">
+            <Spacing ml={3}>
+              {addButtonEl}
+            </Spacing>
+            <ButtonTabs
+              onClickTab={({ uuid }) => {
+                goToWithQuery({ [TAB_URL_PARAM]: uuid }, { replaceParams: true });
+              }}
+              selectedTabUUID={timePeriod}
+              tabs={TIME_PERIOD_TABS}
+            />
+          </FlexContainer>
         </Spacing>
       </PageSectionHeader>
 
