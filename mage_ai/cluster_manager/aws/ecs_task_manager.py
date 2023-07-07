@@ -120,8 +120,8 @@ class EcsTaskManager:
                 }
             ],
             network_configuration=network_configuration,
-            cpu=task.get('cpu'),
-            memory=task.get('memory'),
+            cpu=int(task.get('cpu')),
+            memory=int(task.get('memory')),
         )
 
         self.instance_metadata = {
