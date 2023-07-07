@@ -56,7 +56,6 @@
     {
       "group": "Tutorials",
       "pages": [
-        "tutorials/common-errors",
         {
           "group": "ETL pipeline",
           "pages": [
