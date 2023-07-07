@@ -116,6 +116,7 @@ def make_app():
 
     routes = [
         (r'/', MainPageHandler),
+        (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
