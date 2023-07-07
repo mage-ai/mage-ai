@@ -113,6 +113,10 @@ export const getAllPipelineRunDataGrouped = (
         const updatedStatsUngrouped = {};
 
         Object.entries(dateStats).forEach(([pipelineType, pipelineTypeStats]) => {
+          const pipelineDoesNotExist = pipelineType === 'null' || pipelineType === null;
+          if (pipelineDoesNotExist) {
+            return;
+          }
           if (date in obj.grouped && pipelineType in obj.grouped[date]) {
             currentStatsGrouped[pipelineType] = { ...obj.grouped[date][pipelineType] };
           }
