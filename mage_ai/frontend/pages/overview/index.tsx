@@ -56,6 +56,10 @@ const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
   mx: 3,
 };
+const SHARED_FETCH_OPTIONS = {
+  refreshInterval: 60000,
+  revalidateOnFocus: false,
+};
 
 function OverviewPage() {
   const q = queryFromUrl();
@@ -94,7 +98,7 @@ function OverviewPage() {
   } = api.monitor_stats.detail(
     MonitorStatsEnum.PIPELINE_RUN_COUNT,
     monitorStatsQueryParams,
-    { refreshInterval: 60000, revalidateOnFocus: false },
+    { ...SHARED_FETCH_OPTIONS },
   );
 
   const {
@@ -107,6 +111,7 @@ function OverviewPage() {
       start_timestamp: unixTimestampFromDate(startDateString),
       status: RunStatusEnum.FAILED,
     },
+    { ...SHARED_FETCH_OPTIONS },
   );
   const pipelineRunsWithoutDeletedPipelines = useMemo(() =>
     (dataPipelineRuns?.pipeline_runs || [])

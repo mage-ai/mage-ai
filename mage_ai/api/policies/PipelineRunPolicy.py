@@ -50,6 +50,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'pipeline_schedule_name',
     'pipeline_schedule_token',
     'pipeline_schedule_type',
+    'pipeline_type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
