@@ -212,6 +212,7 @@ function OverviewPage() {
               onClickTab={({ uuid }) => {
                 goToWithQuery({ [TAB_URL_PARAM]: uuid }, { replaceParams: true });
               }}
+              regularSizeText
               selectedTabUUID={timePeriod}
               tabs={TIME_PERIOD_TABS}
             />
