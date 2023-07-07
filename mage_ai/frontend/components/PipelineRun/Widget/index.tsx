@@ -41,6 +41,10 @@ function Widget({
     ? ALL_PIPELINE_RUNS_TYPE
     : PIPELINE_TYPE_LABEL_MAPPING[pipelineType];
   const Icon = PIPELINE_TYPE_ICON_MAPPING[pipelineType];
+  const count = pipelineRuns.length;
+  const countDisplay = count === 0
+    ? ''
+    : `(${count})`;
 
   return (
     <RowDataTable
@@ -70,14 +74,14 @@ function Widget({
           </Button>
           <Spacing ml={2} />
           <Text bold>
-            Latest {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures
+            Latest {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures {countDisplay}
           </Text>
         </FlexContainer>
       }
       maxHeight={MAX_HEIGHT}
       minHeight={MIN_HEIGHT}
     >
-      {pipelineRuns.length === 0
+      {count === 0
         ? (
           <FlexContainer
             alignItems="center"

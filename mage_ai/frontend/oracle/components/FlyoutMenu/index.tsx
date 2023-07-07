@@ -269,23 +269,26 @@ function FlyoutMenu({
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
-                <Flex alignItems="center">
-                  {beforeIcon &&
-                    <>
-                      {beforeIcon}
-                      <Spacing mr="4px" />
-                    </>
-                  }
-                  {typeof labelToRender === 'string' && (
-                    <Text
-                      bold={bold}
-                      disabled={disabled}
-                      noWrapping
-                    >
-                      {labelToRender}
-                    </Text>
-                  )}
-                </Flex>
+                {(beforeIcon || typeof labelToRender === 'string') && (
+                  <Flex alignItems="center">
+                    {beforeIcon &&
+                      <>
+                        {beforeIcon}
+                        <Spacing mr="4px" />
+                      </>
+                    }
+                    {typeof labelToRender === 'string' && (
+                      <Text
+                        bold={bold}
+                        disabled={disabled}
+                        noWrapping
+                      >
+                        {labelToRender}
+                      </Text>
+                    )}
+                  </Flex>
+                )}
+
                 {typeof labelToRender !== 'string' && labelToRender}
 
                 {items && (
