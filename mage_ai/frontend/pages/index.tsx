@@ -15,10 +15,7 @@ const Home = () => {
   const pipelineRunCount = useMemo(() => dataPipelineRuns?.metadata?.count || 0, [
     dataPipelineRuns?.metadata?.count,
   ]);
-  let homepageRedirectPath = '/overview';
-  if (dataPipelineRuns && pipelineRunCount === 0) {
-    homepageRedirectPath = '/pipelines';
-  }
+  const homepageRedirectPath = pipelineRunCount === 0 ? '/pipelines' : '/overview';
 
   useEffect(() => {
     if (dataStatus) {
@@ -27,9 +24,18 @@ const Home = () => {
       if (basePath === '/') {
         pathname = manage ? '/manage' : homepageRedirectPath;
       }
-      router.replace(pathname);
+      if (dataPipelineRuns) {
+        router.replace(pathname);
+      }
     }
-  }, [basePath, completePath, dataStatus, homepageRedirectPath, router]);
+  }, [
+    basePath,
+    completePath,
+    dataPipelineRuns,
+    dataStatus,
+    homepageRedirectPath,
+    router,
+  ]);
 };
 
 export default Home;
