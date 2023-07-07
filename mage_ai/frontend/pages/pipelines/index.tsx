@@ -37,9 +37,10 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
+import { capitalize, removeUnderscore } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
+import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
 import { useModal } from '@context/Modal';
@@ -227,42 +228,16 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
+  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(createPipeline), [
+    createPipeline,
+  ]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
       addButtonProps={{
         isLoading: isLoadingCreate,
         label: 'New',
-        menuItems: [
-          {
-            label: () => 'Standard (batch)',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/standard',
-          },
-          {
-            label: () => 'Data integration',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-                type: PipelineTypeEnum.INTEGRATION,
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/integration',
-          },
-          {
-            label: () => 'Streaming',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-                type: PipelineTypeEnum.STREAMING,
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/streaming',
-          },
-        ],
+        menuItems: newPipelineButtonMenuItems,
       }}
       deleteRowProps={{
         confirmationMessage: 'This is irreversible and will immediately delete everything associated \
@@ -356,12 +331,12 @@ function PipelineListPage() {
     />
   ), [
     clonePipeline,
-    createPipeline,
     deletePipeline,
     groupByQuery,
     isLoadingClone,
     isLoadingCreate,
     isLoadingDelete,
+    newPipelineButtonMenuItems,
     query,
     searchText,
     selectedPipeline?.description,

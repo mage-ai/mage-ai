@@ -259,7 +259,9 @@ class PipelineRun(BaseModel):
 
     @property
     def pipeline_type(self) -> PipelineType:
-        return self.pipeline.type
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+
+        return self.pipeline.type if pipeline is not None else None
 
     @property
     def logs(self):
