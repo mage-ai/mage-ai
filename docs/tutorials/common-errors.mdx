@@ -1,0 +1,41 @@
+---
+title: "Debugging Common Errors"
+sidebarTitle: "Common Errors"
+icon: "brain"
+description: "Here are our solutions to common errors. Can't find what you're looking for? Share it with the [Mage Community](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A) or open a PR to get started!"
+---
+## Intro
+
+
+### Changing columns
+
+Sometimes, we can't control what data upstream of our pipelines contains. 😔
+
+<Frame><img alt="Oh no" src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif" /></Frame>
+
+Thankfully, [Mage Community](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
+
+Say you have an upstream block that looks like:
+
+```SQL
+SELECT 
+  df."col_1",
+  df."col_2",
+  df."col_3",
+FROM {{ df }} df
+```
+
+Where the underlying `df` might all three columns... or just a subset. 😅
+
+For cases where expected columns _might_ not be present, we can add a transformer block upstream of an exporter:
+
+```python
+# headers = [cols we need in our dataframe]
+# df = our DataFrame()
+
+for head in headers:
+  if head not in df.columns:
+       df[head] = None
+```
+This is especially helpful in databases like Snowflake, which don't have an `iferror()` function to check for missing columns.
+
