@@ -15,7 +15,10 @@ const Home = () => {
   const pipelineRunCount = useMemo(() => dataPipelineRuns?.metadata?.count || 0, [
     dataPipelineRuns?.metadata?.count,
   ]);
-  const homepageRedirectPath = pipelineRunCount === 0 ? '/pipelines' : '/overview';
+  let homepageRedirectPath = '/overview';
+  if (dataPipelineRuns && pipelineRunCount === 0) {
+    homepageRedirectPath = '/pipelines';
+  }
 
   useEffect(() => {
     if (dataStatus) {
