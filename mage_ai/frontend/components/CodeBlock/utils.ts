@@ -90,6 +90,7 @@ export const getMoreActionsItems = (
   block: BlockType,
   runBlock: (payload: {
     block: BlockType;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       build_model?: boolean;
       run_model?: boolean;
@@ -142,13 +143,22 @@ export const getMoreActionsItems = (
     BlockTypeEnum.EXTENSION,
     BlockTypeEnum.MARKDOWN,
   ].includes(blockType)) {
-    items.push({
-      label: () => isDBT
-        ? 'Execute and run upstream blocks'
-        : 'Execute with upstream blocks',
-      onClick: () => runBlock({ block, runUpstream: true }),
-      uuid: 'execute_upstream',
-    });
+    items.push(...[
+      {
+        label: () => isDBT
+          ? 'Execute and run all upstream blocks'
+          : 'Execute with all upstream blocks',
+        onClick: () => runBlock({ block, runUpstream: true }),
+        uuid: 'execute_upstream',
+      },
+      {
+        label: () => isDBT
+          ? 'Execute and run incomplete upstream blocks'
+          : 'Execute with incomplete upstream blocks',
+        onClick: () => runBlock({ block, runIncompleteUpstream: true }),
+        uuid: 'execute_incomplete_upstream',
+      },
+    ]);
 
     if (!isDBT) {
       items.push({

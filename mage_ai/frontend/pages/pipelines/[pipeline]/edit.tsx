@@ -1728,6 +1728,7 @@ function PipelineDetailPage({
     code: string;
     ignoreAlreadyRunning?: boolean;
     runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       run_model?: boolean;
     };
@@ -1739,9 +1740,10 @@ function PipelineDetailPage({
       code,
       ignoreAlreadyRunning,
       runDownstream = false,
+      runIncompleteUpstream = false,
       runSettings = {},
-      runUpstream = false,
       runTests = false,
+      runUpstream,
     } = payload;
 
     const {
@@ -1762,6 +1764,7 @@ function PipelineDetailPage({
         output_messages_to_logs: !!get(localStorageBlockOutputLogsKey),
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream, // This will only run downstream blocks that are charts/widgets
+        run_incomplete_upstream: runIncompleteUpstream,
         run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,

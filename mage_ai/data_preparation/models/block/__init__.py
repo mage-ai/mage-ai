@@ -1659,7 +1659,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self, **kwargs) -> None:
+    def run_upstream_blocks(self, incomplete_only: bool = False, **kwargs) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1668,10 +1668,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 root_blocks.append(block)
             return block.uuid
 
-        upstream_blocks = self.get_all_upstream_blocks()
+        upstream_blocks = list(filter(
+            lambda x: not incomplete_only or BlockStatus.EXECUTED != x.status,
+            self.get_all_upstream_blocks(),
+        ))
         root_blocks = []
         upstream_block_uuids = list(
-            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks)
+            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks),
         )
 
         run_blocks_sync(

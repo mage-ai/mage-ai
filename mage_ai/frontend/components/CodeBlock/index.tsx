@@ -172,6 +172,7 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
     runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       run_model?: boolean;
     };
@@ -426,6 +427,7 @@ function CodeBlock({
     code?: string;
     disableReset?: boolean;
     runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       run_model?: boolean;
     };
@@ -437,6 +439,7 @@ function CodeBlock({
       code,
       disableReset,
       runDownstream,
+      runIncompleteUpstream,
       runSettings,
       runUpstream,
       runTests: runTestsInit,
@@ -462,6 +465,7 @@ function CodeBlock({
       block: blockPayload,
       code: code || content,
       runDownstream: runDownstream || hasDownstreamWidgets,
+      runIncompleteUpstream: runIncompleteUpstream || false,
       runSettings,
       runTests: runTests || false,
       runUpstream: runUpstream || false,
