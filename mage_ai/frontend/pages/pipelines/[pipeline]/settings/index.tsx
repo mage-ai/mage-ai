@@ -39,7 +39,7 @@ function PipelineSettings({
               }
             }
           },
-          onErrorCallback: (response, errors) => console.log({
+          onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
           }),
