@@ -182,6 +182,7 @@ class WorkspaceResource(GenericResource):
 
                 ecs_instance_manager = EcsTaskManager(cluster_name)
 
+                # TODO: Create a service for each workspace
                 ecs_instance_manager.create_task(
                     workspace_name,
                     task_definition,
