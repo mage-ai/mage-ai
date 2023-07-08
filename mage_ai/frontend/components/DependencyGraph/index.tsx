@@ -20,12 +20,12 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
+import KernelOutputType  from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-
 import {
   EdgeType,
   NodeType,
@@ -45,6 +45,10 @@ import {
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import {
+  getMessagesWithType,
+  hasErrorOrOutput,
+} from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
@@ -114,6 +118,9 @@ export type DependencyGraphProps = {
   fetchPipeline?: () => void;
   height: number;
   heightOffset?: number;
+  messages?: {
+    [uuid: string]: KernelOutputType[];
+  };
   noStatus?: boolean;
   onClickNode?: (opts: {
     block?: BlockType;
@@ -142,6 +149,7 @@ function DependencyGraph({
   fetchPipeline,
   height,
   heightOffset = UNIT * 10,
+  messages,
   noStatus,
   onClickNode,
   pannable = true,
@@ -493,16 +501,24 @@ function DependencyGraph({
         runtime,
       };
     } else {
+      const messagesWithType = getMessagesWithType(messages?.[block.uuid] || []);
+      const {
+        hasError,
+        hasOutput,
+      } = hasErrorOrOutput(messagesWithType);
+
+      const isInProgress = runningBlocksMapping[block.uuid];
+
       return {
-        hasFailed: StatusTypeEnum.FAILED === block.status,
-        isInProgress: runningBlocksMapping[block.uuid],
-        isQueued: runningBlocksMapping[block.uuid]
-          && runningBlocks[0]?.uuid !== block.uuid,
-        isSuccessful: StatusTypeEnum.EXECUTED === block.status,
+        hasFailed: !isInProgress && (hasError || StatusTypeEnum.FAILED === block.status),
+        isInProgress,
+        isQueued: isInProgress && runningBlocks[0]?.uuid !== block.uuid,
+        isSuccessful: !isInProgress && ((!hasError && hasOutput) || StatusTypeEnum.EXECUTED === block.status),
       };
     }
   }, [
     blockStatus,
+    messages,
     noStatus,
     runningBlocks,
     runningBlocksMapping,
