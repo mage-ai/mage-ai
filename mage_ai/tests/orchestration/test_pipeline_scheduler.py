@@ -97,6 +97,26 @@ class PipelineSchedulerTests(DBTestCase):
                 b.update(status=BlockRun.BlockRunStatus.FAILED)
             else:
                 b.update(status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+            ct += 1
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+            self.assertEqual(mock_send_message.call_count, 1)
+
+    def test_schedule_with_block_failures(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        ct = 0
+        for b in pipeline_run.block_runs:
+            if ct == 0:
+                b.update(status=BlockRun.BlockRunStatus.FAILED)
+            ct += 1
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
             scheduler.notification_sender,
@@ -154,15 +174,9 @@ class PipelineSchedulerTests(DBTestCase):
     def test_on_block_failure(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
-        ) as mock_send_message:
-            scheduler.on_block_failure('block1')
-            mock_send_message.assert_called_once()
-            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
-            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
-            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+        scheduler.on_block_failure('block1')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
 
     def test_on_block_failure_allow_blocks_to_fail(self):
         pipeline_run = create_pipeline_run_with_schedule(
@@ -171,15 +185,10 @@ class PipelineSchedulerTests(DBTestCase):
         )
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
-        ) as mock_send_message:
-            scheduler.on_block_failure('block1')
-            mock_send_message.assert_not_called()
-            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
-            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
-            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler.on_block_failure('block1')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
 
     # dynamic block tests
     @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
