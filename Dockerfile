@@ -6,12 +6,12 @@ USER root
 # Download ODBC headers for pyodbc
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
-RUN apt -y update
-RUN ACCEPT_EULA=Y apt -y install msodbcsql18
-RUN apt -y install unixodbc-dev
+RUN apt-get -y update
+RUN ACCEPT_EULA=Y apt-get -y install msodbcsql18
+RUN apt-get -y install unixodbc-dev
 
 # Install NFS dependencies, and pymssql dependencies
-RUN apt -y install nfs-common freetds-dev freetds-bin
+RUN apt-get -y install nfs-common freetds-dev freetds-bin
 
 # Install Mage
 RUN ${PIP} install --upgrade pip
@@ -23,7 +23,7 @@ COPY ./mage_ai/server/constants.py constants.py
 RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
 
 # Install R
-RUN apt install -y r-base
+RUN apt-get install -y r-base
 RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
