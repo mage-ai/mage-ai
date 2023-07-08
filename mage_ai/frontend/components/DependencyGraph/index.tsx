@@ -118,7 +118,7 @@ export type DependencyGraphProps = {
   fetchPipeline?: () => void;
   height: number;
   heightOffset?: number;
-  messages: {
+  messages?: {
     [uuid: string]: KernelOutputType[];
   };
   noStatus?: boolean;

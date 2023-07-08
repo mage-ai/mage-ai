@@ -425,7 +425,7 @@ export function buildBorderProps({
 
 export function getMessagesWithType(
   messages: KernelOutputType[],
-  errorMessages?: string[] = null,
+  errorMessages: string[] = null,
 ): KernelOutputType[] {
   if (errorMessages && errorMessages?.length >= 0) {
     return errorMessages.map((errorMessage: string) => ({
