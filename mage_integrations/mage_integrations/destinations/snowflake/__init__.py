@@ -357,7 +357,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                         query_strings=query_strings,
                         record_data=record_data,
                         stream=stream,
-                        tags=tags,
+                        tags=tags2,
                         **kwargs,
                     )
                 else:
