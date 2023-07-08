@@ -231,6 +231,7 @@ class DBTBlock(Block):
                 proc = subprocess.Popen(
                     cmds,
                     bufsize=1,
+                    encoding='utf-8',
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                     stdout=stdout,
                     universal_newlines=True,
