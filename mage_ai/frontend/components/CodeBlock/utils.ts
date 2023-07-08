@@ -7,6 +7,10 @@ import BlockType, {
   CONVERTIBLE_BLOCK_TYPES,
   TagEnum,
 } from '@interfaces/BlockType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
@@ -416,5 +420,33 @@ export function buildBorderProps({
       selected,
     },
     tags: buildTags(block),
+  };
+}
+
+export function getMessagesWithType(
+  messages: KernelOutputType[],
+  errorMessages?: string[] = null,
+): KernelOutputType[] {
+  if (errorMessages && errorMessages?.length >= 0) {
+    return errorMessages.map((errorMessage: string) => ({
+      data: errorMessage,
+      execution_state: ExecutionStateEnum.IDLE,
+      type: DataTypeEnum.TEXT_PLAIN,
+    }));
+  }
+
+  return messages.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
+}
+
+export function hasErrorOrOutput(messagesWithType: KernelOutputType[]): {
+  hasError: boolean;
+  hasOutput: boolean;
+} {
+  const hasError = !!messagesWithType.find(({ error }) => error);
+  const hasOutput = messagesWithType.length >= 1;
+
+  return {
+    hasError,
+    hasOutput,
   };
 }

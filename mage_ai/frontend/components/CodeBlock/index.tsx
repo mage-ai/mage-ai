@@ -47,7 +47,6 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KernelOutputType, {
-  DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
@@ -119,7 +118,9 @@ import {
   buildBorderProps,
   buildConvertBlockMenuItems,
   getDownstreamBlockUuids,
+  getMessagesWithType,
   getUpstreamBlockUuids,
+  hasErrorOrOutput,
 } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -540,20 +541,14 @@ function CodeBlock({
     mainContainerRef,
   ]);
 
-  const messagesWithType = useMemo(() => {
-    if (errorMessages?.length >= 0) {
-      return errorMessages.map((errorMessage: string) => ({
-        data: errorMessage,
-        execution_state: ExecutionStateEnum.IDLE,
-        type: DataTypeEnum.TEXT_PLAIN,
-      }));
-    }
-    return messages.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
-  }, [
+  const messagesWithType = useMemo(() => getMessagesWithType(messages, errorMessages), [
     errorMessages,
     messages,
   ]);
-  const hasError = !!messagesWithType.find(({ error }) => error);
+  const {
+    hasError,
+    hasOutput,
+  } = hasErrorOrOutput(messagesWithType);
 
   const color = getColorsForBlockType(
     blockType,
@@ -589,7 +584,6 @@ function CodeBlock({
     selected,
   ]);
 
-  const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
       setAnyInputFocused?.(false);
