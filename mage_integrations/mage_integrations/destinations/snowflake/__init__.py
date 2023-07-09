@@ -326,9 +326,9 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
             try:
                 df = pd.DataFrame([d['record'] for d in record_data])
-                table = self.config['table']
-                database = self.config['database']
-                schema = self.config['schema']
+                database = self.config.get(self.DATABASE_CONFIG_KEY)
+                schema = self.config.get(self.SCHEMA_CONFIG_KEY)
+                table = self.config.get(self.TABLE_CONFIG_KEY)
                 self.logger.info(
                     f'write_pandas to: {database}.{schema}.{table}')
                 success, num_chunks, num_rows, output = write_pandas(
