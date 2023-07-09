@@ -258,7 +258,7 @@ function CodeBlock({
     uuid: blockUUID,
   } = block || {};
   const blockConfiguration = useMemo(() => blockConfig, [blockConfig]);
-  const blockPipelinesLength = useMemo(() => Object.values(pipelines)?.length || 1, [pipeline]);
+  const blockPipelinesLength = useMemo(() => Object.values(pipelines || {})?.length || 1, [pipeline]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);

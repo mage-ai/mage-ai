@@ -3,6 +3,7 @@ import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
 import { Batch, HexagonAll, Integration, Streaming } from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
+import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { PipelineMetadataType } from './MetadataType';
 
 export enum PipelineTypeEnum {
@@ -76,6 +77,7 @@ export default interface PipelineType {
     catalog: CatalogType;
   };
   description?: string;
+  executor_type?: ExecutorTypeEnum;
   extensions?: PipelineExtensionsType;
   id?: number;
   metadata?: PipelineMetadataType;

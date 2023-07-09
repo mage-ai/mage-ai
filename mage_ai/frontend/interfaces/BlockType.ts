@@ -4,6 +4,7 @@ import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
+import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -194,6 +195,7 @@ export default interface BlockType {
     error: string;
     message: string;
   };
+  executor_type?: ExecutorTypeEnum;
   extension_uuid?: string;
   file?: string;
   has_callback?: boolean;

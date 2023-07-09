@@ -8,6 +8,7 @@ import traceback
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
+from jinja2 import Template
 from logging import Logger
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set, Tuple, Union
@@ -52,6 +53,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
@@ -1444,6 +1446,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def save_outputs_async(self, outputs, override=False) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
+
+    def get_executor_type(self) -> str:
+        if self.executor_type:
+            return Template(self.executor_type).render(**get_template_vars())
+        return self.executor_type
 
     def get_pipelines_from_cache(self) -> List[Dict]:
         return BlockCache().get_pipelines(self)

@@ -2,15 +2,21 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
@@ -34,9 +40,14 @@ function PipelineSettings({
   pipeline,
   updatePipeline,
 }: PipelineSettingsProps) {
+  const refExecutorTypeSelect = useRef(null);
+  const refExecutorTypeTextInput = useRef(null);
+
   const pipelineUUID = pipeline?.uuid;
   const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
 
+  const [editCustomExecutorType, setEditCustomExecutorType] = useState<boolean>(false);
+  const [executorType, setExecutorType] = useState(pipeline?.executor_type);
   const [newPipelineName, setNewPipelineName] = useState(pipeline?.name || '');
 
   const localStorageHiddenBlocksKey =
@@ -93,6 +104,18 @@ function PipelineSettings({
     setBlockOutputLogsState,
   ]);
 
+  useEffect(() => {
+    if (!editCustomExecutorType
+      && executorType
+      && !EXECUTOR_TYPES.find(et => et === executorType)
+    ) {
+      setEditCustomExecutorType(true);
+    }
+  }, [
+    editCustomExecutorType,
+    executorType,
+  ]);
+
   const allBlocksHidden = useMemo(() => {
     const arr = blocks?.filter(({ uuid }) => !!hiddenBlocks?.[uuid]);
 
@@ -115,13 +138,79 @@ function PipelineSettings({
         value={newPipelineName}
       />
 
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Headline>
+          Executor type
+        </Headline>
+
+        <Text muted>
+          For more information on this setting, please read the <Link
+            href="https://docs.mage.ai/production/configuring-production-settings/compute-resource#2-set-executor-type-and-customize-the-compute-resource-of-the-mage-executor"
+            openNewWindow
+          >
+            documentation
+          </Link>.
+        </Text>
+
+        <Spacing mt={1}>
+          {!editCustomExecutorType && (
+            <Select
+              label="Executor type"
+              onChange={e => setExecutorType(e.target.value)}
+              primary
+              ref={refExecutorTypeSelect}
+              value={executorType || ''}
+            >
+              {EXECUTOR_TYPES.map(executorTypeOption => (
+                <option key={executorTypeOption} value={executorTypeOption}>
+                  {executorTypeOption}
+                </option>
+              ))}
+            </Select>
+          )}
+          {editCustomExecutorType && (
+            <TextInput
+              label="Executor type"
+              monospace
+              onChange={e => setExecutorType(e.target.value)}
+              primary
+              ref={refExecutorTypeTextInput}
+              setContentOnMount
+              value={executorType || ''}
+            />
+          )}
+
+          <Spacing mt={1}>
+            <Link
+              muted
+              onClick={() => {
+                if (editCustomExecutorType) {
+                  setExecutorType(null);
+                  setTimeout(() => refExecutorTypeSelect?.current?.focus(), 1);
+                } else {
+                  setTimeout(() => refExecutorTypeTextInput?.current?.focus(), 1);
+                }
+                setEditCustomExecutorType(!editCustomExecutorType);
+              }}
+              preventDefault
+              small
+            >
+              {editCustomExecutorType
+                ? 'Select a preset executor type'
+                : 'Enter a custom executor type'
+              }
+            </Link>
+          </Spacing>
+        </Spacing>
+      </Spacing>
+
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <FlexContainer>
           <Button
-            disabled={newPipelineName === pipeline?.name}
             loading={isPipelineUpdating}
             // @ts-ignore
             onClick={() => updatePipeline({
+              executor_type: executorType,
               name: newPipelineName,
             })}
             primary
