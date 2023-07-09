@@ -248,6 +248,7 @@ function BlockSettings({
           <Button
             disabled={!blockAttributesTouched}
             loading={isLoadingUpdateBlock}
+            // @ts-ignore
             onClick={() => updateBlock({
               block: blockAttributes,
             })}
