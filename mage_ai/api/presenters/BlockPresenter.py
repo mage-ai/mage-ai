@@ -1,5 +1,6 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
     compiled_query_string,
@@ -28,7 +29,7 @@ class BlockPresenter(BasePresenter):
         'uuid',
     ]
 
-    def present(self, **kwargs):
+    async def present(self, **kwargs):
         display_format = kwargs['format']
 
         if display_format in [constants.CREATE, constants.UPDATE]:
@@ -67,6 +68,16 @@ class BlockPresenter(BasePresenter):
                 ))
 
             return data
+        elif 'with_settings' == display_format:
+            cache = BlockCache()
+            if not cache.exists():
+                await cache.initialize_cache_for_all_pipelines()
+
+            data = dict(
+                pipelines=self.model.get_pipelines_from_cache(),
+            )
+
+            return data
 
         return self.model.to_dict()
 
@@ -83,5 +94,12 @@ BlockPresenter.register_format(
     [
         'content',
         'outputs',
+    ],
+)
+
+BlockPresenter.register_format(
+    'with_settings',
+    [
+        'pipelines',
     ],
 )

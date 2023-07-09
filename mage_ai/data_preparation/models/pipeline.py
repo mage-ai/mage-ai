@@ -215,6 +215,25 @@ class Pipeline:
         return pipeline
 
     @classmethod
+    async def load_metadata(self, uuid, repo_path: str = None) -> Dict:
+        repo_path = repo_path or get_repo_path()
+        config_path = os.path.join(
+            repo_path,
+            PIPELINES_FOLDER,
+            uuid,
+            PIPELINE_CONFIG_FILE,
+        )
+
+        if not os.path.exists(config_path):
+            raise Exception(f'Pipeline {uuid} does not exist.')
+
+        config = None
+        async with aiofiles.open(config_path, mode='r') as f:
+            config = yaml.safe_load(await f.read()) or {}
+
+        return config
+
+    @classmethod
     async def get_async(self, uuid, repo_path: str = None):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
             IntegrationPipeline,
@@ -259,7 +278,7 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def get_all_pipelines(self, repo_path):
+    def get_all_pipelines(self, repo_path) -> List[str]:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):
             os.mkdir(pipelines_folder)

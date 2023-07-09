@@ -23,7 +23,7 @@ function BlockSettings({
   } = block;
   const { data: dataBlock, mutate: fetchBlock } = api.blocks.detail(
     encodeURIComponent(`${blockType}/${blockUUID}`),
-    {}, {
+    {
       _format: 'with_settings',
     },
   );
