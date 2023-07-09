@@ -337,7 +337,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     table,
                     database=database,
                     schema=schema,
-                    auto_create_table=True,
+                    auto_create_table=False,
                 )
                 self.logger.info(
                     f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
