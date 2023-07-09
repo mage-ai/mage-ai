@@ -215,6 +215,25 @@ class Pipeline:
         return pipeline
 
     @classmethod
+    async def load_metadata(self, uuid, repo_path: str = None) -> Dict:
+        repo_path = repo_path or get_repo_path()
+        config_path = os.path.join(
+            repo_path,
+            PIPELINES_FOLDER,
+            uuid,
+            PIPELINE_CONFIG_FILE,
+        )
+
+        if not os.path.exists(config_path):
+            raise Exception(f'Pipeline {uuid} does not exist.')
+
+        config = None
+        async with aiofiles.open(config_path, mode='r') as f:
+            config = yaml.safe_load(await f.read()) or {}
+
+        return config
+
+    @classmethod
     async def get_async(self, uuid, repo_path: str = None):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
             IntegrationPipeline,
@@ -259,7 +278,7 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def get_all_pipelines(self, repo_path):
+    def get_all_pipelines(self, repo_path) -> List[str]:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):
             os.mkdir(pipelines_folder)
@@ -614,6 +633,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -624,8 +644,8 @@ class Pipeline:
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
-            include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
+            include_block_tags=include_block_tags,
             include_callback_blocks=include_callback_blocks,
             include_conditional_blocks=include_conditional_blocks,
             include_content=include_content,
@@ -633,7 +653,9 @@ class Pipeline:
             sample_count=sample_count,
         )
         blocks_data = await asyncio.gather(
-            *[b.to_dict_async(**shared_kwargs) for b in self.blocks_by_uuid.values()]
+            *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
+                include_block_pipelines=include_block_pipelines,
+            ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
@@ -703,6 +725,8 @@ class Pipeline:
         db_connection.session.commit()
 
     async def update(self, data, update_content=False):
+        should_update_block_cache = False
+
         if 'name' in data and self.name and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -723,11 +747,14 @@ class Pipeline:
             await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+            should_update_block_cache = True
+
         should_save = False
 
         if 'description' in data and data['description'] != self.description:
             self.description = data['description']
             should_save = True
+            should_update_block_cache = True
 
         if 'type' in data and data['type'] != self.type:
             """
@@ -735,10 +762,12 @@ class Pipeline:
             """
             self.type = data['type']
             should_save = True
+            should_update_block_cache = True
 
         if 'updated_at' in data and data['updated_at'] != self.updated_at:
             self.updated_at = data['updated_at']
             should_save = True
+            should_update_block_cache = True
 
         if 'data_integration' in data:
             self.data_integration = data['data_integration']
@@ -874,6 +903,14 @@ class Pipeline:
                         block_type=block.type,
                         widget=widget,
                     )
+
+        if should_update_block_cache:
+            from mage_ai.cache.block import BlockCache
+
+            cache = await BlockCache.initialize_cache()
+
+            for block in self.blocks_by_uuid.values():
+                cache.update_pipeline(block, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]

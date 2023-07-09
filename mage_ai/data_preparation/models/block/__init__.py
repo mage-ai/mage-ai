@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Set, Tuple, Union
 import pandas as pd
 import simplejson
 
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -1444,6 +1445,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
+    def get_pipelines_from_cache(self) -> List[Dict]:
+        return BlockCache().get_pipelines(self)
+
     def to_dict_base(
         self,
         include_callback_blocks: bool = False,
@@ -1517,6 +1521,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -1553,6 +1558,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_block_tags:
             data['tags'] = self.tags()
+
+        if include_block_pipelines:
+            data['pipelines'] = self.get_pipelines_from_cache()
 
         return data
 

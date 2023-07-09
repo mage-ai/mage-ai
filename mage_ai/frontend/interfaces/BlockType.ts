@@ -168,6 +168,18 @@ export interface BlockRequestPayloadType {
   upstream_blocks?: string[];
 }
 
+export interface BlockPipelineType {
+  added_at?: string;
+  pipeline: {
+    description?: string;
+    name: string;
+    type: string;
+    updated_at: string;
+    uuid: string;
+  };
+  updated_at: string;
+}
+
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
@@ -204,6 +216,9 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
+  pipelines?: {
+    [uuid: string]: BlockPipelineType;
+  };
   priority?: number;
   replicated_block?: string;
   status?: StatusTypeEnum;

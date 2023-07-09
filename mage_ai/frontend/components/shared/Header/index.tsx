@@ -23,7 +23,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
-import { Branch } from '@oracle/icons';
+import { Branch, Slack } from '@oracle/icons';
 import { ChevronRight } from '@oracle/icons';
 import {
   HeaderStyle,
@@ -319,19 +319,20 @@ function Header({
 
             <Spacing ml={2}>
               <KeyboardShortcutButton
+                beforeElement={<Slack />}
                 blackBorder
-                block
                 compact
-                noHoverUnderline
-                openNewTab
+                inline
                 linkProps={{
                   as: 'https://www.mage.ai/chat',
                   href: 'https://www.mage.ai/chat',
                 }}
+                noHoverUnderline
+                openNewTab
                 sameColorAsText
                 uuid="Header/live_chat"
               >
-                Live chat
+                Live help
               </KeyboardShortcutButton>
             </Spacing>
 

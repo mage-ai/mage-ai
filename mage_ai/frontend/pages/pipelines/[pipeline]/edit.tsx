@@ -223,6 +223,7 @@ function PipelineDetailPage({
     data,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
+    include_block_pipelines: true,
     includes_outputs: isEmptyObject(messages),
   }, {
     refreshInterval: 60000,
@@ -2306,6 +2307,7 @@ function PipelineDetailPage({
             depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            selectedBlock={selectedBlock}
             treeRef={treeRef}
             variables={globalVariables}
           />

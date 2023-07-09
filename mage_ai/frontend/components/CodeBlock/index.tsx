@@ -251,12 +251,14 @@ function CodeBlock({
     error: blockError,
     has_callback: hasCallback,
     language: blockLanguage,
+    pipelines,
     replicated_block: replicatedBlockUUID,
     type: blockType,
     upstream_blocks: blockUpstreamBlocks = [],
     uuid: blockUUID,
   } = block || {};
   const blockConfiguration = useMemo(() => blockConfig, [blockConfig]);
+  const blockPipelinesLength = useMemo(() => Object.values(pipelines)?.length || 1, [pipeline]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
@@ -905,6 +907,7 @@ function CodeBlock({
     )
     : null
   , [
+    block,
     fetchBlock,
     isDBT,
     selectedTab,
@@ -1247,7 +1250,7 @@ function CodeBlock({
                       <FlexContainer alignItems="center">
                         <Text
                           monospace={numberOfParentBlocks >= 1}
-                          small={numberOfParentBlocks >= 1}
+                          small
                           underline={numberOfParentBlocks === 0}
                         >
                           {numberOfParentBlocks === 0 && 'Edit parent blocks'}
@@ -1262,6 +1265,27 @@ function CodeBlock({
                     </Button>
                   </Tooltip>
                 )}
+
+                {blockPipelinesLength >= 2 && (
+                  <Spacing ml={2}>
+                    <Tooltip
+                      block
+                      label={`This block is used in ${blockPipelinesLength} pipelines.`}
+                      size={null}
+                      widthFitContent
+                    >
+                      <Link
+                        default
+                        monospace
+                        onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+                        preventDefault
+                        small
+                      >
+                        {blockPipelinesLength} pipelines
+                      </Link>
+                    </Tooltip>
+                  </Spacing>
+                )}
               </Flex>
 
               <CommandButtons
@@ -1275,6 +1299,7 @@ function CodeBlock({
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
                 isEditingBlock={isEditingBlock}
+                openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}
