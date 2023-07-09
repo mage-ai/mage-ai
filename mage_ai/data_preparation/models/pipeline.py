@@ -722,6 +722,8 @@ class Pipeline:
         db_connection.session.commit()
 
     async def update(self, data, update_content=False):
+        should_update_block_cache = False
+
         if 'name' in data and self.name and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -742,11 +744,14 @@ class Pipeline:
             await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+            should_update_block_cache = True
+
         should_save = False
 
         if 'description' in data and data['description'] != self.description:
             self.description = data['description']
             should_save = True
+            should_update_block_cache = True
 
         if 'type' in data and data['type'] != self.type:
             """
@@ -754,10 +759,12 @@ class Pipeline:
             """
             self.type = data['type']
             should_save = True
+            should_update_block_cache = True
 
         if 'updated_at' in data and data['updated_at'] != self.updated_at:
             self.updated_at = data['updated_at']
             should_save = True
+            should_update_block_cache = True
 
         if 'data_integration' in data:
             self.data_integration = data['data_integration']
@@ -893,6 +900,14 @@ class Pipeline:
                         block_type=block.type,
                         widget=widget,
                     )
+
+        if should_update_block_cache:
+            from mage_ai.cache.block import BlockCache
+
+            cache = await BlockCache.initialize_cache()
+
+            for block in self.blocks_by_uuid.values():
+                cache.update_pipeline(block, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]

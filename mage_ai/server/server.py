@@ -14,6 +14,7 @@ from tornado.log import enable_pretty_logging
 from tornado.options import options
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -292,6 +293,9 @@ async def main(
                 name='frontend',
                 user_id=owner_user.id,
             )
+
+    print('Initializing block cache.')
+    await BlockCache.initialize_cache()
 
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(

@@ -435,11 +435,13 @@ function Sidekick({
     />
   ), [extensionsAndAddonsProps]);
 
-  const blockSettingsMemo = useMemo(() => selectedBlock && (
+  const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
       block={selectedBlock}
+      pipeline={pipeline}
     />
   ), [
+    pipeline,
     selectedBlock,
   ]);
 

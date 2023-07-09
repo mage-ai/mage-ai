@@ -41,13 +41,24 @@ class BlockCache(BaseCache):
         return pipelines_dict
 
     def add_pipeline(self, block: 'Block', pipeline: 'Pipeline') -> None:
+        self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
+
+    def update_pipeline(
+        self,
+        block: 'Block',
+        pipeline: 'Pipeline',
+        added_at: str = None,
+    ) -> None:
         mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
         if mapping is None:
             mapping = {}
 
         key = self.build_key(block)
         pipelines_dict = mapping.get(key, {})
-        pipelines_dict[pipeline.uuid] = self.__build_pipeline_dict(pipeline)
+        pipelines_dict[pipeline.uuid] = self.__build_pipeline_dict(
+            pipeline,
+            added_at=added_at,
+        )
         mapping[key] = pipelines_dict
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
@@ -82,26 +93,35 @@ class BlockCache(BaseCache):
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
 
-    def __build_pipeline_dict(self, pipeline: Union[Dict, 'Pipeline']) -> None:
+    def __build_pipeline_dict(
+        self,
+        pipeline: Union[Dict, 'Pipeline'],
+        added_at: str = None
+    ) -> None:
         pipeline_description = None
+        pipeline_name = None
         pipeline_type = None
         pipeline_updated_at = None
         pipeline_uuid = None
 
         if type(pipeline) is dict:
             pipeline_description = pipeline.get('description')
+            pipeline_name = pipeline.get('name')
             pipeline_type = pipeline.get('type')
             pipeline_updated_at = pipeline.get('updated_at')
             pipeline_uuid = pipeline.get('uuid')
         else:
             pipeline_description = pipeline.description
+            pipeline_name = pipeline.name
             pipeline_type = pipeline.type
             pipeline_updated_at = pipeline.updated_at
             pipeline_uuid = pipeline.uuid
 
         return dict(
+            added_at=added_at,
             pipeline=dict(
                 description=pipeline_description,
+                name=pipeline_name,
                 type=pipeline_type,
                 updated_at=pipeline_updated_at,
                 uuid=pipeline_uuid,
