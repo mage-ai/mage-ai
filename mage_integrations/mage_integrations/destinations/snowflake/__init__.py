@@ -122,6 +122,44 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             ),
         ]
 
+    def build_merge_command(
+        self,
+        columns: List[str],
+        full_table_name: str,
+        full_table_name_temp: str,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
+    ) -> str:
+        unique_constraints_clean = [
+            f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+            for col in unique_constraints
+        ]
+        columns_cleaned = [
+            f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+            for col in columns
+        ]
+
+        merge_commands = [
+            f'MERGE INTO {full_table_name} AS a',
+            f'USING (SELECT * FROM {full_table_name_temp}) AS b',
+            f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+        ]
+
+        if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+            set_command = ', '.join(
+                [f'a.{col} = b.{col}' for col in columns_cleaned],
+            )
+            merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
+
+        insert_columns = ', '.join(columns_cleaned)
+        merge_values = f"({', '.join([f'b.{col}' for col in columns_cleaned])})"
+        merge_commands.append(
+            f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}",
+        )
+        merge_command = '\n'.join(merge_commands)
+
+        return merge_command
+
     def build_insert_commands(
         self,
         records: List[Dict],
@@ -183,32 +221,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 f'FROM VALUES {insert_values}',
             ])]
 
-            unique_constraints_clean = [
-                self._wrap_with_quotes(clean_column_name(col))
-                for col in unique_constraints
-            ]
-            columns_cleaned = [
-                self._wrap_with_quotes(clean_column_name(col))
-                for col in columns
-            ]
-
-            merge_commands = [
-                f'MERGE INTO {full_table_name} AS a',
-                f'USING (SELECT * FROM {full_table_name_temp}) AS b',
-                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
-            ]
-
-            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                set_command = ', '.join(
-                    [f'a.{col} = b.{col}' for col in columns_cleaned],
-                )
-                merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
-
-            merge_values = f"({', '.join([f'b.{col}' for col in columns_cleaned])})"
-            merge_commands.append(
-                f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}",
+            merge_command = self.build_merge_command(
+                columns=columns,
+                full_table_name=full_table_name,
+                full_table_name_temp=full_table_name_temp,
+                unique_conflict_method=unique_conflict_method,
+                unique_constraints=unique_constraints,
             )
-            merge_command = '\n'.join(merge_commands)
 
             return commands + [
                 merge_command,
@@ -298,6 +317,28 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
         return records_inserted, records_updated
 
+    def write_dataframe_to_table(
+        self,
+        df: pd.Dataframe,
+        database: str,
+        schema: str,
+        table: str,
+    ) -> List[Tuple]:
+        self.logger.info(
+            f'write_pandas to: {database}.{schema}.{table}')
+        success, num_chunks, num_rows, output = write_pandas(
+            self.build_connection().connection,
+            df,
+            table,
+            database=database,
+            schema=schema,
+            auto_create_table=False,
+        )
+        self.logger.info(
+            f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
+        self.logger.info(f'write_pandas output: {output}')
+        return [(num_rows, num_rows)]
+
     def process_queries(
         self,
         query_strings: List[str],
@@ -318,51 +359,45 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         else:
             results = []
             self.logger.info('Using batch load for Snowflake...')
-            tries = tags.get('tries', 0)
+
+            unique_constraints = self.unique_constraints.get(stream)
+            unique_conflict_method = self.unique_conflict_methods.get(stream)
 
             # Execute the query_strings before inserting the data, i.e., passed-in
             # query_strings including create table command or alter table command
             self.logger.info(f'Executing query_strings: {query_strings}')
             results += self.build_connection().execute(query_strings, commit=True)
 
-            try:
-                df = pd.DataFrame([d['record'] for d in record_data])
-                database = self.config.get(self.DATABASE_CONFIG_KEY)
-                schema = self.config.get(self.SCHEMA_CONFIG_KEY)
-                table = self.config.get(self.TABLE_CONFIG_KEY)
-                self.logger.info(
-                    f'write_pandas to: {database}.{schema}.{table}')
-                success, num_chunks, num_rows, output = write_pandas(
-                    self.build_connection().connection,
-                    df,
-                    table,
-                    database=database,
-                    schema=schema,
-                    auto_create_table=False,
-                )
-                self.logger.info(
-                    f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
-                self.logger.info(f'write_pandas output: {output}')
-                results.append([(num_rows, num_rows)])
-            except Exception as err:
-                self.logger.error(f'Encountered exception: {err}')
-                if tries < 2:
-                    tries += 1
-                    tags2 = merge_dict(tags, dict(tries=tries))
-                    self.logger.info(
-                        f'Batch upload to Snowflake failed, retry {tries}.',
-                        tags=tags2,
-                    )
+            df = pd.DataFrame([d['record'] for d in record_data])
+            df.columns = df.columns.str.lower()
+            self.logger.info(f'Batch upload to Snowflake: {df.shape[0]} rows.')
+            self.logger.info(f'Columns: {df.columns}')
+            database = self.config.get(self.DATABASE_CONFIG_KEY)
+            schema = self.config.get(self.SCHEMA_CONFIG_KEY)
+            table = self.config.get(self.TABLE_CONFIG_KEY)
 
-                    return self.process_queries(
-                        query_strings=query_strings,
-                        record_data=record_data,
-                        stream=stream,
-                        tags=tags2,
-                        **kwargs,
-                    )
-                else:
-                    raise err
+            if unique_constraints and unique_conflict_method:
+                full_table_name = self.full_table_name(database, schema, table)
+                full_table_name_temp = self.full_table_name_temp(database, schema, table)
+                drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
+
+                results += self.build_connection().execute(drop_temp_table_command, commit=True)
+                results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+
+                merge_command = self.build_merge_command(
+                    columns=df.columns,
+                    full_table_name=full_table_name,
+                    full_table_name_temp=full_table_name_temp,
+                    unique_conflict_method=unique_conflict_method,
+                    unique_constraints=unique_constraints,
+                )
+                self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
+                results += self.build_connection().execute(merge_command, commit=True)
+
+                self.logger.info(f'Dropping temporary table: {full_table_name_temp}')
+                results += self.build_connection().execute(drop_temp_table_command, commit=True)
+            else:
+                results += self.write_dataframe_to_table(df, database, schema, table)
 
             return results
 
