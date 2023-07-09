@@ -6,6 +6,7 @@ import {
   NavReport,
   Secrets,
   Settings,
+  SettingsWithKnobs,
   Table,
   Terminal,
   Tree,
@@ -134,12 +135,17 @@ export const SIDEKICK_VIEWS: {
     key: ViewKeyEnum.TERMINAL,
     label: 'Terminal',
   },
+  {
+    key: ViewKeyEnum.BLOCK_SETTINGS,
+    label: 'Block settings',
+  },
 ];
 
 export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
 
 export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.ADDON_BLOCKS]: Union,
+  [ViewKeyEnum.BLOCK_SETTINGS]: SettingsWithKnobs,
   [ViewKeyEnum.CALLBACKS]: Callback,
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,

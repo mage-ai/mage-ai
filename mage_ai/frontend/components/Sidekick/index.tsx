@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
+import BlockSettings from '@components/BlockSettings';
 import BlockType, {
   BlockRequestPayloadType,
   InsightType,
@@ -31,7 +32,11 @@ import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
 
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
-import { Charts as ChartsIcon, Close } from '@oracle/icons';
+import {
+  Charts as ChartsIcon,
+  Close,
+  SettingsWithKnobs,
+} from '@oracle/icons';
 import {
   MESSAGE_VIEWS,
   VH_PERCENTAGE,
@@ -430,6 +435,14 @@ function Sidekick({
     />
   ), [extensionsAndAddonsProps]);
 
+  const blockSettingsMemo = useMemo(() => selectedBlock && (
+    <BlockSettings
+      block={selectedBlock}
+    />
+  ), [
+    selectedBlock,
+  ]);
+
   return (
     <>
       {errorMessages?.length >= 1 &&
@@ -568,9 +581,8 @@ function Sidekick({
         }
 
         {ViewKeyEnum.CHARTS === activeView && (widgets.length > 0
-          ?
-            chartsMemo
-          :
+          ? chartsMemo
+          : (
             <FlexContainer
               alignItems="center"
               flexDirection="column"
@@ -593,6 +605,7 @@ function Sidekick({
                 <EmptyCharts size={UNIT * 40} />
               </Spacing>
             </FlexContainer>
+          )
         )}
 
         {ViewKeyEnum.TERMINAL === activeView && terminalMemo}
@@ -600,6 +613,31 @@ function Sidekick({
         {ViewKeyEnum.EXTENSIONS === activeView && extensionsMemo}
 
         {ViewKeyEnum.ADDON_BLOCKS === activeView && addonMemo}
+
+        {ViewKeyEnum.BLOCK_SETTINGS === activeView && (selectedBlock
+          ? blockSettingsMemo
+          : (
+            <FlexContainer
+              alignItems="center"
+              flexDirection="column"
+              justifyContent="center"
+              verticalHeight={VH_PERCENTAGE}
+              verticalHeightOffset={heightOffset}
+              width={afterWidth}
+            >
+              <Spacing px={1}>
+                <FlexContainer flexDirection="row">
+                  <Text center default>
+                    Please select a block and then click the settings icon
+                    &nbsp;<SettingsWithKnobs size={UNIT * 1.5} />&nbsp;
+                    <br />
+                    in the top right corner of a block (if applicable).
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+            </FlexContainer>
+          )
+        )}
       </SidekickContainerStyle>
     </>
   );

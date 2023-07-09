@@ -22,6 +22,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Charts,
@@ -41,6 +42,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 import { isMac } from '@utils/os';
@@ -63,6 +65,10 @@ type CommandButtonsProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   isEditingBlock?: boolean;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    addon: AddonBlockTypeEnum,
+    blockUUID: string;
+  }) => void;
   pipeline?: PipelineType;
   runBlock?: (payload: {
     block: BlockType;
@@ -96,6 +102,7 @@ function CommandButtons({
   fetchPipeline,
   interruptKernel,
   isEditingBlock,
+  openSidekickView,
   pipeline,
   runBlock,
   setIsEditingBlock,
@@ -442,7 +449,7 @@ function CommandButtons({
             noBackground
             noBorder
             noPadding
-            onClick={() => setIsEditingBlock(prevState => !prevState)}
+            onClick={() => openSidekickView?.(ViewKeyEnum.BLOCK_SETTINGS)}
           >
             <SettingsWithKnobs default size={DEFAULT_ICON_SIZE} />
           </Button>

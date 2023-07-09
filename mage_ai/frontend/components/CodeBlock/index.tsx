@@ -905,6 +905,7 @@ function CodeBlock({
     )
     : null
   , [
+    block,
     fetchBlock,
     isDBT,
     selectedTab,
@@ -1275,6 +1276,7 @@ function CodeBlock({
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
                 isEditingBlock={isEditingBlock}
+                openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}

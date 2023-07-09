@@ -2306,6 +2306,7 @@ function PipelineDetailPage({
             depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            selectedBlock={selectedBlock}
             treeRef={treeRef}
             variables={globalVariables}
           />
