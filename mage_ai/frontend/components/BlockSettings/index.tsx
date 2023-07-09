@@ -1,19 +1,25 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
-import BlockType, {
-  BlockLanguageEnum,
-  BlockPipelineType,
-  BlockTypeEnum,
-} from '@interfaces/BlockType';
+import BlockType, { BlockPipelineType } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
+import {
+  PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
+import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
 type BlockSettingsProps = {
@@ -25,22 +31,47 @@ function BlockSettings({
   block,
   pipeline,
 }: BlockSettingsProps) {
+  const refExecutorTypeSelect = useRef(null);
+  const refExecutorTypeTextInput = useRef(null);
+
+  const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
+
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockSettings/index',
   });
 
   const {
-    configuration,
-    language: blockLanguage,
     type: blockType,
     uuid: blockUUID,
   } = block;
 
+  const [blockAttributes, setBlockAttributesState] = useState<BlockType>(block);
+  const [blockAttributesTouched, setBlockAttributesTouched] = useState<boolean>(false);
+  const [editCustomExecutorType, setEditCustomExecutorType] = useState<boolean>(false);
+
+  const setBlockAttributes = useCallback((handlePrevious) => {
+    setBlockAttributesTouched(true);
+    setBlockAttributesState(handlePrevious);
+  }, []);
+
+  const executorType = useMemo(() => blockAttributes?.executor_type, [blockAttributes]);
+  useEffect(() => {
+    if (!editCustomExecutorType
+      && executorType
+      && !EXECUTOR_TYPES.find(et => et === executorType)
+    ) {
+      setEditCustomExecutorType(true);
+    }
+  }, [
+    editCustomExecutorType,
+    executorType,
+  ]);
+
   const {
     data: dataBlock,
-    mutate: fetchBlock,
+    // mutate: fetchBlock,
   } = api.blocks.pipelines.detail(
-    pipeline?.uuid,
+    pipelineUUID,
     encodeURIComponent(blockUUID),
     {
       _format: 'with_settings',
@@ -54,6 +85,23 @@ function BlockSettings({
     ? Object.values(blockDetails?.pipelines)
     : []
   , [blockDetails]);
+
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setBlockAttributesTouched(false);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const pipelinesTable = useMemo(() => blockPipelines?.length >= 1 && (
     <Table
@@ -116,6 +164,100 @@ function BlockSettings({
           <Spinner inverted />
         </Spacing>
       )}
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Headline>
+              Executor type
+            </Headline>
+
+            <Text muted>
+              For more information on this setting, please read the <Link
+                href="https://docs.mage.ai/production/configuring-production-settings/compute-resource#2-set-executor-type-and-customize-the-compute-resource-of-the-mage-executor"
+                openNewWindow
+              >
+                documentation
+              </Link>.
+            </Text>
+
+            <Spacing mt={1}>
+              {!editCustomExecutorType && (
+                <Select
+                  label="Executor type"
+                  // @ts-ignore
+                  onChange={e => setBlockAttributes(prev => ({
+                    ...prev,
+                    executor_type: e.target.value,
+                  }))}
+                  primary
+                  ref={refExecutorTypeSelect}
+                  value={blockAttributes?.executor_type || ''}
+                >
+                  {EXECUTOR_TYPES.map(executorTypeOption => (
+                    <option key={executorTypeOption} value={executorTypeOption}>
+                      {executorTypeOption}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {editCustomExecutorType && (
+                <TextInput
+                  label="Executor type"
+                  monospace
+                  // @ts-ignore
+                  onChange={e => setBlockAttributes(prev => ({
+                    ...prev,
+                    executor_type: e.target.value,
+                  }))}
+                  primary
+                  ref={refExecutorTypeTextInput}
+                  setContentOnMount
+                  value={blockAttributes?.executor_type || ''}
+                />
+              )}
+
+              <Spacing mt={1}>
+                <Link
+                  muted
+                  onClick={() => {
+                    if (editCustomExecutorType) {
+                      // @ts-ignore
+                      setBlockAttributes(prev => ({
+                        ...prev,
+                        executor_type: null,
+                      }));
+                      setTimeout(() => refExecutorTypeSelect?.current?.focus(), 1);
+                    } else {
+                      setTimeout(() => refExecutorTypeTextInput?.current?.focus(), 1);
+                    }
+                    setEditCustomExecutorType(!editCustomExecutorType);
+                  }}
+                  preventDefault
+                  small
+                >
+                  {editCustomExecutorType
+                    ? 'Select a preset executor type'
+                    : 'Enter a custom executor type'
+                  }
+                </Link>
+              </Spacing>
+            </Spacing>
+          </Spacing>
+
+          <Button
+            disabled={!blockAttributesTouched}
+            loading={isLoadingUpdateBlock}
+            // @ts-ignore
+            onClick={() => updateBlock({
+              block: blockAttributes,
+            })}
+            primary
+          >
+            Update block settings
+          </Button>
+        </Spacing>
+      </Spacing>
 
       {dataBlock && (
         <Spacing mb={UNITS_BETWEEN_SECTIONS}>

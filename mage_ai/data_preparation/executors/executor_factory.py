@@ -30,7 +30,7 @@ class ExecutorFactory:
             if pipeline.type == PipelineType.PYSPARK:
                 executor_type = ExecutorType.PYSPARK
             else:
-                executor_type = pipeline.executor_type
+                executor_type = pipeline.get_executor_type()
                 if executor_type == ExecutorType.LOCAL_PYTHON or executor_type is None:
                     # Use default executor type
                     executor_type = self.get_default_executor_type()
@@ -123,7 +123,7 @@ class ExecutorFactory:
             ):
                 executor_type = ExecutorType.PYSPARK
             else:
-                executor_type = block.executor_type
+                executor_type = block.get_executor_type()
                 if executor_type == ExecutorType.LOCAL_PYTHON:
                     # Use default executor type
                     executor_type = self.get_default_executor_type()

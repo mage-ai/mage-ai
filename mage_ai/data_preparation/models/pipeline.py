@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import shutil
+from jinja2 import Template
 from typing import Callable, Dict, List
 
 import aiofiles
@@ -27,6 +28,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -783,6 +785,10 @@ class Pipeline:
                 )
             should_save = True
 
+        if 'executor_type' in data:
+            self.executor_type = data.get('executor_type')
+            should_save = True
+
         blocks = data.get('blocks', [])
 
         if blocks:
@@ -1052,6 +1058,11 @@ class Pipeline:
 
     def get_executable_blocks(self):
         return [b for b in self.blocks_by_uuid.values() if b.executable]
+
+    def get_executor_type(self) -> str:
+        if self.executor_type:
+            return Template(self.executor_type).render(**get_template_vars())
+        return self.executor_type
 
     def has_block(self, block_uuid: str, block_type: str = None, extension_uuid: str = None):
         if extension_uuid:
