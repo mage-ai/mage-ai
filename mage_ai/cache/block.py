@@ -15,7 +15,7 @@ class BlockCache(BaseCache):
 
         return cache
 
-    def build_key(self, block: Union[Dict, 'Block']) -> str:
+    def build_key(self, block: Union[Dict]) -> str:
         block_type = ''
         block_uuid = ''
 
@@ -31,7 +31,7 @@ class BlockCache(BaseCache):
     def exists(self) -> bool:
         return self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING) is not None
 
-    def get_pipelines(self, block: 'Block') -> Dict:
+    def get_pipelines(self, block) -> Dict:
         pipelines_dict = {}
 
         mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
@@ -40,13 +40,13 @@ class BlockCache(BaseCache):
 
         return pipelines_dict
 
-    def add_pipeline(self, block: 'Block', pipeline: 'Pipeline') -> None:
+    def add_pipeline(self, block, pipeline) -> None:
         self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
 
     def update_pipeline(
         self,
-        block: 'Block',
-        pipeline: 'Pipeline',
+        block,
+        pipeline,
         added_at: str = None,
     ) -> None:
         mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
@@ -63,7 +63,7 @@ class BlockCache(BaseCache):
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
 
-    def remove_pipeline(self, block: 'Block', pipeline: 'Pipeline') -> None:
+    def remove_pipeline(self, block, pipeline) -> None:
         mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
         if mapping is None:
             mapping = {}
@@ -95,7 +95,7 @@ class BlockCache(BaseCache):
 
     def __build_pipeline_dict(
         self,
-        pipeline: Union[Dict, 'Pipeline'],
+        pipeline: Union[Dict],
         added_at: str = None
     ) -> None:
         pipeline_description = None

@@ -127,12 +127,18 @@ class BlockResource(GenericResource):
         block_type = parts[0]
         block_uuid_with_extension = '/'.join(parts[1:])
         parts2 = block_uuid_with_extension.split('.')
+
         language = None
         if len(parts2) >= 2:
             block_uuid = '.'.join(parts2[:-1])
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[-1]]
         else:
             block_uuid = block_uuid_with_extension
+
+        block_language = query.get('block_language', [None])
+        if block_language:
+            block_language = block_language[0]
+            language = block_language
 
         if BlockType.DBT == block_type:
             block = DBTBlock(

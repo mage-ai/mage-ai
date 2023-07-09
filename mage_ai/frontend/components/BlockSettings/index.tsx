@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 
-import BlockType, { BlockPipelineType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockPipelineType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
@@ -26,13 +30,20 @@ function BlockSettings({
   });
 
   const {
+    configuration,
+    language: blockLanguage,
     type: blockType,
     uuid: blockUUID,
   } = block;
   const { data: dataBlock, mutate: fetchBlock } = api.blocks.detail(
-    encodeURIComponent(`${blockType}/${blockUUID}`),
+    encodeURIComponent(BlockTypeEnum.DBT === blockType && BlockLanguageEnum.SQL === blockLanguage
+      ? `${blockType}/${configuration?.file_path}`
+      : `${blockType}/${blockUUID}`,
+    ),
     {
       _format: 'with_settings',
+      block_language: blockLanguage,
+      block_type: blockType,
     },
   );
   const blockDetails: {
