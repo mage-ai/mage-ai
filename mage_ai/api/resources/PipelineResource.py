@@ -157,6 +157,15 @@ class PipelineResource(BaseResource):
         if kwargs.get('api_operation_action', None) != DELETE:
             switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
 
+        query = kwargs.get('query', {})
+        include_block_pipelines = query.get('include_block_pipelines', [False])
+        if include_block_pipelines:
+            include_block_pipelines = include_block_pipelines[0]
+        if include_block_pipelines:
+            from mage_ai.cache.block import BlockCache
+
+            await BlockCache.initialize_cache()
+
         return self(pipeline, user, **kwargs)
 
     @safe_db_query

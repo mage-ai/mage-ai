@@ -138,6 +138,7 @@ class BlockResource(GenericResource):
         block_language = query.get('block_language', [None])
         if block_language:
             block_language = block_language[0]
+        if block_language:
             language = block_language
 
         if BlockType.DBT == block_type:

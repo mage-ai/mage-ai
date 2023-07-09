@@ -633,6 +633,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -643,8 +644,8 @@ class Pipeline:
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
-            include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
+            include_block_tags=include_block_tags,
             include_callback_blocks=include_callback_blocks,
             include_conditional_blocks=include_conditional_blocks,
             include_content=include_content,
@@ -652,7 +653,9 @@ class Pipeline:
             sample_count=sample_count,
         )
         blocks_data = await asyncio.gather(
-            *[b.to_dict_async(**shared_kwargs) for b in self.blocks_by_uuid.values()]
+            *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
+                include_block_pipelines=include_block_pipelines,
+            ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
