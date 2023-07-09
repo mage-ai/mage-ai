@@ -322,6 +322,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
             # Execute the query_strings before inserting the data, i.e., passed-in
             # query_strings including create table command or alter table command
+            self.logger.info(f'Executing query_strings: {query_strings}')
             results += self.build_connection().execute(query_strings, commit=True)
 
             try:
