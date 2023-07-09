@@ -7,6 +7,14 @@ from typing import Dict, Union
 
 
 class BlockCache(BaseCache):
+    @classmethod
+    async def initialize_cache(self) -> 'BlockCache':
+        cache = self()
+        if not cache.exists():
+            await cache.initialize_cache_for_all_pipelines()
+
+        return cache
+
     def build_key(self, block: Union[Dict, 'Block']) -> str:
         block_type = ''
         block_uuid = ''
@@ -40,6 +48,18 @@ class BlockCache(BaseCache):
         key = self.build_key(block)
         pipelines_dict = mapping.get(key, {})
         pipelines_dict[pipeline.uuid] = self.__build_pipeline_dict(pipeline)
+        mapping[key] = pipelines_dict
+
+        self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
+
+    def remove_pipeline(self, block: 'Block', pipeline: 'Pipeline') -> None:
+        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
+        if mapping is None:
+            mapping = {}
+
+        key = self.build_key(block)
+        pipelines_dict = mapping.get(key, {})
+        pipelines_dict.pop(pipeline.uuid, None)
         mapping[key] = pipelines_dict
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)

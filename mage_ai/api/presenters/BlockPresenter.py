@@ -69,12 +69,8 @@ class BlockPresenter(BasePresenter):
 
             return data
         elif 'with_settings' == display_format:
-            cache = BlockCache()
-            if not cache.exists():
-                await cache.initialize_cache_for_all_pipelines()
-
             data = dict(
-                pipelines=self.model.get_pipelines_from_cache(),
+                pipelines=await self.resource.get_pipelines_from_cache(),
             )
 
             return data
