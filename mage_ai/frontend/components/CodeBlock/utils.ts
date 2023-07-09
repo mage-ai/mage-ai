@@ -142,181 +142,183 @@ export const getMoreActionsItems = (
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
 
-  if (![
-    BlockTypeEnum.CALLBACK,
-    BlockTypeEnum.EXTENSION,
-    BlockTypeEnum.MARKDOWN,
-  ].includes(blockType)) {
-    items.push(...[
-      {
-        label: () => isDBT
-          ? 'Execute and run all upstream blocks'
-          : 'Execute with all upstream blocks',
-        onClick: () => runBlock({ block, runUpstream: true }),
-        uuid: 'execute_upstream',
-      },
-      {
-        label: () => isDBT
-          ? 'Execute and run incomplete upstream blocks'
-          : 'Execute with incomplete upstream blocks',
-        onClick: () => runBlock({ block, runIncompleteUpstream: true }),
-        uuid: 'execute_incomplete_upstream',
-      },
-    ]);
+  if (BlockTypeEnum.SCRATCHPAD !== blockType) {
+    if (![
+      BlockTypeEnum.CALLBACK,
+      BlockTypeEnum.EXTENSION,
+      BlockTypeEnum.MARKDOWN,
+    ].includes(blockType)) {
+      items.push(...[
+        {
+          label: () => isDBT
+            ? 'Execute and run all upstream blocks'
+            : 'Execute with all upstream blocks',
+          onClick: () => runBlock({ block, runUpstream: true }),
+          uuid: 'execute_upstream',
+        },
+        {
+          label: () => isDBT
+            ? 'Execute and run incomplete upstream blocks'
+            : 'Execute with incomplete upstream blocks',
+          onClick: () => runBlock({ block, runIncompleteUpstream: true }),
+          uuid: 'execute_incomplete_upstream',
+        },
+      ]);
 
-    if (!isDBT) {
-      items.push({
-        label: () => 'Execute block and run tests',
-        onClick: () => runBlock({ block, runTests: true }),
-        uuid: 'run_tests',
-      });
-    }
-
-    const {
-      addNewBlock,
-      blocksMapping,
-      fetchFileTree,
-      fetchPipeline,
-      savePipelineContent,
-      updatePipeline,
-    } = opts || {};
-
-    // If current block’s downstream has other dynamic blocks,
-    // disable this button
-    const otherDynamicBlocks = [];
-    downstreamBlocks.forEach((uuid1: string) => {
-      const b = blocksMapping?.[uuid1];
-      if (b) {
-        b.upstream_blocks.forEach((uuid2: string) => {
-          if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
-            otherDynamicBlocks.push(blocksMapping[uuid2]);
-          }
+      if (!isDBT) {
+        items.push({
+          label: () => 'Execute block and run tests',
+          onClick: () => runBlock({ block, runTests: true }),
+          uuid: 'run_tests',
         });
       }
-    });
 
-    if (isDBT && BlockLanguageEnum.SQL === language) {
-      if (!metadata?.dbt?.block?.snapshot) {
-        items.unshift(...[
-          {
-            label: () => 'Run model',
-            onClick: () => runBlock({
-              block,
-              runSettings: {
-                run_model: true,
-              },
-            }),
-            tooltip: () => 'Execute command dbt run.',
-            uuid: 'run_model',
-          },
-          {
-            label: () => 'Test model',
-            onClick: () => runBlock({
-              block,
-              runSettings: {
-                test_model: true,
-              },
-            }),
-            tooltip: () => 'Execute command dbt test.',
-            uuid: 'test_model',
-          },
-          {
-            label: () => 'Build model',
-            onClick: () => runBlock({
-              block,
-              runSettings: {
-                build_model: true,
-              },
-            }),
-            tooltip: () => 'Execute command dbt build.',
-            uuid: 'build_model',
-          },
-          {
-            label: () => 'Add upstream models',
-            onClick: () => {
-              updatePipeline({
-                pipeline: {
-                  add_upstream_for_block_uuid: block?.uuid,
-                },
-              });
-            },
-            tooltip: () => 'Add upstream models for this model to the pipeline.',
-            uuid: 'add_upstream_models',
-          },
-        ]);
-      }
-    }
+      const {
+        addNewBlock,
+        blocksMapping,
+        fetchFileTree,
+        fetchPipeline,
+        savePipelineContent,
+        updatePipeline,
+      } = opts || {};
 
-    if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
-      items.push({
-        label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
-        onClick: () => savePipelineContent({
-          block: {
-            ...block,
-            configuration: {
-              ...configuration,
-              dynamic: !dynamic,
-            },
-          },
-        }),
-        uuid: 'dynamic',
+      // If current block’s downstream has other dynamic blocks,
+      // disable this button
+      const otherDynamicBlocks = [];
+      downstreamBlocks.forEach((uuid1: string) => {
+        const b = blocksMapping?.[uuid1];
+        if (b) {
+          b.upstream_blocks.forEach((uuid2: string) => {
+            if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
+              otherDynamicBlocks.push(blocksMapping[uuid2]);
+            }
+          });
+        }
       });
-    }
 
-    if (blocksMapping) {
-      const dynamicChildBlock = upstreamBlocks?.find(
-        (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
-      );
+      if (isDBT && BlockLanguageEnum.SQL === language) {
+        if (!metadata?.dbt?.block?.snapshot) {
+          items.unshift(...[
+            {
+              label: () => 'Run model',
+              onClick: () => runBlock({
+                block,
+                runSettings: {
+                  run_model: true,
+                },
+              }),
+              tooltip: () => 'Execute command dbt run.',
+              uuid: 'run_model',
+            },
+            {
+              label: () => 'Test model',
+              onClick: () => runBlock({
+                block,
+                runSettings: {
+                  test_model: true,
+                },
+              }),
+              tooltip: () => 'Execute command dbt test.',
+              uuid: 'test_model',
+            },
+            {
+              label: () => 'Build model',
+              onClick: () => runBlock({
+                block,
+                runSettings: {
+                  build_model: true,
+                },
+              }),
+              tooltip: () => 'Execute command dbt build.',
+              uuid: 'build_model',
+            },
+            {
+              label: () => 'Add upstream models',
+              onClick: () => {
+                updatePipeline({
+                  pipeline: {
+                    add_upstream_for_block_uuid: block?.uuid,
+                  },
+                });
+              },
+              tooltip: () => 'Add upstream models for this model to the pipeline.',
+              uuid: 'add_upstream_models',
+            },
+          ]);
+        }
+      }
 
-      if (dynamicChildBlock) {
+      if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
         items.push({
-          label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+          label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
           onClick: () => savePipelineContent({
             block: {
               ...block,
               configuration: {
                 ...configuration,
-                reduce_output: !reduceOutput,
+                dynamic: !dynamic,
               },
             },
           }),
-          uuid: 'reduce_output',
+          uuid: 'dynamic',
         });
       }
-    }
 
-    items.push({
-      label: () => has_callback ? 'Remove callback' : 'Add callback',
-      onClick: () => {
-        if (has_callback) {
-          return savePipelineContent({
-            block: {
-              ...block,
-              has_callback: !has_callback,
-            },
-          }).then(() => {
-            fetchFileTree();
-            fetchPipeline();
-          });
-        } else {
-          goToWithQuery({
-            sideview: ViewKeyEnum.CALLBACKS,
+      if (blocksMapping) {
+        const dynamicChildBlock = upstreamBlocks?.find(
+          (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+        );
+
+        if (dynamicChildBlock) {
+          items.push({
+            label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+            onClick: () => savePipelineContent({
+              block: {
+                ...block,
+                configuration: {
+                  ...configuration,
+                  reduce_output: !reduceOutput,
+                },
+              },
+            }),
+            uuid: 'reduce_output',
           });
         }
-      },
-      uuid: 'has_callback',
-    });
+      }
 
-
-    if (!isDBT) {
       items.push({
-        disabled: !!replicatedBlock,
-        label: () => 'Replicate block',
-        onClick: () => addNewBlock({
-          replicated_block: blockUUID,
-        }),
-        uuid: 'Replicate block',
+        label: () => has_callback ? 'Remove callback' : 'Add callback',
+        onClick: () => {
+          if (has_callback) {
+            return savePipelineContent({
+              block: {
+                ...block,
+                has_callback: !has_callback,
+              },
+            }).then(() => {
+              fetchFileTree();
+              fetchPipeline();
+            });
+          } else {
+            goToWithQuery({
+              sideview: ViewKeyEnum.CALLBACKS,
+            });
+          }
+        },
+        uuid: 'has_callback',
       });
+
+
+      if (!isDBT) {
+        items.push({
+          disabled: !!replicatedBlock,
+          label: () => 'Replicate block',
+          onClick: () => addNewBlock({
+            replicated_block: blockUUID,
+          }),
+          uuid: 'Replicate block',
+        });
+      }
     }
   }
 

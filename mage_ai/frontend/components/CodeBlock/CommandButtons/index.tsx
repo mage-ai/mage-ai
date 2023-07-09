@@ -30,6 +30,7 @@ import {
   Edit,
   Ellipsis,
   PlayButtonFilled,
+  SettingsWithKnobs,
 } from '@oracle/icons';
 import { DEFAULT_ICON_SIZE } from '../constants';
 import {
@@ -429,6 +430,25 @@ function CommandButtons({
         </Spacing>
       )}
 
+      <Spacing ml={PADDING_UNITS}>
+        <Tooltip
+          appearBefore
+          default
+          label="View and edit settings for this block"
+          size={DEFAULT_ICON_SIZE}
+          widthFitContent
+        >
+          <Button
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => setIsEditingBlock(prevState => !prevState)}
+          >
+            <SettingsWithKnobs default size={DEFAULT_ICON_SIZE} />
+          </Button>
+        </Tooltip>
+      </Spacing>
+
       <div ref={refMoreActions}>
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
@@ -450,14 +470,16 @@ function CommandButtons({
             >
               <Circle
                 borderSize={1.5}
+                default
                 size={DEFAULT_ICON_SIZE}
               >
-                <Ellipsis size={UNIT} />
+                <Ellipsis default size={UNIT} />
               </Circle>
             </Button>
           </Tooltip>
         </Spacing>
       </div>
+
       <ClickOutside
         disableEscape
         onClickOutside={() => setShowMoreActions(false)}

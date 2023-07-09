@@ -19,6 +19,7 @@ export const VH_PERCENTAGE = 90;
 
 export enum ViewKeyEnum {
   ADDON_BLOCKS = 'addon_blocks',
+  BLOCK_SETTINGS = 'block_settings',
   CALLBACKS = 'callbacks',
   CHARTS = 'charts',
   DATA = 'data',
@@ -34,6 +35,7 @@ export enum ViewKeyEnum {
 }
 
 export const FULL_WIDTH_VIEWS = [
+  ViewKeyEnum.BLOCK_SETTINGS,
   ViewKeyEnum.CALLBACKS,
   ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
