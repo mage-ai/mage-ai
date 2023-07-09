@@ -35,14 +35,15 @@ function BlockSettings({
     type: blockType,
     uuid: blockUUID,
   } = block;
-  const { data: dataBlock, mutate: fetchBlock } = api.blocks.detail(
-    encodeURIComponent(BlockTypeEnum.DBT === blockType && BlockLanguageEnum.SQL === blockLanguage
-      ? `${blockType}/${configuration?.file_path}`
-      : `${blockType}/${blockUUID}`,
-    ),
+
+  const {
+    data: dataBlock,
+    mutate: fetchBlock,
+  } = api.blocks.pipelines.detail(
+    pipeline?.uuid,
+    encodeURIComponent(blockUUID),
     {
       _format: 'with_settings',
-      block_language: blockLanguage,
       block_type: blockType,
     },
   );
