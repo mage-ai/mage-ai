@@ -20,7 +20,7 @@ class BlockCache(BaseCache):
         """Generate cache key for block.
 
         Args:
-            block (Union[Dict]): The block dict or object
+            block (Union[Dict]): The block dict or object.
 
         Returns:
             str: The cache key generated with block_type and block_uuid.
@@ -98,9 +98,11 @@ class BlockCache(BaseCache):
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
+
         pipeline_dicts = await asyncio.gather(
-            *[Pipeline.load_metadata(uuid) for uuid in pipeline_uuids],
+            *[Pipeline.load_metadata(uuid, raise_exception=False) for uuid in pipeline_uuids],
         )
+        pipeline_dicts = [p for p in pipeline_dicts if p is not None]
 
         mapping = {}
         for pipeline_dict in pipeline_dicts:
