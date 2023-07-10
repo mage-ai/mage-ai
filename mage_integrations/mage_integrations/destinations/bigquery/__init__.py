@@ -290,7 +290,7 @@ WHERE table_id = '{table_name}'
 
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         full_table_name = f'{database_name}.{schema_name}.{table_name}'
         table_name_delete = f'_delete_{table_name}'
@@ -390,7 +390,7 @@ WHERE table_id = '{table_name}'
         except Exception as err:
             database_name = self.config.get(self.DATABASE_CONFIG_KEY)
             schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-            table_name = self.config.get('table')
+            table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
             if self.attempted_create_table:
                 connection.execute([
@@ -424,7 +424,7 @@ WHERE table_id = '{table_name}'
 
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
