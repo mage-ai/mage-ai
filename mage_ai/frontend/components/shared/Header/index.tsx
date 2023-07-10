@@ -263,7 +263,7 @@ function Header({
                 <Button
                   borderLess
                   linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
+                    href: 'https://github.com/mage-ai/mage-ai/releases',
                   }}
                   noHoverUnderline
                   primary
