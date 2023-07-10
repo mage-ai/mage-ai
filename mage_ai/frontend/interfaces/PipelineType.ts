@@ -68,6 +68,13 @@ export interface PipelineExtensionsType {
   };
 }
 
+export interface PipelineRetryConfigType {
+  delay?: number;
+  exponential_backoff?: boolean;
+  max_delay?: number;
+  retries?: number;
+}
+
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
@@ -82,6 +89,7 @@ export default interface PipelineType {
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;
+  retry_config?: PipelineRetryConfigType;
   schedules?: PipelineScheduleType[];
   type?: PipelineTypeEnum;
   updated_at?: string;

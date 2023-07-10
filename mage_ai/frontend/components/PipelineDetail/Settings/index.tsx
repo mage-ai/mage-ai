@@ -16,6 +16,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import usePrevious from '@utils/usePrevious';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
@@ -27,6 +28,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
+import { isEqual } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 
 type PipelineSettingsProps = {
@@ -46,9 +48,25 @@ function PipelineSettings({
   const pipelineUUID = pipeline?.uuid;
   const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
 
+  const [pipelineAttributesTouched, setPipelineAttributesTouched] = useState<boolean>(false);
+
   const [editCustomExecutorType, setEditCustomExecutorType] = useState<boolean>(false);
-  const [executorType, setExecutorType] = useState(pipeline?.executor_type);
-  const [newPipelineName, setNewPipelineName] = useState(pipeline?.name || '');
+  const [pipelineAttributes, setPipelineAttributesState] = useState<PipelineType>(null);
+
+  const pipelinePrev = usePrevious(pipeline);
+  useEffect(() => {
+    if (!isEqual(pipeline, pipelinePrev)) {
+      setPipelineAttributesState(pipeline);
+    }
+  }, [
+    pipeline,
+    pipelinePrev,
+  ]);
+
+  const setPipelineAttributes = useCallback((handlePrevious) => {
+    setPipelineAttributesTouched(true);
+    setPipelineAttributesState(handlePrevious);
+  }, []);
 
   const localStorageHiddenBlocksKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS}_${pipelineUUID}`;
@@ -104,6 +122,7 @@ function PipelineSettings({
     setBlockOutputLogsState,
   ]);
 
+  const executorType = useMemo(() => pipelineAttributes?.executor_type, [pipelineAttributes]);
   useEffect(() => {
     if (!editCustomExecutorType
       && executorType
@@ -131,14 +150,17 @@ function PipelineSettings({
     <Spacing p={PADDING_UNITS}>
       <TextInput
         label="Pipeline name"
-        onChange={e => setNewPipelineName(e.target.value)}
+        onChange={e => setPipelineAttributes(prev => ({
+          ...prev,
+          name: e.target.value,
+        }))}
         primary
         required
         setContentOnMount
-        value={newPipelineName}
+        value={pipelineAttributes?.name || ''}
       />
 
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Headline>
           Executor type
         </Headline>
@@ -156,10 +178,10 @@ function PipelineSettings({
           {!editCustomExecutorType && (
             <Select
               label="Executor type"
-              onChange={e => setExecutorType(e.target.value)}
+              onChange={e => setPipelineAttributes(() => e.target.value)}
               primary
               ref={refExecutorTypeSelect}
-              value={executorType || ''}
+              value={pipelineAttributes?.executor_type || ''}
             >
               {EXECUTOR_TYPES.map(executorTypeOption => (
                 <option key={executorTypeOption} value={executorTypeOption}>
@@ -172,11 +194,13 @@ function PipelineSettings({
             <TextInput
               label="Executor type"
               monospace
-              onChange={e => setExecutorType(e.target.value)}
-              primary
+              onChange={e => setPipelineAttributes(prev => ({
+                ...prev,
+                executor_type: e.target.value,
+              }))}
               ref={refExecutorTypeTextInput}
               setContentOnMount
-              value={executorType || ''}
+              value={pipelineAttributes?.executor_type || ''}
             />
           )}
 
@@ -185,7 +209,11 @@ function PipelineSettings({
               muted
               onClick={() => {
                 if (editCustomExecutorType) {
-                  setExecutorType(null);
+                  setPipelineAttributes(prev => ({
+                    ...prev,
+                    executor_type: pipeline?.executor_type,
+                  }));
+
                   setTimeout(() => refExecutorTypeSelect?.current?.focus(), 1);
                 } else {
                   setTimeout(() => refExecutorTypeTextInput?.current?.focus(), 1);
@@ -205,14 +233,105 @@ function PipelineSettings({
       </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Retry configuration
+        </Headline>
+
+        <Text muted>
+          For more information on this setting, please read the <Link
+            href="https://docs.mage.ai/orchestration/pipeline-runs/retrying-block-runs"
+            openNewWindow
+          >
+            documentation
+          </Link>.
+        </Text>
+
+        <Spacing mt={1}>
+          <FlexContainer>
+            <TextInput
+              label="Retries"
+              monospace
+              onChange={e => setPipelineAttributes(prev => ({
+                ...prev,
+                retry_config: {
+                  ...prev?.retry_config,
+                  retries: typeof e.target.value !== 'undefined' && e.target.value !== null
+                    ? Number(e.target.value)
+                    : e.target.value,
+                },
+              }))}
+              setContentOnMount
+              type="number"
+              value={pipelineAttributes?.retry_config?.retries || ''}
+            />
+
+            <Spacing mr={1} />
+
+            <TextInput
+              label="Delay"
+              monospace
+              onChange={e => setPipelineAttributes(prev => ({
+                ...prev,
+                retry_config: {
+                  ...prev?.retry_config,
+                  delay: typeof e.target.value !== 'undefined' && e.target.value !== null
+                    ? Number(e.target.value)
+                    : e.target.value,
+                },
+              }))}
+              setContentOnMount
+              type="number"
+              value={pipelineAttributes?.retry_config?.delay || ''}
+            />
+
+            <Spacing mr={1} />
+
+            <TextInput
+              label="Max delay"
+              monospace
+              onChange={e => setPipelineAttributes(prev => ({
+                ...prev,
+                retry_config: {
+                  ...prev?.retry_config,
+                  max_delay: typeof e.target.value !== 'undefined' && e.target.value !== null
+                    ? Number(e.target.value)
+                    : e.target.value,
+                },
+              }))}
+              setContentOnMount
+              type="number"
+              value={pipelineAttributes?.retry_config?.max_delay || ''}
+            />
+
+            <Spacing mr={1} />
+
+            <Checkbox
+              checked={!!pipelineAttributes?.retry_config?.exponential_backoff}
+              label="Exponential backoff"
+              onClick={() => setPipelineAttributes(prev => ({
+                ...prev,
+                retry_config: {
+                  ...prev?.retry_config,
+                  exponential_backoff: !prev?.retry_config?.exponential_backoff,
+                },
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <FlexContainer>
           <Button
+            disabled={!pipelineAttributesTouched}
             loading={isPipelineUpdating}
             // @ts-ignore
             onClick={() => updatePipeline({
-              executor_type: executorType,
-              name: newPipelineName,
-            })}
+              executor_type: pipelineAttributes?.executor_type,
+              name: pipelineAttributes?.name,
+              retry_config: pipelineAttributes?.retry_config,
+              // @ts-ignore
+            }).then(() => setPipelineAttributesTouched(false))}
             primary
           >
             Save pipeline settings

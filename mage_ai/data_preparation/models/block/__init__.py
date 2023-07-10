@@ -1611,6 +1611,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 CallbackBlock.create(self.uuid)
             self.__update_pipeline_block()
 
+        if 'retry_config' in data and data['retry_config'] != self.retry_config:
+            self.retry_config = data['retry_config']
+            self.__update_pipeline_block()
+
         return self
 
     def update_callback_blocks(self, callback_blocks: List[Any]) -> None:

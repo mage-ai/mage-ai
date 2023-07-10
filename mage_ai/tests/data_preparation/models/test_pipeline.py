@@ -38,6 +38,7 @@ class PipelineTest(DBTestCase):
             name='test pipeline 2',
             notification_config=dict(),
             uuid='test_pipeline_2',
+            retry_config={},
             spark_config=dict(),
             type='python',
             blocks=[
@@ -176,6 +177,7 @@ class PipelineTest(DBTestCase):
             name='test pipeline 3',
             notification_config=dict(),
             uuid='test_pipeline_3',
+            retry_config={},
             spark_config=dict(),
             type='python',
             blocks=[
@@ -257,6 +259,7 @@ class PipelineTest(DBTestCase):
             name='test pipeline 4',
             notification_config=dict(),
             uuid='test_pipeline_4',
+            retry_config={},
             spark_config=dict(),
             type='python',
             blocks=[
@@ -360,6 +363,7 @@ class PipelineTest(DBTestCase):
             name='test pipeline 5',
             notification_config=dict(),
             uuid='test_pipeline_5',
+            retry_config={},
             spark_config=dict(),
             type='python',
             blocks=[
@@ -591,6 +595,7 @@ class PipelineTest(DBTestCase):
                     "extensions": {},
                     "name": "test_pipeline_9",
                     "notification_config": {},
+                    "retry_config": {},
                     "spark_config": {},
                     "type": "integration",
                     "updated_at": None,

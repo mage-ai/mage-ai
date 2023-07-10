@@ -48,16 +48,17 @@ class Pipeline:
         self.blocks_by_uuid = {}
         self.data_integration = None
         self.description = None
-        self.extensions = {}
-        self.executor_type = None
         self.executor_config = dict()
+        self.executor_type = None
+        self.extensions = {}
         self.name = None
         self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
+        self.retry_config = {}
         self.schedules = []
-        self.uuid = uuid
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
+        self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
         if config is None:
@@ -446,6 +447,7 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.executor_config = config.get('executor_config') or dict()
         self.notification_config = config.get('notification_config') or dict()
+        self.retry_config = config.get('retry_config') or {}
         self.spark_config = config.get('spark_config') or dict()
         self.widget_configs = config.get('widgets') or []
 
@@ -564,6 +566,7 @@ class Pipeline:
             executor_type=self.executor_type,
             name=self.name,
             notification_config=self.notification_config,
+            retry_config=self.retry_config,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
             uuid=self.uuid,
@@ -727,6 +730,7 @@ class Pipeline:
         db_connection.session.commit()
 
     async def update(self, data, update_content=False):
+        old_uuid = None
         should_update_block_cache = False
 
         if 'name' in data and self.name and data['name'] != self.name:
@@ -753,28 +757,6 @@ class Pipeline:
 
         should_save = False
 
-        if 'description' in data and data['description'] != self.description:
-            self.description = data['description']
-            should_save = True
-            should_update_block_cache = True
-
-        if 'type' in data and data['type'] != self.type:
-            """
-            Update kernel
-            """
-            self.type = data['type']
-            should_save = True
-            should_update_block_cache = True
-
-        if 'updated_at' in data and data['updated_at'] != self.updated_at:
-            self.updated_at = data['updated_at']
-            should_save = True
-            should_update_block_cache = True
-
-        if 'data_integration' in data:
-            self.data_integration = data['data_integration']
-            should_save = True
-
         if 'extensions' in data:
             for extension_uuid, extension in data['extensions'].items():
                 if extension_uuid not in self.extensions:
@@ -785,9 +767,24 @@ class Pipeline:
                 )
             should_save = True
 
-        if 'executor_type' in data:
-            self.executor_type = data.get('executor_type')
-            should_save = True
+        for key in [
+            'description',
+            'type',
+            'updated_at',
+        ]:
+            if key in data and data.get(key) != getattr(self, key):
+                setattr(self, key, data.get(key))
+                should_save = True
+                should_update_block_cache = True
+
+        for key in [
+            'data_integration',
+            'executor_type',
+            'retry_config',
+        ]:
+            if key in data:
+                setattr(self, key, data.get(key))
+                should_save = True
 
         blocks = data.get('blocks', [])
 
@@ -916,6 +913,8 @@ class Pipeline:
             cache = await BlockCache.initialize_cache()
 
             for block in self.blocks_by_uuid.values():
+                if old_uuid:
+                    cache.remove_pipeline(block, old_uuid)
                 cache.update_pipeline(block, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
