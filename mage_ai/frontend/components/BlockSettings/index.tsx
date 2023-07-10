@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockPipelineType, BlockRetryConfigType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockColorEnum,
+  BlockPipelineType,
+  BlockRetryConfigType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -15,6 +20,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   PADDING_UNITS,
@@ -26,12 +32,18 @@ import { useError } from '@context/Error';
 
 type BlockSettingsProps = {
   block: BlockType;
+  fetchFileTree: () => void;
+  fetchPipeline: () => void;
   pipeline: PipelineType;
+  setSelectedBlock: (block: BlockType) => void;
 };
 
 function BlockSettings({
   block,
+  fetchFileTree,
+  fetchPipeline,
   pipeline,
+  setSelectedBlock,
 }: BlockSettingsProps) {
   const refExecutorTypeSelect = useRef(null);
   const refExecutorTypeTextInput = useRef(null);
@@ -48,9 +60,16 @@ function BlockSettings({
     uuid: blockUUID,
   } = block;
 
-  const [blockAttributes, setBlockAttributesState] = useState<BlockType>(block);
+  const [blockAttributes, setBlockAttributesState] = useState<BlockType>(null);
   const [blockAttributesTouched, setBlockAttributesTouched] = useState<boolean>(false);
   const [editCustomExecutorType, setEditCustomExecutorType] = useState<boolean>(false);
+
+  const blockPrev = usePrevious(block);
+  useEffect(() => {
+    if (blockPrev?.uuid !== block?.uuid) {
+      setBlockAttributesState(block);
+    }
+  }, [block, blockPrev]);
 
   const blockRetryConfig: BlockRetryConfigType = useMemo(() => blockAttributes?.retry_config || {}, [blockAttributes]);
   const setBlockAttributes = useCallback((handlePrevious) => {
@@ -95,8 +114,16 @@ function BlockSettings({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: (resp) => {
             setBlockAttributesTouched(false);
+
+            fetchFileTree();
+            fetchPipeline();
+
+            // Select the newly renamed block
+            if (resp?.block) {
+              setSelectedBlock(resp?.block);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -179,6 +206,41 @@ function BlockSettings({
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <TextInput
+              label="Name"
+              // @ts-ignore
+              onChange={e => setBlockAttributes(prev => ({
+                ...prev,
+                name: e.target.value,
+              }))}
+              primary
+              setContentOnMount
+              value={blockAttributes?.name || ''}
+            />
+
+            {BlockTypeEnum.CUSTOM === block?.type && (
+              <Spacing mt={PADDING_UNITS}>
+                <Select
+                  label="Color"
+                  // @ts-ignore
+                  onChange={e => setBlockAttributes(prev => ({
+                    ...prev,
+                    color: e.target.value,
+                  }))}
+                  primary
+                  value={blockAttributes?.color || ''}
+                >
+                  {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
+                    <option key={color} value={color}>
+                      {color}
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
+            )}
+          </Spacing>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
             <Headline>
               Executor type
             </Headline>
@@ -221,6 +283,7 @@ function BlockSettings({
                     ...prev,
                     executor_type: e.target.value,
                   }))}
+                  primary
                   ref={refExecutorTypeTextInput}
                   setContentOnMount
                   value={blockAttributes?.executor_type || ''}
@@ -260,7 +323,6 @@ function BlockSettings({
               Retry configuration
             </Headline>
 
-
             <Text muted>
               {isUsingPipelineRetryConfig && (
                 <>
@@ -293,6 +355,7 @@ function BlockSettings({
                           : null,
                     },
                   }))}
+                  primary
                   required={typeof pipelineRetryConfig?.retries === 'undefined'}
                   setContentOnMount
                   type="number"
@@ -318,6 +381,7 @@ function BlockSettings({
                           : null,
                     },
                   }))}
+                  primary
                   required={typeof pipelineRetryConfig?.delay === 'undefined'}
                   setContentOnMount
                   type="number"
@@ -343,6 +407,7 @@ function BlockSettings({
                           : null,
                     },
                   }))}
+                  primary
                   required={typeof pipelineRetryConfig?.max_delay === 'undefined'}
                   setContentOnMount
                   type="number"
@@ -382,7 +447,9 @@ function BlockSettings({
             // @ts-ignore
             onClick={() => updateBlock({
               block: {
+                color: blockAttributes?.color,
                 executor_type: blockAttributes?.executor_type,
+                name: blockAttributes?.name,
                 retry_config: blockRetryConfig,
               },
             })}

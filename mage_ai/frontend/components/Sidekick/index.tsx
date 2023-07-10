@@ -438,11 +438,17 @@ function Sidekick({
   const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
       block={selectedBlock}
+      fetchFileTree={fetchFileTree}
+      fetchPipeline={fetchPipeline}
       pipeline={pipeline}
+      setSelectedBlock={setSelectedBlock}
     />
   ), [
+    fetchFileTree,
+    fetchPipeline,
     pipeline,
     selectedBlock,
+    setSelectedBlock,
   ]);
 
   return (

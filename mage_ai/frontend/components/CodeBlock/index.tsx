@@ -189,6 +189,7 @@ type CodeBlockProps = {
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedBlock?: (block: BlockType) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -237,6 +238,7 @@ function CodeBlock({
   setErrors,
   setOutputBlocks,
   setSelected,
+  setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
   textareaFocused,
@@ -626,12 +628,17 @@ function CodeBlock({
         setErrorMessages(messages);
       },
       onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
+        response,
+        {
+          callback: (resp) => {
             setIsEditingBlockName(false);
             fetchPipeline();
             fetchFileTree();
             setContent(content);
+            // Select the newly renamed block
+            if (resp?.block) {
+              setSelectedBlock(resp?.block);
+            }
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
