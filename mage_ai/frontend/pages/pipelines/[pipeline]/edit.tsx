@@ -288,22 +288,28 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      extension?: string;
     },
   ) => {
     const newQuery: {
       [VIEW_QUERY_PARAM]: ViewKeyEnum;
       addon?: string;
       block_uuid?: string;
+      extension?: string;
     } = {
       [VIEW_QUERY_PARAM]: newView,
     };
+
+    if (opts?.addon) {
+      newQuery.addon = opts?.addon;
+    }
 
     if (opts?.blockUUID) {
       newQuery.block_uuid = opts?.blockUUID;
     }
 
-    if (opts?.addon) {
-      newQuery.addon = opts?.addon;
+    if (opts?.extension) {
+      newQuery.extension = opts?.extension;
     }
 
     goToWithQuery(newQuery, {
@@ -330,6 +336,8 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      // http://localhost:3000/pipelines/delicate_field/edit?addon=conditionals&sideview=power_ups&extension=great_expectations
+      extension?: string;
     },
   ) => {
     setAfterHidden(false);

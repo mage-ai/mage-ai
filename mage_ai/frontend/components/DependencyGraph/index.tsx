@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
+import BlockNode from './BlockNode';
 import BlockType, {
   BLOCK_TYPES_WITH_NO_PARENTS,
   BlockLanguageEnum,
@@ -43,6 +44,7 @@ import {
   WIDTH_OF_SINGLE_CHARACTER_SMALL,
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
+import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
 import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
@@ -107,6 +109,7 @@ export type DependencyGraphProps = {
       runtime?: number,
     };
   };
+  blocks?: BlockType[];
   disabled?: boolean;
   editingBlock?: {
     upstreamBlocks: {
@@ -143,6 +146,7 @@ export type DependencyGraphProps = {
 function DependencyGraph({
   blockRefs,
   blockStatus,
+  blocks: allBlocksProp,
   disabled: disabledProp,
   editingBlock,
   enablePorts = false,
@@ -185,8 +189,8 @@ function DependencyGraph({
   }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type)) || [], [
     pipeline?.blocks,
   ]);
-  const dynamicUpstreamBlocksData =
-    indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
+  // const dynamicUpstreamBlocksData =
+  //   indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
 
   const blocks = useMemo(() => {
     const arr = blocksInit;
@@ -202,7 +206,116 @@ function DependencyGraph({
     showDynamicBlocks,
   ]);
 
-  const blockUUIDMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
+  const allBlocks = useMemo(() => {
+    const arr = [];
+
+    if (allBlocksProp) {
+      return allBlocksProp;
+    } else if (pipeline) {
+      const mapping = {};
+      const arr2 = [];
+
+      arr2.push(...pipeline?.blocks);
+      arr2.push(...pipeline?.callbacks);
+      arr2.push(...pipeline?.conditionals);
+
+      Object.values(pipeline?.extensions).forEach(({ blocks }) => {
+        arr2.push(...blocks);
+      });
+
+      return arr2.reduce((acc, b) => {
+        if (!mapping[b.uuid]) {
+          acc.push(b);
+        }
+
+        return acc;
+      }, []);
+    }
+
+    return arr;
+  }, [
+    allBlocksProp,
+    pipeline,
+  ]);
+  const blockUUIDMapping = useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
+
+  const callbackBlocksByBlockUUID = useMemo(() => {
+    const mapping = {};
+
+    blocks?.map((block) => {
+      mapping[block.uuid] = block?.callback_blocks?.reduce((acc, uuid) => {
+        const b = blockUUIDMapping?.[uuid];
+        if (b) {
+          return acc.concat(b);
+        }
+
+        return acc;
+      }, []);
+    });
+
+    return mapping;
+  }, [
+    blocks,
+    blockUUIDMapping,
+  ]);
+
+  const conditionalBlocksByBlockUUID = useMemo(() => {
+    const mapping = {};
+
+    blocks?.map((block) => {
+      mapping[block.uuid] = block?.conditional_blocks?.reduce((acc, uuid) => {
+        const b = blockUUIDMapping?.[uuid];
+        if (b) {
+          return acc.concat(b);
+        }
+
+        return acc;
+      }, []);
+    });
+
+    return mapping;
+  }, [
+    blocks,
+    blockUUIDMapping,
+  ]);
+
+  const extensionBlocksByBlockUUID = useMemo(() => {
+    const mapping = {};
+
+    blocks?.map((block) => {
+      const arr = [];
+
+      Object.entries(pipeline?.extensions || {})?.forEach(([
+        extensionUUID,
+        {
+          blocks: blocksForExtension,
+        },
+      ]) => {
+        blocksForExtension?.forEach(({
+          upstream_blocks: upstreamBlocks,
+          uuid: blockUUID,
+        }) => {
+          if (upstreamBlocks?.includes(block?.uuid)) {
+            const b = blockUUIDMapping?.[blockUUID];
+            if (b) {
+              arr.push({
+                ...b,
+                extension_uuid: extensionUUID,
+              });
+            }
+          }
+        });
+      });
+
+      mapping[block.uuid] = arr;
+    });
+
+    return mapping;
+  }, [
+    blocks,
+    blockUUIDMapping,
+    pipeline,
+  ]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
@@ -455,17 +568,33 @@ function DependencyGraph({
         }
       });
 
+      const callbackBlocks = callbackBlocksByBlockUUID?.[block?.uuid];
+      const conditionalBlocks = conditionalBlocksByBlockUUID?.[block?.uuid];
+      const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
+
       nodesInner.push({
         data: {
           block,
         },
-        height: nodeHeight,
+        // height: nodeHeight,
+        height: getBlockNodeHeight(block, pipeline, {
+          blockStatus,
+          callbackBlocks,
+          conditionalBlocks,
+          extensionBlocks,
+        }),
         id: uuid,
         ports,
-        width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
-          + (disabledProp ? 0 : UNIT * 5)
-          + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
-          + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
+        // width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
+        //   + (disabledProp ? 0 : UNIT * 5)
+        //   + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
+        //   + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
+        width: getBlockNodeWidth(block, pipeline, {
+          blockStatus,
+          callbackBlocks,
+          conditionalBlocks,
+          extensionBlocks,
+        }),
       });
 
     });
@@ -475,12 +604,16 @@ function DependencyGraph({
       nodes: nodesInner,
     };
   }, [
-    blockEditing?.uuid,
+    // blockEditing?.uuid,
     blockStatus,
     blocks,
-    disabledProp,
+    callbackBlocksByBlockUUID,
+    conditionalBlocksByBlockUUID,
+    // disabledProp,
     displayTextForBlock,
     downstreamBlocksMapping,
+    extensionBlocksByBlockUUID,
+    pipeline,
   ]);
 
   const getBlockStatus = useCallback((block: BlockType) => {
@@ -491,6 +624,7 @@ function DependencyGraph({
         status,
         runtime,
       } = blockStatus[getBlockRunBlockUUID(block)] || {};
+
       return {
         hasFailed: RunStatus.FAILED === status,
         isCancelled: RunStatus.CANCELLED === status,
@@ -768,7 +902,24 @@ function DependencyGraph({
                     x={0}
                     y={0}
                   >
-                    <GraphNode
+                    <BlockNode
+                      block={block}
+                      callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
+                      conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
+                      disabled={blockEditing?.uuid === block.uuid}
+                      extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
+                      height={nodeHeight}
+                      hideStatus={disabledProp || noStatus}
+                      key={block.uuid}
+                      pipeline={pipeline}
+                      selected={blockEditing
+                        ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
+                      {...blockStatus}
+                    />
+
+                    {/*<GraphNode
                       block={block}
                       bodyText={`${displayText}${blockEditing?.uuid === block.uuid ? ' (editing)' : ''}`}
                       disabled={blockEditing?.uuid === block.uuid}
@@ -782,7 +933,8 @@ function DependencyGraph({
                       }
                       subtitle={subtitle}
                       {...blockStatus}
-                    />
+                    />*/}
+
                   </foreignObject>
                 );
               }}
