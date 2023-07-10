@@ -3,11 +3,11 @@ import datetime
 import json
 import os
 import shutil
-from jinja2 import Template
 from typing import Callable, Dict, List
 
 import aiofiles
 import yaml
+from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
@@ -218,7 +218,20 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    async def load_metadata(self, uuid, repo_path: str = None) -> Dict:
+    async def load_metadata(
+        self,
+        uuid: str,
+        repo_path: str = None,
+        raise_exception: bool = True,
+    ) -> Dict:
+        """Load pipeline metadata dictionary.
+
+        Args:
+            uuid (str): Pipeline uuid.
+            repo_path (str, optional): The project path.
+            raise_exception (bool, optional): Whether to raise Exception.
+                If raise_exception = False, return None as the config when exception happens.
+        """
         repo_path = repo_path or get_repo_path()
         config_path = os.path.join(
             repo_path,
@@ -227,12 +240,17 @@ class Pipeline:
             PIPELINE_CONFIG_FILE,
         )
 
-        if not os.path.exists(config_path):
-            raise Exception(f'Pipeline {uuid} does not exist.')
+        try:
+            if not os.path.exists(config_path):
+                raise Exception(f'Pipeline {uuid} does not exist.')
 
-        config = None
-        async with aiofiles.open(config_path, mode='r') as f:
-            config = yaml.safe_load(await f.read()) or {}
+            config = None
+            async with aiofiles.open(config_path, mode='r') as f:
+                config = yaml.safe_load(await f.read()) or {}
+        except Exception as e:
+            if raise_exception:
+                raise e
+            config = None
 
         return config
 
