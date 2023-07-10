@@ -65,6 +65,7 @@
         },
         "guides/data-integration-pipeline",
         "tutorials/setup-dbt",
+        "tutorials/examples",
         {
           "group": "Machine learning pipeline",
           "pages": [
@@ -560,4 +561,3 @@
     }
   }
 }
-
