@@ -128,7 +128,7 @@ function BlockExtras({
           <Flex flexDirection="column">
             <Spacing px={1}>
               <Text bold muted>
-                Callbacks
+                Extensions
               </Text>
             </Spacing>
             <BlockExtraRow

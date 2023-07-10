@@ -22,9 +22,13 @@ const HEADER_HEIGHT = (UNIT * 2) + (UNIT * 5);
 // Padding horizontal, icon height, margin between icon and text
 const HEADER_WIDTH = (UNIT * 2) + (UNIT * 5) + (UNIT * 2);
 
-const BADGE_HEIGHT = 22;
-const MAX_WIDTH = UNIT * 40;
+const BADGE_HEIGHT = 18.5;
+const MAX_WIDTH = UNIT * 30;
 const TAG_HEIGHT = 18;
+// Padding left and right is 2px each
+const BADGE_PADDING_TOTAL = 2 * 2;
+const BADGE_SPACING_HORIZONTAL = 4;
+const BADGE_SPACING_VERTICAL = 4;
 
 export function blockTagsText(block: BlockType): string {
   const tags = buildTags(block);
@@ -95,6 +99,20 @@ export function getBlockHeaderSubtitle(block: BlockType, pipeline: PipelineType)
   return subtitle || '';
 }
 
+export function getWidthOfBadgeBlocks(blocks: BlockType[]): number {
+  let width = 0;
+
+  blocks?.forEach(({ uuid }: BlockType, idx: number) => {
+    width += BADGE_PADDING_TOTAL + (uuid.length * WIDTH_OF_SMALL_CHARACTER);
+
+    if (idx >= 1) {
+      width += BADGE_SPACING_HORIZONTAL;
+    }
+  });
+
+  return width;
+}
+
 export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opts: {
   callbackBlocks: BlockType;
   conditionalBlocks: BlockType;
@@ -105,7 +123,7 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
   // Body padding top
   let height = NODE_HEIGHT + HEADER_HEIGHT;
 
-  const width = getBlockNodeWidth(block, pipeline);
+  const width = getBlockNodeWidth(block, pipeline, opts);
   const widthWithoutPadding = width - (NODE_WIDTH + (UNIT * 2));
 
   const tagsText = blockTagsText(block);
@@ -126,20 +144,21 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
     extensionBlocks,
   } = opts || {};
 
-  if (callbackBlocks?.length >= 1) {
-    spacingBetweenRowsCount += 1;
-    height += BADGE_HEIGHT;
-  }
-
-  if (conditionalBlocks?.length >= 1) {
-    spacingBetweenRowsCount += 1;
-    height += BADGE_HEIGHT;
-  }
-
-  if (extensionBlocks?.length >= 1) {
-    spacingBetweenRowsCount += 1;
-    height += BADGE_HEIGHT;
-  }
+  [
+    callbackBlocks,
+    conditionalBlocks,
+    extensionBlocks,
+  ].forEach((blocks: BlockType[]) => {
+    if (blocks?.length >= 1) {
+      const blocksWidth = getWidthOfBadgeBlocks(blocks);
+      let lines = 1;
+      if (blocksWidth > widthWithoutPadding) {
+        lines = Math.ceil(blocksWidth / widthWithoutPadding);
+      }
+      spacingBetweenRowsCount += 1;
+      height += (BADGE_HEIGHT * lines) + (BADGE_SPACING_VERTICAL * (lines - 1));
+    }
+  });
 
   // Spacing between last row and bottom of node
   spacingBetweenRowsCount += 1;
@@ -149,7 +168,11 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
   return height;
 }
 
-export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType): number {
+export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType, opts: {
+  callbackBlocks: BlockType;
+  conditionalBlocks: BlockType;
+  extensionBlocks: BlockType;
+}): number {
   let longestTextLength = Math.max(
     getBlockHeaderText(block, pipeline)?.length * WIDTH_OF_HEADER_TEXT_CHARACTER,
     getBlockHeaderSubtitle(block, pipeline)?.length * WIDTH_OF_SMALL_CHARACTER,
@@ -158,8 +181,20 @@ export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType): num
   const tagsText = blockTagsText(block);
   const tagsTextWidth = tagsText?.length * WIDTH_OF_SMALL_CHARACTER;
 
-  if (tagsTextWidth > longestTextLength) {
-    longestTextLength = Math.min(MAX_WIDTH, tagsTextWidth);
+  const {
+    callbackBlocks,
+    conditionalBlocks,
+    extensionBlocks,
+  } = opts || {};
+
+  const textWidth = Math.max(...[
+    callbackBlocks,
+    conditionalBlocks,
+    extensionBlocks,
+  ].map((blocks: BlockType[]) => getWidthOfBadgeBlocks(blocks)).concat(tagsTextWidth));
+
+  if (textWidth > longestTextLength) {
+    longestTextLength = Math.min(MAX_WIDTH, textWidth);
   }
 
   // width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)

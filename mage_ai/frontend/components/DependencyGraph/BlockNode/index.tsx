@@ -99,7 +99,7 @@ function BlockNode({
 
       <BodyStyle>
         {tags?.length >= 1 && (
-          <Spacing my={1}>
+          <Spacing mt={1}>
             <Text default monospace small>
               {blockTagsText(block)}
             </Text>
@@ -114,38 +114,37 @@ function BlockNode({
         ].map((blocks, idx) => {
           if (blocks?.length >= 1) {
             return (
-              <Spacing key={`badge-blocks-${idx}`} my={1}>
-                <FlexContainer alignItems="center">
+              <div key={`badge-blocks-${idx}`} style={{ marginTop: 4 }}>
+                <FlexContainer alignItems="center" flexWrap="wrap">
                   {blocks.reduce((acc, b, idx) => {
                     if (idx >= 1) {
                       acc.push(
-                        <div key={`space-${b.uuid}`}>
-                          &nbsp;
-                        </div>,
+                        <div key={`space-${b.uuid}`} style={{ width: 4 }} />,
                       );
                     }
 
                     acc.push(
-                      <Badge
-                        color={getColorsForBlockType(
-                          b.type,
-                          {
-                            blockColor: b.color,
-                            theme: themeContext,
-                          },
-                        ).accentLight}
-                        key={`badge-${b.uuid}`}
-                        monospace
-                        small
-                      >
-                        {b.uuid}
-                      </Badge>,
+                      <div key={`badge-${b.uuid}`} style={{ marginTop: 4 }}>
+                        <Badge
+                          color={getColorsForBlockType(
+                            b.type,
+                            {
+                              blockColor: b.color,
+                              theme: themeContext,
+                            },
+                          ).accentLight}
+                          monospace
+                          small
+                        >
+                          {b.uuid}
+                        </Badge>
+                      </div>,
                     );
 
                     return acc;
                   }, [])}
                 </FlexContainer>
-              </Spacing>
+              </div>
             );
           }
 
