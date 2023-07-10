@@ -13,6 +13,7 @@ class PipelinePresenter(BasePresenter):
         'executor_type',
         'name',
         'notification_config',
+        'retry_config',
         'spark_config',
         'type',
         'updated_at',

@@ -62,13 +62,13 @@ function PipelineSettings({
       title={({ name }) => `${name} settings`}
       uuid={`${PageNameEnum.SETTINGS}_${pipelineUUID}`}
     >
-      {data && (
+      {pipeline && (
         <Settings
           isPipelineUpdating={isPipelineUpdating}
           pipeline={pipeline}
           // @ts-ignore
-          updatePipeline={(data: PipelineType) => updatePipeline({
-            pipeline: data,
+          updatePipeline={(pipelineAttributes: PipelineType) => updatePipeline({
+            pipeline: pipelineAttributes,
           })}
         />
       )}

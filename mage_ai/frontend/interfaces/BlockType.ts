@@ -181,6 +181,13 @@ export interface BlockPipelineType {
   updated_at: string;
 }
 
+export interface BlockRetryConfigType {
+  delay?: number;
+  exponential_backoff?: boolean;
+  max_delay?: number;
+  retries?: number;
+}
+
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
@@ -223,6 +230,7 @@ export default interface BlockType {
   };
   priority?: number;
   replicated_block?: string;
+  retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   type?: BlockTypeEnum;

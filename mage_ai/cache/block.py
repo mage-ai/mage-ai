@@ -63,14 +63,14 @@ class BlockCache(BaseCache):
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
 
-    def remove_pipeline(self, block, pipeline) -> None:
+    def remove_pipeline(self, block, pipeline_uuid: str) -> None:
         mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
         if mapping is None:
             mapping = {}
 
         key = self.build_key(block)
         pipelines_dict = mapping.get(key, {})
-        pipelines_dict.pop(pipeline.uuid, None)
+        pipelines_dict.pop(pipeline_uuid, None)
         mapping[key] = pipelines_dict
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
