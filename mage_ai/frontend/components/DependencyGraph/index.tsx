@@ -146,7 +146,7 @@ export type DependencyGraphProps = {
 function DependencyGraph({
   blockRefs,
   blockStatus,
-  blocks: allBlocks,
+  blocks: allBlocksProp,
   disabled: disabledProp,
   editingBlock,
   enablePorts = false,
@@ -189,8 +189,8 @@ function DependencyGraph({
   }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type)) || [], [
     pipeline?.blocks,
   ]);
-  const dynamicUpstreamBlocksData =
-    indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
+  // const dynamicUpstreamBlocksData =
+  //   indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
 
   const blocks = useMemo(() => {
     const arr = blocksInit;
@@ -206,7 +206,38 @@ function DependencyGraph({
     showDynamicBlocks,
   ]);
 
-  const blockUUIDMapping = useMemo(() => indexBy(allBlocks, ({ uuid }) => uuid), [allBlocks]);
+  const allBlocks = useMemo(() => {
+    const arr = [];
+
+    if (allBlocksProp) {
+      return allBlocksProp;
+    } else if (pipeline) {
+      const mapping = {};
+      const arr2 = [];
+
+      arr2.push(...pipeline?.blocks);
+      arr2.push(...pipeline?.callbacks);
+      arr2.push(...pipeline?.conditionals);
+
+      Object.values(pipeline?.extensions).forEach(({ blocks }) => {
+        arr2.push(...blocks);
+      });
+
+      return arr2.reduce((acc, b) => {
+        if (!mapping[b.uuid]) {
+          acc.push(b);
+        }
+
+        return acc;
+      }, []);
+    }
+
+    return arr;
+  }, [
+    allBlocksProp,
+    pipeline,
+  ]);
+  const blockUUIDMapping = useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
 
   const callbackBlocksByBlockUUID = useMemo(() => {
     const mapping = {};
@@ -547,6 +578,7 @@ function DependencyGraph({
         },
         // height: nodeHeight,
         height: getBlockNodeHeight(block, pipeline, {
+          blockStatus,
           callbackBlocks,
           conditionalBlocks,
           extensionBlocks,
@@ -558,6 +590,7 @@ function DependencyGraph({
         //   + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
         //   + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
         width: getBlockNodeWidth(block, pipeline, {
+          blockStatus,
           callbackBlocks,
           conditionalBlocks,
           extensionBlocks,
@@ -571,12 +604,12 @@ function DependencyGraph({
       nodes: nodesInner,
     };
   }, [
-    blockEditing?.uuid,
+    // blockEditing?.uuid,
     blockStatus,
     blocks,
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
-    disabledProp,
+    // disabledProp,
     displayTextForBlock,
     downstreamBlocksMapping,
     extensionBlocksByBlockUUID,
@@ -591,6 +624,7 @@ function DependencyGraph({
         status,
         runtime,
       } = blockStatus[getBlockRunBlockUUID(block)] || {};
+
       return {
         hasFailed: RunStatus.FAILED === status,
         isCancelled: RunStatus.CANCELLED === status,
@@ -872,9 +906,17 @@ function DependencyGraph({
                       block={block}
                       callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
                       conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
+                      disabled={blockEditing?.uuid === block.uuid}
                       extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
                       height={nodeHeight}
+                      hideStatus={disabledProp || noStatus}
+                      key={block.uuid}
                       pipeline={pipeline}
+                      selected={blockEditing
+                        ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
+                      {...blockStatus}
                     />
 
                     {/*<GraphNode

@@ -6,7 +6,11 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const NodeStyle = styled.div<{
   borderColor?: string;
+  disabled?: boolean;
   height?: number;
+  isCancelled: boolean;
+  isConditionFailed: boolean;
+  selected?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   border: 1px solid transparent;
@@ -21,9 +25,42 @@ export const NodeStyle = styled.div<{
     border-color: ${props.borderColor};
   `}
 
+  ${props => props.selected && `
+    border-color: ${(props.theme.content || dark.content).active};
+  `}
+
+  ${props => (props.isCancelled || props.disabled) && `
+    // opacity doesn’t work on Safari
+    border-color: ${(props.theme.content || dark.content).muted};
+    border-style: dotted;
+    cursor: not-allowed;
+    opacity: 0.5;
+  `}
+
+  ${props => props.isConditionFailed && `
+    background-color: ${(props.theme.content || dark.content).disabled};
+    cursor: not-allowed;
+  `}
+
+  ${props => props.isConditionFailed && `
+    background-color: ${(props.theme.content || dark.content).disabled};
+    cursor: not-allowed;
+  `}
+
+  ${props => props.disabled && `
+    &:hover {
+      cursor: not-allowed;
+    }
+  `}
+
   ${props => props.height && `
     height: ${props.height}px;
   `}
+`;
+
+export const StatusStyle = styled.div`
+  height: ${UNIT * 2}px;
+  width: ${UNIT * 2}px;
 `;
 
 export const IconStyle = styled.div<{
@@ -61,6 +98,15 @@ export const BodyStyle = styled.div`
   padding-right: ${UNIT * 1}px;
 `;
 
-export const BadgeStyle = styled.div`
-  margin: ${UNIT * 0.5}px;
+export const RuntimeStyle = styled.div<{
+  backgroundColor?:string;
+}>`
+  margin-right: ${2 * UNIT}px;
+  padding: 12px 4px;
+
+  height: 100%;
+  width: 50px;
+
+  background: rgba(0, 0, 0, 0.2);
+  background-blend-mode: soft-light;
 `;

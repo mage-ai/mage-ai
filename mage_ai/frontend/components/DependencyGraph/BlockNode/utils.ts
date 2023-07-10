@@ -1,16 +1,21 @@
 import BlockType, {
+  ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPE_NAME_MAPPING,
   BlockLanguageEnum,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { parse } from 'yaml';
 
+export const HEADER_SPACING_HORIZONTAL_UNITS = PADDING_UNITS;
+const HEADER_SPACING_HORIZONTAL = PADDING_UNITS * UNIT;
+export const STATUS_SIZE = UNIT * 2;
+
 const WIDTH_OF_HEADER_TEXT_CHARACTER = 8.62;
-const WIDTH_OF_SMALL_CHARACTER = 7.39;
+const WIDTH_OF_SMALL_CHARACTER = 7.43;
 
 // Border vertical
 const NODE_HEIGHT = 2;
@@ -19,8 +24,12 @@ const NODE_WIDTH = 2;
 
 // Padding vertical, icon height
 const HEADER_HEIGHT = (UNIT * 2) + (UNIT * 5);
-// Padding horizontal, icon height, margin between icon and text
-const HEADER_WIDTH = (UNIT * 2) + (UNIT * 5) + (UNIT * 2);
+// Padding horizontal, icon width, margin between icon and text, margin between text and status, status size
+const HEADER_WIDTH = (UNIT * 2)
+  + (UNIT * 5)
+  + HEADER_SPACING_HORIZONTAL
+  + HEADER_SPACING_HORIZONTAL
+  + STATUS_SIZE;
 
 const BADGE_HEIGHT = 18.5;
 const MAX_WIDTH = UNIT * 30;
@@ -33,7 +42,11 @@ const BADGE_SPACING_VERTICAL = 4;
 export function blockTagsText(block: BlockType): string {
   const tags = buildTags(block);
 
-  return tags?.map(({ title }) => title).join(', ') || '';
+  if (tags?.length >= 1) {
+    return tags?.map(({ title }) => title).join(', ') || '';
+  }
+
+  return ABBREV_BLOCK_LANGUAGE_MAPPING[block?.language] || '';
 }
 
 export function displayTextForBlock(block: BlockType, pipeline: BlockType): {
@@ -114,6 +127,9 @@ export function getWidthOfBadgeBlocks(blocks: BlockType[]): number {
 }
 
 export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opts: {
+  blockStatus: {
+    runtime: number;
+  };
   callbackBlocks: BlockType;
   conditionalBlocks: BlockType;
   extensionBlocks: BlockType;
@@ -139,6 +155,7 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
   }
 
   const {
+    blockStatus,
     callbackBlocks,
     conditionalBlocks,
     extensionBlocks,
@@ -160,6 +177,11 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
     }
   });
 
+  if (typeof blockStatus?.[block.uuid]?.runtime !== 'undefined') {
+    height += TAG_HEIGHT;
+    spacingBetweenRowsCount += 1;
+  }
+
   // Spacing between last row and bottom of node
   spacingBetweenRowsCount += 1;
 
@@ -169,6 +191,9 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
 }
 
 export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType, opts: {
+  blockStatus: {
+    runtime: number;
+  };
   callbackBlocks: BlockType;
   conditionalBlocks: BlockType;
   extensionBlocks: BlockType;
@@ -196,11 +221,5 @@ export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType, opts
   if (textWidth > longestTextLength) {
     longestTextLength = Math.min(MAX_WIDTH, textWidth);
   }
-
-  // width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
-  //         + (disabledProp ? 0 : UNIT * 5)
-  //         + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
-  //         + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
-
   return NODE_WIDTH + HEADER_WIDTH + longestTextLength;
 }
