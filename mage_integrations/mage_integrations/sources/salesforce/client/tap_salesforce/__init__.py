@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
-import os
 import sys
-parts = os.path.dirname(__file__).split('/')
-sys.path.append('/'.join(parts[:-1]))
-
-from mage_integrations.sources.messages import write_schema
-from singer import metadata, metrics
-from tap_salesforce.salesforce import Salesforce, field_to_property_schema
-from tap_salesforce.salesforce.bulk import Bulk
-from tap_salesforce.salesforce.exceptions import (
-    TapSalesforceException, TapSalesforceQuotaExceededException, TapSalesforceBulkAPIDisabledException)
-from tap_salesforce.sync import (sync_stream, resume_syncing_bulk_query, get_stream_version)
 from typing import List
-import json
+
 import singer
 import singer.utils as singer_utils
-import sys
-import tap_salesforce.salesforce
+from singer import metadata, metrics
+
+from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.salesforce.client.tap_salesforce import salesforce
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce import (
+    Salesforce,
+)
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.bulk import (
+    Bulk,
+)
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.exceptions import (
+    TapSalesforceBulkAPIDisabledException,
+    TapSalesforceException,
+    TapSalesforceQuotaExceededException,
+)
+from mage_integrations.sources.salesforce.client.tap_salesforce.sync import (
+    get_stream_version,
+    resume_syncing_bulk_query,
+    sync_stream,
+)
 
 LOGGER = singer.get_logger()
 
@@ -44,6 +51,7 @@ FORCED_FULL_TABLE = {
     'ReportEvent',
 }
 
+
 def get_replication_key(sobject_name, fields):
     if sobject_name in FORCED_FULL_TABLE:
         return None
@@ -60,8 +68,10 @@ def get_replication_key(sobject_name, fields):
         return 'LoginTime'
     return None
 
+
 def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
+
 
 def build_state(raw_state, catalog):
     state = {}
@@ -69,7 +79,7 @@ def build_state(raw_state, catalog):
     for catalog_entry in catalog['streams']:
         tap_stream_id = catalog_entry['tap_stream_id']
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-        replication_method = catalog_entry['replication_method']
+        replication_method = catalog_metadata.get((), {}).get('replication-method')
 
         version = singer.get_bookmark(raw_state,
                                       tap_stream_id,
@@ -79,14 +89,15 @@ def build_state(raw_state, catalog):
         if singer.get_bookmark(raw_state, tap_stream_id, 'JobID'):
             job_id = singer.get_bookmark(raw_state, tap_stream_id, 'JobID')
             batches = singer.get_bookmark(raw_state, tap_stream_id, 'BatchIDs')
-            current_bookmark = singer.get_bookmark(raw_state, tap_stream_id, 'JobHighestBookmarkSeen')
+            current_bookmark = singer.get_bookmark(raw_state, tap_stream_id,
+                                                   'JobHighestBookmarkSeen')
             state = singer.write_bookmark(state, tap_stream_id, 'JobID', job_id)
             state = singer.write_bookmark(state, tap_stream_id, 'BatchIDs', batches)
-            state = singer.write_bookmark(state, tap_stream_id, 'JobHighestBookmarkSeen', current_bookmark)
+            state = singer.write_bookmark(state, tap_stream_id, 'JobHighestBookmarkSeen',
+                                          current_bookmark)
 
         if replication_method == 'INCREMENTAL':
-            bookmark_properties = catalog_entry.get('bookmark_properties', [])
-            replication_key = bookmark_properties[0] if len(bookmark_properties) else None
+            replication_key = catalog_metadata.get((), {}).get('replication-key')
             replication_key_value = singer.get_bookmark(raw_state,
                                                         tap_stream_id,
                                                         replication_key)
@@ -101,6 +112,7 @@ def build_state(raw_state, catalog):
 
     return state
 
+
 # pylint: disable=undefined-variable
 def create_property_schema(field, mdata):
     field_name = field['name']
@@ -112,7 +124,7 @@ def create_property_schema(field, mdata):
         mdata = metadata.write(
             mdata, ('properties', field_name), 'inclusion', 'available')
 
-    property_schema, mdata = field_to_property_schema(field, mdata)
+    property_schema, mdata = salesforce.field_to_property_schema(field, mdata)
 
     return (property_schema, mdata)
 
@@ -120,14 +132,14 @@ def create_property_schema(field, mdata):
 def discover_objects(sf, streams: List[str] = None) -> List[str]:
     global_description = sf.describe()
 
-    return list({o['name'] for o in global_description['sobjects'] if not streams or o['name'] in streams})
+    return list({o['name'] for o in global_description['sobjects'] if not streams or o['name'] in streams}) # noqa
 
 
 # pylint: disable=too-many-branches,too-many-statements
-def do_discover(sf, streams: List[str] = [], logger=LOGGER):
+def do_discover(sf, streams, logger):
     """Describes a Salesforce instance's objects and generates a JSON schema for each field."""
-    objects_to_discover = discover_objects(sf, streams=streams)
 
+    objects_to_discover = discover_objects(sf, streams=streams)
     key_properties = ['Id']
 
     sf_custom_setting_objects = []
@@ -138,7 +150,8 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
 
     # Check if the user has BULK API enabled
     if sf.api_type == 'BULK' and not Bulk(sf).has_permissions():
-        raise TapSalesforceBulkAPIDisabledException('This client does not have Bulk API permissions, received "API_DISABLED_FOR_ORG" error code')
+        raise TapSalesforceBulkAPIDisabledException('This client does not have Bulk API permissions'
+                                                    ' received "API_DISABLED_FOR_ORG" error code')
 
     for sobject_name in objects_to_discover:
 
@@ -183,9 +196,10 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
                 f, mdata)
 
             # Compound Address fields and geolocations cannot be queried by the Bulk API
-            if f['type'] in ("address", "location") and sf.api_type == tap_salesforce.salesforce.BULK_API_TYPE:
+            if f['type'] in ("address", "location") and sf.api_type == salesforce.BULK_API_TYPE:
                 unsupported_fields.add(
-                    (field_name, 'cannot query compound address fields or geolocations with bulk API'))
+                    (field_name,
+                     'cannot query compound address fields or geolocations with bulk API'))
 
             # we haven't been able to observe any records with a json field, so we
             # are marking it as unavailable until we have an example to work with
@@ -204,7 +218,7 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
 
             if sf.select_fields_by_default and inclusion != 'unsupported':
                 mdata = metadata.write(
-                    mdata, ('properties', field_name), 'selected', True)
+                    mdata, ('properties', field_name), 'selected-by-default', True)
 
             properties[field_name] = property_schema
 
@@ -216,33 +230,26 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
         # subfields but are not actually present in the field list
         field_name_set = {f['name'] for f in fields}
         filtered_unsupported_fields = [f for f in unsupported_fields if f[0] in field_name_set]
-        missing_unsupported_field_names = [f[0] for f in unsupported_fields if f[0] not in field_name_set]
+        missing_unsupported_field_names = [f[0] for f in unsupported_fields if f[0] not in field_name_set] # noqa
 
         if missing_unsupported_field_names:
-            logger.info(f'Ignoring the following unsupported fields for object {sobject_name} as they'
-                        f" are missing from the field list: {', '.join(sorted(missing_unsupported_field_names))}",
-                        )
+            logger.info(f"Ignoring the following unsupported fields for object {sobject_name} as they are missing from the field list: {', '.join(sorted(missing_unsupported_field_names))}") # noqa
 
         if filtered_unsupported_fields:
-            filtered_unsupported_fields_str = ', '.join(sorted([k for k, _ in filtered_unsupported_fields]))
-            logger.info(f'Not syncing the following unsupported fields for object {sobject_name}:'
-                        f' {filtered_unsupported_fields_str}'
-                        )
-
+            logger.info(f"Not syncing the following unsupported fields for object {sobject_name}: {', '.join(sorted([k for k, _ in filtered_unsupported_fields]))}") # noqa
         # Salesforce Objects are skipped when they do not have an Id field
         if not found_id_field:
             logger.info(
-                f'Skipping Salesforce Object {sobject_name}, as it has no Id field',
-                )
+                f"Skipping Salesforce Object {sobject_name}, as it has no Id field")
             continue
 
         # Any property added to unsupported_fields has metadata generated and
         # removed
         for prop, description in filtered_unsupported_fields:
             if metadata.get(mdata, ('properties', prop),
-                            'selected'):
+                            'selected-by-default'):
                 metadata.delete(
-                    mdata, ('properties', prop), 'selected')
+                    mdata, ('properties', prop), 'selected-by-default')
 
             mdata = metadata.write(
                 mdata, ('properties', prop), 'unsupported-description', description)
@@ -283,23 +290,24 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
     unsupported_tag_objects = [object_to_tag_references[f]
                                for f in sf_custom_setting_objects if f in object_to_tag_references]
     if unsupported_tag_objects:
-        logger.info( #pylint:disable=logging-not-lazy
+        logger.info(  # pylint:disable=logging-not-lazy
             "Skipping the following Tag objects, Tags on Custom Settings Salesforce objects " +
             "are not supported by the Bulk API:")
         logger.info(unsupported_tag_objects)
         entries = [e for e in entries if e['stream']
                    not in unsupported_tag_objects]
 
-    return {'streams': entries}
+    result = {'streams': entries}
+    return result
 
 
-def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
+def do_sync(sf, catalog, state, logger):
     starting_stream = state.get("current_stream")
 
     if starting_stream:
-        logger.info(f'Resuming sync from {starting_stream}')
+        logger.info(f"Resuming sync from {starting_stream}")
     else:
-        logger.info('Starting sync')
+        logger.info("Starting sync")
 
     for catalog_entry in catalog["streams"]:
         stream_version = get_stream_version(catalog_entry, state)
@@ -309,29 +317,30 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
         activate_version_message = singer.ActivateVersionMessage(
             stream=(stream_alias or stream), version=stream_version)
 
-        bookmark_properties = catalog_entry.get('bookmark_properties', [])
-        replication_key = bookmark_properties[0] if len(bookmark_properties) else None
+        catalog_metadata = metadata.to_map(catalog_entry['metadata'])
+        replication_key = catalog_metadata.get((), {}).get('replication-key')
 
         mdata = metadata.to_map(catalog_entry['metadata'])
 
         if not stream_is_selected(mdata):
-            logger.info(f'{stream_name}: Skipping - not selected')
+            logger.info(f"{stream_name}: Skipping - not selected")
             continue
 
         if starting_stream:
             if starting_stream == stream_name:
-                logger.info(f'{stream_name}: Resuming')
+                logger.info(f"{stream_name}: Resuming")
                 starting_stream = None
             else:
-                logger.info(f'{stream_name}: Skipping - already synced' )
+                logger.info(f"{stream_name}: Skipping - already synced")
                 continue
         else:
-            logger.info(f'{stream_name}: Starting')
+            logger.info(f"{stream_name}: Starting")
 
         state["current_stream"] = stream_name
         singer.write_state(state)
-        key_properties = metadata.to_map(catalog_entry['metadata']).get((), {}).get('table-key-properties')
-
+        key_properties = metadata.to_map(
+            catalog_entry['metadata']).get((), {}).get('table-key-properties')
+        bookmark_properties = catalog_entry.get('bookmark_properties', [])
         replication_method = catalog_entry.get('replication_method')
         schema = catalog_entry.get('schema')
         unique_conflict_method = catalog_entry.get('unique_conflict_method')
@@ -350,30 +359,35 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
         job_id = singer.get_bookmark(state, catalog_entry['tap_stream_id'], 'JobID')
         batch_ids = singer.get_bookmark(state, catalog_entry['tap_stream_id'], 'BatchIDs')
         # Checking whether job_id list is not empty and batches list is not empty
-        if job_id and batch_ids :
+        if job_id and batch_ids:
             with metrics.record_counter(stream) as counter:
-                logger.info(f'Found JobID from previous Bulk Query. Resuming sync for job: {job_id}')
+                logger.info(f"Found JobID from previous Bulk Query Resuming sync for job: {job_id}")
                 # Resuming a sync should clear out the remaining state once finished
                 counter = resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter)
-                logger.info(f'{stream_name}: Completed sync ({counter.value} rows)')
-                if sync_complete_callback:
-                    sync_complete_callback(stream_name, counter.value)
-                # Remove Job info from state once we complete this resumed query. One of a few cases could have occurred:
+                logger.info(f"{stream_name}: Completed sync ({counter.value} rows)")
+                # Remove Job info from state once we complete this resumed query.
+                # One of a few cases could have occurred:
                 # 1. The job succeeded, in which case make JobHighestBookmarkSeen the new bookmark
-                # 2. The job partially completed, in which case make JobHighestBookmarkSeen the new bookmark, or
+                # 2. The job partially completed,
+                #    in which case make JobHighestBookmarkSeen the new bookmark, or
                 #    existing bookmark if no bookmark exists for the Job.
-                # 3. The job completely failed, in which case maintain the existing bookmark, or None if no bookmark
-                state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}).pop('JobID', None)
-                state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}).pop('BatchIDs', None)
+                # 3. The job completely failed, in which case maintain the existing bookmark
+                #    or None if no bookmark
+                state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}).pop('JobID',
+                                                                                       None)
+                state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}).pop('BatchIDs',
+                                                                                       None)
                 bookmark = state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}) \
                                                      .pop('JobHighestBookmarkSeen', None)
-                existing_bookmark = state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'], {}) \
+                existing_bookmark = state.get('bookmarks', {}).get(catalog_entry['tap_stream_id'],
+                                                                   {}) \
                                                               .pop(replication_key, None)
                 state = singer.write_bookmark(
                     state,
                     catalog_entry['tap_stream_id'],
                     replication_key,
-                    bookmark or existing_bookmark) # If job is removed, reset to existing bookmark or None
+                    # If job is removed, reset to existing bookmark or None
+                    bookmark or existing_bookmark)
                 singer.write_state(state)
         else:
             # Tables with a replication_key or an empty bookmark will emit an
@@ -388,9 +402,7 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
                                               'version',
                                               stream_version)
             counter = sync_stream(sf, catalog_entry, state)
-            logger.info(f'{stream_name}: Completed sync ({counter.value} rows)')
-            if sync_complete_callback:
-                sync_complete_callback(stream_name, counter.value)
+            logger.info(f"{stream_name}: Completed sync ({counter.value} rows)")
 
     state["current_stream"] = None
     singer.write_state(state)
@@ -400,12 +412,6 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
 def main_impl():
     args = singer_utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
-
-    CONFIG.update(query=dict(
-        discover_streams=['Account'],
-        list_objects=False,
-    ))
-    query = CONFIG.get('query')
 
     sf = None
     try:
@@ -427,10 +433,7 @@ def main_impl():
         sf.login()
 
         if args.discover:
-            if query.get('list_objects'):
-                json.dump(discover_objects(sf), sys.stdout, indent=2)
-            else:
-                do_discover(sf, streams=query.get('discover_streams'))
+            do_discover(sf)
         elif args.properties:
             catalog = args.properties
             state = build_state(args.state, catalog)
@@ -462,7 +465,3 @@ def main():
         for error_line in str(e).splitlines():
             LOGGER.critical(error_line)
         raise e
-
-
-if __name__ == '__main__':
-    main()

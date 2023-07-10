@@ -3,8 +3,10 @@
 class TapSalesforceException(Exception):
     pass
 
+
 class TapSalesforceQuotaExceededException(TapSalesforceException):
     pass
+
 
 class TapSalesforceBulkAPIDisabledException(TapSalesforceException):
     pass

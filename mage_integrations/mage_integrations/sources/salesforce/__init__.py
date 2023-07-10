@@ -1,5 +1,7 @@
 from datetime import datetime
-from mage_integrations.sources.base import Source
+from typing import Dict, Generator, List
+
+from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.salesforce.client.tap_salesforce import (
     build_state,
@@ -10,12 +12,6 @@ from mage_integrations.sources.salesforce.client.tap_salesforce import (
 from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce import (
     Salesforce as SalesforceConnection,
 )
-from singer import utils
-from typing import List
-import singer
-
-
-LOGGER = singer.get_logger()
 
 
 class Salesforce(Source):
@@ -58,50 +54,49 @@ class Salesforce(Source):
             self.client,
             catalog_dict,
             state,
-            logger=self.logger,
-            sync_complete_callback=self.__sync_complete_callback,
+            logger=self.logger
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
         try:
             if streams:
-                return Catalog(do_discover(self.client, streams=streams)['streams'])
+                return Catalog(
+                    do_discover(self.client, streams=streams, logger=self.logger)['streams'])
         finally:
             self.__finally_clean_up()
 
         return Catalog([])
 
     def get_stream_ids(self) -> List[str]:
-        return discover_objects(self.client)
-
-    def __sync_complete_callback(self, tap_stream_id: str, record_count: int) -> None:
-        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=dict(
-            records=record_count,
-            stream=tap_stream_id,
-        ))
+        return discover_objects(self.client, self.selected_streams)
 
     def __finally_clean_up(self):
         if self.client:
             if self.client.rest_requests_attempted > 0:
-                LOGGER.debug(
-                    "This job used %s REST requests towards the Salesforce quota.",
-                    self.client.rest_requests_attempted)
+                self.logger.info(
+                    f"This job used {self.client.rest_requests_attempted} REST requests \
+                    towards the Salesforce quota.")
             if self.client.jobs_completed > 0:
-                LOGGER.debug(
-                    "Replication used %s Bulk API jobs towards the Salesforce quota.",
-                    self.client.jobs_completed)
+                self.logger.info(
+                    f"Replication used {self.client.jobs_completed} Bulk API jobs \
+                    towards the Salesforce quota.")
             if self.client.login_timer:
                 self.client.login_timer.cancel()
 
     def test_connection(self):
         self.client
 
+    def load_data(
+        self,
+        stream,
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        raw_state = {}
+        catalog_dict = self.discover(streams=self.selected_streams).to_dict()
+        state = build_state(raw_state, catalog_dict)
 
-@utils.handle_top_exception(LOGGER)
-def main():
-    source = Salesforce()
-    source.process()
+        yield self._client.query(state=state, catalog_entry=stream.to_dict(), limit=True)
 
 
 if __name__ == '__main__':
-    main()
+    main(Salesforce)
