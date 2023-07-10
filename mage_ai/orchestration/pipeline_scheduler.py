@@ -193,6 +193,14 @@ class PipelineScheduler:
                             schedule.schedule_interval == ScheduleInterval.ONCE:
 
                         schedule.update(status=ScheduleStatus.INACTIVE)
+            elif self.pipeline_run.any_blocks_failed() and \
+                    not self.allow_blocks_to_fail:
+                self.pipeline_run.update(
+                    status=PipelineRun.PipelineRunStatus.FAILED)
+                self.notification_sender.send_pipeline_run_failure_message(
+                    pipeline=self.pipeline,
+                    pipeline_run=self.pipeline_run,
+                )
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
             else:
@@ -262,9 +270,6 @@ class PipelineScheduler:
                 metrics=metrics,
                 status=BlockRun.BlockRunStatus.FAILED,
             )
-            if not self.allow_blocks_to_fail:
-                self.pipeline_run.update(
-                    status=PipelineRun.PipelineRunStatus.FAILED)
 
         update_status()
 
@@ -282,11 +287,6 @@ class PipelineScheduler:
         )
 
         if not self.allow_blocks_to_fail:
-            self.notification_sender.send_pipeline_run_failure_message(
-                pipeline=self.pipeline,
-                pipeline_run=self.pipeline_run,
-            )
-
             if PipelineType.INTEGRATION == self.pipeline.type:
                 # If a block/stream fails, stop all other streams
                 job_manager.kill_pipeline_run_job(self.pipeline_run.id)
