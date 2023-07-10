@@ -330,6 +330,7 @@ function PipelineSettings({
               executor_type: pipelineAttributes?.executor_type,
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,
+              // @ts-ignore
             }).then(() => setPipelineAttributesTouched(false))}
             primary
           >
