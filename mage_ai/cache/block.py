@@ -9,9 +9,9 @@ from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 
 class BlockCache(BaseCache):
     @classmethod
-    async def initialize_cache(self) -> 'BlockCache':
+    async def initialize_cache(self, replace: bool = False) -> 'BlockCache':
         cache = self()
-        if not cache.exists():
+        if replace or not cache.exists():
             await cache.initialize_cache_for_all_pipelines()
 
         return cache
