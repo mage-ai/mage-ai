@@ -14,8 +14,9 @@ type BlockExtrasProps = {
   block: BlockType;
   blocks: BlockType[];
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
-    addon: AddonBlockTypeEnum,
+    addon?: AddonBlockTypeEnum,
     blockUUID: string;
+    extension?: string;
   }) => void;
   pipeline: PipelineType;
 };

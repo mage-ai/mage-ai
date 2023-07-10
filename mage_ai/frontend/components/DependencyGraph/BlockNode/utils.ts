@@ -49,7 +49,7 @@ export function blockTagsText(block: BlockType): string {
   return ABBREV_BLOCK_LANGUAGE_MAPPING[block?.language] || '';
 }
 
-export function displayTextForBlock(block: BlockType, pipeline: BlockType): {
+export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   displayText: string;
   subtitle?: string;
 } {
@@ -128,11 +128,13 @@ export function getWidthOfBadgeBlocks(blocks: BlockType[]): number {
 
 export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opts: {
   blockStatus: {
-    runtime: number;
+    [uuid: string]: {
+      runtime?: number,
+    };
   };
-  callbackBlocks: BlockType;
-  conditionalBlocks: BlockType;
-  extensionBlocks: BlockType;
+  callbackBlocks: BlockType[];
+  conditionalBlocks: BlockType[];
+  extensionBlocks: BlockType[];
 }): number {
   let spacingBetweenRowsCount = 0;
 
@@ -192,11 +194,13 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
 
 export function getBlockNodeWidth(block: BlockType, pipeline: PipelineType, opts: {
   blockStatus: {
-    runtime: number;
+    [uuid: string]: {
+      runtime?: number,
+    };
   };
-  callbackBlocks: BlockType;
-  conditionalBlocks: BlockType;
-  extensionBlocks: BlockType;
+  callbackBlocks: BlockType[];
+  conditionalBlocks: BlockType[];
+  extensionBlocks: BlockType[];
 }): number {
   let longestTextLength = Math.max(
     getBlockHeaderText(block, pipeline)?.length * WIDTH_OF_HEADER_TEXT_CHARACTER,
