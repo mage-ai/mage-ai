@@ -16,6 +16,7 @@ import sys
 class Destination(BaseDestination):
     DATABASE_CONFIG_KEY = 'database'
     SCHEMA_CONFIG_KEY = 'schema'
+    TABLE_CONFIG_KEY = 'table'
 
     BATCH_SIZE = 1000
 
@@ -32,7 +33,7 @@ class Destination(BaseDestination):
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         tags = dict(
             database_name=database_name,
@@ -88,7 +89,7 @@ class Destination(BaseDestination):
     ) -> List[str]:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
@@ -183,7 +184,7 @@ class Destination(BaseDestination):
     ):
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)

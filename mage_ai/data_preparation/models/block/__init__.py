@@ -8,6 +8,7 @@ import traceback
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
+from jinja2 import Template
 from logging import Logger
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set, Tuple, Union
@@ -15,6 +16,7 @@ from typing import Any, Callable, Dict, List, Set, Tuple, Union
 import pandas as pd
 import simplejson
 
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -51,6 +53,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
@@ -1444,6 +1447,14 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
+    def get_executor_type(self) -> str:
+        if self.executor_type:
+            return Template(self.executor_type).render(**get_template_vars())
+        return self.executor_type
+
+    def get_pipelines_from_cache(self) -> List[Dict]:
+        return BlockCache().get_pipelines(self)
+
     def to_dict_base(
         self,
         include_callback_blocks: bool = False,
@@ -1517,6 +1528,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -1553,6 +1565,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_block_tags:
             data['tags'] = self.tags()
+
+        if include_block_pipelines:
+            data['pipelines'] = self.get_pipelines_from_cache()
 
         return data
 
@@ -1594,6 +1609,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.has_callback = data['has_callback']
             if self.has_callback:
                 CallbackBlock.create(self.uuid)
+            self.__update_pipeline_block()
+
+        if 'retry_config' in data and data['retry_config'] != self.retry_config:
+            self.retry_config = data['retry_config']
             self.__update_pipeline_block()
 
         return self
@@ -2116,7 +2135,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
-            TAG_CONDITION,
+            # TAG_CONDITION,
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
@@ -2137,8 +2156,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.replicated_block:
             arr.append(TAG_REPLICA)
 
-        if len(self.conditional_blocks) > 0:
-            arr.append(TAG_CONDITION)
+        # if len(self.conditional_blocks) > 0:
+        #     arr.append(TAG_CONDITION)
 
         return arr
 

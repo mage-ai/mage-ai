@@ -11,6 +11,8 @@ type CircleProps = {
   children?: any;
   color?: string;
   danger?: boolean;
+  default?: boolean;
+  muted?: boolean;
   size: number;
   square?: boolean;
 };
@@ -43,6 +45,14 @@ const CircleStyle = styled.div<CircleProps>`
 
   ${props => props.danger && `
     background-color: ${(props.theme.borders || dark.borders).danger};
+  `}
+
+  ${props => props.muted && `
+    border-color: ${(props.theme.content || dark.content).muted};
+  `}
+
+  ${props => props.default && `
+    border-color: ${(props.theme.monotone || dark.monotone).gray};
   `}
 `;
 

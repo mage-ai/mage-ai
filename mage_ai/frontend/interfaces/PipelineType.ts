@@ -3,6 +3,7 @@ import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
 import { Batch, HexagonAll, Integration, Streaming } from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
+import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { PipelineMetadataType } from './MetadataType';
 
 export enum PipelineTypeEnum {
@@ -67,6 +68,13 @@ export interface PipelineExtensionsType {
   };
 }
 
+export interface PipelineRetryConfigType {
+  delay?: number;
+  exponential_backoff?: boolean;
+  max_delay?: number;
+  retries?: number;
+}
+
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
@@ -76,10 +84,12 @@ export default interface PipelineType {
     catalog: CatalogType;
   };
   description?: string;
+  executor_type?: ExecutorTypeEnum;
   extensions?: PipelineExtensionsType;
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;
+  retry_config?: PipelineRetryConfigType;
   schedules?: PipelineScheduleType[];
   type?: PipelineTypeEnum;
   updated_at?: string;

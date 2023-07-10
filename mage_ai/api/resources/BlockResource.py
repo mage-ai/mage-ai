@@ -2,6 +2,7 @@ import urllib.parse
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
@@ -18,7 +19,7 @@ from mage_ai.settings.repo import get_repo_path
 class BlockResource(GenericResource):
     @classmethod
     @safe_db_query
-    def create(self, payload, user, **kwargs):
+    async def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
         block_type = payload.get('type')
@@ -82,6 +83,9 @@ class BlockResource(GenericResource):
 
             block.update_content(content)
 
+        cache = await BlockCache.initialize_cache()
+        cache.add_pipeline(block, pipeline)
+
         return self(block, user, **kwargs)
 
     @classmethod
@@ -123,12 +127,19 @@ class BlockResource(GenericResource):
         block_type = parts[0]
         block_uuid_with_extension = '/'.join(parts[1:])
         parts2 = block_uuid_with_extension.split('.')
+
         language = None
         if len(parts2) >= 2:
             block_uuid = '.'.join(parts2[:-1])
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[-1]]
         else:
             block_uuid = block_uuid_with_extension
+
+        block_language = query.get('block_language', [None])
+        if block_language:
+            block_language = block_language[0]
+        if block_language:
+            language = block_language
 
         if BlockType.DBT == block_type:
             block = DBTBlock(
@@ -148,12 +159,17 @@ class BlockResource(GenericResource):
         return self(block, user, **kwargs)
 
     @safe_db_query
-    def delete(self, **kwargs):
+    async def delete(self, **kwargs):
         query = kwargs.get('query', {})
 
         force = query.get('force', [False])
         if force:
             force = force[0]
+
+        pipeline = kwargs.get('parent_model')
+        cache = await BlockCache.initialize_cache()
+        cache.remove_pipeline(self.model, pipeline.uuid)
+
         return self.model.delete(force=force)
 
     @safe_db_query
@@ -166,3 +182,8 @@ class BlockResource(GenericResource):
             payload,
             update_state=update_state,
         )
+
+    async def get_pipelines_from_cache(self):
+        await BlockCache.initialize_cache()
+
+        return self.model.get_pipelines_from_cache()

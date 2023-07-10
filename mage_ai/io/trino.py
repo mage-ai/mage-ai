@@ -1,23 +1,26 @@
 from io import StringIO
-from mage_ai.io.base import ExportWritePolicy, QUERY_ROW_LIMIT
+from time import sleep
+from typing import IO, List, Mapping, Union
+
+import numpy as np
+import simplejson
+from pandas import DataFrame, Series
+from trino.auth import BasicAuthentication
+from trino.dbapi import Connection
+from trino.dbapi import Cursor as CursorParent
+from trino.exceptions import TrinoUserError
+from trino.transaction import IsolationLevel
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import (
-    clean_df_for_export,
-    infer_dtypes,
-)
+from mage_ai.io.export_utils import PandasTypes, clean_df_for_export, infer_dtypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import (
     clean_name,
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
 )
-from pandas import DataFrame, Series
-from time import sleep
-from trino.auth import BasicAuthentication
-from trino.dbapi import Connection, Cursor as CursorParent
-from trino.exceptions import TrinoUserError
-from trino.transaction import IsolationLevel
-from typing import IO, List, Mapping, Union
 
 
 class Cursor(CursorParent):
@@ -111,8 +114,10 @@ class Trino(BaseSQL):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
-        unique_constraints: List[str] = [],
+        unique_constraints: List[str] = None,
     ):
+        if unique_constraints is None:
+            unique_constraints = []
         query = []
         for cname in dtypes:
             query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
@@ -206,33 +211,41 @@ class Trino(BaseSQL):
         self,
         cursor: Cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
         **kwargs,
     ) -> None:
+        columns = df.columns
+        values_placeholder = ', '.join(['?' for i in range(len(columns))])
+        sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
+
+        def serialize_obj(val):
+            if type(val) is dict or type(val) is list:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
+        df_ = df.copy()
+
+        for col in columns:
+            df_col_dropna = df_[col].dropna()
+            if df_col_dropna.count() == 0:
+                continue
+            if dtypes[col] == PandasTypes.OBJECT \
+                    or (df_[col].dtype == PandasTypes.OBJECT and
+                        type(df_col_dropna.iloc[0]) != str):
+                df_[col] = df_[col].apply(lambda x: serialize_obj(x))
+        df_.replace({np.NaN: None}, inplace=True)
+
         values = []
-        for _, row in df.iterrows():
-            t = tuple(row)
-            if len(t) == 1:
-                values.append(f'({str(t[0])})')
-            else:
-                values.append(str(t))
+        for _, row in df_.iterrows():
+            values.append(tuple(row))
 
-        value_payload_size = 0
-        subbatch_query = []
-        for value in values:
-            subbatch_query.append(value)
-            value_payload_size += len(value) + 2
-            if value_payload_size >= self.QUERY_MAX_LENGTH:
-                values_string = ', '.join(subbatch_query)
-                sql = f'INSERT INTO {full_table_name} VALUES {values_string}'
-                cursor.execute(sql)
-                subbatch_query = []
-                value_payload_size = 0
-
-        values_string = ', '.join(subbatch_query)
-        sql = f'INSERT INTO {full_table_name} VALUES {values_string}'
-        cursor.execute(sql)
+        cursor.executemany(sql, values)
 
     def get_type(self, column: Series, dtype: str) -> str:
         return convert_python_type_to_trino_type(
@@ -335,7 +348,13 @@ class Trino(BaseSQL):
                         )
                         cur.execute(query)
 
-                    self.upload_dataframe(cur, df, full_table_name, buffer)
+                    self.upload_dataframe(
+                        cur,
+                        df,
+                        dtypes,
+                        full_table_name,
+                        buffer,
+                    )
             self.conn.commit()
 
         if verbose:

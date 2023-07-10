@@ -223,6 +223,7 @@ function PipelineDetailPage({
     data,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
+    include_block_pipelines: true,
     includes_outputs: isEmptyObject(messages),
   }, {
     refreshInterval: 60000,
@@ -287,22 +288,28 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      extension?: string;
     },
   ) => {
     const newQuery: {
       [VIEW_QUERY_PARAM]: ViewKeyEnum;
       addon?: string;
       block_uuid?: string;
+      extension?: string;
     } = {
       [VIEW_QUERY_PARAM]: newView,
     };
+
+    if (opts?.addon) {
+      newQuery.addon = opts?.addon;
+    }
 
     if (opts?.blockUUID) {
       newQuery.block_uuid = opts?.blockUUID;
     }
 
-    if (opts?.addon) {
-      newQuery.addon = opts?.addon;
+    if (opts?.extension) {
+      newQuery.extension = opts?.extension;
     }
 
     goToWithQuery(newQuery, {
@@ -329,6 +336,8 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      // http://localhost:3000/pipelines/delicate_field/edit?addon=conditionals&sideview=power_ups&extension=great_expectations
+      extension?: string;
     },
   ) => {
     setAfterHidden(false);
@@ -2306,6 +2315,7 @@ function PipelineDetailPage({
             depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            selectedBlock={selectedBlock}
             treeRef={treeRef}
             variables={globalVariables}
           />

@@ -47,7 +47,6 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KernelOutputType, {
-  DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
@@ -119,7 +118,9 @@ import {
   buildBorderProps,
   buildConvertBlockMenuItems,
   getDownstreamBlockUuids,
+  getMessagesWithType,
   getUpstreamBlockUuids,
+  hasErrorOrOutput,
 } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -250,12 +251,14 @@ function CodeBlock({
     error: blockError,
     has_callback: hasCallback,
     language: blockLanguage,
+    pipelines,
     replicated_block: replicatedBlockUUID,
     type: blockType,
     upstream_blocks: blockUpstreamBlocks = [],
     uuid: blockUUID,
   } = block || {};
   const blockConfiguration = useMemo(() => blockConfig, [blockConfig]);
+  const blockPipelinesLength = useMemo(() => Object.values(pipelines || {})?.length || 1, [pipeline]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
@@ -540,20 +543,14 @@ function CodeBlock({
     mainContainerRef,
   ]);
 
-  const messagesWithType = useMemo(() => {
-    if (errorMessages?.length >= 0) {
-      return errorMessages.map((errorMessage: string) => ({
-        data: errorMessage,
-        execution_state: ExecutionStateEnum.IDLE,
-        type: DataTypeEnum.TEXT_PLAIN,
-      }));
-    }
-    return messages.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
-  }, [
+  const messagesWithType = useMemo(() => getMessagesWithType(messages, errorMessages), [
     errorMessages,
     messages,
   ]);
-  const hasError = !!messagesWithType.find(({ error }) => error);
+  const {
+    hasError,
+    hasOutput,
+  } = hasErrorOrOutput(messagesWithType);
 
   const color = getColorsForBlockType(
     blockType,
@@ -589,7 +586,6 @@ function CodeBlock({
     selected,
   ]);
 
-  const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
       setAnyInputFocused?.(false);
@@ -911,6 +907,7 @@ function CodeBlock({
     )
     : null
   , [
+    block,
     fetchBlock,
     isDBT,
     selectedTab,
@@ -1253,7 +1250,7 @@ function CodeBlock({
                       <FlexContainer alignItems="center">
                         <Text
                           monospace={numberOfParentBlocks >= 1}
-                          small={numberOfParentBlocks >= 1}
+                          small
                           underline={numberOfParentBlocks === 0}
                         >
                           {numberOfParentBlocks === 0 && 'Edit parent blocks'}
@@ -1268,6 +1265,27 @@ function CodeBlock({
                     </Button>
                   </Tooltip>
                 )}
+
+                {blockPipelinesLength >= 2 && (
+                  <Spacing ml={2}>
+                    <Tooltip
+                      block
+                      label={`This block is used in ${blockPipelinesLength} pipelines.`}
+                      size={null}
+                      widthFitContent
+                    >
+                      <Link
+                        default
+                        monospace
+                        onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+                        preventDefault
+                        small
+                      >
+                        {blockPipelinesLength} pipelines
+                      </Link>
+                    </Tooltip>
+                  </Spacing>
+                )}
               </Flex>
 
               <CommandButtons
@@ -1281,6 +1299,7 @@ function CodeBlock({
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
                 isEditingBlock={isEditingBlock}
+                openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}
@@ -2163,6 +2182,7 @@ function CodeBlock({
                   block={block}
                   blocks={allBlocks}
                   openSidekickView={openSidekickView}
+                  pipeline={pipeline}
                 />
               )}
             </CodeContainerStyle>

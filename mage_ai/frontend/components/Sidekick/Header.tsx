@@ -2,6 +2,7 @@ import NextLink from 'next/link';
 import { CanvasRef } from 'reaflow';
 import { useMemo } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ExtensionOptionType from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
@@ -20,11 +21,11 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getFormattedVariables } from './utils';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-
 
 type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
@@ -33,6 +34,7 @@ type SidekickHeaderProps = {
   secrets?: {
     [key: string]: any;
   }[];
+  selectedBlock?: BlockType;
   treeRef?: { current?: CanvasRef };
   variables?: {
     [key: string]: any;
@@ -44,6 +46,7 @@ function SidekickHeader({
   depGraphZoom,
   pipeline,
   secrets,
+  selectedBlock,
   treeRef,
   variables,
 }: SidekickHeaderProps) {
@@ -52,11 +55,26 @@ function SidekickHeader({
   const globalVars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
   const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
-  const sidekickLabel = sidekickView?.buildLabel?.({
+  let sidekickLabel = sidekickView?.buildLabel?.({
     pipeline,
     secrets,
     variables: globalVars,
   }) || sidekickView?.label;
+
+  if (ViewKeyEnum.BLOCK_SETTINGS === activeView && selectedBlock?.uuid) {
+    sidekickLabel = (
+      <>
+        Block settings for <Text
+          bold
+          color={getColorsForBlockType(selectedBlock?.type).accent}
+          inline
+          monospace
+        >
+          {selectedBlock?.uuid}
+        </Text>
+      </>
+    );
+  }
 
   let el = (
     <Text bold>

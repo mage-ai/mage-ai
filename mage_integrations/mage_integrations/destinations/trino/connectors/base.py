@@ -236,7 +236,7 @@ DESCRIBE {schema_name}.{table_name}
 
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)

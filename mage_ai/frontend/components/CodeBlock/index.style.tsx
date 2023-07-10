@@ -18,7 +18,7 @@ export const LEFT_PADDING = 68;
 
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
-  props: {
+  props?: {
     blockColor?: BlockColorEnum,
     isSelected?: boolean,
     theme?: ThemeType,
