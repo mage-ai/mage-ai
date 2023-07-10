@@ -492,21 +492,13 @@ Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. Th
 
 `mage_ai.io.azure_blob_storage.AzureBlobStorage`
 
-<<<<<<< HEAD
-Handles data transfer between an Azure Blob Storage conatiner and the Mage app. Supports loading files of any of the following types:
-=======
 Handles data transfer between an Azure Blob Storage conatiner and Mage. Supports loading files of the following types:
->>>>>>> 758798d4bf5d130c084d35b3305c66bcae4e9438
 -   CSV
 -   JSON
 -   Parquet
 -   HDF5
 
-<<<<<<< HEAD
-To authenticate (and authorize) access to Azure Blob Storage, the following environment variables must be set:
-=======
 To authenticate access to Azure Blob Storage, the following environment variables must be set:
->>>>>>> 758798d4bf5d130c084d35b3305c66bcae4e9438
 
 - `AZURE_CLIENT_ID`
 - `AZURE_CLIENT_SECRET`
@@ -522,11 +514,6 @@ Initializes data loader from an Azure Blob Storage container.
 -   **Args**
 
     -   `verbose (bool)`: Enables verbose output printing. Defaults to `False`.
-<<<<<<< HEAD
-    -   `credentials_mapping (Mapping[str, str])` - Mapping object corresponding to your service account key. See instructions above on when to use this keyword argument
-    -   `path_to_credentials (str)` - Filepath to service account key. See instructions above on when to use this keyword argument.
-=======
->>>>>>> 758798d4bf5d130c084d35b3305c66bcae4e9438
 
 <h3> Factory Methods </h3>
 
@@ -560,11 +547,7 @@ Exports data frame to an Azure Blob Storage container.
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
 
-<<<<<<< HEAD
-**_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
-=======
 **_load_** - `load(container_name: str, blob_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
->>>>>>> 758798d4bf5d130c084d35b3305c66bcae4e9438
 
 Loads data from object in Azure Blob Storage into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
 
@@ -1277,4 +1260,4 @@ When using the `__getitem__` overload, comparisons to specific versions are not 
     -   ` version_id (str, Optional)`: ID of the version of the secret to load. Defaults to `None`.
     -   `version_stage_label (str, Optional)`: Staging label of the version of the secret to load. Defaults to `None`.
 
--   **Returns**: (`bytes | str`) The secret stored under `secret_id` in AWS secret manager. If secret is a binary value, returns a `bytes` object; else returns a `string` object
+-   **Returns**: (`bytes | str`) The secret stored under `secret_id` in AWS secret manager. If secret is a binary value, returns a `bytes` object; else returns a `string` object.
