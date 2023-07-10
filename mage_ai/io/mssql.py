@@ -122,6 +122,10 @@ class MSSQL(BaseSQL):
                 PandasTypes.COMPLEX,
             ):
                 df_[col] = df_[col].astype('string')
+
+            # Remove extraneous surrounding double quotes
+            # that get added while performing conversion to string.
+            df_[col] = df_[col].apply(lambda x: x.strip('"'))
         for _, row in df_.iterrows():
             values.append(tuple(row))
 
