@@ -56,37 +56,81 @@ class BlockCache(BaseCache):
     def add_pipeline(self, block, pipeline) -> None:
         self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
 
+    def move_pipelines(self, new_block, old_block) -> None:
+        new_key = self.build_key(new_block)
+        if not new_key:
+            return
+
+        old_key = self.build_key(old_block)
+        if not old_key:
+            return
+
+        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
+        if mapping is None:
+            mapping = {}
+
+        pipelines_dict = mapping.get(old_key, {})
+        mapping[new_key] = pipelines_dict
+        mapping.pop(old_key, None)
+
+        self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
+
     def update_pipeline(
         self,
         block,
         pipeline,
         added_at: str = None,
     ) -> None:
-        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
-        if mapping is None:
-            mapping = {}
+        self.update_pipelines(block, [pipeline], added_at)
 
+    def update_pipelines(
+        self,
+        block,
+        pipelines,
+        added_at: str = None,
+    ) -> None:
         key = self.build_key(block)
         if not key:
             return
 
+        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
+        if mapping is None:
+            mapping = {}
+
         pipelines_dict = mapping.get(key, {})
-        pipelines_dict[pipeline.uuid] = self.__build_pipeline_dict(
-            pipeline,
-            added_at=added_at,
-        )
+
+        for pipeline in pipelines:
+            pipeline_uuid = pipeline.get('uuid') if type(pipeline) is dict else pipeline.uuid
+            pipelines_dict[pipeline_uuid] = self.__build_pipeline_dict(
+                pipeline,
+                added_at=added_at,
+            )
+
         mapping[key] = pipelines_dict
 
         self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
 
-    def remove_pipeline(self, block, pipeline_uuid: str) -> None:
-        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
-        if mapping is None:
-            mapping = {}
-
+    def remove_block(self, block) -> None:
         key = self.build_key(block)
         if not key:
             return
+
+        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
+        if mapping:
+            mapping.pop(key, None)
+        elif mapping is None:
+            mapping = {}
+
+        self.set(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING, mapping)
+
+    def remove_pipeline(self, block, pipeline_uuid: str) -> None:
+        key = self.build_key(block)
+        if not key:
+            return
+
+        mapping = self.get(CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING)
+        if mapping is None:
+            mapping = {}
 
         pipelines_dict = mapping.get(key, {})
         pipelines_dict.pop(pipeline_uuid, None)
