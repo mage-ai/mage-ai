@@ -2156,8 +2156,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.replicated_block:
             arr.append(TAG_REPLICA)
 
-        if len(self.conditional_blocks) > 0:
-            arr.append(TAG_CONDITION)
+        # if len(self.conditional_blocks) > 0:
+        #     arr.append(TAG_CONDITION)
 
         return arr
 

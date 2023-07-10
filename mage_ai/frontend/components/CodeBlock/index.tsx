@@ -2182,6 +2182,7 @@ function CodeBlock({
                   block={block}
                   blocks={allBlocks}
                   openSidekickView={openSidekickView}
+                  pipeline={pipeline}
                 />
               )}
             </CodeContainerStyle>

@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import BlockExtraRow from './BlockExtraRow';
 import BlockType from '@interfaces/BlockType';
 import Flex from '@oracle/components/Flex';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
@@ -16,12 +17,14 @@ type BlockExtrasProps = {
     addon: AddonBlockTypeEnum,
     blockUUID: string;
   }) => void;
+  pipeline: PipelineType;
 };
 
 function BlockExtras({
   block,
   blocks,
   openSidekickView,
+  pipeline,
 }: BlockExtrasProps) {
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const callbackBlocks = useMemo(() => block?.callback_blocks?.reduce((acc, uuid) => {
@@ -48,40 +51,98 @@ function BlockExtras({
     blocksByUUID,
   ]);
 
+  const extensionBlocks = useMemo(() => {
+    const arr = [];
+
+    Object.entries(pipeline?.extensions || {})?.forEach(([
+      extensionUUID,
+      {
+        blocks: blocksForExtension,
+      },
+    ]) => {
+      blocksForExtension?.forEach(({
+        upstream_blocks: upstreamBlocks,
+        uuid: blockUUID,
+      }) => {
+        if (upstreamBlocks?.includes(block?.uuid)) {
+          const b = blocksByUUID?.[blockUUID];
+          if (b) {
+            arr.push({
+              ...b,
+              extension_uuid: extensionUUID,
+            });
+          }
+        }
+      });
+    });
+
+    return arr;
+  }, [
+    block,
+    blocksByUUID,
+    pipeline,
+  ]);
+
   return (
     <>
       {conditionalBlocks?.length >= 1 && (
-        <Flex flexDirection="column">
-          <Spacing px={1}>
-            <Text bold muted>
-              Conditionals
-            </Text>
-          </Spacing>
-          <BlockExtraRow
-            blocks={conditionalBlocks}
-            onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
-              addon: AddonBlockTypeEnum.CONDITIONAL,
-              blockUUID: uuid,
-            })}
-          />
-        </Flex>
+        <Spacing mt={1}>
+          <Flex flexDirection="column">
+            <Spacing px={1}>
+              <Text bold muted>
+                Conditionals
+              </Text>
+            </Spacing>
+            <BlockExtraRow
+              blocks={conditionalBlocks}
+              onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+                addon: AddonBlockTypeEnum.CONDITIONAL,
+                blockUUID: uuid,
+              })}
+            />
+          </Flex>
+        </Spacing>
       )}
-      <Spacing mb={1} />
+
       {callbackBlocks?.length >= 1 && (
-        <Flex flexDirection="column">
-          <Spacing px={1}>
-            <Text bold muted>
-              Callbacks
-            </Text>
-          </Spacing>
-          <BlockExtraRow
-            blocks={callbackBlocks}
-            onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
-              addon: AddonBlockTypeEnum.CALLBACK,
-              blockUUID: uuid,
-            })}
-          />
-        </Flex>
+        <Spacing mt={1}>
+          <Flex flexDirection="column">
+            <Spacing px={1}>
+              <Text bold muted>
+                Callbacks
+              </Text>
+            </Spacing>
+            <BlockExtraRow
+              blocks={callbackBlocks}
+              onClick={({ uuid }) => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+                addon: AddonBlockTypeEnum.CALLBACK,
+                blockUUID: uuid,
+              })}
+            />
+          </Flex>
+        </Spacing>
+      )}
+
+      {extensionBlocks?.length >= 1 && (
+        <Spacing mt={1}>
+          <Flex flexDirection="column">
+            <Spacing px={1}>
+              <Text bold muted>
+                Callbacks
+              </Text>
+            </Spacing>
+            <BlockExtraRow
+              blocks={extensionBlocks}
+              onClick={({
+                extension_uuid: extensionUUID,
+                uuid,
+              }) => openSidekickView(ViewKeyEnum.EXTENSIONS, true, {
+                blockUUID: uuid,
+                extension: extensionUUID,
+              })}
+            />
+          </Flex>
+        </Spacing>
       )}
     </>
   );
