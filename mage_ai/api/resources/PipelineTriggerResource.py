@@ -7,7 +7,6 @@ from mage_ai.data_preparation.models.triggers import (
     get_triggers_by_pipeline,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.shared.hash import index_by
 
 
 class PipelineTriggerResource(GenericResource):
