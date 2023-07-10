@@ -13,6 +13,7 @@ import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
 import { find } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { useRouter } from 'next/router';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
@@ -25,7 +26,9 @@ function UserWorkspacesEdit({
   user,
   workspaces,
 }: UserWorkspacesEditProps) {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserType>();
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
 
   useEffect(() => {
     if (user) {
@@ -75,17 +78,8 @@ function UserWorkspacesEdit({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            user: userServer,
-          }) => {
-            toast.success(
-              'User roles successfully saved.',
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `user-update-success-${userServer.id}`,
-              },
-            );
-            fetchUser();
+          callback: () => {
+            router.push('/manage/users');
           },
           onErrorCallback: ({
             error: {
@@ -110,6 +104,23 @@ function UserWorkspacesEdit({
 
   return (
     <>
+      <Spacing p={2}>
+        <Button
+          disabled={buttonDisabled}
+          loading={isLoading}
+          onClick={() => {
+            const updated_profile = {
+              ...profile,
+              roles_new: profile?.roles_new?.map(({ id }: RoleType) => id),
+            };
+            // @ts-ignore
+            updateUser({ user: updated_profile });
+          }}
+          primary
+        >
+          Update workspace roles
+        </Button>
+      </Spacing>
       <Table
         columnFlex={[1, 1]}
         columns={[
@@ -135,7 +146,7 @@ function UserWorkspacesEdit({
               // label="Roles"
               // @ts-ignore
               onChange={e => {
-                // setButtonDisabled(false);
+                setButtonDisabled(false);
                 const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (newRole) {
                   setProfile(prev => {
@@ -164,22 +175,6 @@ function UserWorkspacesEdit({
           ];
         })}
       />
-      <Spacing p={2}>
-        <Button
-          loading={isLoading}
-          onClick={() => {
-            const updated_profile = {
-              ...profile,
-              roles_new: profile?.roles_new?.map(({ id }: RoleType) => id),
-            };
-            // @ts-ignore
-            updateUser({ user: updated_profile });
-          }}
-          primary
-        >
-          Update roles
-        </Button>
-      </Spacing>
     </>
   );
 }

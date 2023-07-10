@@ -263,7 +263,9 @@ const SHARED_STYLES = css<{
     background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     color: ${(props.theme.monotone || dark.monotone).white};
+  `}
 
+  ${props => props.primary && !props.disabled && !props.notClickable && `
     &:hover,
     &:focus,
     &:active {
