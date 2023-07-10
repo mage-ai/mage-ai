@@ -295,7 +295,7 @@ async def main(
             )
 
     print('Initializing block cache.')
-    await BlockCache.initialize_cache()
+    await BlockCache.initialize_cache(replace=True)
 
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(

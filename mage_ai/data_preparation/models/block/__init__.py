@@ -2222,6 +2222,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
+            cache = BlockCache()
+            cache.move_pipelines(self, dict(
+                type=self.type,
+                uuid=old_uuid,
+            ))
+
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
             return
