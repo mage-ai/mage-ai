@@ -153,7 +153,7 @@ function TriggersTable({
     });
   }
 
-  const columnFlex = [null, null, null, null, null, null, null, null, null];
+  const columnFlex = [null, null, null, 1, null, null, null, null, null];
 
   if (includePipelineColumn) {
     columns.splice(2, 0, { uuid: 'Pipeline' });
