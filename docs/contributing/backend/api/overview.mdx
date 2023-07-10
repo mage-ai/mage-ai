@@ -89,14 +89,14 @@ To decode a token:
 
 ### Examples
 
-Decoded token, API key in UTM
+Decoded token, API key in in URL:
 
 ```curl
 curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2" \
     -H "OAUTH-TOKEN: [DECODED-TOKEN-FROM-RESPONSE]"
 ```
 
-Decoded token, API key in body
+Decoded token, API key in body:
 
 ```curl
 curl -X POST "localhost:6789/api/pipelines" \
@@ -107,7 +107,7 @@ curl -X POST "localhost:6789/api/pipelines" \
     }'
 ```
 
-Raw token, API key in body
+Raw token, API key in body:
 
 ```curl
 curl -X POST "localhost:6789/api/pipelines" \
