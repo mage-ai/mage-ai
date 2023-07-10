@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import RoleType from '@interfaces/RoleType';
@@ -13,7 +14,6 @@ import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
 import { find } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { useRouter } from 'next/router';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;

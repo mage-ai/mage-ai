@@ -27,7 +27,7 @@ export function buildNavigationItems(
     },
   ];
 
-  if (owner || roles === RoleValueEnum.ADMIN) {
+  if (owner) {
     workspaceItems.push({
       Icon: WorkspacesUsersIcon,
       id: WorkspacesPageNameEnum.USERS,

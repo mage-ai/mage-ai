@@ -1145,7 +1145,6 @@ def schedule_all():
             )
             if pipeline_schedule.get_settings().skip_if_previous_running and \
                     running_pipeline_run is not None:
-
                 payload['create_block_runs'] = False
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
@@ -1168,7 +1167,7 @@ def schedule_all():
 
                 pipeline_scheduler.start(should_schedule=False)
 
-    active_pipeline_runs = PipelineRun.active_runs(
+    active_pipeline_runs = PipelineRun.active_runs_for_pipelines(
         pipeline_uuids=repo_pipelines,
         include_block_runs=True,
     )

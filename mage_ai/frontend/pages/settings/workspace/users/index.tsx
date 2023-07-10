@@ -15,6 +15,7 @@ import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import {
   SECTION_ITEM_UUID_USERS,
   SECTION_UUID_WORKSPACE,
@@ -32,6 +33,12 @@ function UsersListPage() {
     add_new_user: boolean;
     user_id: number;
   }>(null);
+
+  const { data: serverStatus } = api.statuses.list();
+  const {
+    project_type: projectType,
+    project_uuid: projectUUID,
+  } = useMemo(() => serverStatus?.statuses?.[0] || {}, [serverStatus]);
 
   const { data, mutate: fetchUsers } = api.users.list({}, {
     revalidateOnFocus: false,
@@ -77,10 +84,18 @@ function UsersListPage() {
 
   const showAddNewUser = query?.add_new_user;
   const formMemo = useMemo(() => {
+    let editFormEntityProps = {};
+    if (projectType === ProjectTypeEnum.SUB) {
+      editFormEntityProps = {
+        entity: 'project',
+        entityID: projectUUID,
+      };
+    }
     if (showAddNewUser) {
       return (
         <Spacing p={PADDING_UNITS}>
           <UserEditForm
+            {...editFormEntityProps}
             newUser
             onSaveSuccess={() => {
               goToWithQuery({
@@ -98,6 +113,7 @@ function UsersListPage() {
       return (
         <Spacing p={PADDING_UNITS}>
           <UserEditForm
+            {...editFormEntityProps}
             hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
             onDeleteSuccess={() => {
               goToWithQuery({
