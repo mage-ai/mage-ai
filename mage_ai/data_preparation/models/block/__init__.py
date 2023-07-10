@@ -2135,7 +2135,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
-            TAG_CONDITION,
+            # TAG_CONDITION,
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
