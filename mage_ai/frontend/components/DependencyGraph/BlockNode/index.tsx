@@ -136,7 +136,7 @@ function BlockNode({
                         ).accentLight}
                         key={`badge-${b.uuid}`}
                         monospace
-                        xxsmall
+                        small
                       >
                         {b.uuid}
                       </Badge>,

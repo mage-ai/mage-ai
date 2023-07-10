@@ -22,7 +22,7 @@ const HEADER_HEIGHT = (UNIT * 2) + (UNIT * 5);
 // Padding horizontal, icon height, margin between icon and text
 const HEADER_WIDTH = (UNIT * 2) + (UNIT * 5) + (UNIT * 2);
 
-const BADGE_HEIGHT = 12;
+const BADGE_HEIGHT = 22;
 const MAX_WIDTH = UNIT * 40;
 const TAG_HEIGHT = 18;
 
