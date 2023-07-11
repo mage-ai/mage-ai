@@ -62,6 +62,12 @@ a sample folder structure:
 
 Code in a project can be shared across the entire project.
 
+### Project Data
+
+Project-level data is stored in the `mage_data` directory— located at the same level as your project folder. 
+
+`mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI.
+
 ### Creating Projects
 
 You can create a new project by running the following command:
@@ -78,13 +84,6 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 ```bash
 mage init [project_name]
 ```
-
-### Project Data
-
-Project-level data is stored in the `mage_data` directory— located at the same level as your project folder. 
-
-`mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI.
-
 
 ## Pipeline
 
