@@ -1,10 +1,14 @@
-from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
-from mage_ai.orchestration.db.models.schedules import PipelineRun, BlockRun
-from sqlalchemy import or_
-from typing import Dict, List, Tuple
 import json
 import re
+from typing import Dict, List, Tuple
+
+from sqlalchemy import or_
+
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+    IntegrationPipeline,
+)
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 
 KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
@@ -116,11 +120,29 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
 
 def parse_line(line: str) -> Dict:
+    """
+    Parses a line of text and extracts tags from the JSON data.
+
+    Args:
+        line (str): The input line to parse.
+
+    Returns:
+        Dict: A dictionary containing the extracted tags.
+
+    Example:
+        >>> line = '2023-01-01T12:34:56 {"tags": {"tag1": "value1", "tag2": "value2"}}'
+        >>> parse_line(line)
+        {'tag1': 'value1', 'tag2': 'value2'}
+    """
     tags = {}
+
+    # Remove timestamp from the beginning of the line
     text = re.sub(r'^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', line).strip()
 
     try:
         data1 = json.loads(text)
+        if type(data1) is str:
+            return tags
         tags = data1.get('tags', {})
         message = data1.get('message', '')
         try:
@@ -151,8 +173,10 @@ def get_metrics(logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[st
             for logs in logs_for_uuid:
                 temp_metrics = {}
 
-                for idx, l in enumerate(logs):
+                for _, l in enumerate(logs):
                     tags = parse_line(l)
+                    if not tags:
+                        continue
 
                     for key_metric in key_metrics:
                         if key_metric in tags:
