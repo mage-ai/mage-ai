@@ -39,6 +39,10 @@ class Source(BaseSource):
     def table_prefix(self):
         return ''
 
+    @property
+    def quote(self):
+        return ''
+
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
 
@@ -416,3 +420,6 @@ WHERE table_schema = '{schema}'
 
     def _convert_to_rows(self, columns, rows_temp):
         return [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+
+    def _wrap_with_quotes(self, name):
+        return f'{self.quote}{name}{self.quote}'

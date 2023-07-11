@@ -24,7 +24,7 @@ from mage_integrations.destinations.sql.utils import (
 
 class PostgreSQL(Destination):
     @property
-    def column_identifier(self) -> str:
+    def quote(self) -> str:
         return '"'
 
     def build_connection(self) -> PostgreSQLConnection:
@@ -52,7 +52,7 @@ class PostgreSQL(Destination):
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
-                column_identifier=self.column_identifier,
+                column_identifier=self.quote,
             ),
         ]
 
@@ -85,7 +85,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
-                column_identifier=self.column_identifier,
+                column_identifier=self.quote,
             ),
         ]
 
@@ -106,7 +106,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             records=records,
             convert_array_func=self.convert_array,
             string_parse_func=self.string_parse_func,
-            column_identifier=self.column_identifier,
+            column_identifier=self.quote,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -118,11 +118,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in unique_constraints
             ]
             columns_cleaned = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in columns if col != INTERNAL_COLUMN_CREATED_AT
             ]
 
