@@ -60,6 +60,10 @@ class BigQuery(Destination):
 
     BATCH_SIZE = 500
 
+    @property
+    def quote(self) -> str:
+        return '`'
+
     def __init__(self, **kwargs):
         Destination.__init__(self, **kwargs)
         self.use_batch_load = self.config.get('use_batch_load')
@@ -101,7 +105,7 @@ class BigQuery(Destination):
                 # BigQuery doesn't support unique constraints
                 unique_constraints=None,
                 create_temporary_table=create_temporary_table,
-                column_identifier='`',
+                column_identifier=self.quote,
             )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
@@ -184,7 +188,7 @@ WHERE TABLE_NAME = '{table_name}'
                 column_type_mapping=new_mapping,
                 columns=new_columns,
                 full_table_name=full_table_name,
-                column_identifier='`',
+                column_identifier=self.quote,
             ))
 
         return alter_table_commands
@@ -458,7 +462,7 @@ WHERE table_id = '{table_name}'
             string_parse_func=convert_json_or_string,
             stringify_values=False,
             convert_column_types=True,
-            column_identifier='`',
+            column_identifier=self.quote,
         )
         insert_columns = ', '.join(insert_columns)
 
