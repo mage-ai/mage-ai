@@ -20,17 +20,17 @@ PRINT_BLOCK_DOC_DEFAULT = typer.Option(
 
 @app.command()
 def generate_block_documentation(project_name: str = PROJECT_NAME_DEFAULT,
+                                 pipeline_name: str = PROJECT_NAME_DEFAULT,
                                  block_name: str = BLOCK_NAME_DEFAULT):
-    llm_pipeline_wizard = LLMPipelineWizard()
-    print(llm_pipeline_wizard.generate_block_documentation(project_name, block_name))
+    print(LLMPipelineWizard().generate_block_documentation_with_name(
+        project_name, pipeline_name, block_name))
 
 
 @app.command()
 def generate_pipeline_documentation(project_name: str = PROJECT_NAME_DEFAULT,
                                     pipeline_name: str = PROJECT_NAME_DEFAULT,
                                     print_block_doc: bool = PRINT_BLOCK_DOC_DEFAULT):
-    llm_pipeline_wizard = LLMPipelineWizard()
-    print(llm_pipeline_wizard.generate_pipeline_documentation(project_name,
+    print(LLMPipelineWizard().generate_pipeline_documentation(project_name,
                                                               pipeline_name,
                                                               print_block_doc))
 

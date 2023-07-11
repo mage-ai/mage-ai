@@ -1,13 +1,23 @@
-import os
-from typing import Dict, Tuple
-
-import yaml
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.pipeline import Pipeline
 
+BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE = {
+    BlockLanguage.MARKDOWN: 'markdown script',
+    BlockLanguage.PYTHON: 'python script',
+    BlockLanguage.R: 'R script',
+    BlockLanguage.SQL: 'sql script',
+    BlockLanguage.YAML: 'yaml configuration',
+}
+BLOCK_TYPE_TO_PURPOSE_VARIABLE = {
+    BlockType.DATA_LOADER: "load data from a specific data source.",
+    BlockType.DATA_EXPORTER: "export data to a specific data source.",
+    BlockType.TRANSFORMER: "transform data from one format into different format.",
+}
 DATA_LOADERS_FOLDER = 'data_loaders'
 DATA_EXPORTERS_FOLDER = 'data_exporters'
 METADATA_FILE = 'metadata.yaml'
@@ -39,55 +49,17 @@ class LLMPipelineWizard:
                          purpose=purpose,
                          add_on_prompt=add_on_prompt)
 
-    def __define_script_path_and_file_type_variables(self,
-                                                     project_name_with_underscore: str,
-                                                     folder: str,
-                                                     block_config: Dict) -> Tuple[str, str]:
-        if block_config["language"] == BlockLanguage.YAML:
-            block_script_path = os.path.join(
-                                os.getcwd(),
-                                f'{project_name_with_underscore}/{folder}'
-                                f'/{block_config["uuid"]}.yaml')
-            file_type = "yaml configuration"
-        elif block_config["language"] == BlockLanguage.PYTHON:
-            block_script_path = os.path.join(
-                                os.getcwd(),
-                                f'{project_name_with_underscore}/{folder}'
-                                f'/{block_config["uuid"]}.py')
-            file_type = "python code"
-        elif block_config["language"] == BlockLanguage.SQL:
-            block_script_path = os.path.join(
-                                os.getcwd(),
-                                f'{project_name_with_underscore}/{folder}'
-                                f'/{block_config["uuid"]}.sql')
-            file_type = "SQL script"
-        elif block_config["language"] == BlockLanguage.MARKDOWN:
-            block_script_path = os.path.join(
-                                os.getcwd(),
-                                f'{project_name_with_underscore}/{folder}'
-                                f'/{block_config["uuid"]}.md')
-            file_type = "markdown script"
-        elif block_config["language"] == BlockLanguage.R:
-            block_script_path = os.path.join(
-                                os.getcwd(),
-                                f'{project_name_with_underscore}/{folder}'
-                                f'/{block_config["uuid"]}.r')
-            file_type = "R script"
-        return block_script_path, file_type
-
     def generate_pipeline_documentation(self,
                                         project_name: str,
                                         pipeline_name: str,
                                         print_block_doc: bool = False) -> str:
-        project_name_with_underscore = project_name.replace(" ", "_")
-        pipeline_metadata_path = os.path.join(os.getcwd(),
-                                              f'{project_name_with_underscore}/pipelines'
-                                              f'/{pipeline_name.replace(" ", "_")}/{METADATA_FILE}')
-        with open(pipeline_metadata_path, 'r') as file:
-            pipeline_metadata = yaml.safe_load(file)
+        pipeline = Pipeline.get(uuid=pipeline_name.replace(" ", "_"),
+                                repo_path=project_name.replace(" ", "_"))
+
         block_docs = []
-        for block in pipeline_metadata["blocks"]:
-            block_docs.append(self.generate_block_documentation(project_name, block))
+        for block_config in pipeline.block_configs:
+            block_docs.append(self.generate_block_documentation(
+                pipeline.get_block(block_config['uuid'])))
         block_docs_content = '\n'.join(block_docs)
         if print_block_doc:
             print(block_docs_content)
@@ -96,34 +68,27 @@ class LLMPipelineWizard:
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
         return chain.run(block_content=block_docs_content)
 
-    def generate_block_documentation(
+    def generate_block_documentation_with_name(
             self,
             project_name: str,
-            block_config: dict) -> str:
-        project_name_with_underscore = project_name.replace(" ", "_")
+            pipeline_name: str,
+            block_name: str) -> str:
+        pipeline = Pipeline.get(uuid=pipeline_name.replace(" ", "_"),
+                                repo_path=project_name.replace(" ", "_"))
+        return self.generate_block_documentation(pipeline.get_block(block_name.replace(" ", "_")))
+
+    def generate_block_documentation(
+            self,
+            block: Block) -> str:
         add_on_prompt = ""
-        if block_config["type"] == BlockType.DATA_LOADER:
-            purpose = "load data from a specific data source."
-            block_script_path, file_type = self.__define_script_path_and_file_type_variables(
-                project_name_with_underscore, DATA_LOADERS_FOLDER, block_config)
-        elif block_config["type"] == BlockType.DATA_EXPORTER:
-            purpose = "export data to a specific data source."
-            block_script_path, file_type = self.__define_script_path_and_file_type_variables(
-                project_name_with_underscore, DATA_EXPORTERS_FOLDER, block_config)
-        elif block_config["type"] == BlockType.TRANSFORMER:
-            purpose = "transform data from one format into different format."
-            block_script_path, file_type = self.__define_script_path_and_file_type_variables(
-                project_name_with_underscore, TRANSFORMERS_FOLDER, block_config)
+        if block.type == BlockType.TRANSFORMER:
             add_on_prompt = "Focus on the customized business logic in execute_transformer_action \
                              function."
-        else:
-            return ""
-        with open(block_script_path, 'r') as blcock_script_file:
-            block_doc = self.__llm_generate_documentation(
-                        blcock_script_file.read(),
-                        file_type,
-                        purpose,
-                        PROMPT_FOR_BLOCK,
-                        add_on_prompt
-                    )
+        block_doc = self.__llm_generate_documentation(
+                    block.content,
+                    BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language],
+                    BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, ""),
+                    PROMPT_FOR_BLOCK,
+                    add_on_prompt
+                )
         return block_doc
