@@ -82,3 +82,22 @@ def apply_transform(ddf: dd, apply_function) -> dd:
 
 def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
     return df.apply(apply_function, axis=1)
+
+
+def should_serialize_pandas(column_types: Dict) -> bool:
+    if not column_types:
+        return False
+    for _, column_type in column_types.items():
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES or \
+                column_type in STRING_SERIALIZABLE_COLUMN_TYPES:
+            return True
+    return False
+
+
+def should_deserialize_pandas(column_types: Dict) -> bool:
+    if not column_types:
+        return False
+    for _, column_type in column_types.items():
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
+            return True
+    return False
