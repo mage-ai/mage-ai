@@ -4,6 +4,8 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const ICON_SIZE = UNIT * 3;
+
 export const NodeStyle = styled.div<{
   borderColor?: string;
   disabled?: boolean;
