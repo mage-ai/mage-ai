@@ -53,8 +53,16 @@ dependencies required for data integrations that can be challenging to install u
       `SECRET_KEY` key in your
       [runtime variables](/production/configuring-production-settings/runtime-variable).
 
+   You can also add a prefix to output tables by configuring the following variables in the `source` configuration yaml:
+
+   ```yaml
+   _patterns:
+     destination_table: MY_PREFIX_{{ variables('stream') }}
+   ```
+   
+
 3. After you enter in all the credentials, click the button
-   **`[Fetch list of streams]`** under the section labeled ** Select stream ** .
+   **`[Fetch list of streams]`** under the section labeled **Select stream**.
 4. Shortly after clicking the above button, click the new dropdown menu under
    the section labeled **Select stream**. Then, choose the stream (aka table)
    you want to load data from.

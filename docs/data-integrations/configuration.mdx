@@ -40,6 +40,23 @@ Here are the default variables available to interpolate:
 | `env` | Environment Mage is running in. | `dev`, `prod` |
 | `execution_partition` | The current partition of the execution: datetime in this format `%Y%m%dT%H%M%S`. | `20231225T122520` |
 
+### Common prefixes
+
+Mage supports table prefixes for integration sources. To add a prefix, add the following to the source configuration for a data integration pipeline:
+
+```yaml
+_patterns:
+  destination_table: MY_PREFIX_{{ variables('stream') }}
+```
+
+For example, configuring a PostgreSQL source:
+
+<Frame>
+<img
+     alt="Configure data integrations"
+     src="/media/integration-prefix.png"
+  />
+</Frame>
 
 ### Environment variables
 
