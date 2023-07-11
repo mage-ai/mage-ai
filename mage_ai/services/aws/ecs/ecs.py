@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict, List
 
 import boto3
 from botocore.config import Config
@@ -52,7 +53,7 @@ def stop_task(task_arn: str, cluster: str = None) -> None:
     )
 
 
-def list_tasks(cluster):
+def list_tasks(cluster) -> List[Dict]:
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     ecs_client = boto3.client('ecs', config=config)
@@ -67,4 +68,22 @@ def list_tasks(cluster):
             'TAGS',
         ],
         tasks=task_arns,
-    )
+    )['tasks']
+
+
+def list_services(cluster) -> List[Dict]:
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    config = Config(region_name=region_name)
+    ecs_client = boto3.client('ecs', config=config)
+
+    service_arns = ecs_client.list_services(
+        cluster=cluster,
+    )['serviceArns']
+
+    return ecs_client.describe_services(
+        cluster=cluster,
+        include=[
+            'TAGS',
+        ],
+        services=service_arns,
+    )['services']

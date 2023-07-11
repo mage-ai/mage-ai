@@ -1,9 +1,11 @@
-from dataclasses import dataclass, field
-from mage_ai.shared.config import BaseConfig
-from typing import Dict, List
-import boto3
 import os
+from dataclasses import dataclass, field
+from typing import Dict, List
+
+import boto3
 import requests
+
+from mage_ai.shared.config import BaseConfig
 
 ECS_CONTAINER_METADATA_URI_VAR = 'ECS_CONTAINER_METADATA_URI_V4'
 
@@ -16,6 +18,7 @@ class EcsConfig(BaseConfig):
     security_groups: List[str]
     subnets: List[str]
     tags: List = field(default_factory=list)
+    network_configuration: Dict = None
     cpu: int = 512
     memory: int = 1024
 
@@ -61,19 +64,23 @@ class EcsConfig(BaseConfig):
         )
 
     def get_task_config(self, command: str = None) -> Dict:
+        network_configuration = self.network_configuration
+        if network_configuration is None:
+            network_configuration = {
+                'awsvpcConfiguration': {
+                    'subnets': self.subnets,
+                    'assignPublicIp': 'ENABLED',
+                    'securityGroups': self.security_groups,
+                }
+            }
+
         task_config = dict(
             taskDefinition=self.task_definition,
             launchType='FARGATE',
             cluster=self.cluster,
             platformVersion='LATEST',
             count=1,
-            networkConfiguration={
-                'awsvpcConfiguration': {
-                    'subnets': self.subnets,
-                    'assignPublicIp': 'ENABLED',
-                    'securityGroups': self.security_groups,
-                }
-            },
+            networkConfiguration=network_configuration,
             tags=self.tags,
         )
         if command is not None:
