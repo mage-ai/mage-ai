@@ -27,6 +27,9 @@ class PostgreSQL(Destination):
     def quote(self) -> str:
         return '"'
 
+    def full_table_name(self, schema_name: str, table_name: str):
+        return f'{self._wrap_with_quotes(schema_name)}.{self._wrap_with_quotes(table_name)}'
+
     def build_connection(self) -> PostgreSQLConnection:
         return PostgreSQLConnection(
             database=self.config['database'],
@@ -49,7 +52,7 @@ class PostgreSQL(Destination):
             build_create_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{schema_name}.{table_name}',
+                full_table_name=self.full_table_name(schema_name, table_name),
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
                 column_identifier=self.quote,
@@ -84,7 +87,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             build_alter_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
-                full_table_name=f'{schema_name}.{table_name}',
+                full_table_name=self.full_table_name(schema_name, table_name),
                 column_identifier=self.quote,
             ),
         ]
@@ -112,7 +115,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         insert_values = ', '.join(insert_values)
 
         commands = [
-            f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
+            f'INSERT INTO {self.full_table_name(schema_name, table_name)} ({insert_columns})',
             f'VALUES {insert_values}',
         ]
 
