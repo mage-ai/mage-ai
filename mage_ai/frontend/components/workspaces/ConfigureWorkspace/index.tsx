@@ -72,7 +72,7 @@ function ConfigureWorkspace({
   const k8sSettingsFields = useMemo(() => (
     <>
       <Headline level={5}>
-        Kubernetes settings
+        Kubernetes settings (optional)
       </Headline>
       {K8S_TEXT_FIELDS.map(({
         autoComplete,

@@ -49,7 +49,7 @@ def fetch_or_create_pipeline_schedule(pipeline: Pipeline) -> PipelineSchedule:
     schedule_name = TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE
     schedule_type = ScheduleType.API
 
-    pipeline_schedule = PipelineSchedule.query.filter(
+    pipeline_schedule = PipelineSchedule.repo_query.filter(
         PipelineSchedule.name == schedule_name,
         PipelineSchedule.pipeline_uuid == pipeline_uuid,
         PipelineSchedule.schedule_type == schedule_type,

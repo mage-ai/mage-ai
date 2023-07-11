@@ -431,3 +431,49 @@ class WorkloadManager:
             storage_access_mode=kwargs.get('storage_access_mode', storage_access_mode_default),
             storage_request_size=storage_request_size,
         )
+
+    def __create_persistent_volume(
+        self,
+        name,
+        volume_host_path=None,
+        storage_request_size='2Gi',
+        access_mode=None,
+    ):
+        nodes = self.core_client.list_node().items
+        hostnames = [node.metadata.labels['kubernetes.io/hostname'] for node in nodes]
+        access_modes = ['ReadWriteOnce'] if access_mode is None else [access_mode]
+        pv = {
+            'apiVersion': 'v1',
+            'kind': 'PersistentVolume',
+            'metadata': {
+                'name': f'{name}-pv'
+            },
+            'spec': {
+                'capacity': {
+                    'storage': storage_request_size,
+                },
+                'volumeMode': 'Filesystem',
+                'accessModes': access_modes,
+                'persistentVolumeReclaimPolicy': 'Delete',
+                'storageClassName': f'{name}-local-storage',
+                'local': {
+                    'path': volume_host_path,
+                },
+                'nodeAffinity': {
+                    'required': {
+                        'nodeSelectorTerms': [
+                            {
+                                'matchExpressions': [
+                                    {
+                                        'key': 'kubernetes.io/hostname',
+                                        'operator': 'In',
+                                        'values': hostnames
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        self.core_client.create_persistent_volume(pv)

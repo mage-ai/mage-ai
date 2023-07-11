@@ -1,5 +1,5 @@
 import { toast } from 'react-toastify';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -9,10 +9,12 @@ import Headline from '@oracle/elements/Headline';
 import RoleType from '@interfaces/RoleType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import {
   USER_PASSWORD_CURRENT_FIELD_UUID,
   USER_PASSWORD_FIELDS,
@@ -39,8 +41,6 @@ type UserEditFormProps = {
 
 function UserEditForm({
   disabledFields,
-  entity = 'global',
-  entityID,
   hideFields: hideFieldsProp,
   newUser,
   onDeleteSuccess,
@@ -57,6 +57,26 @@ function UserEditForm({
   const {
     owner: isOwner,
   } = getUser() || {};
+
+
+  const { data: serverStatus } = api.statuses.list();
+  const {
+    project_type: projectType,
+    project_uuid: projectUUID,
+  } = useMemo(() => serverStatus?.statuses?.[0] || {}, [serverStatus]);
+
+  let entity = 'global';
+  let entityID = null;
+  let roleText = null;
+
+  if (projectType === ProjectTypeEnum.SUB) {
+    entity = 'project';
+    entityID = projectUUID;
+  } else if (projectType === ProjectTypeEnum.MAIN) {
+    roleText = `The roles selected here will apply to this user globally.
+                If a user has both a global role and a workspace role,
+                then the role with higher access will take precedence.`;
+  }
 
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
     entity: entity,
@@ -244,6 +264,13 @@ function UserEditForm({
 
         {!user?.owner && !hideFields?.includes('roles') && (
           <Spacing mt={2}>
+            {roleText && (
+              <Spacing mb={1}>
+                <Text>
+                  {roleText}
+                </Text>
+              </Spacing>
+            )}
             <Select
               disabled={disabledFields?.includes('roles')}
               label="Roles"

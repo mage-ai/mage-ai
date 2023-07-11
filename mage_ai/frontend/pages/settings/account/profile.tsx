@@ -16,11 +16,6 @@ import { getUser } from '@utils/session';
 function ProfilePage() {
   const { id } = getUser() || {};
   const { data, mutate: fetchUser } = api.users.detail(id);
-  const { data: serverStatus } = api.statuses.list();
-  const {
-    project_type: projectType,
-    project_uuid: projectUUID,
-  } = useMemo(() => serverStatus?.statuses?.[0] || {}, [serverStatus]);
   const user = data?.user;
 
   return (
@@ -32,8 +27,6 @@ function ProfilePage() {
         <Panel>
           <UserEditForm
             disabledFields={['roles']}
-            entity={projectType === 'sub' ? 'project' : 'global'}
-            entityID={projectType === 'sub' && projectUUID}
             onSaveSuccess={fetchUser}
             user={user}
           />

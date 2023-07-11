@@ -17,6 +17,7 @@ from sqlalchemy import (
     Integer,
     String,
     Table,
+    or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
@@ -39,7 +40,8 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.base import Base, BaseModel
+from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
@@ -78,6 +80,15 @@ class PipelineSchedule(BaseModel):
         back_populates='pipeline_schedules'
     )
 
+    @classproperty
+    def repo_query(cls):
+        return cls.query.filter(
+            or_(
+                PipelineSchedule.repo_path == get_repo_path(),
+                PipelineSchedule.repo_path.is_(None),
+            )
+        )
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)
@@ -108,7 +119,9 @@ class PipelineSchedule(BaseModel):
     @classmethod
     @safe_db_query
     def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
-        query = self.query.filter(self.status == ScheduleStatus.ACTIVE)
+        query = self.repo_query.filter(
+            self.status == ScheduleStatus.ACTIVE,
+        )
         if pipeline_uuids is not None:
             query = query.filter(PipelineSchedule.pipeline_uuid.in_(pipeline_uuids))
         return query.all()
@@ -124,7 +137,7 @@ class PipelineSchedule(BaseModel):
     @safe_db_query
     def create_or_update(self, trigger_config: Trigger):
         try:
-            existing_trigger = PipelineSchedule.query.filter(
+            existing_trigger = PipelineSchedule.repo_query.filter(
                 self.name == trigger_config.name,
                 self.pipeline_uuid == trigger_config.pipeline_uuid,
             ).one_or_none()
@@ -292,14 +305,21 @@ class PipelineRun(BaseModel):
 
     @classmethod
     @safe_db_query
-    def active_runs(
+    def active_runs_for_pipelines(
         self,
-        pipeline_uuids: List[str] = None,
+        pipeline_uuids: List[str],
         include_block_runs: bool = False,
     ) -> List['PipelineRun']:
-        query = self.query.filter(self.status == self.PipelineRunStatus.RUNNING)
-        if pipeline_uuids is not None:
-            query = query.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
+        # Filter by schedules because pipelines across repos can potentially
+        # have the same uuid
+        repo_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.pipeline_uuid.in_(pipeline_uuids)
+        ).all()
+        schedule_ids = [s.id for s in repo_schedules]
+        query = self.query.filter(
+            self.status == self.PipelineRunStatus.RUNNING,
+            self.pipeline_schedule_id.in_(schedule_ids),
+        )
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()

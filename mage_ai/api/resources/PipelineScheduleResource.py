@@ -1,6 +1,5 @@
 import uuid
 
-from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
@@ -23,12 +22,7 @@ class PipelineScheduleResource(DatabaseResource):
     def collection(self, query_arg, meta, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
-        query = PipelineSchedule.query.filter(
-            or_(
-                PipelineSchedule.repo_path == get_repo_path(),
-                PipelineSchedule.repo_path.is_(None),
-            )
-        )
+        query = PipelineSchedule.repo_query
         if pipeline:
             return (
                 query.

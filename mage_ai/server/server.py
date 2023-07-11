@@ -403,6 +403,8 @@ if __name__ == '__main__':
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
     instance_type = args.instance_type
+    project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
+    cluster_type = os.getenv('CLUSTER_TYPE')
 
     start_server(
         host=host,
@@ -411,4 +413,6 @@ if __name__ == '__main__':
         manage=manage,
         dbt_docs=dbt_docs,
         instance_type=instance_type,
+        project_type=project_type,
+        cluster_type=cluster_type,
     )
