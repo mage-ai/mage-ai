@@ -1151,10 +1151,11 @@ class Block:
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
+        upstream_block_uuids: List[str] = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
             self.pipeline,
-            self.upstream_block_uuids,
+            upstream_block_uuids or self.upstream_block_uuids,
             input_args,
             execution_partition,
             global_vars,
@@ -2473,6 +2474,7 @@ class CallbackBlock(AddonBlock):
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 
             # Copied logic from the method self.execute_block
@@ -2491,12 +2493,12 @@ class CallbackBlock(AddonBlock):
             for callback_function in callback_functions_legacy:
                 callback_function(**global_vars_copy)
 
-            for callback_function in callback_functions:
+            for idx, callback_function in enumerate(callback_functions):
                 try:
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output.
                     callback_function(callback_status, *input_vars, **global_vars_copy)
-                except TypeError:
+                except TypeError as err:
                     # This try except block will make the above code backwards compatible in case
                     # a user has already written callback functions with only keyword arguments.
                     callback_function(
@@ -2505,6 +2507,7 @@ class CallbackBlock(AddonBlock):
                             __input=outputs_from_input_vars,
                         )),
                     )
+
 
     def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
