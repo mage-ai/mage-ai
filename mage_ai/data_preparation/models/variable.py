@@ -23,6 +23,8 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     cast_column_types,
     deserialize_columns,
     serialize_columns,
+    should_deserialize_pandas,
+    should_serialize_pandas,
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
@@ -394,7 +396,11 @@ class Variable:
             with open(column_types_filename, 'r') as f:
                 column_types = json.load(f)
                 # ddf = dask_from_pandas(df)
-                df = apply_transform_pandas(df, lambda row: deserialize_columns(row, column_types))
+                if should_deserialize_pandas(column_types):
+                    df = apply_transform_pandas(
+                        df,
+                        lambda row: deserialize_columns(row, column_types),
+                    )
                 df = cast_column_types(df, column_types)
         return df
 
@@ -455,25 +461,28 @@ class Variable:
         with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
             f.write(json.dumps(column_types))
 
-        # Try using Polars to write the dataframe to improve performance
-        if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
-                and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
-            # Polars ignores any index
-            try:
-                pl_df = pl.from_pandas(df_output)
-                self.__write_polars_dataframe(pl_df)
-                # Test read dataframe from parquet
-                self. __read_parquet(sample=True, raise_exception=True)
+        if should_serialize_pandas(column_types):
+            # Try using Polars to write the dataframe to improve performance
+            if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
+                    and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
+                # Polars ignores any index
+                try:
+                    pl_df = pl.from_pandas(df_output)
+                    self.__write_polars_dataframe(pl_df)
+                    # Test read dataframe from parquet
+                    self. __read_parquet(sample=True, raise_exception=True)
 
-                return
-            except Exception:
-                pass
+                    return
+                except Exception:
+                    pass
 
-        # ddf = dask_from_pandas(df_output)
-        df_output_serialized = apply_transform_pandas(
-            df_output,
-            lambda row: serialize_columns(row, column_types),
-        )
+            # ddf = dask_from_pandas(df_output)
+            df_output_serialized = apply_transform_pandas(
+                df_output,
+                lambda row: serialize_columns(row, column_types),
+            )
+        else:
+            df_output_serialized = df_output
 
         self.storage.write_parquet(
             df_output_serialized,
