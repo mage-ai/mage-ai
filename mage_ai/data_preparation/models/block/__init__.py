@@ -2498,7 +2498,7 @@ class CallbackBlock(AddonBlock):
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output.
                     callback_function(callback_status, *input_vars, **global_vars_copy)
-                except TypeError as err:
+                except TypeError:
                     # This try except block will make the above code backwards compatible in case
                     # a user has already written callback functions with only keyword arguments.
                     callback_function(
@@ -2507,7 +2507,6 @@ class CallbackBlock(AddonBlock):
                             __input=outputs_from_input_vars,
                         )),
                     )
-
 
     def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
