@@ -2,7 +2,7 @@ import { ThemeContext } from 'styled-components';
 import { useContext, useMemo } from 'react';
 
 import Badge from '@oracle/components/Badge';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -11,8 +11,16 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import { BlocksStacked } from '@oracle/icons';
 import {
+  CircleWithArrowUp,
+  CubeWithArrowDown,
+  DBT as DBTIcon,
+  FrameBoxSelection,
+  Sensor,
+  Union,
+} from '@oracle/icons';
+import {
+  ICON_SIZE,
   BodyStyle,
   HeaderStyle,
   IconStyle,
@@ -20,7 +28,6 @@ import {
   StatusStyle,
 } from './index.style';
 import { Check, Close } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
   HEADER_SPACING_HORIZONTAL_UNITS,
@@ -31,6 +38,14 @@ import {
 } from './utils';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getRuntimeText } from '../utils';
+
+const ICON_MAPPING = {
+  [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
+  [BlockTypeEnum.DATA_LOADER]: CubeWithArrowDown,
+  [BlockTypeEnum.DBT]: DBTIcon,
+  [BlockTypeEnum.SENSOR]: Sensor,
+  [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
+};
 
 type BlockNodeProps = {
   block: BlockType;
@@ -112,6 +127,58 @@ function BlockNode({
 
   const tagsText = useMemo(() => blockTagsText(block), [block]);
 
+  const iconEl = useMemo(() => {
+    const El = ICON_MAPPING[type] || Union;
+    let backgroundColor;
+    let borderColor;
+    let inverted = false;
+
+    if ([
+      BlockTypeEnum.CALLBACK,
+      BlockTypeEnum.CHART,
+      BlockTypeEnum.CONDITIONAL,
+      BlockTypeEnum.CUSTOM,
+      BlockTypeEnum.DATA_EXPORTER,
+      BlockTypeEnum.DATA_LOADER,
+      BlockTypeEnum.EXTENSION,
+      BlockTypeEnum.SCRATCHPAD,
+      BlockTypeEnum.SENSOR,
+      BlockTypeEnum.MARKDOWN,
+      BlockTypeEnum.TRANSFORMER,
+    ].includes(type)) {
+      backgroundColor = accent;
+    } else if ([
+      BlockTypeEnum.DBT,
+    ].includes(type)) {
+      borderColor = accent;
+    }
+
+    if ([
+      BlockTypeEnum.DATA_EXPORTER,
+    ].includes(type)) {
+      inverted = true;
+    }
+
+    return (
+      <IconStyle
+        backgroundColor={backgroundColor}
+        borderColor={borderColor}
+      >
+        <div
+          style={{
+            height: ICON_SIZE,
+            width: ICON_SIZE,
+          }}
+        >
+          <El inverted={inverted} size={ICON_SIZE} />
+        </div>
+      </IconStyle>
+    );
+  }, [
+    accent,
+    type,
+  ]);
+
   return (
     <NodeStyle
       borderColor={accent}
@@ -124,11 +191,7 @@ function BlockNode({
       <HeaderStyle>
         <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex flex={1}>
-            <IconStyle
-              borderColor={accent}
-            >
-              <BlocksStacked size={UNIT * 3} />
-            </IconStyle>
+            {iconEl}
 
             <Spacing mr={HEADER_SPACING_HORIZONTAL_UNITS} />
 
