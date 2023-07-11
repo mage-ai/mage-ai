@@ -9,13 +9,13 @@ import simplejson
 from mage_ai.shared.parsers import encode_complex
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
-JSON_SERIALIZABLE_COLUMN_TYPES = [
+JSON_SERIALIZABLE_COLUMN_TYPES = set([
     dict.__name__,
     list.__name__,
-]
-STRING_SERIALIZABLE_COLUMN_TYPES = [
+])
+STRING_SERIALIZABLE_COLUMN_TYPES = set([
     'ObjectId',
-]
+])
 
 CAST_TYPE_COLUMN_TYPES = set([
     'Int64',
