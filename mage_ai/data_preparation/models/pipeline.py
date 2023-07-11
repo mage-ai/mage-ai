@@ -56,6 +56,7 @@ class Pipeline:
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
         self.schedules = []
+        self.tags = []
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
         self.uuid = uuid
@@ -462,11 +463,12 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
         self.conditional_configs = config.get('conditionals') or []
+        self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
-        self.executor_config = config.get('executor_config') or dict()
-        self.notification_config = config.get('notification_config') or dict()
+        self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
-        self.spark_config = config.get('spark_config') or dict()
+        self.spark_config = config.get('spark_config') or {}
+        self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
 
         self.variables = config.get('variables')
@@ -585,6 +587,7 @@ class Pipeline:
             name=self.name,
             notification_config=self.notification_config,
             retry_config=self.retry_config,
+            tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
             uuid=self.uuid,
