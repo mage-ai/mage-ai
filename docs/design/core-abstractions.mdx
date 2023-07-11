@@ -20,23 +20,49 @@ Here is a [sample project](https://github.com/mage-ai/demo%5Fetl%5Fpipeline) and
 a sample folder structure:
 
 ```
-📁 charts/
-📁 data_exporters/
-📁 data_loaders/
-📁 pipelines/
-  ⌄ 📁 demo/
+📁./
+  📁 mage_data/
+⌄ 📁 my-first-project/
+    📁 charts/
+    📁 custom/
+    📁 data_exporters/
+    📁 data_loaders/
+    📁 dbt/
+    📁 extensions/
+    📁 pipelines/
+      ⌄ 📁 demo/
+        📝 __init__.py
+        📝 metadata.yaml
+    📁 scratchpads/
+    📁 transformers/
+    📁 utils/
     📝 __init__.py
+    📝 io_config.yaml
     📝 metadata.yaml
-📁 scratchpads/
-📁 transformers/
-📁 utils/
-📝 __init__.py
-📝 io_config.yaml
-📝 metadata.yaml
-📝 requirements.txt
+    📝 requirements.txt
 ```
 
+### Structure
+
+- Each [Block](/design/core-abstractions#block) type has it's own directory:
+  - `charts`
+  - [`custom`](/guides/blocks/custom-blocks)
+  - [`data_loaders`](/design/blocks/data-loader)
+  - [`data_exporters`](/design/blocks/data-exporter)
+  - [`extensions`](/design/blocks/extension)
+  - [`sensors`](/design/blocks/sensor)
+  - [`scratchpads`](/design/blocks/scratchpad)
+  - [`transformers`](/design/blocks/transformer)
+- dbt assets are stored in the [dbt directory](/dbt/overview).
+- Each [pipeline](/design/core-abstractions#pipeline) is represented by a YAML file in the `pipelines` folder under the Mage project directory.
+- The `utils` folder is meant to hold custom utilities for your project. For example, [Python scripts](/development/dependencies/custom-files).
+- The `exensions` folder is used for Mage extensions that integrate other data tools, like [Great Expectations](/development/testing/great-expectations).
+- The `metadata.yaml` file contains project-level metadata. There's a metadata file in each pipeline as well.
+- Data loader and exporter [configurations](/guides/io_config) are stored in the `io_config.yaml` file.
+
 Code in a project can be shared across the entire project.
+
+### Creating Projects
 
 You can create a new project by running the following command:
 
@@ -52,6 +78,13 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 ```bash
 mage init [project_name]
 ```
+
+### Project Data
+
+Project-level data is stored in the `mage_data` directory— located at the same level as your project folder. 
+
+`mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI.
+
 
 ## Pipeline
 
