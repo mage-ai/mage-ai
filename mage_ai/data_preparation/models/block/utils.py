@@ -1,12 +1,25 @@
+import json
+from typing import Any, Dict, List, Tuple
+
+import pandas as pd
+
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
-from typing import Any, Dict, List, Tuple
-import json
-import pandas as pd
 
 
 def clean_name(name: str, **kwargs) -> str:
+    """
+    Cleans the given name by removing invalid characters.
+
+    Args:
+        name (str): The name to clean.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        str: The cleaned name.
+
+    """
     return clean_name_orig(name, allow_characters=['/'], **kwargs)
 
 
@@ -16,6 +29,19 @@ def dynamic_block_uuid(
     index: int,
     upstream_block_uuid: str = None,
 ) -> str:
+    """
+    Generates a dynamic block UUID based on the given parameters.
+
+    Args:
+        block_uuid (str): The UUID of the parent block.
+        metadata (Dict): The metadata of the block.
+        index (int): The index of the dynamic block.
+        upstream_block_uuid (str, optional): The UUID of the upstream block.
+
+    Returns:
+        str: The generated dynamic block UUID.
+
+    """
     block_uuid_subname = metadata.get('block_uuid', index)
     uuid = f'{block_uuid}:{block_uuid_subname}'
 
@@ -35,6 +61,20 @@ def create_block_run_from_dynamic_child(
     index: int,
     upstream_block_uuid: str = None,
 ):
+    """
+    Creates a block run for a dynamic child block.
+
+    Args:
+        block: The dynamic child block.
+        pipeline_run: The pipeline run.
+        block_metadata (Dict): The metadata of the block.
+        index (int): The index of the dynamic block.
+        upstream_block_uuid (str, optional): The UUID of the upstream block.
+
+    Returns:
+        block_run: The created block run.
+
+    """
     metadata = block_metadata.copy()
     metadata.update(dict(dynamic_block_index=index))
 
@@ -54,6 +94,18 @@ def dynamic_block_values_and_metadata(
     execution_partition: str = None,
     block_uuid: str = None,
 ):
+    """
+    Retrieves the values and metadata of a dynamic block.
+
+    Args:
+        block: The dynamic block.
+        execution_partition (str, optional): The execution partition.
+        block_uuid (str, optional): The UUID of the block.
+
+    Returns:
+        Tuple: A tuple containing the values and metadata of the dynamic block.
+
+    """
     block_uuid_original = block.uuid
     block_uuid = block_uuid_original if block_uuid is None else block_uuid
 
@@ -84,6 +136,18 @@ def create_block_runs_from_dynamic_block(
     pipeline_run,
     block_uuid: str = None,
 ) -> List:
+    """
+    Creates block runs for all dynamic child blocks of a dynamic block.
+
+    Args:
+        block: The dynamic block.
+        pipeline_run: The pipeline run.
+        block_uuid (str, optional): The UUID of the block.
+
+    Returns:
+        List: A list of all the created block runs.
+
+    """
     block_uuid_original = block.uuid
     block_uuid = block_uuid_original if block_uuid is None else block_uuid
     execution_partition = pipeline_run.execution_partition
@@ -107,7 +171,7 @@ def create_block_runs_from_dynamic_block(
 
         block_runs_created_by_block_uuid = {}
         dynamic_child_block_runs = []
-        for idx, value in enumerate(values):
+        for idx, _ in enumerate(values):
             if idx < len(block_metadata):
                 metadata = block_metadata[idx].copy()
             else:
@@ -265,6 +329,16 @@ def create_block_runs_from_dynamic_block(
 
 
 def get_all_ancestors(block) -> List:
+    """
+    Retrieves all ancestors of the given block.
+
+    Args:
+        block: The block.
+
+    Returns:
+        List: A list of all ancestors of the block.
+
+    """
     arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
     return list(filter(
         lambda x: x.uuid != block.uuid,
@@ -273,6 +347,16 @@ def get_all_ancestors(block) -> List:
 
 
 def get_all_descendants(block) -> List:
+    """
+    Retrieves all descendants of the given block.
+
+    Args:
+        block: The block.
+
+    Returns:
+        List: A list of all descendants of the block.
+
+    """
     arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
     return list(filter(
         lambda x: x.uuid != block.uuid,
@@ -286,6 +370,19 @@ def get_leaf_nodes(
     condition=None,
     include_all_nodes: bool = False,
 ) -> List:
+    """
+    Retrieves all leaf nodes of the given block.
+
+    Args:
+        block: The block.
+        attribute_key (str): The attribute key for the nodes.
+        condition: A condition function to filter the nodes. (default: None)
+        include_all_nodes (bool): Whether to include all nodes in the result. (default: False)
+
+    Returns:
+        List: A list of all leaf nodes of the block.
+
+    """
     leafs = []
 
     def _get_leaf_nodes(b):
@@ -304,14 +401,44 @@ def get_leaf_nodes(
 
 
 def is_dynamic_block(block) -> bool:
+    """
+    Checks if the given block is a dynamic block.
+
+    Args:
+        block: The block.
+
+    Returns:
+        bool: True if the block is a dynamic block, False otherwise.
+
+    """
     return block.configuration and block.configuration.get('dynamic', False)
 
 
 def should_reduce_output(block) -> bool:
+    """
+    Checks if the given block should reduce its output.
+
+    Args:
+        block: The block.
+
+    Returns:
+        bool: True if the block should reduce its output, False otherwise.
+
+    """
     return block.configuration and block.configuration.get('reduce_output', False)
 
 
 def is_dynamic_block_child(block) -> bool:
+    """
+    Checks if the given block is a dynamic block child.
+
+    Args:
+        block: The block.
+
+    Returns:
+        bool: True if the block is a dynamic block child, False otherwise.
+
+    """
     dynamic_or_child = []
 
     for upstream_block in block.upstream_blocks:
@@ -331,6 +458,18 @@ def output_variables(
     block_uuid: str,
     execution_partition: str = None,
 ) -> List[str]:
+    """
+    Retrieves the output variables of a block.
+
+    Args:
+        pipeline: The pipeline.
+        block_uuid (str): The UUID of the block.
+        execution_partition (str, optional): The execution partition.
+
+    Returns:
+        List[str]: A list of output variable names.
+
+    """
     """Return output variables in dictionary.
     The key is the variable name, and the value is variable data type.
 
@@ -352,10 +491,32 @@ def output_variables(
 
 
 def is_output_variable(variable_uuid: str) -> bool:
+    """
+    Checks if the given variable UUID represents an output variable.
+
+    Args:
+        variable_uuid (str): The UUID of the variable.
+
+    Returns:
+        bool: True if the variable is an output variable, False otherwise.
+
+    """
     return variable_uuid == 'df' or variable_uuid.startswith('output')
 
 
 def is_valid_print_variable(k, v, block_uuid):
+    """
+    Checks if the given key-value pair represents a valid print variable.
+
+    Args:
+        k: The key.
+        v: The value.
+        block_uuid: The UUID of the block.
+
+    Returns:
+        bool: True if the key-value pair is a valid print variable, False otherwise.
+
+    """
     if f'{block_uuid}_' not in k:
         return False
     if type(v) is not str:
@@ -378,12 +539,17 @@ def input_variables(
     upstream_block_uuids: List[str],
     execution_partition: str = None,
 ) -> Dict[str, List[str]]:
-    """Get input variables from upstream blocks' output variables.
+    """
+    Retrieves the input variables from the output variables of upstream blocks.
+
     Args:
-        execution_partition (str, optional): The execution paratition string.
+        pipeline: The pipeline.
+        upstream_block_uuids (List[str]): The UUIDs of the upstream blocks.
+        execution_partition (str, optional): The execution partition.
 
     Returns:
-        Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
+        Dict[str, List[str]]: A mapping from upstream block UUID to a list of variable names.
+
     """
     return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
             for block_uuid in upstream_block_uuids}
@@ -398,6 +564,24 @@ def fetch_input_variables(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
 ) -> Tuple[List, List, List]:
+    """
+    Fetches the input variables for a block.
+
+    Args:
+        pipeline: The pipeline.
+        upstream_block_uuids (List[str]): The UUIDs of the upstream blocks.
+        input_args (List[Any]): The input arguments.
+        execution_partition (str, optional): The execution partition.
+        global_vars (Dict, optional): Global variables.
+        dynamic_block_index (int, optional): The index of the dynamic block.
+        dynamic_upstream_block_uuids (List[str], optional): The UUIDs of the dynamic upstream
+            blocks.
+
+    Returns:
+        Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
+            upstream block UUIDs.
+
+    """
     spark = (global_vars or dict()).get('spark')
     upstream_block_uuids_final = []
 

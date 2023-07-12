@@ -26,6 +26,13 @@ from mage_ai.shared.hash import merge_dict
 class DBTBlock(Block):
     @property
     def file_path(self) -> str:
+        """
+        Return the file path for the DBT block.
+
+        Returns:
+            str: The file path of the DBT block.
+
+        """
         if BlockLanguage.SQL == self.language:
             repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
             file_path = self.configuration.get('file_path')
@@ -39,6 +46,13 @@ class DBTBlock(Block):
         return super().file_path
 
     async def metadata_async(self) -> Dict:
+        """
+        Retrieve metadata asynchronously.
+
+        Returns:
+            Dict: The metadata of the DBT block.
+
+        """
         project = None
         projects = {}
         block_metadata = {}
@@ -97,6 +111,15 @@ class DBTBlock(Block):
         global_vars=None,
         **kwargs,
     ):
+        """
+        Run tests for the DBT block.
+
+        Args:
+            build_block_output_stdout: The build block output stdout.
+            global_vars: The global variables.
+            **kwargs: Additional keyword arguments.
+
+        """
         if self.configuration.get('file_path') is not None:
             attributes_dict = parse_attributes(self)
             snapshot = attributes_dict['snapshot']
@@ -110,6 +133,13 @@ class DBTBlock(Block):
         )
 
     def tags(self) -> List[str]:
+        """
+        Get the tags associated with the DBT block.
+
+        Returns:
+            List[str]: The list of tags.
+
+        """
         arr = super().tags()
 
         if self.configuration.get('file_path') is not None:
@@ -130,6 +160,13 @@ class DBTBlock(Block):
         return arr
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+        """
+        Update the upstream blocks of the DBT block.
+
+        Args:
+            upstream_blocks (List[Any]): The list of upstream blocks.
+
+        """
         upstream_blocks_previous = self.upstream_blocks
         super().update_upstream_blocks(upstream_blocks)
         if BlockLanguage.SQL == self.language:
@@ -145,6 +182,22 @@ class DBTBlock(Block):
         run_settings: Dict = None,
         **kwargs,
     ) -> List:
+        """
+        Execute the DBT block.
+
+        Args:
+            outputs_from_input_vars:
+            execution_partition (str, optional): The execution partition.
+            global_vars (Dict, optional): The global variables.
+            test_execution (bool, optional): Whether it is a test execution.
+            runtime_arguments (Dict, optional): The runtime arguments.
+            run_settings (Dict, optional): The run settings.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            List: The list of outputs.
+
+        """
         variables = merge_dict(global_vars, runtime_arguments or {})
 
         if run_settings:
