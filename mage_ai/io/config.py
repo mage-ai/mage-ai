@@ -431,7 +431,7 @@ class ConfigFileLoader(BaseConfigLoader):
             self.config = config
         else:
             if filepath is None:
-                filepath = get_repo_path() / 'io_config.yaml'
+                filepath = os.path.join(get_repo_path(), 'io_config.yaml')
             self.filepath = Path(filepath)
             self.profile = profile
             with self.filepath.open('r') as fin:
