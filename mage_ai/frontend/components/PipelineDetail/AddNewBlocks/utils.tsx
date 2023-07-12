@@ -44,6 +44,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.MONGODB,
         DataSourceTypeEnum.OPENSEARCH,
+        DataSourceTypeEnum.AZURE_DATA_LAKE,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,
