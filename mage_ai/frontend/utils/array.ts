@@ -7,6 +7,16 @@ export function pushAtIndex(item, idx, arr) {
   return copy;
 }
 
+export function pushUnique(item, arr, func) {
+  const copy = arr.slice();
+
+  if (!find(arr, func)) {
+    copy.push(item);
+  }
+
+  return copy;
+}
+
 export function appendArray(value, arrArg) {
   const newArray = arrArg.slice();
   newArray.push(value);

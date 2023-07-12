@@ -7,10 +7,12 @@ import Text from '@oracle/elements/Text';
 import { sortByKey } from '@utils/array';
 
 type TagsContainerProps = {
+  onClickTag?: (tag: TagType) => void;
   tags: TagType[];
 };
 
 function TagsContainer({
+  onClickTag,
   tags = [],
 }: TagsContainerProps) {
   const tagsCount = useMemo(() => tags?.length || 0, [tags]);
@@ -18,19 +20,22 @@ function TagsContainer({
 
   return (
     <FlexContainer alignItems="center" flexWrap="wrap">
-      {tagsSorted?.reduce((acc, { uuid }: TagType) => {
+      {tagsSorted?.reduce((acc, tag: TagType) => {
         acc.push(
           <div
-            key={`tag-${uuid}`}
+            key={`tag-${tag.uuid}`}
             style={{
               marginBottom: 2,
               marginRight: tagsCount >= 2 ? 4 : 0,
               marginTop: 2,
             }}
           >
-            <Chip small>
+            <Chip
+              onClick={onClickTag ? () => onClickTag(tag) : null}
+              small
+            >
               <Text>
-                {uuid}
+                {tag.uuid}
               </Text>
             </Chip>
           </div>,

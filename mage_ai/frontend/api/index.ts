@@ -69,6 +69,7 @@ export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
+export const TAGS: 'tags' = 'tags';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
@@ -129,6 +130,7 @@ const RESOURCES: any[][] = [
   [SESSIONS],
   [STATUSES],
   [SYNCS],
+  [TAGS],
   [USERS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],

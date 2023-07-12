@@ -627,6 +627,16 @@ function PipelineListPage() {
                     uuid: 'clone',
                   },
                   {
+                    label: () => 'Add tags',
+                    onClick: () => {
+                      router.push(
+                        '/pipelines/[pipeline]/settings',
+                        `/pipelines/${selectedPipeline?.uuid}/settings`,
+                      );
+                    },
+                    uuid: 'add_tags',
+                  },
+                  {
                     label: () => 'Delete',
                     onClick: () => {
                       if (typeof window !== 'undefined'
