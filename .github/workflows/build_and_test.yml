@@ -36,12 +36,7 @@ jobs:
         run: |
           sudo apt install libkrb5-dev
           python -m pip install --upgrade pip
-          ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/')
-          if [ "$ver" -ge "38" ]; then
-              pip install -r requirements.txt
-          else
-              pip install $(grep -ivE "langchain" requirements.txt)
-          fi
+          pip install -r requirements.txt
           pip install -r mage_integrations/requirements.txt
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests

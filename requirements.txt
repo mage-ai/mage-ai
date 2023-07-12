@@ -57,7 +57,7 @@ google-cloud-pubsub==2.16.0
 google-cloud-run==0.5.0
 google-cloud-storage==2.5.0
 kubernetes==25.3.0
-langchain>=0.0.222
+langchain>=0.0.222; python_version >= '3.8'
 mysql-connector-python==8.0.31
 openai>=0.27.8
 psycopg2==2.9.3
