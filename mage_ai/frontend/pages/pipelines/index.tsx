@@ -287,7 +287,7 @@ function PipelineListPage() {
                 fill={dark.content.default}
                 size={UNIT * 1.5}
               />
-              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+              : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.STATUS),
             onClick: () => goToWithQuery({
@@ -305,7 +305,7 @@ function PipelineListPage() {
                 fill={dark.content.default}
                 size={UNIT * 1.5}
               />
-              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+              : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.TAG),
             onClick: () => goToWithQuery({
@@ -323,7 +323,7 @@ function PipelineListPage() {
                 fill={dark.content.default}
                 size={UNIT * 1.5}
               />
-              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+              : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.TYPE),
             onClick: () => goToWithQuery({

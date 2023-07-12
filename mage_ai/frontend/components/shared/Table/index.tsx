@@ -347,12 +347,14 @@ function Table({
 
   const tableEl = useMemo(() => {
     if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {
+      // @ts-ignore
       return rowsGroupedByIndex?.reduce((acc, indexes: number[], idx: number) => {
         const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
         if (els?.length >= 1) {
           const header = rowGroupHeaders[idx];
 
           acc.push(
+            // @ts-ignore
             <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
               <Accordion
                 visibleMapping={{

@@ -124,7 +124,7 @@ function TagsAutocompleteInputField({
                     {...opts}
                     onClick={(e) => {
                       pauseEvent(e);
-                      opts?.onClick?.();
+                      opts?.onClick?.(e);
                     }}
                   >
                     <Chip small>
@@ -141,6 +141,7 @@ function TagsAutocompleteInputField({
               setInputValue(null);
             }}
             searchQuery={inputValue}
+            uuid={uuid}
           />
         </DropdownStyle>
       </Spacing>
