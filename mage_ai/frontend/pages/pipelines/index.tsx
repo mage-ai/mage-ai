@@ -556,7 +556,14 @@ function PipelineListPage() {
       let value = pipeline[groupByQuery];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
-        // Check if pipeline is: active, inactive, no schedules, or retry
+        const { schedules = [] } = pipeline;
+        // TODO (tommy dang): when is the pipeline status RETRY?
+        const schedulesCount = schedules.length;
+        const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+        value = isActive
+          ? PipelineStatusEnum.ACTIVE
+          : schedulesCount >= 1 ? PipelineStatusEnum.INACTIVE : PipelineStatusEnum.NO_SCHEDULES;
+
       } else if (PipelineGroupingEnum.TAG === groupByQuery) {
         const pt = pipeline?.tags;
         if (pt) {
