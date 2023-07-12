@@ -831,8 +831,6 @@ function SchemaTable({
           Settings
         </Headline>
 
-<<<<<<< HEAD
-=======
         <Spacing mb={SPACING_BOTTOM_UNITS}>
           <Spacing mb={1}>
             <FlexContainer alignItems="center" flexWrap="wrap">
@@ -855,54 +853,6 @@ function SchemaTable({
           </Spacing>
         </Spacing>
 
-        <Spacing mb={SPACING_BOTTOM_UNITS}>
-          <Spacing mb={1}>
-            <Text bold large>
-              Replication method
-            </Text>
-            <Text default>
-              Do you want to synchronize the entire stream (<Text bold inline monospace>
-                {ReplicationMethodEnum.FULL_TABLE}
-              </Text>)
-              on each integration pipeline run or
-              only new records (<Text bold inline monospace>
-                {ReplicationMethodEnum.INCREMENTAL}
-              </Text>)?
-              {source === IntegrationSourceEnum.POSTGRESQL &&
-                <Text default>
-                  Log-based incremental replication (<Text bold inline monospace>
-                    {ReplicationMethodEnum.LOG_BASED}
-                  </Text>)
-                  is also available for PostgreSQL sources.
-                </Text>
-              }
-            </Text>
-          </Spacing>
-
-          <Select
-            onChange={(e) => {
-              updateStream(streamUUID, (stream: StreamType) => ({
-                ...stream,
-                replication_method: e.target.value,
-              }));
-            }}
-            primary
-            value={replicationMethod}
-          >
-            <option value="" />
-            {Object.values(ReplicationMethodEnum)
-              .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
-                ? true
-                : method !== ReplicationMethodEnum.LOG_BASED))
-              .map(method => (
-                <option key={method} value={method}>
-                  {method}
-                </option>
-            ))}
-          </Select>
-        </Spacing>
-
->>>>>>> cf2110040 ([dy] Run streams in parallel)
         {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
           <Spacing mb={SPACING_BOTTOM_UNITS}>
             <Spacing mb={1}>
