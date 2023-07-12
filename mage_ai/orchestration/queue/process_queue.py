@@ -47,6 +47,8 @@ class ProcessQueue(Queue):
         self.mp_manager = Manager()
         self.job_dict = self.mp_manager.dict()
 
+        self.worker_pool_proc = None
+
     def clean_up_jobs(self):
         """
         Cleans up completed jobs from the job dictionary.
