@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Chip from '@oracle/components/Chip';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -583,7 +584,25 @@ function PipelineListPage() {
     } else if (PipelineGroupingEnum.TAG === groupByQuery) {
       sortByKey(Object.keys(mapping), uuid => uuid).forEach((val: string) => {
         arr.push(mapping[val]);
-        headers.push(val || 'No tags');
+        if (val) {
+          headers.push(val.split(', ').map((v: string, idx: number) => (
+            <>
+              <div
+                key={`${v}-${idx}-spacing`}
+                style={{
+                  marginLeft: idx >= 1 ? 4 : 0,
+                }}
+              />
+              <Chip key={`${v}-${idx}`} small>
+                <Text>
+                  {v}
+                </Text>
+              </Chip>
+            </>
+          )));
+        } else {
+          headers.push('No tags');
+        }
       });
     } else if (PipelineGroupingEnum.TYPE === groupByQuery) {
       Object.values(PipelineTypeEnum).forEach((val) => {

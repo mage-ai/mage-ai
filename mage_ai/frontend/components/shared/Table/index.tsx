@@ -353,7 +353,7 @@ function Table({
           const header = rowGroupHeaders[idx];
 
           acc.push(
-            <Spacing key={header} mt={idx >= 1 ? 2 : 0}>
+            <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
               <Accordion
                 visibleMapping={{
                   '0': true,
