@@ -15,6 +15,8 @@ from mage_ai.shared.utils import clean_name
 
 
 class BlockExecutor:
+    RETRYABLE = True
+
     def __init__(
         self,
         pipeline,
@@ -93,12 +95,18 @@ class BlockExecutor:
                 from mage_ai.shared.retry import retry
 
                 if retry_config is None:
-                    retry_config = dict()
+                    if self.RETRYABLE:
+                        retry_config = merge_dict(
+                            self.pipeline.retry_config or dict(),
+                            self.block.retry_config or dict(),
+                        )
+                    else:
+                        retry_config = dict()
                 if type(retry_config) is not RetryConfig:
                     retry_config = RetryConfig.load(config=retry_config)
 
                 @retry(
-                    retries=retry_config.retries,
+                    retries=retry_config.retries if self.RETRYABLE else 0,
                     delay=retry_config.delay,
                     max_delay=retry_config.max_delay,
                     exponential_backoff=retry_config.exponential_backoff,
