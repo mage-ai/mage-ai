@@ -97,7 +97,7 @@ class BlockExecutor:
                 if retry_config is None:
                     if self.RETRYABLE:
                         retry_config = merge_dict(
-                            self.pipeline.retry_config or dict(),
+                            self.pipeline.repo_config.retry_config or dict(),
                             self.block.retry_config or dict(),
                         )
                     else:
