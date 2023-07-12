@@ -24,12 +24,12 @@ import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
@@ -244,7 +244,15 @@ function PipelineListPage() {
           with the pipeline, including its blocks, triggers, runs, logs, and history.',
         isLoading: isLoadingDelete,
         item: 'pipeline',
-        onDelete: () => deletePipeline(selectedPipeline?.uuid),
+        onDelete: () => {
+          if (typeof window !== 'undefined'
+            && window.confirm(
+              `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
+            )
+          ) {
+            deletePipeline(selectedPipeline?.uuid);
+          }
+        },
       }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
@@ -531,7 +539,7 @@ function PipelineListPage() {
             maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
           >
             <Table
-              columnFlex={[null, 1, 3, 4, 1, 1, 1, null]}
+              columnFlex={[null, null, null, 2, null, 1, null, null, null]}
               columns={[
                 {
                   label: () => '',
@@ -550,6 +558,9 @@ function PipelineListPage() {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
                 },
                 {
+                  uuid: 'Tags',
+                },
+                {
                   uuid: 'Blocks',
                 },
                 {
@@ -557,6 +568,7 @@ function PipelineListPage() {
                 },
                 {
                   center: true,
+                  label: () => '',
                   uuid: 'Actions',
                 },
               ]}
@@ -616,7 +628,15 @@ function PipelineListPage() {
                   },
                   {
                     label: () => 'Delete',
-                    onClick: () => deletePipeline(selectedPipeline?.uuid),
+                    onClick: () => {
+                      if (typeof window !== 'undefined'
+                        && window.confirm(
+                          `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
+                        )
+                      ) {
+                        deletePipeline(selectedPipeline?.uuid);
+                      }
+                    },
                     uuid: 'delete',
                   },
                 ];
@@ -626,12 +646,21 @@ function PipelineListPage() {
                   blocks,
                   description,
                   schedules,
+                  tags,
                   type,
                   uuid,
                 } = pipeline;
                 const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
                 const schedulesCount = schedules.length;
                 const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+
+                const tagsEl = (
+                  <div key={`pipeline_tags_${idx}`}>
+                    <TagsContainer
+                      tags={tags?.map(tag => ({ uuid: tag }))}
+                    />
+                  </div>
+                );
 
                 return [
                   (schedulesCount >= 1 || !!pipelinesEditing[uuid])
@@ -698,6 +727,7 @@ function PipelineListPage() {
                   >
                     {PIPELINE_TYPE_LABEL_MAPPING[type]}
                   </Text>,
+                  tagsEl,
                   <Text
                     default={blocksCount === 0}
                     key={`pipeline_block_count_${idx}`}

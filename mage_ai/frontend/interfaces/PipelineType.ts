@@ -91,6 +91,7 @@ export default interface PipelineType {
   name?: string;
   retry_config?: PipelineRetryConfigType;
   schedules?: PipelineScheduleType[];
+  tags?: string[];
   type?: PipelineTypeEnum;
   updated_at?: string;
   uuid: string;
