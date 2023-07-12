@@ -32,13 +32,13 @@ import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { Check, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
+import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize, removeUnderscore } from '@utils/string';
+import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
@@ -281,15 +281,13 @@ function PipelineListPage() {
         groupByLabel: groupByQuery,
         menuItems: [
           {
-            beforeIcon: (
-              <Check
-                fill={groupByQuery === PipelineGroupingEnum.STATUS
-                  ? dark.content.default
-                  : dark.interactive.transparent
-                }
-                size={UNIT * 2}
+            beforeIcon: groupByQuery === PipelineGroupingEnum.STATUS
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
               />
-            ),
+              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+            ,
             label: () => capitalize(PipelineGroupingEnum.STATUS),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.STATUS
@@ -301,15 +299,31 @@ function PipelineListPage() {
             uuid: 'Pipelines/GroupMenu/Status',
           },
           {
-            beforeIcon: (
-              <Check
-                fill={groupByQuery === PipelineGroupingEnum.TYPE
-                  ? dark.content.default
-                  : dark.interactive.transparent
-                }
-                size={UNIT * 2}
+            beforeIcon: groupByQuery === PipelineGroupingEnum.TAG
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
               />
-            ),
+              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+            ,
+            label: () => capitalize(PipelineGroupingEnum.TAG),
+            onClick: () => goToWithQuery({
+              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TAG
+                ? null
+                : PipelineGroupingEnum.TAG,
+            }, {
+              pushHistory: true,
+            }),
+            uuid: 'Pipelines/GroupMenu/Tag',
+          },
+          {
+            beforeIcon: groupByQuery === PipelineGroupingEnum.TYPE
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
+              />
+              : <Circle borderSize={1} muted size={UNIT * 1.5} />
+            ,
             label: () => capitalize(PipelineGroupingEnum.TYPE),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TYPE
@@ -531,6 +545,62 @@ function PipelineListPage() {
     showHelpMageModal,
   ]);
 
+  const {
+    rowGroupHeaders,
+    rowsGroupedByIndex,
+  } = useMemo(() => {
+    const mapping = {};
+
+    pipelines?.forEach((pipeline, idx: number) => {
+      let value = pipeline[groupByQuery];
+
+      if (PipelineGroupingEnum.STATUS === groupByQuery) {
+        // Check if pipeline is: active, inactive, no schedules, or retry
+      } else if (PipelineGroupingEnum.TAG === groupByQuery) {
+        const pt = pipeline?.tags;
+        if (pt) {
+          value = sortByKey(pipeline.tags, uuid => uuid).join(', ');
+        } else {
+          value = '';
+        }
+      }
+
+      if (!mapping[value]) {
+        mapping[value] = [];
+      }
+
+      mapping[value].push(idx);
+    });
+
+    const arr = [];
+    const headers = [];
+
+    if (PipelineGroupingEnum.STATUS === groupByQuery) {
+      Object.values(PipelineStatusEnum).forEach((val) => {
+        arr.push(mapping[val]);
+        headers.push(capitalizeRemoveUnderscoreLower(val));
+      });
+    } else if (PipelineGroupingEnum.TAG === groupByQuery) {
+      sortByKey(Object.keys(mapping), uuid => uuid).forEach((val: string) => {
+        arr.push(mapping[val]);
+        headers.push(val || 'No tags');
+      });
+    } else if (PipelineGroupingEnum.TYPE === groupByQuery) {
+      Object.values(PipelineTypeEnum).forEach((val) => {
+        arr.push(mapping[val]);
+        headers.push(PIPELINE_TYPE_LABEL_MAPPING[val]);
+      });
+    }
+
+    return {
+      rowGroupHeaders: headers,
+      rowsGroupedByIndex: arr,
+    };
+  }, [
+    groupByQuery,
+    pipelines,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
@@ -591,18 +661,6 @@ function PipelineListPage() {
                   uuid: 'Actions',
                 },
               ]}
-              grouping={{
-                column: capitalize(groupByQuery),
-                columnIndex: groupByQuery === PipelineGroupingEnum.STATUS
-                  ? 1
-                  : (groupByQuery === PipelineGroupingEnum.TYPE ? 4 : null),
-                values: groupByQuery === PipelineGroupingEnum.STATUS
-                    ? Object.values(PipelineStatusEnum).map(val => removeUnderscore(val))
-                    : (groupByQuery === PipelineGroupingEnum.TYPE
-                      ? Object.values(PipelineTypeEnum).map(val => PIPELINE_TYPE_LABEL_MAPPING[val])
-                      : []
-                    ),
-              }}
               isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
                 const pipeline = pipelines[rowIndex];
@@ -670,6 +728,7 @@ function PipelineListPage() {
                   },
                 ];
               }}
+              rowGroupHeaders={rowGroupHeaders}
               rows={pipelines.map((pipeline, idx) => {
                 const {
                   blocks,
@@ -803,6 +862,7 @@ function PipelineListPage() {
                   </Flex>,
                 ];
               })}
+              rowsGroupedByIndex={rowsGroupedByIndex}
               stickyHeader
             />
           </TableContainerStyle>
