@@ -642,6 +642,10 @@ def run_integration_pipeline(
             pipeline_scheduler,
             pipeline_run_id,
             variables,
+            all_block_runs,
+            block_runs,
+            executable_block_run_ids,
+            pipeline_run,
         )
     )
 
@@ -678,22 +682,35 @@ def run_integration_stream(
     pipeline_scheduler,
     pipeline_run_id,
     variables,
+    all_block_runs,
+    block_runs,
+    executable_block_run_ids,
+    pipeline_run,
 ):
     tap_stream_id = stream['tap_stream_id']
     destination_table = stream.get('destination_table', tap_stream_id)
 
-    
-    block_runs_for_stream = (
-        BlockRun.query
-        .filter(BlockRun.id.in_(executable_block_runs))
-        .filter(BlockRun.block_uuid.like(f'%{tap_stream_id}%'))
-    )
+    block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
+    if len(block_runs_for_stream) == 0:
+        return
+
     indexes = [0]
     for br in block_runs_for_stream:
         parts = br.block_uuid.split(':')
         if len(parts) >= 3:
             indexes.append(int(parts[2]))
     max_index = max(indexes)
+
+    all_block_runs_for_stream = list(filter(
+        lambda br: tap_stream_id in br.block_uuid,
+        all_block_runs,
+    ))
+    all_indexes = [0]
+    for br in all_block_runs_for_stream:
+        parts = br.block_uuid.split(':')
+        if len(parts) >= 3:
+            all_indexes.append(int(parts[2]))
+    max_index_for_stream = max(all_indexes)
 
     for idx in range(max_index + 1):
         block_runs_in_order = []
@@ -702,8 +719,9 @@ def run_integration_stream(
         while True:
             block_runs_in_order.append(
                 find(
-                    lambda b: b.block_uuid == f'{current_block.uuid}:{tap_stream_id}:{idx}',
-                    block_runs_for_stream,
+                    lambda b: b.block_uuid ==
+                    f'{current_block.uuid}:{tap_stream_id}:{idx}',  # noqa: B023
+                    all_block_runs,
                 )
             )
             downstream_blocks = current_block.downstream_blocks
@@ -715,26 +733,27 @@ def run_integration_stream(
         data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}'
 
         data_loader_block_run = find(
-            lambda b: b.block_uuid == data_loader_uuid,
-            block_runs_for_stream,
+            lambda b: b.block_uuid == data_loader_uuid,     # noqa: B023
+            all_block_runs,
         )
         data_exporter_block_run = find(
-            lambda b: b.block_uuid == data_exporter_uuid,
+            lambda b: b.block_uuid == data_exporter_uuid,   # noqa: B023
             block_runs_for_stream,
         )
         if not data_loader_block_run or not data_exporter_block_run:
             continue
 
-        transformer_block_runs = [br for br in block_runs_in_order if br.block_uuid not in [
-            data_loader_uuid,
-            data_exporter_uuid,
-        ]]
+        transformer_block_runs = [br for br in block_runs_in_order if (
+            br.block_uuid not in [data_loader_uuid, data_exporter_uuid] and
+            br.id in executable_block_run_ids
+        )]
 
         index = stream.get('index', idx)
 
         shared_dict = dict(
             destination_table=destination_table,
             index=index,
+            is_last_block_run=(index == max_index_for_stream),
             selected_streams=[
                 tap_stream_id,
             ],
@@ -744,15 +763,31 @@ def run_integration_stream(
         ] + [(br, shared_dict) for br in transformer_block_runs] + [
             (data_exporter_block_run, shared_dict),
         ]
+        if len(executable_block_runs) == 1 and \
+                data_exporter_block_run.id in executable_block_run_ids:
+            block_runs_and_configs = block_runs_and_configs[-1:]
+        elif data_loader_block_run.id not in executable_block_run_ids:
+            block_runs_and_configs = block_runs_and_configs[1:]
 
-        outputs = []
-        for idx2, tup in enumerate(block_runs_and_configs):
+        block_failed = False
+        for _, tup in enumerate(block_runs_and_configs):
             block_run, template_runtime_configuration = tup
 
             tags_updated = merge_dict(tags, dict(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
             ))
+
+            if block_failed:
+                block_run.update(
+                    status=BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                )
+                continue
+
+            pipeline_run.refresh()
+            if pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+                return
+
             block_run.update(
                 started_at=datetime.now(),
                 status=BlockRun.BlockRunStatus.RUNNING,
@@ -762,19 +797,53 @@ def run_integration_stream(
                 **tags_updated,
             )
 
-            output = run_block(
-                pipeline_run_id,
-                block_run.id,
-                variables,
-                tags_updated,
-                input_from_output=outputs[idx2 - 1] if idx2 >= 1 else None,
-                pipeline_type=PipelineType.INTEGRATION,
-                verify_output=False,
-                runtime_arguments=runtime_arguments,
-                schedule_after_complete=False,
-                template_runtime_configuration=template_runtime_configuration,
-            )
-            outputs.append(output)
+            try:
+                run_block(
+                    pipeline_run_id,
+                    block_run.id,
+                    variables,
+                    tags_updated,
+                    pipeline_type=PipelineType.INTEGRATION,
+                    verify_output=False,
+                    # Not retry for data integration pipeline blocks
+                    retry_config=dict(retries=0),
+                    runtime_arguments=runtime_arguments,
+                    schedule_after_complete=False,
+                    template_runtime_configuration=template_runtime_configuration,
+                )
+            except Exception as e:
+                if pipeline_scheduler.allow_blocks_to_fail:
+                    block_failed = True
+                else:
+                    raise e
+            else:
+                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
+                        f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+
+                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
+                        destination_table=destination_table,
+                        index=index,
+                        stream=tap_stream_id,
+                    ))
+                    pipeline_scheduler.logger.info(
+                        f'Calculate metrics for pipeline run {pipeline_run.id} started.',
+                        **tags_updated,
+                        tags=tags2,
+                    )
+                    try:
+                        calculate_metrics(pipeline_run)
+                        pipeline_scheduler.logger.info(
+                            f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                            **tags_updated,
+                            tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
+                        )
+                    except Exception:
+                        pipeline_scheduler.logger.error(
+                            f'Failed to calculate metrics for pipeline run {pipeline_run.id}. '
+                            f'{traceback.format_exc()}',
+                            **tags_updated,
+                            tags=tags2,
+                        )
 
 
 def run_block(
