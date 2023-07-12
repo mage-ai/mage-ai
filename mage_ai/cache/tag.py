@@ -4,7 +4,7 @@ from datetime import datetime
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_TAGS_TO_OBJECT_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
-from typing import Dict, Union
+from typing import Dict
 
 KEY_FOR_PIPELINES = 'Pipeline'
 
@@ -120,6 +120,8 @@ class TagCache(BaseCache):
                 if KEY_FOR_PIPELINES not in mapping[key]:
                     mapping[key][KEY_FOR_PIPELINES] = {}
 
-                mapping[key][KEY_FOR_PIPELINES][pipeline_dict.get('uuid')] = build_pipeline_dict(pipeline_dict)
+                mapping[key][KEY_FOR_PIPELINES][pipeline_dict.get('uuid')] = build_pipeline_dict(
+                    pipeline_dict,
+                )
 
         self.set(self.cache_key, mapping)
