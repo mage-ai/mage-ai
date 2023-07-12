@@ -240,6 +240,7 @@ function Toolbar({
   ), [
     closeGroupButtonMenu,
     groupButtonMenuOpen,
+    groupByLabel,
     groupMenuItems,
   ]);
 

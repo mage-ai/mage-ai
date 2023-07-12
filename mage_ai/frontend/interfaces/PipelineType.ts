@@ -49,6 +49,7 @@ export enum PipelineStatusEnum {
 export enum PipelineQueryEnum {
   GROUP = 'group_by',
   STATUS = 'status[]',
+  TAG = 'tag[]',
   TYPE = 'type[]',
 }
 

@@ -32,7 +32,12 @@ class PipelineResource(BaseResource):
         if include_schedules:
             include_schedules = include_schedules[0]
 
-        tags = query.get('tags[]', [])
+        tags = query.get('tag[]', [])
+        if tags:
+            new_tags = []
+            for tag in tags:
+                new_tags += tag.split(',')
+            tags = new_tags
 
         pipeline_types = query.get('type[]', [])
         if pipeline_types:

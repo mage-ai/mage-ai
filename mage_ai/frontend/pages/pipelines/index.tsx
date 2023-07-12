@@ -24,6 +24,7 @@ import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
+import TagType from '@interfaces/TagType';
 import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
@@ -43,6 +44,7 @@ import { filterQuery, queryFromUrl } from '@utils/url';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
+import { sortByKey } from '@utils/array';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
 
@@ -67,7 +69,11 @@ function PipelineListPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const q = queryFromUrl();
-  const query = filterQuery(q, [PipelineQueryEnum.STATUS, PipelineQueryEnum.TYPE]);
+  const query = filterQuery(q, [
+    PipelineQueryEnum.STATUS,
+    PipelineQueryEnum.TAG,
+    PipelineQueryEnum.TYPE,
+  ]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
@@ -232,6 +238,11 @@ function PipelineListPage() {
     createPipeline,
   ]);
 
+  const { data: dataTags } = api.tags.list();
+  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
+    dataTags,
+  ]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
       addButtonProps={{
@@ -256,9 +267,16 @@ function PipelineListPage() {
       }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
+        tag: tags.map(({ uuid }) => uuid),
         type: Object.values(PipelineTypeEnum),
       }}
-      filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+      filterValueLabelMapping={{
+        tag: tags.reduce((acc, { uuid }) => ({
+          ...acc,
+          [uuid]: uuid,
+        }), {}),
+        type: PIPELINE_TYPE_LABEL_MAPPING,
+      }}
       groupButtonProps={{
         groupByLabel: groupByQuery,
         menuItems: [
@@ -351,6 +369,7 @@ function PipelineListPage() {
     selectedPipeline?.name,
     selectedPipeline?.uuid,
     showInputModal,
+    tags,
   ]);
 
   const [showError] = useError(null, {}, [], {
