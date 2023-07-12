@@ -13,6 +13,7 @@ import {
   RenderItemProps,
 } from '@components/AutocompleteDropdown/constants';
 import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
+import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -81,7 +82,9 @@ function TagsAutocompleteInputField({
         }}
       >
         <TextInput
-          onBlur={() => setFocused(false)}
+          // Need setTimeout because when clicking a row, the onBlur will be triggered.
+          // If the onBlur triggers too soon, clicking a row does nothing.
+          onBlur={() => setTimeout(() => setFocused(false), 150)}
           onChange={e => setInputValue(e.target.value)}
           onFocus={() => setFocused(true)}
           ref={refTextInput}
@@ -103,6 +106,10 @@ function TagsAutocompleteInputField({
                 ) => (
                   <RowStyle
                     {...opts}
+                    onClick={(e) => {
+                      pauseEvent(e);
+                      opts?.onClick?.();
+                    }}
                   >
                     <Chip small>
                       <Text>

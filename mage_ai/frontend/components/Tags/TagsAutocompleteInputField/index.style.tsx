@@ -34,6 +34,10 @@ export const RowStyle = styled.div<{
   position: relative;
   z-index: 2;
 
+  &:hover {
+    cursor: pointer;
+  }
+
   ${props => props.highlighted && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}

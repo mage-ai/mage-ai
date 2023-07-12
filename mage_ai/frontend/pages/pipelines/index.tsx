@@ -627,7 +627,7 @@ function PipelineListPage() {
                     uuid: 'clone',
                   },
                   {
-                    label: () => 'Add tags',
+                    label: () => 'Add/Remove tags',
                     onClick: () => {
                       router.push(
                         '/pipelines/[pipeline]/settings',
