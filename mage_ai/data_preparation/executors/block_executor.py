@@ -15,6 +15,10 @@ from mage_ai.shared.utils import clean_name
 
 
 class BlockExecutor:
+    """
+    Executor for a block in a pipeline.
+    """
+
     RETRYABLE = True
 
     def __init__(
@@ -23,6 +27,14 @@ class BlockExecutor:
         block_uuid,
         execution_partition=None
     ):
+        """
+        Initialize the BlockExecutor.
+
+        Args:
+            pipeline: The pipeline object.
+            block_uuid: The UUID of the block.
+            execution_partition: The execution partition of the block.
+        """
         self.pipeline = pipeline
         self.block_uuid = block_uuid
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
@@ -54,6 +66,30 @@ class BlockExecutor:
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
+        """
+        Execute the block.
+
+        Args:
+            analyze_outputs: Whether to analyze the outputs of the block.
+            callback_url: The URL for the callback.
+            global_vars: Global variables for the block execution.
+            update_status: Whether to update the status of the block execution.
+            on_complete: Callback function called when the block execution is complete.
+            on_failure: Callback function called when the block execution fails.
+            on_start: Callback function called when the block execution starts.
+            input_from_output: Input from the output of a previous block.
+            verify_output: Whether to verify the output of the block.
+            retry_config: Configuration for retrying the block execution.
+            runtime_arguments: Runtime arguments for the block execution.
+            template_runtime_configuration: Template runtime configuration for the block execution.
+            dynamic_block_index: Index of the dynamic block.
+            dynamic_block_uuid: UUID of the dynamic block.
+            dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            The result of the block execution.
+        """
         if template_runtime_configuration:
             self.block.template_runtime_configuration = template_runtime_configuration
         try:
@@ -64,7 +100,7 @@ class BlockExecutor:
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
-            pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
+            pipeline_run = PipelineRun.query.get(kwargs.get('pipeline_run_id')) \
                 if 'pipeline_run_id' in kwargs else None
 
             conditional_result = self._execute_conditional(
@@ -77,7 +113,7 @@ class BlockExecutor:
             if not conditional_result:
                 self.logger.info(
                     f'Conditional block(s) returned false for {self.block.uuid}. '
-                    'This block run and downstream blocks will set as CONDITION_FAILED.',
+                    'This block run and downstream blocks will be set as CONDITION_FAILED.',
                     **merge_dict(tags, dict(
                         block_type=self.block.type,
                         block_uuid=self.block.uuid,
@@ -203,6 +239,26 @@ class BlockExecutor:
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
+        """
+        Execute the block.
+
+        Args:
+            analyze_outputs: Whether to analyze the outputs of the block.
+            callback_url: The URL for the callback.
+            global_vars: Global variables for the block execution.
+            update_status: Whether to update the status of the block execution.
+            input_from_output: Input from the output of a previous block.
+            logging_tags: Tags for logging.
+            verify_output: Whether to verify the output of the block.
+            runtime_arguments: Runtime arguments for the block execution.
+            dynamic_block_index: Index of the dynamic block.
+            dynamic_block_uuid: UUID of the dynamic block.
+            dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            The result of the block execution.
+        """
         if logging_tags is None:
             logging_tags = dict()
         result = self.block.execute_sync(
@@ -247,7 +303,20 @@ class BlockExecutor:
         pipeline_run: PipelineRun,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
-    ):
+    ) -> bool:
+        """
+        Execute the conditional blocks.
+
+        Args:
+            global_vars: Global variables for the block execution.
+            logging_tags: Tags for logging.
+            pipeline_run: The pipeline run object.
+            dynamic_block_index: Index of the dynamic block.
+            dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
+
+        Returns:
+            True if all conditional blocks evaluate to True, False otherwise.
+        """
         result = True
         for conditional_block in self.block.conditional_blocks:
             try:
@@ -263,14 +332,14 @@ class BlockExecutor:
                 )
                 if not block_result:
                     self.logger.info(
-                        f'Conditional block {conditional_block.uuid} evaluated as False ' +
+                        f'Conditional block {conditional_block.uuid} evaluated as False '
                         f'for block {self.block.uuid}',
                         logging_tags,
                     )
                 result = result and block_result
             except Exception as conditional_err:
                 self.logger.exception(
-                    f'Failed to execute conditional block {conditional_block.uuid} ' +
+                    f'Failed to execute conditional block {conditional_block.uuid} '
                     f'for block {self.block.uuid}.',
                     **merge_dict(logging_tags, dict(
                         error=conditional_err,
@@ -289,6 +358,17 @@ class BlockExecutor:
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
+        """
+        Execute the callback blocks.
+
+        Args:
+            callback: The callback type ('on_success' or 'on_failure').
+            global_vars: Global variables for the block execution.
+            logging_tags: Tags for logging.
+            pipeline_run: The pipeline run object.
+            dynamic_block_index: Index of the dynamic block.
+            dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
+        """
         arr = []
         if self.block.callback_block:
             arr.append(self.block.callback_block)
@@ -311,7 +391,7 @@ class BlockExecutor:
                 )
             except Exception as callback_err:
                 self.logger.exception(
-                    f'Failed to execute {callback} callback block {callback_block.uuid} ' +
+                    f'Failed to execute {callback} callback block {callback_block.uuid} '
                     f'for block {self.block.uuid}.',
                     **merge_dict(logging_tags, dict(
                         error=callback_err,
@@ -324,7 +404,18 @@ class BlockExecutor:
         global_vars: Dict = None,
         **kwargs,
     ) -> List[str]:
-        cmd = f'/app/run_app.sh '\
+        """
+        Run the commands for the block.
+
+        Args:
+            block_run_id: The ID of the block run.
+            global_vars: Global variables for the block execution.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            A list of command arguments.
+        """
+        cmd = f'/app/run_app.sh ' \
               f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
         options = [
             '--block-uuid',
@@ -401,6 +492,15 @@ class BlockExecutor:
         )
 
     def _build_tags(self, **kwargs):
+        """
+        Build tags for logging.
+
+        Args:
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            The built tags.
+        """
         default_tags = dict(
             block_type=self.block.type,
             block_uuid=self.block_uuid,
