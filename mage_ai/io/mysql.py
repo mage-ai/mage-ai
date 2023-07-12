@@ -119,7 +119,7 @@ class MySQL(BaseSQL):
         elif dtype == PandasTypes.DATE:
             return 'DATE'
         elif dtype == PandasTypes.STRING:
-            return 'CHAR(255)'
+            return 'TEXT'
         elif dtype == PandasTypes.CATEGORICAL:
             return 'TEXT'
         elif dtype == PandasTypes.BYTES:
