@@ -178,7 +178,10 @@ function PipelineSettings({
           {!editCustomExecutorType && (
             <Select
               label="Executor type"
-              onChange={e => setPipelineAttributes(() => e.target.value)}
+              onChange={e => setPipelineAttributes(prev => ({
+                ...prev,
+                executor_type: e.target.value,
+              }))}
               primary
               ref={refExecutorTypeSelect}
               value={pipelineAttributes?.executor_type || ''}
