@@ -104,6 +104,7 @@ export default {
     success: LIME_DARK,
     successLight: LIME_TRASPARENT,
     table: '#292A2F',
+    tag: '#3A4550',
   },
   borders: {
     button: '#454850',

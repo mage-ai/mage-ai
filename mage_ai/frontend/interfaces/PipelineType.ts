@@ -49,11 +49,13 @@ export enum PipelineStatusEnum {
 export enum PipelineQueryEnum {
   GROUP = 'group_by',
   STATUS = 'status[]',
+  TAG = 'tag[]',
   TYPE = 'type[]',
 }
 
 export enum PipelineGroupingEnum {
   STATUS = 'status',
+  TAG = 'tag',
   TYPE = 'type',
 }
 
@@ -91,6 +93,7 @@ export default interface PipelineType {
   name?: string;
   retry_config?: PipelineRetryConfigType;
   schedules?: PipelineScheduleType[];
+  tags?: string[];
   type?: PipelineTypeEnum;
   updated_at?: string;
   uuid: string;

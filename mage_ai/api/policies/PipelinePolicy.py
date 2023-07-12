@@ -125,6 +125,7 @@ PipelinePolicy.allow_query([
 
 PipelinePolicy.allow_query([
     'status[]',
+    'tag[]',
     'type[]',
     'include_schedules',
 ], scopes=[

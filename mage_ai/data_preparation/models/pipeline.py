@@ -56,6 +56,7 @@ class Pipeline:
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
         self.schedules = []
+        self.tags = []
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
         self.uuid = uuid
@@ -462,11 +463,12 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
         self.conditional_configs = config.get('conditionals') or []
+        self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
-        self.executor_config = config.get('executor_config') or dict()
-        self.notification_config = config.get('notification_config') or dict()
+        self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
-        self.spark_config = config.get('spark_config') or dict()
+        self.spark_config = config.get('spark_config') or {}
+        self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
 
         self.variables = config.get('variables')
@@ -585,6 +587,7 @@ class Pipeline:
             name=self.name,
             notification_config=self.notification_config,
             retry_config=self.retry_config,
+            tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
             uuid=self.uuid,
@@ -750,6 +753,7 @@ class Pipeline:
     async def update(self, data, update_content=False):
         old_uuid = None
         should_update_block_cache = False
+        should_update_tag_cache = False
 
         if 'name' in data and self.name and data['name'] != self.name:
             """
@@ -772,6 +776,7 @@ class Pipeline:
             self.__transfer_related_models(old_uuid, new_uuid)
 
             should_update_block_cache = True
+            should_update_tag_cache = True
 
         should_save = False
 
@@ -784,6 +789,15 @@ class Pipeline:
                     extension,
                 )
             should_save = True
+
+        if 'tags' in data:
+            new_tags = data.get('tags', [])
+            old_tags = self.tags or []
+
+            if sorted(new_tags) != sorted(old_tags):
+                self.tags = new_tags
+                should_save = True
+                should_update_tag_cache = True
 
         for key in [
             'description',
@@ -934,6 +948,16 @@ class Pipeline:
                 if old_uuid:
                     cache.remove_pipeline(block, old_uuid)
                 cache.update_pipeline(block, self)
+
+        if should_update_tag_cache:
+            from mage_ai.cache.tag import TagCache
+
+            cache = await TagCache.initialize_cache()
+
+            for tag_uuid in self.tags:
+                if old_uuid:
+                    cache.remove_pipeline(tag_uuid, old_uuid)
+                cache.add_pipeline(tag_uuid, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]

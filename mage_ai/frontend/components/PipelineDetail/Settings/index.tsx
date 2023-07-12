@@ -14,8 +14,11 @@ import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import TagType from '@interfaces/TagType';
+import TagsAutocompleteInputField from '@components/Tags/TagsAutocompleteInputField';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
@@ -30,6 +33,7 @@ import {
 import { get, set } from '@storage/localStorage';
 import { isEqual } from '@utils/hash';
 import { isJsonString } from '@utils/string';
+import { pushUnique } from '@utils/array';
 
 type PipelineSettingsProps = {
   isPipelineUpdating?: boolean;
@@ -145,6 +149,14 @@ function PipelineSettings({
   ]);
 
   const noBlocks = useMemo(() => !blocks?.length, [blocks]);
+
+  const pipelineTags = useMemo(() => pipelineAttributes?.tags || [], [pipelineAttributes]);
+  const { data: dataTags } = api.tags.list();
+  const unselectedTags =
+    useMemo(() => (dataTags?.tags || []).filter(({ uuid }) => !pipelineTags.includes(uuid)), [
+      dataTags,
+      pipelineTags,
+    ]);
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -321,6 +333,32 @@ function PipelineSettings({
       </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Tags
+        </Headline>
+
+        <Spacing mt={1}>
+          <TagsAutocompleteInputField
+            removeTag={(tag: TagType) => {
+              setPipelineAttributes(prev => ({
+                ...prev,
+                tags: pipelineTags.filter(uuid => uuid !== tag.uuid),
+              }));
+            }}
+            selectTag={(tag: TagType) => {
+              setPipelineAttributes(prev => ({
+                ...prev,
+                tags: pushUnique(tag.uuid, pipelineTags, uuid => uuid === tag.uuid),
+              }));
+            }}
+            selectedTags={pipelineTags?.map(tag => ({ uuid: tag }))}
+            tags={unselectedTags}
+            uuid={`TagsAutocompleteInputField-${pipeline?.uuid}`}
+          />
+        </Spacing>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <FlexContainer>
           <Button
             disabled={!pipelineAttributesTouched}
@@ -330,6 +368,7 @@ function PipelineSettings({
               executor_type: pipelineAttributes?.executor_type,
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,
+              tags: pipelineAttributes?.tags,
               // @ts-ignore
             }).then(() => setPipelineAttributesTouched(false))}
             primary

@@ -51,6 +51,7 @@ export type ThemeType = {
     scrollbarTrack: string;
     success: string;
     table: string;
+    tag: string;
   };
   borders: {
     contrast: string;

@@ -45,7 +45,9 @@ type ToolbarProps = {
     [keyof: string]: string[];
   };
   filterValueLabelMapping?: {
-    [keyof: string]: string;
+    [keyof: string]: {
+      [keyof: string]: string;
+    };
   };
   moreActionsMenuItems?: FlyoutMenuItemType[];
   groupButtonProps?: {
@@ -240,6 +242,7 @@ function Toolbar({
   ), [
     closeGroupButtonMenu,
     groupButtonMenuOpen,
+    groupByLabel,
     groupMenuItems,
   ]);
 

@@ -27,7 +27,7 @@ const ChipStyle = styled.div<ChipProps>`
   display: inline-block;
 
   ${props => !props.primary && `
-    background-color: ${(props.theme.background || dark.background).popup};
+    background-color: ${(props.theme.background || dark.background).tag};
   `}
 
   ${props => props.primary && `
@@ -76,7 +76,7 @@ const Chip = ({
             {label}
           </Text>
         )}
-        {!disabled && (
+        {!disabled && onClick && (
           <Spacing ml={1}>
             <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
           </Spacing>

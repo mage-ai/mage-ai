@@ -15,6 +15,7 @@ class PipelinePresenter(BasePresenter):
         'notification_config',
         'retry_config',
         'spark_config',
+        'tags',
         'type',
         'updated_at',
         'uuid',

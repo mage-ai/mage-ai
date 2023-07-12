@@ -10,6 +10,8 @@ import os
 
 
 class BaseCache():
+    cache_key = None
+
     def __init__(self, repo_path: str = None, repo_config=None):
         self.repo_path = repo_path or get_repo_path()
 
@@ -28,6 +30,9 @@ class BaseCache():
             self._storage = LocalStorage()
 
         return self._storage
+
+    def exists(self) -> bool:
+        return self.get(self.cache_key) is not None
 
     def get(self, key: str) -> Union[Dict, List]:
         value_fetched = self.storage.read_json_file(self.__build_path(key), None)

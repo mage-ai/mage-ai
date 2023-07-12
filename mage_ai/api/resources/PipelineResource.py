@@ -32,6 +32,13 @@ class PipelineResource(BaseResource):
         if include_schedules:
             include_schedules = include_schedules[0]
 
+        tags = query.get('tag[]', [])
+        if tags:
+            new_tags = []
+            for tag in tags:
+                new_tags += tag.split(',')
+            tags = new_tags
+
         pipeline_types = query.get('type[]', [])
         if pipeline_types:
             pipeline_types = pipeline_types[0]
@@ -44,7 +51,23 @@ class PipelineResource(BaseResource):
         if pipeline_statuses:
             pipeline_statuses = pipeline_statuses.split(',')
 
-        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+        if tags:
+            from mage_ai.cache.tag import KEY_FOR_PIPELINES, TagCache
+
+            await TagCache.initialize_cache()
+
+            cache = TagCache()
+            tags_mapping = cache.get_tags()
+            pipeline_uuids = set()
+
+            for tag_uuid in tags:
+                pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
+                if pipelines_dict:
+                    pipeline_uuids.update(pipelines_dict.keys())
+
+            pipeline_uuids = list(pipeline_uuids)
+        else:
+            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
         await UsageStatisticLogger().pipelines_impression(lambda: len(pipeline_uuids))
 
