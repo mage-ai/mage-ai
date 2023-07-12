@@ -68,6 +68,7 @@ module.exports = {
     'semi': 'off',
     'radix': 'off',
     'react/display-name': 'off',
+    'react-hooks/exhaustive-deps': 'error',
     'react-hooks/rules-of-hooks': 'warn',
     'react/jsx-closing-tag-location': 'off',
     'react/jsx-curly-newline': 'off',
