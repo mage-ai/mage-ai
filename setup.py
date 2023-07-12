@@ -40,6 +40,10 @@ setuptools.setup(
         ],
     },
     extras_require={
+        'ai': [
+            'langchain>=0.0.222',
+            'openai>=0.27.8',
+        ],
         'azure': [
             'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
@@ -130,7 +134,9 @@ setuptools.setup(
             'great_expectations==0.15.50',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
+            'langchain>=0.0.222',
             'ldap3==2.9.1',
+            'openai>=0.27.8',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
             'psycopg2-binary==2.9.3',
