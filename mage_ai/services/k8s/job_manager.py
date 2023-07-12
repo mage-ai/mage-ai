@@ -143,13 +143,16 @@ class JobManager():
         self._print("Job created. status='%s'" % str(api_response.status))
 
     def delete_job(self):
-        api_response = self.batch_api_client.delete_namespaced_job(
-            name=self.job_name,
-            namespace=self.namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=0))
-        self._print("Job deleted. status='%s'" % str(api_response.status))
+        try:
+            api_response = self.batch_api_client.delete_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=0))
+            self._print("Job deleted. status='%s'" % str(api_response.status))
+        except Exception as e:
+            self._print(f'Failed to delete job {self.job_name} with error {e}')
 
     def job_exists(self):
         try:
