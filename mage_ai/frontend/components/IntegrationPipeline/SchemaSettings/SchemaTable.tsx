@@ -146,7 +146,12 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
-  }, [bookmarkProperties?.length, bookmarkValuesInit, streamUUID]);
+  }, [
+    bookmarkProperties?.length,
+    bookmarkValues,
+    bookmarkValuesInit,
+    streamUUID,
+  ]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
@@ -575,6 +580,7 @@ function SchemaTable({
     metadataByColumn,
     partitionKeys,
     properties,
+    removeBookmarkPropertyFromState,
     showPartitionKey,
     streamUUID,
     uniqueConstraints,
@@ -833,23 +839,21 @@ function SchemaTable({
 
         <Spacing mb={SPACING_BOTTOM_UNITS}>
           <Spacing mb={1}>
-            <FlexContainer alignItems="center" flexWrap="wrap">
-              <Text bold large>
-                Run stream in parallel
-              </Text>
-              <Spacing ml={1} />
-              <Checkbox
-                checked={runInParallel}
-                key={`${streamUUID}/run_in_parallel`}
-                onClick={() => updateStream(streamUUID, (stream: StreamType) => {
-                  stream.run_in_parallel = !runInParallel;
-                  return stream;
-                })}
-              />
-            </FlexContainer>
+            <Text bold large>
+              Run stream in parallel
+            </Text>
             <Text default>
               Parallel streams will be run at the same time, so make sure there are no dependencies between them.
             </Text>
+            <Spacing mb={1} />
+            <ToggleSwitch
+              checked={runInParallel}
+              key={`${streamUUID}/run_in_parallel`}
+              onCheck={() => updateStream(streamUUID, (stream: StreamType) => {
+                stream.run_in_parallel = !runInParallel;
+                return stream;
+              })}
+            />
           </Spacing>
         </Spacing>
 
