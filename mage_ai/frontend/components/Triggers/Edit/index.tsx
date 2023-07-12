@@ -224,7 +224,14 @@ function Edit({
     [
       formattedVariables,
       overwriteVariables,
+      scheduleVariables,
     ],
+  );
+
+  const isCustomInterval = useMemo(
+    () => scheduleInterval &&
+      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    [scheduleInterval],
   );
 
   useEffect(
@@ -232,11 +239,11 @@ function Edit({
       if (pipelineSchedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
         if (isCustomInterval) {
+          setCustomInterval(pipelineSchedule?.schedule_interval);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
           });
-          setCustomInterval(scheduleInterval);
         } else {
           if (isStreamingPipeline) {
             setSchedule({
@@ -262,7 +269,13 @@ function Edit({
         }
       }
     },
-    [pipelineSchedule],
+    [
+      isCustomInterval,
+      isStreamingPipeline,
+      pipelineSchedule,
+      scheduleInterval,
+      sla,
+    ],
   );
 
   const onSave = useCallback(() => {
@@ -316,6 +329,7 @@ function Edit({
     date,
     enableSLA,
     eventMatchers,
+    isCustomInterval,
     pipelineSchedule,
     runtimeVariables,
     schedule,
@@ -323,12 +337,6 @@ function Edit({
     time,
     updateSchedule,
   ]);
-
-  const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
-    [scheduleInterval],
-  );
 
   const detailsMemo = useMemo(() => {
     const rows = [
