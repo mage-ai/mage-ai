@@ -43,6 +43,22 @@ function TagsAutocompleteInputField({
     searchQueries: [tag.uuid],
     value: tag.uuid,
   })), [tagsSorted]);
+  const autocompleteItemsWithExtra = useMemo(() => {
+    if (inputValue?.length >= 1) {
+      return autocompleteItems.concat({
+        itemObject: {
+          uuid: inputValue,
+        },
+        searchQueries: [inputValue],
+        value: `Add tag: ${inputValue}`,
+      });
+    }
+
+    return autocompleteItems;
+  }, [
+    autocompleteItems,
+    inputValue,
+  ]);
 
   const {
     registerOnKeyDown,
@@ -97,10 +113,10 @@ function TagsAutocompleteInputField({
           <AutocompleteDropdown
             itemGroups={[
               {
-                items: focused ? autocompleteItems : [],
+                items: focused ? autocompleteItemsWithExtra : [],
                 renderItem: (
                   {
-                    itemObject,
+                    value,
                   }: ItemType,
                   opts: RenderItemProps,
                 ) => (
@@ -113,7 +129,7 @@ function TagsAutocompleteInputField({
                   >
                     <Chip small>
                       <Text>
-                        {itemObject.uuid}
+                        {value}
                       </Text>
                     </Chip>
                   </RowStyle>
