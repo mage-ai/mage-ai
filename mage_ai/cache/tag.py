@@ -20,6 +20,9 @@ class TagCache(BaseCache):
 
         return cache
 
+    def get_tags(self) -> Dict:
+        return self.get(self.cache_key) or {}
+
     def build_key(self, tag_uuid: str) -> str:
         """Generate cache key for tag.
 
