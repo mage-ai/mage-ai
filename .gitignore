@@ -168,4 +168,5 @@ node_modules
 # Scratch files
 scratch*
 
-
+# Playwright test automation
+playwright-report/

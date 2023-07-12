@@ -46,9 +46,10 @@ jobs:
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
-  build_frontend:
-    runs-on: ubuntu-latest
-    steps:
+      - name: Create Mage test project
+        run: python3 mage_ai/cli/main.py init test_project
+        env:
+          PYTHONPATH: ${{ env.pythonLocation }}:.
       - uses: actions/checkout@v3
       - name: Set up Node
         uses: actions/setup-node@v3
@@ -56,6 +57,10 @@ jobs:
           node-version: "14.19.1"
       - name: Install dependencies
         run: yarn
-      - name: Build and export
-        run: |
-          cd mage_ai/frontend && yarn install && yarn export
+      - name: Build frontend to be served statically
+        run: yarn install && yarn export_prod
+        working-directory: mage_ai/frontend/
+      - name: Run Playwright tests
+        run: cd mage_ai/frontend && yarn playwright install chromium && yarn playwright test
+        env:
+          PYTHONPATH: ${{ env.pythonLocation }}:.
