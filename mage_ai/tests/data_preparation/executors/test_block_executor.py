@@ -161,8 +161,7 @@ class BlockExecutorTest(TestCase):
         )
 
         self.assertFalse(result)
-        self.block.conditional_blocks[0].execute_conditional.assert_called_once_with(
-            self.block,
+        expected_kwargs = dict(
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
             execution_partition=self.execution_partition,
@@ -171,15 +170,13 @@ class BlockExecutorTest(TestCase):
             logging_tags={},
             pipeline_run=None,
         )
+        self.block.conditional_blocks[0].execute_conditional.assert_called_once_with(
+            self.block,
+            **expected_kwargs,
+        )
         self.block.conditional_blocks[1].execute_conditional.assert_called_once_with(
             self.block,
-            dynamic_block_index=None,
-            dynamic_upstream_block_uuids=None,
-            execution_partition=self.execution_partition,
-            global_vars={},
-            logger=self.logger,
-            logging_tags={},
-            pipeline_run=None,
+            **expected_kwargs,
         )
 
     def test_execute_conditional_exception(self):
@@ -220,8 +217,7 @@ class BlockExecutorTest(TestCase):
             dynamic_upstream_block_uuids=None,
         )
 
-        self.block.callback_block.execute_callback.assert_called_once_with(
-            'on_success',
+        expected_kwargs = dict(
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
             execution_partition=self.execution_partition,
@@ -230,26 +226,17 @@ class BlockExecutorTest(TestCase):
             logging_tags={},
             parent_block=self.block,
             pipeline_run=None,
+        )
+
+        self.block.callback_block.execute_callback.assert_called_once_with(
+            'on_success',
+            **expected_kwargs,
         )
         self.block.callback_blocks[0].execute_callback.assert_called_once_with(
             'on_success',
-            dynamic_block_index=None,
-            dynamic_upstream_block_uuids=None,
-            execution_partition=self.execution_partition,
-            global_vars={},
-            logger=self.logger,
-            logging_tags={},
-            parent_block=self.block,
-            pipeline_run=None,
+            **expected_kwargs,
         )
         self.block.callback_blocks[1].execute_callback.assert_called_once_with(
             'on_success',
-            dynamic_block_index=None,
-            dynamic_upstream_block_uuids=None,
-            execution_partition=self.execution_partition,
-            global_vars={},
-            logger=self.logger,
-            logging_tags={},
-            parent_block=self.block,
-            pipeline_run=None,
+            **expected_kwargs,
         )
