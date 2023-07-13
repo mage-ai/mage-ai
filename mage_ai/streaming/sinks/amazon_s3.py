@@ -1,14 +1,18 @@
+import os
+import sys
+import threading
+import time
+import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
+from typing import Dict, List
+
+import boto3
+import pandas as pd
+
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
-from typing import Dict, List
-import boto3
-import os
-import pandas as pd
-import sys
-import time
 
 
 @dataclass
@@ -29,6 +33,8 @@ class AmazonS3Sink(BaseSink):
         self.last_upload_time = None
         if self.buffer:
             self.upload_data_to_s3()
+        self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data_to_s3)
+        self.timer.start()
 
     def write(self, data: Dict):
         self._print(f'Ingest data {data}, time={time.time()}')
@@ -51,6 +57,7 @@ class AmazonS3Sink(BaseSink):
             return
 
     def upload_data_to_s3(self):
+        self.__reset_timer()
         if not self.buffer:
             return
         self._print(f'Upload {len(self.buffer)} records to S3.')
@@ -81,3 +88,11 @@ class AmazonS3Sink(BaseSink):
 
         self.client.put_object(Body=buffer, Bucket=self.config.bucket, Key=object_key)
         self.clear_buffer()
+
+    def __reset_timer(self):
+        try:
+            self.timer.cancel()
+        except Exception:
+            traceback.print_exc()
+        self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data_to_s3)
+        self.timer.start()
