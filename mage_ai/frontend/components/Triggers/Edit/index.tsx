@@ -121,7 +121,7 @@ function Edit({
 
   const [settings, setSettings] = useState<PipelineScheduleSettingsType>();
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
-  const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
+  const [schedule, setSchedule] = useState<PipelineScheduleType>(null);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
@@ -236,9 +236,12 @@ function Edit({
 
   useEffect(
     () => {
-      if (pipelineSchedule) {
+      if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        if (isCustomInterval) {
+        const custom = pipelineSchedule?.schedule_interval &&
+          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum)
+
+        if (custom) {
           setCustomInterval(pipelineSchedule?.schedule_interval);
           setSchedule({
             ...pipelineSchedule,
@@ -260,7 +263,7 @@ function Edit({
         if (slaFromSchedule) {
           setEnableSLA(true);
 
-          const { time, unit } = convertSeconds(sla);
+          const { time, unit } = convertSeconds(slaFromSchedule);
           setSchedule(schedule => ({
             ...schedule,
             slaAmount: time,
@@ -270,11 +273,10 @@ function Edit({
       }
     },
     [
-      isCustomInterval,
       isStreamingPipeline,
       pipelineSchedule,
+      schedule,
       scheduleInterval,
-      sla,
     ],
   );
 
