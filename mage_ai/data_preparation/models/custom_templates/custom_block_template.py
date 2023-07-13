@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.custom_templates.constants import (
 from mage_ai.data_preparation.models.custom_templates.utils import custom_templates_directory
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
 from typing import Dict, List
 
@@ -26,7 +27,6 @@ class CustomBlockTemplate(BaseConfig):
     color: BlockColor = None
     configuration: Dict = None
     description: str = None
-    file_path: str = None
     filenames_in_directory: List[str] = field(default_factory=list)
     language: BlockLanguage = None
     name: str = None
@@ -36,15 +36,30 @@ class CustomBlockTemplate(BaseConfig):
     uuid: str = None
 
     @classmethod
-    def load(self, config_path: str = None, config: Dict = None):
+    def load(
+        self,
+        uuid: str,
+        filenames_in_directory: List[str] = [],
+    ):
+        config_path = os.path.join(
+            get_repo_path(),
+            custom_templates_directory(),
+            DIRECTORY_FOR_BLOCK_TEMPLATES,
+            uuid,
+        )
         config_path_metadata = os.path.join(config_path, METADATA_FILENAME_WITH_EXTENSION)
-        return super().load(config_path_metadata)
+        custom_template = super().load(config_path_metadata)
+        custom_template.filenames_in_directory = filenames_in_directory
+        custom_template.uuid = uuid
+
+        return custom_template
 
     def metadata_file_path(self) -> str:
         return os.path.join(
+            get_repo_path(),
             custom_templates_directory(),
             DIRECTORY_FOR_BLOCK_TEMPLATES,
-            self.file_path,
+            self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
         )
 
@@ -57,9 +72,9 @@ class CustomBlockTemplate(BaseConfig):
 
         return File(
             dir_path=os.path.join(
-                custom_templates_directory(without_repo_path=True),
+                custom_templates_directory(),
                 DIRECTORY_FOR_BLOCK_TEMPLATES,
-                self.file_path,
+                self.uuid,
             ),
             filename=filename,
             repo_path=get_repo_path(),
@@ -75,20 +90,25 @@ class CustomBlockTemplate(BaseConfig):
             return Template(content).render(**(variables or {}))
 
     def to_dict(self) -> Dict:
+        return merge_dict(self.to_dict_base(), dict(
+            uuid=self.uuid,
+        ))
+
+    def to_dict_base(self) -> Dict:
         return dict(
             block_type=self.block_type,
             color=self.color,
             configuration=self.configuration,
             description=self.description,
-            filenames_in_directory=self.filenames_in_directory,
             language=self.language,
             name=self.name,
             pipeline=self.pipeline,
             tags=self.tags,
             user=self.user,
-            uuid=self.uuid,
         )
 
     def save(self) -> None:
-        content = yaml.safe_dump(self.to_dict())
-        safe_write(self.metadata_file_path(), content)
+        content = yaml.safe_dump(self.to_dict_base())
+        file_path = self.metadata_file_path()
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        safe_write(file_path, content)
