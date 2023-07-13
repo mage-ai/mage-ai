@@ -58,7 +58,7 @@ class CustomTemplateResource(GenericResource):
             return self(CustomBlockTemplate.load(uuid=uuid), user, **kwargs)
 
     def delete(self, **kwargs):
-        pass
+        self.model.delete
 
     def update(self, payload, **kwargs):
         for key, value in payload.items():

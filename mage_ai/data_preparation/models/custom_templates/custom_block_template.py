@@ -1,4 +1,5 @@
 import os
+import shutil
 import yaml
 from dataclasses import dataclass, field
 from jinja2 import Template
@@ -121,3 +122,6 @@ class CustomBlockTemplate(BaseConfig):
         file_path = self.metadata_file_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
+
+    def delete(self) -> None:
+        shutil.rmtree(os.path.join(get_repo_path(), self.uuid))
