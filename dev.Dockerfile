@@ -31,8 +31,6 @@ RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-
 RUN ${PIP} install "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 RUN ${PIP} install -r requirements.txt
 
-COPY ./mage_ai /home/src/mage_ai
-
 # Set up spark kernel (Uncomment the code below to set it up)
 RUN ${PIP} install sparkmagic
 RUN mkdir ~/.sparkmagic
@@ -48,6 +46,9 @@ RUN apt install -y nodejs
 RUN apt install -y npm
 RUN npm install --global yarn
 RUN yarn global add next
+
+# Copy code and setup frontend.
+COPY ./mage_ai /home/src/mage_ai
 RUN cd /home/src/mage_ai/frontend && yarn install
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
