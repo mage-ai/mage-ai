@@ -36,6 +36,5 @@ class SinkFactory:
 
             return AzureDataLakeSink(config, **kwargs)
         raise Exception(
-            f'Ingesting data to {connector_type} is not supported in \
-            streaming pipelines yet.',
+            f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )
