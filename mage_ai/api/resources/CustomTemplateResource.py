@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
@@ -14,7 +15,6 @@ from mage_ai.data_preparation.models.custom_templates.utils import (
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.shared.hash import ignore_keys
 
-OBJECT_TYPE_BLOCK = 'block'
 OBJECT_TYPE_KEY = 'object_type'
 
 
@@ -27,7 +27,7 @@ class CustomTemplateResource(GenericResource):
 
         templates = []
 
-        if OBJECT_TYPE_BLOCK == object_type:
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             file_dicts = get_templates(DIRECTORY_FOR_BLOCK_TEMPLATES)
             file_dicts_flat = flatten_files(file_dicts)
             templates = group_and_hydrate_files(file_dicts_flat, CustomBlockTemplate)
@@ -41,7 +41,7 @@ class CustomTemplateResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         custom_template = None
-        if OBJECT_TYPE_BLOCK == payload.get(OBJECT_TYPE_KEY):
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == payload.get(OBJECT_TYPE_KEY):
             custom_template = CustomBlockTemplate(**ignore_keys(payload, [OBJECT_TYPE_KEY]))
             custom_template.save()
 
@@ -50,7 +50,12 @@ class CustomTemplateResource(GenericResource):
 
     @classmethod
     def member(self, pk, user, **kwargs):
-        return self({}, user, **kwargs)
+        uuid = urllib.parse.unquote(pk)
+        parts = uuid.split(os.sep)
+        object_type = parts[1]
+
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
+            return self(CustomBlockTemplate.load(uuid=uuid), user, **kwargs)
 
     def delete(self, **kwargs):
         pass

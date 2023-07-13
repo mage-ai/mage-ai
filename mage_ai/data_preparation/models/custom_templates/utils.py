@@ -59,12 +59,8 @@ def group_and_hydrate_files(
 
     arr = []
 
-    for uuid, group in groups.items():
-        custom_template = custom_template_class.load(
-            uuid,
-            filenames_in_directory=[g.get('name') for g in group],
-        )
-
+    for template_uuid, group in groups.items():
+        custom_template = custom_template_class.load(template_uuid=template_uuid)
         arr.append(custom_template)
 
     return arr

@@ -11,6 +11,7 @@ class CustomTemplatePresenter(BasePresenter):
         'name',
         'pipeline',
         'tags',
+        'template_uuid',
         'user',
         'uuid',
     ]

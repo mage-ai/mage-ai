@@ -27,38 +27,51 @@ class CustomBlockTemplate(BaseConfig):
     color: BlockColor = None
     configuration: Dict = None
     description: str = None
-    filenames_in_directory: List[str] = field(default_factory=list)
     language: BlockLanguage = None
     name: str = None
     pipeline: Dict = field(default_factory=dict)
     tags: Dict = field(default_factory=dict)
+    template_uuid: str = None
     user: Dict = field(default_factory=dict)
-    uuid: str = None
 
     @classmethod
-    def load(
-        self,
-        uuid: str,
-        filenames_in_directory: List[str] = [],
-    ):
-        config_path = os.path.join(
+    def load(self, template_uuid: str = None, uuid: str = None):
+        uuid_use = uuid
+        template_uuid_use = template_uuid
+
+        if uuid_use:
+            parts = uuid_use.split(os.sep)
+            template_uuid_use = os.path.join(*parts[2:])
+        elif template_uuid_use:
+            uuid_use = os.path.join(
+                custom_templates_directory(),
+                DIRECTORY_FOR_BLOCK_TEMPLATES,
+                template_uuid_use,
+            )
+
+        config_path_metadata = os.path.join(
             get_repo_path(),
-            custom_templates_directory(),
-            DIRECTORY_FOR_BLOCK_TEMPLATES,
-            uuid,
+            uuid_use,
+            METADATA_FILENAME_WITH_EXTENSION,
         )
-        config_path_metadata = os.path.join(config_path, METADATA_FILENAME_WITH_EXTENSION)
+        print('WTFFFFFFFFFFFFFFFFFFFFF', config_path_metadata)
         custom_template = super().load(config_path_metadata)
-        custom_template.filenames_in_directory = filenames_in_directory
-        custom_template.uuid = uuid
+        custom_template.template_uuid = template_uuid_use
 
         return custom_template
 
+    @property
+    def uuid(self):
+        return os.path.join(
+            custom_templates_directory(),
+            DIRECTORY_FOR_BLOCK_TEMPLATES,
+            self.template_uuid,
+        )
+
+    @property
     def metadata_file_path(self) -> str:
         return os.path.join(
             get_repo_path(),
-            custom_templates_directory(),
-            DIRECTORY_FOR_BLOCK_TEMPLATES,
             self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
         )
@@ -71,11 +84,7 @@ class CustomBlockTemplate(BaseConfig):
         ])
 
         return File(
-            dir_path=os.path.join(
-                custom_templates_directory(),
-                DIRECTORY_FOR_BLOCK_TEMPLATES,
-                self.uuid,
-            ),
+            dir_path=self.uuid,
             filename=filename,
             repo_path=get_repo_path(),
         ).content()
@@ -91,6 +100,7 @@ class CustomBlockTemplate(BaseConfig):
 
     def to_dict(self) -> Dict:
         return merge_dict(self.to_dict_base(), dict(
+            template_uuid=self.template_uuid,
             uuid=self.uuid,
         ))
 
@@ -109,6 +119,6 @@ class CustomBlockTemplate(BaseConfig):
 
     def save(self) -> None:
         content = yaml.safe_dump(self.to_dict_base())
-        file_path = self.metadata_file_path()
+        file_path = self.metadata_file_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
