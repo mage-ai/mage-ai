@@ -3,8 +3,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.custom_templates.constants import (
     CUSTOM_TEMPLATES_DIRECTORY,
     CUSTOM_TEMPLATES_DIRECTORY_ENVIRONMENT_VARIABLE,
-    DIRECTORY_FOR_BLOCK_TEMPLATES,
-    DIRECTORY_FOR_PIPELINE_TEMPLATES,
 )
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by

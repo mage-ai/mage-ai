@@ -54,8 +54,12 @@ class CustomTemplateResource(GenericResource):
         parts = uuid.split(os.sep)
         object_type = parts[1]
 
-        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
-            return self(CustomBlockTemplate.load(uuid=uuid), user, **kwargs)
+        try:
+            if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
+                return self(CustomBlockTemplate.load(uuid=uuid), user, **kwargs)
+        except Exception as err:
+            print(f'[WARNING] CustomTemplateResource.member: {err}')
+            raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
     def delete(self, **kwargs):
         self.model.delete
