@@ -67,7 +67,6 @@ class PipelineSchedule(BaseModel):
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
-    # The column name is repo_name, but
     repo_path = Column(String(255))
     settings = Column(JSON)
 
