@@ -49,8 +49,8 @@ class AzureDataLakeSink(BaseSink):
             filename = curr_time.strftime('%Y%m%d-%H%M%S')
             try:
                 storage_options = {
-                    "azure_storage_account_name": self.config.account_name,
-                    "azure_storage_access_key": self.config.access_key}
+                    'azure_storage_account_name': self.config.account_name,
+                    'azure_storage_access_key': self.config.access_key}
 
                 data = pa.Table.from_pandas(df)
 
@@ -60,7 +60,7 @@ class AzureDataLakeSink(BaseSink):
                                 mode=self.config.mode,
                                 storage_options=storage_options)
 
-                self._print(f"Data written to {self.config.table_uri}")
+                self._print(f'Data written to {self.config.table_uri}')
             except Exception as e:
                 self.clear_buffer()
                 raise Exception(e)

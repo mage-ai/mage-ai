@@ -38,13 +38,13 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.RABBITMQ,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.DUMMY,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.MONGODB,
         DataSourceTypeEnum.OPENSEARCH,
-        DataSourceTypeEnum.AZURE_DATA_LAKE,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,
