@@ -61,4 +61,6 @@ class CustomTemplateResource(GenericResource):
         pass
 
     def update(self, payload, **kwargs):
-        pass
+        for key, value in payload.items():
+            setattr(self.model, key, value)
+        self.model.save()

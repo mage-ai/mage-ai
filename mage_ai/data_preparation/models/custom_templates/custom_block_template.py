@@ -54,7 +54,6 @@ class CustomBlockTemplate(BaseConfig):
             uuid_use,
             METADATA_FILENAME_WITH_EXTENSION,
         )
-        print('WTFFFFFFFFFFFFFFFFFFFFF', config_path_metadata)
         custom_template = super().load(config_path_metadata)
         custom_template.template_uuid = template_uuid_use
 
