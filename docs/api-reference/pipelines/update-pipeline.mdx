@@ -1,0 +1,77 @@
+---
+title: "Update pipeline"
+api: "PUT /api/pipelines/:uuid"
+---
+`PUT /api/pipelines/:uuid`
+
+All default attributes for a pipeline may be updated in addittion to the following:
+<ParamField query="add_upstream_for_block_uuid" type="string">
+  The uuid for a block upstream of the pipeline.
+</ParamField>
+
+<ParamField query="callbacks" type="array of objects">
+  Array of [callback](/development/blocks/callbacks) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="conditionals" type="array of objects">
+  Array of [conditional](/development/blocks/conditionals/) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="extensions" type="array of objects">
+  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="schedules" type="array of objects">
+  Array of [schedule](/guides/triggering-pipelines/) trigger objects.
+</ParamField>
+
+<CodeGroup>
+  ```curl cURL
+  curl --request PUT 
+  --url http://localhost:6789/api/pipelines/arwen_starlight
+  -H 'Content-Type: application/json' 
+  -H 'Cookie: oauth_token=some_really_long_string'
+  -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
+  -d '{"pipeline": {"type": "integration"}}'
+  ```
+  ```python Python
+  import requests
+
+  headers = {
+  "Content-Type": "application/json",
+  "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+  "Cookie": "oauth_token=some_really_long_string"
+  }
+
+  json_data = {
+  'pipeline': {
+      "type": 'integration'
+      }
+  }
+  
+  r = requests.put('http://localhost:6789/api/pipelines/arwen_starlight', headers=headers, json=json_data)
+  ```
+</CodeGroup>
+
+```json
+{
+  "pipeline": {
+    "data_integration": null,
+    "description": null,
+    "executor_config": {},
+    "executor_count": 1,
+    "executor_type": null,
+    "name": "arwen-starlight",
+    "notification_config": {},
+    "type": "integration",
+    "updated_at": null,
+    "uuid": "arwen_starlight",
+    "spark_config": {},
+    "blocks": [],
+    "callbacks": [],
+    "conditionals": [],
+    "widgets": [],
+    "extensions": {}
+  }
+}
+```

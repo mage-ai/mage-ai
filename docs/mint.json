@@ -27,7 +27,16 @@
     "type": "github",
     "url": "https://github.com/mage-ai/mage-ai"
   },
+  "topAnchor": {
+    "name": "Documentation",
+    "icon": "book-open"
+  },
   "anchors": [
+    {
+      "name": "API Reference",
+      "icon": "square-terminal",
+      "url": "api-reference"
+    },
     {
       "name": "Watch 2 min demo",
       "icon": "circle-play",
@@ -502,27 +511,7 @@
         {
           "group": "Backend",
           "pages": [
-            "contributing/backend/overview",
-            {
-              "group": "API",
-              "pages": [
-                "contributing/backend/api/overview",
-                "contributing/backend/api/resources",
-                "contributing/backend/api/policies",
-                "contributing/backend/api/presenters",
-                {
-                  "group": "Routes",
-                  "pages": [
-                    "contributing/backend/api/sessions",
-                    "contributing/backend/api/pipelines",
-                    "contributing/backend/api/pipeline-schedules",
-                    "contributing/backend/api/pipeline-runs",
-                    "contributing/backend/api/backfills",
-                    "contributing/backend/api/logs"
-                  ]
-                }
-              ]
-            }
+            "contributing/backend/overview"
           ]
         },
         {
@@ -532,6 +521,66 @@
           ]
         },
         "contributing/statistics/overview"
+      ]
+    },
+    {
+      "group": "API",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/resources",
+        "api-reference/policies",
+        "api-reference/presenters"
+      ]
+    },
+    {
+      "group": "Backfills",
+      "pages": [
+        "api-reference/backfills/overview",
+        "api-reference/backfills/create-backfills",
+        "api-reference/backfills/delete-backfill",
+        "api-reference/backfills/read-backfills",
+        "api-reference/backfills/update-backfill"
+      ]
+    },
+    {
+      "group": "Logs",
+      "pages": [
+        "api-reference/logs/overview",
+        "api-reference/logs/read-logs"
+      ]
+    },
+    {
+      "group": "Pipeline runs",
+      "pages": [
+        "api-reference/pipeline-runs/overview",
+        "api-reference/pipeline-runs/get-pipeline-runs",
+        "api-reference/pipeline-runs/trigger-pipeline"
+      ]
+    },
+    {
+      "group": "Pipeline schedules",
+      "pages": [
+        "api-reference/pipeline-schedules/overview",
+        "api-reference/pipeline-schedules/read-pipeline-schedule",
+        "api-reference/pipeline-schedules/create-pipeline-schedule",
+        "api-reference/pipeline-schedules/delete-pipeline-schedule"
+      ]
+    },
+    {
+      "group": "Pipelines",
+      "pages": [
+        "api-reference/pipelines/overview",
+        "api-reference/pipelines/read-pipeline",
+        "api-reference/pipelines/create-pipeline",
+        "api-reference/pipelines/delete-pipeline",
+        "api-reference/pipelines/update-pipeline"
+      ]
+    },
+    {
+      "group": "Sessions",
+      "pages": [
+        "api-reference/sessions/overview",
+        "api-reference/sessions/create-session"
       ]
     },
     {
