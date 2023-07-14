@@ -204,13 +204,7 @@ class BlockExecutor:
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
-            else:
-                self.__update_block_run_status(
-                    'completed',
-                    block_run_id=kwargs.get('block_run_id'),
-                    callback_url=callback_url,
-                    tags=tags,
-                )
+
             self._execute_callback(
                 'on_success',
                 dynamic_block_index=dynamic_block_index,
