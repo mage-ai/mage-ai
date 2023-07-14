@@ -314,24 +314,26 @@ class IntegrationPipeline(Pipeline):
                     self.data_loader.file_path,
                     self.__global_variables(),
                 )
-                arr += self.__run_in_subprocess(
-                    [
-                        PYTHON,
-                        self.source_file_path,
-                        '--config_json',
-                        config_json,
-                        '--settings',
-                        self.settings_file_path,
-                        '--state',
-                        self.source_state_file_path(
-                            destination_table=destination_table,
-                            stream=tap_stream_id,
-                        ),
-                        '--selected_streams_json',
-                        json.dumps([tap_stream_id]),
-                        '--count_records',
-                    ],
-                    config=config,
+                arr += json.loads(
+                    self.__run_in_subprocess(
+                        [
+                            PYTHON,
+                            self.source_file_path,
+                            '--config_json',
+                            config_json,
+                            '--settings',
+                            self.settings_file_path,
+                            '--state',
+                            self.source_state_file_path(
+                                destination_table=destination_table,
+                                stream=tap_stream_id,
+                            ),
+                            '--selected_streams_json',
+                            json.dumps([tap_stream_id]),
+                            '--count_records',
+                        ],
+                        config=config,
+                    )
                 )
 
         return arr
@@ -354,9 +356,11 @@ class IntegrationPipeline(Pipeline):
                     '--selected_streams_json',
                     json.dumps(streams),
                 ]
-            return self.__run_in_subprocess(
-                run_args,
-                config=config,
+            return json.loads(
+                self.__run_in_subprocess(
+                    run_args,
+                    config=config,
+                )
             )
 
     def discover_streams(self) -> List[str]:
@@ -365,16 +369,18 @@ class IntegrationPipeline(Pipeline):
                 self.data_loader.file_path,
                 self.__global_variables(),
             )
-            return self.__run_in_subprocess(
-                [
-                    PYTHON,
-                    self.source_file_path,
-                    '--config_json',
-                    config_json,
-                    '--discover',
-                    '--discover_streams',
-                ],
-                config=config,
+            return json.loads(
+                self.__run_in_subprocess(
+                    [
+                        PYTHON,
+                        self.source_file_path,
+                        '--config_json',
+                        config_json,
+                        '--discover',
+                        '--discover_streams',
+                    ],
+                    config=config,
+                )
             )
 
     def __run_in_subprocess(self, run_args: List[str], config: Dict = None) -> str:
@@ -382,11 +388,9 @@ class IntegrationPipeline(Pipeline):
             proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             proc.check_returncode()
 
-            return json.loads(
-                parse_logs_and_json(
-                    proc.stdout.decode(),
-                    config=config,
-                )
+            return parse_logs_and_json(
+                proc.stdout.decode(),
+                config=config,
             )
         except subprocess.CalledProcessError as e:
             message = e.stderr.decode('utf-8')

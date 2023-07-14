@@ -21,6 +21,10 @@ def filter_out_env_var_values(value: str) -> str:
 
 
 def filter_out_config_values(log: str, config: Dict) -> str:
+    """
+    Used for integration pipeline logging security. Filters out values from
+    the passed in config.
+    """
     if config is None:
         return log
     values = config.values()

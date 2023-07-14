@@ -1,6 +1,5 @@
 import json
 import re
-from collections.abc import Iterable
 from datetime import datetime
 from typing import Dict
 
@@ -91,7 +90,7 @@ def print_log_from_line(
 
 def print_logs_from_output(
     output: str,
-    filter_values: Iterable = None,
+    config: Dict = None,
     logger=None,
     logging_tags: Dict = None,
     tags: Dict = None,
@@ -99,7 +98,7 @@ def print_logs_from_output(
     for line in output.split('\n'):
         print_log_from_line(
             line,
-            filter_values=filter_values,
+            config=config,
             logger=logger,
             logging_tags=logging_tags,
             tags=tags,
