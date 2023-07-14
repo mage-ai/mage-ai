@@ -1,20 +1,17 @@
-from jupyter_server import subprocess
+import json
+import os
 from logging import Logger
-from mage_ai.data_integrations.logger.utils import (
-    print_log_from_line,
-)
-from mage_ai.data_integrations.utils.config import (
-    build_config_json,
-    get_catalog_by_stream,
-)
+from typing import Dict, List
+
+import pandas as pd
+from jupyter_server import subprocess
+
+from mage_ai.data_integrations.logger.utils import print_log_from_line
+from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
-from typing import Dict, List
-
-import json
-import os
-import pandas as pd
+from mage_ai.shared.security import filter_out_values
 
 
 class IntegrationBlock(Block):
@@ -77,8 +74,9 @@ class IntegrationBlock(Block):
             ) or dict()
 
             if stream_catalog.get('replication_method') == 'INCREMENTAL':
-                from mage_integrations.sources.utils import \
-                    update_source_state_from_destination_state
+                from mage_integrations.sources.utils import (
+                    update_source_state_from_destination_state,
+                )
                 update_source_state_from_destination_state(
                     source_state_file_path,
                     destination_state_file_path,
@@ -93,14 +91,15 @@ class IntegrationBlock(Block):
             lines_in_file = 0
 
             with open(source_output_file_path, 'w') as f:
+                config, config_json = build_config(
+                    self.pipeline.data_loader.file_path,
+                    variables_dictionary_for_config,
+                )
                 args = [
                     PYTHON_COMMAND,
                     self.pipeline.source_file_path,
                     '--config_json',
-                    build_config_json(
-                        self.pipeline.data_loader.file_path,
-                        variables_dictionary_for_config,
-                    ),
+                    config_json,
                     '--log_to_stdout',
                     '1',
                     '--settings',
@@ -120,9 +119,10 @@ class IntegrationBlock(Block):
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
-                    f.write(line.decode())
+                    f.write(filter_out_values(line.decode(), config.values())),
                     print_log_from_line(
                         line,
+                        filter_values=config.values(),
                         logger=logger,
                         logging_tags=logging_tags,
                         tags=tags,
@@ -133,7 +133,11 @@ class IntegrationBlock(Block):
 
             proc.communicate()
             if proc.returncode != 0 and proc.returncode is not None:
-                raise subprocess.CalledProcessError(proc.returncode, proc.args)
+                cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
+                raise subprocess.CalledProcessError(
+                    proc.returncode,
+                    filter_out_values(cmd, config.values()),
+                )
 
             file_size = os.path.getsize(source_output_file_path)
             msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
@@ -144,13 +148,13 @@ class IntegrationBlock(Block):
                 print(msg)
         elif BlockType.TRANSFORMER == self.type:
             from mage_integrations.sources.constants import COLUMN_TYPE_NULL
-            from mage_integrations.utils.logger.constants import (
-                TYPE_RECORD,
-                TYPE_SCHEMA,
-            )
             from mage_integrations.transformers.utils import (
                 convert_data_type,
                 infer_dtypes,
+            )
+            from mage_integrations.utils.logger.constants import (
+                TYPE_RECORD,
+                TYPE_SCHEMA,
             )
 
             decorated_functions = []
@@ -278,15 +282,17 @@ class IntegrationBlock(Block):
             else:
                 print(msg)
 
+            config, config_json = build_config(
+                self.pipeline.data_exporter.file_path,
+                variables_dictionary_for_config,
+                override=override,
+            )
+
             proc = subprocess.Popen([
                 PYTHON_COMMAND,
                 self.pipeline.destination_file_path,
                 '--config_json',
-                build_config_json(
-                    self.pipeline.data_exporter.file_path,
-                    variables_dictionary_for_config,
-                    override=override,
-                ),
+                config_json,
                 '--log_to_stdout',
                 '1',
                 '--settings',
@@ -303,6 +309,7 @@ class IntegrationBlock(Block):
             for line in proc.stdout:
                 print_log_from_line(
                     line,
+                    filter_values=config.values(),
                     logger=logger,
                     logging_tags=logging_tags,
                     tags=tags,
@@ -310,7 +317,11 @@ class IntegrationBlock(Block):
 
             proc.communicate()
             if proc.returncode != 0 and proc.returncode is not None:
-                raise subprocess.CalledProcessError(proc.returncode, proc.args)
+                cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
+                raise subprocess.CalledProcessError(
+                    proc.returncode,
+                    filter_out_values(cmd, config.values()),
+                )
 
             outputs.append(proc)
 
@@ -333,8 +344,9 @@ class DestinationBlock(IntegrationBlock):
     ):
         data = {}
         if state_stream and destination_table:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
             integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
             destination_state_file_path = integration_pipeline.destination_state_file_path(
                 destination_table=destination_table,
@@ -359,10 +371,12 @@ class DestinationBlock(IntegrationBlock):
 
     def update(self, data, update_state=False):
         if update_state:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
-            from mage_integrations.destinations.utils \
-                import update_destination_state_bookmarks
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
+            from mage_integrations.destinations.utils import (
+                update_destination_state_bookmarks,
+            )
 
             integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
             tap_stream_id = data.get('tap_stream_id')
