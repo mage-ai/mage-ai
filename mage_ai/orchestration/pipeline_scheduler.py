@@ -24,9 +24,6 @@ from mage_ai.data_preparation.models.block.utils import (
 )
 from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-    IntegrationPipeline,
-)
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -517,30 +514,25 @@ class PipelineScheduler:
                 filtered_streams,
             ))
 
+            # Filter parallel streams so that we are only left with block runs for streams
+            # that do not have a corresponding integration stream job.
             parallel_streams_to_schedule = []
             for stream in parallel_streams:
                 tap_stream_id = stream.get('tap_stream_id')
                 if not job_manager.has_integration_stream_job(self.pipeline_run.id, tap_stream_id):
                     parallel_streams_to_schedule.append(stream)
 
+            # Stop scheduling if there are no streams to schedule.
             if (not sequential_streams or job_manager.has_pipeline_run_job(self.pipeline_run.id)) \
                     and len(parallel_streams_to_schedule) == 0:
                 return
 
+            # Generate global variables and runtime arguments for pipeline execution.
             variables = self.pipeline_run.get_variables(extra_variables={
                 'pipeline.name': self.pipeline.name,
                 'pipeline.uuid': self.pipeline.uuid,
                 'pipeline_uuid': self.pipeline.uuid,
             })
-            integration_pipeline = IntegrationPipeline.get(self.pipeline.uuid)
-
-            self.logger.info(
-                f'Start executing PipelineRun {self.pipeline_run.id}: '
-                f'pipeline {integration_pipeline.uuid}',
-                **tags,
-            )
-
-            executable_block_runs = [b.id for b in block_runs_to_schedule]
 
             pipeline_schedule = self.pipeline_run.pipeline_schedule
             schedule_interval = pipeline_schedule.schedule_interval
@@ -577,22 +569,17 @@ class PipelineScheduler:
                 _start_date=start_date,
             )
 
-            data_loader_block = integration_pipeline.data_loader
-            data_exporter_block = integration_pipeline.data_exporter
+            data_loader_block = self.pipeline.data_loader
+            data_exporter_block = self.pipeline.data_exporter
+            executable_block_runs = [b.id for b in block_runs_to_schedule]
 
-            all_block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == self.pipeline_run.id)
-            block_runs = list(filter(lambda br: br.id in executable_block_runs, all_block_runs))
+            self.logger.info(
+                f'Start executing PipelineRun {self.pipeline_run.id}: '
+                f'pipeline {self.pipeline.uuid}',
+                **tags,
+            )
 
             for stream in parallel_streams_to_schedule:
-                tap_stream_id = stream.get('tap_stream_id')
-                block_runs_for_stream = list(filter(
-                    lambda br: tap_stream_id in br.block_uuid,
-                    block_runs_to_schedule,
-                ))
-                for b in block_runs_for_stream:
-                    b.update(
-                        status=BlockRun.BlockRunStatus.QUEUED,
-                    )
                 job_manager.add_job(
                     JobType.INTEGRATION_STREAM,
                     f'{self.pipeline_run.id}_{tap_stream_id}',
@@ -611,17 +598,6 @@ class PipelineScheduler:
             if job_manager.has_pipeline_run_job(self.pipeline_run.id) or \
                     len(sequential_streams) == 0:
                 return
-
-            for stream in sequential_streams:
-                tap_stream_id = stream.get('tap_stream_id')
-                block_runs_for_stream = list(filter(
-                    lambda br: tap_stream_id in br.block_uuid,
-                    block_runs_to_schedule,
-                ))
-                for b in block_runs_for_stream:
-                    b.update(
-                        status=BlockRun.BlockRunStatus.QUEUED,
-                    )
 
             job_manager.add_job(
                 JobType.PIPELINE_RUN,
@@ -727,9 +703,12 @@ def run_integration_stream(
     tap_stream_id = stream['tap_stream_id']
     destination_table = stream.get('destination_table', tap_stream_id)
 
+    # all_block_runs is a list of all block runs for the pipeline run
     all_block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id)
+    # block_runs is a list of all executable blocks runs for the pipeline run
     block_runs = list(filter(lambda br: br.id in executable_block_runs, all_block_runs))
 
+    # block_runs_for_stream is a list of block runs for the specified stream
     block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
     if len(block_runs_for_stream) == 0:
         return
@@ -752,6 +731,8 @@ def run_integration_stream(
             all_indexes.append(int(parts[2]))
     max_index_for_stream = max(all_indexes)
 
+    # Streams can be split up into multiple parts if the source has a large amount of
+    # data. Loop through each part of the stream, and execute the blocks runs.
     for idx in range(max_index + 1):
         block_runs_in_order = []
         current_block = data_loader_block
@@ -790,6 +771,8 @@ def run_integration_stream(
 
         index = stream.get('index', idx)
 
+        # Create config for the block runs. This metadata will be passed into the
+        # block before block execution.
         shared_dict = dict(
             destination_table=destination_table,
             index=index,
