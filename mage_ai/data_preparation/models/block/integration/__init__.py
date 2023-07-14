@@ -11,7 +11,7 @@ from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.security import filter_out_values
+from mage_ai.shared.security import filter_out_config_values
 
 
 class IntegrationBlock(Block):
@@ -119,10 +119,10 @@ class IntegrationBlock(Block):
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
-                    f.write(filter_out_values(line.decode(), config.values())),
+                    f.write(filter_out_config_values(line.decode(), config)),
                     print_log_from_line(
                         line,
-                        filter_values=config.values(),
+                        config=config,
                         logger=logger,
                         logging_tags=logging_tags,
                         tags=tags,
@@ -136,7 +136,7 @@ class IntegrationBlock(Block):
                 cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
                 raise subprocess.CalledProcessError(
                     proc.returncode,
-                    filter_out_values(cmd, config.values()),
+                    filter_out_config_values(cmd, config),
                 )
 
             file_size = os.path.getsize(source_output_file_path)
@@ -309,7 +309,7 @@ class IntegrationBlock(Block):
             for line in proc.stdout:
                 print_log_from_line(
                     line,
-                    filter_values=config.values(),
+                    config=config,
                     logger=logger,
                     logging_tags=logging_tags,
                     tags=tags,
@@ -320,7 +320,7 @@ class IntegrationBlock(Block):
                 cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
                 raise subprocess.CalledProcessError(
                     proc.returncode,
-                    filter_out_values(cmd, config.values()),
+                    filter_out_config_values(cmd, config),
                 )
 
             outputs.append(proc)

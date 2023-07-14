@@ -5,12 +5,12 @@ from datetime import datetime
 from typing import Dict
 
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.security import filter_out_values
+from mage_ai.shared.security import filter_out_config_values
 
 
 def print_log_from_line(
     line: str,
-    filter_values: Iterable = None,
+    config: Dict = None,
     logger=None,
     logging_tags: Dict = None,
     tags: Dict = None,
@@ -61,7 +61,7 @@ def print_log_from_line(
                     updated_tags = tags1
                     try:
                         updated_tags.update(data2)
-                        message = filter_out_values(message, filter_values)
+                        message = filter_out_config_values(message, config)
                         logger.info(
                             message,
                             **merge_dict(
@@ -80,11 +80,11 @@ def print_log_from_line(
                 else:
                     message = 'Exception raised, please check logs for more details.'
 
-                message = filter_out_values(message, filter_values)
+                message = filter_out_config_values(message, config)
                 raise Exception(message)
 
         if log_to_print:
-            print(filter_out_values(log_to_print, filter_values))
+            print(filter_out_config_values(log_to_print, config))
     except json.decoder.JSONDecodeError:
         pass
 

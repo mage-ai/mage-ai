@@ -1,7 +1,7 @@
 import os
-from collections.abc import Iterable
+from typing import Dict, List
 
-MIN_SECRET_ENV_VAR_LENGTH = 8
+MIN_SECRET_LENGTH = 8
 WHITELISTED_ENV_VARS = set([
     'MAGE_DATA_DIR',
     'MAGE_REPO_PATH',
@@ -11,19 +11,26 @@ WHITELISTED_ENV_VARS = set([
 ])
 
 
-def filter_out_env_var_values(value: str):
+def filter_out_env_var_values(value: str) -> str:
     env_var_values = dict(os.environ).values()
     whitelisted_env_var_values = set([os.getenv(k) for k in WHITELISTED_ENV_VARS if os.getenv(k)])
     env_var_values = [v for v in env_var_values
-                      if v and len(v) >= MIN_SECRET_ENV_VAR_LENGTH
+                      if v and len(v) >= MIN_SECRET_LENGTH
                       and v not in whitelisted_env_var_values]
     return filter_out_values(value, env_var_values)
 
 
-def filter_out_values(log: str, values: Iterable):
+def filter_out_config_values(log: str, config: Dict) -> str:
+    if config is None:
+        return log
+    values = config.values()
+    secret_values = [v for v in values if isinstance(v, str) and len(v) >= MIN_SECRET_LENGTH]
+    return filter_out_values(log, secret_values)
+
+
+def filter_out_values(log: str, values: List[str]) -> str:
     if not values:
         return log
-    values = [v for v in values if isinstance(v, str)]
     values.sort(key=len, reverse=True)
     log_clean = log
     for value in values:

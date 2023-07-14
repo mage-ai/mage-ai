@@ -2,7 +2,6 @@ import importlib
 import json
 import os
 import subprocess
-from collections.abc import Iterable
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -24,7 +23,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
-from mage_ai.shared.security import filter_out_values
+from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
 PYTHON = 'python3'
@@ -217,7 +216,7 @@ class IntegrationPipeline(Pipeline):
                         error = line
                 elif not error and line.startswith('CRITICAL'):
                     error = line
-            raise Exception(filter_out_values(error, config_interpolated.values()))
+            raise Exception(filter_out_config_values(error, config_interpolated))
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
@@ -259,7 +258,7 @@ class IntegrationPipeline(Pipeline):
                 proc.check_returncode()
 
                 output = proc.stdout.decode()
-                print_logs_from_output(output, filter_values=config.values())
+                print_logs_from_output(output, config=config)
 
                 pipeline = Pipeline(self.uuid)
                 block = pipeline.get_block(self.data_loader.uuid)
@@ -294,7 +293,7 @@ class IntegrationPipeline(Pipeline):
                         error = dig(json_object, 'tags.error')
                     except Exception:
                         error = line
-            error = filter_out_values(error, config.values())
+            error = filter_out_config_values(error, config)
             if not error:
                 raise Exception('The sample data was not able to be loaded. Please check if the ' +
                                 'stream still exists. If it does not, click the "View and select ' +
@@ -332,7 +331,7 @@ class IntegrationPipeline(Pipeline):
                         json.dumps([tap_stream_id]),
                         '--count_records',
                     ],
-                    filter_values=config.values(),
+                    config=config,
                 )
 
         return arr
@@ -357,7 +356,7 @@ class IntegrationPipeline(Pipeline):
                 ]
             return self.__run_in_subprocess(
                 run_args,
-                filter_values=config.values(),
+                config=config,
             )
 
     def discover_streams(self) -> List[str]:
@@ -375,10 +374,10 @@ class IntegrationPipeline(Pipeline):
                     '--discover',
                     '--discover_streams',
                 ],
-                filter_values=config.values(),
+                config=config,
             )
 
-    def __run_in_subprocess(self, run_args: List[str], filter_values: Iterable = None) -> str:
+    def __run_in_subprocess(self, run_args: List[str], config: Dict = None) -> str:
         try:
             proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             proc.check_returncode()
@@ -386,12 +385,12 @@ class IntegrationPipeline(Pipeline):
             return json.loads(
                 parse_logs_and_json(
                     proc.stdout.decode(),
-                    filter_values=filter_values,
+                    config=config,
                 )
             )
         except subprocess.CalledProcessError as e:
             message = e.stderr.decode('utf-8')
-            raise Exception(filter_out_values(message, filter_values))
+            raise Exception(filter_out_config_values(message, config))
 
     def streams(self, variables: Dict = None) -> List[Dict]:
         if variables is None:
