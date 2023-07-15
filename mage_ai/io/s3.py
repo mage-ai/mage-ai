@@ -1,12 +1,14 @@
+import os
 from contextlib import contextmanager
 from io import BytesIO
-from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from pandas import DataFrame
 from pathlib import Path
-import boto3
-import os
 from typing import Union
+
+import boto3
+from pandas import DataFrame
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseFile, FileFormat
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
 class S3(BaseFile):
@@ -153,6 +155,7 @@ class S3(BaseFile):
         return cls(
             aws_access_key_id=config[ConfigKey.AWS_ACCESS_KEY_ID],
             aws_secret_access_key=config[ConfigKey.AWS_SECRET_ACCESS_KEY],
+            aws_session_token=config[ConfigKey.AWS_SESSION_TOKEN],
             region_name=config[ConfigKey.AWS_REGION],
             endpoint_url=config[ConfigKey.AWS_ENDPOINT],
             **kwargs,
