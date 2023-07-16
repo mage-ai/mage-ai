@@ -26,6 +26,7 @@ class ClickHouse(BaseSQLDatabase):
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
+        self.database = kwargs.get('database', 'default')
         with self.printer.print_msg('Connecting to ClickHouse'):
             self.client = clickhouse_connect.get_client(**kwargs)
 
@@ -50,6 +51,9 @@ class ClickHouse(BaseSQLDatabase):
             port=config[ConfigKey.CLICKHOUSE_PORT],
             username=config[ConfigKey.CLICKHOUSE_USERNAME],
         )
+
+    def default_database(self) -> str:
+        return self.database
 
     def execute(self, command_string: str, **kwargs) -> None:
         """
@@ -208,7 +212,7 @@ class ClickHouse(BaseSQLDatabase):
         elif type(df) is list:
             df = DataFrame(df)
 
-        def __process(database: Union[str, None]):
+        def __process():
 
             df_existing = self.client.query_df(f"""
 EXISTS TABLE {database}.{table_name}
@@ -258,6 +262,6 @@ INSERT INTO {database}.{table_name}
         if verbose:
             with self.printer.print_msg(
                     f'Exporting data to table \'{database}.{table_name}\''):
-                __process(database=database)
+                __process()
         else:
-            __process(database=database)
+            __process()
