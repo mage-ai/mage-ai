@@ -15,4 +15,4 @@ secrets_manager = SecretsManager()
 
 
 def get_secret(secret_name: str) -> str:
-    return secrets_manager.client.get_secret(secret_name)
+    return secrets_manager.client.get_secret(secret_name).value
