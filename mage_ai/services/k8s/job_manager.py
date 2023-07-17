@@ -86,7 +86,7 @@ class JobManager():
         self,
         command: str,
         k8s_config: K8sExecutorConfig = None,
-    ):
+    ) -> client.V1Job:
         # Configureate Pod template container
         mage_server_container_spec = self.pod_config.spec.containers[0]
 
@@ -140,7 +140,7 @@ class JobManager():
             body=job,
             namespace=self.namespace,
         )
-        self._print("Job created. status='%s'" % str(api_response.status))
+        self._print(f"Job created. status='{api_response.status}'")
 
     def delete_job(self):
         try:
