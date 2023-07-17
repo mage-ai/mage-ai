@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -20,24 +20,17 @@ def get_secrets_dir(
     if entity == Entity.GLOBAL:
         return secrets_dir
     elif entity == Entity.PROJECT:
-        return os.path.join(secrets_dir, project_uuid)
+        return os.path.join(secrets_dir, 'projects', project_uuid)
     elif entity == Entity.PIPELINE:
-        return os.path.join(secrets_dir, project_uuid, pipeline_uuid)
+        return os.path.join(
+            secrets_dir,
+            'projects',
+            project_uuid,
+            'pipelines',
+            pipeline_uuid,
+        )
 
     return secrets_dir
-
-
-def get_secret_path(
-    entity: Entity,
-    project_uuid: str = None,
-    pipeline_uuid: str = None,
-) -> Union[None, str]:
-    if entity == Entity.GLOBAL:
-        return None
-    elif entity == Entity.PROJECT:
-        return project_uuid
-    elif entity == Entity.PIPELINE:
-        return os.path.join(project_uuid, pipeline_uuid)
 
 
 def create_secret(
@@ -70,8 +63,8 @@ def create_secret(
     encrypted_value = fernet.encrypt(value.encode('utf-8')).decode('utf-8')
     kwargs = {
         'name': name,
-        'uuid': key_uuid,
         'value': encrypted_value,
+        'key_uuid': key_uuid,
         'repo_name': get_repo_path(),
     }
 
@@ -131,13 +124,13 @@ def get_secret_value(
             secret = Secret.query.filter(
                 Secret.name == name,
                 Secret.repo_name == repo_name,
-                Secret.uuid.is_(None),
+                Secret.key_uuid.is_(None),
             ).one_or_none()
 
         if key_uuid and not secret:
             secret = Secret.query.filter(
                 Secret.name == name,
-                Secret.uuid == key_uuid,
+                Secret.key_uuid == key_uuid,
             ).one_or_none()
 
         if secret:
@@ -161,7 +154,7 @@ def delete_secret(
     secret = Secret.query.filter(
         Secret.name == name,
         Secret.repo_name == get_repo_path(),
-        Secret.uuid.is_(None),
+        Secret.key_uuid.is_(None),
     ).one_or_none()
 
     if not secret:
@@ -173,7 +166,7 @@ def delete_secret(
         if key_uuid:
             secret = Secret.query.filter(
                 Secret.name == name,
-                Secret.uuid == key_uuid,
+                Secret.key_uuid == key_uuid,
             ).one_or_none()
 
     if secret:

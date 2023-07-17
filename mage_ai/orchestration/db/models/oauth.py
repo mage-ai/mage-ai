@@ -76,7 +76,7 @@ class User(BaseModel):
 
     def get_access(
         self,
-        entity: Union['Entity', None] = None,
+        entity: Union[Entity, None] = None,
         entity_id: Union[str, None] = None,
     ) -> int:
         '''
@@ -158,7 +158,7 @@ class Role(BaseModel):
     @safe_db_query
     def create_default_roles(
         self,
-        entity: 'Entity' = None,
+        entity: Entity = None,
         entity_id: str = None,
         prefix: str = None,
     ):
@@ -197,7 +197,7 @@ class Role(BaseModel):
 
     def get_access(
         self,
-        entity: Union['Entity', None],
+        entity: Union[Entity, None],
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
@@ -284,7 +284,7 @@ class Permission(BaseModel):
     @safe_db_query
     def create_default_permissions(
         self,
-        entity: 'Entity' = None,
+        entity: Entity = None,
         entity_id: str = None,
     ) -> List['Permission']:
         if entity is None:
