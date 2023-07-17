@@ -23,9 +23,17 @@ def filter_out_env_var_values(value: str) -> str:
 def filter_out_config_values(log: str, config: Dict) -> str:
     """
     Used for integration pipeline logging security. Filters out values from
-    the passed in config.
+    the passed in config if the config value is a string and is over
+    MIN_SECRET_LENGTH characters long.
+
+    Args:
+        log (str): The log to filter.
+        config (Dict[str, any]): The config to get filter values from.
+
+    Returns:
+        str: Log with config values filtered out.
     """
-    if config is None:
+    if not log or not config:
         return log
     values = config.values()
     secret_values = [v for v in values if isinstance(v, str) and len(v) >= MIN_SECRET_LENGTH]
@@ -33,7 +41,7 @@ def filter_out_config_values(log: str, config: Dict) -> str:
 
 
 def filter_out_values(log: str, values: List[str]) -> str:
-    if not values:
+    if not log or not values:
         return log
     values.sort(key=len, reverse=True)
     log_clean = log
