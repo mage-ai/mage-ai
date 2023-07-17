@@ -4,11 +4,10 @@ from mage_ai.orchestration.db.models.base import BaseModel
 
 
 class Secret(BaseModel):
-    name = Column(String(255))
+    name = Column(String(255), nullable=False)
     value = Column(Text)
     # Column name is "repo_name", but we expect the repo path so that
     # we can identify the repo.
     repo_name = Column(String(255))
-    entity = Column(String(255))
-    entity_id = Column(String(255))
-    repo_unique_constraint = UniqueConstraint(name, repo_name)
+    uuid = Column(String(255), nullable=True)
+    __table_args__ = (UniqueConstraint('name', 'uuid', name='name_uuid_uc'),)
