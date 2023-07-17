@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Dict
+from typing import Dict, Union
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -52,7 +52,7 @@ class JobManager():
     def run_job(
         self,
         command: str,
-        k8s_config=None,
+        k8s_config: Union[K8sExecutorConfig, Dict] = None,
     ):
         if not self.job_exists():
             if type(k8s_config) is dict:
