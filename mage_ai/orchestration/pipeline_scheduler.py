@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 from mage_ai.data_integrations.utils.scheduler import (
     clear_source_output_files,
+    get_extra_variables,
     initialize_state_and_runs,
 )
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
@@ -71,11 +72,9 @@ class PipelineScheduler:
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
             self.streams = self.pipeline.streams(
-                self.pipeline_run.get_variables(extra_variables={
-                    'pipeline.name': self.pipeline.name,
-                    'pipeline.uuid': self.pipeline.uuid,
-                    'pipeline_uuid': self.pipeline.uuid,
-                })
+                self.pipeline_run.get_variables(
+                    extra_variables=get_extra_variables(self.pipeline)
+                )
             )
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
@@ -528,11 +527,9 @@ class PipelineScheduler:
                 return
 
             # Generate global variables and runtime arguments for pipeline execution.
-            variables = self.pipeline_run.get_variables(extra_variables={
-                'pipeline.name': self.pipeline.name,
-                'pipeline.uuid': self.pipeline.uuid,
-                'pipeline_uuid': self.pipeline.uuid,
-            })
+            variables = self.pipeline_run.get_variables(
+                extra_variables=get_extra_variables(self.pipeline),
+            )
 
             pipeline_schedule = self.pipeline_run.pipeline_schedule
             schedule_interval = pipeline_schedule.schedule_interval
@@ -580,6 +577,7 @@ class PipelineScheduler:
             )
 
             for stream in parallel_streams_to_schedule:
+                tap_stream_id = stream.get('tap_stream_id')
                 job_manager.add_job(
                     JobType.INTEGRATION_STREAM,
                     f'{self.pipeline_run.id}_{tap_stream_id}',
