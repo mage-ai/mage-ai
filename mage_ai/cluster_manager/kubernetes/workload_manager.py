@@ -38,6 +38,7 @@ class WorkloadManager:
         self.load_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
+        self.networking_client = client.NetworkingV1Api()
 
         self.namespace = namespace
         if not self.namespace:
@@ -143,6 +144,8 @@ class WorkloadManager:
         )
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
+
+        ingress_name = kwargs.get('ingress_name')
 
         env_vars = self.__populate_env_vars(
             name,
@@ -303,7 +306,36 @@ class WorkloadManager:
             }
         }
 
-        return self.core_client.create_namespaced_service(self.namespace, service)
+        k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
+
+        if ingress_name:
+            self.update_ingress_paths(ingress_name, service_name, name)
+
+        return k8s_service
+
+    def update_ingress_paths(self, ingress_name: str, service_name: str, workspace_name: str):
+        ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
+        ingress.spec.rules.append(
+            client.V1IngressRule(
+                host=ingress.spec.rules[0].host,
+                http=client.V1HTTPIngressRuleValue(
+                    paths=[
+                        client.V1HTTPIngressPath(
+                            backend=client.V1IngressBackend(
+                                service=client.V1IngressServiceBackend(
+                                    name=service_name,
+                                    port=client.V1ServiceBackendPort(
+                                        number=6789
+                                    )
+                                )
+                            ),
+                            path=f'/{workspace_name}'
+                        )
+                    ]
+                ),
+            )
+        )
+        self.networking_client.patch_namespaced_ingress(ingress_name, self.namespace, ingress)
 
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)

@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import re
 import traceback
 import webbrowser
 from time import sleep
@@ -208,6 +209,9 @@ async def main(
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
+
+    for handler in app.handlers[0][1]:
+        handler.regex = re.compile(handler.regex.pattern.replace('/', '/myApplication/', 1))
 
     port = int(port)
     max_port = port + 100
