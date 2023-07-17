@@ -79,6 +79,7 @@ There're two ways to customize the Kubernetes executor config:
 in this project. Example config:
     ```yaml
     k8s_executor_config:
+      job_name_prefix: data-prep
       resource_limits:
         cpu: 1000m
         memory: 2048Mi
@@ -87,14 +88,15 @@ in this project. Example config:
         memory: 1024Mi
       service_account_name: default
     ```
-If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
-```yaml
-k8s_executor_config:
-  resource_limits:
-    gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
-```
-Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
-is installed and run on your nodes to use the GPUs.
+* The kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`. The default `job_name_prefix` is `data-prep`. You can customize it in the k8s executor config.
+* If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
+  ```yaml
+  k8s_executor_config:
+    resource_limits:
+      gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
+  ```
+  Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
+  is installed and run on your nodes to use the GPUs.
 
 ### AWS ECS executor
 
