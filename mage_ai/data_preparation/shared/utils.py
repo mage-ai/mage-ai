@@ -18,4 +18,10 @@ def get_template_vars() -> Dict[str, Callable]:
     except ImportError:
         pass
 
+    try:
+        from mage_ai.services.azure.key_vault.key_vault import get_secret
+        kwargs['azure_secret_var'] = get_secret
+    except Exception:
+        pass
+
     return kwargs
