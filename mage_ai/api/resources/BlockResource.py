@@ -168,7 +168,8 @@ class BlockResource(GenericResource):
 
         pipeline = kwargs.get('parent_model')
         cache = await BlockCache.initialize_cache()
-        cache.remove_pipeline(self.model, pipeline.uuid)
+        if pipeline:
+            cache.remove_pipeline(self.model, pipeline.uuid)
 
         return self.model.delete(force=force)
 
