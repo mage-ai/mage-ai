@@ -1,3 +1,4 @@
+import asyncio
 import multiprocessing
 import time
 import traceback
@@ -35,7 +36,9 @@ def run_scheduler():
     except Exception:
         traceback.print_exc()
     try:
-        LoopTimeTrigger().start()
+        asyncio.run(LoopTimeTrigger().start())
+    except asyncio.CancelledError:
+        pass
     except Exception as e:
         traceback.print_exc()
         raise e
