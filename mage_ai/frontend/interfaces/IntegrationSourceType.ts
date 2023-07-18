@@ -136,6 +136,7 @@ export enum IntegrationSourceEnum {
 
 export enum IntegrationDestinationEnum {
   BIGQUERY = 'bigquery',
+  CLICKHOUSE = 'clickhouse',
   DELTA_LAKE_S3 = 'delta_lake_s3',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
