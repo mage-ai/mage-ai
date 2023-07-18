@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Flex from '@oracle/components/Flex';
 import Spacing from '@oracle/elements/Spacing';
@@ -10,6 +11,7 @@ import { MetricsSummaryContainerStyle } from './index.style';
 import {
   PIPELINE_TYPE_ICON_MAPPING,
   PIPELINE_TYPE_LABEL_MAPPING,
+  PipelineTypeEnum,
 } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { capitalize } from '@utils/string';
@@ -23,10 +25,28 @@ type MetricsSummaryProps = {
 function MetricsSummary({
   pipelineRunCountByPipelineType,
 }: MetricsSummaryProps) {
-  const pipelineRunCounts = sortTuplesArrayByFirstItem(
-    Object.entries(pipelineRunCountByPipelineType)
-      .filter(([pipelineType, countsObj]) => Object.keys(countsObj).length !== 0),
-  );
+  const pipelineRunCounts = useMemo(() => {
+    if (!pipelineRunCountByPipelineType) {
+      return [];
+    }
+
+    const updated = JSON.parse(JSON.stringify(pipelineRunCountByPipelineType));
+    const standardCountObj = updated[PipelineTypeEnum.PYTHON] || {};
+    Object.entries(updated[PipelineTypeEnum.PYSPARK] || {}).forEach(([runStatus, count]) => {
+      if (standardCountObj[runStatus]) {
+        standardCountObj[runStatus] += count;
+      } else {
+        standardCountObj[runStatus] = count;
+      }
+    });
+    updated[PipelineTypeEnum.PYTHON] = standardCountObj;
+    delete updated[PipelineTypeEnum.PYSPARK];
+    
+    return sortTuplesArrayByFirstItem(
+      Object.entries(updated)
+        .filter(([pipelineType, countsObj]) => Object.keys(countsObj).length !== 0),
+    );
+  }, [pipelineRunCountByPipelineType]);
 
   return (
     <MetricsSummaryContainerStyle>
