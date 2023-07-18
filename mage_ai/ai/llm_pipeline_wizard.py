@@ -70,6 +70,7 @@ class LLMPipelineWizard:
         self,
         pipeline_uuid: str,
         project_path: str = None,
+        print_block_doc: bool = False,
     ) -> str:
         pipeline = Pipeline.get(
             uuid=pipeline_uuid,
@@ -82,6 +83,8 @@ class LLMPipelineWizard:
                 continue
             block_docs.append(self.generate_block_documentation(block))
         block_docs_content = '\n'.join(block_docs)
+        if print_block_doc:
+            print(block_docs_content)
         prompt_template = PromptTemplate(input_variables=['block_content'],
                                          template=PROMPT_FOR_SUMMARIZE_BLOCK_DOC)
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
