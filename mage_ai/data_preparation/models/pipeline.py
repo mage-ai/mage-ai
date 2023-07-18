@@ -27,10 +27,16 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
+from mage_ai.data_preparation.repo_manager import (
+    RepoConfig,
+    get_project_uuid,
+    get_repo_config,
+)
+from mage_ai.data_preparation.shared.secrets import get_secrets_dir
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
@@ -775,6 +781,25 @@ class Pipeline:
             await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+            # Update pipeline secrets directory.
+            try:
+                secrets_dir = get_secrets_dir(
+                    Entity.PIPELINE,
+                    get_project_uuid(),
+                    old_uuid,
+                )
+                if os.path.exists(secrets_dir):
+                    shutil.move(
+                        secrets_dir,
+                        get_secrets_dir(
+                            Entity.PIPELINE,
+                            get_project_uuid(),
+                            new_uuid,
+                        )
+                    )
+            except Exception as err:
+                print(f'Could not rename pipeline secrets directory with error: {str(err)}')
+
             should_update_block_cache = True
             should_update_tag_cache = True
 
@@ -1307,6 +1332,18 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
+
+        # Delete secret directory when deleting pipeline
+        try:
+            secrets_dir = get_secrets_dir(
+                Entity.PIPELINE,
+                get_project_uuid(),
+                self.uuid,
+            )
+            if os.path.exists(secrets_dir):
+                shutil.rmtree(secrets_dir)
+        except Exception as err:
+            print(f'Could not delete secrets directory due to {str(err)}')
 
     def delete_block(
         self,

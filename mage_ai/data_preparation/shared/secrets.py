@@ -15,6 +15,18 @@ def get_secrets_dir(
     project_uuid: str = None,
     pipeline_uuid: str = None,
 ) -> str:
+    """
+    Returns the path of the directory to store the secret encryption key and key uuid based
+    on the entity type.
+
+    Args:
+        entity (Entity): Entity for the secret (global, project, pipeline)
+        project_uuid (str): Project uuid, required if entity is project or pipeline
+        pipeline_uuid (str): Pipeline uuid, required if entity is pipeline
+
+    Returns:
+        str: /path/to/secrets/directory
+    """
     secrets_dir = os.path.abspath(os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR))
 
     if entity == Entity.GLOBAL:
@@ -73,17 +85,13 @@ def create_secret(
     return secret
 
 
-def get_valid_secrets(
-    entity: Entity = Entity.GLOBAL,
-    pipeline_uuid: str = None,
-    project_uuid: str = None,
-) -> List:
+def get_valid_secrets_for_repo() -> List:
+    """
+    This method still only returns secrets for the current repo. This will need to be
+    updated in the future to return secrets based on the parameters passed in.
+    """
     from mage_ai.orchestration.db.models.secrets import Secret
-    key, _ = _get_encryption_key(
-        entity,
-        project_uuid=project_uuid,
-        pipeline_uuid=pipeline_uuid,
-    )
+    key, _ = _get_encryption_key(entity=Entity.GLOBAL)
     if not key:
         return []
 
@@ -176,6 +184,16 @@ def delete_secret(
 
 
 def _create_key_files(secrets_dir: str) -> Tuple[str, str]:
+    """
+    Creates key files in the secrets_dir directory if they do not exist. Returns the key
+    and key_uuid values.
+
+    Args:
+        secrets_dir: The directory to create the key files in.
+
+    Returns:
+        Tuple[str, str]: A tuple with the key and key_uuid values.
+    """
     key_file = os.path.join(secrets_dir, 'key')
     uuid_file = os.path.join(secrets_dir, 'uuid')
 

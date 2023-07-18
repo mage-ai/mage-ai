@@ -242,14 +242,6 @@ class UserRole(BaseModel):
 
 
 class Permission(BaseModel):
-    class Entity(str, enum.Enum):
-        # Permissions saved to the DB should not have the "ANY" entity. It should only be used
-        # when evaluating permissions.
-        ANY = 'any'
-        GLOBAL = 'global'
-        PROJECT = 'project'
-        PIPELINE = 'pipeline'
-
     class Access(int, enum.Enum):
         OWNER = 1
         ADMIN = 2

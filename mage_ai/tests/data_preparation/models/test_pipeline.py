@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import uuid
 from unittest.mock import patch
 
 import yaml
@@ -490,7 +491,8 @@ class PipelineTest(DBTestCase):
             widgets=[],
         ))
 
-    def test_delete(self):
+    @patch('mage_ai.data_preparation.repo_manager.get_project_uuid')
+    def test_delete(self, mock_project_uuid):
         pipeline = Pipeline.create(
             'test pipeline 6',
             repo_path=self.repo_path,
@@ -505,6 +507,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block3, upstream_block_uuids=['block2'])
         pipeline.add_block(block4)
         pipeline.add_block(block5)
+        mock_project_uuid.return_value = uuid.uuid4().hex
         pipeline.delete()
         self.assertFalse(os.access(pipeline.dir_path, os.F_OK))
         self.assertTrue(os.access(block1.file_path, os.F_OK))

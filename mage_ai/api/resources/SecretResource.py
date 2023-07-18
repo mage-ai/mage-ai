@@ -2,7 +2,10 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_project_uuid
-from mage_ai.data_preparation.shared.secrets import create_secret, get_valid_secrets
+from mage_ai.data_preparation.shared.secrets import (
+    create_secret,
+    get_valid_secrets_for_repo,
+)
 from mage_ai.data_preparation.sync import (
     GIT_ACCESS_TOKEN_SECRET_NAME,
     GIT_SSH_PRIVATE_KEY_SECRET_NAME,
@@ -36,11 +39,7 @@ class SecretResource(DatabaseResource):
         pipeline_uuid = query.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
-        secrets = get_valid_secrets(
-            entity,
-            pipeline_uuid=pipeline_uuid,
-            project_uuid=get_project_uuid(),
-        )
+        secrets = get_valid_secrets_for_repo()
         return list(filter(
             lambda s: self._filter_secrets(s, user),
             secrets
