@@ -69,7 +69,7 @@ tables==3.7.0
 trino==0.321.0
 
 # Azure
-azure-eventhub==5.10.1
+azure-eventhub==5.11.2
 azure-identity==1.11.0
 azure-keyvault-secrets==4.6.0
 azure-keyvault-certificates==4.6.0
