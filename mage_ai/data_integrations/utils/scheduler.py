@@ -1,19 +1,29 @@
+import json
+import math
+import os
+import shutil
+from typing import Dict, List
+
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+    IntegrationPipeline,
+)
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
-from typing import Dict, List
-import json
-import math
-import os
-import shutil
-
 
 SQL_SOURCES_UUID = [d.get('uuid', d['name'].lower()) for d in SQL_SOURCES]
+
+
+def get_extra_variables(pipeline: IntegrationPipeline) -> Dict:
+    return {
+        'pipeline.name': pipeline.name,
+        'pipeline.uuid': pipeline.uuid,
+        'pipeline_uuid': pipeline.uuid,
+    }
 
 
 def clear_source_output_files(
@@ -164,7 +174,9 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
 
 
 def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variables: Dict) -> None:
-    from mage_integrations.sources.utils import update_source_state_from_destination_state
+    from mage_integrations.sources.utils import (
+        update_source_state_from_destination_state,
+    )
 
     integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
