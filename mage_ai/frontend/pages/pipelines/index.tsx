@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Chip from '@oracle/components/Chip';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -24,24 +25,27 @@ import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
+import TagType from '@interfaces/TagType';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { Check, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
+import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
+import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
+import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
+import { sortByKey } from '@utils/array';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
 
@@ -66,7 +70,11 @@ function PipelineListPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const q = queryFromUrl();
-  const query = filterQuery(q, [PipelineQueryEnum.STATUS, PipelineQueryEnum.TYPE]);
+  const query = filterQuery(q, [
+    PipelineQueryEnum.STATUS,
+    PipelineQueryEnum.TAG,
+    PipelineQueryEnum.TYPE,
+  ]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
@@ -227,68 +235,60 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
+  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(createPipeline), [
+    createPipeline,
+  ]);
+
+  const { data: dataTags } = api.tags.list();
+  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
+    dataTags,
+  ]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
       addButtonProps={{
         isLoading: isLoadingCreate,
         label: 'New',
-        menuItems: [
-          {
-            label: () => 'Standard (batch)',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/standard',
-          },
-          {
-            label: () => 'Data integration',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-                type: PipelineTypeEnum.INTEGRATION,
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/integration',
-          },
-          {
-            label: () => 'Streaming',
-            onClick: () => createPipeline({
-              pipeline: {
-                name: randomNameGenerator(),
-                type: PipelineTypeEnum.STREAMING,
-              },
-            }),
-            uuid: 'Pipelines/NewPipelineMenu/streaming',
-          },
-        ],
+        menuItems: newPipelineButtonMenuItems,
       }}
       deleteRowProps={{
         confirmationMessage: 'This is irreversible and will immediately delete everything associated \
           with the pipeline, including its blocks, triggers, runs, logs, and history.',
         isLoading: isLoadingDelete,
         item: 'pipeline',
-        onDelete: () => deletePipeline(selectedPipeline?.uuid),
+        onDelete: () => {
+          if (typeof window !== 'undefined'
+            && window.confirm(
+              `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
+            )
+          ) {
+            deletePipeline(selectedPipeline?.uuid);
+          }
+        },
       }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
+        tag: tags.map(({ uuid }) => uuid),
         type: Object.values(PipelineTypeEnum),
       }}
-      filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+      filterValueLabelMapping={{
+        tag: tags.reduce((acc, { uuid }) => ({
+          ...acc,
+          [uuid]: uuid,
+        }), {}),
+        type: PIPELINE_TYPE_LABEL_MAPPING,
+      }}
       groupButtonProps={{
         groupByLabel: groupByQuery,
         menuItems: [
           {
-            beforeIcon: (
-              <Check
-                fill={groupByQuery === PipelineGroupingEnum.STATUS
-                  ? dark.content.default
-                  : dark.interactive.transparent
-                }
-                size={UNIT * 2}
+            beforeIcon: groupByQuery === PipelineGroupingEnum.STATUS
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
               />
-            ),
+              : <Circle muted size={UNIT * 1.5} />
+            ,
             label: () => capitalize(PipelineGroupingEnum.STATUS),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.STATUS
@@ -300,15 +300,31 @@ function PipelineListPage() {
             uuid: 'Pipelines/GroupMenu/Status',
           },
           {
-            beforeIcon: (
-              <Check
-                fill={groupByQuery === PipelineGroupingEnum.TYPE
-                  ? dark.content.default
-                  : dark.interactive.transparent
-                }
-                size={UNIT * 2}
+            beforeIcon: groupByQuery === PipelineGroupingEnum.TAG
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
               />
-            ),
+              : <Circle muted size={UNIT * 1.5} />
+            ,
+            label: () => capitalize(PipelineGroupingEnum.TAG),
+            onClick: () => goToWithQuery({
+              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TAG
+                ? null
+                : PipelineGroupingEnum.TAG,
+            }, {
+              pushHistory: true,
+            }),
+            uuid: 'Pipelines/GroupMenu/Tag',
+          },
+          {
+            beforeIcon: groupByQuery === PipelineGroupingEnum.TYPE
+              ? <Check
+                fill={dark.content.default}
+                size={UNIT * 1.5}
+              />
+              : <Circle muted size={UNIT * 1.5} />
+            ,
             label: () => capitalize(PipelineGroupingEnum.TYPE),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TYPE
@@ -356,18 +372,19 @@ function PipelineListPage() {
     />
   ), [
     clonePipeline,
-    createPipeline,
     deletePipeline,
     groupByQuery,
     isLoadingClone,
     isLoadingCreate,
     isLoadingDelete,
+    newPipelineButtonMenuItems,
     query,
     searchText,
     selectedPipeline?.description,
     selectedPipeline?.name,
     selectedPipeline?.uuid,
     showInputModal,
+    tags,
   ]);
 
   const [showError] = useError(null, {}, [], {
@@ -529,6 +546,87 @@ function PipelineListPage() {
     showHelpMageModal,
   ]);
 
+  const {
+    rowGroupHeaders,
+    rowsGroupedByIndex,
+  } = useMemo(() => {
+    const mapping = {};
+
+    pipelines?.forEach((pipeline, idx: number) => {
+      let value = pipeline[groupByQuery];
+
+      if (PipelineGroupingEnum.STATUS === groupByQuery) {
+        const { schedules = [] } = pipeline;
+        // TODO (tommy dang): when is the pipeline status RETRY?
+        const schedulesCount = schedules.length;
+        const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+        value = isActive
+          ? PipelineStatusEnum.ACTIVE
+          : schedulesCount >= 1 ? PipelineStatusEnum.INACTIVE : PipelineStatusEnum.NO_SCHEDULES;
+
+      } else if (PipelineGroupingEnum.TAG === groupByQuery) {
+        const pt = pipeline?.tags;
+        if (pt) {
+          value = sortByKey(pipeline.tags, uuid => uuid).join(', ');
+        } else {
+          value = '';
+        }
+      }
+
+      if (!mapping[value]) {
+        mapping[value] = [];
+      }
+
+      mapping[value].push(idx);
+    });
+
+    const arr = [];
+    const headers = [];
+
+    if (PipelineGroupingEnum.STATUS === groupByQuery) {
+      Object.values(PipelineStatusEnum).forEach((val) => {
+        arr.push(mapping[val]);
+        headers.push(capitalizeRemoveUnderscoreLower(val));
+      });
+    } else if (PipelineGroupingEnum.TAG === groupByQuery) {
+      sortByKey(Object.keys(mapping), uuid => uuid).forEach((val: string) => {
+        arr.push(mapping[val]);
+        if (val) {
+          headers.push(val.split(', ').map((v: string, idx: number) => (
+            <>
+              <div
+                key={`${v}-${idx}-spacing`}
+                style={{
+                  marginLeft: idx >= 1 ? 4 : 0,
+                }}
+              />
+              <Chip key={`${v}-${idx}`} small>
+                <Text>
+                  {v}
+                </Text>
+              </Chip>
+            </>
+          )));
+        } else {
+          headers.push('No tags');
+        }
+      });
+    } else if (PipelineGroupingEnum.TYPE === groupByQuery) {
+      Object.values(PipelineTypeEnum).forEach((val) => {
+        arr.push(mapping[val]);
+        headers.push(PIPELINE_TYPE_LABEL_MAPPING[val]);
+      });
+    }
+
+    return {
+      rowGroupHeaders: headers,
+      rowsGroupedByIndex: arr,
+    };
+  }, [
+    groupByQuery,
+    pipelines,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
@@ -556,7 +654,7 @@ function PipelineListPage() {
             maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
           >
             <Table
-              columnFlex={[null, 1, 3, 4, 1, 1, 1, null]}
+              columnFlex={[null, null, null, 2, null, 1, null, null, null]}
               columns={[
                 {
                   label: () => '',
@@ -575,6 +673,9 @@ function PipelineListPage() {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
                 },
                 {
+                  uuid: 'Tags',
+                },
+                {
                   uuid: 'Blocks',
                 },
                 {
@@ -582,21 +683,10 @@ function PipelineListPage() {
                 },
                 {
                   center: true,
+                  label: () => '',
                   uuid: 'Actions',
                 },
               ]}
-              grouping={{
-                column: capitalize(groupByQuery),
-                columnIndex: groupByQuery === PipelineGroupingEnum.STATUS
-                  ? 1
-                  : (groupByQuery === PipelineGroupingEnum.TYPE ? 4 : null),
-                values: groupByQuery === PipelineGroupingEnum.STATUS
-                    ? Object.values(PipelineStatusEnum).map(val => removeUnderscore(val))
-                    : (groupByQuery === PipelineGroupingEnum.TYPE
-                      ? Object.values(PipelineTypeEnum).map(val => PIPELINE_TYPE_LABEL_MAPPING[val])
-                      : []
-                    ),
-              }}
               isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
                 const pipeline = pipelines[rowIndex];
@@ -640,23 +730,51 @@ function PipelineListPage() {
                     uuid: 'clone',
                   },
                   {
+                    label: () => 'Add/Remove tags',
+                    onClick: () => {
+                      router.push(
+                        '/pipelines/[pipeline]/settings',
+                        `/pipelines/${selectedPipeline?.uuid}/settings`,
+                      );
+                    },
+                    uuid: 'add_tags',
+                  },
+                  {
                     label: () => 'Delete',
-                    onClick: () => deletePipeline(selectedPipeline?.uuid),
+                    onClick: () => {
+                      if (typeof window !== 'undefined'
+                        && window.confirm(
+                          `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
+                        )
+                      ) {
+                        deletePipeline(selectedPipeline?.uuid);
+                      }
+                    },
                     uuid: 'delete',
                   },
                 ];
               }}
+              rowGroupHeaders={rowGroupHeaders}
               rows={pipelines.map((pipeline, idx) => {
                 const {
                   blocks,
                   description,
                   schedules,
+                  tags,
                   type,
                   uuid,
                 } = pipeline;
                 const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
                 const schedulesCount = schedules.length;
                 const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+
+                const tagsEl = (
+                  <div key={`pipeline_tags_${idx}`}>
+                    <TagsContainer
+                      tags={tags?.map(tag => ({ uuid: tag }))}
+                    />
+                  </div>
+                );
 
                 return [
                   (schedulesCount >= 1 || !!pipelinesEditing[uuid])
@@ -723,6 +841,7 @@ function PipelineListPage() {
                   >
                     {PIPELINE_TYPE_LABEL_MAPPING[type]}
                   </Text>,
+                  tagsEl,
                   <Text
                     default={blocksCount === 0}
                     key={`pipeline_block_count_${idx}`}
@@ -769,6 +888,7 @@ function PipelineListPage() {
                   </Flex>,
                 ];
               })}
+              rowsGroupedByIndex={rowsGroupedByIndex}
               stickyHeader
             />
           </TableContainerStyle>

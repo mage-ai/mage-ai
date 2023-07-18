@@ -7,6 +7,7 @@ from typing import Callable, Dict, List
 
 import aiofiles
 import yaml
+from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
@@ -26,14 +27,12 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import (
-    RepoConfig,
-    get_repo_config,
-    get_repo_path,
-)
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
@@ -49,16 +48,18 @@ class Pipeline:
         self.blocks_by_uuid = {}
         self.data_integration = None
         self.description = None
-        self.extensions = {}
-        self.executor_type = None
         self.executor_config = dict()
+        self.executor_type = None
+        self.extensions = {}
         self.name = None
         self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
+        self.retry_config = {}
         self.schedules = []
-        self.uuid = uuid
+        self.tags = []
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
+        self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
         if config is None:
@@ -218,6 +219,43 @@ class Pipeline:
         return pipeline
 
     @classmethod
+    async def load_metadata(
+        self,
+        uuid: str,
+        repo_path: str = None,
+        raise_exception: bool = True,
+    ) -> Dict:
+        """Load pipeline metadata dictionary.
+
+        Args:
+            uuid (str): Pipeline uuid.
+            repo_path (str, optional): The project path.
+            raise_exception (bool, optional): Whether to raise Exception.
+                If raise_exception = False, return None as the config when exception happens.
+        """
+        repo_path = repo_path or get_repo_path()
+        config_path = os.path.join(
+            repo_path,
+            PIPELINES_FOLDER,
+            uuid,
+            PIPELINE_CONFIG_FILE,
+        )
+
+        try:
+            if not os.path.exists(config_path):
+                raise Exception(f'Pipeline {uuid} does not exist.')
+
+            config = None
+            async with aiofiles.open(config_path, mode='r') as f:
+                config = yaml.safe_load(await f.read()) or {}
+        except Exception as e:
+            if raise_exception:
+                raise e
+            config = None
+
+        return config
+
+    @classmethod
     async def get_async(self, uuid, repo_path: str = None):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
             IntegrationPipeline,
@@ -262,7 +300,7 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def get_all_pipelines(self, repo_path):
+    def get_all_pipelines(self, repo_path) -> List[str]:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):
             os.mkdir(pipelines_folder)
@@ -425,10 +463,12 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
         self.conditional_configs = config.get('conditionals') or []
+        self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
-        self.executor_config = config.get('executor_config') or dict()
-        self.notification_config = config.get('notification_config') or dict()
-        self.spark_config = config.get('spark_config') or dict()
+        self.notification_config = config.get('notification_config') or {}
+        self.retry_config = config.get('retry_config') or {}
+        self.spark_config = config.get('spark_config') or {}
+        self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
 
         self.variables = config.get('variables')
@@ -546,6 +586,8 @@ class Pipeline:
             executor_type=self.executor_type,
             name=self.name,
             notification_config=self.notification_config,
+            retry_config=self.retry_config,
+            tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
             uuid=self.uuid,
@@ -617,6 +659,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -627,8 +670,8 @@ class Pipeline:
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
-            include_block_tags=include_block_tags,
             include_block_metadata=include_block_metadata,
+            include_block_tags=include_block_tags,
             include_callback_blocks=include_callback_blocks,
             include_conditional_blocks=include_conditional_blocks,
             include_content=include_content,
@@ -636,7 +679,9 @@ class Pipeline:
             sample_count=sample_count,
         )
         blocks_data = await asyncio.gather(
-            *[b.to_dict_async(**shared_kwargs) for b in self.blocks_by_uuid.values()]
+            *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
+                include_block_pipelines=include_block_pipelines,
+            ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
@@ -706,6 +751,10 @@ class Pipeline:
         db_connection.session.commit()
 
     async def update(self, data, update_content=False):
+        old_uuid = None
+        should_update_block_cache = False
+        should_update_tag_cache = False
+
         if 'name' in data and self.name and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -726,26 +775,10 @@ class Pipeline:
             await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+            should_update_block_cache = True
+            should_update_tag_cache = True
+
         should_save = False
-
-        if 'description' in data and data['description'] != self.description:
-            self.description = data['description']
-            should_save = True
-
-        if 'type' in data and data['type'] != self.type:
-            """
-            Update kernel
-            """
-            self.type = data['type']
-            should_save = True
-
-        if 'updated_at' in data and data['updated_at'] != self.updated_at:
-            self.updated_at = data['updated_at']
-            should_save = True
-
-        if 'data_integration' in data:
-            self.data_integration = data['data_integration']
-            should_save = True
 
         if 'extensions' in data:
             for extension_uuid, extension in data['extensions'].items():
@@ -756,6 +789,34 @@ class Pipeline:
                     extension,
                 )
             should_save = True
+
+        if 'tags' in data:
+            new_tags = data.get('tags', [])
+            old_tags = self.tags or []
+
+            if sorted(new_tags) != sorted(old_tags):
+                self.tags = new_tags
+                should_save = True
+                should_update_tag_cache = True
+
+        for key in [
+            'description',
+            'type',
+            'updated_at',
+        ]:
+            if key in data and data.get(key) != getattr(self, key):
+                setattr(self, key, data.get(key))
+                should_save = True
+                should_update_block_cache = True
+
+        for key in [
+            'data_integration',
+            'executor_type',
+            'retry_config',
+        ]:
+            if key in data:
+                setattr(self, key, data.get(key))
+                should_save = True
 
         blocks = data.get('blocks', [])
 
@@ -877,6 +938,26 @@ class Pipeline:
                         block_type=block.type,
                         widget=widget,
                     )
+
+        if should_update_block_cache:
+            from mage_ai.cache.block import BlockCache
+
+            cache = await BlockCache.initialize_cache()
+
+            for block in self.blocks_by_uuid.values():
+                if old_uuid:
+                    cache.remove_pipeline(block, old_uuid)
+                cache.update_pipeline(block, self)
+
+        if should_update_tag_cache:
+            from mage_ai.cache.tag import TagCache
+
+            cache = await TagCache.initialize_cache()
+
+            for tag_uuid in self.tags:
+                if old_uuid:
+                    cache.remove_pipeline(tag_uuid, old_uuid)
+                cache.add_pipeline(tag_uuid, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]
@@ -1018,6 +1099,11 @@ class Pipeline:
 
     def get_executable_blocks(self):
         return [b for b in self.blocks_by_uuid.values() if b.executable]
+
+    def get_executor_type(self) -> str:
+        if self.executor_type:
+            return Template(self.executor_type).render(**get_template_vars())
+        return self.executor_type
 
     def has_block(self, block_uuid: str, block_type: str = None, extension_uuid: str = None):
         if extension_uuid:

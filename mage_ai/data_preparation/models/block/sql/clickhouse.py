@@ -17,6 +17,8 @@ def create_upstream_block_tables(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
 ):
+    configuration = configuration if configuration else block.configuration
+    database = configuration.get('data_provider_database') or loader.default_database()
     create_upstream_block_tables_orig(
         loader,
         block,
@@ -33,6 +35,7 @@ def create_upstream_block_tables(
         query=query,
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        database=database,
     )
 
 

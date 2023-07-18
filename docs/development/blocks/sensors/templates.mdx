@@ -27,7 +27,7 @@ def check_condition(**kwargs) -> bool:
 ## Google BigQuery
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
 from os import path
@@ -64,7 +64,7 @@ def query_bigquery_and_check_condition(**kwargs) -> bool:
 ## MySQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.mysql import MySQL
 from os import path
@@ -102,7 +102,7 @@ def query_mysql_and_check_condition(**kwargs) -> bool:
 ## PostgreSQL
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from os import path
@@ -140,7 +140,7 @@ def query_postgres_and_check_condition(**kwargs) -> bool:
 ## Amazon Redshift
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from os import path
@@ -178,7 +178,7 @@ def query_redshift_and_check_condition(**kwargs) -> bool:
 ## Amazon S3
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
@@ -214,7 +214,7 @@ def check_condition(**kwargs) -> bool:
 ## Snowflake
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from os import path

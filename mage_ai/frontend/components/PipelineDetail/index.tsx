@@ -552,6 +552,7 @@ function PipelineDetail({
             setErrors={setErrors}
             setOutputBlocks={setOutputBlocks}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+            setSelectedBlock={setSelectedBlock}
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={selected && textareaFocused}

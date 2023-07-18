@@ -11,17 +11,15 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Select from '@oracle/elements/Inputs/Select';
 import Text from '@oracle/elements/Text';
-import api, { MONITOR_STATS } from '@api';
-import buildUrl from '@api/utils/url';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
 import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { ThemeContext } from 'styled-components';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
 
 type BlockRuntimeMonitorProps = {
   pipeline: PipelineType;
@@ -77,29 +75,19 @@ function BlockRuntimeMonitor({
     stats: monitorStats,
   } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    const date = new Date();
-    const dateRange = [];
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
+  const dateRange = useMemo(() => getDateRange(), []);
 
   const blockRuntimeData = useMemo(() => {
     if (monitorStats) {
       return Object.entries(monitorStats).reduce(
         // @ts-ignore
-        (obj, [blockUuid, { data: runtimeStats }]) => {
-          return {
+        (obj, [blockUuid, { data: runtimeStats }]) => ({
             ...obj,
             [blockUuid]: dateRange.map(date => ({
               x: date,
               y: date in runtimeStats ? [runtimeStats[date]] : null,
             }))
-          };
-        },
+          }),
         {},
       );
     }

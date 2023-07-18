@@ -31,7 +31,10 @@ description: "Configure Mage settings through environment variables."
 | `LDAP_BASE_DN`         | [More information](/production/authentication/overview#ldap) | See link         |
 | `LDAP_AUTHENTICATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
 | `LDAP_AUTHORIZATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_GROUP_FIELD` | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_ROLES_MAPPING` | [More information](/production/authentication/overview#ldap) | See link |
 | `LDAP_DEFAULT_ACCESS` | [More information](/production/authentication/overview#ldap) | See link |
+| `MAGE_CACHE_DIRECTORY` | The directory Mage uses for storing and retrieving temporary data used in the UI. | `/root/.mage_data/default_repo/.cache` |
 | `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
 | `MAGE_PUBLIC_HOST` | The public host url that can be used to access the Mage app. This value will be used in emails or other notifications. | `http://localhost:6789` |
 | `MAX_PRINT_OUTPUT_LINES` | The max number of `stdout` lines, such as from `print` statements, included in a message from the websocket server. Defaults to `1000`. | `100` |

@@ -26,6 +26,21 @@ class JobStatus(str, Enum):
 
 class ProcessQueue(Queue):
     def __init__(self, queue_config: QueueConfig):
+        """
+        A process-based implementation of a queue that allows enqueueing and executing jobs using
+        multiprocessing.
+
+        Args:
+            queue_config (QueueConfig): The configuration for the process queue.
+
+        Attributes:
+            queue_config (QueueConfig): The configuration for the process queue.
+            queue (mp.Queue): A multiprocessing queue for storing the jobs.
+            size (int): The size of the worker pool (defaults to the number of CPUs).
+            mp_manager (Manager): A multiprocessing manager for maintaining a shared dictionary for
+                jobs.
+
+        """
         self.queue_config = queue_config
         self.queue = mp.Queue()
         self.size = queue_config.concurrency or os.cpu_count()
@@ -35,23 +50,53 @@ class ProcessQueue(Queue):
         self.worker_pool_proc = None
 
     def clean_up_jobs(self):
+        """
+        Cleans up completed jobs from the job dictionary.
+        """
         job_ids = self.job_dict.keys()
         for job_id in job_ids:
             if job_id in self.job_dict and not self.has_job(job_id):
                 del self.job_dict[job_id]
 
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
+        """
+        Enqueues a job to be executed in the worker pool.
+
+        Args:
+            job_id (str): The ID of the job.
+            target (Callable): The target function to execute.
+            *args: Variable length argument list for the target function.
+            **kwargs: Keyword arguments for the target function.
+
+        """
         self._print(f'Enqueue job {job_id}')
         self.queue.put([job_id, target, args, kwargs])
         self.job_dict[job_id] = JobStatus.QUEUED
         if not self.is_worker_pool_alive():
             self.start_worker_pool()
 
-    def has_job(self, job_id: str):
+    def has_job(self, job_id: str) -> bool:
+        """
+        Checks if a job with the given ID exists in the queue or is currently being executed.
+
+        Args:
+            job_id (str): The ID of the job.
+
+        Returns:
+            bool: True if the job exists, False otherwise.
+
+        """
         job = self.job_dict.get(job_id)
         return job is not None and (job == JobStatus.QUEUED or isinstance(job, int))
 
     def kill_job(self, job_id: str):
+        """
+        Cancels and kills a job with the given ID if it is running.
+
+        Args:
+            job_id (str): The ID of the job.
+
+        """
         print(f'Kill job {job_id}, job_dict {self.job_dict}')
         job = self.job_dict.get(job_id)
         if not job:
@@ -67,13 +112,23 @@ class ProcessQueue(Queue):
         self.job_dict[job_id] = JobStatus.CANCELLED
 
     def start_worker_pool(self):
+        """
+        Starts the worker pool by creating a new process for executing jobs.
+        """
         self.worker_pool_proc = mp.Process(
             target=poll_job_and_execute,
             args=[self.queue, self.size, self.job_dict],
         )
         self.worker_pool_proc.start()
 
-    def is_worker_pool_alive(self):
+    def is_worker_pool_alive(self) -> bool:
+        """
+        Checks if the worker pool process is alive.
+
+        Returns:
+            bool: True if the worker pool process is alive, False otherwise.
+
+        """
         if self.worker_pool_proc is None:
             return False
         return self.worker_pool_proc.is_alive()
@@ -81,6 +136,19 @@ class ProcessQueue(Queue):
 
 class Worker(mp.Process):
     def __init__(self, queue: mp.Queue, job_dict):
+        """
+        A worker process for executing jobs from the process queue.
+
+        Args:
+            queue (mp.Queue): The multiprocessing queue from which jobs are fetched.
+            job_dict: The shared job dictionary.
+
+        Attributes:
+            queue (mp.Queue): The multiprocessing queue from which jobs are fetched.
+            job_dict: The shared job dictionary.
+            dsn (str): The Sentry DSN for error reporting.
+
+        """
         super().__init__()
         self.queue = queue
         self.job_dict = job_dict
@@ -94,9 +162,14 @@ class Worker(mp.Process):
 
     @newrelic.agent.background_task(name='worker-run', group='Task')
     def run(self):
+        """
+        The entry point for the worker process.
+
+        Fetches a job from the queue, executes it, and updates the job status in the job dictionary.
+
+        """
         if not self.queue.empty():
             args = self.queue.get()
-
             job_id = args[0]
             print(f'Run worker for job {job_id}')
             if self.job_dict[job_id] != JobStatus.QUEUED:
@@ -113,6 +186,15 @@ class Worker(mp.Process):
 
 
 def poll_job_and_execute(queue, size, job_dict):
+    """
+    Continuously polls the job queue and executes jobs in a worker pool.
+
+    Args:
+        queue: The multiprocessing queue from which jobs are fetched.
+        size: The size of the worker pool.
+        job_dict: The shared job dictionary.
+
+    """
     workers = []
     while True:
         workers = [w for w in workers if w.is_alive()]

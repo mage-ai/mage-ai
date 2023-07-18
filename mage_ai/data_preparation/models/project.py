@@ -1,6 +1,8 @@
-from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
-from mage_ai.server.constants import VERSION
 import aiohttp
+
+from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.server.constants import VERSION
+from mage_ai.settings.repo import get_repo_path
 
 
 class Project():

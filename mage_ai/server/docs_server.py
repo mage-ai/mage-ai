@@ -1,7 +1,8 @@
-from http.server import SimpleHTTPRequestHandler
-from mage_ai.data_preparation.repo_manager import get_repo_path
 import os
 import socketserver
+from http.server import SimpleHTTPRequestHandler
+
+from mage_ai.settings.repo import get_repo_path
 
 
 def get_dbt_target_path():

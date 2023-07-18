@@ -66,7 +66,7 @@ def convert_column_if_json(value, column_type):
 
 class Snowflake(Destination):
     @property
-    def column_identifier(self) -> str:
+    def quote(self) -> str:
         if self.disable_double_quotes:
             return ''
         return '"'
@@ -107,7 +107,7 @@ class Snowflake(Destination):
                 table_name,
             ),
             unique_constraints=unique_constraints,
-            column_identifier=self.column_identifier,
+            column_identifier=self.quote,
         )
 
         return [
@@ -154,7 +154,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     schema_name,
                     table_name,
                 ),
-                column_identifier=self.column_identifier,
+                column_identifier=self.quote,
             ),
         ]
 
@@ -183,7 +183,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
-            column_identifier=self.column_identifier,
+            column_identifier=self.quote,
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -220,11 +220,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             ])]
 
             unique_constraints_clean = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in unique_constraints
             ]
             columns_cleaned = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in columns
             ]
 

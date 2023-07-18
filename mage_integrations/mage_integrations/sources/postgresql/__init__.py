@@ -35,7 +35,7 @@ class PostgreSQL(Source):
     @property
     def table_prefix(self):
         schema = self.config['schema']
-        return f'{schema}.'
+        return f'"{schema}".'
 
     def build_table_name(self, stream) -> str:
         table_name = stream.tap_stream_id

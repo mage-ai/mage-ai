@@ -7,6 +7,13 @@ export enum RoleValueEnum {
   VIEWER = 4,
 }
 
+export enum UserAccessEnum {
+  OWNER = 1,
+  ADMIN = 2,
+  EDITOR = 4,
+  VIEWER = 8,
+}
+
 export const ROLE_DISPLAY_MAPPING = {
   [RoleValueEnum.ADMIN]: 'Admin',
   [RoleValueEnum.EDITOR]: 'Editor',

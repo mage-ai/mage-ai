@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Dict
+from typing import Dict, Union
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -52,7 +52,7 @@ class JobManager():
     def run_job(
         self,
         command: str,
-        k8s_config=None,
+        k8s_config: Union[K8sExecutorConfig, Dict] = None,
     ):
         if not self.job_exists():
             if type(k8s_config) is dict:
@@ -86,7 +86,7 @@ class JobManager():
         self,
         command: str,
         k8s_config: K8sExecutorConfig = None,
-    ):
+    ) -> client.V1Job:
         # Configureate Pod template container
         mage_server_container_spec = self.pod_config.spec.containers[0]
 
@@ -140,16 +140,19 @@ class JobManager():
             body=job,
             namespace=self.namespace,
         )
-        self._print("Job created. status='%s'" % str(api_response.status))
+        self._print(f"Job created. status='{api_response.status}'")
 
     def delete_job(self):
-        api_response = self.batch_api_client.delete_namespaced_job(
-            name=self.job_name,
-            namespace=self.namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=0))
-        self._print("Job deleted. status='%s'" % str(api_response.status))
+        try:
+            api_response = self.batch_api_client.delete_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=0))
+            self._print("Job deleted. status='%s'" % str(api_response.status))
+        except Exception as e:
+            self._print(f'Failed to delete job {self.job_name} with error {e}')
 
     def job_exists(self):
         try:

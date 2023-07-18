@@ -22,6 +22,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Charts,
@@ -30,6 +31,7 @@ import {
   Edit,
   Ellipsis,
   PlayButtonFilled,
+  SettingsWithKnobs,
 } from '@oracle/icons';
 import { DEFAULT_ICON_SIZE } from '../constants';
 import {
@@ -40,6 +42,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 import { isMac } from '@utils/os';
@@ -62,12 +65,17 @@ type CommandButtonsProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   isEditingBlock?: boolean;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    addon: AddonBlockTypeEnum,
+    blockUUID: string;
+  }) => void;
   pipeline?: PipelineType;
   runBlock?: (payload: {
     block: BlockType;
     code?: string;
     disableReset?: boolean;
     runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       run_model?: boolean;
     };
@@ -94,6 +102,7 @@ function CommandButtons({
   fetchPipeline,
   interruptKernel,
   isEditingBlock,
+  openSidekickView,
   pipeline,
   runBlock,
   setIsEditingBlock,
@@ -428,6 +437,25 @@ function CommandButtons({
         </Spacing>
       )}
 
+      <Spacing ml={PADDING_UNITS}>
+        <Tooltip
+          appearBefore
+          default
+          label="View and edit settings for this block"
+          size={DEFAULT_ICON_SIZE}
+          widthFitContent
+        >
+          <Button
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => openSidekickView?.(ViewKeyEnum.BLOCK_SETTINGS)}
+          >
+            <SettingsWithKnobs default size={DEFAULT_ICON_SIZE} />
+          </Button>
+        </Tooltip>
+      </Spacing>
+
       <div ref={refMoreActions}>
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
@@ -449,14 +477,16 @@ function CommandButtons({
             >
               <Circle
                 borderSize={1.5}
+                default
                 size={DEFAULT_ICON_SIZE}
               >
-                <Ellipsis size={UNIT} />
+                <Ellipsis default size={UNIT} />
               </Circle>
             </Button>
           </Tooltip>
         </Spacing>
       </div>
+
       <ClickOutside
         disableEscape
         onClickOutside={() => setShowMoreActions(false)}

@@ -20,7 +20,6 @@ from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     get_repo_config,
-    get_repo_path,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
@@ -28,6 +27,7 @@ from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
 from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings.repo import get_repo_path
 
 logger = Logger().new_server_logger(__name__)
 
@@ -182,6 +182,7 @@ class WorkspaceResource(GenericResource):
 
                 ecs_instance_manager = EcsTaskManager(cluster_name)
 
+                # TODO: Create a service for each workspace
                 ecs_instance_manager.create_task(
                     workspace_name,
                     task_definition,
@@ -317,15 +318,9 @@ class WorkspaceResource(GenericResource):
             instances = workload_manager.list_workloads()
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-
-            try:
-                cluster_name = os.getenv(ECS_CLUSTER_NAME)
-                ecs_instance_manager = EcsTaskManager(cluster_name)
-                instances = ecs_instance_manager.list_tasks()
-            except Exception as e:
-                error = ApiError.RESOURCE_ERROR.copy()
-                error.update(message=str(e))
-                raise ApiError(error)
+            cluster_name = os.getenv(ECS_CLUSTER_NAME)
+            ecs_instance_manager = EcsTaskManager(cluster_name)
+            instances = ecs_instance_manager.list_tasks()
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
                 CloudRunServiceManager,

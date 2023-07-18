@@ -1,11 +1,13 @@
 from datetime import datetime
 from typing import Dict, List
-
 from sqlalchemy.orm import aliased
 
-from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.api.utils import get_query_timestamps
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.constants import LOG_PARTITION_EDIT_PIPELINE
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
@@ -40,27 +42,7 @@ class LogResource(GenericResource):
     async def __pipeline_logs(self, pipeline: Pipeline, query_arg, meta) -> List[Dict]:
         pipeline_uuid = pipeline.uuid
 
-        start_timestamp = query_arg.get('start_timestamp', [None])
-        if start_timestamp:
-            start_timestamp = start_timestamp[0]
-        end_timestamp = query_arg.get('end_timestamp', [None])
-        if end_timestamp:
-            end_timestamp = end_timestamp[0]
-
-        error = ApiError.RESOURCE_INVALID.copy()
-        if start_timestamp:
-            try:
-                start_timestamp = datetime.fromtimestamp(int(start_timestamp))
-            except (ValueError, OverflowError):
-                error.update(message='Value is invalid for start_timestamp.')
-                raise ApiError(error)
-        if end_timestamp:
-            try:
-                end_timestamp = datetime.fromtimestamp(int(end_timestamp))
-            except (ValueError, OverflowError):
-                error.update(message='Value is invalid for end_timestamp.')
-                raise ApiError(error)
-
+        start_timestamp, end_timestamp = get_query_timestamps(query_arg)
         pipeline_schedule_ids = query_arg.get('pipeline_schedule_id[]', [None])
         if pipeline_schedule_ids:
             pipeline_schedule_ids = pipeline_schedule_ids[0]
@@ -258,11 +240,36 @@ class LogResource(GenericResource):
             if len(block_run_logs) >= MAX_LOG_FILES:
                 break
 
+        for block in pipeline.blocks_by_uuid.values():
+            logger = LoggerManagerFactory.get_logger_manager(
+                partition=LOG_PARTITION_EDIT_PIPELINE,
+                pipeline_uuid=pipeline_uuid,
+                subpartition=block.uuid,
+            )
+
+            def __filter(file: File) -> bool:
+                should_add = True
+
+                try:
+                    dsts = datetime.strptime(file.filename.split('.')[0], '%Y%m%dT%H%M%S')
+
+                    if start_timestamp:
+                        should_add = should_add and start_timestamp <= dsts
+                    if end_timestamp:
+                        should_add = should_add and dsts <= end_timestamp
+                except ValueError as err:
+                    print(f'[WARNING] LogResource.__filter: {err}')
+                    should_add = False
+
+                return should_add
+
+            block_run_logs += await logger.get_logs_in_subpartition_async(filter_func=__filter)
+
         return [
-            dict(
-                block_run_logs=block_run_logs,
-                pipeline_run_logs=pipeline_run_logs,
-                total_block_run_log_count=total_block_run_log_count,
-                total_pipeline_run_log_count=total_pipeline_run_log_count,
-            ),
+            {
+                'block_run_logs': block_run_logs,
+                'pipeline_run_logs': pipeline_run_logs,
+                'total_block_run_log_count': total_block_run_log_count,
+                'total_pipeline_run_log_count': total_pipeline_run_log_count,
+            },
         ]

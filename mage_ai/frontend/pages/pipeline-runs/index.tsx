@@ -12,10 +12,10 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
+  PIPELINE_RUN_STATUSES,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
-import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -83,7 +83,7 @@ function RunListPage() {
             <option key="all_statuses" value="all">
               All statuses
             </option>
-            {Object.values(RunStatusEnum).map(status => (
+            {PIPELINE_RUN_STATUSES.map(status => (
               <option key={status} value={status}>
                 {RUN_STATUS_TO_LABEL[status]}
               </option>

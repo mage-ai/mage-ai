@@ -11,7 +11,6 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 from mage_ai.data_preparation.models.constants import PipelineStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import (
@@ -20,6 +19,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
 )
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by, ignore_keys
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -31,6 +31,13 @@ class PipelineResource(BaseResource):
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
+
+        tags = query.get('tag[]', [])
+        if tags:
+            new_tags = []
+            for tag in tags:
+                new_tags += tag.split(',')
+            tags = new_tags
 
         pipeline_types = query.get('type[]', [])
         if pipeline_types:
@@ -44,7 +51,23 @@ class PipelineResource(BaseResource):
         if pipeline_statuses:
             pipeline_statuses = pipeline_statuses.split(',')
 
-        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+        if tags:
+            from mage_ai.cache.tag import KEY_FOR_PIPELINES, TagCache
+
+            await TagCache.initialize_cache()
+
+            cache = TagCache()
+            tags_mapping = cache.get_tags()
+            pipeline_uuids = set()
+
+            for tag_uuid in tags:
+                pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
+                if pipelines_dict:
+                    pipeline_uuids.update(pipelines_dict.keys())
+
+            pipeline_uuids = list(pipeline_uuids)
+        else:
+            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
         await UsageStatisticLogger().pipelines_impression(lambda: len(pipeline_uuids))
 
@@ -156,6 +179,15 @@ class PipelineResource(BaseResource):
 
         if kwargs.get('api_operation_action', None) != DELETE:
             switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+
+        query = kwargs.get('query', {})
+        include_block_pipelines = query.get('include_block_pipelines', [False])
+        if include_block_pipelines:
+            include_block_pipelines = include_block_pipelines[0]
+        if include_block_pipelines:
+            from mage_ai.cache.block import BlockCache
+
+            await BlockCache.initialize_cache()
 
         return self(pipeline, user, **kwargs)
 

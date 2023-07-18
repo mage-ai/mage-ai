@@ -27,6 +27,12 @@ class MonitorStatResource(GenericResource):
         else:
             end_time = None
 
+        group_by_pipeline_type = query.get('group_by_pipeline_type', False)
+        if group_by_pipeline_type:
+            group_by_pipeline_type = group_by_pipeline_type[0]
+        else:
+            group_by_pipeline_type = False
+
         pipeline_schedule_ids = query.get('pipeline_schedule_id', None)
         if pipeline_schedule_ids:
             pipeline_schedule_id = pipeline_schedule_ids[0]
@@ -39,6 +45,7 @@ class MonitorStatResource(GenericResource):
             start_time=start_time,
             end_time=end_time,
             pipeline_schedule_id=pipeline_schedule_id,
+            group_by_pipeline_type=group_by_pipeline_type,
         )
 
         return self(dict(

@@ -72,6 +72,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --openai_api_key)
+    OPENAI_API_KEY="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --require-user-authentication)
     REQUIRE_USER_AUTHENTICATION=1
     shift # past argument
@@ -105,6 +110,7 @@ export GCP_REGION=$GCP_REGION
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
+export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 
 if command -v docker-compose &> /dev/null

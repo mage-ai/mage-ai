@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.8.102',
+    version='0.9.4',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -40,11 +40,16 @@ setuptools.setup(
         ],
     },
     extras_require={
+        'ai': [
+            'langchain>=0.0.222',
+            'openai>=0.27.8',
+        ],
         'azure': [
             'azure-eventhub==5.11.2',
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
+            'azure-mgmt-containerinstance==10.1.0',
             'azure-storage-blob==12.14.1',
         ],
         'bigquery': [
@@ -105,6 +110,7 @@ setuptools.setup(
             'azure-identity==1.11.0',
             'azure-keyvault-certificates==4.6.0',
             'azure-keyvault-secrets==4.6.0',
+            'azure-mgmt-containerinstance==10.1.0',
             'azure-storage-blob==12.14.1',
             'boto3==1.26.60',
             'botocore==1.29.60',
@@ -130,7 +136,9 @@ setuptools.setup(
             'great_expectations==0.15.50',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
+            'langchain>=0.0.222',
             'ldap3==2.9.1',
+            'openai>=0.27.8',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
             'psycopg2-binary==2.9.3',

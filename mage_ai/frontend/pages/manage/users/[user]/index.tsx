@@ -53,14 +53,13 @@ function ManageUserDetail({
       <UserEditForm
         hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
         onDeleteSuccess={() => router.push('/manage/users')}
-        onSaveSuccess={fetchUser}
+        onSaveSuccess={() => router.push('/manage/users')}
         showDelete
         title="Edit user"
         user={user}
       />
     </Spacing>
   ), [
-    fetchUser,
     router,
     user,
   ]);

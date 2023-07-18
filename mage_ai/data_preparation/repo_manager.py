@@ -1,25 +1,20 @@
 import os
-import sys
 import traceback
 import uuid
 from enum import Enum
 from typing import Dict
+from warnings import warn
 
 import ruamel.yaml
 import yaml
 from jinja2 import Template
 
-from mage_ai.data_preparation.shared.constants import (
-    MAGE_DATA_DIR_ENV_VAR,
-    REPO_PATH_ENV_VAR,
-)
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.shared.environments import is_test
-
-if is_test():
-    DEFAULT_MAGE_DATA_DIR = './'
-else:
-    DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
+from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
+from mage_ai.settings.repo import get_data_dir as get_data_dir_new
+from mage_ai.settings.repo import get_repo_name as get_repo_name_new
+from mage_ai.settings.repo import get_repo_path as get_repo_path_new
+from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 
 
 class ProjectType(str, Enum):
@@ -31,7 +26,7 @@ class ProjectType(str, Enum):
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
         from mage_ai.data_preparation.shared.utils import get_template_vars
-        self.repo_path = repo_path or get_repo_path()
+        self.repo_path = repo_path or get_repo_path_new()
         self.repo_name = os.path.basename(self.repo_path)
         try:
             if not config_dict:
@@ -90,6 +85,8 @@ class RepoConfig:
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.retry_config = repo_config.get('retry_config')
+
+            self.ldap_config = repo_config.get('ldap_config')
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -196,18 +193,6 @@ def init_repo(
     get_repo_config(repo_path).save(**new_config)
 
 
-def get_data_dir() -> str:
-    return os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR
-
-
-def get_repo_name() -> str:
-    return os.path.basename(get_repo_path())
-
-
-def get_repo_path() -> str:
-    return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
-
-
 def get_repo_config(repo_path=None) -> RepoConfig:
     return RepoConfig(repo_path=repo_path)
 
@@ -218,11 +203,6 @@ def get_project_type(repo_path=None) -> ProjectType:
     except Exception:
         # default to standalone project type
         return ProjectType.STANDALONE
-
-
-def set_repo_path(repo_path: str) -> None:
-    os.environ[REPO_PATH_ENV_VAR] = repo_path
-    sys.path.append(os.path.dirname(repo_path))
 
 
 def get_variables_dir(repo_path: str = None) -> str:
@@ -248,3 +228,45 @@ def update_project_uuid():
 
 def get_project_uuid() -> str:
     return project_uuid
+
+
+# These should not be used. Please use the corresponding functions in
+# mage_ai/settings/__init__.py
+
+REPO_PATH_ENV_VAR = 'MAGE_REPO_PATH'
+
+
+def get_repo_path() -> str:
+    warn(
+        'repo_manager.get_repo_path is deprecated. Please use mage_ai.settings.repo.get_repo_path',
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return get_repo_path_new()
+
+
+def set_repo_path(repo_path: str) -> None:
+    warn(
+        'repo_manager.set_repo_path is deprecated. Please use mage_ai.settings.repo.set_repo_path',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    set_repo_path_new(repo_path)
+
+
+def get_repo_name() -> str:
+    warn(
+        'repo_manager.get_repo_name is deprecated. Please use mage_ai.settings.repo.get_repo_name',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_repo_name_new()
+
+
+def get_data_dir() -> str:
+    warn(
+        'repo_manager.get_data_dir is deprecated. Please use mage_ai.settings.repo.get_data_dir',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_data_dir_new()

@@ -16,7 +16,7 @@ from jinja2 import Template
 from pandas import DataFrame
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.sql import bigquery
+from mage_ai.data_preparation.models.block.sql import bigquery, clickhouse
 from mage_ai.data_preparation.models.block.sql import (
     execute_sql_code as execute_sql_code_orig,
 )
@@ -28,16 +28,15 @@ from mage_ai.data_preparation.models.block.sql import (
     snowflake,
     spark,
     trino,
-    clickhouse,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex

@@ -23,6 +23,7 @@ type ButtonTabsProps = {
   contained?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
+  regularSizeText?: boolean;
   selectedTabUUID?: string;
   small?: boolean;
   tabs: TabType[];
@@ -34,6 +35,7 @@ function ButtonTabs({
   contained,
   noPadding,
   onClickTab,
+  regularSizeText,
   selectedTabUUID,
   small,
   tabs,
@@ -68,7 +70,7 @@ function ButtonTabs({
             bold
             default={!selected}
             noWrapping
-            small
+            small={!regularSizeText}
           >
             {displayText}
           </Text>

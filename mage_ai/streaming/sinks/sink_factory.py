@@ -1,5 +1,6 @@
-from mage_ai.streaming.constants import SinkType
 from typing import Dict
+
+from mage_ai.streaming.constants import SinkType
 
 
 class SinkFactory:
@@ -30,6 +31,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.opensearch import OpenSearchSink
 
             return OpenSearchSink(config, **kwargs)
+        elif connector_type == SinkType.AZURE_DATA_LAKE:
+            from mage_ai.streaming.sinks.azure_data_lake import AzureDataLakeSink
+
+            return AzureDataLakeSink(config, **kwargs)
         raise Exception(
             f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )

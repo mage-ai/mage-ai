@@ -87,6 +87,7 @@ export function useDetail(
 ) {
   const {
     data,
+    isValidating,
     error,
     mutate,
   } = useSWR(
@@ -101,6 +102,7 @@ export function useDetail(
   return {
     data,
     error,
+    isValidating,
     mutate,
   };
 }

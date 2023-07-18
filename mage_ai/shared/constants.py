@@ -5,6 +5,13 @@ ENV_PROD = 'prod'
 ENV_STAGING = 'staging'
 ENV_TEST = 'test'
 
+VALID_ENVS = frozenset([
+    ENV_DEV,
+    ENV_PROD,
+    ENV_STAGING,
+    ENV_TEST,
+])
+
 SAMPLE_SIZE = 1000
 
 S3_PREFIX = 's3://'

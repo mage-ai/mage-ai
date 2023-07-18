@@ -4,6 +4,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type CircleProps = {
   borderColor?: string;
@@ -11,8 +12,12 @@ type CircleProps = {
   children?: any;
   color?: string;
   danger?: boolean;
+  default?: boolean;
+  muted?: boolean;
   size: number;
   square?: boolean;
+  success?: boolean;
+  warning?: boolean;
 };
 
 const CircleStyle = styled.div<CircleProps>`
@@ -21,11 +26,32 @@ const CircleStyle = styled.div<CircleProps>`
   `}
 
   ${props => props.square && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${props.size >= UNIT * 2 ? BORDER_RADIUS_SMALL : 2}px;
   `}
 
   ${props => !props.color && !(props.borderSize || props.borderColor) && `
     background-color: ${(props.theme.content || dark.content).muted};
+  `}
+
+  ${props => props.success && !props.borderSize && `
+    background-color: ${(props.theme.status || dark.status).positive};
+  `}
+
+  ${props => props.warning && !props.borderSize && `
+    background-color: ${(props.theme.accent || dark.accent).warning};
+  `}
+
+  ${props => props.success && props.borderSize && `
+    border-color: ${(props.theme.status || dark.status).positive} !important;
+  `}
+
+  ${props => props.warning && props.borderSize && `
+    border-color: ${(props.theme.accent || dark.accent).warning} !important;
+  `}
+
+  ${props => props.borderSize && `
+    border-style: solid;
+    border-width: ${props.borderSize}px;
   `}
 
   ${props => (props.borderSize || props.borderColor) && `
@@ -43,6 +69,14 @@ const CircleStyle = styled.div<CircleProps>`
 
   ${props => props.danger && `
     background-color: ${(props.theme.borders || dark.borders).danger};
+  `}
+
+  ${props => props.muted && `
+    border-color: ${(props.theme.content || dark.content).muted};
+  `}
+
+  ${props => props.default && `
+    border-color: ${(props.theme.monotone || dark.monotone).gray};
   `}
 `;
 

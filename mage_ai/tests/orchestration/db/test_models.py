@@ -152,7 +152,7 @@ class PipelineRunTests(DBTestCase):
         )
         self.assertEqual(pipeline_run.logs.get('path'), expected_file_path)
 
-    def test_active_runs(self):
+    def test_active_runs_for_pipelines(self):
         create_pipeline_with_blocks(
             'test active run 1',
             self.repo_path,
@@ -179,15 +179,16 @@ class PipelineRunTests(DBTestCase):
             pipeline_uuid='test_active_run_2',
         )
         pipeline_run4.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        results1 = PipelineRun.active_runs(
+        results1 = PipelineRun.active_runs_for_pipelines(
             pipeline_uuids=['test_active_run_1'],
             include_block_runs=True,
         )
-        results2 = PipelineRun.active_runs(
+        results2 = PipelineRun.active_runs_for_pipelines(
             pipeline_uuids=['test_active_run_2'],
             include_block_runs=True,
         )
-        results3 = PipelineRun.active_runs(
+        results3 = PipelineRun.active_runs_for_pipelines(
+            pipeline_uuids=['test_active_run_1', 'test_active_run_2'],
             include_block_runs=True,
         )
         self.assertEqual(

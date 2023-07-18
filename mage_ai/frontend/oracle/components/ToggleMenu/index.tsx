@@ -35,7 +35,9 @@ type ToggleMenuProps = {
   query: { [keyof: string]: string[] };
   setOpen: (open: boolean) => void;
   toggleValueMapping?: {
-    [keyof: string]: string;
+    [keyof: string]: {
+      [keyof: string]: string;
+    };
   };
 };
 
@@ -100,7 +102,7 @@ function ToggleMenu({
                 Object.entries((optionsState || options)?.[highlightedOptionKey] || {}).map(([value, enabled]) => (
                   <ToggleValueStyle key={value}>
                     <Text>
-                      {toggleValueMapping?.[value] || removeUnderscore(capitalize(value))}
+                      {toggleValueMapping?.[highlightedOptionKey]?.[value] || removeUnderscore(capitalize(value))}
                     </Text>
                     <ToggleSwitch
                       checked={enabled}

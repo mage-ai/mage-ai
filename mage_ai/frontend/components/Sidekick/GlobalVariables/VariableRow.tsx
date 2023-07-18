@@ -8,7 +8,7 @@ import Row from '@components/shared/Grid/Row';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import { CellStyle } from './index.style';
-import { Check, Close, Copy, Edit, Trash } from '@oracle/icons';
+import { Copy, Edit, Trash } from '@oracle/icons';
 import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { LIME_DARK } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';

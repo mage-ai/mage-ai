@@ -11,16 +11,31 @@ const Home = () => {
   const { data: data } = api.statuses.list();
   const dataStatus = useMemo(() => data?.statuses?.[0], [data]);
 
+  const { data: dataPipelineRuns } = api.pipeline_runs.list({ _limit: 0 });
+  const pipelineRunCount = useMemo(() => dataPipelineRuns?.metadata?.count || 0, [
+    dataPipelineRuns?.metadata?.count,
+  ]);
+  const homepageRedirectPath = pipelineRunCount === 0 ? '/pipelines' : '/overview';
+
   useEffect(() => {
     if (dataStatus) {
       const manage = dataStatus?.is_instance_manager;
       let pathname = completePath;
       if (basePath === '/') {
-        pathname = manage ? '/manage' : '/pipelines';
+        pathname = manage ? '/manage' : homepageRedirectPath;
       }
-      router.replace(pathname);
+      if (dataPipelineRuns) {
+        router.replace(pathname);
+      }
     }
-  }, [basePath, completePath, dataStatus, router]);
+  }, [
+    basePath,
+    completePath,
+    dataPipelineRuns,
+    dataStatus,
+    homepageRedirectPath,
+    router,
+  ]);
 };
 
 export default Home;

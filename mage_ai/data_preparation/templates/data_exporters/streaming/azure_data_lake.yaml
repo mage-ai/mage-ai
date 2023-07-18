@@ -1,0 +1,6 @@
+connector_type: azure_data_lake
+table_uri: abfs://container@storagename.dfs.core.windows.net/
+account_name: account_name
+access_key: access_key
+mode: append
+file_type: delta

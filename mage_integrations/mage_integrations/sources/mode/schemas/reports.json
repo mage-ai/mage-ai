@@ -1,0 +1,128 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "token": {
+        "type": "string"
+      },
+      "id": {
+        "type": "integer"
+      },
+      "name": {
+        "type": ["string", "null"]
+      },
+      "description": {
+        "type": ["string", "null"]
+      },
+      "created_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "published_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "edited_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "theme_id": {
+        "type": ["integer", "null"]
+      },
+      "type": {
+        "type": ["string", "null"]
+      },
+      "last_successful_sync_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "last_saved_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "archived": {
+        "type": ["boolean", "null"]
+      },
+      "space_token": {
+        "type": ["string", "null"]
+      },
+      "account_id": {
+        "type": ["integer", "null"]
+      },
+      "account_username": {
+        "type": ["string", "null"]
+      },
+      "public": {
+        "type": ["boolean", "null"]
+      },
+      "full_width": {
+        "type": ["boolean", "null"]
+      },
+      "manual_run_disabled": {
+        "type": ["boolean", "null"]
+      },
+      "run_privately": {
+        "type": ["boolean", "null"]
+      },
+      "drilldowns_enabled": {
+        "type": ["boolean", "null"]
+      },
+      "is_embedded": {
+        "type": ["boolean", "null"]
+      },
+      "is_signed": {
+        "type": ["boolean", "null"]
+      },
+      "shared": {
+        "type": ["boolean", "null"]
+      },
+      "expected_runtime": {
+        "type": ["number", "null"]
+      },
+      "last_successfully_run_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "last_run_at": {
+        "type": ["string", "null"],
+        "format": "date-time"
+      },
+      "web_preview_image": {
+        "type": ["string", "null"]
+      },
+      "last_successful_run_token": {
+        "type": ["string", "null"]
+      },
+      "flamingo_signature": {
+        "type": ["string", "null"]
+      },
+      "github_link": {
+        "type": ["string", "null"]
+      },
+      "query_count": {
+        "type": ["integer", "null"]
+      },
+      "max_query_count": {
+        "type": ["integer", "null"]
+      },
+      "chart_count": {
+        "type": ["integer", "null"]
+      },
+      "runs_count": {
+        "type": ["integer", "null"]
+      },
+      "schedules_count": {
+        "type": ["integer", "null"]
+      },
+      "query_preview": {
+        "type": ["string", "null"]
+      },
+      "view_count": {
+        "type": ["integer", "null"]
+      }
+    }
+  }

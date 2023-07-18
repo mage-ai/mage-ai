@@ -121,7 +121,7 @@ function Edit({
 
   const [settings, setSettings] = useState<PipelineScheduleSettingsType>();
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
-  const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
+  const [schedule, setSchedule] = useState<PipelineScheduleType>(null);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
@@ -151,7 +151,8 @@ function Edit({
   const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
 
-  const { data: dataEventRules } = api.event_rules.detail('aws');
+  const { data: dataEventRules } =
+    api.event_rules.detail(ScheduleTypeEnum.EVENT === scheduleType ? 'aws' : null);
   const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rule?.rules || [], [dataEventRules]);
   const eventRulesByName = useMemo(() => indexBy(eventRules, ({ name }) => name), [eventRules]);
 
@@ -223,19 +224,29 @@ function Edit({
     [
       formattedVariables,
       overwriteVariables,
+      scheduleVariables,
     ],
+  );
+
+  const isCustomInterval = useMemo(
+    () => scheduleInterval &&
+      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    [scheduleInterval],
   );
 
   useEffect(
     () => {
-      if (pipelineSchedule) {
+      if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        if (isCustomInterval) {
+        const custom = pipelineSchedule?.schedule_interval &&
+          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum)
+
+        if (custom) {
+          setCustomInterval(pipelineSchedule?.schedule_interval);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
           });
-          setCustomInterval(scheduleInterval);
         } else {
           if (isStreamingPipeline) {
             setSchedule({
@@ -252,7 +263,7 @@ function Edit({
         if (slaFromSchedule) {
           setEnableSLA(true);
 
-          const { time, unit } = convertSeconds(sla);
+          const { time, unit } = convertSeconds(slaFromSchedule);
           setSchedule(schedule => ({
             ...schedule,
             slaAmount: time,
@@ -261,7 +272,12 @@ function Edit({
         }
       }
     },
-    [pipelineSchedule],
+    [
+      isStreamingPipeline,
+      pipelineSchedule,
+      schedule,
+      scheduleInterval,
+    ],
   );
 
   const onSave = useCallback(() => {
@@ -315,6 +331,7 @@ function Edit({
     date,
     enableSLA,
     eventMatchers,
+    isCustomInterval,
     pipelineSchedule,
     runtimeVariables,
     schedule,
@@ -322,12 +339,6 @@ function Edit({
     time,
     updateSchedule,
   ]);
-
-  const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
-    [scheduleInterval],
-  );
 
   const detailsMemo = useMemo(() => {
     const rows = [

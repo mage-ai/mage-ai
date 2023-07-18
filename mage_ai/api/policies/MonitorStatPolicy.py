@@ -22,6 +22,7 @@ MonitorStatPolicy.allow_read([] + MonitorStatPresenter.default_attributes, scope
 
 MonitorStatPolicy.allow_query([
     'end_time',
+    'group_by_pipeline_type',
     'pipeline_schedule_id',
     'pipeline_uuid',
     'start_time',

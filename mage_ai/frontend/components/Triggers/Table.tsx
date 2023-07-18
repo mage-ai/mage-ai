@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -12,24 +13,29 @@ import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
 } from '@interfaces/PipelineScheduleType';
+import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-
 import {
+  Code,
   Edit,
   Pause,
   PlayButtonFilled,
   TodoList,
   Trash,
 } from '@oracle/icons';
+import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+
+const ICON_SIZE = UNIT * 1.5;
 
 type TriggersTableProps = {
   fetchPipelineSchedules: () => void;
@@ -38,6 +44,9 @@ type TriggersTableProps = {
   includePipelineColumn?: boolean;
   pipeline?: PipelineType;
   pipelineSchedules: PipelineScheduleType[];
+  pipelineTriggersByName?: {
+    [name: string]: PipelineTriggerType;
+  };
   selectedSchedule?: PipelineScheduleType;
   setErrors?: (errors: any) => void;
   setSelectedSchedule?: (schedule: PipelineScheduleType) => void;
@@ -51,6 +60,7 @@ function TriggersTable({
   includePipelineColumn,
   pipeline,
   pipelineSchedules,
+  pipelineTriggersByName,
   selectedSchedule,
   setErrors,
   setSelectedSchedule,
@@ -114,7 +124,7 @@ function TriggersTable({
       uuid: 'action',
     },
     {
-      uuid: 'Status',
+      uuid: 'Info',
     },
     {
       uuid: 'Type',
@@ -129,7 +139,7 @@ function TriggersTable({
       uuid: 'Runs',
     },
     {
-      uuid: 'Latest run status',
+      uuid: 'Latest status',
     },
     {
       uuid: 'Logs',
@@ -143,7 +153,7 @@ function TriggersTable({
     });
   }
 
-  const columnFlex = [null, 1, 1, 3, 1, null, null, null, null];
+  const columnFlex = [null, null, null, 1, null, null, null, null, null];
 
   if (includePipelineColumn) {
     columns.splice(2, 0, { uuid: 'Pipeline' });
@@ -191,6 +201,25 @@ function TriggersTable({
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
               deleteButtonRefs.current[id] = createRef();
 
+              let statusIcon;
+              if (ScheduleStatusEnum.ACTIVE === status) {
+                statusIcon = (
+                  <Circle
+                    size={ICON_SIZE}
+                    success
+                  />
+                );
+              } else if (ScheduleStatusEnum.INACTIVE === status) {
+                statusIcon = (
+                  <Circle
+                    borderSize={1}
+                    size={ICON_SIZE}
+                    square
+                    warning
+                  />
+                );
+              }
+
               const rows = [
                 <Button
                   iconOnly
@@ -213,14 +242,38 @@ function TriggersTable({
                     : <PlayButtonFilled default size={2 * UNIT} />
                   }
                 </Button>,
-                <Text
-                  default={ScheduleStatusEnum.INACTIVE === status}
+                <FlexContainer
+                  alignItems="center"
+                  flexDirection="row"
                   key={`trigger_status_${idx}`}
-                  monospace
-                  success={ScheduleStatusEnum.ACTIVE === status}
                 >
-                  {status}
-                </Text>,
+                  <Tooltip
+                    block
+                    label={status}
+                    size={ICON_SIZE}
+                    widthFitContent
+                  >
+                    {statusIcon}
+                  </Tooltip>
+
+                  {pipelineTriggersByName?.[name] && (
+                    <>
+                      <Spacing mr={1} />
+
+                      <Tooltip
+                        block
+                        label="This trigger is saved in code."
+                        size={ICON_SIZE}
+                        widthFitContent
+                      >
+                        <Code
+                          default
+                          size={ICON_SIZE}
+                        />
+                      </Tooltip>
+                    </>
+                  )}
+                </FlexContainer>,
                 <Text
                   default
                   key={`trigger_type_${idx}`}
@@ -254,7 +307,14 @@ function TriggersTable({
                 <Text default key={`trigger_run_count_${idx}`} monospace>
                   {pipelineRunsCount}
                 </Text>,
-                <Text default key={`latest_run_status_${idx}`} monospace>
+                <Text
+                  danger={RunStatus.FAILED === lastPipelineRunStatus}
+                  default={!lastPipelineRunStatus}
+                  key={`latest_run_status_${idx}`}
+                  monospace
+                  success={RunStatus.COMPLETED === lastPipelineRunStatus}
+                  warning={RunStatus.CANCELLED === lastPipelineRunStatus}
+                >
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,
                 <Button

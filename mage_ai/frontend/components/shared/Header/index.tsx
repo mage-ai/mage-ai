@@ -23,7 +23,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
-import { Branch } from '@oracle/icons';
+import { Branch, Slack } from '@oracle/icons';
 import { ChevronRight } from '@oracle/icons';
 import {
   HeaderStyle,
@@ -223,6 +223,14 @@ function Header({
     uuid: 'git_actions',
   });
 
+  const branchName = useMemo(() => {
+    if (branch?.length >= 21) {
+      return `${branch.slice(0, 21)}...`;
+    }
+
+    return branch;
+  }, [branch]);
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -289,7 +297,7 @@ function Header({
                     <Branch size={1.5 * UNIT} />
                     <Spacing ml={1} />
                     <Text monospace small>
-                      {branch}
+                      {branchName}
                     </Text>
                   </FlexContainer>
                 </KeyboardShortcutButton>
@@ -311,19 +319,20 @@ function Header({
 
             <Spacing ml={2}>
               <KeyboardShortcutButton
+                beforeElement={<Slack />}
                 blackBorder
-                block
                 compact
-                noHoverUnderline
-                openNewTab
+                inline
                 linkProps={{
                   as: 'https://www.mage.ai/chat',
                   href: 'https://www.mage.ai/chat',
                 }}
+                noHoverUnderline
+                openNewTab
                 sameColorAsText
                 uuid="Header/live_chat"
               >
-                Live chat
+                Live help
               </KeyboardShortcutButton>
             </Spacing>
 

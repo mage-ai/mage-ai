@@ -17,6 +17,7 @@ class K8sResourceConfig(BaseConfig):
 
 @dataclass
 class K8sExecutorConfig(BaseConfig):
+    job_name_prefix: str = None
     resource_limits: Dict = None
     resource_requests: Dict = None
     service_account_name: str = DEFAULT_SERVICE_ACCOUNT_NAME

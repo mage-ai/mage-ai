@@ -14,12 +14,13 @@ from tornado.log import enable_pretty_logging
 from tornado.options import options
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.cache.block import BlockCache
+from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     init_repo,
-    set_repo_path,
     update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
@@ -70,6 +71,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
+from mage_ai.settings.repo import set_repo_path
 from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -116,6 +118,7 @@ def make_app():
 
     routes = [
         (r'/', MainPageHandler),
+        (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
@@ -292,6 +295,11 @@ async def main(
                 user_id=owner_user.id,
             )
 
+    print('Initializing block cache.')
+    await BlockCache.initialize_cache(replace=True)
+    print('Initializing tag cache.')
+    await TagCache.initialize_cache(replace=True)
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -398,6 +406,8 @@ if __name__ == '__main__':
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
     instance_type = args.instance_type
+    project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
+    cluster_type = os.getenv('CLUSTER_TYPE')
 
     start_server(
         host=host,
@@ -406,4 +416,6 @@ if __name__ == '__main__':
         manage=manage,
         dbt_docs=dbt_docs,
         instance_type=instance_type,
+        project_type=project_type,
+        cluster_type=cluster_type,
     )

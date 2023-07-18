@@ -3,7 +3,11 @@ title: "Configure triggers in code"
 description: "Configure triggers in triggers.yaml under pipeline folder."
 ---
 
-In addition to configurint triggers via UI, you can also configure triggers in code.
+In addition to configuring triggers via UI, you can also configure triggers in code.
+
+You can either manually define the triggers in code or you can go to the triggers detail page in the
+UI and click the button labeled <b>Save trigger in code</b> on the left side panel to store the
+current trigger’s settings to code.
 
 ## Create and configure triggers
 
@@ -32,7 +36,7 @@ Here are the steps to create and configure triggers via code:
         1. `variables`: A dictionary of variables that's associated with the trigger
         1. `sla`: SLA in seconds
         1. `settings`: a dictionary of [advanced settings](/guides/triggering-pipelines#additional-trigger-settings)
-            1. `skip_if_previous_running`: `true`/`false` 
+            1. `skip_if_previous_running`: `true`/`false`
             1. `allow_blocks_to_fail`: `true`/`false`
         1. `envs`: The environments that the trigger runs in. If envs is not set or empty, the trigger will run in all environments. The environment of the Mage app is set via `ENV` [environment variable](/development/environment-variables). Supported `envs` values: `dev`, `staging`, `prod`, `test`.
 1. Save the `triggers.yaml` file. The trigger configs will be synced to the triggers UI shortly.

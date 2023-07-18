@@ -87,6 +87,7 @@ export default {
     content: '#1B1C20',
     danger: RED_XLIGHT,
     dark: GRAY,
+    dashboard: '#18181C',
     header: '#1B1B1B',
     menu: NAVY,
     muted: SILVER,
@@ -103,6 +104,7 @@ export default {
     success: LIME_DARK,
     successLight: LIME_TRASPARENT,
     table: '#292A2F',
+    tag: '#3A4550',
   },
   borders: {
     button: '#454850',

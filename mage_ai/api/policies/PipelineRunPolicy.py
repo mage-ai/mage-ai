@@ -50,6 +50,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'pipeline_schedule_name',
     'pipeline_schedule_token',
     'pipeline_schedule_type',
+    'pipeline_type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -88,8 +89,12 @@ PipelineRunPolicy.allow_write([
 
 PipelineRunPolicy.allow_query([
     'backfill_id',
+    'end_timestamp',
+    'include_pipeline_type',
     'order_by[]',
+    'pipeline_type',
     'pipeline_uuid',
+    'start_timestamp',
     'status',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

@@ -1,16 +1,15 @@
 import uuid
 
-from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
 
@@ -23,12 +22,7 @@ class PipelineScheduleResource(DatabaseResource):
     def collection(self, query_arg, meta, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
-        query = PipelineSchedule.query.filter(
-            or_(
-                PipelineSchedule.repo_path == get_repo_path(),
-                PipelineSchedule.repo_path.is_(None),
-            )
-        )
+        query = PipelineSchedule.repo_query
         if pipeline:
             return (
                 query.

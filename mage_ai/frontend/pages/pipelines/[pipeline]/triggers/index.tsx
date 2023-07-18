@@ -17,6 +17,7 @@ import PipelineScheduleType, {
   ScheduleStatusEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
+import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
@@ -26,7 +27,6 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
-
 import {
   Add,
   PlayButton,
@@ -36,6 +36,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
+import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
@@ -206,7 +207,19 @@ function PipelineSchedules({
     variablesOrig,
   ]);
 
-  const totalTriggers = useMemo(() => dataPipelineSchedules?.metadata?.count || [], [dataPipelineSchedules]);
+  const totalTriggers = useMemo(() => dataPipelineSchedules?.metadata?.count || [], [
+    dataPipelineSchedules,
+  ]);
+
+  const {
+    data: dataPipelineTriggers,
+    mutate: fetchPipelineTriggers,
+  } = api.pipeline_triggers.pipelines.list(pipelineUUID);
+  const pipelineTriggersByName: {
+    [name: string]: PipelineTriggerType;
+  } = useMemo(() => indexBy(dataPipelineTriggers?.pipeline_triggers || [], ({ name }) => name), [
+      dataPipelineTriggers,
+    ]);
 
   return (
     <PipelineDetailPage
@@ -288,6 +301,7 @@ function PipelineSchedules({
               fetchPipelineSchedules={fetchPipelineSchedules}
               pipeline={pipeline}
               pipelineSchedules={pipelineSchedules}
+              pipelineTriggersByName={pipelineTriggersByName}
               selectedSchedule={selectedSchedule}
               setErrors={setErrors}
               setSelectedSchedule={setSelectedSchedule}

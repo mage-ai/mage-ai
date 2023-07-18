@@ -1,7 +1,8 @@
-from mage_ai.data_preparation.repo_manager import get_repo_path
+import aiohttp
+
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.constants import VERSION
-import aiohttp
+from mage_ai.settings.repo import get_repo_path
 
 
 class ApiProjectsHandler(BaseHandler):

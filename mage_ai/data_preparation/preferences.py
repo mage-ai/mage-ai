@@ -5,8 +5,8 @@ from typing import Dict
 import yaml
 
 from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
 # Git environment variables

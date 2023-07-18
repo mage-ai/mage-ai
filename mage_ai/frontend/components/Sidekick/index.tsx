@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
-import BlockCharts from '@components/BlockCharts';
+import BlockSettings from '@components/BlockSettings';
 import BlockType, {
   BlockRequestPayloadType,
   InsightType,
@@ -18,7 +18,6 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
-import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
@@ -29,12 +28,15 @@ import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Secrets from './GlobalVariables/Secrets';
 import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
-import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
 
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
-import { Charts as ChartsIcon, Close } from '@oracle/icons';
+import {
+  Charts as ChartsIcon,
+  Close,
+  SettingsWithKnobs,
+} from '@oracle/icons';
 import {
   MESSAGE_VIEWS,
   VH_PERCENTAGE,
@@ -48,13 +50,11 @@ import {
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
-  PaddingContainerStyle,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
-import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { useWindowSize } from '@utils/sizes';
@@ -190,10 +190,6 @@ function Sidekick({
   const columns = (sampleData?.columns || []).slice(0, MAX_COLUMNS);
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
-  const features = columns?.map(uuid => ({
-    columnType: columnTypes[uuid],
-    uuid,
-  }));
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
@@ -203,11 +199,6 @@ function Sidekick({
     insights,
   ]);
 
-  const qualityMetrics: StatRowType[] = createMetricsSample({ statistics });
-  const statsSample: StatRowType[] = createStatisticsSample({
-    columnTypes,
-    statistics,
-  });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
@@ -277,7 +268,7 @@ function Sidekick({
     secrets,
   ]);
 
-  const extensionsAndAddonsProps = {
+  const extensionsAndAddonsProps = useMemo(() => ({
     addNewBlockAtIndex,
     autocompleteItems,
     blockRefs,
@@ -302,7 +293,163 @@ function Sidekick({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
-  };
+  }), [
+    addNewBlockAtIndex,
+    autocompleteItems,
+    blockRefs,
+    blocks,
+    blocksInNotebook,
+    deleteBlock,
+    fetchFileTree,
+    fetchPipeline,
+    interruptKernel,
+    messages,
+    onChangeCallbackBlock,
+    onChangeCodeBlock,
+    onSelectBlockFile,
+    pipeline,
+    runBlock,
+    runningBlocks,
+    savePipelineContent,
+    selectedBlock,
+    setAnyInputFocused,
+    setErrors,
+    setHiddenBlocks,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+  ]);
+
+  const dataMemo = useMemo(() => columns.length > 0 && (
+    <DataTable
+      columnHeaderHeight={
+        (isEmptyObject(columnTypes)
+          && isEmptyObject(insightsByFeatureUUID)
+          && isEmptyObject(insightsOverview))
+        ? 0
+        : TABLE_COLUMN_HEADER_HEIGHT
+      }
+      columns={columns}
+      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+      noBorderBottom
+      noBorderLeft
+      noBorderRight
+      noBorderTop
+      renderColumnHeader={renderColumnHeader}
+      rows={rows}
+      width={afterWidth}
+    />
+  ), [
+    afterWidth,
+    columnTypes,
+    columns,
+    heightOffset,
+    heightWindow,
+    insightsByFeatureUUID,
+    insightsOverview,
+    renderColumnHeader,
+    rows,
+  ]);
+
+  const chartsMemo = useMemo(() => widgets.length > 0 && (
+    <Charts
+      autocompleteItems={autocompleteItems}
+      blockRefs={blockRefs}
+      blocks={blocks}
+      chartRefs={chartRefs}
+      deleteWidget={deleteWidget}
+      fetchFileTree={fetchFileTree}
+      fetchPipeline={fetchPipeline}
+      messages={messages}
+      onChangeChartBlock={onChangeChartBlock}
+      pipeline={pipeline}
+      runBlock={runBlock}
+      runningBlocks={runningBlocks}
+      savePipelineContent={savePipelineContent}
+      selectedBlock={selectedBlock}
+      setAnyInputFocused={setAnyInputFocused}
+      setErrors={setErrors}
+      setSelectedBlock={setSelectedBlock}
+      setTextareaFocused={setTextareaFocused}
+      textareaFocused={textareaFocused}
+      updateWidget={updateWidget}
+      widgets={widgets}
+      width={afterWidth}
+    />
+  ), [
+    afterWidth,
+    autocompleteItems,
+    blockRefs,
+    blocks,
+    chartRefs,
+    deleteWidget,
+    fetchFileTree,
+    fetchPipeline,
+    messages,
+    onChangeChartBlock,
+    pipeline,
+    runBlock,
+    runningBlocks,
+    savePipelineContent,
+    selectedBlock,
+    setAnyInputFocused,
+    setErrors,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+    updateWidget,
+    widgets,
+  ]);
+
+  const terminalMemo = useMemo(() => (
+    <div
+      style={{
+        height: '100%',
+        position: 'relative',
+        width: afterWidth,
+      }}
+    >
+      <Terminal
+        lastMessage={lastTerminalMessage}
+        onFocus={() => setSelectedBlock(null)}
+        sendMessage={sendTerminalMessage}
+        width={afterWidth}
+      />
+    </div>
+  ), [
+    afterWidth,
+    lastTerminalMessage,
+    sendTerminalMessage,
+    setSelectedBlock,
+  ]);
+
+  const extensionsMemo = useMemo(() => (
+    <Extensions
+      {...extensionsAndAddonsProps}
+    />
+  ), [extensionsAndAddonsProps]);
+
+  const addonMemo = useMemo(() => (
+    <AddonBlocks
+      {...extensionsAndAddonsProps}
+    />
+  ), [extensionsAndAddonsProps]);
+
+  const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
+    <BlockSettings
+      block={selectedBlock}
+      fetchFileTree={fetchFileTree}
+      fetchPipeline={fetchPipeline}
+      pipeline={pipeline}
+      setSelectedBlock={setSelectedBlock}
+    />
+  ), [
+    fetchFileTree,
+    fetchPipeline,
+    pipeline,
+    selectedBlock,
+    setSelectedBlock,
+  ]);
 
   return (
     <>
@@ -352,11 +499,13 @@ function Sidekick({
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
+                blocks={blocks}
                 blockRefs={blockRefs}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - heightOffset - finalOutputHeight}
+                messages={messages}
                 // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
                   const hidden = !!prev?.[uuid];
@@ -395,66 +544,13 @@ function Sidekick({
             </>
           </ApiReloader>
         }
-        {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
-          <DataTable
-            columnHeaderHeight={
-              (isEmptyObject(columnTypes)
-                && isEmptyObject(insightsByFeatureUUID)
-                && isEmptyObject(insightsOverview))
-              ? 0
-              : TABLE_COLUMN_HEADER_HEIGHT
-            }
-            columns={columns}
-            height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
-            noBorderBottom
-            noBorderLeft
-            noBorderRight
-            noBorderTop
-            renderColumnHeader={renderColumnHeader}
-            rows={rows}
-            width={afterWidth}
-          />
-        )}
-        {activeView === ViewKeyEnum.REPORTS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <FlexContainer flexDirection="column" fullWidth>
-              {qualityMetrics && (
-                <StatsTable
-                  stats={qualityMetrics}
-                  title="Quality metrics"
-                />
-              )}
-              {statsSample && (
-                <Spacing mt={PADDING_UNITS}>
-                  <StatsTable
-                    stats={statsSample}
-                    title="Statistics"
-                  />
-                </Spacing>
-              )}
-              {features.length > 0 && (
-                <Spacing mt={PADDING_UNITS}>
-                  <FeatureProfiles
-                    features={features}
-                    statistics={statistics}
-                  />
-                </Spacing>
-              )}
-            </FlexContainer>
-          </PaddingContainerStyle>
-        }
-        {activeView === ViewKeyEnum.GRAPHS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <BlockCharts
-              afterWidth={afterWidth}
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
-          </PaddingContainerStyle>
-        }
+
+        {activeView === ViewKeyEnum.DATA && dataMemo}
+
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
+
         {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
+
         {ViewKeyEnum.FILE_VERSIONS === activeView && (
           <ApiReloader uuid={`FileVersions/${selectedFilePath
               ? decodeURIComponent(selectedFilePath)
@@ -494,32 +590,8 @@ function Sidekick({
         }
 
         {ViewKeyEnum.CHARTS === activeView && (widgets.length > 0
-          ?
-            <Charts
-              autocompleteItems={autocompleteItems}
-              blockRefs={blockRefs}
-              blocks={blocks}
-              chartRefs={chartRefs}
-              deleteWidget={deleteWidget}
-              fetchFileTree={fetchFileTree}
-              fetchPipeline={fetchPipeline}
-              messages={messages}
-              onChangeChartBlock={onChangeChartBlock}
-              pipeline={pipeline}
-              runBlock={runBlock}
-              runningBlocks={runningBlocks}
-              savePipelineContent={savePipelineContent}
-              selectedBlock={selectedBlock}
-              setAnyInputFocused={setAnyInputFocused}
-              setErrors={setErrors}
-              setSelectedBlock={setSelectedBlock}
-              setTextareaFocused={setTextareaFocused}
-              textareaFocused={textareaFocused}
-              updateWidget={updateWidget}
-              widgets={widgets}
-              width={afterWidth}
-            />
-          :
+          ? chartsMemo
+          : (
             <FlexContainer
               alignItems="center"
               flexDirection="column"
@@ -542,35 +614,38 @@ function Sidekick({
                 <EmptyCharts size={UNIT * 40} />
               </Spacing>
             </FlexContainer>
+          )
         )}
 
-        {ViewKeyEnum.TERMINAL === activeView && (
-          <div
-            style={{
-              height: '100%',
-              position: 'relative',
-              width: afterWidth,
-            }}
-          >
-            <Terminal
-              lastMessage={lastTerminalMessage}
-              onFocus={() => setSelectedBlock(null)}
-              sendMessage={sendTerminalMessage}
+        {ViewKeyEnum.TERMINAL === activeView && terminalMemo}
+
+        {ViewKeyEnum.EXTENSIONS === activeView && extensionsMemo}
+
+        {ViewKeyEnum.ADDON_BLOCKS === activeView && addonMemo}
+
+        {ViewKeyEnum.BLOCK_SETTINGS === activeView && (selectedBlock
+          ? blockSettingsMemo
+          : (
+            <FlexContainer
+              alignItems="center"
+              flexDirection="column"
+              justifyContent="center"
+              verticalHeight={VH_PERCENTAGE}
+              verticalHeightOffset={heightOffset}
               width={afterWidth}
-            />
-          </div>
-        )}
-
-        {ViewKeyEnum.EXTENSIONS === activeView && (
-          <Extensions
-            {...extensionsAndAddonsProps}
-          />
-        )}
-
-        {ViewKeyEnum.ADDON_BLOCKS === activeView && (
-          <AddonBlocks
-            {...extensionsAndAddonsProps}
-          />
+            >
+              <Spacing px={1}>
+                <FlexContainer flexDirection="row">
+                  <Text center default>
+                    Please select a block and then click the settings icon
+                    &nbsp;<SettingsWithKnobs size={UNIT * 1.5} />&nbsp;
+                    <br />
+                    in the top right corner of a block (if applicable).
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+            </FlexContainer>
+          )
         )}
       </SidekickContainerStyle>
     </>

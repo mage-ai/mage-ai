@@ -65,6 +65,7 @@ BlockPolicy.allow_write([
     'language',
     'metadata',
     'name',
+    'pipelines',
     'priority',
     'replicated_block',
     'type',
@@ -94,6 +95,7 @@ BlockPolicy.allow_write([
     'metadata',
     'name',
     'outputs',
+    'pipelines',
     'replicated_block',
     'retry_config',
     'status',
@@ -127,6 +129,7 @@ BlockPolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_query([
+    'block_language',
     'block_type',
     'extension_uuid',
     'update_state',

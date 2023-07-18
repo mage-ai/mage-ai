@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import List, Tuple
 
+from mage_ai.api.errors import ApiError
 from mage_ai.orchestration.db.models.oauth import (
     Oauth2AccessToken,
     Permission,
@@ -120,3 +122,28 @@ def parse_cookie_header(cookies_raw):
             cookies[cookie_name] = cookie_value
 
     return cookies
+
+
+def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
+    start_timestamp = query_arg.get('start_timestamp', [None])
+    if start_timestamp:
+        start_timestamp = start_timestamp[0]
+    end_timestamp = query_arg.get('end_timestamp', [None])
+    if end_timestamp:
+        end_timestamp = end_timestamp[0]
+
+    error = ApiError.RESOURCE_INVALID.copy()
+    if start_timestamp:
+        try:
+            start_timestamp = datetime.fromtimestamp(int(start_timestamp))
+        except (ValueError, OverflowError):
+            error.update(message='Value is invalid for start_timestamp.')
+            raise ApiError(error)
+    if end_timestamp:
+        try:
+            end_timestamp = datetime.fromtimestamp(int(end_timestamp))
+        except (ValueError, OverflowError):
+            error.update(message='Value is invalid for end_timestamp.')
+            raise ApiError(error)
+
+    return start_timestamp, end_timestamp

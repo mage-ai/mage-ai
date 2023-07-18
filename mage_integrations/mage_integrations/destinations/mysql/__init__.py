@@ -1,7 +1,7 @@
-from mage_integrations.connections.mysql import (
-    ConnectionMethod,
-    MySQL as MySQLConnection,
-)
+from typing import Dict, List, Tuple
+
+from mage_integrations.connections.mysql import ConnectionMethod
+from mage_integrations.connections.mysql import MySQL as MySQLConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     INTERNAL_COLUMN_CREATED_AT,
@@ -11,6 +11,7 @@ from mage_integrations.destinations.mysql.utils import (
     build_alter_table_command,
     build_create_table_command,
     clean_column_name,
+    convert_column_to_type,
     convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
@@ -18,7 +19,6 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from typing import Dict, List, Tuple
 
 
 class MySQL(Destination):
@@ -132,6 +132,7 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
             ),
             columns=columns,
             records=records,
+            convert_column_to_type_func=convert_column_to_type,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
         )

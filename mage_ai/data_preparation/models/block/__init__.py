@@ -8,6 +8,7 @@ import traceback
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
+from jinja2 import Template
 from logging import Logger
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set, Tuple, Union
@@ -15,7 +16,10 @@ from typing import Any, Callable, Dict, List, Set, Tuple, Union
 import pandas as pd
 import simplejson
 
+from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -47,12 +51,14 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
@@ -755,6 +761,7 @@ class Block:
         dynamic_block_uuid: str = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        output_messages_to_logs: bool = False,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -775,6 +782,24 @@ class Block:
                         'before running the current block.'
                     )
             global_vars = self.__enrich_global_vars(global_vars)
+
+            if output_messages_to_logs and not logger:
+                from mage_ai.data_preparation.models.block.constants import (
+                    LOG_PARTITION_EDIT_PIPELINE,
+                )
+
+                logger_manager = LoggerManagerFactory.get_logger_manager(
+                    block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
+                    partition=LOG_PARTITION_EDIT_PIPELINE,
+                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                    subpartition=clean_name(self.uuid),
+                )
+                logger = DictLogger(logger_manager.logger)
+                logging_tags = dict(
+                    block_type=self.type,
+                    block_uuid=self.uuid,
+                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                )
 
             output = self.execute_block(
                 build_block_output_stdout=build_block_output_stdout,
@@ -1126,10 +1151,11 @@ class Block:
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
+        upstream_block_uuids: List[str] = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
             self.pipeline,
-            self.upstream_block_uuids,
+            upstream_block_uuids or self.upstream_block_uuids,
             input_args,
             execution_partition,
             global_vars,
@@ -1422,6 +1448,14 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
+    def get_executor_type(self) -> str:
+        if self.executor_type:
+            return Template(self.executor_type).render(**get_template_vars())
+        return self.executor_type
+
+    def get_pipelines_from_cache(self) -> List[Dict]:
+        return BlockCache().get_pipelines(self)
+
     def to_dict_base(
         self,
         include_callback_blocks: bool = False,
@@ -1495,6 +1529,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        include_block_pipelines: bool = False,
         include_block_tags: bool = False,
         include_callback_blocks: bool = False,
         include_conditional_blocks: bool = False,
@@ -1531,6 +1566,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_block_tags:
             data['tags'] = self.tags()
+
+        if include_block_pipelines:
+            data['pipelines'] = self.get_pipelines_from_cache()
 
         return data
 
@@ -1572,6 +1610,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.has_callback = data['has_callback']
             if self.has_callback:
                 CallbackBlock.create(self.uuid)
+            self.__update_pipeline_block()
+
+        if 'retry_config' in data and data['retry_config'] != self.retry_config:
+            self.retry_config = data['retry_config']
             self.__update_pipeline_block()
 
         return self
@@ -1637,7 +1679,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self, **kwargs) -> None:
+    def run_upstream_blocks(self, incomplete_only: bool = False, **kwargs) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1646,10 +1688,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 root_blocks.append(block)
             return block.uuid
 
-        upstream_blocks = self.get_all_upstream_blocks()
+        upstream_blocks = list(filter(
+            lambda x: not incomplete_only or BlockStatus.EXECUTED != x.status,
+            self.get_all_upstream_blocks(),
+        ))
         root_blocks = []
         upstream_block_uuids = list(
-            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks)
+            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks),
         )
 
         run_blocks_sync(
@@ -2091,7 +2136,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
-            TAG_CONDITION,
+            # TAG_CONDITION,
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
@@ -2112,8 +2157,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if self.replicated_block:
             arr.append(TAG_REPLICA)
 
-        if len(self.conditional_blocks) > 0:
-            arr.append(TAG_CONDITION)
+        # if len(self.conditional_blocks) > 0:
+        #     arr.append(TAG_CONDITION)
 
         return arr
 
@@ -2177,6 +2222,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
+
+            cache = BlockCache()
+            cache.move_pipelines(self, dict(
+                type=self.type,
+                uuid=old_uuid,
+            ))
 
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
@@ -2423,6 +2474,7 @@ class CallbackBlock(AddonBlock):
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 
             # Copied logic from the method self.execute_block
@@ -2441,7 +2493,7 @@ class CallbackBlock(AddonBlock):
             for callback_function in callback_functions_legacy:
                 callback_function(**global_vars_copy)
 
-            for callback_function in callback_functions:
+            for idx, callback_function in enumerate(callback_functions):
                 try:
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output.

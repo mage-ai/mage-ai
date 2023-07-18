@@ -10,8 +10,8 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import Paginate from '@components/shared/Paginate';
+import PipeIconGradient from '@oracle/icons/custom/PipeIconGradient';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
 import PipelineRunType, {
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
@@ -29,22 +29,21 @@ import usePrevious from '@utils/usePrevious';
 
 import {
   BlocksSeparated,
-  PipelineRun,
+  PipeIcon,
 } from '@oracle/icons';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
 
-const TAB_URL_PARAM = 'tab';
-
 const TAB_PIPELINE_RUNS = {
-  Icon: PipelineRun,
-  IconSelected: PipelineRunGradient,
+  Icon: PipeIcon,
+  IconSelected: PipeIconGradient,
   label: () => 'Pipeline runs',
   uuid: 'pipeline_runs',
 };

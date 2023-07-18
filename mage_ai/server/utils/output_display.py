@@ -1,14 +1,14 @@
+import json
+import re
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.constants import (
-    BlockType,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    BlockType,
 )
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.code import is_pyspark_code
-from typing import Dict, List
-import json
-import re
-
 
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
@@ -224,8 +224,10 @@ def add_execution_code(
     block_type: BlockType = None,
     extension_uuid: str = None,
     kernel_name: str = None,
+    output_messages_to_logs: bool = False,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
+    run_incomplete_upstream: bool = False,
     run_settings: Dict = None,
     run_tests: bool = False,
     run_upstream: bool = False,
@@ -250,6 +252,7 @@ def add_execution_code(
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
         ):
             magic_header = '%%local'
+            run_incomplete_upstream = False
             run_upstream = False
         else:
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
@@ -262,7 +265,7 @@ spark = SparkSession.builder.getOrCreate()
 
     return f"""{magic_header}
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
@@ -276,6 +279,7 @@ db_connection.start_session()
 
 def execute_custom_code():
     block_uuid=\'{block_uuid}\'
+    run_incomplete_upstream={str(run_incomplete_upstream)}
     run_upstream={str(run_upstream)}
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
@@ -300,12 +304,13 @@ def execute_custom_code():
     except Exception:
         pass
 
-    if run_upstream:
-        block.run_upstream_blocks(global_vars=global_vars)
+    if run_incomplete_upstream or run_upstream:
+        block.run_upstream_blocks(global_vars=global_vars, incomplete_only=run_incomplete_upstream)
 
     block_output = block.execute_with_callback(
         custom_code=code,
         global_vars=global_vars,
+        output_messages_to_logs={output_messages_to_logs},
         run_settings=json.loads('{run_settings_json}'),
         test_execution=True,
         update_status={update_status},

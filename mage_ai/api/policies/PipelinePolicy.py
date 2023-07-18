@@ -112,6 +112,7 @@ PipelinePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_query([
+    'include_block_pipelines',
     'includes_block_metadata',
     'includes_content',
     'includes_extensions',
@@ -124,6 +125,7 @@ PipelinePolicy.allow_query([
 
 PipelinePolicy.allow_query([
     'status[]',
+    'tag[]',
     'type[]',
     'include_schedules',
 ], scopes=[

@@ -66,6 +66,7 @@ import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
 } from '@storage/constants';
 import {
@@ -222,6 +223,7 @@ function PipelineDetailPage({
     data,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
+    include_block_pipelines: true,
     includes_outputs: isEmptyObject(messages),
   }, {
     refreshInterval: 60000,
@@ -286,22 +288,28 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      extension?: string;
     },
   ) => {
     const newQuery: {
       [VIEW_QUERY_PARAM]: ViewKeyEnum;
       addon?: string;
       block_uuid?: string;
+      extension?: string;
     } = {
       [VIEW_QUERY_PARAM]: newView,
     };
+
+    if (opts?.addon) {
+      newQuery.addon = opts?.addon;
+    }
 
     if (opts?.blockUUID) {
       newQuery.block_uuid = opts?.blockUUID;
     }
 
-    if (opts?.addon) {
-      newQuery.addon = opts?.addon;
+    if (opts?.extension) {
+      newQuery.extension = opts?.extension;
     }
 
     goToWithQuery(newQuery, {
@@ -328,6 +336,8 @@ function PipelineDetailPage({
     opts?: {
       addon?: string;
       blockUUID: string;
+      // http://localhost:3000/pipelines/delicate_field/edit?addon=conditionals&sideview=power_ups&extension=great_expectations
+      extension?: string;
     },
   ) => {
     setAfterHidden(false);
@@ -1727,6 +1737,7 @@ function PipelineDetailPage({
     code: string;
     ignoreAlreadyRunning?: boolean;
     runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
     runSettings?: {
       run_model?: boolean;
     };
@@ -1738,9 +1749,10 @@ function PipelineDetailPage({
       code,
       ignoreAlreadyRunning,
       runDownstream = false,
+      runIncompleteUpstream = false,
       runSettings = {},
-      runUpstream = false,
       runTests = false,
+      runUpstream,
     } = payload;
 
     const {
@@ -1751,12 +1763,17 @@ function PipelineDetailPage({
     const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
+      const localStorageBlockOutputLogsKey =
+        `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS}_${pipeline?.uuid}`;
+
       sendMessage(JSON.stringify({
         ...sharedWebsocketData,
         code,
         extension_uuid: extensionUUID,
+        output_messages_to_logs: !!get(localStorageBlockOutputLogsKey),
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream, // This will only run downstream blocks that are charts/widgets
+        run_incomplete_upstream: runIncompleteUpstream,
         run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,
@@ -2298,6 +2315,7 @@ function PipelineDetailPage({
             depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            selectedBlock={selectedBlock}
             treeRef={treeRef}
             variables={globalVariables}
           />

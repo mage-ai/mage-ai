@@ -1,8 +1,27 @@
 import moment from 'moment';
 
+export enum TimePeriodEnum {
+  TODAY = 'today',
+  WEEK = 'week',
+  MONTH = 'month',
+}
+
+export const TIME_PERIOD_DISPLAY_MAPPING = {
+  [TimePeriodEnum.TODAY]: 'today',
+  [TimePeriodEnum.WEEK]: 'last 7 days',
+  [TimePeriodEnum.MONTH]: 'last 30 days',
+};
+
+export const TIME_PERIOD_INTERVAL_MAPPING = {
+  [TimePeriodEnum.TODAY]: 0,
+  [TimePeriodEnum.WEEK]: 6,
+  [TimePeriodEnum.MONTH]: 29,
+};
+
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
+export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);
@@ -101,6 +120,64 @@ export function getDatePartsFromUnixTimestamp(
     hour: String(dateMoment.hour()),
     minute: String(dateMoment.minute()),
   };
+}
+
+export function getFullDateRangeString(
+  daysAgo: number,
+  options?: {
+    endDateOnly?: boolean;
+    localTime?: boolean;
+  },
+) {
+  let dateMomentStart = moment.utc();
+  let dateMomentEnd = moment.utc();
+
+  if (options?.localTime) {
+    dateMomentStart = moment().local();
+    dateMomentEnd = moment().local();
+  }
+
+  dateMomentStart = dateMomentStart.subtract(daysAgo, 'days');
+  const dateStartString = dateMomentStart.format(DATE_FORMAT_FULL);
+  const dateEndString = dateMomentEnd.format(DATE_FORMAT_FULL);
+
+  return options?.endDateOnly
+    ? dateEndString
+    : `${dateStartString} - ${dateEndString}`;
+}
+
+export function getStartDateStringFromPeriod(
+  period: TimePeriodEnum | string,
+  options?: {
+    isoString?: boolean;
+    localTime?: boolean;
+  },
+): string {
+  let dateMoment = options?.localTime ? moment().local() : moment.utc();
+  if (period === TimePeriodEnum.WEEK) {
+    const weekDaysAgo = TIME_PERIOD_INTERVAL_MAPPING[TimePeriodEnum.WEEK];
+    dateMoment = dateMoment.subtract(weekDaysAgo, 'days');
+  } else if (period === TimePeriodEnum.MONTH) {
+    const monthDaysAgo = TIME_PERIOD_INTERVAL_MAPPING[TimePeriodEnum.MONTH];
+    dateMoment = dateMoment.subtract(monthDaysAgo, 'days');
+  }
+
+  return options?.isoString
+    ? dateMoment.startOf('day').toISOString()
+    : dateMoment.startOf('day').format(DATE_FORMAT_LONG);
+}
+
+export function getDateRange(
+  daysInterval: number = 90,
+): string[] {
+  const date = new Date();
+  const dateRange = [];
+  for (let i = 0; i < daysInterval; i++) {
+    dateRange.unshift(date.toISOString().split('T')[0]);
+    date.setDate(date.getDate() - 1);
+  }
+
+  return dateRange;
 }
 
 export function padTime(time: string) {

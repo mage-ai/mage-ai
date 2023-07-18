@@ -6,6 +6,7 @@ import {
   NavReport,
   Secrets,
   Settings,
+  SettingsWithKnobs,
   Table,
   Terminal,
   Tree,
@@ -19,6 +20,7 @@ export const VH_PERCENTAGE = 90;
 
 export enum ViewKeyEnum {
   ADDON_BLOCKS = 'addon_blocks',
+  BLOCK_SETTINGS = 'block_settings',
   CALLBACKS = 'callbacks',
   CHARTS = 'charts',
   DATA = 'data',
@@ -34,18 +36,16 @@ export enum ViewKeyEnum {
 }
 
 export const FULL_WIDTH_VIEWS = [
+  ViewKeyEnum.BLOCK_SETTINGS,
   ViewKeyEnum.CALLBACKS,
   ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
   ViewKeyEnum.EXTENSIONS,
-  ViewKeyEnum.REPORTS,
   ViewKeyEnum.TREE,
 ];
 
 export const MESSAGE_VIEWS = [
   ViewKeyEnum.DATA,
-  ViewKeyEnum.REPORTS,
-  ViewKeyEnum.GRAPHS,
 ];
 
 export const SIDEKICK_VIEWS: {
@@ -135,18 +135,21 @@ export const SIDEKICK_VIEWS: {
     key: ViewKeyEnum.TERMINAL,
     label: 'Terminal',
   },
+  {
+    key: ViewKeyEnum.BLOCK_SETTINGS,
+    label: 'Block settings',
+  },
 ];
 
 export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
 
 export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.ADDON_BLOCKS]: Union,
+  [ViewKeyEnum.BLOCK_SETTINGS]: SettingsWithKnobs,
   [ViewKeyEnum.CALLBACKS]: Callback,
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,
   [ViewKeyEnum.EXTENSIONS]: Lightning,
-  [ViewKeyEnum.GRAPHS]: Charts,
-  [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.SECRETS]: Secrets,
   [ViewKeyEnum.SETTINGS]: Settings,
   [ViewKeyEnum.TERMINAL]: Terminal,

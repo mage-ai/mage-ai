@@ -15,6 +15,7 @@ import {
   BranchAlt,
   DocumentIcon,
   Lightning,
+  NavDashboard,
   PipelineV3,
   Schedule,
   Settings,
@@ -28,10 +29,18 @@ import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 const ICON_SIZE = 3 * UNIT;
-const DEFAULT_ITEMS = [
+const DEFAULT_NAV_ITEMS = [
   {
     id: 'main',
     items: [
+      {
+        Icon: NavDashboard,
+        id: 'overview',
+        label: () => 'Overview',
+        linkProps: {
+          href: '/overview',
+        },
+      },
       {
         Icon: PipelineV3,
         id: 'pipelines',
@@ -331,7 +340,7 @@ function VerticalNavigation({
 
   const buttons = useMemo(() => {
     const arr = [];
-    (navigationItems || DEFAULT_ITEMS).forEach((item, idx: number) => {
+    (navigationItems || DEFAULT_NAV_ITEMS).forEach((item, idx: number) => {
       const { id, items } = item;
 
       if (items?.length >= 1) {

@@ -10,9 +10,11 @@ from mage_ai.data_preparation.models.block.sql.constants import (
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
+from mage_ai.settings.repo import get_repo_path
+
+MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 
 
 def build_variable_pattern(variable_name: str):
@@ -293,6 +295,7 @@ def create_upstream_block_tables(
     schema_name: str = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    database: str = None,
 ):
     if cache_keys is None:
         cache_keys = []
@@ -370,8 +373,7 @@ def create_upstream_block_tables(
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
 
-            loader.export(
-                df,
+            kwargs = dict(
                 table_name=table_name,
                 schema_name=schema,
                 cascade_on_drop=cascade_on_drop,
@@ -380,6 +382,10 @@ def create_upstream_block_tables(
                 index=False,
                 verbose=False,
             )
+            if database:
+                kwargs['database'] = database
+
+            loader.export(df, **kwargs)
 
 
 def extract_and_replace_text_between_strings(
@@ -453,3 +459,43 @@ def has_create_or_insert_statement(text: str) -> bool:
 
     matches = extract_insert_statement_table_names(text)
     return len(matches) >= 1
+
+
+def split_query_string(query_string: str) -> List[str]:
+    text_parts = []
+
+    matches = re.finditer(r"'(.*?)'|\"(.*?)\"", query_string, re.IGNORECASE)
+
+    previous_idx = 0
+
+    for _, match in enumerate(matches):
+        matched_string = match.group()
+        updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
+
+        start_idx, end_idx = match.span()
+
+        previous_chunk = query_string[previous_idx:start_idx]
+        text_parts.append(previous_chunk)
+        text_parts.append(updated_string)
+        previous_idx = end_idx
+
+    text_parts.append(query_string[previous_idx:])
+
+    text_combined = ''.join(text_parts)
+    queries = text_combined.split(';')
+
+    arr = []
+    for query in queries:
+        query = query.strip()
+        if not query:
+            continue
+
+        lines = query.split('\n')
+        query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
+        query = query.strip()
+        query = re.sub(MAGE_SEMI_COLON, ';', query)
+
+        if query:
+            arr.append(query)
+
+    return arr
