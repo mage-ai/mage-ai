@@ -1,5 +1,6 @@
 import os
 import time
+import traceback
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
@@ -96,3 +97,10 @@ def run_job(command: str, job_id: str, container_instance_config: ContainerInsta
     else:
         logger.info(f'Executing job {job_id} failed.'
                     f'Provisioning state is: {container_group.provisioning_state}')
+
+    # Delete the container group
+    try:
+        aci_client.container_groups.begin_delete(resource_group_name,
+                                                 job_id)
+    except Exception:
+        traceback.print_exc()

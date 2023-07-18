@@ -49,6 +49,7 @@ setuptools.setup(
             'azure-identity==1.11.0',
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
+            'azure-mgmt-containerinstance==10.1.0',
             'azure-storage-blob==12.14.1',
         ],
         'bigquery': [
@@ -109,6 +110,7 @@ setuptools.setup(
             'azure-identity==1.11.0',
             'azure-keyvault-certificates==4.6.0',
             'azure-keyvault-secrets==4.6.0',
+            'azure-mgmt-containerinstance==10.1.0',
             'azure-storage-blob==12.14.1',
             'boto3==1.26.60',
             'botocore==1.29.60',
