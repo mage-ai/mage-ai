@@ -24,7 +24,6 @@ BackfillPolicy.allow_actions([
 
 BackfillPolicy.allow_actions([
     constants.CREATE,
-    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -36,7 +35,6 @@ BackfillPolicy.allow_read([
 ] + BackfillPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.DELETE,
     constants.DETAIL,
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
@@ -77,7 +75,6 @@ BackfillPolicy.allow_query([
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.DELETE,
     constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
