@@ -373,29 +373,19 @@ def create_upstream_block_tables(
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
 
+            kwargs = dict(
+                table_name=table_name,
+                schema_name=schema,
+                cascade_on_drop=cascade_on_drop,
+                drop_table_on_replace=True,
+                if_exists='replace',
+                index=False,
+                verbose=False,
+            )
             if database:
-                loader.export(
-                    df,
-                    table_name=table_name,
-                    database=database,
-                    schema_name=schema,
-                    cascade_on_drop=cascade_on_drop,
-                    drop_table_on_replace=True,
-                    if_exists='replace',
-                    index=False,
-                    verbose=False,
-                )
-            else:
-                loader.export(
-                    df,
-                    table_name=table_name,
-                    schema_name=schema,
-                    cascade_on_drop=cascade_on_drop,
-                    drop_table_on_replace=True,
-                    if_exists='replace',
-                    index=False,
-                    verbose=False,
-                )
+                kwargs['database'] = database
+
+            loader.export(df, **kwargs)
 
 
 def extract_and_replace_text_between_strings(
