@@ -5,13 +5,13 @@ from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 app = typer.Typer()
 
 PROJECT_NAME_DEFAULT = typer.Argument(
-    ..., help='Mage project name'
+    ..., help='Mage project path'
 )
 PIPELINE_NAME_DEFAULT = typer.Argument(
-    ..., help='Mage pipeline name'
+    ..., help='Mage pipeline uuid'
 )
 BLOCK_NAME_DEFAULT = typer.Argument(
-    ..., help='Mage block name in the pipeline'
+    ..., help='Mage block uuid in the pipeline'
 )
 PRINT_BLOCK_DOC_DEFAULT = typer.Option(
     False, help='specify if block documentation should be printed.'
@@ -19,20 +19,25 @@ PRINT_BLOCK_DOC_DEFAULT = typer.Option(
 
 
 @app.command()
-def generate_block_documentation(project_name: str = PROJECT_NAME_DEFAULT,
-                                 pipeline_name: str = PROJECT_NAME_DEFAULT,
-                                 block_name: str = BLOCK_NAME_DEFAULT):
+def generate_block_documentation(project_path: str = PROJECT_NAME_DEFAULT,
+                                 pipeline_uuid: str = PROJECT_NAME_DEFAULT,
+                                 block_uuid: str = BLOCK_NAME_DEFAULT):
     print(LLMPipelineWizard().generate_block_documentation_with_name(
-        project_name, pipeline_name, block_name))
+        pipeline_uuid,
+        block_uuid,
+        project_path=project_path,
+    ))
 
 
 @app.command()
-def generate_pipeline_documentation(project_name: str = PROJECT_NAME_DEFAULT,
-                                    pipeline_name: str = PROJECT_NAME_DEFAULT,
+def generate_pipeline_documentation(project_path: str = PROJECT_NAME_DEFAULT,
+                                    pipeline_uuid: str = PROJECT_NAME_DEFAULT,
                                     print_block_doc: bool = PRINT_BLOCK_DOC_DEFAULT):
-    print(LLMPipelineWizard().generate_pipeline_documentation(project_name,
-                                                              pipeline_name,
-                                                              print_block_doc))
+    print(LLMPipelineWizard().generate_pipeline_documentation(
+        pipeline_uuid,
+        print_block_doc=print_block_doc,
+        project_path=project_path,
+    )['pipeline_doc'])
 
 
 if __name__ == '__main__':

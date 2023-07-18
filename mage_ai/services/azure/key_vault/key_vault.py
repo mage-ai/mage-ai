@@ -7,6 +7,8 @@ class SecretsManager:
         from azure.keyvault.secrets import SecretClient
 
         key_vault_url = os.getenv('AZURE_KEY_VAULT_URL')
+        if not key_vault_url:
+            raise Exception('Please provide valid AZURE_KEY_VAULT_URL in environment variable.')
         cred = DefaultAzureCredential()
         self.client = SecretClient(vault_url=key_vault_url, credential=cred)
 

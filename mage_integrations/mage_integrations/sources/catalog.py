@@ -13,6 +13,7 @@ class CatalogEntry(catalog.CatalogEntry):
         disable_column_type_check: bool = None,
         bookmark_properties: List[str] = None,
         partition_keys: List[str] = None,
+        run_in_parallel: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -22,6 +23,7 @@ class CatalogEntry(catalog.CatalogEntry):
         self.bookmark_properties = bookmark_properties
         self.disable_column_type_check = disable_column_type_check
         self.partition_keys = partition_keys
+        self.run_in_parallel = run_in_parallel
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
 
@@ -36,6 +38,8 @@ class CatalogEntry(catalog.CatalogEntry):
             result['disable_column_type_check'] = self.disable_column_type_check
         if self.partition_keys:
             result['partition_keys'] = self.partition_keys
+        if self.run_in_parallel:
+            result['run_in_parallel'] = self.run_in_parallel
         if self.unique_conflict_method:
             result['unique_conflict_method'] = self.unique_conflict_method
         if self.unique_constraints:
@@ -93,6 +97,7 @@ class Catalog(catalog.Catalog):
             entry.partition_keys = stream.get('partition_keys')
             entry.replication_key = stream.get('replication_key')
             entry.replication_method = stream.get('replication_method')
+            entry.run_in_parallel = stream.get('run_in_parallel')
             entry.schema = catalog.Schema.from_dict(stream.get('schema'))
             entry.stream = stream.get('stream')
             entry.stream_alias = stream.get('stream_alias')

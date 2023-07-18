@@ -295,6 +295,7 @@ def create_upstream_block_tables(
     schema_name: str = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    database: str = None,
 ):
     if cache_keys is None:
         cache_keys = []
@@ -372,8 +373,7 @@ def create_upstream_block_tables(
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
 
-            loader.export(
-                df,
+            kwargs = dict(
                 table_name=table_name,
                 schema_name=schema,
                 cascade_on_drop=cascade_on_drop,
@@ -382,6 +382,10 @@ def create_upstream_block_tables(
                 index=False,
                 verbose=False,
             )
+            if database:
+                kwargs['database'] = database
+
+            loader.export(df, **kwargs)
 
 
 def extract_and_replace_text_between_strings(

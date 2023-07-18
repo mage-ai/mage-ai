@@ -169,7 +169,7 @@ def execute_sql_code(
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
 
-        database = database or 'default'
+        database = database or loader.default_database()
 
         if use_raw_sql:
             return execute_raw_sql(

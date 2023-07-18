@@ -104,6 +104,7 @@ function SchemaTable({
     metadata,
     partition_keys: partitionKeys,
     replication_method: replicationMethod,
+    run_in_parallel: runInParallel,
     schema: {
       properties,
     },
@@ -145,7 +146,12 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
-  }, [bookmarkProperties?.length, bookmarkValuesInit, streamUUID]);
+  }, [
+    bookmarkProperties?.length,
+    bookmarkValues,
+    bookmarkValuesInit,
+    streamUUID,
+  ]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
@@ -574,6 +580,7 @@ function SchemaTable({
     metadataByColumn,
     partitionKeys,
     properties,
+    removeBookmarkPropertyFromState,
     showPartitionKey,
     streamUUID,
     uniqueConstraints,
@@ -829,6 +836,26 @@ function SchemaTable({
         <Headline condensed level={4} spacingBelow>
           Settings
         </Headline>
+
+        <Spacing mb={SPACING_BOTTOM_UNITS}>
+          <Spacing mb={1}>
+            <Text bold large>
+              Run stream in parallel
+            </Text>
+            <Text default>
+              Parallel streams will be run at the same time, so make sure there are no dependencies between them.
+            </Text>
+            <Spacing mb={1} />
+            <ToggleSwitch
+              checked={runInParallel}
+              key={`${streamUUID}/run_in_parallel`}
+              onCheck={() => updateStream(streamUUID, (stream: StreamType) => {
+                stream.run_in_parallel = !runInParallel;
+                return stream;
+              })}
+            />
+          </Spacing>
+        </Spacing>
 
         {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
           <Spacing mb={SPACING_BOTTOM_UNITS}>
