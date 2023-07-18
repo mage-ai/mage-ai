@@ -25,7 +25,7 @@ LlmPolicy.allow_actions([
 
 LlmPolicy.allow_read([
     'use_case',
-    'payload',
+    'request',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

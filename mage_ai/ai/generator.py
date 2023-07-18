@@ -5,11 +5,11 @@ from mage_ai.ai.constants import LLMUseCase
 
 class Generator:
     @classmethod
-    def generate(self, use_case: LLMUseCase, payload: Dict) -> Dict:
+    def generate(self, use_case: LLMUseCase, request: Dict) -> Dict:
         if use_case == LLMUseCase.GENERATE_DOC_FOR_BLOCK:
             from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
-            pipeline_uuid = payload.get('pipeline_uuid')
-            block_uuid = payload.get('block_uuid')
+            pipeline_uuid = request.get('pipeline_uuid')
+            block_uuid = request.get('block_uuid')
             return dict(
                 block_doc=LLMPipelineWizard().generate_block_documentation_with_name(
                     pipeline_uuid,
