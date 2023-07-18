@@ -509,7 +509,6 @@ class Target(PluginBase, SingerReader, metaclass=abc.ABCMeta):
     # CLI handler
 
 
-
 class SQLTarget(Target):
     """Target implementation for SQL destinations."""
 
