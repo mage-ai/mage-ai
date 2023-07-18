@@ -161,7 +161,7 @@ class ClickHouse(BaseSQLDatabase):
         self,
         df: DataFrame,
         table_name: str,
-        database: str = 'default',
+        database: str,
     ):
         dtypes = infer_dtypes(df)
         db_dtypes = {
@@ -180,7 +180,7 @@ class ClickHouse(BaseSQLDatabase):
         self,
         df: DataFrame,
         table_name: str,
-        database: str = 'default',
+        database: str,
         if_exists: str = 'append',
         index: bool = False,
         query_string: Union[str, None] = None,
@@ -225,7 +225,7 @@ EXISTS TABLE {database}.{table_name}
                 if ExportWritePolicy.FAIL == if_exists:
                     raise ValueError(
                         f'Table \'{table_name}\' already'
-                        ' exists in database {database}.',
+                        f' exists in database {database}.',
                     )
                 elif ExportWritePolicy.REPLACE == if_exists:
                     self.client.command(
