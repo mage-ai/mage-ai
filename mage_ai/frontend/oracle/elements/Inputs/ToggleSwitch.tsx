@@ -15,7 +15,7 @@ type ToggleSwitchProps = {
 } & InputWrapperProps;
 
 const ToggleSwitchStyle = styled.label<
-  InputWrapperProps & {monotone?: boolean }
+  InputWrapperProps & { monotone?: boolean }
 >`
   ${SHARED_INPUT_STYLES}
 
