@@ -193,9 +193,14 @@ def make_app():
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    updated_routes = []
+    for route in routes:
+        updated_routes.append((route[0].replace('/', '/test-ingress/', 1), *route[1:]))
+
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
-        routes,
+        updated_routes,
         autoreload=True,
         template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
     )
@@ -209,9 +214,6 @@ async def main(
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
-
-    for handler in app.handlers[0][1]:
-        handler.regex = re.compile(handler.regex.pattern.replace('/', '/myApplication/', 1))
 
     port = int(port)
     max_port = port + 100

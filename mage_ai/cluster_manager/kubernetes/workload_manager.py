@@ -54,14 +54,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        try:
-            config.load_incluster_config()
-            return True
-        except Exception:
-            pass
+        # try:
+        #     config.load_incluster_config()
+        #     return True
+        # except Exception:
+        #     pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/k8s_main_project/kubeconfig')
         except Exception:
             pass
 
@@ -144,6 +144,13 @@ class WorkloadManager:
         )
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
+
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
 
         ingress_name = kwargs.get('ingress_name')
 
@@ -308,6 +315,7 @@ class WorkloadManager:
 
         k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
 
+        ingress_name = 'mageai'
         if ingress_name:
             self.update_ingress_paths(ingress_name, service_name, name)
 
@@ -329,7 +337,8 @@ class WorkloadManager:
                                     )
                                 )
                             ),
-                            path=f'/{workspace_name}'
+                            path=f'/{workspace_name}',
+                            path_type='Prefix',
                         )
                     ]
                 ),
@@ -466,7 +475,7 @@ class WorkloadManager:
 
     def __create_persistent_volume(
         self,
-        name,
+        name: str,
         volume_host_path=None,
         storage_request_size='2Gi',
         access_mode=None,
