@@ -3,9 +3,9 @@ title: "GitHub Actions"
 description: "Development (local) and production (cloud) using GitHub Actions."
 ---
 
-## Mage project setup
+Mage supports GitHub Actions for CI/CD workflows. We have templates for deploying to [AWS ECS, GCP Cloud Run, and Azure](https://github.com/mage-ai/mage-ai/tree/master/templates/github_actions).
 
-Follow the [Mage project setup instructions](/production/ci-cd/local-cloud/repository-setup).
+Before you configure your action, follow the [Mage project setup instructions](/production/ci-cd/local-cloud/repository-setup).
 
 ---
 
@@ -86,12 +86,10 @@ env:
 | `ECS_TASK_DEFINITION` | Go to your AWS ECS task definition for the above service. Click on the **JSON** tab on the task definition detail page. Copy the JSON string content and save it to a file in your root folder containing your Mage project. Use the path to that file as the value in this field. | `some_path/ecs-task-definition.json` |
 
 1. Click the button labeled **Start commit** in the top right corner.
-1. Click the button labeled **Commit new file**.
-1. Every time you merge a pull request into the master branch, this GitHub
+2. Click the button labeled **Commit new file**.
+3. Every time you merge a pull request into the master branch, this GitHub
    Action will run, building a Docker image using your GitHub code, then
    updating AWS ECS to use the new image with the updated code.
-
----
 
 ## GCP
 
@@ -138,8 +136,26 @@ env:
     Action will run, building a Docker image using your GitHub code, then
     updating Google Cloud Run to use the new image with the updated code.
 
----
-
 ## Azure
 
-_Coming soon..._
+Mage can be deployed to Azure using GitHub Actions. 
+
+Our template for deploying to an Azure Container instance is located [here](https://github.com/mage-ai/mage-ai/blob/master/templates/github_actions/build_and_deploy_to_azure_container_instance.yml) and based off the "GitHub Workflow" option in Azure's docs.
+
+To configure this workflow, you will need to add the following secrets to your GitHub repo:
+
+| Key                   | Description                                                                            |   |   |   |
+|-----------------------|----------------------------------------------------------------------------------------|---|---|---|
+| `AZURE_CREDENTIALS`     | The entire JSON output from the service principal creation step                        |   |   |   |
+| `REGISTRY_LOGIN_SERVER` | The login server name of your registry (all lowercase). Example: myregistry.azurecr.io |   |   |   |
+| `REGISTRY_USERNAME`     | The clientId from the JSON output from the service principal creation                  |   |   |   |
+| `REGISTRY_PASSWORD`     | The clientSecret from the JSON output from the service principal creation              |   |   |   |
+| `RESOURCE_GROUP`        | The name of the resource group you used to scope the service principal                 |   |   |   |
+
+We recommend [Microsoft's Guide](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action?tabs=userlevel#configure-github-workflow) for obtaining these credentials via the Azure CLI. 
+
+Microsoft also has templates that are similar to ours— we use the `Service ID Principal` method for authentication, but you can check Microsoft's docs for the [`OpenID Connect`](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action?tabs=openid#save-credentials-to-github-repo) method.
+
+Alternatively, you can use the `az container app up` command in the [Deploy to Azure](https://github.com/Azure/deploy-to-azure-cli-extension) extension in the Azure CLI. This command streamlines creation of the GitHub workflow and deployment steps.
+
+
