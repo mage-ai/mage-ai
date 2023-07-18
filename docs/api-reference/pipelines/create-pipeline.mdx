@@ -54,7 +54,7 @@ api: "POST /api/pipelines"
       }
   }
   
-  r = requests.post('http://localhost:6789/api/pipelines', headers=headers, json=json_data)
+  r = requests.get('http://localhost:6789/api/pipelines', headers=headers, json=json_data)
   ```
 </CodeGroup>
 
