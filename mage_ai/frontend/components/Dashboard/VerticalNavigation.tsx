@@ -81,7 +81,7 @@ const DEFAULT_NAV_ITEMS = [
       {
         Icon: BranchAlt,
         id: 'version-control',
-        label: () => 'Version control (beta)',
+        label: () => 'Version control',
         linkProps: {
           href: '/version-control',
         },

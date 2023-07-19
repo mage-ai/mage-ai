@@ -64,7 +64,9 @@ function VersionControl() {
   });
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_custom_branches, [dataBranches]);
 
-  const { data: dataBranch, mutate: fetchBranch } = api.git_custom_branches.detail('current');
+  const { data: dataBranch, mutate: fetchBranch } = api.git_custom_branches.detail('current', {
+    _format: 'with_files',
+  });
   const branch: GitBranchType = useMemo(() => dataBranch?.git_custom_branch || {}, [dataBranch]);
   const files: FileType[] = useMemo(() => branch?.files || [], [branch]);
 
