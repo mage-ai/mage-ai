@@ -154,7 +154,8 @@ class PipelineScheduler:
         )
 
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
-        self.__run_heartbeat()
+        if lock.try_acquire_lock(f'pipeline_run_{self.pipeline_run.id}', timeout=10):
+            self.__run_heartbeat()
 
         for b in self.pipeline_run.block_runs:
             b.refresh()

@@ -19,7 +19,7 @@ class DistributedLock:
     def __lock_key(self, key) -> str:
         return f'{self.lock_key_prefix}_{key}'
 
-    def try_acquire_lock(self, key) -> bool:
+    def try_acquire_lock(self, key, timeout: int = None) -> bool:
         if not self.redis_client:
             return True
         # Try to acquire the lock by setting the lock key with a value and an expiration time
@@ -27,7 +27,7 @@ class DistributedLock:
             self.__lock_key(key),
             '1',
             nx=True,
-            ex=self.lock_timeout,
+            ex=timeout or self.lock_timeout,
         )
         return acquired is True
 
