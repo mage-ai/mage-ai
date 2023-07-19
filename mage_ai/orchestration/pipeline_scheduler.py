@@ -49,6 +49,7 @@ from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
+from mage_ai.settings import HOSTNAME
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
@@ -710,11 +711,14 @@ class PipelineScheduler:
         return crashed_runs
 
     def __build_tags(self, **kwargs):
-        return merge_dict(kwargs, dict(
+        base_tags = dict(
             pipeline_run_id=self.pipeline_run.id,
             pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
             pipeline_uuid=self.pipeline.uuid,
-        ))
+        )
+        if HOSTNAME:
+            base_tags['hostname'] = HOSTNAME
+        return merge_dict(kwargs, base_tags)
 
     def __run_heartbeat(self) -> None:
         load1, load5, load15, cpu_count = get_compute()
