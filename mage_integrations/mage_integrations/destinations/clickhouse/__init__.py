@@ -9,9 +9,9 @@ from mage_integrations.destinations.clickhouse.target_clickhouse.target import (
 
 class Clickhouse(Destination):
     def process(self, input_buffer) -> None:
-        TargetClickhouse(config=self.config,logger=self.logger).listen_override(
+        self.config['state_path'] = self.state_file_path
+        TargetClickhouse(config=self.config, logger=self.logger).listen_override(
             file_input=open(self.input_file_path, 'r'))
-
 
 
 if __name__ == '__main__':

@@ -21,7 +21,6 @@ class TargetClickhouse(SQLTarget):
         th.Property(
             "sqlalchemy_url",
             th.StringType,
-            secret=True,  # Flag config as protected.
             description="SQLAlchemy connection string",
         ),
     ).to_dict()

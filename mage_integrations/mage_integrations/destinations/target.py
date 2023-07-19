@@ -503,6 +503,10 @@ class Target(PluginBase, SingerReader, metaclass=abc.ABCMeta):
         """
         state_json = json.dumps(state)
         self.logger.info(f"Emitting completed target state {state_json}")
+        self.logger.info(f"{self.config}")
+        text = f'{state_json}\n'
+        with open(self.config['state_path'], "w") as file:
+            file.write(text)
         sys.stdout.write(f"{state_json}\n")
         sys.stdout.flush()
 
