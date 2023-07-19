@@ -327,7 +327,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
         success, num_chunks, num_rows, output = write_pandas(
-            self.build_connection().connection,
+            self.build_connection().build_connection(),
             df,
             table,
             database=database,
