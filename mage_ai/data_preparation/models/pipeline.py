@@ -32,7 +32,10 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_uuid,
     get_repo_config,
 )
-from mage_ai.data_preparation.shared.secrets import get_secrets_dir
+from mage_ai.data_preparation.shared.secrets import (
+    delete_secrets_dir,
+    rename_pipeline_secrets_dir,
+)
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -783,20 +786,7 @@ class Pipeline:
 
             # Update pipeline secrets directory.
             try:
-                secrets_dir = get_secrets_dir(
-                    Entity.PIPELINE,
-                    get_project_uuid(),
-                    old_uuid,
-                )
-                if os.path.exists(secrets_dir):
-                    shutil.move(
-                        secrets_dir,
-                        get_secrets_dir(
-                            Entity.PIPELINE,
-                            get_project_uuid(),
-                            new_uuid,
-                        )
-                    )
+                rename_pipeline_secrets_dir(get_project_uuid(), old_uuid, new_uuid)
             except Exception as err:
                 print(f'Could not rename pipeline secrets directory with error: {str(err)}')
 
@@ -1335,13 +1325,7 @@ class Pipeline:
 
         # Delete secret directory when deleting pipeline
         try:
-            secrets_dir = get_secrets_dir(
-                Entity.PIPELINE,
-                get_project_uuid(),
-                self.uuid,
-            )
-            if os.path.exists(secrets_dir):
-                shutil.rmtree(secrets_dir)
+            delete_secrets_dir(Entity.PIPELINE, get_project_uuid(), self.uuid)
         except Exception as err:
             print(f'Could not delete secrets directory due to {str(err)}')
 

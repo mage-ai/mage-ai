@@ -1,4 +1,5 @@
 import os
+import shutil
 import uuid
 from typing import List, Tuple
 
@@ -43,6 +44,37 @@ def get_secrets_dir(
         )
 
     return secrets_dir
+
+
+def rename_pipeline_secrets_dir(
+    project_uuid: str,
+    old_pipeline_uuid: str,
+    new_pipeline_uuid: str,
+):
+    secrets_dir = get_secrets_dir(
+        Entity.PIPELINE,
+        project_uuid,
+        old_pipeline_uuid,
+    )
+    if os.path.exists(secrets_dir):
+        shutil.move(
+            secrets_dir,
+            get_secrets_dir(
+                Entity.PIPELINE,
+                project_uuid,
+                new_pipeline_uuid,
+            )
+        )
+
+
+def delete_secrets_dir(
+    entity: Entity,
+    project_uuid: str = None,
+    pipeline_uuid: str = None,
+):
+    secrets_dir = get_secrets_dir(entity, project_uuid, pipeline_uuid)
+    if os.path.exists(secrets_dir):
+        shutil.rmtree(secrets_dir)
 
 
 def create_secret(
@@ -158,12 +190,13 @@ def delete_secret(
     project_uuid: str = None,
 ) -> None:
     from mage_ai.orchestration.db.models.secrets import Secret
-
-    secret = Secret.query.filter(
-        Secret.name == name,
-        Secret.repo_name == get_repo_path(),
-        Secret.key_uuid.is_(None),
-    ).one_or_none()
+    secret = None
+    if entity == Entity.GLOBAL:
+        secret = Secret.query.filter(
+            Secret.name == name,
+            Secret.repo_name == get_repo_path(),
+            Secret.key_uuid.is_(None),
+        ).one_or_none()
 
     if not secret:
         _, key_uuid = _get_encryption_key(
