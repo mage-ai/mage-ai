@@ -16,7 +16,7 @@ from mage_ai.api.utils import (
     is_owner,
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.constants import Entity
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import extract
@@ -42,8 +42,8 @@ class BasePolicy():
             self.resources = [resource]
 
     @property
-    def entity(self) -> Tuple[Union[Permission.Entity, None], Union[str, None]]:
-        return Permission.Entity.PROJECT, get_project_uuid()
+    def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
+        return Entity.PROJECT, get_project_uuid()
 
     @classmethod
     def action_rule(self, action):

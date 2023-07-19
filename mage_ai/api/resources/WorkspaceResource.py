@@ -22,8 +22,9 @@ from mage_ai.data_preparation.repo_manager import (
     get_repo_config,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import Permission, Role, User
+from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
 from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
@@ -82,7 +83,7 @@ class WorkspaceResource(GenericResource):
                         workspace['project_uuid'] = project_uuid
                         if query_user:
                             workspace['access'] = query_user.get_access(
-                                Permission.Entity.PROJECT,
+                                Entity.PROJECT,
                                 project_uuid,
                             )
                     workspaces.append(workspace)
@@ -216,7 +217,7 @@ class WorkspaceResource(GenericResource):
                 project_uuid is not None and \
                 REQUIRE_USER_AUTHENTICATION:
             Role.create_default_roles(
-                entity=Permission.Entity.PROJECT,
+                entity=Entity.PROJECT,
                 entity_id=project_uuid,
                 prefix=workspace_name,
             )
