@@ -170,7 +170,10 @@ class WorkspaceResource(GenericResource):
                     **extra_args,
                 )
             elif cluster_type == ClusterType.ECS:
-                from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+                from mage_ai.cluster_manager.aws.ecs_manager import (
+                    EcsManager,
+                    InstanceType,
+                )
                 cluster_name = payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
                 task_definition = payload.get(
                     'task_definition',
@@ -180,11 +183,11 @@ class WorkspaceResource(GenericResource):
                     'container_name',
                     os.getenv(ECS_CONTAINER_NAME),
                 )
+                instance_type = payload.get('instance_type', InstanceType.SERVICE)
 
-                ecs_instance_manager = EcsTaskManager(cluster_name)
-
-                # TODO: Create a service for each workspace
-                ecs_instance_manager.create_task(
+                ecs_instance_manager = EcsManager(cluster_name)
+                ecs_instance_manager.create_instance(
+                    instance_type,
                     workspace_name,
                     task_definition,
                     container_name,
@@ -228,7 +231,7 @@ class WorkspaceResource(GenericResource):
         cluster_type = self.model.get('cluster_type')
         instance_name = self.model.get('name')
         if cluster_type == ClusterType.ECS:
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
             task_arn = payload.get('task_arn')
             cluster_name = payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
             task_definition = payload.get(
@@ -239,7 +242,7 @@ class WorkspaceResource(GenericResource):
 
             action = payload.get('action')
 
-            ecs_instance_manager = EcsTaskManager(cluster_name)
+            ecs_instance_manager = EcsManager(cluster_name)
             if action == 'stop':
                 ecs_instance_manager.stop_task(task_arn)
             elif action == 'resume':
@@ -256,6 +259,8 @@ class WorkspaceResource(GenericResource):
         workspace_name = self.model.get('name')
         instance = self.model.get('instance')
 
+        print('model:', self.model)
+
         repo_path = get_repo_path()
         workspace_file = os.path.join(repo_path, 'projects', f'{workspace_name}.yaml')
 
@@ -263,12 +268,13 @@ class WorkspaceResource(GenericResource):
 
         try:
             if cluster_type == ClusterType.ECS:
-                from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+                from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
+                instance_type = instance.get('type')
                 task_arn = instance.get('task_arn')
                 cluster_name = os.getenv(ECS_CLUSTER_NAME)
 
-                ecs_instance_manager = EcsTaskManager(cluster_name)
-                ecs_instance_manager.delete_task(workspace_name, task_arn)
+                ecs_instance_manager = EcsManager(cluster_name)
+                ecs_instance_manager.delete(instance_type, workspace_name, task_arn)
             elif cluster_type == ClusterType.K8S:
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
                     WorkloadManager,
@@ -318,10 +324,13 @@ class WorkspaceResource(GenericResource):
 
             instances = workload_manager.list_workloads()
         elif cluster_type == ClusterType.ECS:
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
             cluster_name = os.getenv(ECS_CLUSTER_NAME)
-            ecs_instance_manager = EcsTaskManager(cluster_name)
-            instances = ecs_instance_manager.list_tasks()
+            ecs_instance_manager = EcsManager(cluster_name)
+            services = ecs_instance_manager.list_services()
+            tasks = ecs_instance_manager.list_tasks()
+
+            instances = services + tasks
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
                 CloudRunServiceManager,

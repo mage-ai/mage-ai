@@ -31,11 +31,11 @@ class ApiInstancesHandler(BaseHandler):
     def get(self, cluster_type):
         instances = []
         if cluster_type == ClusterType.ECS:
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
 
             try:
                 cluster_name = self.get_argument('cluster_name', os.getenv(ECS_CLUSTER_NAME))
-                ecs_instance_manager = EcsTaskManager(cluster_name)
+                ecs_instance_manager = EcsManager(cluster_name)
                 instances = ecs_instance_manager.list_tasks()
             except Exception as e:
                 logger.error(str(e))
@@ -68,7 +68,7 @@ class ApiInstancesHandler(BaseHandler):
     def post(self, cluster_type):
         try:
             if cluster_type == ClusterType.ECS:
-                from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+                from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
@@ -81,7 +81,7 @@ class ApiInstancesHandler(BaseHandler):
                     os.getenv(ECS_CONTAINER_NAME),
                 )
 
-                ecs_instance_manager = EcsTaskManager(cluster_name)
+                ecs_instance_manager = EcsManager(cluster_name)
 
                 instance = ecs_instance_manager.create_task(
                     name,
@@ -147,7 +147,7 @@ class ApiInstancesHandler(BaseHandler):
 class ApiInstanceDetailHandler(BaseHandler):
     def put(self, cluster_type, instance_name):
         if cluster_type == 'ecs':
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
             instance_payload = self.get_payload().get('instance')
             task_arn = instance_payload.get('task_arn')
             cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
@@ -159,7 +159,7 @@ class ApiInstanceDetailHandler(BaseHandler):
 
             action = instance_payload.get('action')
 
-            ecs_instance_manager = EcsTaskManager(cluster_name)
+            ecs_instance_manager = EcsManager(cluster_name)
             instance = None
             if action == 'stop':
                 instance = ecs_instance_manager.stop_task(task_arn)
@@ -177,11 +177,11 @@ class ApiInstanceDetailHandler(BaseHandler):
 
     def delete(self, cluster_type, instance_name):
         if cluster_type == 'ecs':
-            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            from mage_ai.cluster_manager.aws.ecs_manager import EcsManager
             task_arn = self.get_argument('task_arn', None)
             cluster_name = self.get_argument('cluster_name', os.getenv(ECS_CLUSTER_NAME))
 
-            ecs_instance_manager = EcsTaskManager(cluster_name)
+            ecs_instance_manager = EcsManager(cluster_name)
             ecs_instance_manager.delete_task(instance_name, task_arn)
 
         self.write(dict(

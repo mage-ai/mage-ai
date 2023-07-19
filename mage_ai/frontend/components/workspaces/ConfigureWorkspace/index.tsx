@@ -167,6 +167,29 @@ function ConfigureWorkspace({
     configureContainer,
     workspaceConfig,
   ]);
+
+  const ecsFields = useMemo(() => (
+    <Spacing mt={1}>
+      <Select
+        label="ECS instance type"
+        onChange={(e) => {
+          e.preventDefault();
+          setWorkspaceConfig(prev => ({
+            ...prev,
+            instance_type: e.target.value,
+          }));
+        }}
+        placeholder="Instance type"
+        value={workspaceConfig?.['instance_type']}
+      >
+        {['service', 'task'].map(val => (
+          <option key={val} value={val}>
+            {val}
+          </option>
+        ))}
+      </Select>
+    </Spacing>
+  ), [workspaceConfig]);
   
   return (
     <Panel>
@@ -209,6 +232,11 @@ function ConfigureWorkspace({
             {clusterType === ClusterTypeEnum.K8S && (
               <Spacing mt={2}>
                 {k8sSettingsFields}
+              </Spacing>
+            )}
+            {clusterType === ClusterTypeEnum.ECS && (
+              <Spacing mt={2}>
+                {ecsFields}
               </Spacing>
             )}
           </form>

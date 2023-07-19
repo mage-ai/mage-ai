@@ -9,9 +9,9 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-      - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
-      - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
-      - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
+      - ECS_CLUSTER_NAME=david-dev-test-cluster
+      - ECS_CONTAINER_NAME=david-dev-test-container
+      - ECS_TASK_DEFINITION=david-dev-dev-task
       - ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
       - ENV=dev
       - GCP_PROJECT_ID=$GCP_PROJECT_ID

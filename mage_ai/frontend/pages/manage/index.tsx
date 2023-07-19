@@ -303,10 +303,7 @@ function WorkspacePage() {
             type,
           } = instance;
 
-          let link = `http://${ip}`;
-          if (clusterType === 'ecs') {
-            link = `http://${ip}:6789`;
-          }
+          const link = `http://${ip}`;
 
           return [
             <Button
