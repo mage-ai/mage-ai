@@ -48,6 +48,7 @@ BlockPolicy.allow_read([
     'bookmarks',
     'content',
     'outputs',
+    'pipelines',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
