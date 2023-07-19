@@ -975,6 +975,11 @@ def run_block(
         return {}
 
     block_run = BlockRun.query.get(block_run_id)
+    if block_run.status not in [
+        BlockRun.BlockRunStatus.INITIAL,
+        BlockRun.BlockRunStatus.QUEUED,
+    ]:
+        return {}
 
     block_run.update(
         started_at=datetime.now(),
