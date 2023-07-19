@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from mage_ai.shared.config import BaseConfig
 from enum import Enum
+
+from mage_ai.shared.config import BaseConfig
 
 
 class QueueType(str, Enum):

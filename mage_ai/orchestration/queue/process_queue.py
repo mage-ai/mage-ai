@@ -7,6 +7,7 @@ from multiprocessing import Manager
 from typing import Callable
 
 import newrelic.agent
+import redis
 import sentry_sdk
 from sentry_sdk import capture_exception
 
@@ -15,8 +16,6 @@ from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.settings import HOSTNAME, REDIS_URL, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
-
-import redis
 
 LIVENESS_TIMEOUT_SECONDS = 300
 
@@ -88,6 +87,8 @@ class ProcessQueue(Queue):
             **kwargs: Keyword arguments for the target function.
 
         """
+        if self.has_job(job_id):
+            self._print(f'Job {job_id} exists. Skip enqueue.')
         self._print(f'Enqueue job {job_id}')
         if self.redis_client:
             self.redis_client.set(job_id, self.client_id)

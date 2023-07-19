@@ -47,6 +47,7 @@ from mage_ai.orchestration.job_manager import JobType, job_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.settings import HOSTNAME
@@ -59,6 +60,7 @@ from mage_ai.shared.retry import retry
 
 MEMORY_USAGE_MAXIMUM = 0.95
 
+lock = DistributedLock()
 logger = Logger().new_server_logger(__name__)
 
 
@@ -1324,6 +1326,9 @@ def schedule_all():
     )
 
     for pipeline_schedule in active_pipeline_schedules:
+        lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
+        if not lock.try_acquire_lock(lock_key):
+            continue
         if pipeline_schedule.should_schedule() and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
@@ -1370,6 +1375,7 @@ def schedule_all():
                         )
 
                 pipeline_scheduler.start(should_schedule=False)
+        lock.release_lock(lock_key)
 
     active_pipeline_runs = PipelineRun.active_runs_for_pipelines(
         pipeline_uuids=repo_pipelines,
