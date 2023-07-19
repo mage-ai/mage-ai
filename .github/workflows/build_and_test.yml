@@ -35,6 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install libkrb5-dev
+          sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r mage_integrations/requirements.txt

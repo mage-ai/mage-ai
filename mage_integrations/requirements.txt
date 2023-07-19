@@ -6,8 +6,8 @@ deltalake==0.7.0
 facebook_business==16.0.0
 google-analytics-data==0.14.2
 google-api-python-client==2.70.0
-google-cloud-bigquery-storage==2.16.2
 google-cloud-bigquery~=3.0
+google-cloud-bigquery-storage==2.16.2
 google-cloud-storage==2.5.0 
 httpx==0.23.1
 httpx[http2]
@@ -19,8 +19,9 @@ psycopg2-binary==2.9.3
 pyarrow==10.0.1
 pymongo==4.3.3
 pymongo_schema==0.4.1
-pymssql~=2.2.7
+pymssql @ git+https://github.com/dy46/pymssql.git@master
 python-dateutil==2.8.2
+python-magic==0.4.27
 redshift-connector==2.0.909
 requests==2.27.1
 requests_mock==1.10.0
@@ -31,7 +32,6 @@ stripe==4.2.0
 trino==0.321.0
 twitter-ads==11.0.0
 tzlocal==4.2
+xlsx2csv==0.8.1
 xmltodict==0.13.0
 zenpy==2.0.25
-xlsx2csv==0.8.1
-python-magic==0.4.27
