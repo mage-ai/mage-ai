@@ -1,5 +1,4 @@
 from mage_ai.api.presenters.GitBranchPresenter import GitBranchPresenter
-from mage_ai.shared.hash import merge_dict
 
 
 class GitCustomBranchPresenter(GitBranchPresenter):
