@@ -246,7 +246,7 @@ class GitBranchResource(GenericResource):
 
         return self
 
-    def files(self) -> Dict:
+    def files(self, limit: int = None) -> Dict:
         git_manager = self.get_git_manager(user=self.current_user)
 
         files = {}
@@ -255,7 +255,12 @@ class GitBranchResource(GenericResource):
         staged_files = git_manager.staged_files()
         untracked_files = git_manager.untracked_files()
 
-        for filename in modified_files + staged_files + untracked_files:
+        arr = modified_files + staged_files + untracked_files
+
+        if limit:
+            arr = arr[:limit]
+
+        for filename in arr:
             # filename: default_repo/transformers/load.py
             parts = filename.split(os.sep)
             number_of_parts = len(parts)

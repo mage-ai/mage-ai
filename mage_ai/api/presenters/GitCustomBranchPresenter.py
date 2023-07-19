@@ -24,7 +24,7 @@ class GitCustomBranchPresenter(GitBranchPresenter):
         if 'with_basic_details' == display_format:
             return dict(name=data_to_display.get('name'))
         elif 'with_files' == display_format:
-            data_to_display.update(files=self.resource.files())
+            data_to_display.update(files=self.resource.files(limit=100))
         elif 'with_logs' == display_format:
             data_to_display.update(logs=self.resource.logs(commits=12))
         elif 'with_remotes' == display_format:
