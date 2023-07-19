@@ -18,25 +18,49 @@ class GitCustomBranchPresenter(GitBranchPresenter):
     ]
 
     def present(self, **kwargs):
-        if 'with_logs' == kwargs['format']:
-            return merge_dict(self.model, dict(logs=self.resource.logs(commits=12)))
-        elif 'with_remotes' == kwargs['format']:
-            return merge_dict(self.model, dict(remotes=self.resource.remotes(limit=100)))
+        display_format = kwargs.get('format')
 
-        return self.model
+        data_to_display = self.model
+
+        if 'with_basic_details' == display_format:
+            return dict(name=data_to_display.get('name'))
+        elif 'with_files' == display_format:
+            data_to_display.update(files=self.resource.files())
+        elif 'with_logs' == display_format:
+            data_to_display.update(logs=self.resource.logs(commits=12))
+        elif 'with_remotes' == display_format:
+            data_to_display.update(remotes=self.resource.remotes(limit=100))
+
+        return data_to_display
 
 
-GitBranchPresenter.register_format(
+GitCustomBranchPresenter.register_format(
+    'with_basic_details',
+    [
+        'name',
+    ],
+)
+
+
+GitCustomBranchPresenter.register_format(
+    'with_files',
+    GitCustomBranchPresenter.default_attributes + [
+        'files',
+    ],
+)
+
+
+GitCustomBranchPresenter.register_format(
     'with_logs',
-    GitBranchPresenter.default_attributes + [
+    GitCustomBranchPresenter.default_attributes + [
         'logs',
     ],
 )
 
 
-GitBranchPresenter.register_format(
+GitCustomBranchPresenter.register_format(
     'with_remotes',
-    GitBranchPresenter.default_attributes + [
+    GitCustomBranchPresenter.default_attributes + [
         'remotes',
     ],
 )
