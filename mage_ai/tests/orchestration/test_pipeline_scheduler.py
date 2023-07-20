@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import pytz
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
@@ -361,7 +362,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(
             status=ScheduleStatus.ACTIVE,
         )
-        now_time = datetime(2023, 5, 23, 1, 20, 33)
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
         pipeline_run = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=601),
             pipeline_uuid=pipeline_uuid,
@@ -380,11 +381,9 @@ class PipelineSchedulerTests(DBTestCase):
             pipeline_schedule_id=pipeline_schedule.id,
         )
         pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        with patch('datetime.datetime.now') as mock_now:
-            mock_now.return_value = now_time
-            with patch.object(
-                NotificationSender,
-                'send_pipeline_run_sla_passed_message'
-            ) as mock_send_message:
-                check_sla()
-                mock_send_message.assert_called_once()
+        with patch.object(
+            NotificationSender,
+            'send_pipeline_run_sla_passed_message'
+        ) as mock_send_message:
+            check_sla()
+            mock_send_message.assert_called_once()
