@@ -47,7 +47,7 @@ class BigQuery(BaseSQLDatabase):
             "https://www.googleapis.com/auth/sqlservice.login",
             "https://www.googleapis.com/auth/drive"
         ]
-        
+
         credentials = kwargs.get('credentials')
         if credentials is None:
             if 'credentials_mapping' in kwargs:
