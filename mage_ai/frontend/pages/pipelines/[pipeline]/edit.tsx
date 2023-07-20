@@ -268,9 +268,6 @@ function PipelineDetailPage({
     pipelineLastSavedState,
     showStalePipelineMessageModal,
   ]);
-  useEffect(() => {
-    displayErrorFromReadResponse(data, setPipelineErrors);
-  }, [data]);
 
   const qUrl = queryFromUrl();
   const {
@@ -417,6 +414,14 @@ function PipelineDetailPage({
     revalidateOnFocus: false,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
+
+  useEffect(() => {
+    let dataWithPotentialError = data;
+    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
+      dataWithPotentialError = dataDataProviders;
+    }
+    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors);
+  }, [data, dataDataProviders]);
 
   // Variables
   const {
