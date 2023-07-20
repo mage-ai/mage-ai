@@ -985,6 +985,7 @@ def run_block(
     if block_run.status not in [
         BlockRun.BlockRunStatus.INITIAL,
         BlockRun.BlockRunStatus.QUEUED,
+        BlockRun.BlockRunStatus.RUNNING,
     ]:
         return {}
 

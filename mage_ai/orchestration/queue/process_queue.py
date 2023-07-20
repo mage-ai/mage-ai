@@ -89,6 +89,7 @@ class ProcessQueue(Queue):
         """
         if self.has_job(job_id):
             self._print(f'Job {job_id} exists. Skip enqueue.')
+            return
         self._print(f'Enqueue job {job_id}')
         if self.redis_client:
             self.redis_client.set(job_id, self.client_id)
