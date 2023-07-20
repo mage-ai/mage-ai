@@ -217,3 +217,18 @@ export function replacePipelinesFolderWithConfig(
     .concat(filesWithChildren)
     .concat(filesWithoutChildren);
 }
+
+export function getBlockFromFilePath(filePath: string, blocks: BlockType[]) {
+  // data_loaders/[uuid].[extension]
+
+  const nameParts = filePath.split('.');
+  const fileExtension = nameParts[nameParts.length - 1] as FileExtensionEnum;
+  if (CODE_BLOCK_FILE_EXTENSIONS.includes(fileExtension)) {
+    nameParts.pop();
+  }
+
+  const parts = nameParts.join('').split(osPath.sep);
+  const blockUUID = parts.slice(1, parts.length).join('');
+
+  return blocks.find(({ uuid }: BlockType) => uuid === blockUUID);
+}

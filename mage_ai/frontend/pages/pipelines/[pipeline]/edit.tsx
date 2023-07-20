@@ -97,6 +97,7 @@ import {
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
+import { getBlockFromFilePath } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -903,11 +904,25 @@ function PipelineDetailPage({
     if (!filePaths.includes(filePathEncoded)) {
       filePaths.push(filePathEncoded);
     }
-    goToWithQuery({
-      file_path: filePathEncoded,
-      'file_paths[]': filePaths,
-    });
+
+
+    const block = getBlockFromFilePath(filePath, blocks);
+
+    if (block) {
+      setSelectedBlock(block);
+      if (blockRefs?.current) {
+        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+        blockRef?.current?.scrollIntoView();
+      }
+    } else {
+      goToWithQuery({
+        file_path: filePathEncoded,
+        'file_paths[]': filePaths,
+      });
+    }
   }, [
+    blockRefs,
+    blocks,
     savePipelineContent,
   ]);
 
