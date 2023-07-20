@@ -2404,7 +2404,7 @@ function PipelineDetailPage({
         pipeline={pipeline}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
-        setErrors={setErrors}
+        setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >
         <div
