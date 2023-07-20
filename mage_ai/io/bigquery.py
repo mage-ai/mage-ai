@@ -10,6 +10,7 @@ from mage_ai.shared.utils import (
 from pandas import DataFrame
 from typing import Dict, List, Mapping, Union
 
+
 class BigQuery(BaseSQLDatabase):
     """
     Handles data transfer between a BigQuery data warehouse and the Mage app.
