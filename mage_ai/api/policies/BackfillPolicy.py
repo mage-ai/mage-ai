@@ -24,6 +24,7 @@ BackfillPolicy.allow_actions([
 
 BackfillPolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -44,6 +45,7 @@ BackfillPolicy.allow_read([] + BackfillPresenter.default_attributes, scopes=[
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
+    constants.DELETE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 BackfillPolicy.allow_write([

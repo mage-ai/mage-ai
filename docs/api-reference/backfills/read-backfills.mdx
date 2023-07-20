@@ -1,5 +1,5 @@
 ---
-title: "Read backfill"
+title: "Read backfills"
 api: "GET /api/backfills"
 ---
 `GET /api/backfills`
@@ -14,6 +14,14 @@ api: "GET /api/backfills"
   Read logs after N number of logs, where N equals `_offset`.
 
   Example: `10`
+</ParamField>
+
+<ParamField query="pipeline_uuid" type="string">
+  The pipeline uuid for which to read backfills.
+</ParamField>
+
+<ParamField query="include_run_count" type="boolean">
+  A boolean which indicates wheter to return the run count in the response metadata object.
 </ParamField>
 
 <CodeGroup>
