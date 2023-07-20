@@ -7,7 +7,6 @@ from multiprocessing import Manager
 from typing import Callable
 
 import newrelic.agent
-import redis
 import sentry_sdk
 from sentry_sdk import capture_exception
 
@@ -15,9 +14,7 @@ from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from mage_ai.services.newrelic import initialize_new_relic
-from mage_ai.settings import HOSTNAME, REDIS_URL, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
-
-LIVENESS_TIMEOUT_SECONDS = 300
+from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 
 class JobStatus(str, Enum):
@@ -45,25 +42,10 @@ class ProcessQueue(Queue):
 
         """
         self.queue_config = queue_config
-        self.process_queue_config = self.queue_config.process_queue_config
         self.queue = mp.Queue()
         self.size = queue_config.concurrency or os.cpu_count()
         self.mp_manager = Manager()
         self.job_dict = self.mp_manager.dict()
-
-        # Initialize redis client to track jobs across multiple replicas
-        if self.process_queue_config and self.process_queue_config.redis_url:
-            redis_url = self.process_queue_config.redis_url
-        elif REDIS_URL:
-            redis_url = REDIS_URL
-            self.redis_client = redis.Redis.from_url(url=REDIS_URL, decode_responses=True)
-        else:
-            redis_url = None
-        if redis_url:
-            self.redis_client = redis.Redis.from_url(url=redis_url, decode_responses=True)
-        else:
-            self.redis_client = None
-        self.client_id = f'HOST_{HOSTNAME}_PID_{os.getpid()}'
 
         self.worker_pool_proc = None
 
@@ -87,13 +69,7 @@ class ProcessQueue(Queue):
             **kwargs: Keyword arguments for the target function.
 
         """
-        if self.has_job(job_id):
-            self._print(f'Job {job_id} exists. Skip enqueue.')
         self._print(f'Enqueue job {job_id}')
-        if self.redis_client:
-            self.redis_client.set(job_id, self.client_id)
-        if self.redis_client:
-            self.redis_client.set(self.client_id, '1', ex=LIVENESS_TIMEOUT_SECONDS)
         self.queue.put([job_id, target, args, kwargs])
         self.job_dict[job_id] = JobStatus.QUEUED
         if not self.is_worker_pool_alive():
@@ -110,12 +86,6 @@ class ProcessQueue(Queue):
             bool: True if the job exists, False otherwise.
 
         """
-        if self.redis_client:
-            job_client_id = self.redis_client.get(job_id)
-            if not job_client_id:
-                return False
-            if job_client_id != self.client_id and self.redis_client.get(job_client_id):
-                return True
         job = self.job_dict.get(job_id)
         return job is not None and (job == JobStatus.QUEUED or isinstance(job, int))
 
@@ -147,13 +117,7 @@ class ProcessQueue(Queue):
         """
         self.worker_pool_proc = mp.Process(
             target=poll_job_and_execute,
-            args=[
-                self.queue,
-                self.size,
-                self.job_dict,
-                self.redis_client,
-                self.client_id,
-            ],
+            args=[self.queue, self.size, self.job_dict],
         )
         self.worker_pool_proc.start()
 
@@ -171,11 +135,7 @@ class ProcessQueue(Queue):
 
 
 class Worker(mp.Process):
-    def __init__(
-        self,
-        queue: mp.Queue,
-        job_dict,
-    ):
+    def __init__(self, queue: mp.Queue, job_dict):
         """
         A worker process for executing jobs from the process queue.
 
@@ -225,13 +185,7 @@ class Worker(mp.Process):
                 self.job_dict[job_id] = JobStatus.COMPLETED
 
 
-def poll_job_and_execute(
-    queue: mp.Queue,
-    size: int,
-    job_dict,
-    redis_client,
-    client_id: str,
-):
+def poll_job_and_execute(queue, size, job_dict):
     """
     Continuously polls the job queue and executes jobs in a worker pool.
 
@@ -254,5 +208,3 @@ def poll_job_and_execute(
             worker.start()
             workers.append(worker)
         time.sleep(1)
-        if redis_client and client_id:
-            redis_client.set(client_id, '1', ex=LIVENESS_TIMEOUT_SECONDS)

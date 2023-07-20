@@ -18,6 +18,7 @@ def clean_name(name: str, **kwargs) -> str:
 
     Returns:
         str: The cleaned name.
+
     """
     return clean_name_orig(name, allow_characters=['/'], **kwargs)
 
@@ -39,6 +40,7 @@ def dynamic_block_uuid(
 
     Returns:
         str: The generated dynamic block UUID.
+
     """
     block_uuid_subname = metadata.get('block_uuid', index)
     uuid = f'{block_uuid}:{block_uuid_subname}'
@@ -71,6 +73,7 @@ def create_block_run_from_dynamic_child(
 
     Returns:
         block_run: The created block run.
+
     """
     metadata = block_metadata.copy()
     metadata.update(dict(dynamic_block_index=index))
@@ -101,6 +104,7 @@ def dynamic_block_values_and_metadata(
 
     Returns:
         Tuple: A tuple containing the values and metadata of the dynamic block.
+
     """
     block_uuid_original = block.uuid
     block_uuid = block_uuid_original if block_uuid is None else block_uuid
@@ -142,6 +146,7 @@ def create_block_runs_from_dynamic_block(
 
     Returns:
         List: A list of all the created block runs.
+
     """
     block_uuid_original = block.uuid
     block_uuid = block_uuid_original if block_uuid is None else block_uuid
@@ -332,6 +337,7 @@ def get_all_ancestors(block) -> List:
 
     Returns:
         List: A list of all ancestors of the block.
+
     """
     arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
     return list(filter(
@@ -349,6 +355,7 @@ def get_all_descendants(block) -> List:
 
     Returns:
         List: A list of all descendants of the block.
+
     """
     arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
     return list(filter(
@@ -374,6 +381,7 @@ def get_leaf_nodes(
 
     Returns:
         List: A list of all leaf nodes of the block.
+
     """
     leafs = []
 
@@ -401,6 +409,7 @@ def is_dynamic_block(block) -> bool:
 
     Returns:
         bool: True if the block is a dynamic block, False otherwise.
+
     """
     return block.configuration and block.configuration.get('dynamic', False)
 
@@ -414,6 +423,7 @@ def should_reduce_output(block) -> bool:
 
     Returns:
         bool: True if the block should reduce its output, False otherwise.
+
     """
     return block.configuration and block.configuration.get('reduce_output', False)
 
@@ -427,6 +437,7 @@ def is_dynamic_block_child(block) -> bool:
 
     Returns:
         bool: True if the block is a dynamic block child, False otherwise.
+
     """
     dynamic_or_child = []
 
@@ -504,6 +515,7 @@ def is_valid_print_variable(k, v, block_uuid):
 
     Returns:
         bool: True if the key-value pair is a valid print variable, False otherwise.
+
     """
     if f'{block_uuid}_' not in k:
         return False
@@ -537,6 +549,7 @@ def input_variables(
 
     Returns:
         Dict[str, List[str]]: A mapping from upstream block UUID to a list of variable names.
+
     """
     return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
             for block_uuid in upstream_block_uuids}
@@ -567,6 +580,7 @@ def fetch_input_variables(
     Returns:
         Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
             upstream block UUIDs.
+
     """
     spark = (global_vars or dict()).get('spark')
     upstream_block_uuids_final = []

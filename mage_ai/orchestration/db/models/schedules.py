@@ -266,21 +266,6 @@ class PipelineRun(BaseModel):
                     ])
 
     @property
-    def initial_block_runs(self) -> List['BlockRun']:
-        return [b for b in self.block_runs
-                if b.status == BlockRun.BlockRunStatus.INITIAL]
-
-    @property
-    def completed_block_runs(self) -> List['BlockRun']:
-        return [b for b in self.block_runs
-                if b.status == BlockRun.BlockRunStatus.COMPLETED]
-
-    @property
-    def failed_block_runs(self) -> List['BlockRun']:
-        return [b for b in self.block_runs
-                if b.status == BlockRun.BlockRunStatus.FAILED]
-
-    @property
     def pipeline(self) -> 'Pipeline':
         return Pipeline.get(self.pipeline_uuid)
 
