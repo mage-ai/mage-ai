@@ -1287,7 +1287,7 @@ def check_sla():
                 pipeline_run.execution_date \
                 if pipeline_run.execution_date is not None \
                 else pipeline_run.created_at
-            if compare(start_date, current_time - timedelta(seconds=sla)) == 1:
+            if compare(start_date + timedelta(seconds=sla), current_time) == -1:
                 # passed SLA for pipeline_run
                 pipeline = Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid)
                 notification_sender = NotificationSender(

@@ -29,9 +29,9 @@ DEFAULT_MESSAGES = dict(
         ),
     ),
     passed_sla=dict(
-        title='SLA passed for Mage pipeline {{pipeline_uuid}}',
+        title='SLA missed for Mage pipeline {{pipeline_uuid}}',
         summary=(
-            'SLA passed for pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
+            'SLA missed for pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
             '`{pipeline_schedule_name}` at execution time `{execution_time}`.'
         ),
     ),
