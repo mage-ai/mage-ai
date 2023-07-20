@@ -7,12 +7,56 @@ module.exports = removeImports({
     // with the actual base paths when the mage_ai app is launched.
     return [
       {
-        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/datasets',
-        destination: '/datasets',
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/overview',
+        destination: '/overview',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/pipelines/:slug*',
+        destination: '/pipelines/:slug*',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/pipelines',
+        destination: '/pipelines',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/pipeline-runs',
+        destination: '/pipeline-runs',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/settings',
+        destination: '/settings',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/settings/:slug*',
+        destination: '/settings/:slug*',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/sign-in',
+        destination: '/sign-in',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/terminal',
+        destination: '/terminal',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/triggers',
+        destination: '/triggers',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/manage',
+        destination: '/manage',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/manage/:slug*',
+        destination: '/manage/:slug*',
+      },
+      {
+        source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/version-control',
+        destination: '/version-control',
       },
       {
         source: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_',
-        destination: '/datasets',
+        destination: '/',
       },
     ];
   },

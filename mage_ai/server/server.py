@@ -130,6 +130,7 @@ def make_app():
         (r'/triggers', MainPageHandler),
         (r'/manage', MainPageHandler),
         (r'/manage/(.*)', MainPageHandler),
+        (r'/version-control', MainPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -191,7 +192,6 @@ def make_app():
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
-        (r'/version-control', MainPageHandler),
     ]
 
     updated_routes = []
