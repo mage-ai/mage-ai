@@ -1,14 +1,16 @@
+from typing import Dict, List, Mapping, Union
+
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
+from pandas import DataFrame
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_bigquery_type,
 )
-from pandas import DataFrame
-from typing import Dict, List, Mapping, Union
 
 
 class BigQuery(BaseSQLDatabase):
@@ -41,16 +43,25 @@ class BigQuery(BaseSQLDatabase):
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
 
+        CLIENT_SCOPES = [
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/bigquery',
+        ]
+
         credentials = kwargs.get('credentials')
         if credentials is None:
             if 'credentials_mapping' in kwargs:
                 mapping_obj = kwargs.pop('credentials_mapping')
                 if mapping_obj is not None:
-                    credentials = service_account.Credentials.from_service_account_info(mapping_obj)
+                    credentials = service_account.Credentials.from_service_account_info(
+                        mapping_obj, scopes=CLIENT_SCOPES
+                            )
             if 'path_to_credentials' in kwargs:
                 path = kwargs.pop('path_to_credentials')
                 if path is not None:
-                    credentials = service_account.Credentials.from_service_account_file(path)
+                    credentials = service_account.Credentials.from_service_account_file(
+                        path, scopes=CLIENT_SCOPES
+                            )
             if 'credentials' in kwargs:
                 kwargs.pop('credentials')
         with self.printer.print_msg('Connecting to BigQuery warehouse'):
