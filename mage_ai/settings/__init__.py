@@ -45,6 +45,8 @@ ACTIVE_DIRECTORY_DIRECTORY_ID = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID', None)
 
 # ----------------------------------------------------------
 
+HOSTNAME = os.getenv('HOSTNAME')
+REDIS_URL = os.getenv('REDIS_URL')
 SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 
 SHELL_COMMAND = os.getenv('SHELL_COMMAND', None)

@@ -66,15 +66,7 @@ def initialize_state_and_runs(
 
         block_runs = create_block_runs(pipeline_run, logger)
 
-        logger.info(
-            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
-            tags=tags,
-        )
-        calculate_metrics(pipeline_run)
-        logger.info(
-            f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
-            tags=merge_dict(tags, dict(metrics=pipeline_run.metrics)),
-        )
+        calculate_metrics(pipeline_run, logger=logger, logging_tags=tags)
 
         return block_runs
     except Exception as err:
