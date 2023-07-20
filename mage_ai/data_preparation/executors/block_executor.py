@@ -472,21 +472,33 @@ class BlockExecutor:
             if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
 
-            if status == BlockRun.BlockRunStatus.COMPLETED and \
-                    pipeline_run is not None and is_dynamic_block(self.block):
-                create_block_runs_from_dynamic_block(
-                    self.block,
-                    pipeline_run,
-                    block_uuid=self.block.uuid if self.block.replicated_block else self.block_uuid,
+            try:
+                if status == BlockRun.BlockRunStatus.COMPLETED and \
+                        pipeline_run is not None and is_dynamic_block(self.block):
+                    create_block_runs_from_dynamic_block(
+                        self.block,
+                        pipeline_run,
+                        block_uuid=self.block.uuid if self.block.replicated_block
+                        else self.block_uuid,
+                    )
+            except Exception as err1:
+                self.logger.exception(
+                    f'Failed to create block runs for dynamic block {self.block.uuid}.',
+                    **merge_dict(tags, dict(
+                        error=err1
+                    )),
                 )
-
-            from mage_ai.orchestration.db.models.schedules import BlockRun
 
             block_run = BlockRun.query.get(block_run_id)
             block_run.update(status=status)
             return
-        except Exception:
-            pass
+        except Exception as err2:
+            self.logger.exception(
+                f'Failed to update block run status to {status} for block {self.block.uuid}.',
+                **merge_dict(tags, dict(
+                    error=err2
+                )),
+            )
 
         # Fall back to making API calls
         response = requests.put(
