@@ -1,14 +1,16 @@
+from typing import Dict, List, Mapping, Union
+
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
+from pandas import DataFrame
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_bigquery_type,
 )
-from pandas import DataFrame
-from typing import Dict, List, Mapping, Union
 
 
 class BigQuery(BaseSQLDatabase):
@@ -37,47 +39,49 @@ class BigQuery(BaseSQLDatabase):
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be
         passed to the Google BigQuery client, accepting all other configuration settings there.
         """
-        if kwargs.get('verbose') is not None:
-            kwargs.pop('verbose')
-        super().__init__(verbose=kwargs.get('verbose', True))
+        if kwargs.get("verbose") is not None:
+            kwargs.pop("verbose")
+        super().__init__(verbose=kwargs.get("verbose", True))
 
         CLIENT_SCOPES = [
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/sqlservice.login",
-            "https://www.googleapis.com/auth/drive"
+            "https://www.googleapis.com/auth/drive",
         ]
 
-        credentials = kwargs.get('credentials')
+        credentials = kwargs.get("credentials")
         if credentials is None:
-            if 'credentials_mapping' in kwargs:
-                mapping_obj = kwargs.pop('credentials_mapping')
+            if "credentials_mapping" in kwargs:
+                mapping_obj = kwargs.pop("credentials_mapping")
                 if mapping_obj is not None:
-                    credentials = service_account \
-                                    .Credentials \
-                                    .from_service_account_info(mapping_obj, scopes=CLIENT_SCOPES)
-            if 'path_to_credentials' in kwargs:
-                path = kwargs.pop('path_to_credentials')
+                    credentials = service_account.Credentials.from_service_account_info(
+                        mapping_obj, scopes=CLIENT_SCOPES
+                    )
+            if "path_to_credentials" in kwargs:
+                path = kwargs.pop("path_to_credentials")
                 if path is not None:
-                    credentials = service_account \
-                                    .Credentials \
-                                    .from_service_account_file(path, scopes=CLIENT_SCOPES)
-            if 'credentials' in kwargs:
-                kwargs.pop('credentials')
-        with self.printer.print_msg('Connecting to BigQuery warehouse'):
+                    credentials = service_account.Credentials.from_service_account_file(
+                        path, scopes=CLIENT_SCOPES
+                    )
+            if "credentials" in kwargs:
+                kwargs.pop("credentials")
+        with self.printer.print_msg("Connecting to BigQuery warehouse"):
             self.client = Client(credentials=credentials, **kwargs)
 
     def default_database(self) -> str:
         return self.client.project
 
     def get_column_types(self, schema: str, table_name: str) -> Dict:
-        results = self.client.query(f"""
+        results = self.client.query(
+            f"""
 SELECT
     column_name
     , data_type
 FROM {schema}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
-""")
+"""
+        )
 
         column_types = {}
         for col, col_type in results:
@@ -93,24 +97,26 @@ WHERE TABLE_NAME = '{table_name}'
         verbose: bool = True,
     ):
         def __process(database):
-            parts = table_id.split('.')
+            parts = table_id.split(".")
             if len(parts) == 2:
                 schema, table_name = parts
             elif len(parts) == 3:
                 database, schema, table_name = parts
 
-            df_existing = self.client.query(f"""
+            df_existing = self.client.query(
+                f"""
     SELECT 1
     FROM `{database}.{schema}.__TABLES_SUMMARY__`
     WHERE table_id = '{table_name}'
-    """).to_dataframe()
+    """
+            ).to_dataframe()
 
-            full_table_name = f'{database}.{schema}.{table_name}'
+            full_table_name = f"{database}.{schema}.{table_name}"
 
             table_doesnt_exist = df_existing.empty
 
             if table_doesnt_exist:
-                raise ValueError(f'Table \'{table_id}\' doesn\'t exist.')
+                raise ValueError(f"Table '{table_id}' doesn't exist.")
 
             current_columns = list(self.get_column_types(schema, table_name).keys())
 
@@ -124,18 +130,24 @@ WHERE TABLE_NAME = '{table_name}'
             if not new_columns:
                 return
             dtypes = infer_dtypes(df)
-            dtypes = \
-                {k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
-                 for k, v in dtypes.items()}
+            dtypes = {
+                k: convert_python_type_to_bigquery_type(
+                    convert_pandas_dtype_to_python_type(v)
+                )
+                for k, v in dtypes.items()
+            }
             columns_and_types = [
-                f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}" for col
-                in new_columns
+                f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}"
+                for col in new_columns
             ]
             # TODO: support alter column type and drop columns
-            alter_table_command = f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
+            alter_table_command = (
+                f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
+            )
             self.client.query(alter_table_command)
+
         if verbose:
-            with self.printer.print_msg(f'Altering table \'{table_id}\''):
+            with self.printer.print_msg(f"Altering table '{table_id}'"):
                 __process(database=database)
         else:
             __process(database=database)
@@ -164,15 +176,15 @@ WHERE TABLE_NAME = '{table_name}'
             DataFrame: Data frame associated with the given query.
         """
 
-        print_message = 'Loading data'
+        print_message = "Loading data"
         if verbose:
-            print_message += ' with query'
+            print_message += " with query"
 
             if display_query:
-                for line in display_query.split('\n'):
-                    print_message += f'\n{line}'
+                for line in display_query.split("\n"):
+                    print_message += f"\n{line}"
             else:
-                print_message += f'\n{query_string}'
+                print_message += f"\n{query_string}"
 
         query_string = self._clean_query(query_string)
 
@@ -186,7 +198,7 @@ WHERE TABLE_NAME = '{table_name}'
         df: DataFrame,
         table_id: str,
         database: Union[str, None] = None,
-        if_exists: str = 'replace',
+        if_exists: str = "replace",
         query_string: Union[str, None] = None,
         verbose: bool = True,
         **configuration_params,
@@ -218,34 +230,36 @@ WHERE TABLE_NAME = '{table_name}'
 
         def __process(database: Union[str, None]):
             if query_string:
-                parts = table_id.split('.')
+                parts = table_id.split(".")
                 if len(parts) == 2:
                     schema, table_name = parts
                 elif len(parts) == 3:
                     database, schema, table_name = parts
 
-                df_existing = self.client.query(f"""
+                df_existing = self.client.query(
+                    f"""
 SELECT 1
 FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
-""").to_dataframe()
+"""
+                ).to_dataframe()
 
-                full_table_name = f'{database}.{schema}.{table_name}'
+                full_table_name = f"{database}.{schema}.{table_name}"
 
                 table_doesnt_exist = df_existing.empty
 
                 if ExportWritePolicy.FAIL == if_exists and not table_doesnt_exist:
                     raise ValueError(
-                        f'Table \'{full_table_name}\' already exists in database.',
+                        f"Table '{full_table_name}' already exists in database.",
                     )
 
                 if ExportWritePolicy.REPLACE == if_exists:
-                    self.client.query(f'DROP TABLE {full_table_name}')
-                    command = f'CREATE TABLE {table_id} AS'
+                    self.client.query(f"DROP TABLE {full_table_name}")
+                    command = f"CREATE TABLE {table_id} AS"
                 elif table_doesnt_exist:
-                    command = f'CREATE TABLE {table_id} AS'
+                    command = f"CREATE TABLE {table_id} AS"
                 else:
-                    command = f'INSERT INTO {table_id}'
+                    command = f"INSERT INTO {table_id}"
 
                 sql = f"""
 {command}
@@ -255,19 +269,19 @@ WHERE table_id = '{table_name}'
 
             else:
                 config = LoadJobConfig(**configuration_params)
-                if 'write_disposition' not in configuration_params:
-                    if if_exists == 'replace':
+                if "write_disposition" not in configuration_params:
+                    if if_exists == "replace":
                         config.write_disposition = WriteDisposition.WRITE_TRUNCATE
-                    elif if_exists == 'append':
+                    elif if_exists == "append":
                         config.write_disposition = WriteDisposition.WRITE_APPEND
-                    elif if_exists == 'fail':
+                    elif if_exists == "fail":
                         config.write_disposition = WriteDisposition.WRITE_EMPTY
                     else:
                         raise ValueError(
-                            f'Invalid policy specified for handling existence of '
-                            f'table: \'{if_exists}\''
+                            f"Invalid policy specified for handling existence of "
+                            f"table: '{if_exists}'"
                         )
-                parts = table_id.split('.')
+                parts = table_id.split(".")
                 if len(parts) == 2:
                     schema = parts[0]
                     table_name = parts[1]
@@ -285,21 +299,29 @@ WHERE table_id = '{table_name}'
                         continue
 
                     null_rows = df[col].isnull()
-                    if col_type.startswith('ARRAY<STRUCT'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
-                    elif col_type.startswith('ARRAY'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
-                    elif col_type.startswith('STRUCT'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
+                    if col_type.startswith("ARRAY<STRUCT"):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(
+                            lambda x: [{}]
+                        )
+                    elif col_type.startswith("ARRAY"):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(
+                            lambda x: []
+                        )
+                    elif col_type.startswith("STRUCT"):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(
+                            lambda x: {}
+                        )
 
                 # Clean column names
                 if type(df) is DataFrame:
-                    df.columns = df.columns.str.replace(' ', '_')
+                    df.columns = df.columns.str.replace(" ", "_")
 
-                self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+                self.client.load_table_from_dataframe(
+                    df, table_id, job_config=config
+                ).result()
 
         if verbose:
-            with self.printer.print_msg(f'Exporting data to table \'{table_id}\''):
+            with self.printer.print_msg(f"Exporting data to table '{table_id}'"):
                 __process(database=database)
         else:
             __process(database=database)
@@ -312,7 +334,7 @@ WHERE table_id = '{table_name}'
             query_string (str): Query to execute on the BigQuery warehouse.
             **kwargs: Additional arguments to pass to query, such as query configurations
         """
-        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+        with self.printer.print_msg(f"Executing query '{query_string}'"):
             query_string = self._clean_query(query_string)
             self.client.query(query_string, **kwargs)
 
@@ -326,14 +348,19 @@ WHERE table_id = '{table_name}'
         results = []
 
         for idx, query in enumerate(queries):
-            variables = query_variables[idx] \
-                        if query_variables and idx < len(query_variables) \
-                        else {}
+            variables = (
+                query_variables[idx]
+                if query_variables and idx < len(query_variables)
+                else {}
+            )
             query = self._clean_query(query)
             result = self.client.query(query, **variables)
 
-            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                    fetch_query_at_indexes[idx]:
+            if (
+                fetch_query_at_indexes
+                and idx < len(fetch_query_at_indexes)
+                and fetch_query_at_indexes[idx]
+            ):
                 result = result.to_dataframe()
 
             results.append(result)
@@ -341,7 +368,7 @@ WHERE table_id = '{table_name}'
         return results
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'BigQuery':
+    def with_config(cls, config: BaseConfigLoader, **kwargs) -> "BigQuery":
         """
         Initializes BigQuery client from configuration loader
 
@@ -349,22 +376,24 @@ WHERE table_id = '{table_name}'
             config (BaseConfigLoader): Configuration loader object
         """
         if ConfigKey.GOOGLE_SERVICE_ACC_KEY in config:
-            kwargs['credentials_mapping'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY]
+            kwargs["credentials_mapping"] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY]
         elif ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH in config:
-            kwargs['path_to_credentials'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH]
+            kwargs["path_to_credentials"] = config[
+                ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH
+            ]
         else:
             raise ValueError(
-                'No valid configuration settings found for Google BigQuery. You must specify '
-                'either your service account key or the filepath to your service account key.'
+                "No valid configuration settings found for Google BigQuery. You must specify "
+                "either your service account key or the filepath to your service account key."
             )
 
         if ConfigKey.GOOGLE_LOCATION in config:
-            kwargs['location'] = config[ConfigKey.GOOGLE_LOCATION]
+            kwargs["location"] = config[ConfigKey.GOOGLE_LOCATION]
 
         return cls(**kwargs)
 
     @classmethod
-    def with_credentials_file(cls, path_to_credentials: str, **kwargs) -> 'BigQuery':
+    def with_credentials_file(cls, path_to_credentials: str, **kwargs) -> "BigQuery":
         """
         Constructs BigQuery data loader using the file containing the service account key.
 
@@ -377,7 +406,9 @@ WHERE table_id = '{table_name}'
         return cls(path_to_credentials=path_to_credentials, **kwargs)
 
     @classmethod
-    def with_credentials_object(cls, credentials: Mapping[str, str], **kwargs) -> 'BigQuery':
+    def with_credentials_object(
+        cls, credentials: Mapping[str, str], **kwargs
+    ) -> "BigQuery":
         """
         Constructs BigQuery data loader using manually specified authentication credentials object.
 
