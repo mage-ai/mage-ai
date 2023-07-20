@@ -10,9 +10,6 @@ def compare(date1: datetime, date2: datetime) -> int:
     date1_utc = date1.astimezone(pytz.UTC)
     date2_utc = date2.astimezone(pytz.UTC)
 
-    print('date1_utc:', date1_utc)
-    print('date2_utc:', date2_utc)
-
     if date1_utc < date2_utc:
         return -1
     elif date1_utc > date2_utc:

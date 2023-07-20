@@ -348,13 +348,14 @@ class PipelineSchedulerTests(DBTestCase):
 
     @freeze_time('2023-05-01 01:20:33')
     def test_send_sla_message(self):
-        create_pipeline_with_blocks(
+        pipeline = create_pipeline_with_blocks(
             'test sla pipeline',
             self.repo_path,
         )
+        pipeline_uuid = pipeline.uuid
         pipeline_schedule = PipelineSchedule.create(
             name='test_sla_pipeline_trigger',
-            pipeline_uuid='test_sla_pipeline',
+            pipeline_uuid=pipeline_uuid,
             sla=600,
         )
         pipeline_schedule.update(
@@ -363,19 +364,19 @@ class PipelineSchedulerTests(DBTestCase):
         now_time = datetime(2023, 5, 23, 1, 20, 33)
         pipeline_run = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=601),
-            pipeline_uuid='test_sla_pipeline',
+            pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         pipeline_run2 = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=599),
-            pipeline_uuid='test_sla_pipeline',
+            pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
         pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         pipeline_run3 = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=1),
-            pipeline_uuid='test_sla_pipeline',
+            pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
         pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
