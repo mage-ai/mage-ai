@@ -36,7 +36,6 @@ BackfillPolicy.allow_read([
 ] + BackfillPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.DELETE,
     constants.DETAIL,
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
