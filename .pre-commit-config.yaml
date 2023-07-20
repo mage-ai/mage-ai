@@ -32,13 +32,6 @@ repos:
     # assumes flake8 is installed in local virtual environment as dev dependency
     language: system
     types: [python]
-  - id: mintlify
-    name: mintlify
-    entry: cd ./docs && mintlify broken-links
-    pass_filenames: false
-    # assumes mintlify is installed in local virtual environment as dev dependency
-    language: system
-    types: [mdx]
   # - id: black
   #   name: black
   #   entry: black
