@@ -48,7 +48,6 @@ class BigQuery(BaseSQLDatabase):
             'https://www.googleapis.com/auth/cloud-platform',
             'https://www.googleapis.com/auth/sqlservice.login',
             'https://www.googleapis.com/auth/drive'
-
         ]
 
         credentials = kwargs.get('credentials')
