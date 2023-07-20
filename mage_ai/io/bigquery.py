@@ -10,7 +10,6 @@ from mage_ai.shared.utils import (
 from pandas import DataFrame
 from typing import Dict, List, Mapping, Union
 
-
 class BigQuery(BaseSQLDatabase):
     """
     Handles data transfer between a BigQuery data warehouse and the Mage app.
@@ -41,16 +40,23 @@ class BigQuery(BaseSQLDatabase):
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
 
+        CLIENT_SCOPES = [
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.login",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        
         credentials = kwargs.get('credentials')
         if credentials is None:
             if 'credentials_mapping' in kwargs:
                 mapping_obj = kwargs.pop('credentials_mapping')
                 if mapping_obj is not None:
-                    credentials = service_account.Credentials.from_service_account_info(mapping_obj)
+                    credentials = service_account.Credentials.from_service_account_info(mapping_obj, scopes=CLIENT_SCOPES)
             if 'path_to_credentials' in kwargs:
                 path = kwargs.pop('path_to_credentials')
                 if path is not None:
-                    credentials = service_account.Credentials.from_service_account_file(path)
+                    credentials = service_account.Credentials.from_service_account_file(path, scopes=CLIENT_SCOPES)
             if 'credentials' in kwargs:
                 kwargs.pop('credentials')
         with self.printer.print_msg('Connecting to BigQuery warehouse'):
