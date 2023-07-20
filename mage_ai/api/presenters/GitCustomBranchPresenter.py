@@ -21,6 +21,15 @@ class GitCustomBranchPresenter(GitBranchPresenter):
 
         data_to_display = self.model
 
+        for key in [
+            'modified_files',
+            'staged_files',
+            'untracked_files',
+        ]:
+            arr = data_to_display.get(key)
+            if arr and type(arr) is list and len(arr) >= 1:
+                data_to_display[key] = arr[:100]
+
         if 'with_basic_details' == display_format:
             return dict(name=data_to_display.get('name'))
         elif 'with_files' == display_format:
