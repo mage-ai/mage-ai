@@ -55,7 +55,7 @@ This plural name will be displayed to the individual who is setting up a synchro
 
 #### Examples
 
-[`mage_integrations/sources/titanic/schemas/passengers.json`](../../../../mage_integrations/sources/titanic/schemas/passengers.json)
+[`mage_integrations/sources/titanic/schemas/passengers.json`](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/titanic/schemas/passengers.json)
 
 ```json
 {
@@ -94,7 +94,7 @@ You must use the exact filename `config.json`.
 
 #### Examples
 
-[`mage_integrations/sources/titanic/templates/config.json`](../../../../mage_integrations/sources/titanic/templates/config.json)
+[`mage_integrations/sources/titanic/templates/config.json`](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/titanic/templates/config.json)
 
 ```json
 {
@@ -109,7 +109,7 @@ This is where majority of the source logic will exist.
 
 #### Examples
 
-[`mage_integrations/sources/titanic/__init__.py`](../../../../mage_integrations/sources/titanic/__init__.py)
+[`mage_integrations/sources/titanic/__init__.py`](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/titanic/__init__.py)
 
 ### `README.md`
 
@@ -121,7 +121,7 @@ Document how to configure and use your source in the `README.md` file.
 
 In the `mage_integrations/sources/titanic/__init__.py`,
 create a new class named after your source and subclass the
-[base source class](../../../../mage_integrations/sources/base.py).
+[base source class](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/sources/base.py).
 
 ```python
 from mage_integrations.sources.base import Source
@@ -176,14 +176,14 @@ When Mage runs a source, the following keys and values are automatically availab
 | --- | --- | --- |
 | `_execution_date` | The date and time (in ISO format) of when the pipeline started running. | `2022-10-21T17:24:49.443559` |
 | `_execution_partition` | An automatically formatted partition of the pipeline run using the execution date. | `20221021T172557` (e.g. format `%Y%m%dT%H%M%S`) |
-| `_start_date` | You can define this variable as a [runtime variable](../../../production/runtime_variables.md) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs minus 1 hour, day, week, etc (based on your schedule’s interval). | `2022-10-01T00:00:00.000000` |
-| `_end_date` | You can define this variable as a [runtime variable](../../../production/runtime_variables.md) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs. | `2022-10-02T00:00:00.000000` |
+| `_start_date` | You can define this variable as a [runtime variable](/production/configuring-production-settings/runtime-variable) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs minus 1 hour, day, week, etc (based on your schedule’s interval). | `2022-10-01T00:00:00.000000` |
+| `_end_date` | You can define this variable as a [runtime variable](/production/configuring-production-settings/runtime-variable) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs. | `2022-10-02T00:00:00.000000` |
 
 <br />
 
 ## 3. Add main function
 
-In the file [`mage_integrations/sources/titanic/__init__.py`](../../../../mage_integrations/sources/titanic/__init__.py)
+In the file [`mage_integrations/sources/titanic/__init__.py`](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/titanic/__init__.py)
 where your custom source class is defined, import this at the top of the file:
 
 ```python
