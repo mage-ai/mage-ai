@@ -23,6 +23,7 @@ import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataProviderType from '@interfaces/DataProviderType';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
@@ -129,7 +130,8 @@ function PipelineDetailPage({
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
@@ -267,7 +269,7 @@ function PipelineDetailPage({
     showStalePipelineMessageModal,
   ]);
   useEffect(() => {
-    displayErrorFromReadResponse(data, setErrors);
+    displayErrorFromReadResponse(data, setPipelineErrors);
   }, [data]);
 
   const qUrl = queryFromUrl();
@@ -2394,7 +2396,7 @@ function PipelineDetailPage({
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
-        errors={errors}
+        errors={pipelineErrors || errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
@@ -2402,7 +2404,7 @@ function PipelineDetailPage({
         pipeline={pipeline}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
-        setErrors={setErrors}
+        setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >
         <div

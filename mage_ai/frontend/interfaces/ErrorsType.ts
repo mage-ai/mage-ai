@@ -1,5 +1,5 @@
 export type ErrorResponseType = {
-  error: {
+  error?: {
     errors?: string[];
     code?: number;
     exception?: string;
@@ -7,6 +7,11 @@ export type ErrorResponseType = {
     type?: string;
   };
   status?: number;
+  url_parameters?: {
+    block_uuid?: string;
+    pk?: string;
+    resource?: string;
+  };
 };
 
 export type ErrorType = {
@@ -15,11 +20,12 @@ export type ErrorType = {
 };
 
 export default interface ErrorsType {
-  errors: ErrorType;
+  displayMessage?: string;
+  errors?: ErrorType;
   links?: {
     href?: string;
     label: string;
     onClick?: () => void;
   }[];
-  response: ErrorResponseType;
+  response?: ErrorResponseType;
 }
