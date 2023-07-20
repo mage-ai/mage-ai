@@ -9,12 +9,43 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
     IntegrationPipeline,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.hash import merge_dict
 
 KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
 
 
-def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
+def calculate_metrics(
+    pipeline_run: PipelineRun,
+    logger=None,
+    logging_tags: Dict = None,
+) -> Dict:
+    if not pipeline_run:
+        return
+    if logging_tags is None:
+        logging_tags = dict()
+    if logger:
+        logger.info(
+            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
+            **logging_tags,
+        )
+    try:
+        __calculate_metrics(pipeline_run)
+        if logger:
+            logger.info(
+                f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                **merge_dict(logging_tags, dict(metrics=pipeline_run.metrics)),
+            )
+    except Exception as e:
+        if logger:
+            logger.error(
+                f'Failed to calculate metrics for pipeline run {pipeline_run.id}.',
+                **logging_tags,
+                error=e
+            )
+
+
+def __calculate_metrics(pipeline_run: PipelineRun):
     pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
     if PipelineType.INTEGRATION != pipeline.type:
