@@ -44,10 +44,8 @@ class BigQuery(BaseSQLDatabase):
         super().__init__(verbose=kwargs.get('verbose', True))
 
         CLIENT_SCOPES = [
-            'https://www.googleapis.com/auth/userinfo.email',
-            'https://www.googleapis.com/auth/cloud-platform',
-            'https://www.googleapis.com/auth/sqlservice.login',
-            'https://www.googleapis.com/auth/drive'
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/bigquery',
         ]
 
         credentials = kwargs.get('credentials')
