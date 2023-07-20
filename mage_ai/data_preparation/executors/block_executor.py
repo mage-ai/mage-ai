@@ -7,9 +7,13 @@ import requests
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
+from mage_ai.data_preparation.models.block.utils import (
+    create_block_runs_from_dynamic_block,
+    is_dynamic_block,
+)
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.shared.retry import RetryConfig
-from mage_ai.orchestration.db.models.schedules import PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -120,7 +124,7 @@ class BlockExecutor:
                     )),
                 )
                 self.__update_block_run_status(
-                    'condition_failed',
+                    BlockRun.BlockRunStatus.CONDITION_FAILED,
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
                     tags=tags,
@@ -187,7 +191,7 @@ class BlockExecutor:
                     )
                 else:
                     self.__update_block_run_status(
-                        'failed',
+                        BlockRun.BlockRunStatus.FAILED,
                         block_run_id=kwargs.get('block_run_id'),
                         callback_url=callback_url,
                         tags=tags,
@@ -206,9 +210,10 @@ class BlockExecutor:
                 on_complete(self.block_uuid)
             else:
                 self.__update_block_run_status(
-                    'completed',
+                    BlockRun.BlockRunStatus.COMPLETED,
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
+                    pipeline_run=pipeline_run,
                     tags=tags,
                 )
             self._execute_callback(
@@ -443,9 +448,10 @@ class BlockExecutor:
 
     def __update_block_run_status(
         self,
-        status: str,
+        status: BlockRun.BlockRunStatus,
         block_run_id: int = None,
         callback_url: str = None,
+        pipeline_run: PipelineRun = None,
         tags: Dict = None,
     ):
         """
@@ -465,6 +471,14 @@ class BlockExecutor:
         try:
             if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
+
+            if status == BlockRun.BlockRunStatus.COMPLETED and \
+                    pipeline_run is not None and is_dynamic_block(self.block):
+                create_block_runs_from_dynamic_block(
+                    self.block,
+                    pipeline_run,
+                    block_uuid=self.block.uuid if self.block.replicated_block else self.block_uuid,
+                )
 
             from mage_ai.orchestration.db.models.schedules import BlockRun
 
