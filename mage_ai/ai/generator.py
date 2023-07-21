@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict
 
 from mage_ai.ai.constants import LLMUseCase
@@ -19,8 +20,8 @@ class Generator:
         elif use_case == LLMUseCase.GENERATE_DOC_FOR_PIPELINE:
             from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 
-            return LLMPipelineWizard().generate_pipeline_documentation(
+            return asyncio.run(LLMPipelineWizard().async_generate_pipeline_documentation(
                 pipeline_uuid,
-            )
+            ))
 
         raise Exception(f'Use case {use_case} is not supported yet.')
