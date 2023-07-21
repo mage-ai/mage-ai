@@ -9,11 +9,11 @@ resources by using the backend server’s API."
 
 Want to jump-in and interact with Mage via API? Replace the variables at the top of this snippet and use it to get started with authetication!
 
+### Initialize Session
+
 ``` python
 import requests
 import json
-
-# Fetch session
 
 API_KEY = "YOUR_API_KEY"
 EMAIL = "EMAIL"
@@ -42,15 +42,19 @@ sessions_url = base_url + "/api/sessions"
 r = s.post(url=sessions_url, json=json_data)
 
 mage_session = r.json().get('session')
+```
 
-# Authenticate
+### Authenticate
 
+```python
 token = mage_session.get('token')
 
 s.headers['Cookie'] = f'oauth_token={token}'
+```
 
-# Get pipelines
+### Get Pipelines
 
+```python
 pipelines_url = base_url + '/api/pipelines'
 
 r = s.get(pipelines_url)
