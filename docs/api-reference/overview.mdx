@@ -7,14 +7,58 @@ resources by using the backend server’s API."
 
 ## Quickstart
 
-Want to jump-in and interact with Mage via API? 
+Want to jump-in and interact with Mage via API? Replace the variables at the top of this snippet and use it to get started with authetication!
 
-Check out our quick start for a Jupyter notebook to authenticate with Python Requests and hit the ground running _or_ read more about our API structure— the compenents that underpin functionality.
+``` python
+import requests
+import json
 
-<CardGroup>
-<Card title="Quick start" icon="person-running" href="https://github.com/mage-ai/mage-ai/blob/master/templates/api-reference/quickstart.ipynb"></Card>
-<Card title="Components" icon="layer-group" href="#components"></Card>
-</CardGroup>
+# Fetch session
+
+API_KEY = "YOUR_API_KEY"
+EMAIL = "EMAIL"
+PASSWORD = "USER_PASSWORD"
+
+base_url = 'http://localhost:6789'
+
+headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": API_KEY
+}
+
+json_data = {
+    "session": {
+        "email": EMAIL,
+        "password": PASSWORD
+    }
+}
+
+s = requests.Session()
+
+s.headers = headers
+
+sessions_url = base_url + "/api/sessions"
+
+r = s.post(url=sessions_url, json=json_data)
+
+mage_session = r.json().get('session')
+
+# Authenticate
+
+token = mage_session.get('token')
+
+s.headers['Cookie'] = f'oauth_token={token}'
+
+# Get pipelines
+
+pipelines_url = base_url + '/api/pipelines'
+
+r = s.get(pipelines_url)
+
+list_pipelines = r.json()
+
+print(list_pipelines)
+```
 
 ## Components
 
