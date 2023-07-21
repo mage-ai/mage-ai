@@ -72,6 +72,17 @@ class GitBranchResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         git_manager = self.get_git_manager(user=user)
 
+        display_format = kwargs.get('meta', {}).get('_format')
+        if 'with_basic_details' == display_format:
+            return self(dict(
+                files={},
+                modified_files=[],
+                name=git_manager.current_branch,
+                staged_files=[],
+                sync_config=get_preferences().sync_config,
+                untracked_files=[],
+            ), user, **kwargs)
+
         modified_files = git_manager.modified_files
         staged_files = await git_manager.staged_files()
         untracked_files = await git_manager.untracked_files()
