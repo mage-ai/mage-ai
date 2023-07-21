@@ -19,7 +19,7 @@ from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
-from typing import Dict
+from typing import Dict, List
 
 
 @dataclass
@@ -31,7 +31,7 @@ class CustomBlockTemplate(BaseConfig):
     language: BlockLanguage = None
     name: str = None
     pipeline: Dict = field(default_factory=dict)
-    tags: Dict = field(default_factory=dict)
+    tags: List = field(default_factory=list)
     template_uuid: str = None
     user: Dict = field(default_factory=dict)
 

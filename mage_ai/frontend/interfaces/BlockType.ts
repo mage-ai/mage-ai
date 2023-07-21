@@ -247,13 +247,14 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 
 export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.CALLBACK]: 'Callback',
+  [BlockTypeEnum.CONDITIONAL]: 'Conditional',
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
   [BlockTypeEnum.EXTENSION]: 'Extension',
+  [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',
-  [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
