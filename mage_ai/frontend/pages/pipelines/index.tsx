@@ -654,7 +654,7 @@ function PipelineListPage() {
             maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
           >
             <Table
-              columnFlex={[null, null, null, 2, null, 1, null, null, null]}
+              columnFlex={[null, null, null, 2, null, null, 1, null, null, null]}
               columns={[
                 {
                   label: () => '',
@@ -671,6 +671,9 @@ function PipelineListPage() {
                 },
                 {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
+                },
+                {
+                  uuid: 'Updated at',
                 },
                 {
                   uuid: 'Tags',
@@ -762,6 +765,7 @@ function PipelineListPage() {
                   schedules,
                   tags,
                   type,
+                  updated_at: updatedAt,
                   uuid,
                 } = pipeline;
                 const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
@@ -840,6 +844,11 @@ function PipelineListPage() {
                     key={`pipeline_type_${idx}`}
                   >
                     {PIPELINE_TYPE_LABEL_MAPPING[type]}
+                  </Text>,
+                  <Text
+                    key={`pipeline_updated_at_${idx}`}
+                  >
+                    {updatedAt ? updatedAt.slice(0, -3) : <>&#8212;</>}
                   </Text>,
                   tagsEl,
                   <Text
