@@ -38,6 +38,19 @@ CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [],
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
+CustomTemplatePolicy.allow_write([
+    'block_type',
+    'language',
+    'object_type',
+    'template_uuid',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+    constants.DELETE,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
 CustomTemplatePolicy.allow_query([
     'object_type',
 ], scopes=[

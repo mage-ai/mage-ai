@@ -10,7 +10,9 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import TagsContainer from '@components/Tags/TagsContainer';
+import TemplateDetail from '@components/CustomTemplates/TemplateDetail';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -36,6 +38,7 @@ import {
 import {
   NAV_LINKS,
   NAV_TABS,
+  NAV_TAB_BLOCKS,
   NavLinkType,
 } from './constants';
 
@@ -50,6 +53,7 @@ function BrowseTemplates({
 }: BrowseTemplatesProps) {
   const themeContext = useContext(ThemeContext);
 
+  const [addingNewTemplate, setAddingNewTemplate] = useState<boolean>(true || false);
   const [selectedLink, setSelectedLink] = useState<NavLinkType>(defaultLinkUUID
     ? NAV_LINKS.find(({ uuid }) => uuid === defaultLinkUUID)
     : NAV_LINKS[0],
@@ -149,6 +153,13 @@ function BrowseTemplates({
     customTemplates,
   ]);
 
+  if (addingNewTemplate) {
+    return (
+      <TemplateDetail
+      />
+    );
+  }
+
   return (
     <ContainerStyle>
       <NavigationStyle>
@@ -164,7 +175,7 @@ function BrowseTemplates({
         </TabsStyle>
 
         <LinksContainerStyle>
-          {linksBlocks}
+          {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && linksBlocks}
         </LinksContainerStyle>
 
         <Spacing pb={13} />
@@ -175,7 +186,7 @@ function BrowseTemplates({
           <Button
             beforeIcon={<Add size={ICON_SIZE} />}
             onClick={() => {
-              console.log('New block template flow');
+              setAddingNewTemplate(true);
             }}
             primary
           >
@@ -183,18 +194,35 @@ function BrowseTemplates({
           </Button>
         </SubheaderStyle>
 
-        {!cardsBlocks?.length && (
-          <Spacing p={2}>
-            <Text>
-              There are currently no templates matching your search.
-            </Text>
-          </Spacing>
-        )}
 
-        {cardsBlocks?.length >= 1 && (
-          <CardsStyle>
-            {cardsBlocks}
-          </CardsStyle>
+        {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
+          <>
+            {!dataCustomTemplates && (
+              <Spacing p={2}>
+                <Spinner inverted />
+              </Spacing>
+            )}
+
+            {dataCustomTemplates && !cardsBlocks?.length && (
+              <Spacing p={2}>
+                <Text>
+                  There are currently no templates matching your search.
+                </Text>
+
+                <br />
+
+                <Text>
+                  Add a new template by clicking the button above.
+                </Text>
+              </Spacing>
+            )}
+
+            {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && cardsBlocks?.length >= 1 && (
+              <CardsStyle>
+                {cardsBlocks}
+              </CardsStyle>
+            )}
+          </>
         )}
       </ContentStyle>
     </ContainerStyle>

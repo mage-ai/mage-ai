@@ -42,8 +42,30 @@ class CustomTemplateResource(GenericResource):
     def create(self, payload, user, **kwargs):
         custom_template = None
         if DIRECTORY_FOR_BLOCK_TEMPLATES == payload.get(OBJECT_TYPE_KEY):
-            custom_template = CustomBlockTemplate(**ignore_keys(payload, [OBJECT_TYPE_KEY]))
-            custom_template.save()
+            template_uuid = payload.get('template_uuid')
+            error = False
+
+            try:
+                CustomBlockTemplate.load(template_uuid=template_uuid)
+                error = True
+            except Exception as err:
+                pass
+
+            if error:
+                error = ApiError.RESOURCE_INVALID
+                error.update(
+                    message=f'Custom template with UUID {template_uuid} already exists.',
+                )
+
+                raise ApiError(error)
+            else:
+                custom_template = CustomBlockTemplate(**ignore_keys(payload, [OBJECT_TYPE_KEY]))
+                if user:
+                    custom_template.user = dict(
+                        username=user.username,
+                    )
+
+                custom_template.save()
 
         if custom_template:
             return self(custom_template, user, **kwargs)

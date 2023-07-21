@@ -31,6 +31,14 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
   [BlockLanguageEnum.YAML]: 'YAML',
 };
 
+export const LANGUAGE_DISPLAY_MAPPING = {
+  [BlockLanguageEnum.MARKDOWN]: 'Markdown',
+  [BlockLanguageEnum.PYTHON]: 'Python',
+  [BlockLanguageEnum.R]: 'R',
+  [BlockLanguageEnum.SQL]: 'SQL',
+  [BlockLanguageEnum.YAML]: 'YAML',
+};
+
 export enum BlockTypeEnum {
   CALLBACK = 'callback',
   CHART = 'chart',
@@ -247,10 +255,12 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 
 export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.CALLBACK]: 'Callback',
+  [BlockTypeEnum.CHART]: 'Chart',
   [BlockTypeEnum.CONDITIONAL]: 'Conditional',
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
+  [BlockTypeEnum.DBT]: 'DBT',
   [BlockTypeEnum.EXTENSION]: 'Extension',
   [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',

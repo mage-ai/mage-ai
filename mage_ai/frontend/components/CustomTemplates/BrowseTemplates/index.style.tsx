@@ -10,7 +10,6 @@ export const ICON_SIZE = UNIT * 2.5;
 const NAV_WIDTH = 40 * UNIT;
 
 export const ContainerStyle = styled.div`
-  // background-color: red;
   height: 100%;
   position: relative;
 `;

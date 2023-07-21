@@ -1,5 +1,6 @@
-import Dashboard from '@components/Dashboard';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
+import Dashboard from '@components/Dashboard';
+import PrivateRoute from '@components/shared/PrivateRoute';
 
 function Templates() {
   return (
@@ -12,4 +13,6 @@ function Templates() {
   );
 }
 
-export default Templates;
+Templates.getInitialProps = async () => ({});
+
+export default PrivateRoute(Templates);

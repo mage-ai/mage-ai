@@ -7,8 +7,10 @@ import {
   Conditional,
   BlockGeneric,
   Callback,
+  Charts,
   CircleWithArrowUp,
   CubeWithArrowDown,
+  DBT,
   FrameBoxSelection,
   Lightning,
   Sensor,
@@ -73,6 +75,10 @@ export const NAV_LINKS: NavLinkType[] = [
     uuid: BlockTypeEnum.CUSTOM,
   },
   {
+    Icon: Charts,
+    uuid: BlockTypeEnum.CHART,
+  },
+  {
     Icon: Callback,
     selectedIconProps: {
       inverted: true,
@@ -90,19 +96,22 @@ export const NAV_LINKS: NavLinkType[] = [
     Icon: Lightning,
     uuid: BlockTypeEnum.EXTENSION,
   },
+  {
+    Icon: DBT,
+    selectedBackgroundColor: null,
+    uuid: BlockTypeEnum.DBT,
+  },
 ].map(({
-  Icon,
-  selectedIconProps,
   uuid,
+  ...rest
 }) => ({
-  Icon,
-  label: () => BLOCK_TYPE_NAME_MAPPING[uuid],
   filterTemplates: (customTemplates: CustomTemplateType) => customTemplates?.filter(({
     block_type: blockType,
   }) => blockType === uuid),
+  label: () => BLOCK_TYPE_NAME_MAPPING[uuid],
   selectedBackgroundColor: theme => getColorsForBlockType(uuid, {
       theme,
   }).accent,
-  selectedIconProps,
   uuid,
+  ...rest,
 })));
