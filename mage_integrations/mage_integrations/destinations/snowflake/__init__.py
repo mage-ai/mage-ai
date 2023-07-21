@@ -1,4 +1,3 @@
-from mage_ai.shared.hash import merge_dict
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
@@ -129,6 +128,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         full_table_name_temp: str,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        column_identifier: str = '',
     ) -> str:
         unique_constraints_clean = [
             f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
@@ -227,6 +227,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 full_table_name_temp=full_table_name_temp,
                 unique_conflict_method=unique_conflict_method,
                 unique_constraints=unique_constraints,
+                column_identifier=self.quote,
             )
 
             return commands + [
@@ -390,6 +391,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     full_table_name_temp=full_table_name_temp,
                     unique_conflict_method=unique_conflict_method,
                     unique_constraints=unique_constraints,
+                    column_identifier=self.quote,
                 )
                 self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
                 results += self.build_connection().execute(merge_command, commit=True)
