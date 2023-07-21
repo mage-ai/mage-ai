@@ -13,8 +13,14 @@ rules:
 - apiGroups: [""] # "" indicates the core API group
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["create", "delete", "get"]
 - apiGroups: ["batch", "extensions"]
   resources: ["jobs", "jobs/status"]
+  verbs: ["create", "delete", "get"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
   verbs: ["create", "delete", "get"]
 
 ---
