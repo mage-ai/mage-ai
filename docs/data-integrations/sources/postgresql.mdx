@@ -103,7 +103,7 @@ create new rows, update existing rows, or delete rows in the destination.
 
 #### Create data integration pipeline in Mage
 
-Follow this [guide to create a data integration pipeline](../../pipelines/DataIntegrationPipeline.md)
+Follow this [guide to create a data integration pipeline](/guides/data-integration-pipeline)
 in Mage.
 
 However, choose <b>PostgreSQL</b> as the source and choose <b>`LOG_BASED`</b> as the
@@ -144,7 +144,7 @@ FROM pg_logical_slot_peek_binary_changes('mage_slot', null, null, 'proto_version
 
 ##### Run sync
 
-After you added a few new rows, [create a trigger](../../../tutorials/triggers/schedule.md)
+After you added a few new rows, [create a trigger](/guides/triggering-pipelines#trigger)
 to start running your pipeline and begin syncing data.
 
 <br />
