@@ -31,7 +31,11 @@ class K8sBlockExecutor(BlockExecutor):
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
         )
-        cmd = self._run_commands(block_run_id, global_vars, **kwargs)
+        cmd = self._run_commands(
+            block_run_id=block_run_id,
+            global_vars=global_vars,
+            **kwargs
+        )
         job_manager.run_job(
             cmd,
             k8s_config=self.executor_config,
