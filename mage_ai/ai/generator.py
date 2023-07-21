@@ -6,7 +6,6 @@ from mage_ai.ai.constants import LLMUseCase
 class Generator:
     @classmethod
     async def generate(self, use_case: LLMUseCase, request: Dict) -> Dict:
-        print(f'use case {use_case}')
         if use_case == LLMUseCase.GENERATE_DOC_FOR_BLOCK:
             from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 
