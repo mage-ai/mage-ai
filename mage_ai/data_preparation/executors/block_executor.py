@@ -119,9 +119,14 @@ class BlockExecutor:
             pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
 
-            block_run_data = block_run.metrics or {}
-            dynamic_block_index = block_run_data.get('dynamic_block_index', None)
-            dynamic_upstream_block_uuids = block_run_data.get('dynamic_upstream_block_uuids', None)
+            if block_run:
+                block_run_data = block_run.metrics or {}
+                dynamic_block_index = block_run_data.get('dynamic_block_index', None)
+                dynamic_upstream_block_uuids = block_run_data.get(
+                    'dynamic_upstream_block_uuids', None)
+            else:
+                dynamic_block_index = None
+                dynamic_upstream_block_uuids = None
 
             # If there are upstream blocks that were dynamically created, and if any of them are
             # configured to reduce their output, we must update the dynamic_upstream_block_uuids to

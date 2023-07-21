@@ -61,9 +61,6 @@ class BlockExecutorTest(TestCase):
         retry_config = {'retries': 5, 'delay': 2}
         runtime_arguments = {'arg1': 'value1'}
         template_runtime_configuration = {'config': 'value'}
-        dynamic_block_index = 1
-        dynamic_block_uuid = 'dynamic_block_uuid'
-        dynamic_upstream_block_uuids = ['upstream_block1', 'upstream_block2']
 
         self.block_executor._execute_conditional = MagicMock(return_value=True)
         self.block_executor._execute = MagicMock(return_value={'result': 'success'})
@@ -83,17 +80,14 @@ class BlockExecutorTest(TestCase):
             retry_config=retry_config,
             runtime_arguments=runtime_arguments,
             template_runtime_configuration=template_runtime_configuration,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         )
 
         self.assertEqual(result, {'result': 'success'})
         self.pipeline.get_block.assert_called_once_with(self.block_uuid, check_template=True)
         self.assertEqual(self.block.template_runtime_configuration, template_runtime_configuration)
         self.block_executor._execute_conditional.assert_called_once_with(
-            dynamic_block_index=dynamic_block_index,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            dynamic_block_index=None,
+            dynamic_upstream_block_uuids=None,
             global_vars=global_vars,
             logging_tags={
                 'block_type': BlockType.DBT,
@@ -104,21 +98,23 @@ class BlockExecutorTest(TestCase):
         )
         self.block_executor._execute.assert_called_once_with(
             analyze_outputs=analyze_outputs,
+            block_run_id=None,
             callback_url=callback_url,
             global_vars=global_vars,
-            update_status=update_status,
             input_from_output=input_from_output,
             logging_tags={
                 'block_type': BlockType.DBT,
                 'block_uuid': self.block_uuid,
                 'pipeline_uuid': self.pipeline.uuid,
             },
+            pipeline_run_id=None,
+            update_status=update_status,
             verify_output=verify_output,
             runtime_arguments=runtime_arguments,
             template_runtime_configuration=template_runtime_configuration,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            dynamic_block_index=None,
+            dynamic_block_uuid=None,
+            dynamic_upstream_block_uuids=None,
         )
         # self.block.run_tests.assert_called_once_with(
         #     execution_partition=self.execution_partition,
@@ -134,8 +130,8 @@ class BlockExecutorTest(TestCase):
         # )
         self.block_executor._execute_callback.assert_called_with(
             'on_success',
-            dynamic_block_index=dynamic_block_index,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            dynamic_block_index=None,
+            dynamic_upstream_block_uuids=None,
             global_vars=global_vars,
             logging_tags={
                 'block_type': BlockType.DBT,
