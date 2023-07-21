@@ -5,10 +5,13 @@ changelog:
   categories:
     - title: 🎉 Exciting New Features 
       labels:
-        - enhancement
-    - title: 🐛 Bug Fix & Polish
+        - feature
+    - title: 🐛 Bug Fixes
       labels:
         - bug
+    - title: 💅 Enhancements & Polish
+      labels:
+        - enhancements
     - title: Other Changes
       labels:
         - "*"
