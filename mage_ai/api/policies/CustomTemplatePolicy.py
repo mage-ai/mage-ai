@@ -26,8 +26,15 @@ CustomTemplatePolicy.allow_actions([
 CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.DETAIL,
     constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [
+    'content',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [], scopes=[
@@ -39,6 +46,7 @@ CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [],
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 CustomTemplatePolicy.allow_write(CustomTemplatePresenter.default_attributes + [
+    'content',
     'object_type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

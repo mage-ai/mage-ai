@@ -27,6 +27,7 @@ class CustomBlockTemplate(BaseConfig):
     block_type: BlockType = None
     color: BlockColor = None
     configuration: Dict = None
+    content: str = ''
     description: str = None
     language: BlockLanguage = None
     name: str = None
@@ -79,7 +80,7 @@ class CustomBlockTemplate(BaseConfig):
     def load_template_content(self, language: BlockLanguage = None) -> str:
         language_to_use = language or self.language
         filename = '.'.join([
-            self.uuid,
+            self.template_uuid,
             BLOCK_LANGUAGE_TO_FILE_EXTENSION[language_to_use],
         ])
 
@@ -122,6 +123,19 @@ class CustomBlockTemplate(BaseConfig):
         file_path = self.metadata_file_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
+
+        if self.content:
+            filename = '.'.join([
+                self.template_uuid,
+                BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language],
+            ])
+
+            File.create(
+                filename,
+                self.uuid,
+                self.content,
+                get_repo_path(),
+            )
 
     def delete(self) -> None:
         shutil.rmtree(os.path.join(get_repo_path(), self.uuid))

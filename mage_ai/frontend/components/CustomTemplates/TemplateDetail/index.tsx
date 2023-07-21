@@ -1,15 +1,19 @@
+import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import AuthToken from '@api/utils/AuthToken';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import CodeEditor from '@components/CodeEditor';
+import CodeBlock from '@components/CodeBlock';
 import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -33,14 +37,26 @@ import {
   NavigationStyle,
   TabsStyle,
 } from './index.style';
+import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import {
+  KEY_CODE_CONTROL,
+  KEY_CODE_META,
+  KEY_CODE_R,
+  KEY_CODE_S,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import {
   NAV_TABS,
   NAV_TAB_DEFINE,
   NAV_TAB_DOCUMENT,
 } from './constants';
-import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
+import { useKeyboardContext } from '@context/Keyboard';
 
 type TemplateDetailProps = {
   defaultTabUUID?: TabType;
@@ -58,6 +74,7 @@ function TemplateDetail({
     uuid: 'CustomTemplates/TemplateDetail',
   });
 
+  const [ready, setReady] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
     : NAV_TABS[0],
@@ -84,6 +101,7 @@ function TemplateDetail({
   useEffect(() => {
     if (templatePrev?.template_uuid !== template?.template_uuid) {
       setTemplateAttributesState(template);
+      setReady(true);
     }
   }, [template, templatePrev]);
 
@@ -148,6 +166,302 @@ function TemplateDetail({
     templateAttributes,
     touched,
   ]);
+
+  const {
+    data: dataKernels,
+    mutate: fetchKernels,
+  } = api.kernels.list({}, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+  });
+  const kernels = dataKernels?.kernels;
+  const kernel =
+    kernels?.find(({ name }) =>
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[PipelineTypeEnum.PYTHON],
+    ) || kernels?.[0];
+
+  const [updateKernel]: any = useMutation(
+    api.kernels.useUpdate(kernel?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => fetchKernels(),
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const interruptKernel = useCallback(() => {
+    updateKernel({
+      kernel: {
+        action_type: 'interrupt',
+      },
+    });
+    setRunningBlocks([]);
+  }, [updateKernel]);
+
+  const [messages, setMessages] = useState<{
+    [uuid: string]: KernelOutputType[];
+  }>({});
+  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
+
+  const blockFromCustomTemplate = useMemo(() => ({
+    language: templateAttributes?.language,
+    name: templateAttributes?.name,
+    type: templateAttributes?.block_type,
+    uuid: templateAttributes?.template_uuid,
+  }), [
+    templateAttributes,
+  ]);
+
+  const token = useMemo(() => new AuthToken(), []);
+  const sharedWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    token,
+  ]);
+
+  // WebSocket
+  const {
+    sendMessage,
+  } = useWebSocket(getWebSocket(), {
+    onClose: () => console.log('socketUrlPublish closed'),
+    onMessage: (lastMessage) => {
+      if (lastMessage) {
+        const message: KernelOutputType = JSON.parse(lastMessage.data);
+        const {
+          execution_state: executionState,
+          uuid,
+        } = message;
+
+        if (!uuid) {
+          return;
+        }
+
+        // @ts-ignore
+        setMessages((messagesPrevious) => {
+          const messagesFromUUID = messagesPrevious[uuid] || [];
+          return {
+            ...messagesPrevious,
+            [uuid]: messagesFromUUID.concat(message),
+          };
+        });
+
+
+        if (ExecutionStateEnum.BUSY === executionState) {
+          setRunningBlocks((runningBlocksPrevious) => {
+            if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !blockFromCustomTemplate) {
+              return runningBlocksPrevious;
+            }
+
+            return runningBlocksPrevious.concat(blockFromCustomTemplate);
+          });
+        } else if (ExecutionStateEnum.IDLE === executionState) {
+          // @ts-ignore
+          setRunningBlocks((runningBlocksPrevious) =>
+            runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+          );
+        }
+      }
+    },
+    onOpen: () => console.log('socketUrlPublish opened'),
+    reconnectAttempts: 10,
+    reconnectInterval: 3000,
+    shouldReconnect: () => {
+      // Will attempt to reconnect on all close events, such as server shutting down.
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+    ignoreAlreadyRunning?: boolean;
+    runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
+    runUpstream?: boolean;
+    runTests?: boolean;
+  }) => {
+    const {
+      block,
+      code,
+      ignoreAlreadyRunning,
+      runDownstream = false,
+      runIncompleteUpstream = false,
+      runSettings = {},
+      runTests = false,
+      runUpstream,
+    } = payload;
+
+    const {
+      extension_uuid: extensionUUID,
+      upstream_blocks: upstreamBlocks,
+      uuid,
+    } = block;
+    const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+
+    if (!isAlreadyRunning || ignoreAlreadyRunning) {
+      sendMessage(JSON.stringify({
+        ...sharedWebsocketData,
+        code,
+        extension_uuid: extensionUUID,
+        run_downstream: runDownstream, // This will only run downstream blocks that are charts/widgets
+        run_incomplete_upstream: runIncompleteUpstream,
+        run_settings: runSettings,
+        run_tests: runTests,
+        run_upstream: runUpstream,
+        type: block.type,
+        upstream_blocks: upstreamBlocks,
+        uuid,
+      }));
+
+      // @ts-ignore
+      setMessages((messagesPrevious) => {
+        delete messagesPrevious[uuid];
+
+        return messagesPrevious;
+      });
+
+      // @ts-ignore
+      setRunningBlocks((runningBlocksPrevious) => {
+        if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+          return runningBlocksPrevious;
+        }
+
+        return runningBlocksPrevious.concat(block);
+      });
+    }
+  }, [
+    runningBlocks,
+    sendMessage,
+    setMessages,
+    setRunningBlocks,
+    sharedWebsocketData,
+  ]);
+
+  const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
+    acc: {
+      [uuid: string]: BlockType;
+    },
+    block: BlockType,
+    idx: number,
+  ) => ({
+    ...acc,
+    [block.uuid]: {
+      ...block,
+      priority: idx,
+    },
+  }), {}), [runningBlocks]);
+
+  const codeBlock = useMemo(() => {
+    if (!ready) {
+      return <div />;
+    }
+
+    const runningBlock = runningBlocksByUUID[blockFromCustomTemplate?.uuid];
+    const executionState = runningBlock
+      ? (runningBlock.priority === 0
+        ? ExecutionStateEnum.BUSY
+        : ExecutionStateEnum.QUEUED
+      )
+      : ExecutionStateEnum.IDLE;
+
+    return (
+      <CodeBlock
+        block={blockFromCustomTemplate}
+        defaultValue={templateAttributes?.content}
+        disableDrag
+        executionState={executionState}
+        hideExtraCommandButtons
+        hideHeaderInteractiveInformation
+        interruptKernel={interruptKernel}
+        messages={messages?.[blockFromCustomTemplate?.uuid]}
+        noDivider
+        onChange={(value: string) => setTemplateAttributes(prev => ({
+          ...prev,
+          content: value,
+        }))}
+        runBlock={runBlock}
+        runningBlocks={runningBlocks}
+        selected
+        setErrors={showError}
+        textareaFocused
+      />
+    );
+  }, [
+    blockFromCustomTemplate,
+    interruptKernel,
+    messages,
+    ready,
+    runBlock,
+    runningBlocks,
+    runningBlocksByUUID,
+    setTemplateAttributes,
+    showError,
+    templateAttributes,
+  ]);
+
+  const saveCustomTemplate = useCallback(() => {
+    const payload = {
+      custom_template: {
+        ...templateAttributes,
+        object_type: OBJECT_TYPE_BLOCKS,
+      },
+    };
+
+    if (isNewCustomTemplate) {
+      createCustomTemplate(payload);
+    } else {
+      updateCustomTemplate(payload);
+    }
+  }, [
+    createCustomTemplate,
+    isNewCustomTemplate,
+    templateAttributes,
+    updateCustomTemplate,
+  ]);
+
+  const uuidKeyboard = 'CustomTemplates/TemplateDetail';
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
+        event.preventDefault();
+        const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
+        if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
+          location.reload();
+        }
+      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
+      ) {
+        event.preventDefault();
+        saveCustomTemplate();
+      }
+    },
+    [
+      saveCustomTemplate,
+      touched,
+    ],
+  );
 
   return (
     <ContainerStyle>
@@ -287,20 +601,7 @@ function TemplateDetail({
                   disabled={buttonDisabled}
                   fullWidth
                   loading={isLoadingCreateCustomTemplate || isLoadingUpdateCustomTemplate}
-                  onClick={() => {
-                    const payload = {
-                      custom_template: {
-                        ...templateAttributes,
-                        object_type: OBJECT_TYPE_BLOCKS,
-                      },
-                    };
-
-                    if (isNewCustomTemplate) {
-                      createCustomTemplate(payload);
-                    } else {
-                      updateCustomTemplate(payload);
-                    }
-                  }}
+                  onClick={() => saveCustomTemplate()}
                   primary
                 >
                   {!isNewCustomTemplate && 'Save template'}
@@ -325,33 +626,11 @@ function TemplateDetail({
       </NavigationStyle>
 
       <ContentStyle>
-        <CodeEditor
-          autoHeight
-          // language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
-          // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
-          // onDidChangeCursorPosition={onDidChangeCursorPosition}
-          // onChange={(value: string) => {
-          //   setContent(value);
-          //   // @ts-ignore
-          //   setFilesTouched((prev: {
-          //     [path: string]: boolean;
-          //   }) => ({
-          //     ...prev,
-          //     [file?.path]: true,
-          //   }));
-          //   setTouched(true);
-          // }}
-          // onSave={(value: string) => {
-          //   saveFile(value, file);
-          // }}
-          selected
-          textareaFocused
-          // value={isJsonString(file?.content)
-          //   ? JSON.stringify(JSON.parse(file?.content), null, 2)
-          //   : file?.content
-          // }
-          width="100%"
-        />
+        <Spacing p={PADDING_UNITS}>
+          <DndProvider backend={HTML5Backend}>
+            {codeBlock}
+          </DndProvider>
+        </Spacing>
       </ContentStyle>
     </ContainerStyle>
   );

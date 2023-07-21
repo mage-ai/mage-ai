@@ -64,6 +64,7 @@ type CommandButtonsProps = {
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  hideExtraButtons?: boolean;
   isEditingBlock?: boolean;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     addon: AddonBlockTypeEnum,
@@ -100,6 +101,7 @@ function CommandButtons({
   executionState,
   fetchFileTree,
   fetchPipeline,
+  hideExtraButtons,
   interruptKernel,
   isEditingBlock,
   openSidekickView,
@@ -328,7 +330,7 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreaming) && (
+      {!hideExtraButtons && (BlockTypeEnum.SCRATCHPAD === block.type && !isStreaming) && (
         <Spacing ml={PADDING_UNITS}>
           <FlyoutMenuWrapper
             items={convertBlockMenuItems}
@@ -365,7 +367,7 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {([
+      {!hideExtraButtons && ([
         BlockTypeEnum.DATA_LOADER,
         BlockTypeEnum.TRANSFORMER,
       ].includes(block.type) && !isStreaming && !isIntegration) && (
@@ -413,7 +415,7 @@ function CommandButtons({
         </>
       )}
 
-      {isMarkdown && (
+      {!hideExtraButtons && isMarkdown && (
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
             appearBefore
@@ -437,35 +439,12 @@ function CommandButtons({
         </Spacing>
       )}
 
-      <Spacing ml={PADDING_UNITS}>
-        <Tooltip
-          appearBefore
-          default
-          label="View and edit settings for this block"
-          size={DEFAULT_ICON_SIZE}
-          widthFitContent
-        >
-          <Button
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => openSidekickView?.(ViewKeyEnum.BLOCK_SETTINGS)}
-          >
-            <SettingsWithKnobs default size={DEFAULT_ICON_SIZE} />
-          </Button>
-        </Tooltip>
-      </Spacing>
-
-      <div ref={refMoreActions}>
+      {!hideExtraButtons && (
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
             appearBefore
             default
-            label={(
-              <Text>
-                More actions
-              </Text>
-            )}
+            label="View and edit settings for this block"
             size={DEFAULT_ICON_SIZE}
             widthFitContent
           >
@@ -473,49 +452,78 @@ function CommandButtons({
               noBackground
               noBorder
               noPadding
-              onClick={() => setShowMoreActions(currState => !currState)}
+              onClick={() => openSidekickView?.(ViewKeyEnum.BLOCK_SETTINGS)}
             >
-              <Circle
-                borderSize={1.5}
-                default
-                size={DEFAULT_ICON_SIZE}
-              >
-                <Ellipsis default size={UNIT} />
-              </Circle>
+              <SettingsWithKnobs default size={DEFAULT_ICON_SIZE} />
             </Button>
           </Tooltip>
         </Spacing>
-      </div>
+      )}
 
-      <ClickOutside
-        disableEscape
-        onClickOutside={() => setShowMoreActions(false)}
-        open={showMoreActions}
-      >
-        <FlyoutMenu
-          items={getMoreActionsItems(
-            block,
-            runBlock,
-            deleteBlock,
-            setOutputCollapsed,
-            isStreaming || isIntegration,
-            {
-              addNewBlock,
-              blocksMapping,
-              fetchFileTree,
-              fetchPipeline,
-              savePipelineContent,
-              updatePipeline,
-            },
-          )}
-          onClickCallback={() => setShowMoreActions(false)}
+      {!hideExtraButtons && (
+        <div ref={refMoreActions}>
+          <Spacing ml={PADDING_UNITS}>
+            <Tooltip
+              appearBefore
+              default
+              label={(
+                <Text>
+                  More actions
+                </Text>
+              )}
+              size={DEFAULT_ICON_SIZE}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => setShowMoreActions(currState => !currState)}
+              >
+                <Circle
+                  borderSize={1.5}
+                  default
+                  size={DEFAULT_ICON_SIZE}
+                >
+                  <Ellipsis default size={UNIT} />
+                </Circle>
+              </Button>
+            </Tooltip>
+          </Spacing>
+        </div>
+      )}
+
+      {!hideExtraButtons && (
+        <ClickOutside
+          disableEscape
+          onClickOutside={() => setShowMoreActions(false)}
           open={showMoreActions}
-          parentRef={refMoreActions}
-          rightOffset={UNIT * 4.75}
-          topOffset={UNIT * 2}
-          uuid="FileHeaderMenu/file_items"
-        />
-      </ClickOutside>
+        >
+          <FlyoutMenu
+            items={getMoreActionsItems(
+              block,
+              runBlock,
+              deleteBlock,
+              setOutputCollapsed,
+              isStreaming || isIntegration,
+              {
+                addNewBlock,
+                blocksMapping,
+                fetchFileTree,
+                fetchPipeline,
+                savePipelineContent,
+                updatePipeline,
+              },
+            )}
+            onClickCallback={() => setShowMoreActions(false)}
+            open={showMoreActions}
+            parentRef={refMoreActions}
+            rightOffset={UNIT * 4.75}
+            topOffset={UNIT * 2}
+            uuid="FileHeaderMenu/file_items"
+          />
+        </ClickOutside>
+      )}
     </FlexContainer>
   );
 }
