@@ -106,6 +106,22 @@ class ApiSchedulerHandler(BaseHandler):
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
 
 
+def replace_base_path(base_path):
+    import fnmatch
+    import os
+    directory = os.path.join(os.path.dirname(__file__), 'frontend_dist_base_path')
+    for path, dirs, files in os.walk(os.path.abspath(directory)):
+        for filename in fnmatch.filter(files, '*.js|*.html'):
+            filepath = os.path.join(path, filename)
+            with open(filepath) as f:
+                s = f.read()
+            s = s.replace('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_', base_path)
+            s = s.replace('src:url(/fonts', f'src:url(/{base_path}/fonts')
+            # replace favicon
+            with open(filepath, "w") as f:
+                f.write(s)
+
+
 def make_app():
     shell_command = SHELL_COMMAND
     if shell_command is None:
@@ -194,9 +210,14 @@ def make_app():
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
     ]
 
-    updated_routes = []
-    for route in routes:
-        updated_routes.append((route[0].replace('/', '/test-ingress/', 1), *route[1:]))
+    base_path = os.getenv('BASE_PATH')
+    template_dir = 'frontend_dist'
+    if base_path:
+        replace_base_path(base_path)
+        updated_routes = []
+        for route in routes:
+            updated_routes.append((route[0].replace('/', '/test-workspace/', 1), *route[1:]))
+        template_dir
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(

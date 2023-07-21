@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "export": "next build && next export",
+    "test": "next build -h",
     "export_prod": "next build && next export -o ../server/frontend_dist",
     "dev": "next dev",
     "lint": "next lint",

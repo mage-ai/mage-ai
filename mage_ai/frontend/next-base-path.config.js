@@ -1,9 +1,9 @@
 const removeImports = require('next-remove-imports')();
 
-// If you make updates to this file, you must also update the
-// next-base-path.config.js file
 module.exports = removeImports({
-  distDir: '../server/frontend_dist',
+  basePath: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_',
+  assetPrefix: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/',
+  distDir: '../server/frontend_dist_base_path',
   eslint: {
     ignoreDuringBuilds: true,
   },
