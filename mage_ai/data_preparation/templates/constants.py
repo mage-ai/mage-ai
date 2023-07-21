@@ -3,8 +3,25 @@ from mage_ai.shared.hash import index_by
 
 GROUP_DELTA_LAKE = 'Delta Lake'
 GROUP_ORCHESTRATION = 'Orchestration'
+GROUP_SYSTEMLINK = 'SystemLink'
 
 TEMPLATES = [
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        description='Load data from File Ingestion Service',
+        groups=[GROUP_SYSTEMLINK],
+        language=BlockLanguage.PYTHON,
+        name='File Ingestion Service',
+        path='data_loaders/systemlink/file_ingestion_service.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        description='Export data to File Ingestion Service',
+        groups=[GROUP_SYSTEMLINK],
+        language=BlockLanguage.PYTHON,
+        name='File Ingestion Service',
+        path='data_exporters/systemlink/file_ingestion_service.py',
+    ),
     dict(
         block_type=BlockType.DATA_LOADER,
         description='Load a Delta Table from Amazon S3.',
