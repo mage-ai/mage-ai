@@ -41,12 +41,12 @@ import { useError } from '@context/Error';
 
 type TemplateDetailProps = {
   defaultTabUUID?: TabType;
-  template?: CustomTemplateType;
+  templateUUID?: string;
 };
 
 function TemplateDetail({
   defaultTabUUID,
-  template,
+  templateUUID,
 }: TemplateDetailProps) {
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
@@ -64,9 +64,20 @@ function TemplateDetail({
     setTemplateAttributesState(handlePrevious);
   }, []);
 
+  const {
+    data: dataCustomTemplate,
+  } = api.custom_templates.detail(
+    templateUUID && encodeURIComponent(templateUUID),
+    {
+      object_type: OBJECT_TYPE_BLOCKS,
+    },
+  );
+  const template: CustomTemplateType =
+    useMemo(() => dataCustomTemplate?.custom_template, [dataCustomTemplate]);
+
   const templatePrev = usePrevious(template);
   useEffect(() => {
-    if (templatePrev?.uuid !== template?.uuid) {
+    if (templatePrev?.template_uuid !== template?.template_uuid) {
       setTemplateAttributesState(template);
     }
   }, [template, templatePrev]);
@@ -93,7 +104,31 @@ function TemplateDetail({
     },
   );
 
-  const isNewCustomTemplate: boolean = !template?.uuid;
+  const [updateCustomTemplate, { isLoading: isLoadingUpdateCustomTemplate }] = useMutation(
+    api.custom_templates.useUpdate(
+      templateUUID && encodeURIComponent(templateUUID),
+      {
+        object_type: OBJECT_TYPE_BLOCKS,
+      },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            custom_template: ct,
+          }) => {
+            setTemplateAttributesState(ct);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const isNewCustomTemplate: boolean = !templateUUID;
   const buttonDisabled = useMemo(() => {
     if (isNewCustomTemplate) {
       return !templateAttributes?.template_uuid
@@ -205,13 +240,21 @@ function TemplateDetail({
                 <Button
                   disabled={buttonDisabled}
                   fullWidth
-                  loading={isLoadingCreateCustomTemplate}
-                  onClick={() => createCustomTemplate({
-                    custom_template: {
-                      ...templateAttributes,
-                      object_type: OBJECT_TYPE_BLOCKS,
-                    },
-                  })}
+                  loading={isLoadingCreateCustomTemplate || isLoadingUpdateCustomTemplate}
+                  onClick={() => {
+                    const payload = {
+                      custom_template: {
+                        ...templateAttributes,
+                        object_type: OBJECT_TYPE_BLOCKS,
+                      },
+                    };
+
+                    if (isNewCustomTemplate) {
+                      createCustomTemplate(payload);
+                    } else {
+                      updateCustomTemplate(payload);
+                    }
+                  }}
                   primary
                 >
                   {!isNewCustomTemplate && 'Save template'}

@@ -59,7 +59,10 @@ class CustomTemplateResource(GenericResource):
 
                 raise ApiError(error)
             else:
-                custom_template = CustomBlockTemplate(**ignore_keys(payload, [OBJECT_TYPE_KEY]))
+                custom_template = CustomBlockTemplate(**ignore_keys(payload, [
+                    'uuid',
+                    OBJECT_TYPE_KEY,
+                ]))
                 if user:
                     custom_template.user = dict(
                         username=user.username,
@@ -72,13 +75,16 @@ class CustomTemplateResource(GenericResource):
 
     @classmethod
     def member(self, pk, user, **kwargs):
-        uuid = urllib.parse.unquote(pk)
-        parts = uuid.split(os.sep)
-        object_type = parts[1]
+        query = kwargs.get('query', {})
+        object_type = query.get(OBJECT_TYPE_KEY, [None])
+        if object_type:
+            object_type = object_type[0]
+
+        template_uuid = urllib.parse.unquote(pk)
 
         try:
             if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
-                return self(CustomBlockTemplate.load(uuid=uuid), user, **kwargs)
+                return self(CustomBlockTemplate.load(template_uuid=template_uuid), user, **kwargs)
         except Exception as err:
             print(f'[WARNING] CustomTemplateResource.member: {err}')
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
@@ -87,6 +93,9 @@ class CustomTemplateResource(GenericResource):
         self.model.delete
 
     def update(self, payload, **kwargs):
-        for key, value in payload.items():
+        for key, value in ignore_keys(payload, [
+            'uuid',
+            OBJECT_TYPE_KEY,
+        ]).items():
             setattr(self.model, key, value)
         self.model.save()

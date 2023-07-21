@@ -1,18 +1,21 @@
 import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import TemplateDetail from '@components/CustomTemplates/TemplateDetail';
-import api from '@api';
+
+type TemplateDetailsProps = {
+  slug: string;
+};
 
 function TemplateDetails({
   slug,
-}) {
-  // DO WE WANT to pass the template UUID or the entire template object to TemplateDetail?
+}: TemplateDetailsProps) {
   return (
     <Dashboard
       title={slug}
       uuid="TemplatesDetail/index"
     >
       <TemplateDetail
+        templateUUID={slug}
       />
     </Dashboard>
   );
@@ -24,16 +27,6 @@ TemplateDetails.getInitialProps = async (ctx) => {
   }: {
     slug: string[],
   } = ctx.query;
-
-  // if (Array.isArray(slugArray)) {
-  //   const [pipelineScheduleId, subpath] = slugArray;
-
-  //   return {
-  //     pipelineScheduleId,
-  //     pipelineUUID,
-  //     subpath,
-  //   };
-  // }
 
   return {
     slug,
