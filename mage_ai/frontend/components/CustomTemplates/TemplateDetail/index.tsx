@@ -15,6 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Select from '@oracle/elements/Inputs/Select';
 import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -41,11 +42,13 @@ import { useError } from '@context/Error';
 
 type TemplateDetailProps = {
   defaultTabUUID?: TabType;
+  onCancel?: () => void;
   templateUUID?: string;
 };
 
 function TemplateDetail({
   defaultTabUUID,
+  onCancel,
   templateUUID,
 }: TemplateDetailProps) {
   const router = useRouter();
@@ -118,6 +121,7 @@ function TemplateDetail({
             custom_template: ct,
           }) => {
             setTemplateAttributesState(ct);
+            setTouched(false);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -232,6 +236,46 @@ function TemplateDetail({
                 </Spacing>
               </>
             )}
+
+            {NAV_TAB_DOCUMENT.uuid === selectedTab?.uuid && (
+              <>
+                <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                  <Spacing mb={1}>
+                    <Text bold>
+                      Name
+                    </Text>
+                    <Text muted small>
+                      A human readable name for your template.
+                    </Text>
+                  </Spacing>
+
+                  <TextInput
+                    // @ts-ignore
+                    onChange={e => setTemplateAttributes(prev => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))}
+                    primary
+                    setContentOnMount
+                    value={templateAttributes?.name || ''}
+                  />
+                </Spacing>
+
+                <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                  <TextArea
+                    label="Description"
+                    // @ts-ignore
+                    onChange={e => setTemplateAttributes(prev => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))}
+                    primary
+                    setContentOnMount
+                    value={templateAttributes?.description || ''}
+                  />
+                </Spacing>
+              </>
+            )}
           </Flex>
 
           <ButtonsStyle>
@@ -261,13 +305,17 @@ function TemplateDetail({
                   {isNewCustomTemplate && 'Create new template'}
                 </Button>
 
-                <Spacing mr={1} />
+                {onCancel && (
+                  <>
+                    <Spacing mr={1} />
 
-                <Button
-                  secondary
-                >
-                  Cancel
-                </Button>
+                    <Button
+                      secondary
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                )}
               </FlexContainer>
             </Spacing>
           </ButtonsStyle>

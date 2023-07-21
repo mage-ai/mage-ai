@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -51,9 +52,10 @@ function BrowseTemplates({
   defaultLinkUUID,
   defaultTabUUID,
 }: BrowseTemplatesProps) {
+  const router = useRouter();
   const themeContext = useContext(ThemeContext);
 
-  const [addingNewTemplate, setAddingNewTemplate] = useState<boolean>(true || false);
+  const [addingNewTemplate, setAddingNewTemplate] = useState<boolean>(false);
   const [selectedLink, setSelectedLink] = useState<NavLinkType>(defaultLinkUUID
     ? NAV_LINKS.find(({ uuid }) => uuid === defaultLinkUUID)
     : NAV_LINKS[0],
@@ -123,34 +125,46 @@ function BrowseTemplates({
   const cardsBlocks = useMemo(() => customTemplates?.map(({
     description,
     name,
-    tags,
-    uuid,
+    // tags,
+    template_uuid: templateUUID,
   }) => (
     <CardStyle
-      key={uuid}
+      key={templateUUID}
+      onClick={() => {
+        router.push(
+          '/templates/[...slug]',
+          `/templates/${encodeURIComponent(templateUUID)}`,
+        );
+      }}
     >
       <CardTitleStyle>
         <Text bold monospace textOverflow>
-          {name}
+          {templateUUID || name}
         </Text>
       </CardTitleStyle>
 
       <CardDescriptionStyle>
-        <Text default textOverflowLines={2}>
-          {description}
+        <Text
+          default={!!description}
+          italic={!description}
+          muted={!description}
+          textOverflowLines={2}
+        >
+          {description || 'No description'}
         </Text>
       </CardDescriptionStyle>
 
-      <TagsStyle>
+      {/*<TagsStyle>
         {tags?.length >= 1 && (
           <TagsContainer
             tags={tags?.map(uuid => ({ uuid }))}
           />
         )}
-      </TagsStyle>
+      </TagsStyle>*/}
     </CardStyle>
   )), [
     customTemplates,
+    router,
   ]);
 
   if (addingNewTemplate) {
