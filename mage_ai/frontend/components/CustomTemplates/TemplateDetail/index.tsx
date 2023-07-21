@@ -9,6 +9,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import CodeEditor from '@components/CodeEditor';
 import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -28,6 +29,7 @@ import {
 import {
   ButtonsStyle,
   ContainerStyle,
+  ContentStyle,
   NavigationStyle,
   TabsStyle,
 } from './index.style';
@@ -321,6 +323,36 @@ function TemplateDetail({
           </ButtonsStyle>
         </FlexContainer>
       </NavigationStyle>
+
+      <ContentStyle>
+        <CodeEditor
+          autoHeight
+          // language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
+          // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
+          // onDidChangeCursorPosition={onDidChangeCursorPosition}
+          // onChange={(value: string) => {
+          //   setContent(value);
+          //   // @ts-ignore
+          //   setFilesTouched((prev: {
+          //     [path: string]: boolean;
+          //   }) => ({
+          //     ...prev,
+          //     [file?.path]: true,
+          //   }));
+          //   setTouched(true);
+          // }}
+          // onSave={(value: string) => {
+          //   saveFile(value, file);
+          // }}
+          selected
+          textareaFocused
+          // value={isJsonString(file?.content)
+          //   ? JSON.stringify(JSON.parse(file?.content), null, 2)
+          //   : file?.content
+          // }
+          width="100%"
+        />
+      </ContentStyle>
     </ContainerStyle>
   );
 }

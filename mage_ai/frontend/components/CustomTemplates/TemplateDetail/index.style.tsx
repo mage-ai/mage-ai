@@ -16,7 +16,9 @@ export const ContainerStyle = styled.div`
 
 export const NavigationStyle = styled.div`
   height: 100%;
+  position: fixed;
   width: ${NAV_WIDTH}px;
+  z-index: 1;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
@@ -44,57 +46,9 @@ export const ButtonsStyle = styled.div`
   `}
 `;
 
-// export const LinksContainerStyle = styled.div`
-//   ${ScrollbarStyledCss}
-
-//   height: 100%;
-//   overflow: auto;
-//   position: fixed;
-//   width: ${NAV_WIDTH}px;
-// `;
-
-// export const NavLinkStyle = styled.div<{
-//   selected?: boolean;
-// }>`
-//   ${transition()}
-
-//   padding-bottom: ${1 * UNIT}px;
-//   padding-left: ${PADDING_UNITS * UNIT}px;
-//   padding-right: ${PADDING_UNITS * UNIT}px;
-//   padding-top: ${1 * UNIT}px;
-
-//   &:hover {
-//     cursor: pointer;
-//   }
-
-//   ${props => props.selected && `
-//     background-color: ${(props.theme.background || dark.background).codeTextarea};
-//   `}
-// `;
-
-// export const IconStyle = styled.div<{
-//   backgroundColor?: string;
-// }>`
-//   ${transition()}
-
-//   border-radius: ${BORDER_RADIUS}px;
-//   height: ${UNIT * 5}px;
-//   margin-right: ${UNIT * 1.25}px;
-//   padding: ${UNIT * 1.25}px;
-//   width: ${UNIT * 5}px;
-
-//   ${props => !props.backgroundColor && `
-//     background-color: ${(props.theme.background || dark.background).chartBlock};
-//   `}
-
-//   ${props => props.backgroundColor && `
-//     background-color: ${props.backgroundColor};
-//   `}
-// `;
-
-// export const ContentStyle = styled.div`
-//   margin-left: ${NAV_WIDTH}px;
-// `;
+export const ContentStyle = styled.div`
+  margin-left: ${NAV_WIDTH}px;
+`;
 
 // export const SubheaderStyle = styled.div`
 //   padding: ${PADDING_UNITS * UNIT}px;
