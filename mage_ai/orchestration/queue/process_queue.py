@@ -7,7 +7,6 @@ from multiprocessing import Manager
 from typing import Callable
 
 import newrelic.agent
-import redis
 import sentry_sdk
 from sentry_sdk import capture_exception
 
@@ -15,6 +14,7 @@ from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import HOSTNAME, REDIS_URL, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 LIVENESS_TIMEOUT_SECONDS = 300
@@ -56,13 +56,11 @@ class ProcessQueue(Queue):
             redis_url = self.process_queue_config.redis_url
         elif REDIS_URL:
             redis_url = REDIS_URL
-            self.redis_client = redis.Redis.from_url(url=REDIS_URL, decode_responses=True)
         else:
             redis_url = None
-        if redis_url:
-            self.redis_client = redis.Redis.from_url(url=redis_url, decode_responses=True)
-        else:
-            self.redis_client = None
+
+        self.redis_client = init_redis_client(redis_url)
+
         self.client_id = f'HOST_{HOSTNAME}_PID_{os.getpid()}'
 
         self.worker_pool_proc = None

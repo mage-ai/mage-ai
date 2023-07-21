@@ -421,7 +421,7 @@ class BlockExecutor:
                     self.logger.info(
                         f'Conditional block {conditional_block.uuid} evaluated as False '
                         f'for block {self.block.uuid}',
-                        logging_tags,
+                        **logging_tags,
                     )
                 result = result and block_result
             except Exception as conditional_err:
