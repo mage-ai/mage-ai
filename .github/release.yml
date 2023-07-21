@@ -11,7 +11,7 @@ changelog:
         - bug
     - title: 💅 Enhancements & Polish
       labels:
-        - enhancements
+        - enhancement
     - title: Other Changes
       labels:
         - "*"
