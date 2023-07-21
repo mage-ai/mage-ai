@@ -34,13 +34,10 @@ json_data = {
 }
 
 s = requests.Session()
-
 s.headers = headers
-
 sessions_url = base_url + "/api/sessions"
 
 r = s.post(url=sessions_url, json=json_data)
-
 mage_session = r.json().get('session')
 ```
 
@@ -48,7 +45,6 @@ mage_session = r.json().get('session')
 
 ```python
 token = mage_session.get('token')
-
 s.headers['Cookie'] = f'oauth_token={token}'
 ```
 
@@ -56,9 +52,7 @@ s.headers['Cookie'] = f'oauth_token={token}'
 
 ```python
 pipelines_url = base_url + '/api/pipelines'
-
 r = s.get(pipelines_url)
-
 list_pipelines = r.json()
 
 print(list_pipelines)
