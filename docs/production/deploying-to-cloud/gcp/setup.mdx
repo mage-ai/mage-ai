@@ -89,6 +89,20 @@ variable "project_id" {
 }
 ```
 
+**Mage Image (REQUIRED)**
+
+Google Cloud Run supports pulling Docker images directly from Docker Hub. To use the latest Mage image (default):
+
+```js
+variable "docker_image" {
+  type        = string
+  description = "The docker image to deploy to Cloud Run."
+  default     = "docker.io/mageai/mageai:latest"
+}
+```
+
+Simply change the tag to adjust the version of Mage you want to deploy. If you need to build your own image, you can push it to Docker Hub or follow our guide to use [GCP Artifact Registry](/production/deploying-to-cloud/gcp/gcp-artifact-registry).
+
 **Application Name**
 
 In the file
@@ -294,9 +308,7 @@ Other variables defined in
 [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 can also be customized to your needs.
 
----
-
-## 5. Deploy
+## 4. Deploy
 
 1. Change directory into scripts folder:
    ```bash
