@@ -30,7 +30,7 @@ class RoleResource(GenericResource):
         permissions_query = Permission.query
         if entity:
             permissions_query = permissions_query.filter(
-                Entity == entity,
+                Permission.entity == entity,
             )
             if entity != Entity.GLOBAL and entity_ids:
                 permissions_query = permissions_query.filter(
