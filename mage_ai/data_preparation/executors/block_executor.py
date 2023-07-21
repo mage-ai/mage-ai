@@ -7,9 +7,21 @@ import requests
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
+from mage_ai.data_preparation.models.block.utils import (
+    create_block_runs_from_dynamic_block,
+)
+from mage_ai.data_preparation.models.block.utils import (
+    dynamic_block_uuid as dynamic_block_uuid_func,
+)
+from mage_ai.data_preparation.models.block.utils import (
+    dynamic_block_values_and_metadata,
+    is_dynamic_block,
+    is_dynamic_block_child,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.shared.retry import RetryConfig
-from mage_ai.orchestration.db.models.schedules import PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -50,20 +62,19 @@ class BlockExecutor:
     def execute(
         self,
         analyze_outputs: bool = False,
+        block_run_id: int = None,
         callback_url: Union[str, None] = None,
         global_vars: Union[Dict, None] = None,
-        update_status: bool = False,
+        input_from_output: Union[Dict, None] = None,
         on_complete: Union[Callable[[str], None], None] = None,
         on_failure: Union[Callable[[str, Dict], None], None] = None,
         on_start: Union[Callable[[str], None], None] = None,
-        input_from_output: Union[Dict, None] = None,
-        verify_output: bool = True,
+        pipeline_run_id: int = None,
         retry_config: Dict = None,
         runtime_arguments: Union[Dict, None] = None,
         template_runtime_configuration: Union[Dict, None] = None,
-        dynamic_block_index: Union[int, None] = None,
-        dynamic_block_uuid: Union[str, None] = None,
-        dynamic_upstream_block_uuids: Union[List[str], None] = None,
+        update_status: bool = False,
+        verify_output: bool = True,
         **kwargs,
     ) -> Dict:
         """
@@ -71,37 +82,108 @@ class BlockExecutor:
 
         Args:
             analyze_outputs: Whether to analyze the outputs of the block.
+            block_run_id: The ID of the block run.
             callback_url: The URL for the callback.
             global_vars: Global variables for the block execution.
-            update_status: Whether to update the status of the block execution.
+            input_from_output: Input from the output of a previous block.
             on_complete: Callback function called when the block execution is complete.
             on_failure: Callback function called when the block execution fails.
             on_start: Callback function called when the block execution starts.
-            input_from_output: Input from the output of a previous block.
-            verify_output: Whether to verify the output of the block.
+            pipeline_run_id: The ID of the pipeline run.
             retry_config: Configuration for retrying the block execution.
             runtime_arguments: Runtime arguments for the block execution.
             template_runtime_configuration: Template runtime configuration for the block execution.
-            dynamic_block_index: Index of the dynamic block.
-            dynamic_block_uuid: UUID of the dynamic block.
-            dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
+            update_status: Whether to update the status of the block in pipeline metadata.yaml file.
+            verify_output: Whether to verify the output of the block.
             **kwargs: Additional keyword arguments.
 
         Returns:
             The result of the block execution.
         """
         if template_runtime_configuration:
+            # Used for data integration pipeline
             self.block.template_runtime_configuration = template_runtime_configuration
         try:
             result = dict()
 
-            tags = self._build_tags(**kwargs)
+            tags = self._build_tags(
+                block_run_id=block_run_id,
+                pipeline_run_id=pipeline_run_id,
+                **kwargs
+            )
 
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
-            pipeline_run = PipelineRun.query.get(kwargs.get('pipeline_run_id')) \
-                if 'pipeline_run_id' in kwargs else None
+
+            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
+            block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+
+            if block_run:
+                block_run_data = block_run.metrics or {}
+                dynamic_block_index = block_run_data.get('dynamic_block_index', None)
+                dynamic_upstream_block_uuids = block_run_data.get(
+                    'dynamic_upstream_block_uuids', None)
+            else:
+                dynamic_block_index = None
+                dynamic_upstream_block_uuids = None
+
+            # If there are upstream blocks that were dynamically created, and if any of them are
+            # configured to reduce their output, we must update the dynamic_upstream_block_uuids to
+            # include all the upstream block’s dynamically created blocks by getting the upstream
+            # block’s dynamic parent block and collecting that parent’s output.
+            if dynamic_upstream_block_uuids:
+                dynamic_upstream_block_uuids_reduce = []
+                dynamic_upstream_block_uuids_no_reduce = []
+
+                for upstream_block_uuid in dynamic_upstream_block_uuids:
+                    upstream_block = self.pipeline.get_block(upstream_block_uuid)
+
+                    if not should_reduce_output(upstream_block):
+                        dynamic_upstream_block_uuids_no_reduce.append(upstream_block_uuid)
+                        continue
+
+                    parts = upstream_block_uuid.split(':')
+                    suffix = None
+                    if len(parts) >= 3:
+                        # A block can have a UUID such as: some_uuid:0 or some_uuid:0:1
+                        suffix = ':'.join(parts[2:])
+
+                    # We currently limit a block to only have 1 direct dynamic parent.
+                    # We are looping over the upstream blocks just in case we support having
+                    # multiple direct dynamic parents.
+                    for block_grandparent in list(filter(
+                        lambda x: is_dynamic_block(x),
+                        upstream_block.upstream_blocks,
+                    )):
+
+                        block_grandparent_uuid = block_grandparent.uuid
+
+                        if suffix and is_dynamic_block_child(block_grandparent):
+                            block_grandparent_uuid = f'{block_grandparent_uuid}:{suffix}'
+
+                        values, block_metadata = dynamic_block_values_and_metadata(
+                            block_grandparent,
+                            self.execution_partition,
+                            block_grandparent_uuid,
+                        )
+
+                        for idx, _ in enumerate(values):
+                            if idx < len(block_metadata):
+                                metadata = block_metadata[idx].copy()
+                            else:
+                                metadata = {}
+
+                            dynamic_upstream_block_uuids_reduce.append(
+                                dynamic_block_uuid_func(
+                                    upstream_block.uuid,
+                                    metadata,
+                                    idx,
+                                    upstream_block_uuid=block_grandparent_uuid,
+                                ))
+
+                dynamic_upstream_block_uuids = dynamic_upstream_block_uuids_reduce + \
+                    dynamic_upstream_block_uuids_no_reduce
 
             conditional_result = self._execute_conditional(
                 dynamic_block_index=dynamic_block_index,
@@ -120,8 +202,8 @@ class BlockExecutor:
                     )),
                 )
                 self.__update_block_run_status(
-                    'condition_failed',
-                    block_run_id=kwargs.get('block_run_id'),
+                    BlockRun.BlockRunStatus.CONDITION_FAILED,
+                    block_run_id=block_run_id,
                     callback_url=callback_url,
                     tags=tags,
                 )
@@ -152,16 +234,19 @@ class BlockExecutor:
                 def __execute_with_retry():
                     return self._execute(
                         analyze_outputs=analyze_outputs,
+                        block_run_id=block_run_id,
                         callback_url=callback_url,
                         global_vars=global_vars,
                         update_status=update_status,
                         input_from_output=input_from_output,
                         logging_tags=tags,
+                        pipeline_run_id=pipeline_run_id,
                         verify_output=verify_output,
                         runtime_arguments=runtime_arguments,
                         template_runtime_configuration=template_runtime_configuration,
                         dynamic_block_index=dynamic_block_index,
-                        dynamic_block_uuid=dynamic_block_uuid,
+                        dynamic_block_uuid=None if dynamic_block_index is None
+                        else block_run.block_uuid,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         **kwargs,
                     )
@@ -187,8 +272,8 @@ class BlockExecutor:
                     )
                 else:
                     self.__update_block_run_status(
-                        'failed',
-                        block_run_id=kwargs.get('block_run_id'),
+                        BlockRun.BlockRunStatus.FAILED,
+                        block_run_id=block_run_id,
                         callback_url=callback_url,
                         tags=tags,
                     )
@@ -206,9 +291,10 @@ class BlockExecutor:
                 on_complete(self.block_uuid)
             else:
                 self.__update_block_run_status(
-                    'completed',
-                    block_run_id=kwargs.get('block_run_id'),
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    block_run_id=block_run_id,
                     callback_url=callback_url,
+                    pipeline_run=pipeline_run,
                     tags=tags,
                 )
             self._execute_callback(
@@ -227,6 +313,7 @@ class BlockExecutor:
     def _execute(
         self,
         analyze_outputs: bool = False,
+        block_run_id: int = None,
         callback_url: Union[str, None] = None,
         global_vars: Union[Dict, None] = None,
         update_status: bool = False,
@@ -402,6 +489,7 @@ class BlockExecutor:
         self,
         block_run_id: int = None,
         global_vars: Dict = None,
+        pipeline_run_id: int = None,
         **kwargs,
     ) -> List[str]:
         """
@@ -427,8 +515,7 @@ class BlockExecutor:
             options += ['--execution-partition', self.execution_partition]
         if block_run_id is not None:
             options += ['--block-run-id', f'{block_run_id}']
-        if kwargs.get('pipeline_run_id'):
-            pipeline_run_id = kwargs.get('pipeline_run_id')
+        if pipeline_run_id:
             options += [
                 '--pipeline-run-id',
                 f'{pipeline_run_id}',
@@ -443,9 +530,10 @@ class BlockExecutor:
 
     def __update_block_run_status(
         self,
-        status: str,
+        status: BlockRun.BlockRunStatus,
         block_run_id: int = None,
         callback_url: str = None,
+        pipeline_run: PipelineRun = None,
         tags: Dict = None,
     ):
         """
@@ -466,13 +554,33 @@ class BlockExecutor:
             if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
 
-            from mage_ai.orchestration.db.models.schedules import BlockRun
+            try:
+                if status == BlockRun.BlockRunStatus.COMPLETED and \
+                        pipeline_run is not None and is_dynamic_block(self.block):
+                    create_block_runs_from_dynamic_block(
+                        self.block,
+                        pipeline_run,
+                        block_uuid=self.block.uuid if self.block.replicated_block
+                        else self.block_uuid,
+                    )
+            except Exception as err1:
+                self.logger.exception(
+                    f'Failed to create block runs for dynamic block {self.block.uuid}.',
+                    **merge_dict(tags, dict(
+                        error=err1
+                    )),
+                )
 
             block_run = BlockRun.query.get(block_run_id)
             block_run.update(status=status)
             return
-        except Exception:
-            pass
+        except Exception as err2:
+            self.logger.exception(
+                f'Failed to update block run status to {status} for block {self.block.uuid}.',
+                **merge_dict(tags, dict(
+                    error=err2
+                )),
+            )
 
         # Fall back to making API calls
         response = requests.put(

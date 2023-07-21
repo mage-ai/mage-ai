@@ -20,5 +20,9 @@ class EcsBlockExecutor(BlockExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-        cmd = self._run_commands(block_run_id, global_vars, **kwargs)
+        cmd = self._run_commands(
+            block_run_id=block_run_id,
+            global_vars=global_vars,
+            **kwargs,
+        )
         ecs.run_task(' '.join(cmd), ecs_config=self.executor_config)

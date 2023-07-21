@@ -57,6 +57,7 @@ def create_block_run_from_dynamic_child(
     pipeline_run,
     block_metadata: Dict,
     index: int,
+    skip_if_exists: bool = True,
     upstream_block_uuid: str = None,
 ):
     """
@@ -81,7 +82,11 @@ def create_block_run_from_dynamic_child(
         index,
         upstream_block_uuid=upstream_block_uuid,
     )
-    block_run = pipeline_run.create_block_run(block_uuid, metrics=metadata)
+    block_run = pipeline_run.create_block_run(
+        block_uuid,
+        metrics=metadata,
+        skip_if_exists=skip_if_exists,
+    )
 
     return block_run
 
