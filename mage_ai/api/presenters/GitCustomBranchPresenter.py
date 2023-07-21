@@ -16,7 +16,7 @@ class GitCustomBranchPresenter(GitBranchPresenter):
         'untracked_files',
     ]
 
-    def present(self, **kwargs):
+    async def present(self, **kwargs):
         display_format = kwargs.get('format')
 
         data_to_display = self.model
@@ -33,7 +33,14 @@ class GitCustomBranchPresenter(GitBranchPresenter):
         if 'with_basic_details' == display_format:
             return dict(name=data_to_display.get('name'))
         elif 'with_files' == display_format:
-            data_to_display.update(files=self.resource.files(limit=100))
+            data_to_display.update(
+                files=await self.resource.files(
+                    self.model.get('modified_files', []),
+                    self.model.get('staged_files', []),
+                    self.model.get('untracked_files', []),
+                    limit=100,
+                )
+            )
         elif 'with_logs' == display_format:
             data_to_display.update(logs=self.resource.logs(commits=12))
         elif 'with_remotes' == display_format:

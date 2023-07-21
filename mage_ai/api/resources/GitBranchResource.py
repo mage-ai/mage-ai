@@ -1,11 +1,12 @@
 import os
+from typing import Dict, List
+
 from github import Auth, Github
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.git import Git
-from mage_ai.data_preparation.git import api
+from mage_ai.data_preparation.git import Git, api
 from mage_ai.data_preparation.preferences import get_preferences
-from typing import Dict, List
 
 
 def build_file_object(obj):
@@ -72,8 +73,8 @@ class GitBranchResource(GenericResource):
         git_manager = self.get_git_manager(user=user)
 
         modified_files = git_manager.modified_files
-        staged_files = git_manager.staged_files()
-        untracked_files = git_manager.untracked_files()
+        staged_files = await git_manager.staged_files()
+        untracked_files = await git_manager.untracked_files()
 
         return self(dict(
             files={},
@@ -93,7 +94,7 @@ class GitBranchResource(GenericResource):
 
         if action_type == 'status':
             status = git_manager.status()
-            untracked_files = git_manager.untracked_files()
+            untracked_files = await git_manager.untracked_files()
             modified_files = git_manager.modified_files
             self.model = dict(
                 name=git_manager.current_branch,
@@ -246,20 +247,19 @@ class GitBranchResource(GenericResource):
 
         return self
 
-    def files(self, limit: int = None) -> Dict:
-        git_manager = self.get_git_manager(user=self.current_user)
-
-        files = {}
-
-        modified_files = git_manager.modified_files
-        staged_files = git_manager.staged_files()
-        untracked_files = git_manager.untracked_files()
-
+    async def files(
+        self,
+        modified_files: List[str],
+        staged_files: List[str],
+        untracked_files: List[str],
+        limit: int = None
+    ) -> Dict:
         arr = modified_files + staged_files + untracked_files
 
         if limit:
             arr = arr[:limit]
 
+        files = {}
         for filename in arr:
             # filename: default_repo/transformers/load.py
             parts = filename.split(os.sep)
