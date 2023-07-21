@@ -5,21 +5,33 @@ import {
 } from 'react';
 import { ThemeContext } from 'styled-components';
 
+import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import {
+  Add,
   BlocksStacked,
 } from '@oracle/icons';
 import {
+  CardDescriptionStyle,
+  CardStyle,
+  CardTitleStyle,
+  CardsStyle,
   ContainerStyle,
+  ContentStyle,
   ICON_SIZE,
   IconStyle,
+  LinksContainerStyle,
   NavLinkStyle,
   NavigationStyle,
+  SubheaderStyle,
   TabsStyle,
-  LinksContainerStyle,
+  TagsStyle,
 } from './index.style';
 import {
   NAV_LINKS,
@@ -44,8 +56,24 @@ function BrowseTemplates({
   );
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
-    : NAV_TABS[0]
+    : NAV_TABS[0],
   );
+
+  const { data: dataCustomTemplates } = api.custom_templates.list({
+    object_type: OBJECT_TYPE_BLOCKS,
+  });
+  const customTemplates: CustomTemplateType[] = useMemo(() => {
+    const arr = dataCustomTemplates?.custom_templates || [];
+
+    if (selectedLink?.filterTemplates) {
+      return selectedLink?.filterTemplates(arr);
+    }
+
+    return arr;
+  }, [
+    dataCustomTemplates,
+    selectedLink,
+  ]);
 
   const linksBlocks = useMemo(() => NAV_LINKS.map((navLink: NavLinkType) => {
     const {
@@ -88,6 +116,39 @@ function BrowseTemplates({
     themeContext,
   ]);
 
+  const cardsBlocks = useMemo(() => customTemplates?.map(({
+    description,
+    name,
+    tags,
+    uuid,
+  }) => (
+    <CardStyle
+      key={uuid}
+    >
+      <CardTitleStyle>
+        <Text bold monospace textOverflow>
+          {name}
+        </Text>
+      </CardTitleStyle>
+
+      <CardDescriptionStyle>
+        <Text default textOverflowLines={2}>
+          {description}
+        </Text>
+      </CardDescriptionStyle>
+
+      <TagsStyle>
+        {tags?.length >= 1 && (
+          <TagsContainer
+            tags={tags?.map(uuid => ({ uuid }))}
+          />
+        )}
+      </TagsStyle>
+    </CardStyle>
+  )), [
+    customTemplates,
+  ]);
+
   return (
     <ContainerStyle>
       <NavigationStyle>
@@ -108,6 +169,34 @@ function BrowseTemplates({
 
         <Spacing pb={13} />
       </NavigationStyle>
+
+      <ContentStyle>
+        <SubheaderStyle>
+          <Button
+            beforeIcon={<Add size={ICON_SIZE} />}
+            onClick={() => {
+              console.log('New block template flow');
+            }}
+            primary
+          >
+            New block template
+          </Button>
+        </SubheaderStyle>
+
+        {!cardsBlocks?.length && (
+          <Spacing p={2}>
+            <Text>
+              There are currently no templates matching your search.
+            </Text>
+          </Spacing>
+        )}
+
+        {cardsBlocks?.length >= 1 && (
+          <CardsStyle>
+            {cardsBlocks}
+          </CardsStyle>
+        )}
+      </ContentStyle>
     </ContainerStyle>
   );
 }

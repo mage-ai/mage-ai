@@ -7,7 +7,7 @@ import { transition } from '@oracle/styles/mixins';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ICON_SIZE = UNIT * 2.5;
-const NAV_MIN_WIDTH = 40 * UNIT;
+const NAV_WIDTH = 40 * UNIT;
 
 export const ContainerStyle = styled.div`
   // background-color: red;
@@ -17,8 +17,8 @@ export const ContainerStyle = styled.div`
 
 export const NavigationStyle = styled.div`
   height: 100%;
-  min-width: ${NAV_MIN_WIDTH}px;
   position: fixed;
+  width: ${NAV_WIDTH}px;
   z-index: 1;
 
   ${props => `
@@ -42,9 +42,9 @@ export const LinksContainerStyle = styled.div`
   ${ScrollbarStyledCss}
 
   height: 100%;
-  min-width: ${NAV_MIN_WIDTH}px;
   overflow: auto;
   position: fixed;
+  width: ${NAV_WIDTH}px;
 `;
 
 export const NavLinkStyle = styled.div<{
@@ -84,4 +84,55 @@ export const IconStyle = styled.div<{
   ${props => props.backgroundColor && `
     background-color: ${props.backgroundColor};
   `}
+`;
+
+export const ContentStyle = styled.div`
+  margin-left: ${NAV_WIDTH}px;
+`;
+
+export const SubheaderStyle = styled.div`
+  padding: ${PADDING_UNITS * UNIT}px;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+`;
+
+export const CardsStyle = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  padding: ${UNIT * 0.75}px;
+`;
+
+export const CardStyle = styled.div`
+  border-radius: ${BORDER_RADIUS}px;
+  margin: ${UNIT * 0.75}px;
+  padding: ${UNIT * 2.5}px;
+  width: ${UNIT * 50}px;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border: 1px solid ${(props.theme.background || dark.background).chartBlock};
+    box-shadow: ${(props.theme.shadow || dark.shadow).frame};
+  `}
+`;
+
+export const CardTitleStyle = styled.div`
+  height: ${UNIT * 2.5}px;
+`;
+
+export const CardDescriptionStyle = styled.div`
+  height: ${UNIT * 2.5 * 2}px;
+  margin-top: ${1 * UNIT}px;
+`;
+
+export const TagsStyle = styled.div`
+  height: ${3 * UNIT}px;
+  margin-top: ${0.5 * UNIT}px;
+  overflow: hidden;
 `;
