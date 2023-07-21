@@ -12,7 +12,7 @@ import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTempla
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
-import TagsContainer from '@components/Tags/TagsContainer';
+// import TagsContainer from '@components/Tags/TagsContainer';
 import TemplateDetail from '@components/CustomTemplates/TemplateDetail';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -34,7 +34,7 @@ import {
   NavigationStyle,
   SubheaderStyle,
   TabsStyle,
-  TagsStyle,
+  // TagsStyle,
 } from './index.style';
 import {
   NAV_LINKS,

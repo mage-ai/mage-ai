@@ -51,15 +51,18 @@ class CustomBlockTemplate(BaseConfig):
                 template_uuid_use,
             )
 
-        config_path_metadata = os.path.join(
-            get_repo_path(),
-            uuid_use,
-            METADATA_FILENAME_WITH_EXTENSION,
-        )
-        custom_template = super().load(config_path_metadata)
-        custom_template.template_uuid = template_uuid_use
+        try:
+            config_path_metadata = os.path.join(
+                get_repo_path(),
+                uuid_use,
+                METADATA_FILENAME_WITH_EXTENSION,
+            )
+            custom_template = super().load(config_path_metadata)
+            custom_template.template_uuid = template_uuid_use
 
-        return custom_template
+            return custom_template
+        except Exception as err:
+            print(f'[WARNING] CustomBlockTemplate.load: {err}')
 
     @property
     def uuid(self):

@@ -157,6 +157,7 @@ type CodeBlockProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   hideExtraCommandButtons?: boolean;
+  hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
   hideRunButton?: boolean;
   mainContainerRef?: any;
@@ -220,6 +221,7 @@ function CodeBlock({
   fetchPipeline,
   height,
   hideExtraCommandButtons,
+  hideExtraConfiguration,
   hideHeaderInteractiveInformation,
   hideRunButton,
   interruptKernel,
@@ -1378,7 +1380,7 @@ function CodeBlock({
                 }
               }}
             >
-              {BlockTypeEnum.DBT === blockType
+              {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
                 && (
                 <CodeHelperStyle normalPadding>
@@ -1645,7 +1647,7 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {isSQLBlock
+              {!hideExtraConfiguration && isSQLBlock
                 && !codeCollapsed
                 && BlockTypeEnum.DBT !== blockType
                 && (

@@ -1,6 +1,7 @@
 import os
 import urllib.parse
 from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
 )
@@ -12,7 +13,7 @@ from mage_ai.data_preparation.models.custom_templates.utils import (
     get_templates,
     group_and_hydrate_files,
 )
-from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.shared.hash import ignore_keys
 
 OBJECT_TYPE_KEY = 'object_type'
@@ -41,24 +42,12 @@ class CustomTemplateResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         custom_template = None
+
         if DIRECTORY_FOR_BLOCK_TEMPLATES == payload.get(OBJECT_TYPE_KEY):
             template_uuid = payload.get('template_uuid')
-            error = False
+            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
 
-            try:
-                CustomBlockTemplate.load(template_uuid=template_uuid)
-                error = True
-            except Exception as err:
-                pass
-
-            if error:
-                error = ApiError.RESOURCE_INVALID
-                error.update(
-                    message=f'Custom template with UUID {template_uuid} already exists.',
-                )
-
-                raise ApiError(error)
-            else:
+            if not custom_template:
                 custom_template = CustomBlockTemplate(**ignore_keys(payload, [
                     'uuid',
                     OBJECT_TYPE_KEY,
@@ -67,6 +56,12 @@ class CustomTemplateResource(GenericResource):
                     custom_template.user = dict(
                         username=user.username,
                     )
+
+                custom_template.content = fetch_template_source(
+                    custom_template.block_type,
+                    payload.get('config', {}),
+                    language=custom_template.language,
+                )
 
                 custom_template.save()
 

@@ -59,6 +59,7 @@ def group_and_hydrate_files(
 
     for template_uuid, group in groups.items():
         custom_template = custom_template_class.load(template_uuid=template_uuid)
-        arr.append(custom_template)
+        if custom_template:
+            arr.append(custom_template)
 
     return arr

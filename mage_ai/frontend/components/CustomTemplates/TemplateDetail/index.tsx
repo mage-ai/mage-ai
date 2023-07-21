@@ -383,6 +383,7 @@ function TemplateDetail({
         disableDrag
         executionState={executionState}
         hideExtraCommandButtons
+        hideExtraConfiguration
         hideHeaderInteractiveInformation
         interruptKernel={interruptKernel}
         messages={messages?.[blockFromCustomTemplate?.uuid]}
