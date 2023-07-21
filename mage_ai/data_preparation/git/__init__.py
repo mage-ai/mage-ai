@@ -113,49 +113,70 @@ class Git:
     def remove_remote(self, name: str) -> None:
         self.repo.git.remote('remove', name)
 
-    def staged_files(self) -> List[str]:
+    async def staged_files(self) -> List[str]:
         if self.repo:
-            files_string = self.repo.git.diff('--name-only', '--cached')
-            if files_string:
-                return files_string.split('\n')
-
+            proc = self.repo.git.diff(
+                '--name-only',
+                '--cached',
+                as_process=True,
+            )
+            try:
+                stdout = await self.__poll_process_with_timeout(
+                    proc,
+                    error_message='Error fetching untracked files',
+                    timeout=10,
+                )
+                if stdout:
+                    return stdout.strip().split('\n')
+            except TimeoutError:
+                pass
         return []
 
-    def untracked_files(self, untracked_files: bool = False) -> List[str]:
+    async def untracked_files(self, untracked_files: bool = False) -> List[str]:
         if not self.repo:
             return []
 
         from git.compat import defenc
 
-        # ---------- Taken from GitPython source code -----------
+        # ---------- Modified from GitPython source code -----------
         proc = self.repo.git.status(
             as_process=True,
             porcelain=True,
             untracked_files=untracked_files,
         )
+        try:
+            stdout = await self.__poll_process_with_timeout(
+                proc,
+                error_message='Error fetching untracked files',
+                timeout=10,
+            )
+        except TimeoutError:
+            lock_file = os.path.join(self.repo_path, '.git', 'index.lock')
+            if os.path.exists(lock_file):
+                os.remove(lock_file)
+            return []
         # Untracked files prefix in porcelain mode
         prefix = '?? '
-        untracked_files = []
-        for line in proc.stdout:
-            line = line.decode(defenc)
-            if not line.startswith(prefix):
-                continue
-            filename = line[len(prefix):].rstrip('\n')
-            # Special characters are escaped
-            if filename[0] == filename[-1] == '"':
-                filename = filename[1:-1]
-                # WHATEVER ... it's a mess, but works for me
-                filename = (
-                    filename
-                    .encode('ascii')
-                    .decode('unicode_escape')
-                    .encode('latin1')
-                    .decode(defenc)
-                )
-            untracked_files.append(filename)
-        proc.wait()
-        # -------------------------------------------------------
-        return untracked_files
+        files = []
+        if stdout:
+            for line in stdout.split('\n'):
+                # line = line.decode(defenc)
+                if not line.startswith(prefix):
+                    continue
+                filename = line[len(prefix):].rstrip('\n')
+                # Special characters are escaped
+                if filename[0] == filename[-1] == '"':
+                    filename = filename[1:-1]
+                    filename = (
+                        filename
+                        .encode('ascii')
+                        .decode('unicode_escape')
+                        .encode('latin1')
+                        .decode(defenc)
+                    )
+                files.append(filename)
+            # -------------------------------------------------------
+            return files
 
     @property
     def modified_files(self) -> List[str]:
@@ -614,8 +635,9 @@ class Git:
         proc: subprocess.Popen,
         error_message: str = None,
         timeout: int = 10,
-    ):
+    ) -> str:
         ct = 0
+        return_code = None
         while ct < timeout * 2:
             return_code = proc.poll()
             if return_code is not None:
@@ -627,13 +649,16 @@ class Git:
         if error_message is None:
             error_message = 'Error running Git process'
 
-        if return_code is not None and return_code != 0:
-            _, err = proc.communicate()
-            message = (
-                err.decode('UTF-8') if err
-                else error_message
-            )
-            raise ChildProcessError(message)
+        if return_code is not None:
+            out, err = proc.communicate()
+            if return_code != 0:
+                message = (
+                    err.decode('UTF-8') if err
+                    else error_message
+                )
+                raise ChildProcessError(message)
+            else:
+                return out.decode('UTF-8') if out else None
 
         if return_code is None:
             proc.kill()
