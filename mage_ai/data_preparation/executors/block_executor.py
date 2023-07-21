@@ -235,6 +235,7 @@ class BlockExecutor:
                         update_status=update_status,
                         input_from_output=input_from_output,
                         logging_tags=tags,
+                        pipeline_run_id=pipeline_run_id,
                         verify_output=verify_output,
                         runtime_arguments=runtime_arguments,
                         template_runtime_configuration=template_runtime_configuration,
