@@ -17,6 +17,7 @@ function Templates() {
   return (
     <Dashboard
       addProjectBreadcrumbToCustomBreadcrumbs={isNew}
+      // @ts-ignore
       breadcrumbs={isNew
         ? [
           {

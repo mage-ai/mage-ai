@@ -337,6 +337,7 @@ function GreatExpectations({
               ),
               tooltip: () => description,
               uuid,
+              // @ts-ignore
             })).concat(getdataSourceMenuItems(
               block => addNewBlockAtIndex(
                 {

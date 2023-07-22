@@ -40,7 +40,7 @@ export type NavLinkType = {
   selectedIconProps?: {
     [key: string]: string;
   };
-  uuid: string;
+  uuid: string | BlockTypeEnum;
 };
 
 export const NAV_LINKS: NavLinkType[] = [
@@ -113,7 +113,7 @@ export const NAV_LINKS: NavLinkType[] = [
   uuid,
   ...rest
 }) => ({
-  filterTemplates: (customTemplates: CustomTemplateType) => customTemplates?.filter(({
+  filterTemplates: (customTemplates: CustomTemplateType[]) => customTemplates?.filter(({
     block_type: blockType,
   }) => blockType === uuid),
   label: () => BLOCK_TYPE_NAME_MAPPING[uuid],

@@ -292,9 +292,10 @@ export const getdataSourceMenuItems = (
     }
 
     if (
-      !blockType.includes([BlockTypeEnum.MARKDOWN, BlockTypeEnum.SCRATCHPAD])
+      ![BlockTypeEnum.MARKDOWN, BlockTypeEnum.SCRATCHPAD].includes(blockType)
         && showBrowseTemplates
     ) {
+      // @ts-ignore
       arr.push(customTemplate);
     }
 

@@ -1,4 +1,4 @@
-import { BlockColorEnum, BlockTypeEnum } from './BlockType';
+import { BlockColorEnum, BlockLanguageEnum, BlockTypeEnum } from './BlockType';
 import { ConfigurationType } from './ChartBlockType';
 import { PipelineTypeEnum } from './PipelineType';
 
@@ -9,6 +9,7 @@ export default interface CustomTemplateType {
   block_type: BlockTypeEnum;
   color?: BlockColorEnum;
   configuration?: ConfigurationType;
+  content?: string;
   description?: string;
   language: BlockLanguageEnum;
   name: string;

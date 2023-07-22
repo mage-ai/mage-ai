@@ -21,6 +21,7 @@ import {
   Add,
   BlocksStacked,
 } from '@oracle/icons';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   BreadcrumbsStyle,
   CardDescriptionStyle,
@@ -75,7 +76,7 @@ function BrowseTemplates({
     : NAV_LINKS[0],
   );
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
+    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
     : NAV_TABS[0],
   );
 
@@ -250,7 +251,7 @@ function BrowseTemplates({
         }
         onMutateSuccess={fetchCustomTemplates}
         templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
-          ? { block_type: selectedLink?.uuid }
+          ? { block_type: selectedLink?.uuid as BlockTypeEnum }
           : null
         }
         templateUUID={selectedTemplate?.template_uuid}

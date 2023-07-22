@@ -11,12 +11,14 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CodeBlock from '@components/CodeBlock';
 import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType  from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Select from '@oracle/elements/Inputs/Select';
 import Text from '@oracle/elements/Text';
@@ -84,7 +86,7 @@ function TemplateDetail({
   templateAttributes: templateAttributesProp,
   templateUUID,
 }: TemplateDetailProps) {
-  const { height, width } = useWindowSize();
+  const { height } = useWindowSize();
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
     uuid: 'CustomTemplates/TemplateDetail',
@@ -93,12 +95,19 @@ function TemplateDetail({
   const [codeBlockKey, setCodeBlockKey] = useState<number>(Number(new Date()));
   const [ready, setReady] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
+    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
     : NAV_TABS[0],
   );
   const [touched, setTouched] = useState<boolean>(false);
   const [templateAttributes, setTemplateAttributesState] =
-    useState<CustomTemplateType>(templateAttributesProp);
+    useState<CustomTemplateType | {
+    block_type?: BlockTypeEnum;
+    content?: string;
+    description?: string;
+    language?: BlockLanguageEnum;
+    name?: string;
+    template_uuid?: string;
+  }>(templateAttributesProp);
   const setTemplateAttributes = useCallback((handlePrevious) => {
     setTouched(true);
     setTemplateAttributesState(handlePrevious);
@@ -190,7 +199,7 @@ function TemplateDetail({
     },
   );
 
-  const isMarkdown = useMemo(() => BlockLanguageEnum.MARKDOWN === templateAttributes?.block_type, [
+  const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === templateAttributes?.block_type, [
     templateAttributes?.block_type,
   ]);
 
@@ -420,6 +429,7 @@ function TemplateDetail({
       : ExecutionStateEnum.IDLE;
 
     return (
+      // @ts-ignore
       <CodeBlock
         block={blockFromCustomTemplate}
         defaultValue={templateAttributes?.content}
@@ -467,8 +477,10 @@ function TemplateDetail({
     };
 
     if (isNewCustomTemplate) {
+      // @ts-ignore
       createCustomTemplate(payload);
     } else {
+      // @ts-ignore
       updateCustomTemplate(payload);
     }
   }, [

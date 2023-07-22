@@ -8,11 +8,11 @@ import { ChevronRight } from '@oracle/icons';
 
 export type BreadcrumbType = {
   bold?: boolean;
-  danger?: string;
+  danger?: boolean;
   label: () => string;
   linkProps?: {
     href: string;
-    as: string;
+    as?: string;
   };
   onClick?: () => void;
 };

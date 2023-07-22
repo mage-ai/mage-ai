@@ -1875,6 +1875,7 @@ function PipelineDetailPage({
     blockType,
   }: {
     addNew?: boolean;
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => (
