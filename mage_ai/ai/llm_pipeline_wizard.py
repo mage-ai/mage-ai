@@ -96,7 +96,7 @@ class LLMPipelineWizard:
             pipeline_doc=pipeline_doc,
         )
 
-    def generate_block_documentation_with_name(
+    async def async_generate_block_documentation_with_name(
         self,
         pipeline_uuid: str,
         block_uuid: str,

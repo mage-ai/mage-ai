@@ -12,7 +12,7 @@ class Generator:
             pipeline_uuid = request.get('pipeline_uuid')
             block_uuid = request.get('block_uuid')
             return dict(
-                block_doc=await LLMPipelineWizard().generate_block_documentation_with_name(
+                block_doc=await LLMPipelineWizard().async_generate_block_documentation_with_name(
                     pipeline_uuid,
                     block_uuid
                 )
