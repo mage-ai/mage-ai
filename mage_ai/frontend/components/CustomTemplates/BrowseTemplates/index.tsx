@@ -184,6 +184,10 @@ function BrowseTemplates({
   if (addingNewTemplate) {
     return (
       <TemplateDetail
+        templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
+          ? { block_type: selectedLink?.uuid }
+          : null
+        }
       />
     );
   }
@@ -222,10 +226,7 @@ function BrowseTemplates({
               New block template
             </Button>
           )}
-
-
         </SubheaderStyle>
-
 
         {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
           <>

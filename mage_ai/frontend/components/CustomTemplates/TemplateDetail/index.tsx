@@ -62,6 +62,9 @@ type TemplateDetailProps = {
   defaultTabUUID?: TabType;
   onCancel?: () => void;
   template?: CustomTemplateType;
+  templateAttributes?: {
+    block_type?: BlockTypeEnum;
+  };
   templateUUID?: string;
 };
 
@@ -69,6 +72,7 @@ function TemplateDetail({
   defaultTabUUID,
   onCancel,
   template: templateProp,
+  templateAttributes: templateAttributesProp,
   templateUUID,
 }: TemplateDetailProps) {
   const router = useRouter();
@@ -83,7 +87,8 @@ function TemplateDetail({
     : NAV_TABS[0],
   );
   const [touched, setTouched] = useState<boolean>(false);
-  const [templateAttributes, setTemplateAttributesState] = useState<CustomTemplateType>(null);
+  const [templateAttributes, setTemplateAttributesState] =
+    useState<CustomTemplateType>(templateAttributesProp);
   const setTemplateAttributes = useCallback((handlePrevious) => {
     setTouched(true);
     setTemplateAttributesState(handlePrevious);
@@ -163,16 +168,21 @@ function TemplateDetail({
     },
   );
 
+  const isMarkdown = useMemo(() => BlockLanguageEnum.MARKDOWN === templateAttributes?.block_type, [
+    templateAttributes?.block_type,
+  ]);
+
   const isNewCustomTemplate: boolean = !templateProp && !templateUUID;
   const buttonDisabled = useMemo(() => {
     if (isNewCustomTemplate) {
       return !templateAttributes?.template_uuid
         || !templateAttributes?.block_type
-        || !templateAttributes?.language;
+        || (!isMarkdown && !templateAttributes?.language);
     }
 
     return !touched;
   }, [
+    isMarkdown,
     isNewCustomTemplate,
     templateAttributes,
     touched,
@@ -534,6 +544,9 @@ function TemplateDetail({
                     onChange={e => setTemplateAttributes(prev => ({
                       ...prev,
                       block_type: e.target.value,
+                      language: BlockTypeEnum.MARKDOWN === e.target.value
+                        ? BlockLanguageEnum.MARKDOWN
+                        : prev?.language,
                     }))}
                     primary
                     value={templateAttributes?.block_type || ''}
@@ -546,24 +559,26 @@ function TemplateDetail({
                   </Select>
                 </Spacing>
 
-                <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-                  <Select
-                    label="Language"
-                    // @ts-ignore
-                    onChange={e => setTemplateAttributes(prev => ({
-                      ...prev,
-                      language: e.target.value,
-                    }))}
-                    primary
-                    value={templateAttributes?.language || ''}
-                  >
-                    {Object.values(BlockLanguageEnum).map((v: string) => (
-                      <option key={v} value={v}>
-                        {LANGUAGE_DISPLAY_MAPPING[v]}
-                      </option>
-                    ))}
-                  </Select>
-                </Spacing>
+                {!isMarkdown && (
+                  <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                    <Select
+                      label="Language"
+                      // @ts-ignore
+                      onChange={e => setTemplateAttributes(prev => ({
+                        ...prev,
+                        language: e.target.value,
+                      }))}
+                      primary
+                      value={templateAttributes?.language || ''}
+                    >
+                      {Object.values(BlockLanguageEnum).map((v: string) => (
+                        <option key={v} value={v}>
+                          {LANGUAGE_DISPLAY_MAPPING[v]}
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+                )}
               </>
             )}
 

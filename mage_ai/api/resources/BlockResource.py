@@ -82,6 +82,7 @@ class BlockResource(GenericResource):
             block = custom_template.create_block(
                 block_name,
                 pipeline,
+                extension_uuid=block_attributes.get('extension_uuid'),
                 priority=block_attributes.get('priority'),
                 upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
             )

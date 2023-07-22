@@ -65,6 +65,7 @@ const DATA_EXPORTER_BUTTON_INDEX = 2;
 const DBT_BUTTON_INDEX = 3;
 const CUSTOM_BUTTON_INDEX = 4;
 const SENSOR_BUTTON_INDEX = 6;
+const MARKDOWN_BUTTON_INDEX = 7;
 
 function AddNewBlocks({
   addNewBlock,
@@ -93,6 +94,7 @@ function AddNewBlocks({
   const dbtButtonRef = useRef(null);
   const customBlockButtonRef = useRef(null);
   const sensorButtonRef = useRef(null);
+  const markdownButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -102,54 +104,68 @@ function AddNewBlocks({
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
   const MAX_TOOLTIP_WIDTH = UNIT * 25;
 
-  const columnActionMenuItems = createActionMenuGroupings(
+  const columnActionMenuItems = useMemo(() => createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
     AxisEnum.COLUMN,
     addNewBlock,
-  );
-  const rowActionMenuItems = createActionMenuGroupings(
+  ), [
+    addNewBlock,
+  ]);
+  const rowActionMenuItems = useMemo(() => createActionMenuGroupings(
     ROW_ACTION_GROUPINGS,
     AxisEnum.ROW,
     addNewBlock,
-  );
+  ), [
+    addNewBlock,
+  ]);
 
-  const allActionMenuItems: FlyoutMenuItemType[] = [
-    {
-      label: () => 'Generic (no template)',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.PYTHON,
-          type: BlockTypeEnum.TRANSFORMER,
-        });
+  const allActionMenuItems = useMemo(() => {
+    const arr: FlyoutMenuItemType[] = [
+      {
+        label: () => 'Generic (no template)',
+        onClick: () => {
+          addNewBlock({
+            language: BlockLanguageEnum.PYTHON,
+            type: BlockTypeEnum.TRANSFORMER,
+          });
+        },
+        uuid: 'generic_transformer_action',
       },
-      uuid: 'generic_transformer_action',
-    },
-    {
-      bold: true,
-      items: rowActionMenuItems,
-      label: () => 'Row actions',
-      uuid: 'row_actions_grouping',
-    },
-    {
-      isGroupingTitle: true,
-      label: () => 'Column actions',
-      uuid: 'column_actions_grouping',
-    },
-    ...columnActionMenuItems,
-  ];
-
-  if (!hideTransformerDataSources) {
-    allActionMenuItems.splice(
-      1,
-      0,
       {
         bold: true,
-        items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-        label: () => 'Data sources',
-        uuid: 'data_sources_grouping',
+        items: rowActionMenuItems,
+        label: () => 'Row actions',
+        uuid: 'row_actions_grouping',
       },
-    );
-  }
+      {
+        isGroupingTitle: true,
+        label: () => 'Column actions',
+        uuid: 'column_actions_grouping',
+      },
+      ...columnActionMenuItems,
+    ];
+
+    if (!hideTransformerDataSources) {
+      arr.splice(
+        1,
+        0,
+        {
+          bold: true,
+          items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+          label: () => 'Data sources',
+          uuid: 'data_sources_grouping',
+        },
+      );
+    }
+
+    return arr;
+  }, [
+    addNewBlock,
+    columnActionMenuItems,
+    hideTransformerDataSources,
+    pipelineType,
+    rowActionMenuItems,
+  ]);
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
   const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
@@ -400,6 +416,16 @@ function AddNewBlocks({
                     }),
                     uuid: 'dbt/generic_command',
                   },
+                  ...getdataSourceMenuItems(
+                    addNewBlock,
+                    BlockTypeEnum.DBT,
+                    pipelineType,
+                    {
+                      blockTemplatesByBlockType,
+                      onlyCustomTemplate: true,
+                      showBrowseTemplates,
+                    },
+                  ),
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DBT_BUTTON_INDEX}
@@ -451,6 +477,16 @@ function AddNewBlocks({
                     label: () => 'SQL',
                     uuid: 'custom_block_sql',
                   },
+                  ...getdataSourceMenuItems(
+                    addNewBlock,
+                    BlockTypeEnum.CUSTOM,
+                    pipelineType,
+                    {
+                      blockTemplatesByBlockType,
+                      onlyCustomTemplate: true,
+                      showBrowseTemplates,
+                    },
+                  ),
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex ===CUSTOM_BUTTON_INDEX}
@@ -524,7 +560,19 @@ function AddNewBlocks({
             <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === SENSOR_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
-                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.SENSOR, pipelineType)}
+                items={[
+                  ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.SENSOR, pipelineType),
+                  ...getdataSourceMenuItems(
+                    addNewBlock,
+                    BlockTypeEnum.SENSOR,
+                    pipelineType,
+                    {
+                      blockTemplatesByBlockType,
+                      onlyCustomTemplate: true,
+                      showBrowseTemplates,
+                    },
+                  ),
+                ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === SENSOR_BUTTON_INDEX}
                 parentRef={sensorButtonRef}
@@ -555,28 +603,60 @@ function AddNewBlocks({
           )}
 
           {!hideMarkdown && (
-            <ButtonWrapper>
-              <KeyboardShortcutButton
-                {...sharedProps}
-                beforeElement={
-                  <IconContainerStyle compact={compact} sky>
-                    <Add
-                      inverted
-                      size={iconSize}
-                    />
-                  </IconContainerStyle>
-                }
-                onClick={(e) => {
-                  e.preventDefault();
-                  addNewBlock({
-                    language: BlockLanguageEnum.MARKDOWN,
-                    type: BlockTypeEnum.MARKDOWN,
-                  });
-                }}
-                uuid="AddNewBlocks/Markdown"
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === MARKDOWN_BUTTON_INDEX}>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    label: () => 'Generic (no template)',
+                    onClick: () => {
+                      addNewBlock({
+                        language: BlockLanguageEnum.MARKDOWN,
+                        type: BlockTypeEnum.MARKDOWN,
+                      });
+                    },
+                    uuid: 'generic_markdown',
+                  },
+                  ...getdataSourceMenuItems(
+                    addNewBlock,
+                    BlockTypeEnum.MARKDOWN,
+                    pipelineType,
+                    {
+                      blockTemplatesByBlockType,
+                      onlyCustomTemplate: true,
+                      showBrowseTemplates,
+                    },
+                  ),
+                ]}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === MARKDOWN_BUTTON_INDEX}
+                parentRef={markdownButtonRef}
+                uuid="markdown_button"
               >
-                Markdown
-              </KeyboardShortcutButton>
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact} sky>
+                      <Add
+                        inverted
+                        size={iconSize}
+                      />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === MARKDOWN_BUTTON_INDEX
+                        ? null
+                        : MARKDOWN_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex(MARKDOWN_BUTTON_INDEX);
+                  }}
+                  uuid="AddNewBlocks/Markdown"
+                >
+                  Markdown
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
             </ButtonWrapper>
           )}
         </FlexContainer>

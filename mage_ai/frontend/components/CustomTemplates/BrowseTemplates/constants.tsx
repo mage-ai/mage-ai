@@ -4,13 +4,14 @@ import {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
-  Conditional,
   BlockGeneric,
   Callback,
   Charts,
   CircleWithArrowUp,
+  Conditional,
   CubeWithArrowDown,
   DBT,
+  File as FileIcon,
   FrameBoxSelection,
   Lightning,
   Sensor,
@@ -100,6 +101,13 @@ export const NAV_LINKS: NavLinkType[] = [
     Icon: DBT,
     selectedBackgroundColor: null,
     uuid: BlockTypeEnum.DBT,
+  },
+  {
+    Icon: FileIcon,
+    selectedIconProps: {
+      inverted: true,
+    },
+    uuid: BlockTypeEnum.MARKDOWN,
   },
 ].map(({
   uuid,

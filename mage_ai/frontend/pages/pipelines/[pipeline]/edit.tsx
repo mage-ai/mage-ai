@@ -1868,6 +1868,35 @@ function PipelineDetailPage({
     shouldReconnect: () => true,
   });
 
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
+    addNew,
+    addNewBlock,
+    blockType,
+  }: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => (
+    <BrowseTemplates
+      defaultLinkUUID={blockType}
+      onClickCustomTemplate={(customTemplate) => {
+        addNewBlock({
+          config: {
+            custom_template_uuid: customTemplate?.template_uuid,
+          },
+        });
+        hideBrowseTemplates();
+      }}
+      showAddingNewTemplates={!!addNew}
+    />
+  ), {
+  }, [
+
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1926,6 +1955,7 @@ function PipelineDetailPage({
       setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -1979,41 +2009,13 @@ function PipelineDetailPage({
     setHiddenBlocks,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     statistics,
     textareaFocused,
     updatePipelineMetadata,
     updateWidget,
     widgets,
   ]);
-
-  const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
-    addNew,
-    addNewBlock,
-    blockType,
-  }: {
-    addNew?: boolean;
-    blockType?: BlockTypeEnum;
-    language?: BlockLanguageEnum;
-  }) => (
-    <BrowseTemplates
-      defaultLinkUUID={blockType}
-      onClickCustomTemplate={(customTemplate) => {
-        addNewBlock({
-          config: {
-            custom_template_uuid: customTemplate?.template_uuid,
-          },
-        });
-        hideBrowseTemplates();
-      }}
-      showAddingNewTemplates={!!addNew}
-    />
-  ), {
-  }, [
-
-  ], {
-    background: true,
-    uuid: 'browse_templates',
-  });
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail

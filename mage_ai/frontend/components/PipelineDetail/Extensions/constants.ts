@@ -1,5 +1,9 @@
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
-import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import ErrorsType from '@interfaces/ErrorsType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
@@ -55,5 +59,10 @@ export type ExtensionProps = {
   });
   setSelectedBlock: (block: BlockType) => void;
   setTextareaFocused: (textareaFocused: boolean) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
   textareaFocused: boolean;
 };
