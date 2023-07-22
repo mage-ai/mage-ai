@@ -226,11 +226,20 @@ export const getdataSourceMenuItems = (
       }
     };
     languages?: BlockLanguageEnum[];
+    onlyCustomTemplate?: boolean;
+    showBrowseTemplates?: (opts?: {
+      addNewBlock?: (block: BlockRequestPayloadType) => void,
+      addNew?: boolean;
+      blockType?: BlockTypeEnum;
+      language?: BlockLanguageEnum;
+    }) => void;
   },
 ) => {
   const {
     blockTemplatesByBlockType,
     languages,
+    onlyCustomTemplate,
+    showBrowseTemplates,
   } = opts || {};
 
   const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
@@ -240,6 +249,20 @@ export const getdataSourceMenuItems = (
       ]),
     ),
   );
+
+  const customTemplate = {
+    label: () => 'Custom template',
+    onClick: () => showBrowseTemplates({
+      addNewBlock,
+      blockType: blockType,
+      language: BlockLanguageEnum.SQL,
+    }),
+    uuid: `${blockType}/custom_template`,
+  };
+
+  if (onlyCustomTemplate) {
+    return [customTemplate];
+  }
 
   if (pipelineType === PipelineTypeEnum.PYSPARK
     || (pipelineType === PipelineTypeEnum.PYTHON && blockType === BlockTypeEnum.TRANSFORMER)
@@ -266,6 +289,14 @@ export const getdataSourceMenuItems = (
     if (!languages || languages?.includes(BlockLanguageEnum.R)) {
       // @ts-ignore
       arr.push(RMenuItems(addNewBlock, blockType));
+    }
+
+    if (
+      ![BlockTypeEnum.MARKDOWN, BlockTypeEnum.SCRATCHPAD].includes(blockType)
+        && showBrowseTemplates
+    ) {
+      // @ts-ignore
+      arr.push(customTemplate);
     }
 
     return arr;

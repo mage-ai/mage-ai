@@ -19,6 +19,7 @@ import BlockType, {
   SampleDataType,
 } from '@interfaces/BlockType';
 import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
+import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
@@ -59,6 +60,7 @@ import {
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { ErrorProvider } from '@context/Error';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
@@ -1867,6 +1869,39 @@ function PipelineDetailPage({
     shouldReconnect: () => true,
   });
 
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
+    addNew,
+    addNewBlock,
+    blockType,
+  }: {
+    addNew?: boolean;
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => (
+    <ErrorProvider>
+      <BrowseTemplates
+        contained
+        defaultLinkUUID={blockType}
+        onClickCustomTemplate={(customTemplate) => {
+          addNewBlock({
+            config: {
+              custom_template_uuid: customTemplate?.template_uuid,
+            },
+          });
+          hideBrowseTemplates();
+        }}
+        showAddingNewTemplates={!!addNew}
+        showBreadcrumbs
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1925,6 +1960,7 @@ function PipelineDetailPage({
       setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -1978,6 +2014,7 @@ function PipelineDetailPage({
     setHiddenBlocks,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     statistics,
     textareaFocused,
     updatePipelineMetadata,
@@ -2049,6 +2086,7 @@ function PipelineDetailPage({
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2093,6 +2131,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     textareaFocused,
     widgets,
   ]);

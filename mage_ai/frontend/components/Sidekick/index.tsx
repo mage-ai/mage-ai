@@ -165,6 +165,7 @@ function Sidekick({
   setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
+  showBrowseTemplates,
   statistics,
   textareaFocused,
   treeRef,
@@ -292,6 +293,7 @@ function Sidekick({
     setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
   }), [
     addNewBlockAtIndex,
@@ -317,6 +319,7 @@ function Sidekick({
     setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
   ]);
 
