@@ -197,15 +197,19 @@ function BrowseTemplates({
 
       <ContentStyle>
         <SubheaderStyle>
-          <Button
-            beforeIcon={<Add size={ICON_SIZE} />}
-            onClick={() => {
-              setAddingNewTemplate(true);
-            }}
-            primary
-          >
-            New block template
-          </Button>
+          {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
+            <Button
+              beforeIcon={<Add size={ICON_SIZE} />}
+              onClick={() => {
+                setAddingNewTemplate(true);
+              }}
+              primary
+            >
+              New block template
+            </Button>
+          )}
+
+
         </SubheaderStyle>
 
 

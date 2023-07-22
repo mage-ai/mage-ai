@@ -61,12 +61,14 @@ import { useKeyboardContext } from '@context/Keyboard';
 type TemplateDetailProps = {
   defaultTabUUID?: TabType;
   onCancel?: () => void;
+  template?: CustomTemplateType;
   templateUUID?: string;
 };
 
 function TemplateDetail({
   defaultTabUUID,
   onCancel,
+  template: templateProp,
   templateUUID,
 }: TemplateDetailProps) {
   const router = useRouter();
@@ -74,6 +76,7 @@ function TemplateDetail({
     uuid: 'CustomTemplates/TemplateDetail',
   });
 
+  const [codeBlockKey, setCodeBlockKey] = useState<number>(Number(new Date()));
   const [ready, setReady] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
@@ -89,17 +92,24 @@ function TemplateDetail({
   const {
     data: dataCustomTemplate,
   } = api.custom_templates.detail(
-    templateUUID && encodeURIComponent(templateUUID),
+    !templateProp && templateUUID && encodeURIComponent(templateUUID),
     {
       object_type: OBJECT_TYPE_BLOCKS,
     },
   );
   const template: CustomTemplateType =
-    useMemo(() => dataCustomTemplate?.custom_template, [dataCustomTemplate]);
+    useMemo(() => templateProp
+      ? templateProp
+      : dataCustomTemplate?.custom_template,
+    [
+      dataCustomTemplate,
+      templateProp,
+    ]);
 
   const templatePrev = usePrevious(template);
   useEffect(() => {
     if (templatePrev?.template_uuid !== template?.template_uuid) {
+      setCodeBlockKey(Number(new Date()));
       setTemplateAttributesState(template);
       setReady(true);
     }
@@ -128,8 +138,9 @@ function TemplateDetail({
   );
 
   const [updateCustomTemplate, { isLoading: isLoadingUpdateCustomTemplate }] = useMutation(
-    api.custom_templates.useUpdate(
-      templateUUID && encodeURIComponent(templateUUID),
+    api.custom_templates.useUpdate(templateProp
+        ? encodeURIComponent(templateProp?.template_uuid)
+        : templateUUID && encodeURIComponent(templateUUID),
       {
         object_type: OBJECT_TYPE_BLOCKS,
       },
@@ -152,7 +163,7 @@ function TemplateDetail({
     },
   );
 
-  const isNewCustomTemplate: boolean = !templateUUID;
+  const isNewCustomTemplate: boolean = !templateProp && !templateUUID;
   const buttonDisabled = useMemo(() => {
     if (isNewCustomTemplate) {
       return !templateAttributes?.template_uuid
@@ -386,6 +397,7 @@ function TemplateDetail({
         hideExtraConfiguration
         hideHeaderInteractiveInformation
         interruptKernel={interruptKernel}
+        key={String(codeBlockKey)}
         messages={messages?.[blockFromCustomTemplate?.uuid]}
         noDivider
         onChange={(value: string) => setTemplateAttributes(prev => ({
@@ -401,6 +413,7 @@ function TemplateDetail({
     );
   }, [
     blockFromCustomTemplate,
+    codeBlockKey,
     interruptKernel,
     messages,
     ready,

@@ -190,6 +190,8 @@ def make_app():
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
+        (r'/files', MainPageHandler),
+        (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)

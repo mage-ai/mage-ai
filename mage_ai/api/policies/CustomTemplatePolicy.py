@@ -35,6 +35,7 @@ CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [], scopes=[
@@ -42,7 +43,6 @@ CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [],
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 CustomTemplatePolicy.allow_write(CustomTemplatePresenter.default_attributes + [

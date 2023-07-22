@@ -20,7 +20,7 @@ class CustomTemplatePresenter(BasePresenter):
     def present(self, **kwargs):
         data = self.resource.model.to_dict()
 
-        if constants.DETAIL == kwargs.get('format'):
+        if kwargs.get('format') in [constants.DETAIL, constants.UPDATE]:
             data['content'] = self.resource.model.load_template_content()
 
         return data
@@ -28,6 +28,7 @@ class CustomTemplatePresenter(BasePresenter):
 
 CustomTemplatePresenter.register_formats([
     constants.DETAIL,
+    constants.UPDATE,
 ], CustomTemplatePresenter.default_attributes + [
         'content',
     ],
