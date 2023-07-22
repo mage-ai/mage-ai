@@ -92,11 +92,11 @@ class LLMPipelineWizard:
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
         pipeline_doc = chain.run(block_content=block_docs_content)
         return dict(
-            block_content=block_docs_content,
+            block_content=block_docs,
             pipeline_doc=pipeline_doc,
         )
 
-    def generate_block_documentation_with_name(
+    async def async_generate_block_documentation_with_name(
         self,
         pipeline_uuid: str,
         block_uuid: str,

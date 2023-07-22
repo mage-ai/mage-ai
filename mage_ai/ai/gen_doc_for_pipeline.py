@@ -24,11 +24,11 @@ PRINT_BLOCK_DOC_DEFAULT = typer.Option(
 def generate_block_documentation(project_path: str = PROJECT_NAME_DEFAULT,
                                  pipeline_uuid: str = PROJECT_NAME_DEFAULT,
                                  block_uuid: str = BLOCK_NAME_DEFAULT):
-    print(LLMPipelineWizard().generate_block_documentation_with_name(
+    print(asyncio.run(LLMPipelineWizard().async_generate_block_documentation_with_name(
         pipeline_uuid,
         block_uuid,
         project_path=project_path,
-    ))
+    )))
 
 
 @app.command()
