@@ -1891,17 +1891,16 @@ function PipelineDetailPage({
           hideBrowseTemplates();
         }}
         showAddingNewTemplates={!!addNew}
+        showBreadcrumbs
       />
     </ErrorProvider>
   ), {
   }, [
-
   ], {
     background: true,
     disableClickOutside: true,
     disableEscape: true,
     uuid: 'browse_templates',
-    visible: true,
   });
 
   const sideKick = useMemo(() => (

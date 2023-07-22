@@ -6,6 +6,7 @@ import {
 import { ThemeContext } from 'styled-components';
 import { useRouter } from 'next/router';
 
+import Breadcrumbs, { BreadcrumbType } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
@@ -21,6 +22,7 @@ import {
   BlocksStacked,
 } from '@oracle/icons';
 import {
+  BreadcrumbsStyle,
   CardDescriptionStyle,
   CardStyle,
   CardTitleStyle,
@@ -51,6 +53,7 @@ type BrowseTemplatesProps = {
   defaultTabUUID?: TabType;
   onClickCustomTemplate?: (customTemplate: CustomTemplateType) => void;
   showAddingNewTemplates?: boolean;
+  showBreadcrumbs?: boolean;
 };
 
 function BrowseTemplates({
@@ -59,6 +62,7 @@ function BrowseTemplates({
   defaultTabUUID,
   onClickCustomTemplate,
   showAddingNewTemplates,
+  showBreadcrumbs,
 }: BrowseTemplatesProps) {
   const router = useRouter();
   const themeContext = useContext(ThemeContext);
@@ -77,7 +81,7 @@ function BrowseTemplates({
 
   const [selectedTemplate, setSelectedTemplate] = useState<CustomTemplateType>(null);
 
-  const { data: dataCustomTemplates } = api.custom_templates.list({
+  const { data: dataCustomTemplates, mutate: fetchCustomTemplates } = api.custom_templates.list({
     object_type: OBJECT_TYPE_BLOCKS,
   });
   const customTemplates: CustomTemplateType[] = useMemo(() => {
@@ -188,16 +192,63 @@ function BrowseTemplates({
     router,
   ]);
 
+  const breadcrumbsEl = useMemo(() => {
+    if (!showBreadcrumbs) {
+      return null;
+    }
+
+    const breadcrumbs: BreadcrumbType[] = [];
+
+    if (addingNewTemplate) {
+      breadcrumbs.push(...[
+        {
+          label: () => 'Templates',
+          onClick: () => {
+            setAddingNewTemplate(false);
+          },
+        },
+        {
+          bold: true,
+          label: () => 'New custom template',
+        },
+      ]);
+    } else {
+      breadcrumbs.push({
+        label: () => 'Templates',
+      });
+    }
+
+    return (
+      <BreadcrumbsStyle>
+        <Breadcrumbs
+          breadcrumbs={breadcrumbs}
+        />
+      </BreadcrumbsStyle>
+    );
+  }, [
+    addingNewTemplate,
+    showBreadcrumbs,
+  ]);
+
+  // 36 is the height of breadcrumbs
+  const heightOffset = useMemo(() => showBreadcrumbs ? 36 : 0, [showBreadcrumbs]);
+  const heightFinal = useMemo(() => height - heightOffset, [
+    height,
+    heightOffset,
+  ]);
+
   if (addingNewTemplate) {
     const detailEl = (
       <TemplateDetail
         contained={contained}
+        heightOffset={heightOffset}
         onCreateCustomTemplate={contained
           ? (customTemplate: CustomTemplateType) => {
             setSelectedTemplate(customTemplate);
           }
           : null
         }
+        onMutateSuccess={fetchCustomTemplates}
         templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
           ? { block_type: selectedLink?.uuid }
           : null
@@ -208,12 +259,16 @@ function BrowseTemplates({
 
     if (contained) {
       return (
-        <ContainedStyle
-          height={height}
-          width={width}
-        >
-          {detailEl}
-        </ContainedStyle>
+        <>
+          {showBreadcrumbs && breadcrumbsEl}
+
+          <ContainedStyle
+            height={heightFinal}
+            width={width}
+          >
+            {detailEl}
+          </ContainedStyle>
+        </>
       );
     }
 
@@ -222,7 +277,7 @@ function BrowseTemplates({
 
   const mainEl = (
     <ContainerStyle>
-      <NavigationStyle height={contained ? height : null}>
+      <NavigationStyle height={contained ? heightFinal : null}>
         <TabsStyle>
           <ButtonTabs
             noPadding
@@ -234,7 +289,10 @@ function BrowseTemplates({
           />
         </TabsStyle>
 
-        <LinksContainerStyle contained={contained}>
+        <LinksContainerStyle
+          contained={contained}
+          heightOffset={heightOffset}
+        >
           {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && linksBlocks}
         </LinksContainerStyle>
       </NavigationStyle>
@@ -289,12 +347,16 @@ function BrowseTemplates({
 
   if (contained) {
     return (
-      <ContainedStyle
-        height={height}
-        width={width}
-      >
-        {mainEl}
-      </ContainedStyle>
+      <>
+        {showBreadcrumbs && breadcrumbsEl}
+
+        <ContainedStyle
+          height={heightFinal}
+          width={width}
+        >
+          {mainEl}
+        </ContainedStyle>
+      </>
     );
   }
 

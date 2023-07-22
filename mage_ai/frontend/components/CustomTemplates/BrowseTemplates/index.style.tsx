@@ -71,6 +71,7 @@ export const TabsStyle = styled.div`
 
 export const LinksContainerStyle = styled.div<{
   contained?: boolean;
+  heightOffset?: number;
 }>`
   ${ScrollbarStyledCss}
 
@@ -79,7 +80,7 @@ export const LinksContainerStyle = styled.div<{
   width: ${NAV_WIDTH}px;
 
   ${props => `
-    height: calc(100% - ${55 + (props?.contained ? CONTAINED_PADDING_VALUE : HEADER_HEIGHT)}px);
+    height: calc(100% - ${55 + (props?.contained ? CONTAINED_PADDING_VALUE : HEADER_HEIGHT) + (props?.heightOffset || 0)}px);
   `}
 `;
 
@@ -171,4 +172,14 @@ export const TagsStyle = styled.div`
   height: ${3 * UNIT}px;
   margin-top: ${0.5 * UNIT}px;
   overflow: hidden;
+`;
+
+export const BreadcrumbsStyle = styled.div`
+  padding-bottom: ${1 * UNIT}px;
+  padding-top: ${1 * UNIT}px;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
 `;

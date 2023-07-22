@@ -62,8 +62,10 @@ import { useWindowSize } from '@utils/sizes';
 type TemplateDetailProps = {
   contained?: boolean;
   defaultTabUUID?: TabType;
+  heightOffset?: number;
   onCancel?: () => void;
   onCreateCustomTemplate?: (customTemplate: CustomTemplateType) => void;
+  onMutateSuccess?: () => void;
   template?: CustomTemplateType;
   templateAttributes?: {
     block_type?: BlockTypeEnum;
@@ -74,8 +76,10 @@ type TemplateDetailProps = {
 function TemplateDetail({
   contained,
   defaultTabUUID,
+  heightOffset,
   onCancel,
   onCreateCustomTemplate,
+  onMutateSuccess,
   template: templateProp,
   templateAttributes: templateAttributesProp,
   templateUUID,
@@ -134,6 +138,10 @@ function TemplateDetail({
           callback: ({
             custom_template: ct,
           }) => {
+            if (onMutateSuccess) {
+              onMutateSuccess?.();
+            }
+
             if (onCreateCustomTemplate) {
               onCreateCustomTemplate?.(ct);
             } else {
@@ -166,6 +174,10 @@ function TemplateDetail({
           callback: ({
             custom_template: ct,
           }) => {
+            if (onMutateSuccess) {
+              onMutateSuccess?.();
+            }
+
             setTemplateAttributesState(ct);
             setTouched(false);
           },
@@ -499,9 +511,14 @@ function TemplateDetail({
     ],
   );
 
+  const heightFinal = useMemo(() => height - heightOffset, [
+    height,
+    heightOffset,
+  ]);
+
   return (
     <ContainerStyle>
-      <NavigationStyle height={contained ? height : null}>
+      <NavigationStyle height={contained ? heightFinal : null}>
         <FlexContainer
           flexDirection="column"
           fullHeight
