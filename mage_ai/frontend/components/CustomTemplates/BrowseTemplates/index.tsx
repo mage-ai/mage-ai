@@ -46,16 +46,19 @@ import {
 type BrowseTemplatesProps = {
   defaultLinkUUID?: string;
   defaultTabUUID?: TabType;
+  showAddingNewTemplates?: boolean;
 };
 
 function BrowseTemplates({
   defaultLinkUUID,
   defaultTabUUID,
+  showAddingNewTemplates,
 }: BrowseTemplatesProps) {
   const router = useRouter();
   const themeContext = useContext(ThemeContext);
 
-  const [addingNewTemplate, setAddingNewTemplate] = useState<boolean>(false);
+  const [addingNewTemplate, setAddingNewTemplate] =
+    useState<boolean>(showAddingNewTemplates || false);
   const [selectedLink, setSelectedLink] = useState<NavLinkType>(defaultLinkUUID
     ? NAV_LINKS.find(({ uuid }) => uuid === defaultLinkUUID)
     : NAV_LINKS[0],

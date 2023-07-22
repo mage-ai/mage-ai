@@ -28,7 +28,7 @@ export const NAV_TAB_PIPELINES = {
 
 export const NAV_TABS = [
   NAV_TAB_BLOCKS,
-  NAV_TAB_PIPELINES,
+  // NAV_TAB_PIPELINES,
 ];
 
 export type NavLinkType = {
