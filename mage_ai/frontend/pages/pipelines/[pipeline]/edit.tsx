@@ -1898,8 +1898,6 @@ function PipelineDetailPage({
   }, [
   ], {
     background: true,
-    disableClickOutside: true,
-    disableEscape: true,
     uuid: 'browse_templates',
   });
 

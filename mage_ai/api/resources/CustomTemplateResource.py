@@ -1,4 +1,3 @@
-import os
 import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
