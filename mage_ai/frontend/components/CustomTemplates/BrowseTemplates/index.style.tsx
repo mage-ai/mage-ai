@@ -2,20 +2,44 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ICON_SIZE = UNIT * 2.5;
 const NAV_WIDTH = 40 * UNIT;
+export const CONTAINED_PADDING_VALUE = 2 * 5 * UNIT;
+
+export const ContainedStyle = styled.div<{
+  height?: number;
+  width?: number;
+}>`
+  ${ScrollbarStyledCss}
+
+  overflow: auto;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).page};
+  `}
+
+  ${props => props.height && `
+    height: ${props.height - CONTAINED_PADDING_VALUE}px;
+  `}
+
+  ${props => props.width && `
+    width: ${props.width - CONTAINED_PADDING_VALUE}px;
+  `}
+`;
 
 export const ContainerStyle = styled.div`
   height: 100%;
   position: relative;
 `;
 
-export const NavigationStyle = styled.div`
-  height: 100%;
+export const NavigationStyle = styled.div<{
+  height?: number;
+}>`
   position: fixed;
   width: ${NAV_WIDTH}px;
   z-index: 1;
@@ -23,6 +47,14 @@ export const NavigationStyle = styled.div`
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
     border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.height && `
+    height: ${props.height - CONTAINED_PADDING_VALUE}px;
+  `}
+
+  ${props => !props.height && `
+    height: 100%;
   `}
 `;
 
@@ -37,13 +69,18 @@ export const TabsStyle = styled.div`
   `}
 `;
 
-export const LinksContainerStyle = styled.div`
+export const LinksContainerStyle = styled.div<{
+  contained?: boolean;
+}>`
   ${ScrollbarStyledCss}
 
-  height: 100%;
   overflow: auto;
   position: fixed;
   width: ${NAV_WIDTH}px;
+
+  ${props => `
+    height: calc(100% - ${55 + (props?.contained ? CONTAINED_PADDING_VALUE : HEADER_HEIGHT)}px);
+  `}
 `;
 
 export const NavLinkStyle = styled.div<{

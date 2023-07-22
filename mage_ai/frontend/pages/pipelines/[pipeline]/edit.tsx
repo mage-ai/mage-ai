@@ -60,6 +60,7 @@ import {
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { ErrorProvider } from '@context/Error';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
@@ -1877,24 +1878,30 @@ function PipelineDetailPage({
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => (
-    <BrowseTemplates
-      defaultLinkUUID={blockType}
-      onClickCustomTemplate={(customTemplate) => {
-        addNewBlock({
-          config: {
-            custom_template_uuid: customTemplate?.template_uuid,
-          },
-        });
-        hideBrowseTemplates();
-      }}
-      showAddingNewTemplates={!!addNew}
-    />
+    <ErrorProvider>
+      <BrowseTemplates
+        contained
+        defaultLinkUUID={blockType}
+        onClickCustomTemplate={(customTemplate) => {
+          addNewBlock({
+            config: {
+              custom_template_uuid: customTemplate?.template_uuid,
+            },
+          });
+          hideBrowseTemplates();
+        }}
+        showAddingNewTemplates={!!addNew}
+      />
+    </ErrorProvider>
   ), {
   }, [
 
   ], {
     background: true,
+    disableClickOutside: true,
+    disableEscape: true,
     uuid: 'browse_templates',
+    visible: true,
   });
 
   const sideKick = useMemo(() => (

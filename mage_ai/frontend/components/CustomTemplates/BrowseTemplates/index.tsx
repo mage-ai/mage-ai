@@ -25,6 +25,7 @@ import {
   CardStyle,
   CardTitleStyle,
   CardsStyle,
+  ContainedStyle,
   ContainerStyle,
   ContentStyle,
   ICON_SIZE,
@@ -42,8 +43,10 @@ import {
   NAV_TAB_BLOCKS,
   NavLinkType,
 } from './constants';
+import { useWindowSize } from '@utils/sizes';
 
 type BrowseTemplatesProps = {
+  contained?: boolean;
   defaultLinkUUID?: string;
   defaultTabUUID?: TabType;
   onClickCustomTemplate?: (customTemplate: CustomTemplateType) => void;
@@ -51,6 +54,7 @@ type BrowseTemplatesProps = {
 };
 
 function BrowseTemplates({
+  contained,
   defaultLinkUUID,
   defaultTabUUID,
   onClickCustomTemplate,
@@ -58,6 +62,7 @@ function BrowseTemplates({
 }: BrowseTemplatesProps) {
   const router = useRouter();
   const themeContext = useContext(ThemeContext);
+  const { height, width } = useWindowSize();
 
   const [addingNewTemplate, setAddingNewTemplate] =
     useState<boolean>(showAddingNewTemplates || false);
@@ -69,6 +74,8 @@ function BrowseTemplates({
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID)
     : NAV_TABS[0],
   );
+
+  const [selectedTemplate, setSelectedTemplate] = useState<CustomTemplateType>(null);
 
   const { data: dataCustomTemplates } = api.custom_templates.list({
     object_type: OBJECT_TYPE_BLOCKS,
@@ -182,19 +189,40 @@ function BrowseTemplates({
   ]);
 
   if (addingNewTemplate) {
-    return (
+    const detailEl = (
       <TemplateDetail
+        contained={contained}
+        onCreateCustomTemplate={contained
+          ? (customTemplate: CustomTemplateType) => {
+            setSelectedTemplate(customTemplate);
+          }
+          : null
+        }
         templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
           ? { block_type: selectedLink?.uuid }
           : null
         }
+        templateUUID={selectedTemplate?.template_uuid}
       />
     );
+
+    if (contained) {
+      return (
+        <ContainedStyle
+          height={height}
+          width={width}
+        >
+          {detailEl}
+        </ContainedStyle>
+      );
+    }
+
+    return detailEl;
   }
 
-  return (
+  const mainEl = (
     <ContainerStyle>
-      <NavigationStyle>
+      <NavigationStyle height={contained ? height : null}>
         <TabsStyle>
           <ButtonTabs
             noPadding
@@ -206,11 +234,9 @@ function BrowseTemplates({
           />
         </TabsStyle>
 
-        <LinksContainerStyle>
+        <LinksContainerStyle contained={contained}>
           {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && linksBlocks}
         </LinksContainerStyle>
-
-        <Spacing pb={13} />
       </NavigationStyle>
 
       <ContentStyle>
@@ -260,6 +286,19 @@ function BrowseTemplates({
       </ContentStyle>
     </ContainerStyle>
   );
+
+  if (contained) {
+    return (
+      <ContainedStyle
+        height={height}
+        width={width}
+      >
+        {mainEl}
+      </ContainedStyle>
+    );
+  }
+
+  return mainEl;
 }
 
 export default BrowseTemplates;

@@ -57,10 +57,13 @@ import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+import { useWindowSize } from '@utils/sizes';
 
 type TemplateDetailProps = {
+  contained?: boolean;
   defaultTabUUID?: TabType;
   onCancel?: () => void;
+  onCreateCustomTemplate?: (customTemplate: CustomTemplateType) => void;
   template?: CustomTemplateType;
   templateAttributes?: {
     block_type?: BlockTypeEnum;
@@ -69,12 +72,15 @@ type TemplateDetailProps = {
 };
 
 function TemplateDetail({
+  contained,
   defaultTabUUID,
   onCancel,
+  onCreateCustomTemplate,
   template: templateProp,
   templateAttributes: templateAttributesProp,
   templateUUID,
 }: TemplateDetailProps) {
+  const { height, width } = useWindowSize();
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
     uuid: 'CustomTemplates/TemplateDetail',
@@ -128,10 +134,14 @@ function TemplateDetail({
           callback: ({
             custom_template: ct,
           }) => {
-            router.push(
-              '/templates/[...slug]',
-              `/templates/${encodeURIComponent(ct?.template_uuid)}`,
-            );
+            if (onCreateCustomTemplate) {
+              onCreateCustomTemplate?.(ct);
+            } else {
+              router.push(
+                '/templates/[...slug]',
+                `/templates/${encodeURIComponent(ct?.template_uuid)}`,
+              );
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -439,6 +449,7 @@ function TemplateDetail({
     const payload = {
       custom_template: {
         ...templateAttributes,
+        language: isMarkdown ? BlockLanguageEnum.MARKDOWN : templateAttributes?.language,
         object_type: OBJECT_TYPE_BLOCKS,
       },
     };
@@ -450,6 +461,7 @@ function TemplateDetail({
     }
   }, [
     createCustomTemplate,
+    isMarkdown,
     isNewCustomTemplate,
     templateAttributes,
     updateCustomTemplate,
@@ -489,7 +501,7 @@ function TemplateDetail({
 
   return (
     <ContainerStyle>
-      <NavigationStyle>
+      <NavigationStyle height={contained ? height : null}>
         <FlexContainer
           flexDirection="column"
           fullHeight

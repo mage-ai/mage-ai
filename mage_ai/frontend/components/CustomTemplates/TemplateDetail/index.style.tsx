@@ -5,6 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { CONTAINED_PADDING_VALUE } from '../BrowseTemplates/index.style';
 
 export const ICON_SIZE = UNIT * 2.5;
 const NAV_WIDTH = 40 * UNIT;
@@ -14,8 +15,10 @@ export const ContainerStyle = styled.div`
   position: relative;
 `;
 
-export const NavigationStyle = styled.div`
-  height: 100%;
+export const NavigationStyle = styled.div<{
+  height?: number;
+}>`
+  overflow: auto;
   position: fixed;
   width: ${NAV_WIDTH}px;
   z-index: 1;
@@ -23,6 +26,14 @@ export const NavigationStyle = styled.div`
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
     border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.height && `
+    height: ${props.height - CONTAINED_PADDING_VALUE}px;
+  `}
+
+  ${props => !props.height && `
+    height: 100%;
   `}
 `;
 
