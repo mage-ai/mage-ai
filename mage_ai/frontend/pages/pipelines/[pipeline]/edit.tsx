@@ -19,6 +19,7 @@ import BlockType, {
   SampleDataType,
 } from '@interfaces/BlockType';
 import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
+import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
@@ -1985,6 +1986,35 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
+    addNew,
+    addNewBlock,
+    blockType,
+  }: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => (
+    <BrowseTemplates
+      defaultLinkUUID={blockType}
+      onClickCustomTemplate={(customTemplate) => {
+        addNewBlock({
+          config: {
+            custom_template_uuid: customTemplate?.template_uuid,
+          },
+        });
+        hideBrowseTemplates();
+      }}
+      showAddingNewTemplates={!!addNew}
+    />
+  ), {
+  }, [
+
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={automaticallyNameBlocks
@@ -2049,6 +2079,7 @@ function PipelineDetailPage({
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2093,6 +2124,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     textareaFocused,
     widgets,
   ]);

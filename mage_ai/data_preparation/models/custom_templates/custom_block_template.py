@@ -3,13 +3,15 @@ import shutil
 import yaml
 from dataclasses import dataclass, field
 from jinja2 import Template
-from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockColor,
     BlockLanguage,
     BlockType,
 )
+from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
     METADATA_FILENAME_WITH_EXTENSION,
@@ -78,6 +80,30 @@ class CustomBlockTemplate(BaseConfig):
             get_repo_path(),
             self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
+        )
+
+    def create_block(
+        self,
+        block_name: str,
+        pipeline: Pipeline,
+        priority: int = None,
+        upstream_block_uuids: List[str] = None,
+        **kwargs,
+    ) -> Block:
+        configuration = None
+        if self.configuration and type(self.configuration) is dict:
+            configuration = self.configuration
+
+        return Block.create(
+            block_name,
+            self.block_type,
+            get_repo_path(),
+            color=self.color,
+            configuration=configuration,
+            language=self.language,
+            pipeline=pipeline,
+            priority=priority,
+            upstream_block_uuids=upstream_block_uuids,
         )
 
     def load_template_content(self, language: BlockLanguage = None) -> str:

@@ -195,6 +195,11 @@ type CodeBlockProps = {
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock?: (block: BlockType) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -249,6 +254,7 @@ function CodeBlock({
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
+  showBrowseTemplates,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -2293,6 +2299,7 @@ function CodeBlock({
                   pipeline={pipeline}
                   setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
+                  showBrowseTemplates={showBrowseTemplates}
                 />
               </Spacing>
             )}

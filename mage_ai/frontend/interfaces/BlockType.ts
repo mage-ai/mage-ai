@@ -158,9 +158,10 @@ export interface AnalysisType {
 export interface BlockRequestPayloadType {
   color?: BlockColorEnum;
   config?: {
-    data_source?: DataSourceTypeEnum;
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
+    custom_template_uuid?: string;
+    data_source?: DataSourceTypeEnum;
     suggested_action?: SuggestionType;
     template_path?: string;
   };

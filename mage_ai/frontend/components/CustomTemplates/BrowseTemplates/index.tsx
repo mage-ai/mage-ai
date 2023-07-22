@@ -46,12 +46,14 @@ import {
 type BrowseTemplatesProps = {
   defaultLinkUUID?: string;
   defaultTabUUID?: TabType;
+  onClickCustomTemplate?: (customTemplate: CustomTemplateType) => void;
   showAddingNewTemplates?: boolean;
 };
 
 function BrowseTemplates({
   defaultLinkUUID,
   defaultTabUUID,
+  onClickCustomTemplate,
   showAddingNewTemplates,
 }: BrowseTemplatesProps) {
   const router = useRouter();
@@ -125,48 +127,57 @@ function BrowseTemplates({
     themeContext,
   ]);
 
-  const cardsBlocks = useMemo(() => customTemplates?.map(({
-    description,
-    name,
-    // tags,
-    template_uuid: templateUUID,
-  }) => (
-    <CardStyle
-      key={templateUUID}
-      onClick={() => {
-        router.push(
-          '/templates/[...slug]',
-          `/templates/${encodeURIComponent(templateUUID)}`,
-        );
-      }}
-    >
-      <CardTitleStyle>
-        <Text bold monospace textOverflow>
-          {templateUUID || name}
-        </Text>
-      </CardTitleStyle>
+  const cardsBlocks = useMemo(() => customTemplates?.map((customTemplate: CustomTemplateType) => {
+    const {
+      description,
+      name,
+      // tags,
+      template_uuid: templateUUID,
+    } = customTemplate;
 
-      <CardDescriptionStyle>
-        <Text
-          default={!!description}
-          italic={!description}
-          muted={!description}
-          textOverflowLines={2}
-        >
-          {description || 'No description'}
-        </Text>
-      </CardDescriptionStyle>
+    return (
+      <CardStyle
+        key={templateUUID}
+        onClick={() => {
+          if (onClickCustomTemplate) {
+            onClickCustomTemplate(customTemplate);
+          } else {
+            router.push(
+              '/templates/[...slug]',
+              `/templates/${encodeURIComponent(templateUUID)}`,
+            );
+          }
+        }}
+      >
+        <CardTitleStyle>
+          <Text bold monospace textOverflow>
+            {templateUUID || name}
+          </Text>
+        </CardTitleStyle>
 
-      {/*<TagsStyle>
-        {tags?.length >= 1 && (
-          <TagsContainer
-            tags={tags?.map(uuid => ({ uuid }))}
-          />
-        )}
-      </TagsStyle>*/}
-    </CardStyle>
-  )), [
+        <CardDescriptionStyle>
+          <Text
+            default={!!description}
+            italic={!description}
+            muted={!description}
+            textOverflowLines={2}
+          >
+            {description || 'No description'}
+          </Text>
+        </CardDescriptionStyle>
+
+        {/*<TagsStyle>
+          {tags?.length >= 1 && (
+            <TagsContainer
+              tags={tags?.map(uuid => ({ uuid }))}
+            />
+          )}
+        </TagsStyle>*/}
+      </CardStyle>
+    );
+  }), [
     customTemplates,
+    onClickCustomTemplate,
     router,
   ]);
 

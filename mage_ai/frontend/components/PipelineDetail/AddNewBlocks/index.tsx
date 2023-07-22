@@ -52,6 +52,11 @@ type AddNewBlocksProps = {
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -79,6 +84,7 @@ function AddNewBlocks({
   pipeline,
   setAddNewBlockMenuOpenIdx,
   setCreatingNewDBTModel,
+  showBrowseTemplates,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -171,11 +177,13 @@ function AddNewBlocks({
     pipelineType,
     {
       blockTemplatesByBlockType,
+      showBrowseTemplates,
     },
   ), [
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
+    showBrowseTemplates,
   ]);
 
   const dataExporterItems = useMemo(() => getdataSourceMenuItems(
@@ -184,11 +192,56 @@ function AddNewBlocks({
     pipelineType,
     {
       blockTemplatesByBlockType,
+      showBrowseTemplates,
     },
   ), [
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
+    showBrowseTemplates,
+  ]);
+
+  const transformerItems = useMemo(() => {
+    if (isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType) {
+      return allActionMenuItems;
+    }
+
+    if (isStreamingPipeline) {
+      return [
+        {
+          items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+          label: () => 'Python',
+          uuid: 'transformers/python',
+        },
+      ];
+    }
+
+    return [
+      {
+        items: allActionMenuItems,
+        label: () => 'Python',
+        uuid: 'transformers/python_all',
+      },
+      ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER),
+      ...getdataSourceMenuItems(
+        addNewBlock,
+        BlockTypeEnum.TRANSFORMER,
+        pipelineType,
+        {
+          blockTemplatesByBlockType,
+          onlyCustomTemplate: true,
+          showBrowseTemplates,
+        },
+      ),
+    ];
+  }, [
+    addNewBlock,
+    allActionMenuItems,
+    blockTemplatesByBlockType,
+    isPySpark,
+    isStreamingPipeline,
+    pipelineType,
+    showBrowseTemplates,
   ]);
 
   return (
@@ -236,28 +289,7 @@ function AddNewBlocks({
             <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
-                items={isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType
-                  ? allActionMenuItems
-                  : (isStreamingPipeline
-                    ?
-                      [
-                        {
-                          items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-                          label: () => 'Python',
-                          uuid: 'transformers/python',
-                        },
-                      ]
-                    :
-                      [
-                        {
-                          items: allActionMenuItems,
-                          label: () => 'Python',
-                          uuid: 'transformers/python_all',
-                        },
-                        ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER),
-                      ]
-                  )
-                }
+                items={transformerItems}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
                 parentRef={transformerButtonRef}
