@@ -131,11 +131,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         column_identifier: str = '',
     ) -> str:
         unique_constraints_clean = [
-            f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
             for col in unique_constraints
         ]
         columns_cleaned = [
-            f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
             for col in columns
         ]
 
