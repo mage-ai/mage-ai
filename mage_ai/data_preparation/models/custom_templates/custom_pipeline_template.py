@@ -22,6 +22,7 @@ from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
+from mage_ai.shared.utils import clean_name
 from typing import Dict, List
 
 
@@ -79,7 +80,7 @@ class CustomPipelineTemplate(BaseConfig):
             description=description,
             name=name,
             pipeline=pipeline_dict,
-            template_uuid=template_uuid,
+            template_uuid=clean_name(template_uuid, [os.sep]) if template_uuid else template_uuid,
         )
 
         custom_template.save()
