@@ -323,7 +323,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         database: str,
         schema: str,
         table: str,
-    ) -> List[Tuple]:
+    ) -> List[List[tuple]]:
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
         success, num_chunks, num_rows, output = write_pandas(
@@ -337,7 +337,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         self.logger.info(
             f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
         self.logger.info(f'write_pandas output: {output}')
-        return [(num_rows, num_rows)]
+        return [[(num_rows, num_rows)]]
 
     def process_queries(
         self,
