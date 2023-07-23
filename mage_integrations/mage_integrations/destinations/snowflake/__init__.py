@@ -332,7 +332,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             table,
             database=database,
             schema=schema,
-            auto_create_table=False,
+            auto_create_table=True,
         )
         self.logger.info(
             f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
@@ -382,7 +382,10 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
 
                 results += self.build_connection().execute(drop_temp_table_command, commit=True)
-                results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+
+                # Outputs of write_dataframe_to_table are for temporary table only, thus not added to results
+                # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+                self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
 
                 merge_command = self.build_merge_command(
                     columns=df.columns,
