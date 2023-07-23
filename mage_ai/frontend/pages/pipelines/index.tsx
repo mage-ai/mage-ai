@@ -42,8 +42,15 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
+import {
+  getFilters,
+  getGroupBys,
+  setFilters,
+  setGroupBys,
+} from '@storage/pipelines';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
+import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 import { useModal } from '@context/Modal';
@@ -75,7 +82,6 @@ function PipelineListPage() {
     PipelineQueryEnum.TAG,
     PipelineQueryEnum.TYPE,
   ]);
-  const groupByQuery = q?.[PipelineQueryEnum.GROUP];
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
     include_schedules: 1,
@@ -96,6 +102,83 @@ function PipelineListPage() {
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+
+  const groupByQuery = q?.[PipelineQueryEnum.GROUP];
+
+  useEffect(() => {
+    let queryFinal = {};
+
+    if (groupByQuery) {
+      setGroupBys({
+        [groupByQuery]: true,
+      });
+    } else {
+      let val;
+      const groupBys = getGroupBys();
+      if (groupBys) {
+        Object.entries(groupBys).forEach(([k, v]) => {
+          if (!val && v) {
+            val = k;
+          }
+        });
+      }
+
+      if (val) {
+        queryFinal[PipelineQueryEnum.GROUP] = val;
+      }
+    }
+
+    if (isEmptyObject(query)) {
+      const filtersQuery = {};
+      const f = getFilters();
+
+      if (f) {
+        Object.entries(f).forEach(([k, v]) => {
+          filtersQuery[k] = [];
+
+          Object.entries(v).forEach(([k2, v2]) => {
+            if (v2) {
+              filtersQuery[k].push(k2);
+            }
+          });
+        });
+      }
+
+      if (!isEmptyObject(filtersQuery)) {
+        queryFinal = {
+          ...queryFinal,
+          ...filtersQuery,
+        };
+      }
+    } else {
+      const f = {};
+      Object.entries(query).forEach(([k, v]) => {
+        f[k] = {};
+
+        let v2 = v;
+        if (!Array.isArray(v2)) {
+          v2 = [v2];
+        }
+
+        if (v2 && Array.isArray(v2)) {
+          v2?.forEach((v3) => {
+            f[k][v3] = true;
+          });
+        }
+      });
+
+      setFilters(f);
+    }
+
+    if (!isEmptyObject(queryFinal)) {
+      goToWithQuery(queryFinal, {
+        pushHistory: true,
+      });
+    }
+  }, [
+    groupByQuery,
+    query,
+  ]);
 
   useEffect(() => {
     displayErrorFromReadResponse(data, setErrors);
