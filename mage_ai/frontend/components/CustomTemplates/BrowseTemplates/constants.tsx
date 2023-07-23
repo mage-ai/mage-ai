@@ -1,9 +1,11 @@
 import CustomTemplateType from '@interfaces/CustomTemplateType';
+import StreamingPipeline from '@oracle/icons/custom/StreamingPipeline';
 import {
   BLOCK_TYPE_NAME_MAPPING,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
+  BatchPipeline,
   BlockGeneric,
   Callback,
   Charts,
@@ -11,12 +13,17 @@ import {
   Conditional,
   CubeWithArrowDown,
   DBT,
+  DataIntegrationPipeline,
   File as FileIcon,
   FrameBoxSelection,
   Lightning,
   Sensor,
   TemplateShapes,
 } from '@oracle/icons';
+import {
+  PIPELINE_TYPE_LABEL_MAPPING,
+  PipelineTypeEnum,
+} from '@interfaces/PipelineType';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 export const NAV_TAB_BLOCKS = {
@@ -120,6 +127,38 @@ export const NAV_LINKS: NavLinkType[] = [
   selectedBackgroundColor: theme => getColorsForBlockType(uuid, {
       theme,
   }).accent,
+  uuid,
+  ...rest,
+})));
+
+console.log(StreamingPipeline)
+
+export const NAV_LINKS_PIPELINES: NavLinkType[] = [
+  {
+    Icon: TemplateShapes,
+    uuid: 'All templates',
+  },
+].concat([
+  {
+    Icon: BatchPipeline,
+    uuid: PipelineTypeEnum.PYTHON,
+  },
+  {
+    Icon: DataIntegrationPipeline,
+    uuid: PipelineTypeEnum.INTEGRATION,
+  },
+  {
+    Icon: StreamingPipeline,
+    uuid: PipelineTypeEnum.STREAMING,
+  },
+].map(({
+  uuid,
+  ...rest
+}) => ({
+  filterTemplates: (customTemplates: CustomTemplateType[]) => customTemplates?.filter(
+    ct => ct?.pipeline?.type === uuid,
+  ),
+  label: () => PIPELINE_TYPE_LABEL_MAPPING[uuid],
   uuid,
   ...rest,
 })));

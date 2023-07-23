@@ -46,38 +46,44 @@ import {
 } from './index.style';
 import {
   NAV_LINKS,
+  NAV_LINKS_PIPELINES,
   NAV_TABS,
   NAV_TAB_BLOCKS,
   NAV_TAB_PIPELINES,
   NavLinkType,
 } from './constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { goToWithQuery } from '@utils/routing';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowseTemplatesProps = {
   contained?: boolean;
   defaultLinkUUID?: string;
-  defaultTabUUID?: TabType;
+  defaultTab?: TabType;
   objectType?: string;
   onClickCustomTemplate?: (customTemplate: CustomTemplateType) => void;
   pipelineUUID?: string;
   showAddingNewTemplates?: boolean;
   showBreadcrumbs?: boolean;
+  tabs?: TabType[];
 };
 
 function BrowseTemplates({
   contained,
   defaultLinkUUID,
-  defaultTabUUID,
+  defaultTab,
   objectType,
   onClickCustomTemplate,
   pipelineUUID,
   showAddingNewTemplates,
   showBreadcrumbs,
+  tabs: tabsProp,
 }: BrowseTemplatesProps) {
   const router = useRouter();
   const themeContext = useContext(ThemeContext);
   const { height, width } = useWindowSize();
+
+  const tabs = useMemo(() => tabsProp || NAV_TABS, [tabsProp]);
 
   const [addingNewTemplate, setAddingNewTemplate] =
     useState<boolean>(showAddingNewTemplates || false);
@@ -85,9 +91,9 @@ function BrowseTemplates({
     ? NAV_LINKS.find(({ uuid }) => uuid === defaultLinkUUID)
     : NAV_LINKS[0],
   );
-  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
-    : NAV_TABS[0],
+  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
+    ? tabs.find(({ uuid }) => uuid === defaultTab?.uuid)
+    : tabs[0],
   );
 
   const [selectedTemplate, setSelectedTemplate] = useState<CustomTemplateType>(null);
@@ -175,6 +181,47 @@ function BrowseTemplates({
     themeContext,
   ]);
 
+  const linksPipelines = useMemo(() => NAV_LINKS_PIPELINES.map((navLink: NavLinkType) => {
+    const {
+      Icon,
+      label,
+      selectedBackgroundColor,
+      selectedIconProps,
+      uuid,
+    } = navLink;
+    const isSelected = selectedLink?.uuid === uuid;
+    const IconProps = {
+      size: ICON_SIZE,
+      ...(isSelected && selectedIconProps ? selectedIconProps : {}),
+    };
+
+    return (
+      <NavLinkStyle
+        key={uuid}
+        onClick={() => setSelectedLink(navLink)}
+        selected={isSelected}
+      >
+        <FlexContainer alignItems="center">
+          <IconStyle
+            backgroundColor={isSelected && selectedBackgroundColor
+              ? selectedBackgroundColor(themeContext)
+              : null
+            }
+          >
+            {Icon ? <Icon {...IconProps} /> : <BlocksStacked {...IconProps} />}
+          </IconStyle>
+
+          <Text bold large>
+            {label ? label() : uuid}
+          </Text>
+        </FlexContainer>
+      </NavLinkStyle>
+    );
+  }), [
+    selectedLink,
+    themeContext,
+  ]);
+
   const cardsBlocks = useMemo(() => customTemplates?.map((customTemplate: CustomTemplateType) => {
     const {
       description,
@@ -199,7 +246,7 @@ function BrowseTemplates({
       >
         <CardTitleStyle>
           <Text bold monospace textOverflow>
-            {templateUUID || name}
+            {name || templateUUID}
           </Text>
         </CardTitleStyle>
 
@@ -225,6 +272,60 @@ function BrowseTemplates({
     );
   }), [
     customTemplates,
+    onClickCustomTemplate,
+    router,
+  ]);
+
+  const cardsPipelines = useMemo(() => customPipelineTemplates?.map((customTemplate: CustomTemplateType) => {
+    const {
+      description,
+      name,
+      // tags,
+      template_uuid: templateUUID,
+    } = customTemplate;
+
+    return (
+      <CardStyle
+        key={templateUUID}
+        onClick={() => {
+          if (onClickCustomTemplate) {
+            onClickCustomTemplate(customTemplate);
+          } else {
+            router.push(
+              '/templates/[...slug]',
+              `/templates/${encodeURIComponent(templateUUID)}?object_type=${OBJECT_TYPE_PIPELINES}`,
+            );
+          }
+        }}
+      >
+        <CardTitleStyle>
+          <Text bold monospace textOverflow>
+            {name || templateUUID}
+          </Text>
+        </CardTitleStyle>
+
+        <CardDescriptionStyle>
+          <Text
+            default={!!description}
+            italic={!description}
+            muted={!description}
+            textOverflowLines={2}
+          >
+            {description || 'No description'}
+          </Text>
+        </CardDescriptionStyle>
+
+        {/*<TagsStyle>
+          {tags?.length >= 1 && (
+            <TagsContainer
+              tags={tags?.map(uuid => ({ uuid }))}
+            />
+          )}
+        </TagsStyle>*/}
+      </CardStyle>
+    );
+  }), [
+    customPipelineTemplates,
     onClickCustomTemplate,
     router,
   ]);
@@ -337,10 +438,16 @@ function BrowseTemplates({
           <ButtonTabs
             noPadding
             onClickTab={(tab: TabType) => {
-              setSelectedTab(tab);
+              if (contained) {
+                setSelectedTab(tab);
+              } else {
+                goToWithQuery({
+                  object_type: NAV_TAB_PIPELINES.uuid === tab.uuid ? OBJECT_TYPE_PIPELINES : OBJECT_TYPE_BLOCKS,
+                });
+              }
             }}
             selectedTabUUID={selectedTab?.uuid}
-            tabs={NAV_TABS}
+            tabs={tabs}
           />
         </TabsStyle>
 
@@ -349,12 +456,13 @@ function BrowseTemplates({
           heightOffset={heightOffset}
         >
           {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && linksBlocks}
+          {NAV_TAB_PIPELINES.uuid === selectedTab?.uuid && linksPipelines}
         </LinksContainerStyle>
       </NavigationStyle>
 
       <ContentStyle>
-        <SubheaderStyle>
-          {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
+        {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
+          <SubheaderStyle>
             <Button
               beforeIcon={<Add size={ICON_SIZE} />}
               onClick={() => {
@@ -364,8 +472,8 @@ function BrowseTemplates({
             >
               New block template
             </Button>
-          )}
-        </SubheaderStyle>
+          </SubheaderStyle>
+        )}
 
         {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
           <>
@@ -389,9 +497,39 @@ function BrowseTemplates({
               </Spacing>
             )}
 
-            {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && cardsBlocks?.length >= 1 && (
+            {cardsBlocks?.length >= 1 && (
               <CardsStyle>
                 {cardsBlocks}
+              </CardsStyle>
+            )}
+          </>
+        )}
+
+        {NAV_TAB_PIPELINES.uuid === selectedTab?.uuid && (
+          <>
+            {!dataCustomPipelineTemplates && (
+              <Spacing p={2}>
+                <Spinner inverted />
+              </Spacing>
+            )}
+
+            {dataCustomPipelineTemplates && !cardsPipelines?.length && (
+              <Spacing p={2}>
+                <Text>
+                  There are currently no templates matching your search.
+                </Text>
+
+                <br />
+
+                <Text>
+                  Add a new template by clicking the button above.
+                </Text>
+              </Spacing>
+            )}
+
+            {cardsPipelines?.length >= 1 && (
+              <CardsStyle>
+                {cardsPipelines}
               </CardsStyle>
             )}
           </>

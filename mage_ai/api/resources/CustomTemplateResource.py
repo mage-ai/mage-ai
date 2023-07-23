@@ -31,11 +31,18 @@ class CustomTemplateResource(GenericResource):
             object_type = object_type[0]
 
         templates = []
+        file_dicts = []
 
         if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             file_dicts = get_templates(DIRECTORY_FOR_BLOCK_TEMPLATES)
+            template_class = CustomBlockTemplate
+        elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
+            file_dicts = get_templates(DIRECTORY_FOR_PIPELINE_TEMPLATES)
+            template_class = CustomPipelineTemplate
+
+        if file_dicts:
             file_dicts_flat = flatten_files(file_dicts)
-            templates = group_and_hydrate_files(file_dicts_flat, CustomBlockTemplate)
+            templates = group_and_hydrate_files(file_dicts_flat, template_class)
 
         return self.build_result_set(
             templates,
@@ -103,6 +110,12 @@ class CustomTemplateResource(GenericResource):
         try:
             if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
                 return self(CustomBlockTemplate.load(template_uuid=template_uuid), user, **kwargs)
+            elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
+                return self(
+                    CustomPipelineTemplate.load(template_uuid=template_uuid),
+                    user,
+                    **kwargs,
+                )
         except Exception as err:
             print(f'[WARNING] CustomTemplateResource.member: {err}')
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
