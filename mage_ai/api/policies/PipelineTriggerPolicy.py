@@ -31,3 +31,11 @@ PipelineTriggerPolicy.allow_read(PipelineTriggerPresenter.default_attributes + [
 ], on_action=[
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+PipelineTriggerPolicy.allow_write(PipelineTriggerPresenter.default_attributes + [
+  'pipeline_schedule_id',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+], condition=lambda policy: policy.has_at_least_editor_role())

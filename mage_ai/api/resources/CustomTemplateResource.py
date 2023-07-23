@@ -8,11 +8,15 @@ from mage_ai.data_preparation.models.custom_templates.constants import (
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
 )
+from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
+    CustomPipelineTemplate,
+)
 from mage_ai.data_preparation.models.custom_templates.utils import (
     flatten_files,
     get_templates,
     group_and_hydrate_files,
 )
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.shared.hash import ignore_keys
 
@@ -66,7 +70,23 @@ class CustomTemplateResource(GenericResource):
 
                 custom_template.save()
         elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
-            pass
+            custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
+
+            if not custom_template:
+                pipeline = Pipeline.get(payload.get('pipeline_uuid'))
+                custom_template = CustomPipelineTemplate.create_from_pipeline(
+                    pipeline,
+                    template_uuid,
+                    name=payload.get('name'),
+                    description=payload.get('description'),
+                )
+
+                if user:
+                    custom_template.user = dict(
+                        username=user.username,
+                    )
+
+                custom_template.save()
 
         if custom_template:
             return self(custom_template, user, **kwargs)
