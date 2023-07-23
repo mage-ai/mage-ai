@@ -53,7 +53,12 @@ type ToolbarProps = {
   groupButtonProps?: {
     menuItems: FlyoutMenuItemType[];
     groupByLabel?: string;
-  }
+  };
+  onFilterApply?: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
   query?: {
     [keyof: string]: string[];
   };
@@ -83,6 +88,7 @@ function Toolbar({
   filterValueLabelMapping,
   groupButtonProps,
   moreActionsMenuItems,
+  onFilterApply,
   query = {},
   searchProps,
   secondaryActionButtonProps,
@@ -174,7 +180,14 @@ function Toolbar({
   const filterButtonEl = useMemo(() => (
     <ToggleMenu
       compact
-      onClickCallback={closeFilterButtonMenu}
+      onClickCallback={(query, updatedQuery) => {
+        if (onFilterApply) {
+          onFilterApply?.(query, updatedQuery);
+        }
+        if (closeFilterButtonMenu) {
+          closeFilterButtonMenu?.();
+        }
+      }}
       onClickOutside={closeFilterButtonMenu}
       onSecondaryClick={() => router.push('/pipelines')}
       open={filterButtonMenuOpen}
@@ -208,6 +221,7 @@ function Toolbar({
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
     filtersAppliedCount,
+    onFilterApply,
     query,
     router,
   ]);

@@ -373,13 +373,21 @@ function PipelineListPage() {
               : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.STATUS),
-            onClick: () => goToWithQuery({
-              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.STATUS
+            onClick: () => {
+              const val = groupByQuery === PipelineGroupingEnum.STATUS
                 ? null
-                : PipelineGroupingEnum.STATUS,
-            }, {
-              pushHistory: true,
-            }),
+                : PipelineGroupingEnum.STATUS;
+
+               if (!val) {
+                 setGroupBys({});
+               }
+
+              goToWithQuery({
+                [PipelineQueryEnum.GROUP]: val,
+              }, {
+                pushHistory: true,
+              });
+            },
             uuid: 'Pipelines/GroupMenu/Status',
           },
           {
@@ -391,13 +399,21 @@ function PipelineListPage() {
               : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.TAG),
-            onClick: () => goToWithQuery({
-              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TAG
+            onClick: () => {
+              const val = groupByQuery === PipelineGroupingEnum.TAG
                 ? null
-                : PipelineGroupingEnum.TAG,
-            }, {
-              pushHistory: true,
-            }),
+                : PipelineGroupingEnum.TAG;
+
+               if (!val) {
+                 setGroupBys({});
+               }
+
+              goToWithQuery({
+                [PipelineQueryEnum.GROUP]: val,
+              }, {
+                pushHistory: true,
+              });
+            },
             uuid: 'Pipelines/GroupMenu/Tag',
           },
           {
@@ -409,13 +425,21 @@ function PipelineListPage() {
               : <Circle muted size={UNIT * 1.5} />
             ,
             label: () => capitalize(PipelineGroupingEnum.TYPE),
-            onClick: () => goToWithQuery({
-              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TYPE
+            onClick: () => {
+              const val = groupByQuery === PipelineGroupingEnum.TYPE
                 ? null
-                : PipelineGroupingEnum.TYPE,
-            }, {
-              pushHistory: true,
-            }),
+                : PipelineGroupingEnum.TYPE;
+
+               if (!val) {
+                 setGroupBys({});
+               }
+
+              goToWithQuery({
+                [PipelineQueryEnum.GROUP]: val,
+              }, {
+                pushHistory: true,
+              });
+            },
             uuid: 'Pipelines/GroupMenu/Type',
           },
         ],
@@ -432,6 +456,12 @@ function PipelineListPage() {
           uuid: 'Pipelines/MoreActionsMenu/EditDescription',
         },
       ]}
+      onFilterApply={(query, updatedQuery) => {
+        // @ts-ignore
+        if (Object.values(updatedQuery).every(arr => !arr?.length)) {
+          setFilters({});
+        }
+      }}
       query={query}
       searchProps={{
         onChange: setSearchText,
