@@ -17,6 +17,7 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import {
   NAV_TABS,
+  NAV_TAB_DEFINE,
   NAV_TAB_BLOCKS,
   NAV_TAB_DOCUMENT,
   NAV_TAB_TRIGGERS,
@@ -37,13 +38,17 @@ type PipelineTemplateDetailProps = {
   pipelineUUID?: string;
   template?: CustomTemplateType;
   templateAttributes?: {
+    description?: string;
+    name?: string;
     pipeline_type?: PipelineTypeEnum;
+    template_uuid?: string;
   };
   templateUUID?: string;
 };
 
 function PipelineTemplateDetail({
   defaultTabUUID,
+  onMutateSuccess,
   pipelineUUID,
   template: templateProp,
   templateAttributes: templateAttributesProp,
@@ -54,13 +59,13 @@ function PipelineTemplateDetail({
     uuid: 'CustomTemplates/PipelineTemplateDetail',
   });
 
-  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
-    : NAV_TABS[0],
-  );
   const [touched, setTouched] = useState<boolean>(false);
   const [templateAttributes, setTemplateAttributesState] =
-    useState<CustomTemplateType | {}>(templateAttributesProp);
+    useState<CustomTemplateType | {
+      description?: string;
+      name?: string;
+      template_uuid?: string;
+    }>(templateAttributesProp);
   const setTemplateAttributes = useCallback((handlePrevious) => {
     setTouched(true);
     setTemplateAttributesState(handlePrevious);
@@ -70,9 +75,15 @@ function PipelineTemplateDetail({
     templateProp,
     templateUUID,
   ]);
+
+  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
+    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
+    : isNewCustomTemplate ? NAV_TAB_DEFINE : NAV_TABS[0],
+  );
+
   const buttonDisabled = useMemo(() => {
     if (isNewCustomTemplate) {
-      return !templateAttributes?.name;
+      return !templateAttributes?.template_uuid;
     }
 
     return !touched;
@@ -189,7 +200,7 @@ function PipelineTemplateDetail({
             setSelectedTab(tab);
           }}
           selectedTabUUID={selectedTab?.uuid}
-          tabs={isNewCustomTemplate ? NAV_TABS.slice(0, 1) : NAV_TABS}
+          tabs={isNewCustomTemplate ? [NAV_TAB_DEFINE] : NAV_TABS}
         />
       </TabsStyle>
 
@@ -197,22 +208,22 @@ function PipelineTemplateDetail({
         // flex={1}
         flexDirection="column"
       >
-        {NAV_TAB_DOCUMENT.uuid === selectedTab?.uuid && (
+        {NAV_TAB_DEFINE.uuid === selectedTab?.uuid && (
           <>
             {pipelineUUID && (
               <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-                <Text>
-                  This custom pipeline template will be based off the pipeline <NextLink
+                <Text default>
+                  This pipeline template will be based off the pipeline <NextLink
                     as={`/pipelines/${pipelineUUID}`}
                     href={'/pipelines/[pipeline]'}
                     passHref
                   >
                     <Link
                       bold
+                      default
                       inline
                       monospace
                       openNewWindow
-                      sameColorAsText
                     >
                       {pipelineUUID}
                     </Link>
@@ -221,6 +232,36 @@ function PipelineTemplateDetail({
               </Spacing>
             )}
 
+            <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Template UUID
+                </Text>
+                <Text muted small>
+                  Unique identifier for custom template.
+                  The UUID will also determine where the custom template file is stored in the
+                  project.
+                  You can use nested folder names in the template’s UUID.
+                </Text>
+              </Spacing>
+
+              <TextInput
+                monospace
+                // @ts-ignore
+                onChange={e => setTemplateAttributes(prev => ({
+                  ...prev,
+                  template_uuid: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                value={templateAttributes?.template_uuid || ''}
+              />
+            </Spacing>
+          </>
+        )}
+
+        {NAV_TAB_DOCUMENT.uuid === selectedTab?.uuid && (
+          <>
             <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
               <Spacing mb={1}>
                 <Text bold>
@@ -283,13 +324,14 @@ function PipelineTemplateDetail({
     isLoadingUpdateCustomTemplate,
     isNewCustomTemplate,
     pipelineUUID,
+    saveCustomTemplate,
     selectedTab?.uuid,
     setTemplateAttributes,
-    templateAttributes?.description,
-    templateAttributes?.name,
+    templateAttributes,
   ]);
 
   return (
+    // @ts-ignore
     <TripleLayout
       after={after}
       before={before}
