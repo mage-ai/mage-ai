@@ -2,15 +2,6 @@ import os
 import shutil
 import yaml
 from dataclasses import dataclass, field
-from jinja2 import Template
-from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import (
-    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
-    BlockColor,
-    BlockLanguage,
-    BlockType,
-)
-from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_PIPELINE_TEMPLATES,
