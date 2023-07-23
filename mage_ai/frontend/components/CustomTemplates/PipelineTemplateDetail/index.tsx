@@ -38,7 +38,10 @@ type PipelineTemplateDetailProps = {
   pipelineUUID?: string;
   template?: CustomTemplateType;
   templateAttributes?: {
+    description?: string;
+    name?: string;
     pipeline_type?: PipelineTypeEnum;
+    template_uuid?: string;
   };
   templateUUID?: string;
 };
@@ -58,7 +61,11 @@ function PipelineTemplateDetail({
 
   const [touched, setTouched] = useState<boolean>(false);
   const [templateAttributes, setTemplateAttributesState] =
-    useState<CustomTemplateType | {}>(templateAttributesProp);
+    useState<CustomTemplateType | {
+      description?: string;
+      name?: string;
+      template_uuid?: string;
+    }>(templateAttributesProp);
   const setTemplateAttributes = useCallback((handlePrevious) => {
     setTouched(true);
     setTemplateAttributesState(handlePrevious);
@@ -324,6 +331,7 @@ function PipelineTemplateDetail({
   ]);
 
   return (
+    // @ts-ignore
     <TripleLayout
       after={after}
       before={before}
