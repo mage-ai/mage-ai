@@ -160,9 +160,11 @@ function PipelineListPage() {
           v2 = [v2];
         }
 
-        v2.forEach((v3) => {
-          f[k][v3] = true;
-        });
+        if (v2 && Array.isArray(v2)) {
+          v2?.forEach((v3) => {
+            f[k][v3] = true;
+          });
+        }
       });
 
       setFilters(f);
