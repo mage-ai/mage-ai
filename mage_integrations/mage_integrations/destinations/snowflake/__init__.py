@@ -1,3 +1,7 @@
+import pandas as pd
+from snowflake.connector.pandas_tools import write_pandas
+from typing import Dict, List, Tuple
+
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
@@ -18,9 +22,6 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.utils.array import batch
-from snowflake.connector.pandas_tools import write_pandas
-from typing import Dict, List, Tuple
-import pandas as pd
 
 
 class Snowflake(Destination):
@@ -128,14 +129,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         full_table_name_temp: str,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
-        column_identifier: str = '',
     ) -> str:
         unique_constraints_clean = [
-            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
+            self._wrap_with_quotes(clean_column_name(col))
             for col in unique_constraints
         ]
         columns_cleaned = [
-            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
+            self._wrap_with_quotes(clean_column_name(col))
             for col in columns
         ]
 
@@ -227,7 +227,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 full_table_name_temp=full_table_name_temp,
                 unique_conflict_method=unique_conflict_method,
                 unique_constraints=unique_constraints,
-                column_identifier=self.quote,
             )
 
             return commands + [
@@ -320,7 +319,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
     def write_dataframe_to_table(
         self,
-        df: pd.Dataframe,
+        df: "pd.Dataframe",
         database: str,
         schema: str,
         table: str,
@@ -391,7 +390,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     full_table_name_temp=full_table_name_temp,
                     unique_conflict_method=unique_conflict_method,
                     unique_constraints=unique_constraints,
-                    column_identifier=self.quote,
                 )
                 self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
                 results += self.build_connection().execute(merge_command, commit=True)
