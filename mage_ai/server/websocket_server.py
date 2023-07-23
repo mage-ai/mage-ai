@@ -233,7 +233,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
         global_vars['env'] = ENV_DEV
         if 'execution_date' not in global_vars:
-            global_vars['execution_date'] = datetime.now()
+            now = datetime.now()
+            global_vars['execution_date'] = now
+            global_vars['interval_end_datetime']  = None
+            global_vars['interval_seconds'] = None
+            global_vars['interval_start_datetime'] = now
+
         global_vars['event'] = dict()
 
         if cancel_pipeline:
