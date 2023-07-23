@@ -235,7 +235,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if 'execution_date' not in global_vars:
             now = datetime.now()
             global_vars['execution_date'] = now
-            global_vars['interval_end_datetime']  = None
+            global_vars['interval_end_datetime'] = None
             global_vars['interval_seconds'] = None
             global_vars['interval_start_datetime'] = now
 
