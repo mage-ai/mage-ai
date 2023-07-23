@@ -1,8 +1,10 @@
 import asyncio
+import dateutil.parser
 import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
+from dateutil.relativedelta import relativedelta
 from typing import Dict, List
 
 import pytz
@@ -467,6 +469,53 @@ class PipelineRun(BaseModel):
         variables['event'] = merge_dict(variables.get('event', {}), event_variables)
         variables['execution_date'] = self.execution_date
         variables['execution_partition'] = self.execution_partition
+
+        interval_end_datetime = variables.get('interval_end_datetime')
+        interval_seconds = variables.get('interval_seconds')
+        interval_start_datetime = variables.get('interval_start_datetime')
+
+        if interval_end_datetime or interval_seconds or interval_start_datetime:
+            if interval_end_datetime:
+                try:
+                    variables['interval_end_datetime'] = dateutil.parser.parse(
+                        interval_end_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime:
+                try:
+                    variables['interval_start_datetime'] = dateutil.parser.parse(
+                        interval_start_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+        elif self.execution_date and ScheduleType.TIME == self.pipeline_schedule.schedule_type:
+            interval_end_datetime = None
+            interval_seconds = None
+            interval_start_datetime = self.execution_date
+
+            if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24
+            elif ScheduleInterval.HOURLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 1
+            elif ScheduleInterval.MONTHLY == self.pipeline_schedule.schedule_interval:
+                interval_end_datetime = interval_start_datetime + relativedelta(months=1)
+                interval_seconds = (
+                    interval_end_datetime.timestamp() - interval_start_datetime.timestamp()
+                )
+            elif ScheduleInterval.WEEKLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24 * 7
+
+            if interval_seconds and not interval_end_datetime:
+                interval_end_datetime = interval_start_datetime + timedelta(
+                    seconds=interval_seconds,
+                )
+
+            variables['interval_end_datetime'] = interval_end_datetime
+            variables['interval_seconds'] = interval_seconds
+            variables['interval_start_datetime'] = interval_start_datetime
+
         variables.update(extra_variables)
 
         return variables
