@@ -3,6 +3,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
+    DIRECTORY_FOR_PIPELINE_TEMPLATES,
 )
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -41,9 +42,10 @@ class CustomTemplateResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         custom_template = None
+        object_type = payload.get(OBJECT_TYPE_KEY)
+        template_uuid = payload.get('template_uuid')
 
-        if DIRECTORY_FOR_BLOCK_TEMPLATES == payload.get(OBJECT_TYPE_KEY):
-            template_uuid = payload.get('template_uuid')
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
 
             if not custom_template:
@@ -63,6 +65,8 @@ class CustomTemplateResource(GenericResource):
                 )
 
                 custom_template.save()
+        elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
+            pass
 
         if custom_template:
             return self(custom_template, user, **kwargs)

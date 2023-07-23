@@ -48,6 +48,7 @@ CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [],
 CustomTemplatePolicy.allow_write(CustomTemplatePresenter.default_attributes + [
     'content',
     'object_type',
+    'pipeline_uuid',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

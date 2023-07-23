@@ -32,13 +32,14 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
-import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { TableContainerStyle } from '@components/shared/Table/index.style';
+import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
@@ -854,6 +855,15 @@ function PipelineListPage() {
                       );
                     },
                     uuid: 'add_tags',
+                  },
+                  {
+                    label: () => 'Create template',
+                    onClick: () => {
+                      router.push(
+                        `/templates?object_type=${OBJECT_TYPE_PIPELINES}&new=1&pipeline_uuid=${selectedPipeline?.uuid}`,
+                      );
+                    },
+                    uuid: 'create_custom_template',
                   },
                   {
                     label: () => 'Delete',
