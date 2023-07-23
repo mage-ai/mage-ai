@@ -22,7 +22,11 @@ import { capitalize, removeUnderscore } from '@utils/string';
 type ToggleMenuProps = {
   children: any;
   compact?: boolean;
-  onClickCallback: () => void;
+  onClickCallback: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
   onClickOutside: () => void;
   onSecondaryClick: () => void;
   open: boolean;
@@ -134,7 +138,11 @@ function ToggleMenu({
                     return query;
                   }, {});
 
-                onClickCallback?.();
+                onClickCallback?.(
+                  query,
+                  updatedQuery,
+                );
+
                 goToWithFilters(
                   query,
                   updatedQuery,
