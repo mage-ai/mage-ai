@@ -683,6 +683,7 @@ function TemplateDetail({
                     <Spacing mr={1} />
 
                     <Button
+                      onClick={onCancel}
                       secondary
                     >
                       Cancel

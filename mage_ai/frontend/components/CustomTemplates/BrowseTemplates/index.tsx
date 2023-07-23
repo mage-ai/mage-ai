@@ -9,8 +9,12 @@ import { useRouter } from 'next/router';
 import Breadcrumbs, { BreadcrumbType } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
+import CustomTemplateType, {
+  OBJECT_TYPE_BLOCKS,
+  OBJECT_TYPE_PIPELINES,
+} from '@interfaces/CustomTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import PipelineTemplateDetail from '@components/CustomTemplates/PipelineTemplateDetail';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 // import TagsContainer from '@components/Tags/TagsContainer';
@@ -44,15 +48,19 @@ import {
   NAV_LINKS,
   NAV_TABS,
   NAV_TAB_BLOCKS,
+  NAV_TAB_PIPELINES,
   NavLinkType,
 } from './constants';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowseTemplatesProps = {
   contained?: boolean;
   defaultLinkUUID?: string;
   defaultTabUUID?: TabType;
+  objectType?: string;
   onClickCustomTemplate?: (customTemplate: CustomTemplateType) => void;
+  pipelineUUID?: string;
   showAddingNewTemplates?: boolean;
   showBreadcrumbs?: boolean;
 };
@@ -61,7 +69,9 @@ function BrowseTemplates({
   contained,
   defaultLinkUUID,
   defaultTabUUID,
+  objectType,
   onClickCustomTemplate,
+  pipelineUUID,
   showAddingNewTemplates,
   showBreadcrumbs,
 }: BrowseTemplatesProps) {
@@ -82,8 +92,13 @@ function BrowseTemplates({
 
   const [selectedTemplate, setSelectedTemplate] = useState<CustomTemplateType>(null);
 
-  const { data: dataCustomTemplates, mutate: fetchCustomTemplates } = api.custom_templates.list({
+  const {
+    data: dataCustomTemplates,
+    mutate: fetchCustomTemplates,
+  } = api.custom_templates.list({
     object_type: OBJECT_TYPE_BLOCKS,
+  }, {}, {
+    pauseFetch: NAV_TAB_BLOCKS.uuid !== selectedTab?.uuid,
   });
   const customTemplates: CustomTemplateType[] = useMemo(() => {
     const arr = dataCustomTemplates?.custom_templates || [];
@@ -95,6 +110,27 @@ function BrowseTemplates({
     return arr;
   }, [
     dataCustomTemplates,
+    selectedLink,
+  ]);
+
+  const {
+    data: dataCustomPipelineTemplates,
+    mutate: fetchCustomPipelineTemplates,
+  } = api.custom_templates.list({
+    object_type: OBJECT_TYPE_PIPELINES,
+  }, {}, {
+    pauseFetch: NAV_TAB_PIPELINES.uuid !== selectedTab?.uuid,
+  });
+  const customPipelineTemplates: CustomTemplateType[] = useMemo(() => {
+    const arr = dataCustomPipelineTemplates?.custom_templates || [];
+
+    if (selectedLink?.filterTemplates) {
+      return selectedLink?.filterTemplates(arr);
+    }
+
+    return arr;
+  }, [
+    dataCustomPipelineTemplates,
     selectedLink,
   ]);
 
@@ -239,24 +275,42 @@ function BrowseTemplates({
   ]);
 
   if (addingNewTemplate) {
-    const detailEl = (
-      <TemplateDetail
-        contained={contained}
-        heightOffset={heightOffset}
-        onCreateCustomTemplate={contained
-          ? (customTemplate: CustomTemplateType) => {
-            setSelectedTemplate(customTemplate);
+    let detailEl;
+
+    if (OBJECT_TYPE_PIPELINES === objectType && pipelineUUID) {
+      detailEl = (
+        <PipelineTemplateDetail
+          onMutateSuccess={fetchCustomPipelineTemplates}
+          pipelineUUID={pipelineUUID}
+          templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
+            ? {
+              pipeline_type: selectedLink?.uuid as PipelineTypeEnum,
+            }
+            : null
           }
-          : null
-        }
-        onMutateSuccess={fetchCustomTemplates}
-        templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
-          ? { block_type: selectedLink?.uuid as BlockTypeEnum }
-          : null
-        }
-        templateUUID={selectedTemplate?.template_uuid}
-      />
-    );
+          templateUUID={selectedTemplate?.template_uuid}
+        />
+      );
+    } else {
+      detailEl = (
+        <TemplateDetail
+          contained={contained}
+          heightOffset={heightOffset}
+          onCreateCustomTemplate={contained
+            ? (customTemplate: CustomTemplateType) => {
+              setSelectedTemplate(customTemplate);
+            }
+            : null
+          }
+          onMutateSuccess={fetchCustomTemplates}
+          templateAttributes={selectedLink && selectedLink?.uuid !== NAV_LINKS?.[0].uuid
+            ? { block_type: selectedLink?.uuid as BlockTypeEnum }
+            : null
+          }
+          templateUUID={selectedTemplate?.template_uuid}
+        />
+      );
+    }
 
     if (contained) {
       return (
