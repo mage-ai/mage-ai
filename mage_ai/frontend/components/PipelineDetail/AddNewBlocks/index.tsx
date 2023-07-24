@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import AddNewBlocksV2 from './v2';
 import BlockTemplateType from '@interfaces/BlockTemplateType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import DBTLogo from '@oracle/icons/custom/DBTLogo';
@@ -259,6 +260,12 @@ function AddNewBlocks({
     pipelineType,
     showBrowseTemplates,
   ]);
+
+  return (
+    <AddNewBlocksV2
+
+    />
+  );
 
   return (
     <FlexContainer flexWrap="wrap" inline>
