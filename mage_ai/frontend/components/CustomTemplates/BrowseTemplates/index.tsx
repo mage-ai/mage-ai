@@ -17,7 +17,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineTemplateDetail from '@components/CustomTemplates/PipelineTemplateDetail';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
-// import TagsContainer from '@components/Tags/TagsContainer';
+import TagsContainer from '@components/Tags/TagsContainer';
 import TemplateDetail from '@components/CustomTemplates/TemplateDetail';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -42,7 +42,7 @@ import {
   NavigationStyle,
   SubheaderStyle,
   TabsStyle,
-  // TagsStyle,
+  TagsStyle,
 } from './index.style';
 import {
   NAV_LINKS,
@@ -226,9 +226,17 @@ function BrowseTemplates({
     const {
       description,
       name,
-      // tags,
+      tags,
       template_uuid: templateUUID,
+      user,
     } = customTemplate;
+
+    const tagsToShow = [];
+    if (tags?.length) {
+      tagsToShow.push(...tags);
+    } else if (user?.username) {
+      tagsToShow.push(user?.username);
+    }
 
     return (
       <CardStyle
@@ -261,13 +269,13 @@ function BrowseTemplates({
           </Text>
         </CardDescriptionStyle>
 
-        {/*<TagsStyle>
-          {tags?.length >= 1 && (
+        <TagsStyle>
+          {tagsToShow?.length >= 1 && (
             <TagsContainer
-              tags={tags?.map(uuid => ({ uuid }))}
+              tags={tagsToShow?.map(uuid => ({ uuid }))}
             />
           )}
-        </TagsStyle>*/}
+        </TagsStyle>
       </CardStyle>
     );
   }), [
@@ -280,9 +288,17 @@ function BrowseTemplates({
     const {
       description,
       name,
-      // tags,
+      tags,
       template_uuid: templateUUID,
+      user,
     } = customTemplate;
+
+    const tagsToShow = [];
+    if (tags?.length) {
+      tagsToShow.push(...tags);
+    } else if (user?.username) {
+      tagsToShow.push(user?.username);
+    }
 
     return (
       <CardStyle
@@ -315,13 +331,13 @@ function BrowseTemplates({
           </Text>
         </CardDescriptionStyle>
 
-        {/*<TagsStyle>
-          {tags?.length >= 1 && (
+        <TagsStyle>
+          {tagsToShow?.length >= 1 && (
             <TagsContainer
-              tags={tags?.map(uuid => ({ uuid }))}
+              tags={tagsToShow?.map(uuid => ({ uuid }))}
             />
           )}
-        </TagsStyle>*/}
+        </TagsStyle>
       </CardStyle>
     );
   }), [

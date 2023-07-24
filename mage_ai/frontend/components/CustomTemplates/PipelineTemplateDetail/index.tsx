@@ -10,6 +10,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
@@ -26,7 +27,6 @@ import {
   NAV_TAB_TRIGGERS,
 } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   ButtonsStyle,
   TabsStyle,
@@ -97,7 +97,7 @@ function PipelineTemplateDetail({
 
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
-    : isNewCustomTemplate ? NAV_TAB_DEFINE : NAV_TABS[0],
+    : NAV_TABS[0],
   );
 
   const buttonDisabled = useMemo(() => {
@@ -159,8 +159,18 @@ function PipelineTemplateDetail({
               onMutateSuccess?.();
             }
 
-            setTemplateAttributesState(ct);
-            setTouched(false);
+            if (
+              (template?.template_uuid && ct?.template_uuid !== template?.template_uuid)
+                || (templateUUID && ct?.template_uuid !== templateUUID)
+            ) {
+              router.replace(
+                '/templates/[...slug]',
+                `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
+              );
+            } else {
+              setTemplateAttributesState(ct);
+              setTouched(false);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -219,7 +229,7 @@ function PipelineTemplateDetail({
             setSelectedTab(tab);
           }}
           selectedTabUUID={selectedTab?.uuid}
-          tabs={isNewCustomTemplate ? [NAV_TAB_DEFINE] : NAV_TABS}
+          tabs={NAV_TABS}
         />
       </TabsStyle>
 
@@ -365,7 +375,7 @@ function PipelineTemplateDetail({
         height={heightWindow}
         heightOffset={HEADER_HEIGHT}
         noStatus
-        pipeline={pipeline}
+        pipeline={pipeline as PipelineType}
       />
     </TripleLayout>
   );

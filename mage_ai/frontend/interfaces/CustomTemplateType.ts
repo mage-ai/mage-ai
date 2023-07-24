@@ -1,6 +1,6 @@
-import { BlockColorEnum, BlockLanguageEnum, BlockTypeEnum } from './BlockType';
+import BlockType, { BlockColorEnum, BlockLanguageEnum, BlockTypeEnum } from './BlockType';
+import PipelineType, { PipelineTypeEnum } from './PipelineType';
 import { ConfigurationType } from './ChartBlockType';
-import { PipelineTypeEnum } from './PipelineType';
 
 export const OBJECT_TYPE_BLOCKS = 'blocks';
 export const OBJECT_TYPE_PIPELINES = 'pipelines';
@@ -14,8 +14,9 @@ export default interface CustomTemplateType {
   language: BlockLanguageEnum;
   name: string;
   pipeline?: {
+    blocks?: BlockType[];
     type: PipelineTypeEnum;
-  };
+  } | PipelineType;
   tags?: string[];
   template_uuid?: string;
   user?: {
