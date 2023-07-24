@@ -238,6 +238,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             global_vars['interval_end_datetime'] = None
             global_vars['interval_seconds'] = None
             global_vars['interval_start_datetime'] = now
+            global_vars['interval_start_datetime_previous'] = None
 
         global_vars['event'] = dict()
 

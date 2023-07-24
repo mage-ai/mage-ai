@@ -3,14 +3,15 @@ import { MutateFunction, useMutation } from 'react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import InputModal from '@oracle/elements/Inputs/InputModal';
 import Headline from '@oracle/elements/Headline';
+import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
@@ -35,12 +36,14 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
+import { ErrorProvider } from '@context/Error';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
-import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import {
@@ -54,8 +57,8 @@ import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
-import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
+import { useModal } from '@context/Modal';
 
 const sharedOpenButtonProps = {
   borderRadius: BORDER_RADIUS_SMALL,
@@ -173,7 +176,7 @@ function PipelineListPage() {
 
     if (!isEmptyObject(queryFinal)) {
       goToWithQuery(queryFinal, {
-        pushHistory: true,
+        pushHistory: false,
       });
     }
   }, [
@@ -319,8 +322,39 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
-  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(createPipeline), [
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
+    <ErrorProvider>
+      <BrowseTemplates
+        contained
+        onClickCustomTemplate={(customTemplate) => {
+          createPipeline({
+            pipeline: {
+              custom_template_uuid: customTemplate?.template_uuid,
+              name: randomNameGenerator(),
+            },
+          }).then(() => {
+            hideBrowseTemplates();
+          });
+        }}
+        showBreadcrumbs
+        tabs={[NAV_TAB_PIPELINES]}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
+  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
+    {
+      showBrowseTemplates,
+    },
+  ), [
+    createPipeline,
+    showBrowseTemplates,
   ]);
 
   const { data: dataTags } = api.tags.list();

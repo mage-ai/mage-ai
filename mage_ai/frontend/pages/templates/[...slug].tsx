@@ -1,29 +1,40 @@
 import { useEffect, useState } from 'react';
 
-import CustomTemplateType, { OBJECT_TYPE_BLOCKS } from '@interfaces/CustomTemplateType';
+import CustomTemplateType, {
+  OBJECT_TYPE_BLOCKS,
+  OBJECT_TYPE_PIPELINES,
+} from '@interfaces/CustomTemplateType';
 import Dashboard from '@components/Dashboard';
+import PipelineTemplateDetail from '@components/CustomTemplates/PipelineTemplateDetail';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import TemplateDetail from '@components/CustomTemplates/TemplateDetail';
 import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { queryFromUrl } from '@utils/url';
 
 type TemplateDetailsProps = {
+  objectType?: string;
   slug: string;
 };
 
 function TemplateDetails({
+  objectType: objectTypeProp,
   slug: templateUUID,
 }: TemplateDetailsProps) {
+  const { object_type: objectTypeFromUrl } = queryFromUrl();
   const [template, setTemplate] = useState<CustomTemplateType>(null);
+
+  const objectType = objectTypeFromUrl || objectTypeProp || OBJECT_TYPE_BLOCKS;
+  const isPipeline = OBJECT_TYPE_PIPELINES === objectType;
 
   const {
     data: dataCustomTemplate,
   } = api.custom_templates.detail(
     templateUUID && encodeURIComponent(templateUUID),
     {
-      object_type: OBJECT_TYPE_BLOCKS,
+      object_type: objectType,
     },
   );
 
@@ -41,7 +52,7 @@ function TemplateDetails({
         {
           label: () => 'Templates',
           linkProps: {
-            href: '/templates',
+            href: isPipeline ? `/templates?object_type=${OBJECT_TYPE_PIPELINES}` : '/templates',
           },
         },
         {
@@ -58,11 +69,21 @@ function TemplateDetails({
         </Spacing>
       )}
       {template && (
-        <TemplateDetail
-          // We need this or else the block code doesn’t update when coming back to the page.
-          key={template?.content?.slice(0, 40)}
-          template={template}
-        />
+        <>
+          {(!objectType || OBJECT_TYPE_BLOCKS === objectType) && (
+            <TemplateDetail
+              // We need this or else the block code doesn’t update when coming back to the page.
+              key={template?.content?.slice(0, 40)}
+              template={template}
+            />
+          )}
+
+          {isPipeline && (
+            <PipelineTemplateDetail
+              template={template}
+            />
+          )}
+        </>
       )}
     </Dashboard>
   );
@@ -70,12 +91,15 @@ function TemplateDetails({
 
 TemplateDetails.getInitialProps = async (ctx) => {
   const {
+    object_type: objectType,
     slug,
   }: {
+    object_type?: string;
     slug: string[],
   } = ctx.query;
 
   return {
+    objectType,
     slug,
   };
 };

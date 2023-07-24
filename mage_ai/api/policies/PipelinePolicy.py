@@ -81,6 +81,7 @@ PipelinePolicy.allow_write([
     'callbacks',
     'conditionals',
     'clone_pipeline_uuid',
+    'custom_template_uuid',
     'extensions',
     'name',
     'type',

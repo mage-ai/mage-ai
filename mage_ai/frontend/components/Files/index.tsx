@@ -277,7 +277,7 @@ function FilesPageComponent() {
         <FileEditor
           active={selectedFilePath === filePath}
           disableRefreshWarning
-          filePath={filePath}
+          filePath={filePath ? encodeURIComponent(filePath) : null}
           hideHeaderButtons
           onContentChange={(content: string) => setContentByFilePath({
             [filePath]: content,
