@@ -147,7 +147,7 @@ export function groupBlockTemplates(
 
     const newItem = {
       label: () => name,
-      onClick: () =>addNewBlock({
+      onClick: () => addNewBlock({
         config: {
           template_path: path,
         },

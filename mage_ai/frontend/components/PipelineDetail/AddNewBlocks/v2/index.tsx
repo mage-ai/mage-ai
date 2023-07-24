@@ -43,6 +43,7 @@ function AddNewBlocksV2({
   addNewBlock,
   blockIdx,
   blockTemplatesByBlockType,
+  itemsDBT,
   pipelineType,
   setAddNewBlockMenuOpenIdx,
   showBrowseTemplates,
@@ -241,11 +242,43 @@ function AddNewBlocksV2({
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
       uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
     },
+    {
+      items: itemsDBT,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
+      uuid: BlockTypeEnum.DBT,
+    },
+    {
+      isGroupingTitle: true,
+      label: () => 'Custom templates',
+      uuid: 'custom_templates',
+    },
+    {
+      label: () => 'Browse templates',
+      onClick: () => showBrowseTemplates({
+        addNewBlock,
+        // blockType: blockType,
+        // language: BlockLanguageEnum.SQL,
+      }),
+      uuid: 'browse_templates',
+    },
+    {
+      label: () => 'Create new template',
+      onClick: () => showBrowseTemplates({
+        addNew: true,
+        addNewBlock,
+        // blockType: blockType,
+        // language: BlockLanguageEnum.SQL,
+      }),
+      uuid: 'create_template',
+    },
   ], [
+    addNewBlock,
     itemsDataExporter,
     itemsDataLoader,
+    itemsDBT,
     itemsSensors,
     itemsTransformer,
+    showBrowseTemplates,
   ]);
 
   return (
