@@ -81,10 +81,10 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     // DataSourceTypeEnum.POSTGRES,
   ],
   [BlockTypeEnum.TRANSFORMER]: [
-    DataSourceTypeEnum.BIGQUERY,
-    DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.REDSHIFT,
-    DataSourceTypeEnum.SNOWFLAKE,
+    // DataSourceTypeEnum.REDSHIFT,
+    // DataSourceTypeEnum.BIGQUERY,
+    // DataSourceTypeEnum.SNOWFLAKE,
+    // DataSourceTypeEnum.POSTGRES,
   ],
   [BlockTypeEnum.SENSOR]: [
     // DataSourceTypeEnum.GENERIC,

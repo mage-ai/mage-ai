@@ -1,12 +1,21 @@
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.shared.hash import index_by
 
+GROUP_AGGREGATE = 'Aggregate'
+GROUP_COLUMN_ACTIONS = 'Column actions'
+GROUP_COLUMN_REMOVAL = 'Column removal'
 GROUP_DATABASES = 'Databases'
+GROUP_DATABASES_NO_SQL = 'Databases (NoSQL)'
+GROUP_DATA_CLEANING = 'Data cleaning'
 GROUP_DATA_LAKES = 'Data lakes'
 GROUP_DATA_WAREHOUSES = 'Data warehouses'
 GROUP_DELTA_LAKE = 'Delta Lake'
+GROUP_FEATURE_EXTRACTION = 'Feature extraction'
+GROUP_FEATURE_SCALING = 'Feature scaling'
+GROUP_FORMATTING = 'Formatting'
 GROUP_ORCHESTRATION = 'Orchestration'
-GROUP_DATABASES_NO_SQL = 'Databases (NoSQL)'
+GROUP_ROW_ACTIONS = 'Row actions'
+GROUP_SHIFT = 'Shift'
 
 TEMPLATES = [
     dict(
@@ -201,6 +210,221 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='Druid',
         path='data_loaders/druid.py',
     ),
+    # Transformers
+    #   Data warehouses
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Amazon Redshift',
+        path='transformers/redshift.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Google BigQuery',
+        path='sensors/bigquery.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Snowflake',
+        path='transformers/snowflake.py',
+    ),
+    #   Databases
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='PostgreSQL',
+        path='transformers/postgres.py',
+    ),
+    #   Row actions
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_ROW_ACTIONS],
+        language=BlockLanguage.PYTHON,
+        name='Drop duplicate rows',
+        path='transformers/transformer_actions/row/drop_duplicate.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_ROW_ACTIONS],
+        language=BlockLanguage.PYTHON,
+        name='Filter rows',
+        path='transformers/transformer_actions/row/filter.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_ROW_ACTIONS],
+        language=BlockLanguage.PYTHON,
+        name='Remove rows',
+        path='transformers/transformer_actions/row/remove.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_ROW_ACTIONS],
+        language=BlockLanguage.PYTHON,
+        name='Sort rows',
+        path='transformers/transformer_actions/row/sort.py',
+    ),
+    #   Column actions
+    #       Aggregate
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Average value of column',
+        path='transformers/transformer_actions/column/average.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Count unique values in column',
+        path='transformers/transformer_actions/column/count_distinct.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='First value in column',
+        path='transformers/transformer_actions/column/first.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Last value in column',
+        path='transformers/transformer_actions/column/last.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Maximum value in column',
+        path='transformers/transformer_actions/column/max.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Median value in column',
+        path='transformers/transformer_actions/column/median.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Min value in column',
+        path='transformers/transformer_actions/column/min.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Sum of all values in column',
+        path='transformers/transformer_actions/column/sum.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='Total count of values in column',
+        path='transformers/transformer_actions/column/count.py',
+    ),
+    #       Formatting
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FORMATTING],
+        language=BlockLanguage.PYTHON,
+        name='Clean column name',
+        path='transformers/transformer_actions/column/clean_column_name.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FORMATTING],
+        language=BlockLanguage.PYTHON,
+        name='Fix syntax errors',
+        path='transformers/transformer_actions/column/fix_syntax_errors.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FORMATTING],
+        language=BlockLanguage.PYTHON,
+        name='Reformat values in column',
+        path='transformers/transformer_actions/column/reformat.py',
+    ),
+    #       Column removal
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_COLUMN_REMOVAL],
+        language=BlockLanguage.PYTHON,
+        name='Keep column(s)',
+        path='transformers/transformer_actions/column/select.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_COLUMN_REMOVAL],
+        language=BlockLanguage.PYTHON,
+        name='Remove column(s)',
+        path='transformers/transformer_actions/column/remove.py',
+    ),
+    #       Shift
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_SHIFT],
+        language=BlockLanguage.PYTHON,
+        name='Shift row values down',
+        path='transformers/transformer_actions/column/shift_down.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_SHIFT],
+        language=BlockLanguage.PYTHON,
+        name='Shift row values up',
+        path='transformers/transformer_actions/column/shift_up.py',
+    ),
+    #       Feature scaling
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FEATURE_SCALING],
+        language=BlockLanguage.PYTHON,
+        name='Normalize data',
+        path='transformers/transformer_actions/column/normalize.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FEATURE_SCALING],
+        language=BlockLanguage.PYTHON,
+        name='Standardize data',
+        path='transformers/transformer_actions/column/standardize.py',
+    ),
+    #       Data cleaning
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_DATA_CLEANING],
+        language=BlockLanguage.PYTHON,
+        name='Fill in missing values',
+        path='transformers/transformer_actions/column/impute.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_DATA_CLEANING],
+        language=BlockLanguage.PYTHON,
+        name='Remove outliers',
+        path='transformers/transformer_actions/column/remove_outliers.py',
+    ),
+    #       Feature extraction
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_FEATURE_EXTRACTION],
+        language=BlockLanguage.PYTHON,
+        name='Calculate difference between values',
+        path='transformers/transformer_actions/column/diff.py',
+    ),
     # Data exporters
     dict(
         block_type=BlockType.DATA_EXPORTER,
@@ -240,7 +464,6 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.DATA_EXPORTER,
-        description='Load data from Google BigQuery.',
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
         name='Google BigQuery',
@@ -287,7 +510,6 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.SENSOR,
-        description='Load data from Google BigQuery.',
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
         name='Google BigQuery',

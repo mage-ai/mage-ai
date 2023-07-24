@@ -8,6 +8,7 @@ import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockBlank,
   TemplateShapes,
@@ -24,6 +25,10 @@ import {
   DividerStyle,
   ICON_SIZE,
 } from './index.style';
+import {
+  COLUMN_ACTION_GROUPINGS,
+  ROW_ACTION_GROUPINGS,
+} from '@interfaces/TransformerActionType';
 import {
   createActionMenuGroupings,
   createColorMenuItems,
@@ -92,6 +97,113 @@ function AddNewBlocksV2({
     // showBrowseTemplates,
   ]);
 
+  const columnActionMenuItems = useMemo(() => createActionMenuGroupings(
+    COLUMN_ACTION_GROUPINGS,
+    AxisEnum.COLUMN,
+    addNewBlock,
+  ), [
+    addNewBlock,
+  ]);
+  const rowActionMenuItems = useMemo(() => createActionMenuGroupings(
+    ROW_ACTION_GROUPINGS,
+    AxisEnum.ROW,
+    addNewBlock,
+  ), [
+    addNewBlock,
+  ]);
+
+  const allActionMenuItems = useMemo(() => {
+    const arr: FlyoutMenuItemType[] = [
+      // {
+      //   label: () => 'Generic (no template)',
+      //   onClick: () => {
+      //     addNewBlock({
+      //       language: BlockLanguageEnum.PYTHON,
+      //       type: BlockTypeEnum.TRANSFORMER,
+      //     });
+      //   },
+      //   uuid: 'generic_transformer_action',
+      // },
+      {
+        bold: true,
+        items: rowActionMenuItems,
+        label: () => 'Row actions',
+        uuid: 'row_actions_grouping',
+      },
+      {
+        isGroupingTitle: true,
+        label: () => 'Column actions',
+        uuid: 'column_actions_grouping',
+      },
+      ...columnActionMenuItems,
+    ];
+
+    // if (!hideTransformerDataSources) {
+    //   arr.splice(
+    //     1,
+    //     0,
+    //     {
+    //       bold: true,
+    //       items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+    //       label: () => 'Data sources',
+    //       uuid: 'data_sources_grouping',
+    //     },
+    //   );
+    // }
+
+    return arr;
+  }, [
+    addNewBlock,
+    columnActionMenuItems,
+    // hideTransformerDataSources,
+    pipelineType,
+    rowActionMenuItems,
+  ]);
+
+  const itemsTransformer = useMemo(() => {
+    // if (isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType) {
+    //   return allActionMenuItems;
+    // }
+
+    // if (isStreamingPipeline) {
+    //   return [
+    //     {
+    //       items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+    //       label: () => 'Python',
+    //       uuid: 'transformers/python',
+    //     },
+    //   ];
+    // }
+
+    // return [
+    //   {
+    //     items: allActionMenuItems,
+    //     label: () => 'Python',
+    //     uuid: 'transformers/python_all',
+    //   },
+    // ];
+
+    return getdataSourceMenuItems(
+      addNewBlock,
+      BlockTypeEnum.TRANSFORMER,
+      pipelineType,
+      {
+        blockTemplatesByBlockType,
+        // showBrowseTemplates,
+      },
+    )?.find(({
+      uuid,
+    }) => uuid === `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`)?.items;
+  }, [
+    addNewBlock,
+    allActionMenuItems,
+    blockTemplatesByBlockType,
+    // isPySpark,
+    // isStreamingPipeline,
+    pipelineType,
+    // showBrowseTemplates,
+  ]);
+
   const itemsSensors = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
     BlockTypeEnum.SENSOR,
@@ -115,7 +227,7 @@ function AddNewBlocksV2({
       uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
     },
     {
-      items: [],
+      items: itemsTransformer,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
       uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
     },
@@ -133,6 +245,7 @@ function AddNewBlocksV2({
     itemsDataExporter,
     itemsDataLoader,
     itemsSensors,
+    itemsTransformer,
   ]);
 
   return (
