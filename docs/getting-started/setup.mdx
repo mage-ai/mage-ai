@@ -84,6 +84,15 @@ Mage uses SQLite as the default database engine. To use PostgreSQL as the databa
       /app/run_app.sh mage start [project_name]
    ```
 
+To use a specific schema in the PostgreSQL database, the connection string could contain the schema name as a parameter:
+
+   ```bash
+   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+      -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name>" \
+      mageai/mageai \
+      /app/run_app.sh mage start [project_name]
+   ```
+
 ### Using MySQL as database
 
 Mage uses SQLite as the default database engine. To use MySQL as the database engine, you'll need to run your Docker container slightly differently:
