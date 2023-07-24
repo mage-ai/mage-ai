@@ -75,7 +75,9 @@ class DBConnection:
 def get_postgresql_schema(url):
     parse_result = urlparse(url)
     if parse_result.scheme == 'postgresql+psycopg2':
-        return parse_qs(parse_result.query)['options'][0].split('=')[1]
+        params = parse_qs(parse_result.query.replace('%%', '%'))['options'][0].replace('-c ', '').split(' ')
+        kvs = dict(p.split('=') for p in params)
+        return kvs.get('search_path')
 
 
 db_connection = DBConnection()
