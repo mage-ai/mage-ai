@@ -5,7 +5,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
-import ScratchpadBlock from '@oracle/icons/custom/ScratchpadBlock';
+import ScratchpadPen from '@oracle/icons/custom/ScratchpadPen';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
@@ -260,7 +260,7 @@ function AddNewBlocksV2({
       uuid: 'custom_block',
     },
     {
-      beforeIcon: <ScratchpadBlock default size={ICON_SIZE} />,
+      beforeIcon: <ScratchpadPen default size={ICON_SIZE} />,
       label: () => 'Scratchpad',
       onClick: () => {
         addNewBlock({
