@@ -39,3 +39,13 @@ export const DividerStyle = styled.div`
     background-color: ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 `;
+
+export const ButtonWrapper = styled.div<{
+  increasedZIndex?: boolean;
+}>`
+  position: relative;
+
+  ${props => props.increasedZIndex && `
+    z-index: 3;
+  `}
+`;

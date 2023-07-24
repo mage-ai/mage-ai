@@ -263,7 +263,12 @@ function AddNewBlocks({
 
   return (
     <AddNewBlocksV2
-
+      addNewBlock={addNewBlock}
+      blockIdx={blockIdx}
+      blockTemplatesByBlockType={blockTemplatesByBlockType}
+      pipelineType={pipelineType}
+      setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+      showBrowseTemplates={showBrowseTemplates}
     />
   );
 
