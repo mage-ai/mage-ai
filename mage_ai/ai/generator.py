@@ -27,7 +27,7 @@ class Generator:
         elif use_case == LLMUseCase.GENERATE_BLOCK_WITH_DESCRIPTION:
             from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 
-            return LLMPipelineWizard().generate_block_with_description(
+            return await LLMPipelineWizard().async_generate_block_with_description(
                 request.get('block_description'),
             )
 

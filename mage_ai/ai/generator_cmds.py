@@ -44,7 +44,7 @@ def generate_pipeline_documentation(project_path: str = PROJECT_NAME_DEFAULT,
 
 @app.command()
 def generate_block_with_description(block_description: str):
-    print(LLMPipelineWizard().generate_block_with_description(block_description))
+    print(asyncio.run(LLMPipelineWizard().async_generate_block_with_description(block_description)))
 
 
 if __name__ == '__main__':

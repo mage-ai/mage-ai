@@ -50,48 +50,48 @@ Write a detailed summarization of the data pipeline based on the content provide
 TRANSFORMERS_FOLDER = 'transformers'
 CLASSIFICATION_FUNCTION_NAME = "classify_description"
 TEMPLATE_CLASSIFICATION_FUNCTION = [
-            {
-                "name": CLASSIFICATION_FUNCTION_NAME,
-                "description": "Classify the code description provided into following properties.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        BlockType.__name__: {
-                            "type": "string",
-                            "description": "Type of the code block. It either "
-                                           "loads data from a source, export data to a source "
-                                           "or transform data from one format to another.",
-                            "enum": ["data_exporter", "data_loader", "transformer"]
-                        },
-                        BlockLanguage.__name__: {
-                            "type": "string",
-                            "description": "Programming language of the code block.",
-                            "enum": [type.name.lower() for type in BlockLanguage]
-                        },
-                        PipelineType.__name__: {
-                            "type": "string",
-                            "description": "Type of pipeline description to build.",
-                            "enum": [type.name.lower() for type in PipelineType]
-                        },
-                        ActionType.__name__: {
-                            "type": "string",
-                            "description": f"If {BlockType.__name__} is transformer, "
-                                           f"{ActionType.__name__} specifies what kind "
-                                           "of action the code performs.",
-                            "enum": [type.name.lower() for type in ActionType]
-                        },
-                        DataSource.__name__: {
-                            "type": "string",
-                            "description": f"If {BlockType.__name__} is data_loader or "
-                                           f"data_exporter, {DataSource.__name__} field specify "
-                                           "where the data loads from or exports to.",
-                            "enum": [type.name.lower() for type in DataSource]
-                        },
-                    },
-                    "required": [BlockType.__name__, BlockLanguage.__name__, PipelineType.__name__],
+    {
+        "name": CLASSIFICATION_FUNCTION_NAME,
+        "description": "Classify the code description provided into following properties.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                BlockType.__name__: {
+                    "type": "string",
+                    "description": "Type of the code block. It either "
+                                   "loads data from a source, export data to a source "
+                                   "or transform data from one format to another.",
+                    "enum": ["data_exporter", "data_loader", "transformer"]
                 },
-            }
-        ]
+                BlockLanguage.__name__: {
+                    "type": "string",
+                    "description": "Programming language of the code block.",
+                    "enum": [type.name.lower() for type in BlockLanguage]
+                },
+                PipelineType.__name__: {
+                    "type": "string",
+                    "description": "Type of pipeline description to build.",
+                    "enum": [type.name.lower() for type in PipelineType]
+                },
+                ActionType.__name__: {
+                    "type": "string",
+                    "description": f"If {BlockType.__name__} is transformer, "
+                                   f"{ActionType.__name__} specifies what kind "
+                                   "of action the code performs.",
+                    "enum": [type.name.lower() for type in ActionType]
+                },
+                DataSource.__name__: {
+                    "type": "string",
+                    "description": f"If {BlockType.__name__} is data_loader or "
+                                   f"data_exporter, {DataSource.__name__} field specify "
+                                   "where the data loads from or exports to.",
+                    "enum": [type.name.lower() for type in DataSource]
+                },
+            },
+            "required": [BlockType.__name__, BlockLanguage.__name__, PipelineType.__name__],
+        },
+    }
+]
 
 
 class LLMPipelineWizard:
@@ -141,9 +141,9 @@ class LLMPipelineWizard:
         config['data_source'] = function_args.get(DataSource.__name__, None)
         return block_type, block_language, pipeline_type, config
 
-    def generate_block_with_description(self, block_description: str) -> str:
+    async def async_generate_block_with_description(self, block_description: str) -> str:
         messages = [{"role": "user", "content": block_description}]
-        response = openai.ChatCompletion.create(
+        response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
             messages=messages,
             functions=TEMPLATE_CLASSIFICATION_FUNCTION,
