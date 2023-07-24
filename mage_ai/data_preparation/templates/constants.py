@@ -268,6 +268,53 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='PostgreSQL',
         path='data_exporters/postgres.py',
     ),
+    # Sensors
+    #   Data lakes
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='Amazon S3',
+        path='sensors/s3.py',
+    ),
+    #   Data warehouses
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Amazon Redshift',
+        path='sensors/redshift.py',
+    ),
+    dict(
+        block_type=BlockType.SENSOR,
+        description='Load data from Google BigQuery.',
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Google BigQuery',
+        path='sensors/bigquery.py',
+    ),
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Snowflake',
+        path='sensors/snowflake.py',
+    ),
+    #   Databases
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='MySQL',
+        path='sensors/mysql.py',
+    ),
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='PostgreSQL',
+        path='sensors/postgres.py',
+    ),
 ]
 
 TEMPLATES_BY_UUID = index_by(lambda x: x['name'], TEMPLATES + TEMPLATES_ONLY_FOR_V2)

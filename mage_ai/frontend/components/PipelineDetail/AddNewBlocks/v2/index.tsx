@@ -57,16 +57,16 @@ function AddNewBlocksV2({
   );
 
   const itemsDataLoader = useMemo(() => getdataSourceMenuItems(
-      addNewBlock,
-      BlockTypeEnum.DATA_LOADER,
-      pipelineType,
-      {
-        blockTemplatesByBlockType,
-        // showBrowseTemplates,
-      },
-    )?.find(({
-      uuid,
-    }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`)?.items,
+    addNewBlock,
+    BlockTypeEnum.DATA_LOADER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+      // showBrowseTemplates,
+    },
+  )?.find(({
+    uuid,
+  }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`)?.items,
   [
     addNewBlock,
     blockTemplatesByBlockType,
@@ -84,12 +84,28 @@ function AddNewBlocksV2({
     },
   )?.find(({
       uuid,
-    }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
+  }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
   [
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
     // showBrowseTemplates,
+  ]);
+
+  const itemsSensors = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.SENSOR,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+    },
+  )?.find(({
+      uuid,
+  }) => uuid === `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`)?.items,
+  [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
   ]);
 
   const itemsTemplates = useMemo(() => [
@@ -99,13 +115,24 @@ function AddNewBlocksV2({
       uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
     },
     {
+      items: [],
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
+      uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
+    },
+    {
       items: itemsDataExporter,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
       uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
     },
+    {
+      items: itemsSensors,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
+      uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
+    },
   ], [
     itemsDataExporter,
     itemsDataLoader,
+    itemsSensors,
   ]);
 
   return (

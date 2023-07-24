@@ -268,7 +268,7 @@ export const getdataSourceMenuItems = (
   if (pipelineType === PipelineTypeEnum.PYSPARK
     || (pipelineType === PipelineTypeEnum.PYTHON && blockType === BlockTypeEnum.TRANSFORMER)
     || (pipelineType === PipelineTypeEnum.STREAMING)
-    || (blockType === BlockTypeEnum.SENSOR)) {
+  ) {
     return dataSourceMenuItemsMapping[blockType];
   } else {
     const additionalTemplates =

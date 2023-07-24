@@ -87,13 +87,13 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.SNOWFLAKE,
   ],
   [BlockTypeEnum.SENSOR]: [
-    DataSourceTypeEnum.GENERIC,
-    DataSourceTypeEnum.BIGQUERY,
-    DataSourceTypeEnum.MYSQL,
-    DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.REDSHIFT,
-    DataSourceTypeEnum.S3,
-    DataSourceTypeEnum.SNOWFLAKE,
+    // DataSourceTypeEnum.GENERIC,
+    // DataSourceTypeEnum.S3,
+    // DataSourceTypeEnum.REDSHIFT,
+    // DataSourceTypeEnum.BIGQUERY,
+    // DataSourceTypeEnum.SNOWFLAKE,
+    // DataSourceTypeEnum.MYSQL,
+    // DataSourceTypeEnum.POSTGRES,
   ],
 };
 
