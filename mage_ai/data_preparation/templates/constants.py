@@ -123,6 +123,12 @@ TEMPLATES = [
 
 TEMPLATES_ONLY_FOR_V2 = [
     # Data loaders
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        language=BlockLanguage.PYTHON,
+        name='Base template (generic)',
+        path='data_loaders/default.jinja',
+    ),
     #   Data lakes
     dict(
         block_type=BlockType.DATA_LOADER,
@@ -211,6 +217,12 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_loaders/druid.py',
     ),
     # Transformers
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        language=BlockLanguage.PYTHON,
+        name='Base template (generic)',
+        path='transformers/default.jinja',
+    ),
     #   Data warehouses
     dict(
         block_type=BlockType.TRANSFORMER,
@@ -429,6 +441,12 @@ TEMPLATES_ONLY_FOR_V2 = [
     dict(
         block_type=BlockType.DATA_EXPORTER,
         language=BlockLanguage.PYTHON,
+        name='Base template (generic)',
+        path='data_exporters/default.jinja',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        language=BlockLanguage.PYTHON,
         name='Local file',
         path='data_exporters/file.py',
     ),
@@ -492,6 +510,12 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_exporters/postgres.py',
     ),
     # Sensors
+    dict(
+        block_type=BlockType.SENSOR,
+        language=BlockLanguage.PYTHON,
+        name='Base template (generic)',
+        path='sensors/default.py',
+    ),
     #   Data lakes
     dict(
         block_type=BlockType.SENSOR,
