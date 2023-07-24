@@ -131,8 +131,6 @@ export const NAV_LINKS: NavLinkType[] = [
   ...rest,
 })));
 
-console.log(StreamingPipeline)
-
 export const NAV_LINKS_PIPELINES: NavLinkType[] = [
   {
     Icon: TemplateShapes,

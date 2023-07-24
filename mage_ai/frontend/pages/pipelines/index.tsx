@@ -1004,6 +1004,7 @@ function PipelineListPage() {
                   </Text>,
                   <Text
                     key={`pipeline_updated_at_${idx}`}
+                    monospace
                     title={updatedAt}
                   >
                     {updatedAt ? updatedAt.slice(0, -3) : <>&#8212;</>}

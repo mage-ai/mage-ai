@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import AddNewBlocksV2 from './v2';
 import BlockTemplateType from '@interfaces/BlockTemplateType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import DBTLogo from '@oracle/icons/custom/DBTLogo';
@@ -260,6 +261,68 @@ function AddNewBlocks({
     showBrowseTemplates,
   ]);
 
+  const itemsDBT = useMemo(() => [
+    {
+      label: () => 'New model',
+      onClick: () => {
+        setCreatingNewDBTModel?.(true);
+        onClickAddSingleDBTModel?.(blockIdx);
+      },
+      uuid: 'dbt/new_model',
+    },
+    {
+      label: () => 'Single model or snapshot (from file)',
+      onClick: () => onClickAddSingleDBTModel?.(blockIdx),
+      uuid: 'dbt/single_model',
+    },
+    {
+      label: () => 'All models (w/ optional exclusion)',
+      onClick: () => addNewBlock({
+        configuration: {
+          dbt: {
+            command: 'run',
+          },
+        },
+        language: BlockLanguageEnum.YAML,
+        type: BlockTypeEnum.DBT,
+      }),
+      uuid: 'dbt/all_models',
+    },
+    {
+      label: () => 'Generic dbt command',
+      onClick: () => addNewBlock({
+        configuration: {
+          dbt: {
+            command: null,
+          },
+        },
+        language: BlockLanguageEnum.YAML,
+        type: BlockTypeEnum.DBT,
+      }),
+      uuid: 'dbt/generic_command',
+    },
+  ], [
+    addNewBlock,
+    blockIdx,
+    onClickAddSingleDBTModel,
+    setCreatingNewDBTModel,
+  ]);
+
+  // TODO (tommy dangerous): uncomment when backend supports block actions via query string
+  // if (PipelineTypeEnum.PYTHON === pipelineType && !isPySpark) {
+  //   return (
+  //     <AddNewBlocksV2
+  //       addNewBlock={addNewBlock}
+  //       blockIdx={blockIdx}
+  //       blockTemplatesByBlockType={blockTemplatesByBlockType}
+  //       itemsDBT={itemsDBT}
+  //       pipelineType={pipelineType}
+  //       setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+  //       showBrowseTemplates={showBrowseTemplates}
+  //     />
+  //   );
+  // }
+
   return (
     <FlexContainer flexWrap="wrap" inline>
       <ClickOutside
@@ -377,45 +440,7 @@ function AddNewBlocks({
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={[
-                  {
-                    label: () => 'New model',
-                    onClick: () => {
-                      setCreatingNewDBTModel?.(true);
-                      onClickAddSingleDBTModel?.(blockIdx);
-                    },
-                    uuid: 'dbt/new_model',
-                  },
-                  {
-                    label: () => 'Single model or snapshot (from file)',
-                    onClick: () => onClickAddSingleDBTModel?.(blockIdx),
-                    uuid: 'dbt/single_model',
-                  },
-                  {
-                    label: () => 'All models (w/ optional exclusion)',
-                    onClick: () => addNewBlock({
-                      configuration: {
-                        dbt: {
-                          command: 'run',
-                        },
-                      },
-                      language: BlockLanguageEnum.YAML,
-                      type: BlockTypeEnum.DBT,
-                    }),
-                    uuid: 'dbt/all_models',
-                  },
-                  {
-                    label: () => 'Generic dbt command',
-                    onClick: () => addNewBlock({
-                      configuration: {
-                        dbt: {
-                          command: null,
-                        },
-                      },
-                      language: BlockLanguageEnum.YAML,
-                      type: BlockTypeEnum.DBT,
-                    }),
-                    uuid: 'dbt/generic_command',
-                  },
+                  ...itemsDBT,
                   ...getdataSourceMenuItems(
                     addNewBlock,
                     BlockTypeEnum.DBT,

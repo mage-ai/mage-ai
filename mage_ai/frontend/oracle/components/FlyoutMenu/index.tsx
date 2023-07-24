@@ -9,7 +9,7 @@ import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardText
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
-import { ArrowRight } from '@oracle/icons';
+import { ChevronRight } from '@oracle/icons';
 import {
   FlyoutMenuContainerStyle,
   LinkAnchorStyle,
@@ -274,7 +274,7 @@ function FlyoutMenu({
                     {beforeIcon &&
                       <>
                         {beforeIcon}
-                        <Spacing mr="4px" />
+                        <Spacing mr={1} />
                       </>
                     }
                     {typeof labelToRender === 'string' && (
@@ -293,7 +293,7 @@ function FlyoutMenu({
 
                 {items && (
                   <Spacing ml={2}>
-                    <ArrowRight />
+                    <ChevronRight />
                   </Spacing>
                 )}
 
