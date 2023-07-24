@@ -176,7 +176,7 @@ function PipelineListPage() {
 
     if (!isEmptyObject(queryFinal)) {
       goToWithQuery(queryFinal, {
-        pushHistory: true,
+        pushHistory: false,
       });
     }
   }, [

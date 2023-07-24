@@ -10,10 +10,12 @@ from mage_ai.data_preparation.models.custom_templates.constants import (
 from mage_ai.data_preparation.models.custom_templates.utils import custom_templates_directory
 from mage_ai.data_preparation.models.triggers import (
     TRIGGER_FILE_NAME,
+    Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
+    get_triggers_by_pipeline,
     load_trigger_configs,
-    load_triggers_file_data,
 )
+from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
@@ -81,7 +83,25 @@ class CustomPipelineTemplate(BaseConfig):
 
         custom_template.save()
 
-        triggers = load_triggers_file_data(pipeline.uuid)
+        triggers = get_triggers_by_pipeline(pipeline.uuid)
+
+        pipeline_schedules = PipelineSchedule.query.filter(
+            PipelineSchedule.pipeline_uuid==pipeline.uuid,
+        ).all()
+        for pipeline_schedule in pipeline_schedules:
+            trigger = Trigger(
+                name=pipeline_schedule.name,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                schedule_interval=pipeline_schedule.schedule_interval,
+                schedule_type=pipeline_schedule.schedule_type,
+                settings=pipeline_schedule.settings,
+                sla=pipeline_schedule.sla,
+                start_time=pipeline_schedule.start_time,
+                status=pipeline_schedule.status,
+                variables=pipeline_schedule.variables,
+            )
+            triggers.append(trigger)
+
         if triggers:
             custom_template.save_triggers(triggers)
 
@@ -148,8 +168,8 @@ class CustomPipelineTemplate(BaseConfig):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
 
-    def save_triggers(self, triggers: Dict) -> None:
-        content = yaml.safe_dump(triggers)
+    def save_triggers(self, triggers: List[Dict]) -> None:
+        content = yaml.safe_dump(dict(triggers=[trigger.to_dict() for trigger in triggers]))
         file_path = self.triggers_file_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
