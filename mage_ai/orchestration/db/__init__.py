@@ -89,7 +89,7 @@ if db_connection_url.startswith('postgresql'):
         db_connection.close_session()
         print(f'Set the default PostgreSQL schema to {db_schema}')
     else:
-        print('No schema found in PostgreSQL connection URL: use default "public" schema')
+        print('No schema in PostgreSQL connection URL: use the default "public" schema')
 
 
 def safe_db_query(func):
