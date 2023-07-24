@@ -52,5 +52,4 @@ the container command with the commands below:
     /app/run_app.sh mage start project_name --instance-type web_server
     ```
 
-
-To run multiple schedulers simultaneously, you will need to specify the `REDIS_URL` environment variable in your container. The Redis storage is used to coordinate the job scheduling between multiple containers to resolve race conditions.
+To run multiple schedulers simultaneously, you will need to specify the `REDIS_URL` environment variable in your container. The Redis storage is used to coordinate the job scheduling between multiple containers to resolve race conditions. Here is an example Redis URL format: `redis://redis:6379/0`
