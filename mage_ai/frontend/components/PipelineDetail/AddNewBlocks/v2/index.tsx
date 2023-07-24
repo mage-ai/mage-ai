@@ -53,6 +53,7 @@ type AddNewBlocksV2Props = {
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   showBrowseTemplates?: (opts?: {
     addNew?: boolean;
+    addNewBlock: (block: BlockRequestPayloadType) => void;
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
@@ -225,8 +226,6 @@ function AddNewBlocksV2({
       label: () => 'Browse templates',
       onClick: () => showBrowseTemplates({
         addNewBlock,
-        // blockType: blockType,
-        // language: BlockLanguageEnum.SQL,
       }),
       uuid: 'browse_templates',
     },
@@ -236,8 +235,6 @@ function AddNewBlocksV2({
       onClick: () => showBrowseTemplates({
         addNew: true,
         addNewBlock,
-        // blockType: blockType,
-        // language: BlockLanguageEnum.SQL,
       }),
       uuid: 'create_template',
     },

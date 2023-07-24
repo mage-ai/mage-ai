@@ -308,19 +308,20 @@ function AddNewBlocks({
     setCreatingNewDBTModel,
   ]);
 
-  if (PipelineTypeEnum.PYTHON === pipelineType && !isPySpark) {
-    return (
-      <AddNewBlocksV2
-        addNewBlock={addNewBlock}
-        blockIdx={blockIdx}
-        blockTemplatesByBlockType={blockTemplatesByBlockType}
-        itemsDBT={itemsDBT}
-        pipelineType={pipelineType}
-        setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-        showBrowseTemplates={showBrowseTemplates}
-      />
-    );
-  }
+  // TODO (tommy dangerous): uncomment when backend supports block actions via query string
+  // if (PipelineTypeEnum.PYTHON === pipelineType && !isPySpark) {
+  //   return (
+  //     <AddNewBlocksV2
+  //       addNewBlock={addNewBlock}
+  //       blockIdx={blockIdx}
+  //       blockTemplatesByBlockType={blockTemplatesByBlockType}
+  //       itemsDBT={itemsDBT}
+  //       pipelineType={pipelineType}
+  //       setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+  //       showBrowseTemplates={showBrowseTemplates}
+  //     />
+  //   );
+  // }
 
   return (
     <FlexContainer flexWrap="wrap" inline>

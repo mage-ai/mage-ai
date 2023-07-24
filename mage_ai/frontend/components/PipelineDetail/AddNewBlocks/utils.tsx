@@ -234,6 +234,7 @@ export const getdataSourceMenuItems = (
       blockType?: BlockTypeEnum;
       language?: BlockLanguageEnum;
     }) => void;
+    v2?: boolean;
   },
 ) => {
   const {
