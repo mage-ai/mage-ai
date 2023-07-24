@@ -189,9 +189,9 @@ function Sidekick({
   } = editingBlock?.upstreamBlocks || {};
 
   const columns = (sampleData?.columns || []).slice(0, MAX_COLUMNS);
-  const rows = sampleData?.rows || [];
-  const columnTypes = metadata?.column_types || {};
-  const insightsOverview = insights?.[1] || {};
+  const rows = useMemo(() => sampleData?.rows || [], [sampleData]);
+  const columnTypes = useMemo(() => metadata?.column_types || {}, [metadata]);
+  const insightsOverview = useMemo(() => insights?.[1] || {}, [insights]);
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
       uuid,
