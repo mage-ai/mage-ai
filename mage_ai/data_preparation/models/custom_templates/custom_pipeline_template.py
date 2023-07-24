@@ -86,7 +86,7 @@ class CustomPipelineTemplate(BaseConfig):
         triggers = get_triggers_by_pipeline(pipeline.uuid)
 
         pipeline_schedules = PipelineSchedule.query.filter(
-            PipelineSchedule.pipeline_uuid==pipeline.uuid,
+            PipelineSchedule.pipeline_uuid == pipeline.uuid,
         ).all()
         for pipeline_schedule in pipeline_schedules:
             trigger = Trigger(

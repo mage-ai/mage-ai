@@ -17,6 +17,6 @@ export const NAV_TAB_TRIGGERS = {
 // Specific order
 export const NAV_TABS = [
   NAV_TAB_DOCUMENT,
-  NAV_TAB_BLOCKS,
-  NAV_TAB_TRIGGERS,
+  // NAV_TAB_BLOCKS,
+  // NAV_TAB_TRIGGERS,
 ];

@@ -60,7 +60,7 @@ function Templates() {
           {
             label: () => 'Templates',
             linkProps: {
-              href: '/templates',
+              href: isPipeline ? `/templates?object_type=${OBJECT_TYPE_PIPELINES}` : '/templates',
             },
           },
           {
