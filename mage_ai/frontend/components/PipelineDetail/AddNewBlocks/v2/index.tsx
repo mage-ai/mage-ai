@@ -1,16 +1,18 @@
 import Button from '@oracle/elements/Button';
-import Spacing from '@oracle/elements/Spacing';
-import Tooltip from '@oracle/components/Tooltip';
 import FlexContainer from '@oracle/components/FlexContainer';
+import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
+import Spacing from '@oracle/elements/Spacing';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import {
   ContainerStyle,
   ICON_SIZE,
+  DividerStyle,
 } from './index.style';
 import {
   BlockBlank,
   TemplateShapes,
 } from '@oracle/icons';
-import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
 
 function AddNewBlocksV2() {
   return (
@@ -78,6 +80,21 @@ function AddNewBlocksV2() {
             <MarkdownPen size={ICON_SIZE} />
           </Button>
         </Tooltip>
+
+        <Spacing mr={3} />
+
+        <DividerStyle />
+
+        <Spacing mr={3} />
+
+        <TextInput
+          fullWidth
+          noBackground
+          noBorder
+          paddingHorizontal={0}
+          paddingVertical={0}
+          placeholder="Add block that..."
+        />
       </FlexContainer>
     </ContainerStyle>
   );

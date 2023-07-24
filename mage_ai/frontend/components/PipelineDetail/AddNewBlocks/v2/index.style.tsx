@@ -30,3 +30,12 @@ export const ContainerStyle = styled.div`
     box-shadow: ${(props.theme.shadow || dark.shadow).frame};
   `}
 `;
+
+export const DividerStyle = styled.div`
+  height: ${ICON_SIZE}px;
+  width: 1px;
+
+  ${props => `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBorder};
+  `}
+`;
