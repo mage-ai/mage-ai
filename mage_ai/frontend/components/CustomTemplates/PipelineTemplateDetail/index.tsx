@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -15,6 +15,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import {
   NAV_TABS,
   NAV_TAB_DEFINE,
@@ -33,7 +34,7 @@ import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
 type PipelineTemplateDetailProps = {
-  defaultTabUUID?: TabType;
+  defaultTab?: TabType;
   onMutateSuccess?: () => void;
   pipelineUUID?: string;
   template?: CustomTemplateType;
@@ -47,10 +48,10 @@ type PipelineTemplateDetailProps = {
 };
 
 function PipelineTemplateDetail({
-  defaultTabUUID,
+  defaultTab,
   onMutateSuccess,
   pipelineUUID,
-  template: templateProp,
+  template,
   templateAttributes: templateAttributesProp,
   templateUUID,
 }: PipelineTemplateDetailProps) {
@@ -71,13 +72,20 @@ function PipelineTemplateDetail({
     setTemplateAttributesState(handlePrevious);
   }, []);
 
-  const isNewCustomTemplate: boolean = useMemo(() => !templateProp && !templateUUID, [
-    templateProp,
+  const templatePrev = usePrevious(template);
+  useEffect(() => {
+    if (templatePrev?.template_uuid !== template?.template_uuid) {
+      setTemplateAttributesState(template);
+    }
+  }, [template, templatePrev]);
+
+  const isNewCustomTemplate: boolean = useMemo(() => !template && !templateUUID, [
+    template,
     templateUUID,
   ]);
 
-  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
+  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
+    ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
     : isNewCustomTemplate ? NAV_TAB_DEFINE : NAV_TABS[0],
   );
 
@@ -123,8 +131,8 @@ function PipelineTemplateDetail({
   );
 
   const [updateCustomTemplate, { isLoading: isLoadingUpdateCustomTemplate }] = useMutation(
-    api.custom_templates.useUpdate(templateProp
-        ? encodeURIComponent(templateProp?.template_uuid)
+    api.custom_templates.useUpdate(template
+        ? encodeURIComponent(template?.template_uuid)
         : templateUUID && encodeURIComponent(templateUUID),
       {
         object_type: OBJECT_TYPE_PIPELINES,

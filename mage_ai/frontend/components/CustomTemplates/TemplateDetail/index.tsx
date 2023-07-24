@@ -63,7 +63,7 @@ import { useWindowSize } from '@utils/sizes';
 
 type TemplateDetailProps = {
   contained?: boolean;
-  defaultTabUUID?: TabType;
+  defaultTab?: TabType;
   heightOffset?: number;
   onCancel?: () => void;
   onCreateCustomTemplate?: (customTemplate: CustomTemplateType) => void;
@@ -77,7 +77,7 @@ type TemplateDetailProps = {
 
 function TemplateDetail({
   contained,
-  defaultTabUUID,
+  defaultTab,
   heightOffset,
   onCancel,
   onCreateCustomTemplate,
@@ -94,8 +94,8 @@ function TemplateDetail({
 
   const [codeBlockKey, setCodeBlockKey] = useState<number>(Number(new Date()));
   const [ready, setReady] = useState<boolean>(false);
-  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTabUUID
-    ? NAV_TABS.find(({ uuid }) => uuid === defaultTabUUID?.uuid)
+  const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
+    ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
     : NAV_TABS[0],
   );
   const [touched, setTouched] = useState<boolean>(false);

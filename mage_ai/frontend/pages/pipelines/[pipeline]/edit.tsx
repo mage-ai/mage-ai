@@ -78,6 +78,7 @@ import {
   set,
 } from '@storage/localStorage';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
@@ -1893,6 +1894,7 @@ function PipelineDetailPage({
         }}
         showAddingNewTemplates={!!addNew}
         showBreadcrumbs
+        tabs={[NAV_TAB_BLOCKS]}
       />
     </ErrorProvider>
   ), {
