@@ -23,6 +23,7 @@ import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { addUnderscores, capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { sortByKey } from '@utils/array';
 
 const getDataSourceTypes = (
   pipelineType?: PipelineTypeEnum,
@@ -276,7 +277,10 @@ export const getdataSourceMenuItems = (
     const arr = [
       {
         // @ts-ignore
-        items: (dataSourceMenuItemsMapping[blockType] || []).concat(additionalTemplates),
+        items: sortByKey(
+          (dataSourceMenuItemsMapping[blockType] || []).concat(additionalTemplates),
+          ({ label }) => label(),
+        ),
         label: () => 'Python',
         uuid: `${blockType}/${BlockLanguageEnum.PYTHON}`,
       },

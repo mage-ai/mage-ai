@@ -25,3 +25,12 @@ BlockTemplatePolicy.allow_read(BlockTemplatePresenter.default_attributes + [], s
     constants.DETAIL,
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+BlockTemplatePolicy.allow_query([
+    'show_all',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

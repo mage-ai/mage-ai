@@ -13,6 +13,7 @@ import {
   TemplateShapes,
 } from '@oracle/icons';
 import {
+  BLOCK_TYPE_NAME_MAPPING,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -43,7 +44,7 @@ function AddNewBlocksV2({
 }) {
   const buttonRefTemplates = useRef(null);
 
-  const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(null);
+  const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(BUTTON_INDEX_TEMPLATES);
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
   const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
@@ -55,19 +56,56 @@ function AddNewBlocksV2({
     [blockIdx, buttonMenuOpenIndex, setAddNewBlockMenuOpenIdx],
   );
 
-  const dataLoaderItems = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_LOADER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      showBrowseTemplates,
-    },
-  ), [
+  const itemsDataLoader = useMemo(() => getdataSourceMenuItems(
+      addNewBlock,
+      BlockTypeEnum.DATA_LOADER,
+      pipelineType,
+      {
+        blockTemplatesByBlockType,
+        // showBrowseTemplates,
+      },
+    )?.find(({
+      uuid,
+    }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`)?.items,
+  [
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
-    showBrowseTemplates,
+    // showBrowseTemplates,
+  ]);
+
+  const itemsDataExporter = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.DATA_EXPORTER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+      // showBrowseTemplates,
+    },
+  )?.find(({
+      uuid,
+    }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
+  [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+    // showBrowseTemplates,
+  ]);
+
+  const itemsTemplates = useMemo(() => [
+    {
+      items: itemsDataLoader,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
+      uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
+    },
+    {
+      items: itemsDataExporter,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
+      uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
+    },
+  ], [
+    itemsDataExporter,
+    itemsDataLoader,
   ]);
 
   return (
@@ -82,7 +120,7 @@ function AddNewBlocksV2({
           <ButtonWrapper increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}>
             <FlyoutMenuWrapper
               disableKeyboardShortcuts
-              items={dataLoaderItems}
+              items={itemsTemplates}
               onClickCallback={closeButtonMenu}
               open={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
               parentRef={buttonRefTemplates}

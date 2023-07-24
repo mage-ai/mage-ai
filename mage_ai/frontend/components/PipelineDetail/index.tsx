@@ -224,7 +224,9 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  const { data: dataBlockTemplates } = api.block_templates.list({}, {
+  const { data: dataBlockTemplates } = api.block_templates.list({
+    show_all: 1,
+  }, {
     revalidateOnFocus: false,
   });
   const blockTemplates: BlockTemplateType[] =
