@@ -473,8 +473,12 @@ class PipelineRun(BaseModel):
         interval_end_datetime = variables.get('interval_end_datetime')
         interval_seconds = variables.get('interval_seconds')
         interval_start_datetime = variables.get('interval_start_datetime')
+        interval_start_datetime_previous = variables.get('interval_start_datetime_previous')
 
-        if interval_end_datetime or interval_seconds or interval_start_datetime:
+        if interval_end_datetime or \
+                interval_seconds or \
+                interval_start_datetime or \
+                interval_start_datetime_previous:
             if interval_end_datetime:
                 try:
                     variables['interval_end_datetime'] = dateutil.parser.parse(
@@ -490,10 +494,19 @@ class PipelineRun(BaseModel):
                     )
                 except Exception as err:
                     print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime_previous:
+                try:
+                    variables['interval_start_datetime_previous'] = dateutil.parser.parse(
+                        interval_start_datetime_previous,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
         elif self.execution_date and ScheduleType.TIME == self.pipeline_schedule.schedule_type:
             interval_end_datetime = None
             interval_seconds = None
             interval_start_datetime = self.execution_date
+            interval_start_datetime_previous = None
 
             if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 24
@@ -512,9 +525,15 @@ class PipelineRun(BaseModel):
                     seconds=interval_seconds,
                 )
 
+            if interval_seconds and interval_start_datetime:
+                interval_start_datetime_previous = interval_start_datetime - timedelta(
+                    seconds=interval_seconds,
+                )
+
             variables['interval_end_datetime'] = interval_end_datetime
             variables['interval_seconds'] = interval_seconds
             variables['interval_start_datetime'] = interval_start_datetime
+            variables['interval_start_datetime_previous'] = interval_start_datetime_previous
 
         variables.update(extra_variables)
 

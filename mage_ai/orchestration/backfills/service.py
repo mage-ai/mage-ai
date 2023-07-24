@@ -84,16 +84,34 @@ def __build_variables_list(backfill: Backfill) -> List[Dict]:
         interval_end_datetime = None
         interval_seconds = None
         interval_start_datetime = execution_date
+        interval_start_datetime_previous = None
 
         if idx < number_of_dates - 1:
             interval_end_datetime = dates[idx + 1]
-            interval_seconds = interval_end_datetime.timestamp() - execution_date.timestamp()
+            interval_seconds = (
+                interval_end_datetime.timestamp() - interval_start_datetime.timestamp()
+            )
+        elif idx >= 1 and idx == number_of_dates - 1:
+            # Last date
+            interval_start_datetime_previous = dates[idx - 1]
+            interval_seconds = (
+                interval_start_datetime.timestamp() - interval_start_datetime_previous.timestamp()
+            )
+            interval_end_datetime = interval_start_datetime + timedelta(seconds=interval_seconds)
+
+        if not interval_start_datetime_previous and (interval_seconds and interval_start_datetime):
+            interval_start_datetime_previous = interval_start_datetime - timedelta(
+                seconds=interval_seconds,
+            )
 
         if interval_end_datetime:
             interval_end_datetime = interval_end_datetime.isoformat()
 
         if interval_start_datetime:
             interval_start_datetime = interval_start_datetime.isoformat()
+
+        if interval_start_datetime_previous:
+            interval_start_datetime_previous = interval_start_datetime_previous.isoformat()
 
         arr.append(dict(
             ds=execution_date.strftime('%Y-%m-%d'),
@@ -102,6 +120,7 @@ def __build_variables_list(backfill: Backfill) -> List[Dict]:
             interval_end_datetime=interval_end_datetime,
             interval_seconds=interval_seconds,
             interval_start_datetime=interval_start_datetime,
+            interval_start_datetime_previous=interval_start_datetime_previous,
         ))
 
     return arr
