@@ -66,6 +66,7 @@ export type TextProps = {
   small?: boolean;
   success?: boolean;
   textOverflow?: boolean;
+  textOverflowLines?: number;
   title?: string;
   underline?: boolean;
   uppercase?: boolean;
@@ -299,6 +300,13 @@ export const SHARED_STYLES = css<TextProps>`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  `}
+
+  ${props => props.textOverflowLines && `
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: ${props.textOverflowLines};
+    display: -webkit-box;
+    overflow: hidden;
   `}
 
   ${props => (props.minWidth || props.maxWidth) && `

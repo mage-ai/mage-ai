@@ -11,6 +11,9 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
 )
+from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
+    CustomBlockTemplate,
+)
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
@@ -44,9 +47,12 @@ class BlockResource(GenericResource):
                     Please choose a different model name, or add a DBT model by \
                     selecting single model from file.')
 
+        payload_config = payload.get('config')
+
+        block_name = name or payload.get('uuid')
         block_attributes = dict(
             color=payload.get('color'),
-            config=payload.get('config'),
+            config=payload_config,
             configuration=payload.get('configuration'),
             extension_uuid=payload.get('extension_uuid'),
             language=language,
@@ -70,12 +76,24 @@ class BlockResource(GenericResource):
                 )
                 raise ApiError(error)
 
-        block = Block.create(
-            name or payload.get('uuid'),
-            block_type,
-            get_repo_path(),
-            **block_attributes,
-        )
+        if payload_config and payload_config.get('custom_template_uuid'):
+            template_uuid = payload_config.get('custom_template_uuid')
+            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+            block = custom_template.create_block(
+                block_name,
+                pipeline,
+                extension_uuid=block_attributes.get('extension_uuid'),
+                priority=block_attributes.get('priority'),
+                upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
+            )
+            content = custom_template.load_template_content()
+        else:
+            block = Block.create(
+                block_name,
+                block_type,
+                get_repo_path(),
+                **block_attributes,
+            )
 
         if content:
             if payload.get('converted_from'):
@@ -168,7 +186,8 @@ class BlockResource(GenericResource):
 
         pipeline = kwargs.get('parent_model')
         cache = await BlockCache.initialize_cache()
-        cache.remove_pipeline(self.model, pipeline.uuid)
+        if pipeline:
+            cache.remove_pipeline(self.model, pipeline.uuid)
 
         return self.model.delete(force=force)
 

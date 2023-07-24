@@ -26,11 +26,30 @@ CustomTemplatePolicy.allow_actions([
 CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.DETAIL,
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
+CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [
+    'content',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
 CustomTemplatePolicy.allow_read(CustomTemplatePresenter.default_attributes + [], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+    constants.DELETE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+CustomTemplatePolicy.allow_write(CustomTemplatePresenter.default_attributes + [
+    'content',
+    'object_type',
+    'pipeline_uuid',
+], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -44,4 +63,5 @@ CustomTemplatePolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
+    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

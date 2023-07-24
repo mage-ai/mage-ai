@@ -5,6 +5,7 @@ import moment from 'moment';
 
 import AddButton from '@components/shared/AddButton';
 import BarStackChart from '@components/charts/BarStack';
+import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
@@ -28,7 +29,9 @@ import {
   BAR_STACK_STATUSES,
   TOOLTIP_LEFT_OFFSET,
 } from '@components/Monitor/constants';
+import { ErrorProvider } from '@context/Error';
 import { MonitorStatsEnum, RunCountStatsType } from '@interfaces/MonitorStatsType';
+import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
@@ -44,13 +47,14 @@ import {
   TIME_PERIOD_TABS,
   TAB_TODAY,
 } from '@components/Dashboard/constants';
-import { capitalize } from '@utils/string';
+import { capitalize, randomNameGenerator } from '@utils/string';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { groupBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { useModal } from '@context/Modal';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -185,8 +189,40 @@ function OverviewPage() {
     '/pipelines/[pipeline]/edit',
     `/pipelines/${pipelineUUID}/edit`,
   ));
-  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(createPipeline), [
+
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
+    <ErrorProvider>
+      <BrowseTemplates
+        contained
+        onClickCustomTemplate={(customTemplate) => {
+          createPipeline({
+            pipeline: {
+              custom_template_uuid: customTemplate?.template_uuid,
+              name: randomNameGenerator(),
+            },
+          }).then(() => {
+            hideBrowseTemplates();
+          });
+        }}
+        showBreadcrumbs
+        tabs={[NAV_TAB_PIPELINES]}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
+  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
+    {
+      showBrowseTemplates,
+    },
+  ), [
+    createPipeline,
+    showBrowseTemplates,
   ]);
   const addButtonEl = useMemo(() => (
     <AddButton

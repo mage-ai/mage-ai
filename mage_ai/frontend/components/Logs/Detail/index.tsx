@@ -27,19 +27,22 @@ const KEYS_TO_SKIP = [
   'error_stack',
   'error_stacktrace',
 ];
-const TAB_DETAILS = { uuid: 'Details' };
-const TAB_ERRORS = { uuid: 'Errors' };
+export const TAB_DETAILS = { uuid: 'Details' };
+export const TAB_ERRORS = { uuid: 'Errors' };
 
 type LogDetailProps = {
   log: LogType;
   onClose: () => void;
+  selectedTab: TabType;
+  setSelectedTab: (tab: TabType) => void;
 };
 
 function LogDetail({
   log,
   onClose,
+  selectedTab,
+  setSelectedTab,
 }: LogDetailProps) {
-  const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const [showFullLogMessage, setShowFullLogMessage] = useState<boolean>(false);
   const {
     data,
@@ -94,8 +97,6 @@ function LogDetail({
     );
   }, [
     error,
-    errorStack,
-    errorStackTrace,
     selectedTab,
     setSelectedTab,
   ]);

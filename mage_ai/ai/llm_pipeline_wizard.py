@@ -1,3 +1,5 @@
+import asyncio
+
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -43,7 +45,7 @@ class LLMPipelineWizard:
     def __init__(self):
         self.llm = OpenAI(temperature=0)
 
-    def __llm_generate_documentation(
+    async def __async_llm_generate_documentation(
         self,
         block_content: str,
         file_type: str,
@@ -61,27 +63,27 @@ class LLMPipelineWizard:
             template=template,
         )
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        return chain.run(block_content=block_content,
-                         file_type=file_type,
-                         purpose=purpose,
-                         add_on_prompt=add_on_prompt)
+        return await chain.arun(block_content=block_content,
+                                file_type=file_type,
+                                purpose=purpose,
+                                add_on_prompt=add_on_prompt)
 
-    def generate_pipeline_documentation(
+    async def async_generate_pipeline_documentation(
         self,
         pipeline_uuid: str,
         project_path: str = None,
         print_block_doc: bool = False,
-    ) -> str:
+    ) -> dict:
         pipeline = Pipeline.get(
             uuid=pipeline_uuid,
             repo_path=project_path or get_repo_path(),
         )
-        block_docs = []
-
+        async_block_docs = []
         for block in pipeline.blocks_by_uuid.values():
             if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 continue
-            block_docs.append(self.generate_block_documentation(block))
+            async_block_docs.append(self.__async_generate_block_documentation(block))
+        block_docs = await asyncio.gather(*async_block_docs)
         block_docs_content = '\n'.join(block_docs)
         if print_block_doc:
             print(block_docs_content)
@@ -90,11 +92,11 @@ class LLMPipelineWizard:
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
         pipeline_doc = chain.run(block_content=block_docs_content)
         return dict(
-            block_content=block_docs_content,
+            block_content=block_docs,
             pipeline_doc=pipeline_doc,
         )
 
-    def generate_block_documentation_with_name(
+    async def async_generate_block_documentation_with_name(
         self,
         pipeline_uuid: str,
         block_uuid: str,
@@ -102,9 +104,10 @@ class LLMPipelineWizard:
     ) -> str:
         pipeline = Pipeline.get(uuid=pipeline_uuid,
                                 repo_path=project_path or get_repo_path())
-        return self.generate_block_documentation(pipeline.get_block(block_uuid))
+        return asyncio.run(
+            self.__async_generate_block_documentation(pipeline.get_block(block_uuid)))
 
-    def generate_block_documentation(
+    async def __async_generate_block_documentation(
         self,
         block: Block,
     ) -> str:
@@ -112,11 +115,10 @@ class LLMPipelineWizard:
         if block.type == BlockType.TRANSFORMER:
             add_on_prompt = "Focus on the customized business logic in execute_transformer_action \
                              function."
-        block_doc = self.__llm_generate_documentation(
+        return await self.__async_llm_generate_documentation(
                     block.content,
                     BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language],
                     BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, ""),
                     PROMPT_FOR_BLOCK,
                     add_on_prompt
                 )
-        return block_doc

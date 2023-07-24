@@ -19,6 +19,7 @@ import {
   PipelineV3,
   Schedule,
   Settings,
+  TemplateShapes,
   Terminal,
 } from '@oracle/icons';
 import {
@@ -79,9 +80,17 @@ const DEFAULT_NAV_ITEMS = [
         },
       },
       {
+        Icon: TemplateShapes,
+        id: 'templates',
+        label: () => 'Templates',
+        linkProps: {
+          href: '/templates',
+        },
+      },
+      {
         Icon: BranchAlt,
         id: 'version-control',
-        label: () => 'Version control (beta)',
+        label: () => 'Version control',
         linkProps: {
           href: '/version-control',
         },

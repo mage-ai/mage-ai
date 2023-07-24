@@ -205,7 +205,7 @@ function BlockNode({
             </Flex>
           </Flex>
 
-          <Spacing mr={HEADER_SPACING_HORIZONTAL_UNITS} />
+          <Spacing mr="15px" />
 
           <StatusStyle title={tooltipText}>
             {!hideStatus && (

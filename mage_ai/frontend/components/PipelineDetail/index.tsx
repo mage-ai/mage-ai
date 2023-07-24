@@ -139,6 +139,11 @@ type PipelineDetailProps = {
   setSelectedOutputBlock: (block: BlockType) => void;
   setSelectedStream: (stream: string) => void;
   setTextareaFocused: (value: boolean) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -187,6 +192,7 @@ function PipelineDetail({
   setSelectedOutputBlock,
   setSelectedStream,
   setTextareaFocused,
+  showBrowseTemplates,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -555,6 +561,7 @@ function PipelineDetail({
             setSelectedBlock={setSelectedBlock}
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
+            showBrowseTemplates={showBrowseTemplates}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -609,6 +616,7 @@ function PipelineDetail({
     setSelectedBlock,
     setSelectedOutputBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
     updateBlock,
     widgets,
@@ -711,6 +719,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
+      showBrowseTemplates={showBrowseTemplates}
     />
   ), [
     addNewBlockAtIndex,
@@ -723,6 +732,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     pipeline,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
   ]);
 
   return (

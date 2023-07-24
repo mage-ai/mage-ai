@@ -3,7 +3,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineRunPresenter import PipelineRunPresenter
 from mage_ai.data_preparation.repo_manager import get_project_uuid
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.constants import Entity
 
 
 class PipelineRunPolicy(BasePolicy):
@@ -14,12 +14,12 @@ class PipelineRunPolicy(BasePolicy):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         if pipeline_uuid:
-            return Permission.Entity.PIPELINE, pipeline_uuid
+            return Entity.PIPELINE, pipeline_uuid
 
         if self.resource and self.resource.model:
-            return Permission.Entity.PIPELINE, self.resource.model.pipeline_uuid
+            return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Permission.Entity.PROJECT, get_project_uuid()
+        return Entity.PROJECT, get_project_uuid()
 
 
 PipelineRunPolicy.allow_actions([

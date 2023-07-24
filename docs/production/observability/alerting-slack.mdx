@@ -59,7 +59,9 @@ Follow these steps to add that webhook URL to your project settings:
 
     - `trigger_failure`: alert when a run of a trigger fails
     - `trigger_success`: alert when a run of a trigger succeeds
-    - `trigger_passed_sla`: alert when a run of a trigger passes sla
+    - `trigger_passed_sla`: alert when a SLA is missed. 
+      - In this context, SLA (Service Level Agreement) is an expected amount of time for the pipeline to complete. 
+      - If the pipeline runs _longer_ than the SLA, an alert will be sent. 
 
 5. In the `metadata.yaml` file, add the following values:
 

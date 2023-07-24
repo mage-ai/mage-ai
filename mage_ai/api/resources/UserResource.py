@@ -8,6 +8,7 @@ from mage_ai.authentication.passwords import (
     verify_password,
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.shared.hash import extract, ignore_keys
@@ -124,7 +125,7 @@ class UserResource(DatabaseResource):
 
             access = get_access_for_roles(
                 roles_new,
-                Permission.Entity.PROJECT,
+                Entity.PROJECT,
                 get_project_uuid(),
             )
 

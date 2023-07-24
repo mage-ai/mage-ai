@@ -34,7 +34,10 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
         self.executor._execute(block_run_id=1, global_vars={'key': 'value'})
 
         # Assertions
-        self.executor._run_commands.assert_called_once_with(1, {'key': 'value'})
+        self.executor._run_commands.assert_called_once_with(
+            block_run_id=1,
+            global_vars={'key': 'value'},
+        )
         job_manager_mock.assert_called_once_with(
             job_name='mage-data-prep-block-1',
             logger=self.executor.logger,
@@ -59,7 +62,10 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
         self.executor._execute(block_run_id=1, global_vars={'key': 'value'})
 
         # Assertions
-        self.executor._run_commands.assert_called_once_with(1, {'key': 'value'})
+        self.executor._run_commands.assert_called_once_with(
+            block_run_id=1,
+            global_vars={'key': 'value'},
+        )
         job_manager_mock.assert_called_once_with(
             job_name='mage-custom-prefix-block-1',
             logger=self.executor.logger,

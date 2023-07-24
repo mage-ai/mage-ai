@@ -33,6 +33,7 @@ export const BLOCK_TEMPLATES = 'block_templates';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const EVENT_MATCHERS = 'event_matchers';
@@ -93,6 +94,7 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
   [EVENT_MATCHERS],

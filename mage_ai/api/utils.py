@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Tuple
 
 from mage_ai.api.errors import ApiError
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import (
     Oauth2AccessToken,
     Permission,
@@ -31,7 +32,7 @@ def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2Acc
 
 def is_owner(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return (user and user.owner) or \
@@ -41,7 +42,7 @@ def is_owner(
 
 def has_at_least_admin_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
@@ -53,7 +54,7 @@ def has_at_least_admin_role(
 
 def has_at_least_editor_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
@@ -66,7 +67,7 @@ def has_at_least_editor_role(
 
 def has_at_least_editor_role_and_notebook_edit_access(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and \
@@ -75,7 +76,7 @@ def has_at_least_editor_role_and_notebook_edit_access(
 
 def has_at_least_editor_role_and_pipeline_edit_access(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not is_disable_pipeline_edit_access() and \
@@ -84,7 +85,7 @@ def has_at_least_editor_role_and_pipeline_edit_access(
 
 def has_at_least_viewer_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
@@ -98,7 +99,7 @@ def has_at_least_viewer_role(
 
 def get_access_for_roles(
     roles: List[Role],
-    entity: Permission.Entity,
+    entity: Entity,
     entity_id: str = None,
 ):
     access = 0

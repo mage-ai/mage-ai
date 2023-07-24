@@ -41,6 +41,7 @@ enum FilterSelectionEnum {
 }
 
 const TABLE_WIDTH = UNIT * 45;
+const WARNING_TEXT_WIDTH = TABLE_WIDTH - UNIT * 4;
 
 function SelectStreams({
   catalog,
@@ -220,13 +221,26 @@ function SelectStreams({
           <Spacing pb={2}>
             <Text
               danger
-              maxWidth={TABLE_WIDTH - UNIT * 4}
+              maxWidth={WARNING_TEXT_WIDTH}
               rightAligned
               whiteSpaceNormal
             >
               WARNING: Selecting too many streams (e.g. &gt;50)
               <br />
               may cause app performance issues.
+            </Text>
+          </Spacing>
+        }
+        {streams?.length === 0 &&
+          <Spacing pb={2}>
+            <Text
+              bold
+              maxWidth={WARNING_TEXT_WIDTH}
+              warning
+              whiteSpaceNormal
+            >
+              If you can successfully connect to the data source but no streams are
+              displayed, check if the user has proper database/schema permissions.
             </Text>
           </Spacing>
         }

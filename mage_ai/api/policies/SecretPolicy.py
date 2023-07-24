@@ -39,8 +39,19 @@ SecretPolicy.allow_read(SecretPresenter.default_attributes + [
 SecretPolicy.allow_write([
     'name',
     'value',
+    'entity',
+    'pipeline_uuid',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access())
+
+SecretPolicy.allow_query([
+    'entity',
+    'pipeline_uuid',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

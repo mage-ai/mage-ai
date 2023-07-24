@@ -1,5 +1,3 @@
-# .github/release.yml
-
 changelog:
   exclude:
     labels:
@@ -7,10 +5,13 @@ changelog:
   categories:
     - title: 🎉 Exciting New Features 
       labels:
-        - enhancement
-    - title: 🐛 Bug Fix & Polish
+        - feature
+    - title: 🐛 Bug Fixes
       labels:
         - bug
+    - title: 💅 Enhancements & Polish
+      labels:
+        - enhancement
     - title: Other Changes
       labels:
         - "*"

@@ -19,10 +19,12 @@ import BlockType, {
   SampleDataType,
 } from '@interfaces/BlockType';
 import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
+import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataProviderType from '@interfaces/DataProviderType';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
@@ -58,6 +60,7 @@ import {
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { ErrorProvider } from '@context/Error';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
@@ -75,6 +78,7 @@ import {
   set,
 } from '@storage/localStorage';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
@@ -97,6 +101,7 @@ import {
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
+import { getBlockFromFilePath } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -128,7 +133,8 @@ function PipelineDetailPage({
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
@@ -265,9 +271,6 @@ function PipelineDetailPage({
     pipelineLastSavedState,
     showStalePipelineMessageModal,
   ]);
-  useEffect(() => {
-    displayErrorFromReadResponse(data, setErrors);
-  }, [data]);
 
   const qUrl = queryFromUrl();
   const {
@@ -414,6 +417,14 @@ function PipelineDetailPage({
     revalidateOnFocus: false,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
+
+  useEffect(() => {
+    let dataWithPotentialError = data;
+    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
+      dataWithPotentialError = dataDataProviders;
+    }
+    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors);
+  }, [data, dataDataProviders]);
 
   // Variables
   const {
@@ -903,11 +914,25 @@ function PipelineDetailPage({
     if (!filePaths.includes(filePathEncoded)) {
       filePaths.push(filePathEncoded);
     }
-    goToWithQuery({
-      file_path: filePathEncoded,
-      'file_paths[]': filePaths,
-    });
+
+
+    const block = getBlockFromFilePath(filePath, blocks);
+
+    if (block) {
+      setSelectedBlock(block);
+      if (blockRefs?.current) {
+        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+        blockRef?.current?.scrollIntoView();
+      }
+    } else {
+      goToWithQuery({
+        file_path: filePathEncoded,
+        'file_paths[]': filePaths,
+      });
+    }
   }, [
+    blockRefs,
+    blocks,
     savePipelineContent,
   ]);
 
@@ -1845,6 +1870,40 @@ function PipelineDetailPage({
     shouldReconnect: () => true,
   });
 
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
+    addNew,
+    addNewBlock,
+    blockType,
+  }: {
+    addNew?: boolean;
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => (
+    <ErrorProvider>
+      <BrowseTemplates
+        contained
+        defaultLinkUUID={blockType}
+        onClickCustomTemplate={(customTemplate) => {
+          addNewBlock({
+            config: {
+              custom_template_uuid: customTemplate?.template_uuid,
+            },
+          });
+          hideBrowseTemplates();
+        }}
+        showAddingNewTemplates={!!addNew}
+        showBreadcrumbs
+        tabs={[NAV_TAB_BLOCKS]}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+  ], {
+    background: true,
+    uuid: 'browse_templates',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1903,6 +1962,7 @@ function PipelineDetailPage({
       setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -1956,6 +2016,7 @@ function PipelineDetailPage({
     setHiddenBlocks,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     statistics,
     textareaFocused,
     updatePipelineMetadata,
@@ -2027,6 +2088,7 @@ function PipelineDetailPage({
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
+      showBrowseTemplates={showBrowseTemplates}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2071,6 +2133,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
+    showBrowseTemplates,
     textareaFocused,
     widgets,
   ]);
@@ -2379,7 +2442,7 @@ function PipelineDetailPage({
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
-        errors={errors}
+        errors={pipelineErrors || errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
@@ -2387,7 +2450,7 @@ function PipelineDetailPage({
         pipeline={pipeline}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
-        setErrors={setErrors}
+        setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >
         <div

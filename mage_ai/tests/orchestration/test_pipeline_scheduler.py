@@ -1,13 +1,23 @@
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
+
+import pytz
+from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.job_manager import JobType
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, check_sla
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
@@ -336,3 +346,44 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(GitSync, 'sync_data') as mock_sync:
             scheduler.start(should_schedule=False)
             mock_sync.assert_called_once()
+
+    @freeze_time('2023-05-01 01:20:33')
+    def test_send_sla_message(self):
+        pipeline = create_pipeline_with_blocks(
+            'test sla pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_sla_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            sla=600,
+        )
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=1),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        with patch.object(
+            NotificationSender,
+            'send_pipeline_run_sla_passed_message'
+        ) as mock_send_message:
+            check_sla()
+            mock_send_message.assert_called_once()

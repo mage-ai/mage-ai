@@ -536,10 +536,10 @@
       "group": "Backfills",
       "pages": [
         "api-reference/backfills/overview",
-        "api-reference/backfills/create-backfills",
-        "api-reference/backfills/delete-backfill",
         "api-reference/backfills/read-backfills",
-        "api-reference/backfills/update-backfill"
+        "api-reference/backfills/create-backfills",
+        "api-reference/backfills/update-backfill",
+        "api-reference/backfills/delete-backfill"
       ]
     },
     {
@@ -553,7 +553,7 @@
       "group": "Pipeline runs",
       "pages": [
         "api-reference/pipeline-runs/overview",
-        "api-reference/pipeline-runs/get-pipeline-runs",
+        "api-reference/pipeline-runs/read-pipeline-runs",
         "api-reference/pipeline-runs/trigger-pipeline"
       ]
     },
@@ -572,8 +572,8 @@
         "api-reference/pipelines/overview",
         "api-reference/pipelines/read-pipeline",
         "api-reference/pipelines/create-pipeline",
-        "api-reference/pipelines/delete-pipeline",
-        "api-reference/pipelines/update-pipeline"
+        "api-reference/pipelines/update-pipeline",
+        "api-reference/pipelines/delete-pipeline"
       ]
     },
     {

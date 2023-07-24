@@ -1,11 +1,12 @@
 import os
+from typing import Dict, List
+
 from github import Auth, Github
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.git import Git
-from mage_ai.data_preparation.git import api
+from mage_ai.data_preparation.git import Git, api
 from mage_ai.data_preparation.preferences import get_preferences
-from typing import Dict, List
 
 
 def build_file_object(obj):
@@ -71,42 +72,23 @@ class GitBranchResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         git_manager = self.get_git_manager(user=user)
 
-        files = {}
+        display_format = kwargs.get('meta', {}).get('_format')
+        if 'with_basic_details' == display_format:
+            return self(dict(
+                files={},
+                modified_files=[],
+                name=git_manager.current_branch,
+                staged_files=[],
+                sync_config=get_preferences().sync_config,
+                untracked_files=[],
+            ), user, **kwargs)
 
         modified_files = git_manager.modified_files
-        staged_files = git_manager.staged_files()
-        untracked_files = git_manager.untracked_files()
-
-        for filename in modified_files + staged_files + untracked_files:
-            # filename: default_repo/transformers/load.py
-            parts = filename.split(os.sep)
-            number_of_parts = len(parts)
-
-            arr = []
-            for idx, part in enumerate(parts):
-                default_obj = dict()
-
-                if idx == 0:
-                    obj = files.get(part, default_obj)
-                else:
-                    obj_prev = arr[idx - 1]
-                    obj = obj_prev.get(part, default_obj)
-
-                arr.append(obj)
-
-            obj_final = None
-            for idx, obj in enumerate(reversed(arr)):
-                if idx == 0:
-                    obj_final = obj
-                else:
-                    part = parts[number_of_parts - idx]
-                    obj[part] = obj_final
-                    obj_final = obj
-
-            files[parts[0]] = obj_final
+        staged_files = await git_manager.staged_files()
+        untracked_files = await git_manager.untracked_files()
 
         return self(dict(
-            files=build_file_object(files),
+            files={},
             modified_files=modified_files,
             name=git_manager.current_branch,
             staged_files=staged_files,
@@ -123,7 +105,7 @@ class GitBranchResource(GenericResource):
 
         if action_type == 'status':
             status = git_manager.status()
-            untracked_files = git_manager.untracked_files()
+            untracked_files = await git_manager.untracked_files()
             modified_files = git_manager.modified_files
             self.model = dict(
                 name=git_manager.current_branch,
@@ -275,6 +257,49 @@ class GitBranchResource(GenericResource):
                 raise ApiError(error)
 
         return self
+
+    async def files(
+        self,
+        modified_files: List[str],
+        staged_files: List[str],
+        untracked_files: List[str],
+        limit: int = None
+    ) -> Dict:
+        arr = modified_files + staged_files + untracked_files
+
+        if limit:
+            arr = arr[:limit]
+
+        files = {}
+        for filename in arr:
+            # filename: default_repo/transformers/load.py
+            parts = filename.split(os.sep)
+            number_of_parts = len(parts)
+
+            arr = []
+            for idx, part in enumerate(parts):
+                default_obj = dict()
+
+                if idx == 0:
+                    obj = files.get(part, default_obj)
+                else:
+                    obj_prev = arr[idx - 1]
+                    obj = obj_prev.get(part, default_obj)
+
+                arr.append(obj)
+
+            obj_final = None
+            for idx, obj in enumerate(reversed(arr)):
+                if idx == 0:
+                    obj_final = obj
+                else:
+                    part = parts[number_of_parts - idx]
+                    obj[part] = obj_final
+                    obj_final = obj
+
+            files[parts[0]] = obj_final
+
+        return build_file_object(files)
 
     def logs(self, commits: int = None) -> List[Dict]:
         git_manager = self.get_git_manager(user=self.current_user)
