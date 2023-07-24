@@ -9,6 +9,9 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
 )
 from mage_ai.data_preparation.models.constants import PipelineStatus
+from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
+    CustomPipelineTemplate,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.orchestration.db import safe_db_query
@@ -152,10 +155,14 @@ class PipelineResource(BaseResource):
     @safe_db_query
     def create(self, payload, user, **kwargs):
         clone_pipeline_uuid = payload.get('clone_pipeline_uuid')
+        template_uuid = payload.get('custom_template_uuid')
         name = payload.get('name')
         pipeline_type = payload.get('type')
 
-        if clone_pipeline_uuid is None:
+        if template_uuid:
+            custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
+            pipeline = custom_template.create_pipeline(name)
+        elif clone_pipeline_uuid is None:
             pipeline = Pipeline.create(
                 name,
                 pipeline_type=pipeline_type,

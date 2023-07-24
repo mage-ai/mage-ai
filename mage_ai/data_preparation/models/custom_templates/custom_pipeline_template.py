@@ -8,7 +8,12 @@ from mage_ai.data_preparation.models.custom_templates.constants import (
     METADATA_FILENAME_WITH_EXTENSION,
 )
 from mage_ai.data_preparation.models.custom_templates.utils import custom_templates_directory
-from mage_ai.data_preparation.models.triggers import TRIGGER_FILE_NAME, load_triggers_file_data
+from mage_ai.data_preparation.models.triggers import (
+    TRIGGER_FILE_NAME,
+    add_or_update_trigger_for_pipeline_and_persist,
+    load_trigger_configs,
+    load_triggers_file_data,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
@@ -98,6 +103,30 @@ class CustomPipelineTemplate(BaseConfig):
             METADATA_FILENAME_WITH_EXTENSION,
         )
 
+    @property
+    def triggers_file_path(self) -> str:
+        return os.path.join(
+            get_repo_path(),
+            self.uuid,
+            TRIGGER_FILE_NAME,
+        )
+
+    def create_pipeline(self, name: str) -> Pipeline:
+        pipeline = Pipeline(clean_name(name), config=self.pipeline)
+        os.makedirs(os.path.dirname(pipeline.config_path), exist_ok=True)
+        pipeline.save()
+
+        if os.path.isfile(self.triggers_file_path):
+            pipeline_uuid = pipeline.uuid
+
+            with open(self.triggers_file_path, 'r') as f:
+                content = f.read()
+
+                for trigger in load_trigger_configs(content, pipeline_uuid=pipeline_uuid):
+                    add_or_update_trigger_for_pipeline_and_persist(trigger, pipeline_uuid)
+
+        return pipeline
+
     def to_dict(self) -> Dict:
         return merge_dict(self.to_dict_base(), dict(
             template_uuid=self.template_uuid,
@@ -121,11 +150,7 @@ class CustomPipelineTemplate(BaseConfig):
 
     def save_triggers(self, triggers: Dict) -> None:
         content = yaml.safe_dump(triggers)
-        file_path = os.path.join(
-            get_repo_path(),
-            self.uuid,
-            TRIGGER_FILE_NAME,
-        )
+        file_path = self.triggers_file_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         safe_write(file_path, content)
 
