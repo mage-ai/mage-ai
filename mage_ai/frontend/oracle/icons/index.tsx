@@ -2,38 +2,48 @@ import BaseIcon, {
   BaseIconProps, CircleStyle, EllipseStyle, PathStyle, RectStyle,
 } from './BaseIcon';
 
-function build(arrayOfPathProps, iconProps: {
+export function build(arrayOfPathProps, iconProps: {
   fill?: string;
   useStroke?: boolean;
   viewBox?: string;
-} = {}) {
+} = {}, opts?: {
+  withoutBaseIcon?: boolean;
+}) {
   return ({
     ...props
-  }: BaseIconProps) => (
-    <BaseIcon
-      {...props}
-      {...iconProps}
-    >
-      {arrayOfPathProps.map(({
-        Style,
-        ...pathProps
-      }, idx) => Style ? (
-        <Style
-          useStroke={iconProps?.useStroke}
-          {...props}
-          {...pathProps}
-          key={idx}
-        />
-      ) : (
-        <PathStyle
-          useStroke={iconProps?.useStroke}
-          {...props}
-          {...pathProps}
-          key={idx}
-        />
-      ))}
-    </BaseIcon>
-  );
+  }: BaseIconProps) => {
+    const arr = arrayOfPathProps.map(({
+      Style,
+      ...pathProps
+    }, idx) => Style ? (
+      <Style
+        useStroke={iconProps?.useStroke}
+        {...props}
+        {...pathProps}
+        key={idx}
+      />
+    ) : (
+      <PathStyle
+        useStroke={iconProps?.useStroke}
+        {...props}
+        {...pathProps}
+        key={idx}
+      />
+    ));
+
+    if (opts?.withoutBaseIcon) {
+      return arr;
+    }
+
+    return (
+      <BaseIcon
+        {...props}
+        {...iconProps}
+      >
+        {arr}
+      </BaseIcon>
+    );
+  };
 }
 
 export const Action = build([{

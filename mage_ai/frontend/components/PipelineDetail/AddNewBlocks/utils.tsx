@@ -224,7 +224,7 @@ export const getdataSourceMenuItems = (
     blockTemplatesByBlockType?: {
       [blockType: string]: {
         [language: string]: FlyoutMenuItemType;
-      }
+      };
     };
     languages?: BlockLanguageEnum[];
     onlyCustomTemplate?: boolean;
@@ -243,13 +243,16 @@ export const getdataSourceMenuItems = (
     showBrowseTemplates,
   } = opts || {};
 
-  const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
+  let dataSourceMenuItemsMapping = {};
+
+  if (!opts?.v2) {
+    dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
       (blockType: BlockTypeEnum) => ([
         blockType,
-        createDataSourceMenuItems(blockType, addNewBlock, pipelineType),
-      ]),
-    ),
-  );
+          createDataSourceMenuItems(blockType, addNewBlock, pipelineType),
+      ])),
+    );
+  }
 
   const customTemplate = {
     label: () => 'Custom template',

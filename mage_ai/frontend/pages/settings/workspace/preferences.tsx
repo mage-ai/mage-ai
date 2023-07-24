@@ -142,7 +142,7 @@ function Preferences() {
                 </FlexContainer>
               </Spacing>
 
-              <Divider light />
+              {/*<Divider light />
 
               <Spacing p={PADDING_UNITS}>
                 <Spacing mb={1}>
@@ -161,7 +161,7 @@ function Preferences() {
                     }}
                   />
                 </FlexContainer>
-              </Spacing>
+              </Spacing>*/}
 
               {isLoadingUpdateProject && (
                 <Spacing p={PADDING_UNITS}>

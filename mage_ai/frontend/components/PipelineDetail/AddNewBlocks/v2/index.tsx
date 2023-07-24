@@ -5,14 +5,19 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
+import ScratchpadBlock from '@oracle/icons/custom/ScratchpadBlock';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
-import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   ArrowsAdjustingFrameSquare,
   BlockBlank,
-  BlockCubePolygon,
+  BlockGeneric,
+  CircleWithArrowUp,
+  CubeWithArrowDown,
+  DBT as DBTIcon,
+  FrameBoxSelection,
+  Sensor,
   TemplateShapes,
 } from '@oracle/icons';
 import {
@@ -27,20 +32,31 @@ import {
   DividerStyle,
   ICON_SIZE,
 } from './index.style';
-import {
-  COLUMN_ACTION_GROUPINGS,
-  ROW_ACTION_GROUPINGS,
-} from '@interfaces/TransformerActionType';
-import {
-  createActionMenuGroupings,
-  createColorMenuItems,
-  getdataSourceMenuItems,
-  getNonPythonMenuItems,
-  groupBlockTemplates,
-} from '../utils';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getdataSourceMenuItems } from '../utils';
 
 const BUTTON_INDEX_TEMPLATES = 0;
+const BUTTON_INDEX_CUSTOM = 1;
+
+type AddNewBlocksV2Props = {
+  addNewBlock: (block: BlockRequestPayloadType) => void;
+  blockIdx: number;
+  blockTemplatesByBlockType: {
+    [blockType: string]: {
+      [language: string]: FlyoutMenuItemType;
+    };
+  };
+  itemsDBT: FlyoutMenuItemType[];
+  pipelineType: PipelineTypeEnum;
+  setAddNewBlockMenuOpenIdx?: (cb: any) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
+};
 
 function AddNewBlocksV2({
   addNewBlock,
@@ -50,10 +66,11 @@ function AddNewBlocksV2({
   pipelineType,
   setAddNewBlockMenuOpenIdx,
   showBrowseTemplates,
-}) {
+}: AddNewBlocksV2Props) {
   const buttonRefTemplates = useRef(null);
+  const buttonRefCustom = useRef(null);
 
-  const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(BUTTON_INDEX_TEMPLATES);
+  const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(null);
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
   const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
@@ -71,7 +88,7 @@ function AddNewBlocksV2({
     pipelineType,
     {
       blockTemplatesByBlockType,
-      // showBrowseTemplates,
+      v2: true,
     },
   )?.find(({
     uuid,
@@ -80,7 +97,6 @@ function AddNewBlocksV2({
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
-    // showBrowseTemplates,
   ]);
 
   const itemsDataExporter = useMemo(() => getdataSourceMenuItems(
@@ -89,7 +105,7 @@ function AddNewBlocksV2({
     pipelineType,
     {
       blockTemplatesByBlockType,
-      // showBrowseTemplates,
+      v2: true,
     },
   )?.find(({
       uuid,
@@ -98,114 +114,22 @@ function AddNewBlocksV2({
     addNewBlock,
     blockTemplatesByBlockType,
     pipelineType,
-    // showBrowseTemplates,
   ]);
 
-  const columnActionMenuItems = useMemo(() => createActionMenuGroupings(
-    COLUMN_ACTION_GROUPINGS,
-    AxisEnum.COLUMN,
+  const itemsTransformer = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
-  ), [
-    addNewBlock,
-  ]);
-  const rowActionMenuItems = useMemo(() => createActionMenuGroupings(
-    ROW_ACTION_GROUPINGS,
-    AxisEnum.ROW,
-    addNewBlock,
-  ), [
-    addNewBlock,
-  ]);
-
-  const allActionMenuItems = useMemo(() => {
-    const arr: FlyoutMenuItemType[] = [
-      // {
-      //   label: () => 'Generic (no template)',
-      //   onClick: () => {
-      //     addNewBlock({
-      //       language: BlockLanguageEnum.PYTHON,
-      //       type: BlockTypeEnum.TRANSFORMER,
-      //     });
-      //   },
-      //   uuid: 'generic_transformer_action',
-      // },
-      {
-        bold: true,
-        items: rowActionMenuItems,
-        label: () => 'Row actions',
-        uuid: 'row_actions_grouping',
-      },
-      {
-        isGroupingTitle: true,
-        label: () => 'Column actions',
-        uuid: 'column_actions_grouping',
-      },
-      ...columnActionMenuItems,
-    ];
-
-    // if (!hideTransformerDataSources) {
-    //   arr.splice(
-    //     1,
-    //     0,
-    //     {
-    //       bold: true,
-    //       items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-    //       label: () => 'Data sources',
-    //       uuid: 'data_sources_grouping',
-    //     },
-    //   );
-    // }
-
-    return arr;
-  }, [
-    addNewBlock,
-    columnActionMenuItems,
-    // hideTransformerDataSources,
+    BlockTypeEnum.TRANSFORMER,
     pipelineType,
-    rowActionMenuItems,
-  ]);
-
-  const itemsTransformer = useMemo(() => {
-    // if (isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType) {
-    //   return allActionMenuItems;
-    // }
-
-    // if (isStreamingPipeline) {
-    //   return [
-    //     {
-    //       items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-    //       label: () => 'Python',
-    //       uuid: 'transformers/python',
-    //     },
-    //   ];
-    // }
-
-    // return [
-    //   {
-    //     items: allActionMenuItems,
-    //     label: () => 'Python',
-    //     uuid: 'transformers/python_all',
-    //   },
-    // ];
-
-    return getdataSourceMenuItems(
-      addNewBlock,
-      BlockTypeEnum.TRANSFORMER,
-      pipelineType,
-      {
-        blockTemplatesByBlockType,
-        // showBrowseTemplates,
-      },
-    )?.find(({
-      uuid,
-    }) => uuid === `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`)?.items;
-  }, [
+    {
+      blockTemplatesByBlockType,
+      v2: true,
+    },
+  )?.find(({
+    uuid,
+  }) => uuid === `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`)?.items, [
     addNewBlock,
-    allActionMenuItems,
     blockTemplatesByBlockType,
-    // isPySpark,
-    // isStreamingPipeline,
     pipelineType,
-    // showBrowseTemplates,
   ]);
 
   const itemsSensors = useMemo(() => getdataSourceMenuItems(
@@ -214,6 +138,7 @@ function AddNewBlocksV2({
     pipelineType,
     {
       blockTemplatesByBlockType,
+      v2: true,
     },
   )?.find(({
       uuid,
@@ -227,10 +152,11 @@ function AddNewBlocksV2({
   const itemsTemplates = useMemo(() => [
     {
       beforeIcon: (
-        <BlockCubePolygon
+        <CubeWithArrowDown
           fill={getColorsForBlockType(
             BlockTypeEnum.DATA_LOADER,
           ).accent}
+          size={ICON_SIZE}
         />
       ),
       items: itemsDataLoader,
@@ -239,10 +165,11 @@ function AddNewBlocksV2({
     },
     {
       beforeIcon: (
-        <BlockCubePolygon
+        <FrameBoxSelection
           fill={getColorsForBlockType(
             BlockTypeEnum.TRANSFORMER,
           ).accent}
+          size={ICON_SIZE}
         />
       ),
       items: itemsTransformer,
@@ -251,10 +178,11 @@ function AddNewBlocksV2({
     },
     {
       beforeIcon: (
-        <BlockCubePolygon
+        <CircleWithArrowUp
           fill={getColorsForBlockType(
             BlockTypeEnum.DATA_EXPORTER,
           ).accent}
+          size={ICON_SIZE}
         />
       ),
       items: itemsDataExporter,
@@ -263,10 +191,11 @@ function AddNewBlocksV2({
     },
     {
       beforeIcon: (
-        <BlockCubePolygon
+        <Sensor
           fill={getColorsForBlockType(
             BlockTypeEnum.SENSOR,
           ).accent}
+          size={ICON_SIZE}
         />
       ),
       items: itemsSensors,
@@ -275,10 +204,11 @@ function AddNewBlocksV2({
     },
     {
       beforeIcon: (
-        <BlockCubePolygon
+        <DBTIcon
           fill={getColorsForBlockType(
             BlockTypeEnum.DBT,
           ).accent}
+          size={ICON_SIZE}
         />
       ),
       items: itemsDBT,
@@ -291,7 +221,7 @@ function AddNewBlocksV2({
       uuid: 'custom_templates',
     },
     {
-      beforeIcon: <TemplateShapes default />,
+      beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
       label: () => 'Browse templates',
       onClick: () => showBrowseTemplates({
         addNewBlock,
@@ -301,7 +231,7 @@ function AddNewBlocksV2({
       uuid: 'browse_templates',
     },
     {
-      beforeIcon: <ArrowsAdjustingFrameSquare default />,
+      beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
       label: () => 'Create new template',
       onClick: () => showBrowseTemplates({
         addNew: true,
@@ -319,6 +249,32 @@ function AddNewBlocksV2({
     itemsSensors,
     itemsTransformer,
     showBrowseTemplates,
+  ]);
+
+  const itemsCustom = useMemo(() => [
+    {
+      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
+      label: () => 'Custom block',
+      onClick: () => {
+        addNewBlock({
+          type: BlockTypeEnum.CUSTOM,
+        });
+      },
+      uuid: 'custom_block',
+    },
+    {
+      beforeIcon: <ScratchpadBlock default size={ICON_SIZE} />,
+      label: () => 'Scratchpad',
+      onClick: () => {
+        addNewBlock({
+          language: BlockLanguageEnum.PYTHON,
+          type: BlockTypeEnum.SCRATCHPAD,
+        });
+      },
+      uuid: 'scratchpad',
+    },
+  ], [
+    addNewBlock,
   ]);
 
   return (
@@ -368,24 +324,41 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <Tooltip
-            block
-            label="Add a blank custom block"
-            size={null}
-            widthFitContent
-          >
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => {
-                console.log('blank');
-              }}
+          <ButtonWrapper increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}>
+            <FlyoutMenuWrapper
+              disableKeyboardShortcuts
+              items={itemsCustom}
+              onClickCallback={closeButtonMenu}
+              open={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
+              parentRef={buttonRefCustom}
+              uuid="button_custom"
             >
-              <BlockBlank size={ICON_SIZE} />
-            </Button>
-          </Tooltip>
+              <Tooltip
+                block
+                label="Add a blank custom block or scratchpad block"
+                size={null}
+                widthFitContent
+              >
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === BUTTON_INDEX_CUSTOM
+                        ? null
+                        : BUTTON_INDEX_CUSTOM,
+                    );
+                    handleBlockZIndex(BUTTON_INDEX_CUSTOM);
+                  }}
+                >
+                  <BlockBlank size={ICON_SIZE} />
+                </Button>
+              </Tooltip>
+            </FlyoutMenuWrapper>
+          </ButtonWrapper>
 
           <Spacing mr={3} />
 
@@ -400,8 +373,12 @@ function AddNewBlocksV2({
               noBackground
               noBorder
               noPadding
-              onClick={() => {
-                console.log('markdown');
+              onClick={(e) => {
+                e.preventDefault();
+                addNewBlock({
+                  language: BlockLanguageEnum.MARKDOWN,
+                  type: BlockTypeEnum.MARKDOWN,
+                });
               }}
             >
               <MarkdownPen size={ICON_SIZE} />
