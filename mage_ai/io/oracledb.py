@@ -15,14 +15,14 @@ class OracleDB(BaseSQL):
                  password,
                  host,
                  port,
-                 service,
+                 service_name,
                  verbose: bool = False,
                  **kwargs) -> None:
         super().__init__(user=user,
                          password=password,
                          host=host,
                          port=port,
-                         service=service,
+                         service_name=service_name,
                          verbose=verbose,
                          **kwargs)
 
@@ -33,7 +33,7 @@ class OracleDB(BaseSQL):
             password=config[ConfigKey.ORACLEDB_PASSWORD],
             host=config[ConfigKey.ORACLEDB_HOST],
             port=config[ConfigKey.ORACLEDB_PORT],
-            service=config[ConfigKey.ORACLEDB_SERVICE]
+            service_name=config[ConfigKey.ORACLEDB_SERVICE]
         )
 
     def open(self) -> None:
