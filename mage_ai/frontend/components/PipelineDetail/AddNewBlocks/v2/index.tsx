@@ -10,7 +10,9 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
+  ArrowsAdjustingFrameSquare,
   BlockBlank,
+  BlockCubePolygon,
   TemplateShapes,
 } from '@oracle/icons';
 import {
@@ -36,6 +38,7 @@ import {
   getNonPythonMenuItems,
   groupBlockTemplates,
 } from '../utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 const BUTTON_INDEX_TEMPLATES = 0;
 
@@ -223,26 +226,61 @@ function AddNewBlocksV2({
 
   const itemsTemplates = useMemo(() => [
     {
+      beforeIcon: (
+        <BlockCubePolygon
+          fill={getColorsForBlockType(
+            BlockTypeEnum.DATA_LOADER,
+          ).accent}
+        />
+      ),
       items: itemsDataLoader,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
       uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
     },
     {
+      beforeIcon: (
+        <BlockCubePolygon
+          fill={getColorsForBlockType(
+            BlockTypeEnum.TRANSFORMER,
+          ).accent}
+        />
+      ),
       items: itemsTransformer,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
       uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
     },
     {
+      beforeIcon: (
+        <BlockCubePolygon
+          fill={getColorsForBlockType(
+            BlockTypeEnum.DATA_EXPORTER,
+          ).accent}
+        />
+      ),
       items: itemsDataExporter,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
       uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
     },
     {
+      beforeIcon: (
+        <BlockCubePolygon
+          fill={getColorsForBlockType(
+            BlockTypeEnum.SENSOR,
+          ).accent}
+        />
+      ),
       items: itemsSensors,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
       uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
     },
     {
+      beforeIcon: (
+        <BlockCubePolygon
+          fill={getColorsForBlockType(
+            BlockTypeEnum.DBT,
+          ).accent}
+        />
+      ),
       items: itemsDBT,
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
       uuid: BlockTypeEnum.DBT,
@@ -253,6 +291,7 @@ function AddNewBlocksV2({
       uuid: 'custom_templates',
     },
     {
+      beforeIcon: <TemplateShapes default />,
       label: () => 'Browse templates',
       onClick: () => showBrowseTemplates({
         addNewBlock,
@@ -262,6 +301,7 @@ function AddNewBlocksV2({
       uuid: 'browse_templates',
     },
     {
+      beforeIcon: <ArrowsAdjustingFrameSquare default />,
       label: () => 'Create new template',
       onClick: () => showBrowseTemplates({
         addNew: true,
