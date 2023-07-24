@@ -378,7 +378,6 @@
                 "production/deploying-to-cloud/gcp/setup",
                 "production/deploying-to-cloud/gcp/resources",
                 "production/deploying-to-cloud/gcp/gcp-artifact-registry"
-
               ]
             },
             {
