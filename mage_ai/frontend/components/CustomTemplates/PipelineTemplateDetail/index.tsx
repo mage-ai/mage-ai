@@ -6,9 +6,11 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CustomTemplateType, { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
+import DependencyGraph from '@components/DependencyGraph';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
@@ -16,6 +18,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   NAV_TABS,
   NAV_TAB_DEFINE,
@@ -24,7 +27,6 @@ import {
   NAV_TAB_TRIGGERS,
 } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   ButtonsStyle,
   TabsStyle,
@@ -32,6 +34,7 @@ import {
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineTemplateDetailProps = {
   defaultTab?: TabType;
@@ -55,6 +58,11 @@ function PipelineTemplateDetail({
   templateAttributes: templateAttributesProp,
   templateUUID,
 }: PipelineTemplateDetailProps) {
+  const {
+    height: heightWindow,
+  } = useWindowSize();
+  const heightOffset = HEADER_HEIGHT;
+
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
     uuid: 'CustomTemplates/PipelineTemplateDetail',
@@ -79,6 +87,9 @@ function PipelineTemplateDetail({
     }
   }, [template, templatePrev]);
 
+  const pipeline = useMemo(() => template?.pipeline, [template]);
+  const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
+
   const isNewCustomTemplate: boolean = useMemo(() => !template && !templateUUID, [
     template,
     templateUUID,
@@ -86,7 +97,7 @@ function PipelineTemplateDetail({
 
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
-    : isNewCustomTemplate ? NAV_TAB_DEFINE : NAV_TABS[0],
+    : NAV_TABS[0],
   );
 
   const buttonDisabled = useMemo(() => {
@@ -148,8 +159,18 @@ function PipelineTemplateDetail({
               onMutateSuccess?.();
             }
 
-            setTemplateAttributesState(ct);
-            setTouched(false);
+            if (
+              (template?.template_uuid && ct?.template_uuid !== template?.template_uuid)
+                || (templateUUID && ct?.template_uuid !== templateUUID)
+            ) {
+              router.replace(
+                '/templates/[...slug]',
+                `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
+              );
+            } else {
+              setTemplateAttributesState(ct);
+              setTouched(false);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -208,7 +229,7 @@ function PipelineTemplateDetail({
             setSelectedTab(tab);
           }}
           selectedTabUUID={selectedTab?.uuid}
-          tabs={isNewCustomTemplate ? [NAV_TAB_DEFINE] : NAV_TABS}
+          tabs={NAV_TABS}
         />
       </TabsStyle>
 
@@ -349,7 +370,13 @@ function PipelineTemplateDetail({
       setBeforeHidden={setBeforeHidden}
       setBeforeWidth={setBeforeWidth}
     >
-      <h1>Hello</h1>
+      <DependencyGraph
+        blocks={blocks}
+        height={heightWindow}
+        heightOffset={HEADER_HEIGHT}
+        noStatus
+        pipeline={pipeline as PipelineType}
+      />
     </TripleLayout>
   );
 }

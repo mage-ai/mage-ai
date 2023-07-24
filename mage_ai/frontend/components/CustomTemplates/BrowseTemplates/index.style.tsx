@@ -169,7 +169,7 @@ export const CardDescriptionStyle = styled.div`
 `;
 
 export const TagsStyle = styled.div`
-  height: ${3 * UNIT}px;
+  height: ${3.5 * UNIT}px;
   margin-top: ${0.5 * UNIT}px;
   overflow: hidden;
 `;

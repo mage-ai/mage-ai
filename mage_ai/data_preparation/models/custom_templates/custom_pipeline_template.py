@@ -131,6 +131,9 @@ class CustomPipelineTemplate(BaseConfig):
             TRIGGER_FILE_NAME,
         )
 
+    def build_pipeline(self) -> Pipeline:
+        return Pipeline(clean_name(self.template_uuid), config=self.pipeline)
+
     def create_pipeline(self, name: str) -> Pipeline:
         pipeline = Pipeline(clean_name(name), config=self.pipeline)
         os.makedirs(os.path.dirname(pipeline.config_path), exist_ok=True)
