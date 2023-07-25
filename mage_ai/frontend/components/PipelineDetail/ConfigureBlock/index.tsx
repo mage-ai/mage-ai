@@ -1,25 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import BlockType, { BlockTypeEnum, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import BlockType, {
+  BLOCK_TYPE_NAME_MAPPING,
+  BlockColorEnum,
+  BlockLanguageEnum,
+  BlockTypeEnum,
+  LANGUAGE_DISPLAY_MAPPING,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
+import {
+  PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+} from '@oracle/styles/units/spacing';
+import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type ConfigureBlockProps = {
   block: BlockType;
   defaultName: string;
   onClose: () => void;
   onSave: (opts: {
+    color?: BlockColorEnum;
+    language?: BlockLanguageEnum;
     name: string;
   }) => void;
   pipeline: PipelineType;
@@ -33,7 +45,13 @@ function ConfigureBlock({
   pipeline,
 }: ConfigureBlockProps) {
   const refTextInput = useRef(null);
-  const [blockName, setBlockName] = useState<string>(defaultName);
+  const [blockAttributes, setBlockAttributes] = useState<{
+    color?: BlockColorEnum;
+    language?: BlockLanguageEnum;
+    name?: string;
+  }>({
+    name: defaultName,
+  });
   const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(
     !!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS),
   );
@@ -66,16 +84,67 @@ function ConfigureBlock({
         {title} block name
       </Text>
 
-      <Spacing mt={1}>
+      <Spacing mt={PADDING_UNITS}>
         <TextInput
           monospace
-          onChange={e => setBlockName(e.target.value)}
+          // @ts-ignore
+          onChange={e => setBlockAttributes(prev => ({
+            ...prev,
+            name: e.target.value,
+          }))}
+          primary
           ref={refTextInput}
-          value={blockName}
+          value={blockAttributes?.name || ''}
         />
       </Spacing>
 
-      <Spacing mt={2}>
+      {BlockTypeEnum.CUSTOM === block?.type && (
+        <>
+          <Spacing mt={PADDING_UNITS}>
+            <Select
+              label="Language"
+              // @ts-ignore
+              onChange={e => setBlockAttributes(prev => ({
+                ...prev,
+                language: e.target.value,
+              }))}
+              primary
+              value={blockAttributes?.language || ''}
+            >
+              {[
+                BlockLanguageEnum.PYTHON,
+                BlockLanguageEnum.SQL,
+                BlockLanguageEnum.R,
+              ].map((v: string) => (
+                <option key={v} value={v}>
+                  {LANGUAGE_DISPLAY_MAPPING[v]}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+
+          <Spacing mt={PADDING_UNITS}>
+            <Select
+              label="Color"
+              // @ts-ignore
+              onChange={e => setBlockAttributes(prev => ({
+                ...prev,
+                color: e.target.value,
+              }))}
+              primary
+              value={blockAttributes?.color || ''}
+            >
+              {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
+                <option key={color} value={color}>
+                  {capitalize(color)}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+        </>
+      )}
+
+      {/*<Spacing mt={PADDING_UNITS}>
         <FlexContainer alignItems="center">
           <Checkbox
             checked={automaticallyNameBlocks}
@@ -92,18 +161,16 @@ function ConfigureBlock({
             }}
           />
         </FlexContainer>
-      </Spacing>
+      </Spacing>*/}
 
-      <Spacing mt={3}>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
         <FlexContainer>
           <KeyboardShortcutButton
             bold
             inline
-            keyboardShortcutValidation={({
-              keyMapping,
-            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => onSave({
-              name: blockName || defaultName,
+              ...blockAttributes,
+              name: blockAttributes?.name || defaultName,
             })}
             primary
             tabIndex={0}

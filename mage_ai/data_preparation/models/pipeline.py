@@ -882,7 +882,11 @@ class Pipeline:
                     if block is None:
                         continue
                     if 'content' in block_data:
+                        from mage_ai.cache.block_action_object import BlockActionObjectCache
+
+                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                         await block.update_content_async(block_data['content'], widget=widget)
+                        cache_block_action_object.update_block(block)
                     if 'callback_content' in block_data \
                             and block.callback_block:
                         await block.callback_block.update_content_async(
@@ -944,7 +948,12 @@ class Pipeline:
 
                         should_save_async = should_save_async or True
                     elif name and name != block.name:
+                        from mage_ai.cache.block_action_object import BlockActionObjectCache
+
+                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+                        cache_block_action_object.update_block(block, remove=True)
                         block.update(extract(block_data, ['name']))
+                        cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
                         should_save_async = should_save_async or True
 

@@ -334,6 +334,9 @@ class File:
                 new_path,
             )
 
+        self.dir_path = dir_path
+        self.filename = filename
+
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
         if include_content:

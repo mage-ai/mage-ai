@@ -3,6 +3,7 @@ import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
@@ -104,6 +105,9 @@ class BlockResource(GenericResource):
         cache = await BlockCache.initialize_cache()
         cache.add_pipeline(block, pipeline)
 
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(block)
+
         return self(block, user, **kwargs)
 
     @classmethod
@@ -189,10 +193,16 @@ class BlockResource(GenericResource):
         if pipeline:
             cache.remove_pipeline(self.model, pipeline.uuid)
 
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         return self.model.delete(force=force)
 
     @safe_db_query
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         query = kwargs.get('query', {})
         update_state = query.get('update_state', [False])
         if update_state:
@@ -201,6 +211,8 @@ class BlockResource(GenericResource):
             payload,
             update_state=update_state,
         )
+
+        cache_block_action_object.update_block(self.model)
 
     async def get_pipelines_from_cache(self):
         await BlockCache.initialize_cache()

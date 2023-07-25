@@ -12,6 +12,7 @@ import { useRouter } from 'next/router';
 import ApiReloader from '@components/ApiReloader';
 import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -104,7 +105,7 @@ import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockFromFilePath } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
-import { isEmptyObject } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -1331,10 +1332,10 @@ function PipelineDetailPage({
     pipeline,
   ]);
 
-  const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
-  useEffect(() => {
-    setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
-  }, []);
+  // const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
+  // useEffect(() => {
+  //   setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
+  // }, []);
 
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
@@ -1352,9 +1353,14 @@ function PipelineDetailPage({
       defaultName={name}
       onClose={hideAddBlockModal}
       onSave={(opts: {
+        color?: BlockColorEnum;
+        language?: BlockLanguageEnum;
         name?: string;
       } = {}) => addNewBlockAtIndex(
-        block,
+        {
+          ...block,
+          ...ignoreKeys(opts, ['name']),
+        },
         idx,
         onCreateCallback,
         opts?.name,
@@ -2026,16 +2032,26 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={automaticallyNameBlocks
-        ? addNewBlockAtIndex
-        : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
-            if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
-              addNewBlockAtIndex(block, idx, onCreateCallback, name);
-            } else {
-              // @ts-ignore
-              showAddBlockModal({ block, idx, name, onCreateCallback });
-            }
-          })
+      // addNewBlockAtIndex={automaticallyNameBlocks
+      //   ? addNewBlockAtIndex
+      //   : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
+      //       if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
+      //         addNewBlockAtIndex(block, idx, onCreateCallback, name);
+      //       } else {
+      //         // @ts-ignore
+      //         showAddBlockModal({ block, idx, name, onCreateCallback });
+      //       }
+      //     })
+      // }
+      addNewBlockAtIndex={
+        (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
+          if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
+            addNewBlockAtIndex(block, idx, onCreateCallback, name);
+          } else {
+            // @ts-ignore
+            showAddBlockModal({ block, idx, name, onCreateCallback });
+          }
+        })
       }
       addWidget={(
         widget: BlockType,
@@ -2098,7 +2114,7 @@ function PipelineDetailPage({
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
-    automaticallyNameBlocks,
+    // automaticallyNameBlocks,
     blockRefs,
     blocks,
     blocksInNotebook,

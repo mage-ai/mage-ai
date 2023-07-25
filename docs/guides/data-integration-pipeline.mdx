@@ -67,7 +67,7 @@ dependencies required for data integrations that can be challenging to install u
    the section labeled **Select stream**. Then, choose the stream (aka table)
    you want to load data from.
 
-### Configure schema
+### Configure stream
 
 After selecting a stream (aka table), you’ll need to configure the schema.
 
@@ -103,6 +103,11 @@ Here are the steps you can optionally go through:
 6. Unique conflict method: choose how to handle duplicate records
    - `IGNORE`: skip the new record if it’s a duplicate of an existing record.
    - `UPDATE`: update the existing record with the new record’s properties.
+
+Once you've configured the schema for the stream, you can optionally choose to
+run the stream in parallel. Parallel streams will be attempted to be synchronized
+in parallel if there are enough worker resources available. This may speed up the
+sync process if you have a large number of streams.
 
 ### Editing bookmark property values
    - You can edit the bookmark values for your next sync by editing them
@@ -162,12 +167,12 @@ and choose the `@once` interval. For more schedules, read the
 ### Monitoring pipeline
 
 After you create a scheduled trigger, click the **`[Start trigger]`** button at
-the top of the page.
-
-You’ll see a new pipeline run appear shortly on the screen.
+the top of the page. You’ll see a new pipeline run appear shortly on the screen.
 
 You can [click the logs](/production/observability/logging) for that pipeline
-run to view the progress of your synchronization.
+run to view the progress of your synchronization. Any string config values over
+8 characters long in the logs will be redacted for security purposes. You'll see
+these values hidden as `********` in the logs. 
 
 ---
 

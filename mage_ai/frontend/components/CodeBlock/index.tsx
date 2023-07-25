@@ -124,9 +124,9 @@ import {
 } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
+import { find, indexBy } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
-import { indexBy } from '@utils/array';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -359,6 +359,11 @@ function CodeBlock({
   const dbtProfileTarget = useMemo(() => dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET], [
     dataProviderConfig,
   ]);
+  const dbtProfileTargetSelectPlaceholder = dbtProjectName
+    ? (dbtProfileData?.target
+      ? find(dbtProfileTargets, (target: string) => target === dbtProfileData.target)
+      : 'Select target')
+    : 'Select project first';
 
   const [manuallyEnterTarget, setManuallyEnterTarget] = useState<boolean>(dbtProfileTarget &&
     !dbtProfileTargets?.includes(dbtProfileTarget),
@@ -1403,7 +1408,6 @@ function CodeBlock({
                             setAnyInputFocused(false);
                           }, 300)}
                           onChange={(e) => {
-                            // @ts-ignore
                             updateDataProviderConfig({
                               [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
                               [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
@@ -1449,7 +1453,6 @@ function CodeBlock({
                             setAnyInputFocused(false);
                           }, 300)}
                           onChange={(e) => {
-                            // @ts-ignore
                             updateDataProviderConfig({
                               [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
                             });
@@ -1459,12 +1462,7 @@ function CodeBlock({
                           onFocus={() => {
                             setAnyInputFocused(true);
                           }}
-                          placeholder={dbtProjectName
-                            ? isSQLBlock
-                              ? dbtProfileData?.target
-                              : null
-                            : 'Select project first'
-                          }
+                          placeholder={dbtProfileTargetSelectPlaceholder}
                           small
                           value={dbtProfileTarget || ''}
                         >
@@ -1484,7 +1482,6 @@ function CodeBlock({
                             setAnyInputFocused(false);
                           }, 300)}
                           onChange={(e) => {
-                            // @ts-ignore
                             updateDataProviderConfig({
                               [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
                             });
@@ -1495,9 +1492,7 @@ function CodeBlock({
                             setAnyInputFocused(true);
                           }}
                           placeholder={dbtProjectName
-                            ? isSQLBlock
-                              ? dbtProfileData?.target
-                              : null
+                            ? (dbtProfileData?.target || 'Enter target')
                             : 'Select project first'
                           }
                           small
@@ -1539,6 +1534,11 @@ function CodeBlock({
                               onClick={(e) => {
                                 pauseEvent(e);
                                 setManuallyEnterTarget(!manuallyEnterTarget);
+                                if (manuallyEnterTarget) {
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DBT_PROFILE_TARGET]: null,
+                                  });
+                                }
                               }}
                             />
                             <span>&nbsp;</span>

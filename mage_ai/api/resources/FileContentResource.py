@@ -2,6 +2,8 @@ import urllib.parse
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
@@ -16,7 +18,7 @@ class FileContentResource(GenericResource):
         file = File.from_path(file_path, get_repo_path())
         return self(file, user, **kwargs)
 
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
         content = payload.get('content')
@@ -31,3 +33,8 @@ class FileContentResource(GenericResource):
             content = file_version.content()
 
         self.model.update_content(content)
+
+        block_type = Block.block_type_from_path(self.model.dir_path)
+        if block_type:
+            cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+            cache_block_action_object.update_block(block_file_absolute_path=self.model.file_path)

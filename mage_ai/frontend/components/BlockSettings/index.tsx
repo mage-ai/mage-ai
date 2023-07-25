@@ -27,6 +27,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { isEmptyObject } from '@utils/hash';
+import { capitalize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -232,7 +233,7 @@ function BlockSettings({
                 >
                   {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
                     <option key={color} value={color}>
-                      {color}
+                      {capitalize(color)}
                     </option>
                   ))}
                 </Select>
