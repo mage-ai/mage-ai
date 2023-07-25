@@ -1,13 +1,14 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   BORDER_COLOR_SHARED_STYLES,
   BorderColorShareProps,
   LEFT_PADDING,
 } from '../index.style';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SHARED_STYLES } from '@oracle/elements/Text';
 
 export const ContainerStyle = styled.div<{
   addBottomPadding?: boolean;
@@ -57,6 +58,8 @@ export const OutputRowStyle = styled.div<{
 `;
 
 export const HTMLOutputStyle = styled.div<any>`
+  ${SHARED_STYLES}
+
   table {
     ${BORDER_COLOR_SHARED_STYLES}
     border-left-style: solid;
