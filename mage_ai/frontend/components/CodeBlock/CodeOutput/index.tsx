@@ -1,5 +1,6 @@
-import Ansi from 'ansi-to-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import Ansi from 'ansi-to-react';
+import InnerHTML from 'dangerously-set-html-content';
 import { useMutation } from 'react-query';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -296,7 +297,9 @@ function CodeOutput({
         rows: any[][];
         shape: number[];
       }) => {
-        if (data && typeof data === 'string') {
+        if (dataType === DataTypeEnum.TEXT_HTML) {
+          dataArray.push(data);
+        } else if (data && typeof data === 'string') {
           const lines = data.split('\n');
           dataArray.push(...lines);
         } else if (typeof dataArray === 'object') {
@@ -377,7 +380,6 @@ function CodeOutput({
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-
           isTable = true;
           const tableEl = createDataTableElement(
             isJsonString(data) ? JSON.parse(data) : data,
@@ -406,19 +408,15 @@ function CodeOutput({
             </OutputRowStyle>
           );
         } else if (dataType === DataTypeEnum.TEXT_HTML) {
-          displayElement = (
-            <OutputRowStyle {...outputRowSharedProps}>
-              <HTMLOutputStyle>
-                <Text
-                  // @ts-ignore
-                  dangerouslySetInnerHTML={{
-                    __html: data,
-                  }}
-                  monospace
-                />
-              </HTMLOutputStyle>
-            </OutputRowStyle>
-          );
+          if (data) {
+            displayElement = (
+              <OutputRowStyle {...outputRowSharedProps}>
+                <HTMLOutputStyle monospace>
+                  <InnerHTML html={data} />
+                </HTMLOutputStyle>
+              </OutputRowStyle>
+            );
+          }
         } else if (dataType === DataTypeEnum.IMAGE_PNG) {
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
