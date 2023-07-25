@@ -594,8 +594,11 @@ function AddNewBlocksV2({
                   },
                 ]}
                 onSelectItem={({ itemObject: blockActionObject }: BlockActionObjectType) => {
-                  console.log(blockActionObject);
+                  addNewBlock({
+                    block_action_object: blockActionObject,
+                  });
                   setInputValue(null);
+                  setSearchResult(null);
                 }}
                 uuid={componentUUID}
               />

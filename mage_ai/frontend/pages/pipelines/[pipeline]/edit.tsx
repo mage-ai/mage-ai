@@ -53,7 +53,6 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { Close } from '@oracle/icons';
 import {
   EDIT_BEFORE_TABS,
@@ -68,7 +67,7 @@ import {
 } from '@interfaces/FileType';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
-  LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
+  // LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
@@ -81,6 +80,7 @@ import {
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { ObjectType } from '@interfaces/BlockActionObjectType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import {
@@ -2043,16 +2043,25 @@ function PipelineDetailPage({
       //       }
       //     })
       // }
-      addNewBlockAtIndex={
-        (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
-          if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
-            addNewBlockAtIndex(block, idx, onCreateCallback, name);
-          } else {
-            // @ts-ignore
-            showAddBlockModal({ block, idx, name, onCreateCallback });
-          }
-        })
-      }
+      addNewBlockAtIndex={(
+        block,
+        idx,
+        onCreateCallback,
+        name,
+      ) => new Promise(() => {
+        console.log(block?.block_action_object)
+        if (ObjectType.BLOCK_FILE === block?.block_action_object?.object_type
+          || (
+          BlockTypeEnum.DBT === block?.type
+            && BlockLanguageEnum.SQL === block?.language
+            && !block?.block_action_object
+        )) {
+          addNewBlockAtIndex(block, idx, onCreateCallback, name);
+        } else {
+          // @ts-ignore
+          showAddBlockModal({ block, idx, name, onCreateCallback });
+        }
+      })}
       addWidget={(
         widget: BlockType,
         {
