@@ -32,6 +32,32 @@ from pathlib import Path
 from typing import Dict
 
 
+def parse_block_file_absolute_path(block_file_absolute_path: str) -> Dict:
+    file_path = str(block_file_absolute_path).replace(get_repo_path(), '')
+    if file_path.startswith(os.sep):
+        file_path = file_path[1:]
+
+    file_path_parts = os.path.split(file_path)
+    filename = file_path_parts[-1]
+
+    filename_parts = filename.split('.')
+    file_extension = None
+    if len(filename_parts) >= 2:
+        file_extension = filename_parts[-1]
+
+    block_language = None
+    if file_extension:
+        block_language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(file_extension)
+
+    return dict(
+        block_type=Block.block_type_from_path(block_file_absolute_path),
+        file_path=file_path,
+        filename=filename,
+        filename_parts=filename_parts,
+        language=block_language,
+    )
+
+
 class BlockActionObjectCache(BaseCache):
     cache_key = CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING
 
@@ -100,6 +126,74 @@ class BlockActionObjectCache(BaseCache):
 
         return ':'.join(arr)
 
+    def update_block_file(
+        self,
+        block_file_absolute_path: str,
+        remove: bool = False,
+    ) -> None:
+        d = parse_block_file_absolute_path(block_file_absolute_path)
+        block_type = d.get('block_type')
+        file_path = d.get('file_path')
+        filename = d.get('filename')
+        filename_parts = d.get('filename_parts')
+        language = d.get('language')
+
+        key = self.build_key_for_block_file(
+            file_path,
+            block_type,
+            language,
+            filename,
+        )
+
+        mapping = self.load_all_data()
+        if mapping is None:
+            mapping = {}
+
+        if OBJECT_TYPE_BLOCK_FILE not in mapping:
+            mapping[OBJECT_TYPE_BLOCK_FILE] = {}
+
+        if remove:
+            if key in mapping[OBJECT_TYPE_BLOCK_FILE]:
+                mapping[OBJECT_TYPE_BLOCK_FILE].pop(key, None)
+        else:
+            content = None
+            with open(block_file_absolute_path, 'r') as f:
+                content = f.read()
+
+            mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
+                content=content,
+                file_path=file_path,
+                language=language,
+                type=block_type,
+                uuid='.'.join(filename_parts[:-1]),
+            )
+
+        self.set(self.cache_key, mapping)
+
+    def update_custom_block_template(
+        self,
+        custom_block_template: CustomBlockTemplate,
+        remove: bool = False,
+    ) -> None:
+        key = self.build_key_for_custom_block_template(custom_block_template)
+
+        mapping = self.load_all_data()
+        if mapping is None:
+            mapping = {}
+
+        if OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE not in mapping:
+            mapping[OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE] = {}
+
+        if remove:
+            if key in mapping[OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE]:
+                mapping[OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE].pop(key, None)
+        else:
+            mapping[OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE][key] = custom_block_template.to_dict(
+                include_content=True,
+            )
+
+        self.set(self.cache_key, mapping)
+
     async def initialize_cache_for_all_objects(self) -> None:
         mapping = {
             OBJECT_TYPE_BLOCK_FILE: {},
@@ -132,32 +226,23 @@ class BlockActionObjectCache(BaseCache):
                     continue
 
                 block_file_absolute_path = path.absolute()
-                file_path = str(block_file_absolute_path).replace(get_repo_path(), '')
-                if file_path.startswith(os.sep):
-                    file_path = file_path[1:]
+                d = parse_block_file_absolute_path(block_file_absolute_path)
 
-                file_path_parts = os.path.split(file_path)
-                filename = file_path_parts[-1]
+                file_path = d.get('file_path')
+                filename = d.get('filename')
+                filename_parts = d.get('filename_parts')
+                language = d.get('language')
 
                 if '__init__.py' == filename:
                     continue
 
-                filename_parts = filename.split('.')
-                file_extension = None
-                if len(filename_parts) >= 2:
-                    file_extension = filename_parts[-1]
-
-                block_language = None
-                if file_extension:
-                    block_language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(file_extension)
-
-                if not block_language:
+                if not language:
                     continue
 
                 key = self.build_key_for_block_file(
                     file_path,
                     block_type,
-                    block_language,
+                    language,
                     filename,
                 )
 
@@ -168,7 +253,7 @@ class BlockActionObjectCache(BaseCache):
                 mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
                     content=content,
                     file_path=file_path,
-                    language=block_language,
+                    language=language,
                     type=block_type,
                     uuid='.'.join(filename_parts[:-1]),
                 )
