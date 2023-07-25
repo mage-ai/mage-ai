@@ -515,7 +515,7 @@ class Block:
         if not replicated_block and \
                 (BlockType.DBT != block_type or BlockLanguage.YAML == language):
 
-            block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
+            block_directory = self.file_directory_name(block_type)
             block_dir_path = os.path.join(repo_path, block_directory)
             if not os.path.exists(block_dir_path):
                 os.mkdir(block_dir_path)
@@ -566,6 +566,10 @@ class Block:
             widget=widget,
         )
         return block
+
+    @classmethod
+    def file_directory_name(self, block_type: BlockType) -> str:
+        return f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
 
     @classmethod
     def get_all_blocks(self, repo_path) -> Dict:
