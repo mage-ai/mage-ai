@@ -362,6 +362,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
             unique_constraints = self.unique_constraints.get(stream)
             unique_conflict_method = self.unique_conflict_methods.get(stream)
+            self.logger.info(f'Batch upload unique_constraints: {unique_constraints}')
+            self.logger.info(f'Batch upload unique_conflict_method: {unique_conflict_method}')
 
             # Execute the query_strings before inserting the data, i.e., passed-in
             # query_strings including create table command or alter table command
