@@ -150,6 +150,7 @@ setuptools.setup(
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==2.7.9',
             'sshtunnel==0.4.0',
+            'thefuzz[speedup]==0.19.0',
         ],
     },
 )
