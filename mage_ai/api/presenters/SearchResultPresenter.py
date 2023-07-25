@@ -7,6 +7,7 @@ from mage_ai.cache.block_action_object.constants import (
 )
 from mage_ai.services.search.constants import SEARCH_TYPE_BLOCK_ACTION_OBJECTS
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.strings import remove_extension_from_filename
 
 
 class SearchResultPresenter(BasePresenter):
@@ -39,21 +40,23 @@ class SearchResultPresenter(BasePresenter):
 
                 if OBJECT_TYPE_BLOCK_FILE == object_type:
                     block_type = block_action_object.get('type')
+                    u = block_action_object.get('uuid')
                     title = ' '.join(list(filter(lambda x: x, [
-                        block_action_object.get('uuid'),
+                        remove_extension_from_filename(u).replace('_', ' ') if u else u,
                     ])))
                 elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
                     block_type = block_action_object.get('block_type')
                     template_name = block_action_object.get('name')
                     template_uuid = block_action_object.get('template_uuid')
+                    u = template_name or template_uuid
                     title = ' '.join(list(filter(lambda x: x, [
-                        template_name or template_uuid,
+                        remove_extension_from_filename(u).replace('_', ' ') if u else u,
                     ])))
                 elif OBJECT_TYPE_MAGE_TEMPLATE ==  object_type:
                     block_type = block_action_object.get('block_type')
-                    template_name = block_action_object.get('name')
+                    u = block_action_object.get('name')
                     title = ' '.join(list(filter(lambda x: x, [
-                        template_name,
+                        remove_extension_from_filename(u).replace('_', ' ') if u else u,
                     ])))
 
                 results_transformed.append(dict(

@@ -3,6 +3,7 @@ import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
@@ -103,6 +104,9 @@ class BlockResource(GenericResource):
 
         cache = await BlockCache.initialize_cache()
         cache.add_pipeline(block, pipeline)
+
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(block)
 
         return self(block, user, **kwargs)
 

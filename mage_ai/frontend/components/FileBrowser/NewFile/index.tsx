@@ -9,11 +9,9 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { getFullPathWithoutRootFolder } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type NewFileProps = {
   fetchFileTree?: () => void;
@@ -104,9 +102,6 @@ function NewFile({
             bold
             disabled={!filename}
             inline
-            keyboardShortcutValidation={({
-              keyMapping,
-            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => {
               if (file) {
                 // @ts-ignore

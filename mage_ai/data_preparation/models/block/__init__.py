@@ -577,7 +577,7 @@ class Block:
         if file_path.startswith(os.sep):
             file_path = file_path[1:]
 
-        file_path_parts = os.path.split(file_path)
+        file_path_parts = file_path.split(os.path.sep)
         dir_name = file_path_parts[0]
 
         for block_type in BlockType:
