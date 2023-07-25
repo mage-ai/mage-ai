@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 from typing import Union
-from requests_toolbelt import MultipartEncoder
 
 
 from pandas import DataFrame, json_normalize
