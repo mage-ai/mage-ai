@@ -10,14 +10,7 @@ class OauthAccessTokenResource(DatabaseResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        results = Oauth2AccessToken.query
-
-        show_all_users = query_arg.get('show_all_users', [None])
-        if show_all_users:
-            show_all_users = show_all_users[0]
-
-        if not show_all_users:
-            results = results.filter(Oauth2AccessToken.user_id == user.id)
+        results = Oauth2AccessToken.query.filter(Oauth2AccessToken.user_id == user.id)
 
         show_all = query_arg.get('show_all', [None])
         if show_all:

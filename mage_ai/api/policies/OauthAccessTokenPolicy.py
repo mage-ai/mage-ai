@@ -29,12 +29,3 @@ OauthAccessTokenPolicy.allow_query([
 ], on_action=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
-
-
-OauthAccessTokenPolicy.allow_query([
-    'show_all_users',
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_admin_role())
