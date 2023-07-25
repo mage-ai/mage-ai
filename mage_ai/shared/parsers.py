@@ -1,5 +1,6 @@
 from datetime import datetime
 from json import JSONDecoder
+
 import numpy as np
 
 INTS = (
@@ -46,13 +47,15 @@ def encode_complex(obj):
     return obj
 
 
-def extract_json_objects(text, decoder=JSONDecoder()):
+def extract_json_objects(text, decoder=None):
     """Find JSON objects in text, and yield the decoded JSON data
 
     Does not attempt to look for JSON arrays, text, or other JSON types outside
     of a parent JSON object.
 
     """
+    if decoder is None:
+        decoder = JSONDecoder()
     pos = 0
     while True:
         match = text.find('{', pos)
@@ -69,7 +72,13 @@ def extract_json_objects(text, decoder=JSONDecoder()):
 def sample_output(obj):
     if isinstance(obj, list):
         sampled = len(obj) > MAX_ITEMS_IN_SAMPLE_OUTPUT
-        return obj[:MAX_ITEMS_IN_SAMPLE_OUTPUT], sampled
+        sampled_list = []
+        for item in obj[:MAX_ITEMS_IN_SAMPLE_OUTPUT]:
+            item, item_sampled = sample_output(item)
+            if item_sampled:
+                sampled = True
+            sampled_list.append(item)
+        return sampled_list, sampled
     elif isinstance(obj, dict):
         sampled = False
         output = dict()
