@@ -365,8 +365,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
             # Execute the query_strings before inserting the data, i.e., passed-in
             # query_strings including create table command or alter table command
-            self.logger.info(f'Executing query_strings: {query_strings}')
-            results += self.build_connection().execute(query_strings, commit=True)
+            if query_strings and len(query_strings) > 0:
+                self.logger.info(f'Executing query_strings: {query_strings}')
+                results += self.build_connection().execute(query_strings, commit=True)
+            else:
+                self.logger.info(f'Skip executing empty query_strings: {query_strings}')
 
             df = pd.DataFrame([d['record'] for d in record_data])
             df.columns = df.columns.str.lower()
