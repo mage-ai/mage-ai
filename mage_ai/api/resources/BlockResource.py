@@ -193,10 +193,16 @@ class BlockResource(GenericResource):
         if pipeline:
             cache.remove_pipeline(self.model, pipeline.uuid)
 
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         return self.model.delete(force=force)
 
     @safe_db_query
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         query = kwargs.get('query', {})
         update_state = query.get('update_state', [False])
         if update_state:
@@ -205,6 +211,8 @@ class BlockResource(GenericResource):
             payload,
             update_state=update_state,
         )
+
+        cache_block_action_object.update_block(self.model)
 
     async def get_pipelines_from_cache(self):
         await BlockCache.initialize_cache()

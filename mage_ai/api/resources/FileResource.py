@@ -77,6 +77,19 @@ class FileResource(GenericResource):
         return self.model.delete()
 
     @safe_db_query
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
+        block_type = Block.block_type_from_path(self.model.dir_path)
+        cache_block_action_object = None
+        if block_type:
+            cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+            cache_block_action_object.update_block(
+                block_file_absolute_path=self.model.file_path,
+                remove=True,
+            )
+
         self.model.rename(payload['dir_path'], payload['name'])
+
+        if block_type and cache_block_action_object:
+            cache_block_action_object.update_block(block_file_absolute_path=self.model.file_path)
+
         return self
