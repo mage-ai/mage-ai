@@ -124,7 +124,8 @@ class CustomTemplateResource(GenericResource):
             print(f'[WARNING] CustomTemplateResource.member: {err}')
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
-    def delete(self, **kwargs):
+    async def delete(self, **kwargs):
+        cache = await BlockActionObjectCache.initialize_cache()
         cache.update_custom_block_template(self.model, remove=True)
         self.model.delete
 

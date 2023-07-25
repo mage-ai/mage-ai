@@ -52,7 +52,7 @@ class SearchResultPresenter(BasePresenter):
                     title = ' '.join(list(filter(lambda x: x, [
                         remove_extension_from_filename(u).replace('_', ' ') if u else u,
                     ])))
-                elif OBJECT_TYPE_MAGE_TEMPLATE ==  object_type:
+                elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
                     block_type = block_action_object.get('block_type')
                     u = block_action_object.get('name')
                     title = ' '.join(list(filter(lambda x: x, [

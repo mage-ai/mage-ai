@@ -238,8 +238,6 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
-        block_files = []
-
         for block_type in BlockType:
             file_directory_name = Block.file_directory_name(block_type)
             directory_full_path = os.path.join(get_repo_path(), file_directory_name)
