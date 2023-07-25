@@ -1,44 +1,67 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
+import AutocompleteDropdown from '@components/AutocompleteDropdown';
+import BlockActionObjectType, { ObjectType } from '@interfaces/BlockActionObjectType';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
 import PenWriting from '@oracle/icons/custom/PenWriting';
+import SearchResultType, { SearchResultTypeEnum } from '@interfaces/SearchResultType';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import {
-  ArrowsAdjustingFrameSquare,
-  BlockBlank,
-  BlockGeneric,
-  CircleWithArrowUp,
-  CubeWithArrowDown,
-  DBT as DBTIcon,
-  FrameBoxSelection,
-  Sensor,
-  TemplateShapes,
-} from '@oracle/icons';
-import {
+  ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPE_NAME_MAPPING,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
+  ArrowsAdjustingFrameSquare,
+  BlockBlank,
+  BlockCubePolygon,
+  BlockGeneric,
+  CircleWithArrowUp,
+  CubeWithArrowDown,
+  DBT as DBTIcon,
+  File as FileIcon,
+  FrameBoxSelection,
+  Sensor,
+  TemplateShapes,
+} from '@oracle/icons';
+import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
+import {
   ButtonWrapper,
   ContainerStyle,
   DividerStyle,
+  DropdownStyle,
   ICON_SIZE,
+  RowStyle,
+  SearchStyle,
+  TextInputFocusAreaStyle,
 } from './index.style';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
+import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getdataSourceMenuItems } from '../utils';
+import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
+import { useError } from '@context/Error';
+import { useKeyboardContext } from '@context/Keyboard';
 
 const BUTTON_INDEX_TEMPLATES = 0;
 const BUTTON_INDEX_CUSTOM = 1;
+const BUTTON_INDEX_MARKDOWN = 0;
 
 type AddNewBlocksV2Props = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -48,6 +71,7 @@ type AddNewBlocksV2Props = {
       [language: string]: FlyoutMenuItemType;
     };
   };
+  compact?: boolean;
   itemsDBT: FlyoutMenuItemType[];
   pipelineType: PipelineTypeEnum;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
@@ -63,6 +87,7 @@ function AddNewBlocksV2({
   addNewBlock,
   blockIdx,
   blockTemplatesByBlockType,
+  compact,
   itemsDBT,
   pipelineType,
   setAddNewBlockMenuOpenIdx,
@@ -70,8 +95,42 @@ function AddNewBlocksV2({
 }: AddNewBlocksV2Props) {
   const buttonRefTemplates = useRef(null);
   const buttonRefCustom = useRef(null);
+  const timeoutRef = useRef(null);
+  const refTextInput = useRef(null);
+
+  const componentUUID = useMemo(() => `AddNewBlocksV2/${blockIdx}`, [blockIdx]);
+  const [showError] = useError(null, {}, [], {
+    uuid: `AddNewBlocksV2/${blockIdx}`,
+  });
 
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(null);
+  const [focused, setFocused] = useState<boolean>(false);
+  const [inputValue, setInputValue] = useState<string>(null);
+  const [searchResult, setSearchResult] = useState<SearchResultType>(null);
+
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => unregisterOnKeyDown(componentUUID), [
+    unregisterOnKeyDown,
+    componentUUID,
+  ]);
+
+  registerOnKeyDown?.(
+    componentUUID,
+    (event, keyMapping) => {
+      if (focused && keyMapping[KEY_CODE_ESCAPE]) {
+        setFocused(false);
+        refTextInput?.current?.blur();
+      }
+    },
+    [
+      focused,
+      refTextInput,
+    ],
+  );
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
   const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
@@ -274,16 +333,86 @@ function AddNewBlocksV2({
     addNewBlock,
   ]);
 
+  const [createSearchResult] = useMutation(
+    api.search_results.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            search_result: sr,
+          }) => {
+            setSearchResult(sr);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const onUserTyping = useCallback((e) => {
+    clearTimeout(timeoutRef.current);
+
+    const val = e.target.value;
+    setInputValue(val);
+
+    if (!val) {
+      setSearchResult(null);
+      return;
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      // @ts-ignore
+      createSearchResult({
+        search_result: {
+          query: val,
+          ratio: 70,
+          type: SearchResultTypeEnum.BLOCK_ACTION_OBJECTS,
+        },
+      });
+    }, 500);
+  }, [
+    createSearchResult,
+    timeoutRef,
+  ]);
+
+  const results: BlockActionObjectType[] =
+    useMemo(() => searchResult?.results || [], [searchResult]);
+  const autocompleteItems =
+    useMemo(() => results?.map((blockActionObject: BlockActionObjectType) => ({
+      itemObject: blockActionObject,
+      searchQueries: [searchResult?.uuid],
+      value: blockActionObject?.uuid,
+    })), [
+      results,
+      searchResult,
+    ]);
+
+  const focusArea = useMemo(() => (
+    <TextInputFocusAreaStyle
+      compact={compact}
+      onClick={() => refTextInput?.current?.focus()}
+    />
+  ), [
+    compact,
+    refTextInput,
+  ]);
+
   return (
     <ClickOutside
       onClickOutside={closeButtonMenu}
       open
     >
-      <ContainerStyle>
+      <ContainerStyle compact={compact}>
         <FlexContainer
           alignItems="center"
         >
-          <ButtonWrapper increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}>
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
+          >
             <FlyoutMenuWrapper
               disableKeyboardShortcuts
               items={itemsTemplates}
@@ -321,7 +450,10 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <ButtonWrapper increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}>
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
+          >
             <FlyoutMenuWrapper
               disableKeyboardShortcuts
               items={itemsCustom}
@@ -359,28 +491,33 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <Tooltip
-            block
-            label="Add a markdown block for documentation"
-            size={null}
-            widthFitContent
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_MARKDOWN === buttonMenuOpenIndex}
           >
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                e.preventDefault();
-                addNewBlock({
-                  language: BlockLanguageEnum.MARKDOWN,
-                  type: BlockTypeEnum.MARKDOWN,
-                });
-              }}
+            <Tooltip
+              block
+              label="Add a markdown block for documentation"
+              size={null}
+              widthFitContent
             >
-              <MarkdownPen size={ICON_SIZE} />
-            </Button>
-          </Tooltip>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  e.preventDefault();
+                  addNewBlock({
+                    language: BlockLanguageEnum.MARKDOWN,
+                    type: BlockTypeEnum.MARKDOWN,
+                  });
+                }}
+              >
+                <MarkdownPen size={ICON_SIZE} />
+              </Button>
+            </Tooltip>
+          </ButtonWrapper>
 
           <Spacing mr={3} />
 
@@ -388,14 +525,118 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <TextInput
-            fullWidth
-            noBackground
-            noBorder
-            paddingHorizontal={0}
-            paddingVertical={0}
-            placeholder="Add block that..."
-          />
+          <SearchStyle>
+            {focusArea}
+            <TextInput
+              fullWidth
+              noBackground
+              noBorder
+              // Need setTimeout because when clicking a row, the onBlur will be triggered.
+              // If the onBlur triggers too soon, clicking a row does nothing.
+              onBlur={() => setTimeout(() => setFocused(false), 150)}
+              onChange={onUserTyping}
+              onFocus={() => setFocused(true)}
+              paddingHorizontal={0}
+              paddingVertical={0}
+              placeholder="Search for a block to add..."
+              ref={refTextInput}
+              value={inputValue || ''}
+            />
+            {focusArea}
+
+            <DropdownStyle
+              topOffset={refTextInput?.current?.getBoundingClientRect().height + (
+                compact
+                  ? 1.5 * UNIT
+                  : 2.5 * UNIT
+              )}
+            >
+              <AutocompleteDropdown
+                itemGroups={[
+                  {
+                    items: focused ? autocompleteItems : [],
+                    renderItem: (
+                      {
+                        itemObject: blockActionObject,
+                      }: ItemType,
+                      opts: RenderItemProps,
+                    ) => {
+                      const {
+                        block_type: blockType,
+                        description,
+                        language,
+                        object_type: objectType,
+                        title,
+                      } = blockActionObject;
+
+                      const iconProps: {
+                        fill?: string;
+                        size: number;
+                      } = {
+                        fill: getColorsForBlockType(blockType).accent,
+                        size: ICON_SIZE,
+                      };
+                      const Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
+
+                      const displayText =
+                        `${title}${description ? ': ' + description : ''}`.slice(0, 40);
+
+                      return (
+                        <RowStyle
+                          {...opts}
+                          onClick={(e) => {
+                            pauseEvent(e);
+                            opts?.onClick?.(e);
+                          }}
+                        >
+                          <Flex
+                            alignItems="center"
+                            flex={1}
+                          >
+                            {Icon && <Icon default={!iconProps?.fill} {...iconProps} />}
+
+                            <Spacing mr={2} />
+
+                            <Text default textOverflow>
+                              {displayText}
+                            </Text>
+                          </Flex>
+
+                          <Spacing mr={1} />
+
+                          <Text monospace muted uppercase>
+                            {ABBREV_BLOCK_LANGUAGE_MAPPING[language]}
+                          </Text>
+
+                          <Spacing mr={1} />
+
+                          {ObjectType.BLOCK_FILE === objectType && (
+                            <FileIcon muted size={ICON_SIZE} />
+                          )}
+
+                          {ObjectType.CUSTOM_BLOCK_TEMPLATE === objectType && (
+                            <TemplateShapes muted size={ICON_SIZE} />
+                          )}
+
+                          {ObjectType.MAGE_TEMPLATE === objectType && (
+                            <BlockCubePolygon muted size={ICON_SIZE} />
+                          )}
+                        </RowStyle>
+                      );
+                    },
+                  },
+                ]}
+                onSelectItem={({ itemObject: blockActionObject }: ItemType) => {
+                  addNewBlock({
+                    block_action_object: blockActionObject,
+                  });
+                  setInputValue(null);
+                  setSearchResult(null);
+                }}
+                uuid={componentUUID}
+              />
+            </DropdownStyle>
+          </SearchStyle>
         </FlexContainer>
       </ContainerStyle>
     </ClickOutside>

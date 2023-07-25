@@ -50,6 +50,20 @@ export type NavLinkType = {
   uuid: string | BlockTypeEnum;
 };
 
+export const BLOCK_TYPE_ICON_MAPPING = {
+  [BlockTypeEnum.CALLBACK]: Callback,
+  [BlockTypeEnum.CHART]: Charts,
+  [BlockTypeEnum.CONDITIONAL]: Conditional,
+  [BlockTypeEnum.CUSTOM]: BlockGeneric,
+  [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
+  [BlockTypeEnum.DATA_LOADER]: CubeWithArrowDown,
+  [BlockTypeEnum.DBT]: DBT,
+  [BlockTypeEnum.EXTENSION]: Lightning,
+  [BlockTypeEnum.MARKDOWN]: FileIcon,
+  [BlockTypeEnum.SENSOR]: Sensor,
+  [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
+}
+
 export const NAV_LINKS: NavLinkType[] = [
   {
     Icon: TemplateShapes,
@@ -57,60 +71,49 @@ export const NAV_LINKS: NavLinkType[] = [
   },
 ].concat([
   {
-    Icon: CubeWithArrowDown,
     uuid: BlockTypeEnum.DATA_LOADER,
   },
   {
-    Icon: FrameBoxSelection,
     uuid: BlockTypeEnum.TRANSFORMER,
   },
   {
-    Icon: CircleWithArrowUp,
     selectedIconProps: {
       inverted: true,
     },
     uuid: BlockTypeEnum.DATA_EXPORTER,
   },
   {
-    Icon: Sensor,
     uuid: BlockTypeEnum.SENSOR,
   },
   {
-    Icon: BlockGeneric,
     selectedIconProps: {
       inverted: true,
     },
     uuid: BlockTypeEnum.CUSTOM,
   },
   {
-    Icon: Charts,
     uuid: BlockTypeEnum.CHART,
   },
   {
-    Icon: Callback,
     selectedIconProps: {
       inverted: true,
     },
     uuid: BlockTypeEnum.CALLBACK,
   },
   {
-    Icon: Conditional,
     selectedIconProps: {
       inverted: true,
     },
     uuid: BlockTypeEnum.CONDITIONAL,
   },
   {
-    Icon: Lightning,
     uuid: BlockTypeEnum.EXTENSION,
   },
   {
-    Icon: DBT,
     selectedBackgroundColor: null,
     uuid: BlockTypeEnum.DBT,
   },
   {
-    Icon: FileIcon,
     selectedIconProps: {
       inverted: true,
     },
@@ -120,6 +123,7 @@ export const NAV_LINKS: NavLinkType[] = [
   uuid,
   ...rest
 }) => ({
+  Icon: BLOCK_TYPE_ICON_MAPPING[uuid],
   filterTemplates: (customTemplates: CustomTemplateType[]) => customTemplates?.filter(({
     block_type: blockType,
   }) => blockType === uuid),

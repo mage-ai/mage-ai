@@ -4,6 +4,7 @@ import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
   BlockColorEnum,
   BlockLanguageEnum,
+  BlockRequestPayloadType,
   BlockTypeEnum,
   LANGUAGE_DISPLAY_MAPPING,
 } from '@interfaces/BlockType';
@@ -26,7 +27,7 @@ import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 
 type ConfigureBlockProps = {
-  block: BlockType;
+  block: BlockType | BlockRequestPayloadType;
   defaultName: string;
   onClose: () => void;
   onSave: (opts: {
@@ -64,24 +65,41 @@ function ConfigureBlock({
     pipeline,
   ]);
 
+  // @ts-ignore
+  const blockActionObject = useMemo(() => block?.block_action_object, [block]);
+
   const title = useMemo(() => {
+    if (blockActionObject) {
+      let t = blockActionObject?.title;
+      if (t?.length > 40) {
+        t = `${t?.slice(0, 40)}...`;
+      }
+
+      return `Block name for ${t}`;
+    }
+
     const blockType = block?.type;
 
+    let tt = BLOCK_TYPE_NAME_MAPPING[blockType];
     if (isIntegrationPipeline) {
       if (BlockTypeEnum.DATA_LOADER === blockType) {
-        return 'Source';
+        tt = 'Source';
       } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
-        return 'Destination';
+        tt = 'Destination';
       }
     }
 
-    return BLOCK_TYPE_NAME_MAPPING[blockType];
-  }, [block, isIntegrationPipeline]);
+    return `${tt} block name`;
+  }, [
+    block,
+    blockActionObject,
+    isIntegrationPipeline,
+  ]);
 
   return (
     <Panel>
       <Text bold>
-        {title} block name
+        {title}
       </Text>
 
       <Spacing mt={PADDING_UNITS}>

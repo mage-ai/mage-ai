@@ -4,6 +4,11 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.block_action_object.constants import (
+    OBJECT_TYPE_BLOCK_FILE,
+    OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
+    OBJECT_TYPE_MAGE_TEMPLATE,
+)
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
@@ -30,6 +35,30 @@ class BlockResource(GenericResource):
         content = payload.get('content')
         language = payload.get('language')
         name = payload.get('name')
+        block_name = name or payload.get('uuid')
+
+        payload_config = payload.get('config') or {}
+
+        block_action_object = payload.get('block_action_object')
+        if block_action_object:
+            object_type = block_action_object.get('object_type')
+
+            cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+            mapping = cache_block_action_object.load_all_data()
+            objects_mapping = mapping.get(object_type)
+            object_uuid = block_action_object.get('uuid')
+            object_from_cache = objects_mapping.get(object_uuid)
+
+            if OBJECT_TYPE_BLOCK_FILE == object_type:
+                block_name = object_from_cache.get('uuid')
+                block_type = object_from_cache.get('type')
+                language = object_from_cache.get('language')
+            elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
+                payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
+            elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
+                block_type = object_from_cache.get('block_type')
+                language = object_from_cache.get('language')
+                payload_config['template_path'] = object_from_cache.get('path')
 
         """
         New DBT models include "content" in its block create payload,
@@ -48,9 +77,6 @@ class BlockResource(GenericResource):
                     Please choose a different model name, or add a DBT model by \
                     selecting single model from file.')
 
-        payload_config = payload.get('config')
-
-        block_name = name or payload.get('uuid')
         block_attributes = dict(
             color=payload.get('color'),
             config=payload_config,

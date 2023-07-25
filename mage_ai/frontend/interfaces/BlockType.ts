@@ -155,7 +155,21 @@ export interface AnalysisType {
   variable_uuid: string;
 }
 
+enum ObjectType {
+  BLOCK_FILE = 'block_file',
+  CUSTOM_BLOCK_TEMPLATE = 'custom_block_template',
+  MAGE_TEMPLATE = 'mage_template',
+}
+
 export interface BlockRequestPayloadType {
+  block_action_object?: {
+    block_type?: BlockTypeEnum;
+    description?: string;
+    language?: BlockLanguageEnum;
+    object_type: ObjectType;
+    title?: string;
+    uuid: string;
+  };
   color?: BlockColorEnum;
   config?: {
     action_type?: ActionTypeEnum;

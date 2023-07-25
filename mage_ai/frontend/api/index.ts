@@ -66,6 +66,7 @@ export const PIPELINE_TRIGGERS: 'pipeline_triggers' = 'pipeline_triggers';
 export const PULL_REQUESTS: 'pull_requests' = 'pull_requests';
 export const PROJECTS: 'projects' = 'projects';
 export const ROLES: 'roles' = 'roles';
+export const SEARCH_RESULTS: 'search_results' = 'search_results';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUSES: 'statuses' = 'statuses';
@@ -128,6 +129,7 @@ const RESOURCES: any[][] = [
   [PROJECTS],
   [PULL_REQUESTS],
   [ROLES],
+  [SEARCH_RESULTS],
   [SECRETS],
   [SESSIONS],
   [STATUSES],

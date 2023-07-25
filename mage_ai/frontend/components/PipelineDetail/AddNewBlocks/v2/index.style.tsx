@@ -1,19 +1,31 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ICON_SIZE = PADDING_UNITS * UNIT;
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{
+  compact?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
-  padding: ${2.5 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).dashboard};
     border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
     box-shadow: ${(props.theme.shadow || dark.shadow).frame};
+  `}
+
+  ${props => !props.compact && `
+    padding-left: ${2.5 * UNIT}px;
+    padding-right: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    padding-left: ${1.5 * UNIT}px;
+    padding-right: ${1.5 * UNIT}px;
   `}
 `;
 
@@ -27,11 +39,86 @@ export const DividerStyle = styled.div`
 `;
 
 export const ButtonWrapper = styled.div<{
+  compact?: boolean;
   increasedZIndex?: boolean;
 }>`
   position: relative;
 
   ${props => props.increasedZIndex && `
     z-index: 3;
+  `}
+
+  ${props => !props.compact && `
+    padding-bottom: ${2.5 * UNIT}px;
+    padding-top: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    padding-bottom: ${1.5 * UNIT}px;
+    padding-top: ${1.5 * UNIT}px;
+  `}
+`;
+
+export const TextInputFocusAreaStyle = styled.div<{
+  compact?: boolean;
+}>`
+  width: 100%;
+
+  &:hover {
+    cursor: text;
+  }
+
+  ${props => !props.compact && `
+    height: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    height: ${1.5 * UNIT}px;
+  `}
+`;
+
+export const SearchStyle = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+export const DropdownStyle = styled.div<{
+  topOffset?: number;
+}>`
+  ${ScrollbarStyledCss}
+
+  border-radius: ${BORDER_RADIUS_SMALL}px;
+  max-height: ${UNIT * 40}px;
+  overflow: auto;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).popup};
+    box-shadow: ${(props.theme.shadow || dark.shadow).popup};
+  `}
+
+  ${props => props.topOffset && `
+    top: ${props.topOffset}px;
+  `}
+`;
+
+export const RowStyle = styled.div<{
+  highlighted?: boolean;
+}>`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: ${UNIT * 1.5}px ${UNIT * 2.5}px;
+  position: relative;
+  z-index: 2;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  ${props => props.highlighted && `
+    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 `;

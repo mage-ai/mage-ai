@@ -224,10 +224,9 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  // TODO (tommy dangerous): uncomment when backend supports block actions via query string
-  // const useV2 = useMemo(() => PipelineTypeEnum.PYTHON === pipeline?.type, [pipeline]);
+  const useV2 = useMemo(() => PipelineTypeEnum.PYTHON === pipeline?.type, [pipeline]);
   const { data: dataBlockTemplates } = api.block_templates.list({
-    // show_all: useV2 ? 1 : null,
+    show_all: useV2 ? 1 : null,
   }, {
     revalidateOnFocus: false,
   });

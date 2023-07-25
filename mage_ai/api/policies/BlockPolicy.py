@@ -56,6 +56,7 @@ BlockPolicy.allow_read([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_write([
+    'block_action_object',
     'color',
     'config',
     'configuration',
