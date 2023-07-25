@@ -1,8 +1,9 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ICON_SIZE = PADDING_UNITS * UNIT;
 
@@ -33,5 +34,51 @@ export const ButtonWrapper = styled.div<{
 
   ${props => props.increasedZIndex && `
     z-index: 3;
+  `}
+`;
+
+export const SearchStyle = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+export const DropdownStyle = styled.div<{
+  topOffset?: number;
+}>`
+  ${ScrollbarStyledCss}
+
+  border-radius: ${BORDER_RADIUS_SMALL}px;
+  max-height: ${UNIT * 40}px;
+  overflow: auto;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).popup};
+    box-shadow: ${(props.theme.shadow || dark.shadow).popup};
+  `}
+
+  ${props => props.topOffset && `
+    top: ${props.topOffset}px;
+  `}
+`;
+
+export const RowStyle = styled.div<{
+  highlighted?: boolean;
+}>`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: ${UNIT * 1.5}px ${UNIT * 2.5}px;
+  position: relative;
+  z-index: 2;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  ${props => props.highlighted && `
+    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 `;
