@@ -162,7 +162,7 @@ enum ObjectType {
 }
 
 export interface BlockRequestPayloadType {
-  block_action_object: {
+  block_action_object?: {
     block_type?: BlockTypeEnum;
     description?: string;
     language?: BlockLanguageEnum;

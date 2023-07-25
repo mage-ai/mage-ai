@@ -65,6 +65,7 @@ function ConfigureBlock({
     pipeline,
   ]);
 
+  // @ts-ignore
   const blockActionObject = useMemo(() => block?.block_action_object, [block]);
 
   const title = useMemo(() => {

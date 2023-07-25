@@ -51,6 +51,7 @@ import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
 import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getdataSourceMenuItems } from '../utils';
 import { onSuccess } from '@api/utils/response';
@@ -363,6 +364,7 @@ function AddNewBlocksV2({
     }
 
     timeoutRef.current = setTimeout(() => {
+      // @ts-ignore
       createSearchResult({
         search_result: {
           query: val,
@@ -543,7 +545,11 @@ function AddNewBlocksV2({
             {focusArea}
 
             <DropdownStyle
-              topOffset={refTextInput?.current?.getBoundingClientRect().height}
+              topOffset={refTextInput?.current?.getBoundingClientRect().height + (
+                compact
+                  ? 1.5 * UNIT
+                  : 2.5 * UNIT
+              )}
             >
               <AutocompleteDropdown
                 itemGroups={[
@@ -620,7 +626,7 @@ function AddNewBlocksV2({
                     },
                   },
                 ]}
-                onSelectItem={({ itemObject: blockActionObject }: BlockActionObjectType) => {
+                onSelectItem={({ itemObject: blockActionObject }: ItemType) => {
                   addNewBlock({
                     block_action_object: blockActionObject,
                   });
