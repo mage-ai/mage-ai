@@ -33,9 +33,6 @@ class Postmark(Source):
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         return ['date']
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Postmark, schemas_folder='tap_postmark/schemas')

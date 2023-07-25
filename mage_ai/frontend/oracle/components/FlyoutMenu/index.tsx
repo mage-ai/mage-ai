@@ -9,7 +9,7 @@ import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardText
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
-import { ArrowRight } from '@oracle/icons';
+import { ChevronRight } from '@oracle/icons';
 import {
   FlyoutMenuContainerStyle,
   LinkAnchorStyle,
@@ -269,28 +269,31 @@ function FlyoutMenu({
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
-                <Flex alignItems="center">
-                  {beforeIcon &&
-                    <>
-                      {beforeIcon}
-                      <Spacing mr="4px" />
-                    </>
-                  }
-                  {typeof labelToRender === 'string' && (
-                    <Text
-                      bold={bold}
-                      disabled={disabled}
-                      noWrapping
-                    >
-                      {labelToRender}
-                    </Text>
-                  )}
-                </Flex>
+                {(beforeIcon || typeof labelToRender === 'string') && (
+                  <Flex alignItems="center">
+                    {beforeIcon &&
+                      <>
+                        {beforeIcon}
+                        <Spacing mr={1} />
+                      </>
+                    }
+                    {typeof labelToRender === 'string' && (
+                      <Text
+                        bold={bold}
+                        disabled={disabled}
+                        noWrapping
+                      >
+                        {labelToRender}
+                      </Text>
+                    )}
+                  </Flex>
+                )}
+
                 {typeof labelToRender !== 'string' && labelToRender}
 
                 {items && (
                   <Spacing ml={2}>
-                    <ArrowRight />
+                    <ChevronRight />
                   </Spacing>
                 )}
 

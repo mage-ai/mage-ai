@@ -68,7 +68,7 @@ If you want to connect to Postgres cluster with ssh tunnel, update the value of 
    you have a different profile):
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from os import path
@@ -96,7 +96,7 @@ def load_data_from_postgres(**kwargs) -> DataFrame:
 Here is an example code snippet to export a dataframe to Postgres:
 
 ```python
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from pandas import DataFrame

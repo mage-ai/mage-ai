@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import AddButton from '@components/shared/AddButton';
 import Badge from '@oracle/components/Badge';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
@@ -13,27 +14,26 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
   BUTTON_PADDING,
   ConfirmDialogueOpenEnum,
   POPUP_MENU_WIDTH,
   POPUP_TOP_OFFSET,
-  SHARED_BUTTON_PROPS,
   SHARED_TOOLTIP_PROPS,
 } from './constants';
+import { Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
 
 type ToolbarProps = {
   addButtonProps?: {
+    isLoading?: boolean;
     label?: string;
     menuItems?: FlyoutMenuItemType[];
-    isLoading?: boolean;
   };
   deleteRowProps?: {
     confirmationMessage: string;
@@ -45,13 +45,20 @@ type ToolbarProps = {
     [keyof: string]: string[];
   };
   filterValueLabelMapping?: {
-    [keyof: string]: string;
+    [keyof: string]: {
+      [keyof: string]: string;
+    };
   };
   moreActionsMenuItems?: FlyoutMenuItemType[];
   groupButtonProps?: {
     menuItems: FlyoutMenuItemType[];
     groupByLabel?: string;
-  }
+  };
+  onFilterApply?: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
   query?: {
     [keyof: string]: string[];
   };
@@ -81,6 +88,7 @@ function Toolbar({
   filterValueLabelMapping,
   groupButtonProps,
   moreActionsMenuItems,
+  onFilterApply,
   query = {},
   searchProps,
   secondaryActionButtonProps,
@@ -148,31 +156,15 @@ function Toolbar({
     isLoading: isLoadingAddButton,
   } = addButtonProps || {};
   const addButtonEl = useMemo(() => (
-    <FlyoutMenuWrapper
-      disableKeyboardShortcuts
-      items={addButtonMenuItems}
+    <AddButton
+      addButtonMenuOpen={addButtonMenuOpen}
+      addButtonMenuRef={addButtonMenuRef}
+      isLoading={isLoadingAddButton}
+      label={addButtonLabel}
+      menuItems={addButtonMenuItems}
+      onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
       onClickCallback={closeAddButtonMenu}
-      onClickOutside={closeAddButtonMenu}
-      open={addButtonMenuOpen}
-      parentRef={addButtonMenuRef}
-      roundedStyle
-      topOffset={1}
-      uuid="Table/Toolbar/NewItemMenu"
-    >
-      <KeyboardShortcutButton
-        {...SHARED_BUTTON_PROPS}
-        background={BUTTON_GRADIENT}
-        beforeElement={<Add size={2.5 * UNIT} />}
-        loading={isLoadingAddButton}
-        onClick={e => {
-          e.preventDefault();
-          setAddButtonMenuOpen(prevOpenState => !prevOpenState);
-        }}
-        uuid="Table/Toolbar/AddButton"
-      >
-        {addButtonLabel}
-      </KeyboardShortcutButton>
-    </FlyoutMenuWrapper>
+    />
   ), [
     addButtonLabel,
     addButtonMenuItems,
@@ -188,7 +180,14 @@ function Toolbar({
   const filterButtonEl = useMemo(() => (
     <ToggleMenu
       compact
-      onClickCallback={closeFilterButtonMenu}
+      onClickCallback={(query, updatedQuery) => {
+        if (onFilterApply) {
+          onFilterApply?.(query, updatedQuery);
+        }
+        if (closeFilterButtonMenu) {
+          closeFilterButtonMenu?.();
+        }
+      }}
       onClickOutside={closeFilterButtonMenu}
       onSecondaryClick={() => router.push('/pipelines')}
       open={filterButtonMenuOpen}
@@ -222,6 +221,7 @@ function Toolbar({
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
     filtersAppliedCount,
+    onFilterApply,
     query,
     router,
   ]);
@@ -256,6 +256,7 @@ function Toolbar({
   ), [
     closeGroupButtonMenu,
     groupButtonMenuOpen,
+    groupByLabel,
     groupMenuItems,
   ]);
 

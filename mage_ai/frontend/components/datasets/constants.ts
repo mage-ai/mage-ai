@@ -1,5 +1,4 @@
 import { COLUMN_TYPE_CATEGORICAL, ColumnTypeEnum } from '@interfaces/FeatureType';
-import { SuccessDirectionEnum } from './StatsTable';
 import { greaterThan, lessThan } from '@utils/array';
 
 export const LARGE_WINDOW_WIDTH = 992;
@@ -52,17 +51,6 @@ export const METRICS_RATE_KEY_MAPPING = {
   duplicate_row_count: 'duplicate_row_rate',
   total_invalid_value_count: 'total_invalid_value_rate',
   total_null_value_count: 'total_null_value_rate',
-};
-
-export const METRICS_SUCCESS_DIRECTION_MAPPING = {
-  column_count: SuccessDirectionEnum.INCREASE,
-  completeness: SuccessDirectionEnum.INCREASE,
-  count: SuccessDirectionEnum.INCREASE,
-  duplicate_row_count: SuccessDirectionEnum.DECREASE,
-  empty_column_count: SuccessDirectionEnum.DECREASE,
-  total_invalid_value_count: SuccessDirectionEnum.DECREASE,
-  total_null_value_count: SuccessDirectionEnum.DECREASE,
-  validity: SuccessDirectionEnum.INCREASE,
 };
 
 export const METRICS_WARNING_MAPPING = {

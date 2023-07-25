@@ -4,8 +4,10 @@ import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
+import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 
 export enum TagEnum {
+  CONDITION = 'condition',
   DBT_SNAPSHOT = 'snapshot',
   DYNAMIC = 'dynamic',
   DYNAMIC_CHILD = 'dynamic_child',
@@ -29,9 +31,18 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
   [BlockLanguageEnum.YAML]: 'YAML',
 };
 
+export const LANGUAGE_DISPLAY_MAPPING = {
+  [BlockLanguageEnum.MARKDOWN]: 'Markdown',
+  [BlockLanguageEnum.PYTHON]: 'Python',
+  [BlockLanguageEnum.R]: 'R',
+  [BlockLanguageEnum.SQL]: 'SQL',
+  [BlockLanguageEnum.YAML]: 'YAML',
+};
+
 export enum BlockTypeEnum {
   CALLBACK = 'callback',
   CHART = 'chart',
+  CONDITIONAL = 'conditional',
   CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
@@ -42,6 +53,12 @@ export enum BlockTypeEnum {
   MARKDOWN = 'markdown',
   TRANSFORMER = 'transformer',
 }
+
+export const SIDEKICK_BLOCK_TYPES = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CONDITIONAL,
+  BlockTypeEnum.EXTENSION,
+];
 
 export enum BlockColorEnum {
   BLUE = 'blue',
@@ -141,9 +158,10 @@ export interface AnalysisType {
 export interface BlockRequestPayloadType {
   color?: BlockColorEnum;
   config?: {
-    data_source?: DataSourceTypeEnum;
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
+    custom_template_uuid?: string;
+    data_source?: DataSourceTypeEnum;
     suggested_action?: SuggestionType;
     template_path?: string;
   };
@@ -160,10 +178,30 @@ export interface BlockRequestPayloadType {
   upstream_blocks?: string[];
 }
 
+export interface BlockPipelineType {
+  added_at?: string;
+  pipeline: {
+    description?: string;
+    name: string;
+    type: string;
+    updated_at: string;
+    uuid: string;
+  };
+  updated_at: string;
+}
+
+export interface BlockRetryConfigType {
+  delay?: number;
+  exponential_backoff?: boolean;
+  max_delay?: number;
+  retries?: number;
+}
+
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
   callback_content?: string;
+  conditional_blocks?: string[];
   color?: BlockColorEnum;
   configuration?: ConfigurationType;
   content?: string;
@@ -173,6 +211,7 @@ export default interface BlockType {
     error: string;
     message: string;
   };
+  executor_type?: ExecutorTypeEnum;
   extension_uuid?: string;
   file?: string;
   has_callback?: boolean;
@@ -195,8 +234,12 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
+  pipelines?: {
+    [uuid: string]: BlockPipelineType;
+  };
   priority?: number;
   replicated_block?: string;
+  retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   type?: BlockTypeEnum;
@@ -212,14 +255,17 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 ];
 
 export const BLOCK_TYPE_NAME_MAPPING = {
-  [BlockTypeEnum.EXTENSION]: 'Callback',
+  [BlockTypeEnum.CALLBACK]: 'Callback',
+  [BlockTypeEnum.CHART]: 'Chart',
+  [BlockTypeEnum.CONDITIONAL]: 'Conditional',
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
+  [BlockTypeEnum.DBT]: 'DBT',
   [BlockTypeEnum.EXTENSION]: 'Extension',
+  [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',
-  [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 

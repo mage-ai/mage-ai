@@ -1,11 +1,7 @@
-from mage_ai.shared.constants import (
-    ENV_DEV,
-    ENV_PROD,
-    ENV_STAGING,
-    ENV_TEST,
-)
 import os
 import sys
+
+from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST
 
 
 def is_debug():
@@ -13,7 +9,7 @@ def is_debug():
 
 
 def is_dev():
-    return os.getenv('ENV', None) == 'dev'
+    return os.getenv('ENV', None) == 'dev' or os.getenv('ENV', None) == 'development'
 
 
 def is_test():
@@ -21,7 +17,7 @@ def is_test():
 
 
 def is_production():
-    return os.getenv('ENV', None) == 'production'
+    return os.getenv('ENV', None) == 'production' or os.getenv('ENV', None) == 'prod'
 
 
 def is_staging():

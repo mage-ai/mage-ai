@@ -474,7 +474,6 @@ function FileBrowser({
         },
       ]);
 
-
       if (selectedBlock) {
         items.push({
           label: () => 'Delete block file',

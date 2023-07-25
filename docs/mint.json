@@ -27,7 +27,16 @@
     "type": "github",
     "url": "https://github.com/mage-ai/mage-ai"
   },
+  "topAnchor": {
+    "name": "Documentation",
+    "icon": "book-open"
+  },
   "anchors": [
+    {
+      "name": "API Reference",
+      "icon": "square-terminal",
+      "url": "api-reference"
+    },
     {
       "name": "Watch 2 min demo",
       "icon": "circle-play",
@@ -65,6 +74,7 @@
         },
         "guides/data-integration-pipeline",
         "tutorials/setup-dbt",
+        "tutorials/examples",
         {
           "group": "Machine learning pipeline",
           "pages": [
@@ -116,7 +126,8 @@
             "data-integrations/destinations/add-new-destination",
             "data-integrations/destinations/adapt-existing-destination"
           ]
-        }
+        },
+        "data-integrations/configuration"
       ]
     },
     {
@@ -126,6 +137,7 @@
         "dbt/add-existing-dbt",
         "dbt/run-single-model",
         "dbt/run-selected-model",
+        "dbt/snapshots",
         "dbt/run-dbt-spark",
         "dbt/running-dbt-tests",
         "dbt/sources",
@@ -187,6 +199,13 @@
               ]
             },
             {
+              "group": "Conditionals",
+              "pages": [
+                "development/blocks/conditionals/overview",
+                "development/blocks/conditionals/templates"
+              ]
+            },
+            {
               "group": "SQL",
               "pages": [
                 "guides/sql-blocks",
@@ -228,6 +247,7 @@
                 "guides/streaming/destinations/dummy",
                 "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
+                "guides/streaming/destinations/mongodb",
                 "guides/streaming/destinations/opensearch",
                 "guides/streaming/destinations/redshift"
               ]
@@ -302,7 +322,8 @@
         {
           "group": "Pipeline runs",
           "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs"
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
         }
       ]
@@ -313,7 +334,8 @@
         {
           "group": "Authentication",
           "pages": [
-            "production/authentication/overview"
+            "production/authentication/overview",
+            "production/authentication/microsoft"
           ]
         },
         {
@@ -354,7 +376,8 @@
               "group": "GCP",
               "pages": [
                 "production/deploying-to-cloud/gcp/setup",
-                "production/deploying-to-cloud/gcp/resources"
+                "production/deploying-to-cloud/gcp/resources",
+                "production/deploying-to-cloud/gcp/gcp-artifact-registry"
               ]
             },
             {
@@ -383,7 +406,8 @@
         {
           "group": "Version control",
           "pages": [
-            "production/data-sync/git"
+            "production/data-sync/git",
+            "production/data-sync/github"
           ]
         }
       ]
@@ -397,7 +421,8 @@
           "pages": [
             "production/observability/monitoring",
             "production/observability/datadog",
-            "production/observability/sentry"
+            "production/observability/sentry",
+            "production/observability/newrelic"
           ]
         },
         {
@@ -487,27 +512,7 @@
         {
           "group": "Backend",
           "pages": [
-            "contributing/backend/overview",
-            {
-              "group": "API",
-              "pages": [
-                "contributing/backend/api/overview",
-                "contributing/backend/api/resources",
-                "contributing/backend/api/policies",
-                "contributing/backend/api/presenters",
-                {
-                  "group": "Routes",
-                  "pages": [
-                    "contributing/backend/api/sessions",
-                    "contributing/backend/api/pipelines",
-                    "contributing/backend/api/pipeline-schedules",
-                    "contributing/backend/api/pipeline-runs",
-                    "contributing/backend/api/backfills",
-                    "contributing/backend/api/logs"
-                  ]
-                }
-              ]
-            }
+            "contributing/backend/overview"
           ]
         },
         {
@@ -517,6 +522,66 @@
           ]
         },
         "contributing/statistics/overview"
+      ]
+    },
+    {
+      "group": "API",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/resources",
+        "api-reference/policies",
+        "api-reference/presenters"
+      ]
+    },
+    {
+      "group": "Backfills",
+      "pages": [
+        "api-reference/backfills/overview",
+        "api-reference/backfills/read-backfills",
+        "api-reference/backfills/create-backfills",
+        "api-reference/backfills/update-backfill",
+        "api-reference/backfills/delete-backfill"
+      ]
+    },
+    {
+      "group": "Logs",
+      "pages": [
+        "api-reference/logs/overview",
+        "api-reference/logs/read-logs"
+      ]
+    },
+    {
+      "group": "Pipeline runs",
+      "pages": [
+        "api-reference/pipeline-runs/overview",
+        "api-reference/pipeline-runs/read-pipeline-runs",
+        "api-reference/pipeline-runs/trigger-pipeline"
+      ]
+    },
+    {
+      "group": "Pipeline schedules",
+      "pages": [
+        "api-reference/pipeline-schedules/overview",
+        "api-reference/pipeline-schedules/read-pipeline-schedule",
+        "api-reference/pipeline-schedules/create-pipeline-schedule",
+        "api-reference/pipeline-schedules/delete-pipeline-schedule"
+      ]
+    },
+    {
+      "group": "Pipelines",
+      "pages": [
+        "api-reference/pipelines/overview",
+        "api-reference/pipelines/read-pipeline",
+        "api-reference/pipelines/create-pipeline",
+        "api-reference/pipelines/update-pipeline",
+        "api-reference/pipelines/delete-pipeline"
+      ]
+    },
+    {
+      "group": "Sessions",
+      "pages": [
+        "api-reference/sessions/overview",
+        "api-reference/sessions/create-session"
       ]
     },
     {
@@ -542,7 +607,7 @@
   },
   "api": {
     "playground": {
-       "mode": "hide"
+      "mode": "hide"
     }
   }
 }

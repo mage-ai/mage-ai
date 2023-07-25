@@ -2,21 +2,28 @@
 import singer
 import singer.utils as singer_utils
 from requests.exceptions import HTTPError
-from tap_salesforce.salesforce.exceptions import TapSalesforceException
+
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.exceptions import (
+    TapSalesforceException,
+)
 
 LOGGER = singer.get_logger()
 
 MAX_RETRIES = 4
 
+
 class Rest():
 
-    def __init__(self, sf):
+    def __init__(self, sf, limit=False):
         self.sf = sf
+        self.limit = limit
 
     def query(self, catalog_entry, state):
         start_date = self.sf.get_start_date(state, catalog_entry)
         query = self.sf._build_query_string(catalog_entry, start_date)
 
+        if self.limit is True:
+            query = query + ' LIMIT 10'
         return self._query_recur(query, catalog_entry, start_date)
 
     # pylint: disable=too-many-arguments
@@ -71,7 +78,8 @@ class Rest():
                 raise ex
 
         if retryable:
-            end_date = self.sf.get_window_end_date(singer_utils.strptime_with_tz(start_date_str), end_date)
+            end_date = self.sf.get_window_end_date(singer_utils.strptime_with_tz(start_date_str),
+                                                   end_date)
 
             query = self.sf._build_query_string(catalog_entry, singer_utils.strftime(start_date),
                                                 singer_utils.strftime(end_date))
@@ -85,7 +93,7 @@ class Rest():
 
     def _sync_records(self, url, headers, params):
         while True:
-            resp = self.sf._make_request_with_backoff('GET', url, headers=headers, params=params)
+            resp = self.sf._make_request('GET', url, headers=headers, params=params)
             resp_json = resp.json()
 
             for rec in resp_json.get('records'):

@@ -236,6 +236,7 @@ function KernelStatus({
     kernelPid,
     kernelPidPrevious,
     setRunningBlocks,
+    showKernelWarning,
   ]);
 
   const kernelStatus = useMemo(() => (
@@ -389,6 +390,7 @@ function KernelStatus({
     showSelectKernel,
     themeContext,
     updateCluster,
+    updatePipelineMetadata,
   ]);
 
   return (

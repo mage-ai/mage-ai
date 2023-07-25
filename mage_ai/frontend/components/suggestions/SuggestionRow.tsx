@@ -40,7 +40,6 @@ const ICON_SIZE = UNIT * 2;
 
 const SuggestionRow = ({
   action,
-  border,
   features,
   featureIdMapping,
   idx,
@@ -120,7 +119,6 @@ const SuggestionRow = ({
 
   return (
     <RowCard
-      border={border}
       flexStart
     >
       {link &&

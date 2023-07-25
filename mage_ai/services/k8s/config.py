@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from mage_ai.shared.config import BaseConfig
 from typing import Dict
+
+from mage_ai.shared.config import BaseConfig
+
 # import traceback
 
+DEFAULT_SERVICE_ACCOUNT_NAME = 'default'
 ECS_CONTAINER_METADATA_URI_VAR = 'ECS_CONTAINER_METADATA_URI_V4'
 
 
@@ -14,8 +17,10 @@ class K8sResourceConfig(BaseConfig):
 
 @dataclass
 class K8sExecutorConfig(BaseConfig):
+    job_name_prefix: str = None
     resource_limits: Dict = None
     resource_requests: Dict = None
+    service_account_name: str = DEFAULT_SERVICE_ACCOUNT_NAME
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):

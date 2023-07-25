@@ -489,7 +489,67 @@ Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. Th
 
 
 ## AzureBlobStorage
-WIP
+
+`mage_ai.io.azure_blob_storage.AzureBlobStorage`
+
+Handles data transfer between an Azure Blob Storage conatiner and Mage. Supports loading files of the following types:
+-   CSV
+-   JSON
+-   Parquet
+-   HDF5
+
+To authenticate access to Azure Blob Storage, the following environment variables must be set:
+
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+- `AZURE_TENANT_ID`
+- `AZURE_STORAGE_ACCOUNT_NAME`
+
+By default, these correspond to variables of the same name in `io_config.yaml`.
+
+<h3> Constructor </h3>
+
+Initializes data loader from an Azure Blob Storage container.
+
+-   **Args**
+
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `False`.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> AzureBlobStorage`
+
+Creates AzureBlobStorage data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`AzureBlobStorage`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, bucket_name: str, object_key: str, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports data frame to an Azure Blob Storage container.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export.
+    -   `container_name (str)`: Name of the Azure container to export data to.
+    -   `blob_path (str)`: The desired output path of the data in your Azure Blob
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Writer                                                                                                         |
+        | ------- | --------------------------------------------------------------------------------------------------------------------- |
+        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
+        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
+        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
+        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+
+**_load_** - `load(container_name: str, blob_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
+
+Loads data from object in Azure Blob Storage into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
 
 ## BigQuery
 
@@ -825,13 +885,16 @@ Sample data from a table in the MySQL database. Sample is not guaranteed to be r
 Handles data transfer between a Snowflake data warehouse and the Mage app. The `Snowflake` client utilizes the following keys to authenticate access and connect to Snowflake servers.
 
 ```yaml
-SNOWFLAKE_USER: Snowflake username
-SNOWFLAKE_PASSWORD: Snowflake password
-SNOWFLAKE_ACCOUNT: Snowflake account ID (including region, excluding "snowflake-computing.com")
-SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional, if unspecified warehouse not chosen.
-SNOWFLAKE_DEFAULT_DB: Default database to use. Optional, if unspecified database not chosen
-SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional, if unspecified schema not chosen
-SNOWFLAKE_ROLE: Snowflake role
+SNOWFLAKE_USER: username
+SNOWFLAKE_PASSWORD: password
+SNOWFLAKE_ACCOUNT: account_id.region
+SNOWFLAKE_DEFAULT_WH: null                  # Optional default warehouse
+SNOWFLAKE_DEFAULT_DB: null                  # Optional default database
+SNOWFLAKE_DEFAULT_SCHEMA: null              # Optional default schema
+SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
+SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
+SNOWFLAKE_ROLE: null                        # Optional role name
+SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
 ```
 
 <h3> Constructor </h3>
@@ -1143,7 +1206,7 @@ Loads secrets from AWS Secrets Manager. To authenticate access to AWS Secrets Ma
     aws configure
     ```
 -   Manually specify your AWS Credentials when constructing the configuration loader
-    `python config = AWSSecretLoader( aws_access_key_id = 'your access key id', aws_secret_access_key = 'your secret key', aws_region = 'your region' ) `
+    `python config = AWSSecretLoader( aws_access_key_id = 'your access key id', aws_secret_access_key = 'your secret key', region_name = 'your region' ) `
 
 **Example**:
 
@@ -1161,7 +1224,7 @@ postgres_db = config.get(ConfigKey.POSTGRES_DBNAME, version_id='my_version_id')
 -   **Keyword Arguments**:
     -   `aws_access_key_id (str, Optional)`: AWS access key ID credential.
     -   `aws_secret_access_key (str, Optional)`: AWS secret access key credential.
-    -   `aws_region (str, Optional)`: AWS region which Secrets Manager is created in.
+    -   `region_name (str, Optional)`: AWS region which Secrets Manager is created in.
 
 **Methods**:
 

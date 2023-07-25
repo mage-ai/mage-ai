@@ -1,5 +1,7 @@
 import { useMutation } from 'react-query';
+import { ResponseType } from 'axios';
 
+import { FetcherOptionsType } from './utils/fetcher';
 import {
   fetchCreate,
   fetchCreateWithParent,
@@ -13,6 +15,7 @@ import {
   useDeleteWithParent,
   useDetail,
   useDetailWithParent,
+  useDetailWithParentAsync,
   useList,
   useListWithParent,
   useUpdate,
@@ -30,6 +33,7 @@ export const BLOCK_TEMPLATES = 'block_templates';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const EVENT_MATCHERS = 'event_matchers';
@@ -43,6 +47,8 @@ export const FILE_CONTENTS: 'file_contents' = 'file_contents';
 export const FILE_VERSIONS: 'file_versions' = 'file_versions';
 export const FOLDERS: 'folders' = 'folders';
 export const GIT_BRANCHES: 'git_branches' = 'git_branches';
+export const GIT_CUSTOM_BRANCHES: 'git_custom_branches' = 'git_custom_branches';
+export const GIT_FILES: 'git_files' = 'git_files';
 export const INSTANCES: 'instances' = 'instances';
 export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
 export const INTEGRATION_SAMPLES = 'integration_samples';
@@ -51,16 +57,20 @@ export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
 export const KERNELS: 'kernels' = 'kernels';
 export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
+export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
+export const PIPELINE_TRIGGERS: 'pipeline_triggers' = 'pipeline_triggers';
+export const PULL_REQUESTS: 'pull_requests' = 'pull_requests';
 export const PROJECTS: 'projects' = 'projects';
 export const ROLES: 'roles' = 'roles';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
+export const TAGS: 'tags' = 'tags';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
@@ -80,8 +90,11 @@ const RESOURCES: any[][] = [
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCK_OUTPUTS],
+  [BLOCK_OUTPUTS, PIPELINES],
+  [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
   [EVENT_MATCHERS],
@@ -94,6 +107,8 @@ const RESOURCES: any[][] = [
   [FILE_VERSIONS, FILES],
   [FOLDERS],
   [GIT_BRANCHES],
+  [GIT_CUSTOM_BRANCHES],
+  [GIT_FILES],
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
@@ -102,18 +117,22 @@ const RESOURCES: any[][] = [
   [KERNELS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
+  [OAUTHS],
   [OUTPUTS, BLOCK_RUNS],
   [PIPELINES],
   [PIPELINE_RUNS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES, PIPELINES],
+  [PIPELINE_TRIGGERS, PIPELINES],
   [PROJECTS],
+  [PULL_REQUESTS],
   [ROLES],
   [SECRETS],
   [SESSIONS],
   [STATUSES],
   [SYNCS],
+  [TAGS],
   [USERS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
@@ -177,6 +196,24 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       },
       grandchildResource,
     );
+    apis[resource][parentResource][grandchildResource].detailAsync = async (
+      parentId: string,
+      id: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useDetailWithParentAsync(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        options,
+        grandchildResource,
+      );
+
+      return await handle(response);
+    };
   } else if (parentResource) {
     apis[resource][parentResource] = {};
 

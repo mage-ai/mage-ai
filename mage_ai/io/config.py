@@ -7,8 +7,8 @@ from typing import Any, Dict, Union
 import yaml
 from jinja2 import Template
 
-from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.settings.repo import get_repo_path
 
 
 class ConfigKey(str, Enum):
@@ -66,6 +66,11 @@ class ConfigKey(str, Enum):
     MYSQL_PASSWORD = 'MYSQL_PASSWORD'
     MYSQL_PORT = 'MYSQL_PORT'
     MYSQL_USER = 'MYSQL_USER'
+
+    ORACLEDB_USER = 'ORACLEDB_USER'
+    ORACLEDB_PASSWORD = 'ORACLEDB_PASSWORD'
+    ORACLEDB_HOST = 'ORACLEDB_HOST'
+    ORACLEDB_PORT = 'ORACLEDB_PORT'
 
     POSTGRES_CONNECTION_METHOD = 'POSTGRES_CONNECTION_METHOD'
     POSTGRES_CONNECT_TIMEOUT = 'POSTGRES_CONNECT_TIMEOUT'
@@ -380,6 +385,10 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
         ConfigKey.SNOWFLAKE_DEFAULT_WH: (VerboseConfigKey.SNOWFLAKE, 'warehouse'),
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
+        ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: (
+            VerboseConfigKey.SNOWFLAKE, 'private_key_passphrase'),
+        ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH: (VerboseConfigKey.SNOWFLAKE, 'private_key_path'),
+        ConfigKey.SNOWFLAKE_ROLE: (VerboseConfigKey.SNOWFLAKE, 'role'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
         ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SPARK, 'cluster'),
@@ -422,7 +431,7 @@ class ConfigFileLoader(BaseConfigLoader):
             self.config = config
         else:
             if filepath is None:
-                filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
+                filepath = os.path.join(get_repo_path(), 'io_config.yaml')
             self.filepath = Path(filepath)
             self.profile = profile
             with self.filepath.open('r') as fin:

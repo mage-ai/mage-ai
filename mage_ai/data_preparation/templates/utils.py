@@ -51,6 +51,8 @@ def write_template(template_source: str, dest_path: str) -> None:
         template_source (str): Template source code to write to file
         dest_path (str): Destination file to write template source code to.
     """
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+
     with open(dest_path, 'w') as foutput:
         foutput.write(template_source)
 

@@ -15,10 +15,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
+from mage_ai.settings.repo import get_repo_path
 
 
 class User(BaseModel):
@@ -70,11 +72,11 @@ class User(BaseModel):
 
     @property
     def project_access(self) -> int:
-        return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+        return self.get_access(Entity.PROJECT, get_project_uuid())
 
     def get_access(
         self,
-        entity: Union['Permission.Entity', None] = None,
+        entity: Union[Entity, None] = None,
         entity_id: Union[str, None] = None,
     ) -> int:
         '''
@@ -129,13 +131,13 @@ class User(BaseModel):
         for user in User.query.all():
             roles_new = []
             if user._owner:
-                roles_new = [Role.get_role('Owner')]
+                roles_new = [Role.get_role(Role.DefaultRole.OWNER)]
             elif user.roles and user.roles & 1 != 0:
-                roles_new = [Role.get_role('Admin')]
+                roles_new = [Role.get_role(Role.DefaultRole.ADMIN)]
             elif user.roles and user.roles & 2 != 0:
-                roles_new = [Role.get_role('Editor')]
+                roles_new = [Role.get_role(Role.DefaultRole.EDITOR)]
             elif user.roles and user.roles & 4 != 0:
-                roles_new = [Role.get_role('Viewer')]
+                roles_new = [Role.get_role(Role.DefaultRole.VIEWER)]
             user.roles_new = roles_new
         db_connection.session.commit()
 
@@ -145,22 +147,29 @@ class Role(BaseModel):
     permissions = relationship('Permission', back_populates='role')
     users = relationship('User', secondary='user_role', back_populates='roles_new')
 
+    # Default global roles created by Mage
+    class DefaultRole(str, enum.Enum):
+        OWNER = 'Owner'
+        ADMIN = 'Admin'
+        EDITOR = 'Editor'
+        VIEWER = 'Viewer'
+
     @classmethod
     @safe_db_query
     def create_default_roles(
         self,
-        entity: 'Permission.Entity' = None,
+        entity: Entity = None,
         entity_id: str = None,
         prefix: str = None,
     ):
         if entity is None:
-            entity = Permission.Entity.GLOBAL
+            entity = Entity.GLOBAL
         Permission.create_default_permissions(entity=entity, entity_id=entity_id)
         mapping = {
-            'Owner': Permission.Access.OWNER,
-            'Admin': Permission.Access.ADMIN,
-            'Editor': Permission.Access.EDITOR,
-            'Viewer': Permission.Access.VIEWER,
+            self.DefaultRole.OWNER: Permission.Access.OWNER,
+            self.DefaultRole.ADMIN: Permission.Access.ADMIN,
+            self.DefaultRole.EDITOR: Permission.Access.EDITOR,
+            self.DefaultRole.VIEWER: Permission.Access.VIEWER,
         }
         for name, access in mapping.items():
             role_name = name
@@ -188,11 +197,13 @@ class Role(BaseModel):
 
     def get_access(
         self,
-        entity: Union['Permission.Entity', None] = None,
+        entity: Union[Entity, None],
         entity_id: Union[str, None] = None,
     ) -> int:
         permissions = []
         if entity is None:
+            return 0
+        elif entity == Entity.ANY:
             permissions.extend(self.permissions)
         else:
             entity_permissions = list(filter(
@@ -217,10 +228,10 @@ class Role(BaseModel):
         This method is used when a role does not have a permission for a specified entity. Then,
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
-        if entity == Permission.Entity.PIPELINE:
-            return self.get_access(Permission.Entity.PROJECT, get_repo_path())
-        elif entity == Permission.Entity.PROJECT:
-            return self.get_access(Permission.Entity.GLOBAL)
+        if entity == Entity.PIPELINE:
+            return self.get_access(Entity.PROJECT, get_project_uuid())
+        elif entity == Entity.PROJECT:
+            return self.get_access(Entity.GLOBAL)
         else:
             return 0
 
@@ -231,11 +242,6 @@ class UserRole(BaseModel):
 
 
 class Permission(BaseModel):
-    class Entity(str, enum.Enum):
-        GLOBAL = 'global'
-        PROJECT = 'project'
-        PIPELINE = 'pipeline'
-
     class Access(int, enum.Enum):
         OWNER = 1
         ADMIN = 2
@@ -253,15 +259,28 @@ class Permission(BaseModel):
 
     role = relationship(Role, back_populates='permissions')
 
+    @validates('entity')
+    def validate_entity(self, key, value):
+        if value == Entity.ANY:
+            raise ValidationError(
+                'Permission entity cannot be ANY. Please select a specific entity.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
+
     @classmethod
     @safe_db_query
     def create_default_permissions(
         self,
-        entity: 'Permission.Entity' = None,
+        entity: Entity = None,
         entity_id: str = None,
     ) -> List['Permission']:
         if entity is None:
-            entity = Permission.Entity.GLOBAL
+            entity = Entity.GLOBAL
         permissions = self.query.filter(
             self.entity == entity,
             self.entity_id == entity_id,

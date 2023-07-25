@@ -1,5 +1,5 @@
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline, create_user
 

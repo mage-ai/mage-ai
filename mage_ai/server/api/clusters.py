@@ -1,5 +1,8 @@
-from .base import BaseHandler
+import os
 from enum import Enum
+
+import yaml
+
 from mage_ai.cluster_manager.constants import (
     ECS_CLUSTER_NAME,
     ECS_CONTAINER_NAME,
@@ -8,11 +11,11 @@ from mage_ai.cluster_manager.constants import (
     GCP_PROJECT_ID,
     GCP_REGION,
     KUBE_NAMESPACE,
-    KUBE_STORAGE_CLASS_NAME
+    KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.server.logger import Logger
-import os
-import yaml
+
+from .base import BaseHandler
 
 logger = Logger().new_server_logger(__name__)
 
@@ -38,7 +41,9 @@ class ApiInstancesHandler(BaseHandler):
                 logger.error(str(e))
                 instances = list()
         elif cluster_type == ClusterType.CLOUD_RUN:
-            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
+                CloudRunServiceManager,
+            )
             project_id = os.getenv(GCP_PROJECT_ID)
             path_to_credentials = os.getenv(GCP_PATH_TO_KEYFILE)
             region = os.getenv(GCP_REGION)
@@ -50,11 +55,13 @@ class ApiInstancesHandler(BaseHandler):
 
             instances = cloud_run_service_manager.list_services()
         elif cluster_type == ClusterType.K8S:
-            from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+            from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                WorkloadManager,
+            )
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
-            instances = workload_manager.list_services()
+            instances = workload_manager.list_workloads()
 
         self.write(dict(instances=instances))
 
@@ -87,8 +94,9 @@ class ApiInstancesHandler(BaseHandler):
                     success=True,
                 ))
             elif cluster_type == ClusterType.CLOUD_RUN:
-                from mage_ai.cluster_manager.gcp.cloud_run_service_manager \
-                    import CloudRunServiceManager
+                from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
+                    CloudRunServiceManager,
+                )
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 project_id = instance_payload.get('project_id', os.getenv(GCP_PROJECT_ID))
@@ -108,7 +116,9 @@ class ApiInstancesHandler(BaseHandler):
 
                 self.write(dict(success=True))
             elif cluster_type == ClusterType.K8S:
-                from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 namespace = instance_payload.get('namespace', os.getenv(KUBE_NAMESPACE))
@@ -123,7 +133,7 @@ class ApiInstancesHandler(BaseHandler):
                     container_config = yaml.full_load(container_config_yaml)
 
                 k8s_workload_manager = WorkloadManager(namespace)
-                k8s_workload_manager.create_stateful_set(
+                k8s_workload_manager.create_workload(
                     name,
                     container_config=container_config,
                     service_account_name=service_account_name,

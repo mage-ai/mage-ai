@@ -3,6 +3,8 @@ from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.shared.array import find
+from typing import Callable, Dict, List
+import asyncio
 import io
 import logging
 import os
@@ -19,12 +21,14 @@ class LoggerManager:
         block_uuid: str = None,
         partition: str = None,
         repo_config: RepoConfig = None,
+        subpartition: str = None,
     ):
         self.repo_path = repo_path
         self.logs_dir = logs_dir
         self.pipeline_uuid = pipeline_uuid
         self.block_uuid = block_uuid
         self.partition = partition
+        self.subpartition = subpartition
 
         self.repo_config = repo_config or get_repo_config()
         logging_config = self.repo_config.logging_config if self.repo_config else dict()
@@ -88,6 +92,7 @@ class LoggerManager:
             self.pipeline_uuid,
             LOGS_DIR,
             self.partition or '',
+            self.subpartition or '',
         )
 
     def get_log_filepath(self, create_dir: bool = False):
@@ -112,3 +117,26 @@ class LoggerManager:
     async def get_logs_async(self):
         file = File.from_path(self.get_log_filepath())
         return await file.to_dict_async(include_content=True)
+
+    async def get_logs_in_subpartition_async(self, filter_func: Callable = None) -> List[Dict]:
+        files = []
+
+        base_path = self.get_log_filepath_prefix()
+        if os.path.exists(base_path):
+            for filename in os.listdir(base_path):
+                full_path = f'{base_path}/{filename}'
+                if not os.path.isfile(full_path):
+                    continue
+
+                file = File.from_path(full_path)
+                should_add = True
+
+                if filter_func:
+                    should_add = filter_func(file)
+
+                if should_add:
+                    files.append(file)
+
+        return await asyncio.gather(
+            *[file.to_dict_async(include_content=True) for file in files]
+        )

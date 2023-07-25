@@ -19,9 +19,11 @@ export type TabType = {
 
 type ButtonTabsProps = {
   allowScroll?: boolean;
+  compact?: boolean;
   contained?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
+  regularSizeText?: boolean;
   selectedTabUUID?: string;
   small?: boolean;
   tabs: TabType[];
@@ -29,9 +31,11 @@ type ButtonTabsProps = {
 
 function ButtonTabs({
   allowScroll,
+  compact,
   contained,
   noPadding,
   onClickTab,
+  regularSizeText,
   selectedTabUUID,
   small,
   tabs,
@@ -66,7 +70,7 @@ function ButtonTabs({
             bold
             default={!selected}
             noWrapping
-            small
+            small={!regularSizeText}
           >
             {displayText}
           </Text>
@@ -89,13 +93,13 @@ function ButtonTabs({
             backgroundPanel
             borderLess
             borderWidth={2}
-            compact={small}
+            compact={compact || small}
             key={uuid}
             onClick={(e) => {
               pauseEvent(e);
               onClickTab(tab);
             }}
-            paddingUnitsHorizontal={2}
+            paddingUnitsHorizontal={1.75}
             paddingUnitsVertical={1.25}
             small={small}
           >
@@ -107,7 +111,7 @@ function ButtonTabs({
           <div key={`button-tab-${uuid}`} style={{ padding: 2 }}>
             <Button
               borderLess
-              compact={small}
+              compact={compact || small}
               default
               onClick={(e) => {
                 pauseEvent(e);
@@ -125,6 +129,7 @@ function ButtonTabs({
 
     return arr;
   }, [
+    compact,
     onClickTab,
     selectedTabUUID,
     small,

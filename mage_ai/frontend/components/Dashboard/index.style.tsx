@@ -33,7 +33,7 @@ type VerticalNavigationStyleProps = {
 const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps & {
   visible?: boolean;
 }>`
-  height: calc(100% - ${HEADER_HEIGHT}px);
+  height: 100%;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
@@ -198,5 +198,25 @@ export const NavigationLinkStyle = styled.a<{
 
   ${props => props.selected && `
     background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
+  `}
+`;
+
+export const ImageStyle = styled.div<{
+  imageUrl: string;
+  size?: number;
+}>`
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: contain;
+  height: ${UNIT * 12}px;
+  width: ${UNIT * 12}px;
+
+  ${props => `
+    background-image: url(${props.imageUrl});
+  `}
+
+  ${props => props.size && `
+    height: ${props.size}px;
+    width: ${props.size}px;
   `}
 `;

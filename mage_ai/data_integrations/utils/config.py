@@ -1,14 +1,16 @@
+import json
+from typing import Dict, List, Tuple
+
+import simplejson
+import yaml
 from jinja2 import Template
+
+from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.utils import get_template_vars
-from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
-from typing import Dict, List
-import json
-import simplejson
-import yaml
 
 KEY_PATTERNS = '_patterns'
 PATTERN_KEY_DESTINATION_TABLE = 'destination_table'
@@ -96,11 +98,11 @@ def build_catalog_json(
     )
 
 
-def build_config_json(
+def build_config(
     absolute_file_path: str,
     variables: Dict,
     override: Dict = None,
-) -> str:
+) -> Tuple[Dict, str]:
     config = interpolate_variables_for_block_settings(
         absolute_file_path,
         variables,
@@ -109,7 +111,7 @@ def build_config_json(
     if override:
         config.update(override)
 
-    return simplejson.dumps(
+    return config, simplejson.dumps(
         config,
         default=encode_complex,
         ignore_nan=True,

@@ -5,3 +5,9 @@ export default interface ProjectType {
   project_uuid?: string;
   version: string;
 }
+
+export enum ProjectTypeEnum {
+  MAIN = 'main',
+  STANDALONE = 'standalone',
+  SUB = 'sub',
+}

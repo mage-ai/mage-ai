@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockPresenter import BlockPresenter
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.constants import Entity
 
 
 class BlockPolicy(BasePolicy):
@@ -10,7 +10,7 @@ class BlockPolicy(BasePolicy):
     def entity(self):
         parent_model = self.options.get('parent_model')
         if parent_model:
-            return Permission.Entity.PIPELINE, parent_model.uuid
+            return Entity.PIPELINE, parent_model.uuid
 
         return super().entity
 
@@ -48,6 +48,7 @@ BlockPolicy.allow_read([
     'bookmarks',
     'content',
     'outputs',
+    'pipelines',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -65,6 +66,7 @@ BlockPolicy.allow_write([
     'language',
     'metadata',
     'name',
+    'pipelines',
     'priority',
     'replicated_block',
     'type',
@@ -81,6 +83,7 @@ BlockPolicy.allow_write([
     'bookmark_values',
     'callback_blocks',
     'color',
+    'conditional_blocks',
     'configuration',
     'content',
     'destination_table',
@@ -93,6 +96,7 @@ BlockPolicy.allow_write([
     'metadata',
     'name',
     'outputs',
+    'pipelines',
     'replicated_block',
     'retry_config',
     'status',
@@ -126,6 +130,7 @@ BlockPolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_query([
+    'block_language',
     'block_type',
     'extension_uuid',
     'update_state',

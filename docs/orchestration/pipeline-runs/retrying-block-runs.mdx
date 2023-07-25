@@ -13,7 +13,7 @@ Mage supports configuring automatic retry for block runs with the following ways
     retry_config:
       # Number of retry times
       retries: 3
-      # Initial delay before retry. If exponential_backoff is true,
+      # Initial delay (in seconds) before retry. If exponential_backoff is true,
       # the delay time is multiplied by 2 for the next retry
       delay: 5
       # Maximum time between the first attempt and the last retry
@@ -36,6 +36,7 @@ Mage supports configuring automatic retry for block runs with the following ways
         exponential_backoff: false
       ...
     ```
+The retry logs show in the same block run log page.
 
 ## Retry incomplete blocks
 

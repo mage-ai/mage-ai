@@ -1,7 +1,8 @@
+from typing import List
+
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.sql.base import Source
-from typing import List
 
 
 class BigQuery(Source):
@@ -12,7 +13,7 @@ class BigQuery(Source):
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
-            path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
+            path_to_credentials_json_file=self.config.get('path_to_credentials_json_file'),
         )
 
     def build_discover_query(self, streams: List[str] = None) -> str:

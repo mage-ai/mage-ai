@@ -12,11 +12,14 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
+  BranchAlt,
   DocumentIcon,
   Lightning,
+  NavDashboard,
   PipelineV3,
   Schedule,
   Settings,
+  TemplateShapes,
   Terminal,
 } from '@oracle/icons';
 import {
@@ -27,10 +30,18 @@ import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 const ICON_SIZE = 3 * UNIT;
-const DEFAULT_ITEMS = [
+const DEFAULT_NAV_ITEMS = [
   {
     id: 'main',
     items: [
+      {
+        Icon: NavDashboard,
+        id: 'overview',
+        label: () => 'Overview',
+        linkProps: {
+          href: '/overview',
+        },
+      },
       {
         Icon: PipelineV3,
         id: 'pipelines',
@@ -66,6 +77,22 @@ const DEFAULT_ITEMS = [
         label: () => 'Files',
         linkProps: {
           href: '/files',
+        },
+      },
+      {
+        Icon: TemplateShapes,
+        id: 'templates',
+        label: () => 'Templates',
+        linkProps: {
+          href: '/templates',
+        },
+      },
+      {
+        Icon: BranchAlt,
+        id: 'version-control',
+        label: () => 'Version control',
+        linkProps: {
+          href: '/version-control',
         },
       },
       {
@@ -322,7 +349,7 @@ function VerticalNavigation({
 
   const buttons = useMemo(() => {
     const arr = [];
-    (navigationItems || DEFAULT_ITEMS).forEach((item, idx: number) => {
+    (navigationItems || DEFAULT_NAV_ITEMS).forEach((item, idx: number) => {
       const { id, items } = item;
 
       if (items?.length >= 1) {

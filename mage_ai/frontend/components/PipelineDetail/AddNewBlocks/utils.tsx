@@ -23,6 +23,7 @@ import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { addUnderscores, capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { sortByKey } from '@utils/array';
 
 const getDataSourceTypes = (
   pipelineType?: PipelineTypeEnum,
@@ -38,6 +39,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.RABBITMQ,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.DUMMY,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
@@ -145,7 +147,7 @@ export function groupBlockTemplates(
 
     const newItem = {
       label: () => name,
-      onClick: () =>addNewBlock({
+      onClick: () => addNewBlock({
         config: {
           template_path: path,
         },
@@ -222,28 +224,54 @@ export const getdataSourceMenuItems = (
     blockTemplatesByBlockType?: {
       [blockType: string]: {
         [language: string]: FlyoutMenuItemType;
-      }
+      };
     };
     languages?: BlockLanguageEnum[];
+    onlyCustomTemplate?: boolean;
+    showBrowseTemplates?: (opts?: {
+      addNewBlock?: (block: BlockRequestPayloadType) => void,
+      addNew?: boolean;
+      blockType?: BlockTypeEnum;
+      language?: BlockLanguageEnum;
+    }) => void;
+    v2?: boolean;
   },
 ) => {
   const {
     blockTemplatesByBlockType,
     languages,
+    onlyCustomTemplate,
+    showBrowseTemplates,
   } = opts || {};
 
-  const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
+  let dataSourceMenuItemsMapping = {};
+
+  if (!opts?.v2) {
+    dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
       (blockType: BlockTypeEnum) => ([
         blockType,
-        createDataSourceMenuItems(blockType, addNewBlock, pipelineType),
-      ]),
-    ),
-  );
+          createDataSourceMenuItems(blockType, addNewBlock, pipelineType),
+      ])),
+    );
+  }
+
+  const customTemplate = {
+    label: () => 'Custom template',
+    onClick: () => showBrowseTemplates({
+      addNewBlock,
+      blockType: blockType,
+      language: BlockLanguageEnum.SQL,
+    }),
+    uuid: `${blockType}/custom_template`,
+  };
+
+  if (onlyCustomTemplate) {
+    return [customTemplate];
+  }
 
   if (pipelineType === PipelineTypeEnum.PYSPARK
-    || (pipelineType === PipelineTypeEnum.PYTHON && blockType === BlockTypeEnum.TRANSFORMER)
     || (pipelineType === PipelineTypeEnum.STREAMING)
-    || (blockType === BlockTypeEnum.SENSOR)) {
+  ) {
     return dataSourceMenuItemsMapping[blockType];
   } else {
     const additionalTemplates =
@@ -252,7 +280,10 @@ export const getdataSourceMenuItems = (
     const arr = [
       {
         // @ts-ignore
-        items: (dataSourceMenuItemsMapping[blockType] || []).concat(additionalTemplates),
+        items: sortByKey(
+          (dataSourceMenuItemsMapping[blockType] || []).concat(additionalTemplates),
+          ({ label }) => label(),
+        ),
         label: () => 'Python',
         uuid: `${blockType}/${BlockLanguageEnum.PYTHON}`,
       },
@@ -265,6 +296,14 @@ export const getdataSourceMenuItems = (
     if (!languages || languages?.includes(BlockLanguageEnum.R)) {
       // @ts-ignore
       arr.push(RMenuItems(addNewBlock, blockType));
+    }
+
+    if (
+      ![BlockTypeEnum.MARKDOWN, BlockTypeEnum.SCRATCHPAD].includes(blockType)
+        && showBrowseTemplates
+    ) {
+      // @ts-ignore
+      arr.push(customTemplate);
     }
 
     return arr;

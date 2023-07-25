@@ -1,0 +1,138 @@
+---
+title: "GitHub authentication integration"
+sidebarTitle: "GitHub authentication"
+icon: "github"
+description: "Authenticate with GitHub then pull from a remote repository, push local changes to a remote repository, and create pull requests for a remote repository."
+"og:image": "https://wallpapercave.com/dwp2x/wp3082268.jpg"
+---
+
+<Frame>
+    <img alt="GitHub authentication" src="https://wallpapercave.com/dwp2x/wp3082255.jpg" />
+</Frame>
+
+On the homepage in the left side navigation, click the link labeled <b>Version control</b>.
+The URL could look something like this: http://localhost:6789/version-control.
+
+## Setup
+
+<Frame>
+    <img alt="Setup" src="https://github.com/mage-ai/assets/blob/main/version-control/setup.png?raw=true" />
+</Frame>
+
+### Authenticate with GitHub
+
+Click the button labeled <b>Authenticate with GitHub</b> to authenticate with GitHub.
+
+After authorizing Mage, you’ll be redirected back to the initial page and an access token will
+be in the URL as a parameter. This access token is saved in your application’s database;
+it never leaves your application’s database.
+
+### Add remote
+
+Enter a name for your new remote. For the remote URL, you must use the `https` version of the
+GitHub repository (as opposed to the `SSH` version).
+
+For example, the remote URL for Mage is `https://github.com/mage-ai/mage-ai.git`.
+
+Once you fill in both input text fields, click the button labeled <b>Create new remote</b>.
+
+### Actions
+
+#### Pull remote branch
+
+1. Under the Actions dropdown, select the option labeled <b>Pull</b>.
+1. Under the Remote dropdown, select the name of the remote you want to pull from (e.g. origin).
+1. Under the Branch dropdown, select the name of the branch you want to pull from the remote you chose from the previous step.
+
+---
+
+## Branches
+
+<Frame>
+    <img alt="Branches" src="https://github.com/mage-ai/assets/blob/main/version-control/branches.png?raw=true" />
+</Frame>
+
+### Switch branch
+
+1. Under the dropdown labeled <b>Current branch</b>, select the name of the branch you want to change to.
+1. After selecting a branch, the current branch will be updated to what you selected.
+
+### Create branch
+
+1. Type in the name of the new branch in the text input field.
+1. Click the button labeled <b>+ Create new branch</b>.
+
+### Merge branch
+
+1. Under the Base branch dropdown, select the name of the branch you want to merge into your current branch.
+1. Under the Action dropdown, select the option labeled <b>Merge</b>.
+1. Type a commit message for the merge action.
+1. Click the button labeled <b>Merge</b>.
+
+### Rebase branch
+
+1. Under the Base branch dropdown, select the name of the branch you want to rebase into your current branch.
+1. Under the Action dropdown, select the option labeled <b>Rebase</b>.
+1. Type a commit message for the rebase action.
+1. Click the button labeled <b>Rebase</b>.
+
+### Delete branch
+
+1. Under the Base branch dropdown, select the name of the branch you want to delete.
+1. Under the Action dropdown, select the option labeled <b>Delete</b>.
+1. Click the button labeled <b>Delete</b>.
+1. Confirm the popup dialog box.
+
+---
+
+## Files
+
+<Frame>
+    <img alt="Files" src="https://github.com/mage-ai/assets/blob/main/version-control/files.png?raw=true" />
+</Frame>
+
+### Add files
+
+1. On the left side under <b>Not staged</b>, check the boxes next to the files you want to add.
+1. Once you’re done selecting the files, click the button labeled <b>Add files</b>.
+1. The selected files will be staged.
+
+### Checkout files
+
+1. On the left side under <b>Not staged</b>, check the boxes next to the files you want to checkout.
+1. Once you’re done selecting the files, click the button labeled <b>Checkout files</b>.
+1. Confirm the popup dialog box.
+1. All changes to the selected files will be undone.
+
+### Reset files
+
+1. On the right side under <b>Staged files</b>, check the boxes next to the files you want to reset.
+1. Once you’re done selecting the files, click the button labeled <b>Reset files</b>.
+1. The selected files will be unstaged.
+
+### Commit
+
+1. Enter a commit message.
+1. Click the button labeled <b>Commit N files with message</b>.
+
+---
+
+## Push
+
+<Frame>
+    <img alt="Push" src="https://github.com/mage-ai/assets/blob/main/version-control/push.png?raw=true" />
+</Frame>
+
+### Push local changes
+
+1. Under the Remote dropdown, select the name of the remote you want to push to (e.g. origin).
+1. Under the Branch dropdown, select the name of the branch you want to push.
+1. Click the button labeled <b>Push [remote] [branch]</b>.
+
+### Create pull request
+
+1. Under the Repository dropdown, select the name of the repository you want to create a pull request for.
+1. Under the Base branch dropdown, select the name of the branch you want your pull request to compare against (e.g. main).
+1. Under the Compare branch dropdown, select the name of the branch you want your pull request to be for (e.g. feature branch).
+1. Type the title of the pull request in the text input field labeled <b>Title</b>.
+1. Type the description of the pull request in the text input field labeled <b>Description</b>.

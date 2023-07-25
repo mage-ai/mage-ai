@@ -139,6 +139,11 @@ type PipelineDetailProps = {
   setSelectedOutputBlock: (block: BlockType) => void;
   setSelectedStream: (stream: string) => void;
   setTextareaFocused: (value: boolean) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -187,6 +192,7 @@ function PipelineDetail({
   setSelectedOutputBlock,
   setSelectedStream,
   setTextareaFocused,
+  showBrowseTemplates,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -218,7 +224,11 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  const { data: dataBlockTemplates } = api.block_templates.list({}, {
+  // TODO (tommy dangerous): uncomment when backend supports block actions via query string
+  // const useV2 = useMemo(() => PipelineTypeEnum.PYTHON === pipeline?.type, [pipeline]);
+  const { data: dataBlockTemplates } = api.block_templates.list({
+    // show_all: useV2 ? 1 : null,
+  }, {
     revalidateOnFocus: false,
   });
   const blockTemplates: BlockTemplateType[] =
@@ -552,8 +562,10 @@ function PipelineDetail({
             setErrors={setErrors}
             setOutputBlocks={setOutputBlocks}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+            setSelectedBlock={setSelectedBlock}
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
+            showBrowseTemplates={showBrowseTemplates}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -608,6 +620,7 @@ function PipelineDetail({
     setSelectedBlock,
     setSelectedOutputBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
     updateBlock,
     widgets,
@@ -659,7 +672,7 @@ function PipelineDetail({
         const block = blocks[blocks.length - 1];
 
         let content = null;
-        let configuration = {};
+        let configuration = newBlock.configuration || {};
         const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
         if (block) {
@@ -710,6 +723,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
+      showBrowseTemplates={showBrowseTemplates}
     />
   ), [
     addNewBlockAtIndex,
@@ -722,6 +736,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     pipeline,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
   ]);
 
   return (

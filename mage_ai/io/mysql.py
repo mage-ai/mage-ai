@@ -1,13 +1,15 @@
+from typing import IO, List, Mapping, Union
+
+import numpy as np
+import pandas as pd
+from mysql.connector import connect
+from mysql.connector.cursor import MySQLCursor
+from pandas import DataFrame, Series
+
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.utils import clean_name
-from mysql.connector import connect
-from mysql.connector.cursor import MySQLCursor
-from pandas import DataFrame, Series
-from typing import IO, List, Mapping, Union
-import numpy as np
-
 
 QUERY_ROW_LIMIT = 10_000_000
 
@@ -48,11 +50,13 @@ class MySQL(BaseSQL):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
-        unique_constraints: List[str] = [],
+        unique_constraints: List[str] = None,
     ) -> str:
+        if unique_constraints is None:
+            unique_constraints = []
         query = []
         for cname in dtypes:
-            query.append(f'`{clean_name(cname)}` {dtypes[cname]}')
+            query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
 
         return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
 
@@ -82,8 +86,8 @@ class MySQL(BaseSQL):
     ) -> None:
         values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
         values = []
-        for i, row in df.iterrows():
-            values.append(tuple(row))
+        for _, row in df.iterrows():
+            values.append(tuple([str(val) if type(val) is pd.Timestamp else val for val in row]))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
         cursor.executemany(sql, values)
@@ -115,7 +119,7 @@ class MySQL(BaseSQL):
         elif dtype == PandasTypes.DATE:
             return 'DATE'
         elif dtype == PandasTypes.STRING:
-            return 'CHAR(255)'
+            return 'TEXT'
         elif dtype == PandasTypes.CATEGORICAL:
             return 'TEXT'
         elif dtype == PandasTypes.BYTES:

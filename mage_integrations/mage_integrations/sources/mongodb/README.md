@@ -17,6 +17,8 @@ You must enter the following credentials when configuring this source:
 | `user` | Name of the user that will access the database. | `admin` |
 | `replica_set` | Name of replica set. | optional |
 | `ssl` | If `true`, connect using SSL. | `false` (default value) |
+| `authSource` | Allow connection for cluster, by overwriting default database name. | `the_database` (optional) |
+| `authMechanism` | Specify default connection mechanism for MongoDB cluster |  `SCRAM-SHA-256` (default is None) |
 
 <br />
 

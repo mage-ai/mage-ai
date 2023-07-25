@@ -1,4 +1,5 @@
 from distutils.file_util import copy_file
+from mage_ai.data_preparation.models.constants import PIPELINE_CONFIG_FILE
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from typing import Callable
 import asyncio
@@ -78,8 +79,8 @@ def cancel_pipeline_execution(
     config_path = pipeline_execution.previous_config_path
     if config_path is not None and os.path.isdir(config_path):
         copy_file(
-            os.path.join(config_path, 'metadata.yaml'),
-            os.path.join(pipeline.dir_path, 'metadata.yaml'),
+            os.path.join(config_path, PIPELINE_CONFIG_FILE),
+            os.path.join(pipeline.dir_path, PIPELINE_CONFIG_FILE),
         )
         delete_pipeline_copy_config(config_path)
 

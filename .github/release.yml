@@ -1,0 +1,17 @@
+changelog:
+  exclude:
+    labels:
+      - documentation
+  categories:
+    - title: 🎉 Exciting New Features 
+      labels:
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+    - title: 💅 Enhancements & Polish
+      labels:
+        - enhancement
+    - title: Other Changes
+      labels:
+        - "*"

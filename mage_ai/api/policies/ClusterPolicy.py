@@ -2,12 +2,13 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.ClusterPresenter import ClusterPresenter
+from mage_ai.orchestration.constants import Entity
 
 
 class ClusterPolicy(BasePolicy):
     @property
     def entity(self):
-        return None, None
+        return Entity.ANY, None
 
 
 ClusterPolicy.allow_actions([

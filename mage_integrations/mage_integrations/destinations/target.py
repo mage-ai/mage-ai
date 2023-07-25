@@ -9,9 +9,7 @@ import sys
 import time
 import typing as t
 
-import click
 from joblib import Parallel, delayed, parallel_backend
-from singer_sdk.cli import common_options
 from singer_sdk.exceptions import RecordsWithoutSchemaException
 from singer_sdk.helpers._batch import BaseBatchFileEncoding
 from singer_sdk.helpers._classproperty import classproperty
@@ -27,7 +25,6 @@ from singer_sdk.mapper import PluginMapper
 from singer_sdk.plugin_base import PluginBase
 
 if t.TYPE_CHECKING:
-    from io import FileIO
     from pathlib import PurePath
 
     from singer_sdk.sinks import Sink
@@ -506,71 +503,14 @@ class Target(PluginBase, SingerReader, metaclass=abc.ABCMeta):
         """
         state_json = json.dumps(state)
         self.logger.info(f"Emitting completed target state {state_json}")
+        self.logger.info(f"{self.config}")
+        text = f'{state_json}\n'
+        with open(self.config['state_path'], "w") as file:
+            file.write(text)
         sys.stdout.write(f"{state_json}\n")
         sys.stdout.flush()
 
     # CLI handler
-
-    @classproperty
-    def cli(cls) -> t.Callable:  # noqa: N805
-        """Execute standard CLI handler for taps.
-
-        Returns:
-            A callable CLI object.
-        """
-
-        @common_options.PLUGIN_VERSION
-        @common_options.PLUGIN_ABOUT
-        @common_options.PLUGIN_ABOUT_FORMAT
-        @common_options.PLUGIN_CONFIG
-        @common_options.PLUGIN_FILE_INPUT
-        @click.command(
-            help="Execute the Singer target.",
-            context_settings={"help_option_names": ["--help"]},
-        )
-        def cli(
-            *,
-            version: bool = False,
-            about: bool = False,
-            config: tuple[str, ...] = (),
-            about_format: str | None = None,
-            file_input: FileIO | None = None,
-        ) -> None:
-            """Handle command line execution.
-
-            Args:
-                version: Display the package version.
-                about: Display package metadata and settings.
-                about_format: Specify output style for `--about`.
-                config: Configuration file location or 'ENV' to use environment
-                    variables. Accepts multiple inputs as a tuple.
-                file_input: Specify a path to an input file to read messages from.
-                    Defaults to standard in if unspecified.
-            """
-            if version:
-                cls.print_version()
-                return
-
-            if not about:
-                cls.print_version(print_fn=cls.logger.info)
-            else:
-                cls.print_about(output_format=about_format)
-                return
-
-            validate_config: bool = True
-
-            cls.print_version(print_fn=cls.logger.info)
-
-            config_files, parse_env_config = cls.config_from_cli_args(*config)
-            target = cls(  # type: ignore[operator]
-                config=config_files or None,
-                parse_env_config=parse_env_config,
-                validate_config=validate_config,
-            )
-
-            target.listen(file_input)
-
-        return cli
 
 
 class SQLTarget(Target):

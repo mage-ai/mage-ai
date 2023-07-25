@@ -18,7 +18,7 @@ export const LEFT_PADDING = 68;
 
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
-  props: {
+  props?: {
     blockColor?: BlockColorEnum,
     isSelected?: boolean,
     theme?: ThemeType,
@@ -61,6 +61,9 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.CALLBACK === blockType) {
     accent = (theme?.accent || dark.accent).rose;
     accentLight = (theme?.accent || dark.accent).roseLight;
+  } else if (BlockTypeEnum.CONDITIONAL === blockType) {
+    accent = (theme || dark).content.default;
+    accentLight = (theme || dark).accent.contentDefaultTransparent;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType
     || blockColor === BlockColorEnum.GREY
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {

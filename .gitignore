@@ -163,4 +163,9 @@ docker-compose.override.yml
 
 # front-end
 node_modules
+.npmrc
+
+# Scratch files
+scratch*
+
 

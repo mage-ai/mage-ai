@@ -1,14 +1,15 @@
-from botocore.config import Config
+import json
+import os
 from functools import reduce
-from mage_ai.services.aws.ecs.config import EcsConfig
-from mage_ai.services.aws.ecs.ecs import list_tasks, run_task, stop_task
-from mage_ai.shared.array import find
-from mage_ai.shared.hash import dig
 from typing import Dict, List
 
 import boto3
-import json
-import os
+from botocore.config import Config
+
+from mage_ai.services.aws.ecs.config import EcsConfig
+from mage_ai.services.aws.ecs.ecs import list_services, list_tasks, run_task, stop_task
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import dig
 
 
 class EcsTaskManager:
@@ -40,7 +41,7 @@ class EcsTaskManager:
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
-        response = list_tasks(self.cluster_name)['tasks']
+        response = list_tasks(self.cluster_name)
         network_interfaces = self.__get_network_interfaces(response, ec2_client)
 
         tasks = []
@@ -50,13 +51,14 @@ class EcsTaskManager:
             tags = task['tags']
             name = find(lambda tag: tag.get('key') == 'name', tags)
 
-            tasks.append(dict(
-                ip=public_ip,
-                name=name.get('value') if name is not None else None,
-                status=task['lastStatus'],
-                task_arn=task['taskArn'],
-                type=task['launchType'],
-            ))
+            if name is not None:
+                tasks.append(dict(
+                    ip=public_ip,
+                    name=name.get('value'),
+                    status=task['lastStatus'],
+                    task_arn=task['taskArn'],
+                    type=task['launchType'],
+                ))
 
         running_instance_names = set(map(lambda x: x['name'], tasks))
 
@@ -80,14 +82,27 @@ class EcsTaskManager:
         ec2_client = boto3.client('ec2', config=config)
 
         # create new task
-        task = find(
-            lambda task: task.get('lastStatus') == 'RUNNING',
-            list_tasks(self.cluster_name)['tasks'],
-        )
+        def find_main_task(task):
+            tags = task.get('tags')
+            dev_tag = find(lambda tag: tag.get('key') == 'dev-instance', tags)
+            return (dev_tag is None or dev_tag.get('value') != '1') \
+                and task.get('lastStatus') == 'RUNNING'
+
+        task = find(find_main_task, list_tasks(self.cluster_name))
         network_interface = self.__get_network_interfaces([task], ec2_client)[task['taskArn']]
 
         subnets = [network_interface['SubnetId']]
         security_groups = [g['GroupId'] for g in network_interface['Groups']]
+
+        try:
+            service = find(
+                lambda service: service.get('status') == 'ACTIVE',
+                list_services(self.cluster_name)
+            )
+            network_configuration = service.get('networkConfiguration')
+        except Exception as err:
+            print(f'Could not get network configuration with error: {str(err)}')
+            network_configuration = None
 
         ecs_config = EcsConfig(
             task_definition,
@@ -99,8 +114,15 @@ class EcsTaskManager:
                 {
                     'key': 'name',
                     'value': name,
+                },
+                {
+                    'key': 'dev-instance',
+                    'value': '1',
                 }
             ],
+            network_configuration=network_configuration,
+            cpu=int(task.get('cpu')),
+            memory=int(task.get('memory')),
         )
 
         self.instance_metadata = {

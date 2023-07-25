@@ -1,6 +1,7 @@
 DESTINATIONS = [
     dict(name='Amazon S3'),
     dict(name='BigQuery'),
+    dict(name='Clickhouse'),
     dict(name='Delta Lake S3'),
     dict(name='Google Cloud Storage'),
     dict(
@@ -9,6 +10,7 @@ DESTINATIONS = [
         uuid='mssql',
     ),
     dict(name='MySQL'),
+    dict(name='OracleDB'),
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
     dict(name='Salesforce'),

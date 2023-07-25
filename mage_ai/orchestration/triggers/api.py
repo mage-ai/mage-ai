@@ -1,24 +1,27 @@
 from datetime import datetime, timedelta
+from time import sleep
+from typing import Dict, Optional
+
 from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload, get_variables
+from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
     TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE,
 )
-from time import sleep
-from typing import Dict, Optional
 
 
 def create_and_start_pipeline_run(
     pipeline: Pipeline,
     pipeline_schedule: PipelineSchedule,
-    payload: Dict = {},
+    payload: Dict = None,
 ) -> PipelineRun:
+    if payload is None:
+        payload = {}
     configured_payload, is_integration = configure_pipeline_run_payload(
         pipeline_schedule,
         pipeline.type,
@@ -34,7 +37,7 @@ def create_and_start_pipeline_run(
         initialize_state_and_runs(
             pipeline_run,
             pipeline_scheduler.logger,
-            get_variables(pipeline_run),
+            pipeline_run.get_variables(),
         )
     pipeline_scheduler.start(should_schedule=False)
 
@@ -46,7 +49,7 @@ def fetch_or_create_pipeline_schedule(pipeline: Pipeline) -> PipelineSchedule:
     schedule_name = TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE
     schedule_type = ScheduleType.API
 
-    pipeline_schedule = PipelineSchedule.query.filter(
+    pipeline_schedule = PipelineSchedule.repo_query.filter(
         PipelineSchedule.name == schedule_name,
         PipelineSchedule.pipeline_uuid == pipeline_uuid,
         PipelineSchedule.schedule_type == schedule_type,
@@ -113,13 +116,15 @@ def check_pipeline_run_status(
 
 def trigger_pipeline(
     pipeline_uuid: str,
-    variables: Dict = {},
+    variables: Dict = None,
     check_status: bool = False,
     error_on_failure: bool = False,
     poll_interval: float = DEFAULT_POLL_INTERVAL,
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
 ) -> PipelineRun:
+    if variables is None:
+        variables = {}
     pipeline = Pipeline.get(pipeline_uuid)
 
     pipeline_schedule = fetch_or_create_pipeline_schedule(pipeline)

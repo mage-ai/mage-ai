@@ -10,4 +10,6 @@ class StatusPresenter(BasePresenter):
         'instance_type',
         'disable_pipeline_edit_access',
         'require_user_authentication',
+        'project_type',
+        'project_uuid',
     ]

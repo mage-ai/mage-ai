@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockRunPresenter import BlockRunPresenter
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.constants import Entity
 
 
 class BlockRunPolicy(BasePolicy):
@@ -13,11 +13,11 @@ class BlockRunPolicy(BasePolicy):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         if pipeline_uuid:
-            return Permission.Entity.PIPELINE, pipeline_uuid
+            return Entity.PIPELINE, pipeline_uuid
 
         parent_model = self.options.get('parent_model')
         if parent_model:
-            return Permission.Entity.PIPELINE, parent_model.pipeline_uuid
+            return Entity.PIPELINE, parent_model.pipeline_uuid
 
         return super().entity
 

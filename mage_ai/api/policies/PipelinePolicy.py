@@ -2,17 +2,17 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelinePresenter import PipelinePresenter
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.constants import Entity
 
 
 class PipelinePolicy(BasePolicy):
     @property
     def entity(self):
         if self.resource and self.resource.model:
-            return Permission.Entity.PIPELINE, self.resource.model.uuid
+            return Entity.PIPELINE, self.resource.model.uuid
 
-        return Permission.Entity.PROJECT, get_repo_path()
+        return Entity.PROJECT, get_project_uuid()
 
 
 PipelinePolicy.allow_actions([
@@ -37,6 +37,7 @@ PipelinePolicy.allow_actions([
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -46,6 +47,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -56,6 +58,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -65,6 +68,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
+    'conditionals',
     'extensions',
     'schedules',
 ], scopes=[
@@ -75,7 +79,9 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_write([
     'callbacks',
+    'conditionals',
     'clone_pipeline_uuid',
+    'custom_template_uuid',
     'extensions',
     'name',
     'type',
@@ -88,6 +94,7 @@ PipelinePolicy.allow_write([
 PipelinePolicy.allow_write([
     'add_upstream_for_block_uuid',
     'callbacks',
+    'conditionals',
     'extensions',
     'schedules',
 ] + PipelinePresenter.default_attributes, scopes=[
@@ -106,6 +113,7 @@ PipelinePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_query([
+    'include_block_pipelines',
     'includes_block_metadata',
     'includes_content',
     'includes_extensions',
@@ -118,6 +126,7 @@ PipelinePolicy.allow_query([
 
 PipelinePolicy.allow_query([
     'status[]',
+    'tag[]',
     'type[]',
     'include_schedules',
 ], scopes=[

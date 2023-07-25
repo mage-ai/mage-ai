@@ -28,6 +28,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ICON_SIZE, IconContainerStyle } from '../../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { getdataSourceMenuItems } from '../../AddNewBlocks/utils';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -60,6 +61,7 @@ function GreatExpectations({
   setErrors,
   setSelectedBlock,
   setTextareaFocused,
+  showBrowseTemplates,
   textareaFocused,
 }: GreatExpectationsProps) {
   const refParent = useRef(null);
@@ -335,7 +337,23 @@ function GreatExpectations({
               ),
               tooltip: () => description,
               uuid,
-            }))}
+              // @ts-ignore
+            })).concat(getdataSourceMenuItems(
+              block => addNewBlockAtIndex(
+                {
+                  ...block,
+                  extension_uuid: extensionUUID,
+                  type: BlockTypeEnum.EXTENSION,
+                },
+                extensionBlocks?.length || 0,
+              ),
+              BlockTypeEnum.EXTENSION,
+              null,
+              {
+                onlyCustomTemplate: true,
+                showBrowseTemplates,
+              },
+            ))}
             onClickCallback={() => setDropdownMenuVisible(false)}
             open={dropdownMenuVisible}
             parentRef={refParent}

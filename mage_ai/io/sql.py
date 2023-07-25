@@ -1,15 +1,17 @@
+import warnings
 from io import StringIO
-from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
+from typing import IO, Any, Dict, List, Mapping, Union
+
+from pandas import DataFrame, Series, read_sql
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLConnection, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader
 from mage_ai.io.export_utils import (
+    PandasTypes,
     clean_df_for_export,
     gen_table_creation_query,
     infer_dtypes,
-    PandasTypes,
 )
-from pandas import DataFrame, read_sql, Series
-from typing import Any, Dict, IO, List, Mapping, Union
-import warnings
 
 
 class BaseSQL(BaseSQLConnection):
@@ -38,6 +40,12 @@ class BaseSQL(BaseSQLConnection):
             str: SQL data type for this column
         """
         raise Exception('Subclasses must override this method.')
+
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return f'CREATE SCHEMA IF NOT EXISTS {schema_name};'
 
     def build_create_table_command(
         self,
@@ -256,7 +264,8 @@ class BaseSQL(BaseSQLConnection):
 
             with self.conn.cursor() as cur:
                 if schema_name:
-                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+                    query = self.build_create_schema_command(schema_name)
+                    cur.execute(query)
 
                 should_create_table = not table_exists
 

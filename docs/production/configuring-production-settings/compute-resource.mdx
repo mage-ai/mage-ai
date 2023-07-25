@@ -57,7 +57,7 @@ blocks:
 ```
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
-There're two ways to customize the compute resource for Kubernetes executor:
+There're two ways to customize the Kubernetes executor config:
 
 1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
     ```yaml
@@ -79,21 +79,24 @@ There're two ways to customize the compute resource for Kubernetes executor:
 in this project. Example config:
     ```yaml
     k8s_executor_config:
+      job_name_prefix: data-prep
       resource_limits:
         cpu: 1000m
         memory: 2048Mi
       resource_requests:
         cpu: 500m
         memory: 1024Mi
+      service_account_name: default
     ```
-If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
-```yaml
-k8s_executor_config:
-  resource_limits:
-    gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
-```
-Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
-is installed and run on your nodes to use the GPUs.
+* The kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`. The default `job_name_prefix` is `data-prep`. You can customize it in the k8s executor config.
+* If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
+  ```yaml
+  k8s_executor_config:
+    resource_limits:
+      gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
+  ```
+  Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
+  is installed and run on your nodes to use the GPUs.
 
 ### AWS ECS executor
 
@@ -129,6 +132,8 @@ How to configure pipeline to use GCP cloud run executor:
 ```yaml
 gcp_cloud_run_config:
   path_to_credentials_json_file: "/path/to/credentials_json_file"
+  project_id: project_id
+  timeout_seconds: 600
 ```
 
 2. Update the `executor_type` of block to `gcp_cloud_run` in pipeline's metadata.yaml:

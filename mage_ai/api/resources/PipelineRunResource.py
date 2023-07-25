@@ -2,6 +2,7 @@ from sqlalchemy.orm import selectinload
 
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.api.utils import get_query_timestamps
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -25,6 +26,7 @@ class PipelineRunResource(DatabaseResource):
         if parent_model:
             pipeline_schedule_id = parent_model.id
 
+        start_timestamp, end_timestamp = get_query_timestamps(query_arg)
         backfill_id = query_arg.get('backfill_id', [None])
         if backfill_id:
             backfill_id = backfill_id[0]
@@ -66,6 +68,10 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
         if status is not None:
             results = results.filter(PipelineRun.status == status)
+        if start_timestamp is not None:
+            results = results.filter(PipelineRun.created_at >= start_timestamp)
+        if end_timestamp is not None:
+            results = results.filter(PipelineRun.created_at <= end_timestamp)
 
         if order_by:
             arr = []
@@ -90,7 +96,28 @@ class PipelineRunResource(DatabaseResource):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
 
-        results = total_results.limit(limit + 1).offset(offset).all()
+        pipeline_type = query_arg.get('pipeline_type', [None])
+        if pipeline_type:
+            pipeline_type = pipeline_type[0]
+
+        if pipeline_type is not None:
+            pipeline_type_by_pipeline_uuid = dict()
+            try:
+                pipeline_runs = total_results.all()
+                results = []
+                for run in pipeline_runs:
+                    if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
+                        pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
+                    run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
+                    if run_pipeline_type == pipeline_type:
+                        results.append(run)
+                total_count = len(results)
+                results = results[offset:(offset + limit)]
+            except Exception as err:
+                print('ERROR filtering pipeline runs:', err)
+                results = total_results.limit(limit + 1).offset(offset).all()
+        else:
+            results = total_results.limit(limit + 1).offset(offset).all()
 
         pipeline_schedule_id = None
         parent_model = kwargs.get('parent_model')

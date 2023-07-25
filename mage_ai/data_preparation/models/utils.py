@@ -9,13 +9,13 @@ import simplejson
 from mage_ai.shared.parsers import encode_complex
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
-JSON_SERIALIZABLE_COLUMN_TYPES = [
+JSON_SERIALIZABLE_COLUMN_TYPES = set([
     dict.__name__,
     list.__name__,
-]
-STRING_SERIALIZABLE_COLUMN_TYPES = [
+])
+STRING_SERIALIZABLE_COLUMN_TYPES = set([
     'ObjectId',
-]
+])
 
 CAST_TYPE_COLUMN_TYPES = set([
     'Int64',
@@ -82,3 +82,22 @@ def apply_transform(ddf: dd, apply_function) -> dd:
 
 def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
     return df.apply(apply_function, axis=1)
+
+
+def should_serialize_pandas(column_types: Dict) -> bool:
+    if not column_types:
+        return False
+    for _, column_type in column_types.items():
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES or \
+                column_type in STRING_SERIALIZABLE_COLUMN_TYPES:
+            return True
+    return False
+
+
+def should_deserialize_pandas(column_types: Dict) -> bool:
+    if not column_types:
+        return False
+    for _, column_type in column_types.items():
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
+            return True
+    return False

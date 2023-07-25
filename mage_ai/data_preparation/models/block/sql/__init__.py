@@ -1,4 +1,8 @@
 from datetime import datetime
+from os import path
+from time import sleep
+from typing import Any, Dict, List
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
@@ -14,22 +18,14 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
     interpolate_vars,
+    split_query_string,
     table_name_parts_from_query,
 )
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.base import (
-    DataSource,
-    ExportWritePolicy,
-    QUERY_ROW_LIMIT,
-)
+from mage_ai.io.base import QUERY_ROW_LIMIT, DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
-from os import path
-from time import sleep
-from typing import Any, Dict, List
-import re
+from mage_ai.settings.repo import get_repo_path
 
-MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
@@ -140,8 +136,9 @@ def execute_sql_code(
                 NotFound: 404 Not found: Table database:schema.table_name
                     was not found in location XX
                 """
+                total_retries = 5
                 tries = 0
-                while tries < 10:
+                while tries < total_retries:
                     sleep(tries)
                     tries += 1
                     try:
@@ -152,7 +149,7 @@ def execute_sql_code(
                         )
                         return [result]
                     except Exception as err:
-                        if '404' not in str(err):
+                        if '404' not in str(err) or tries == total_retries:
                             raise err
     elif DataSource.CLICKHOUSE.value == data_provider:
         from mage_ai.io.clickhouse import ClickHouse
@@ -172,7 +169,7 @@ def execute_sql_code(
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
 
-        database = database or 'default'
+        database = database or loader.default_database()
 
         if use_raw_sql:
             return execute_raw_sql(
@@ -255,10 +252,12 @@ def execute_sql_code(
                 query,
                 **interpolate_input_data_kwargs,
             )
+
+            schema = schema or loader.default_schema()
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
-                return execute_raw_sql(
+                return mssql.execute_raw_sql(
                     loader,
                     block,
                     query_string,
@@ -268,7 +267,7 @@ def execute_sql_code(
             else:
                 loader.export(
                     None,
-                    None,
+                    schema,
                     table_name,
                     query_string=query_string,
                     drop_table_on_replace=True,
@@ -544,53 +543,15 @@ def execute_sql_code(
                     ]
 
 
-def split_query_string(query_string: str) -> List[str]:
-    text_parts = []
-
-    matches = re.finditer(r"'(.*?)'|\"(.*?)\"", query_string, re.IGNORECASE)
-
-    previous_idx = 0
-
-    for idx, match in enumerate(matches):
-        matched_string = match.group()
-        updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
-
-        start_idx, end_idx = match.span()
-
-        previous_chunk = query_string[previous_idx:start_idx]
-        text_parts.append(previous_chunk)
-        text_parts.append(updated_string)
-        previous_idx = end_idx
-
-    text_parts.append(query_string[previous_idx:])
-
-    text_combined = ''.join(text_parts)
-    queries = text_combined.split(';')
-
-    arr = []
-    for query in queries:
-        query = query.strip()
-        if not query:
-            continue
-
-        lines = query.split('\n')
-        query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
-        query = query.strip()
-        query = re.sub(MAGE_SEMI_COLON, ';', query)
-
-        if query:
-            arr.append(query)
-
-    return arr
-
-
 def execute_raw_sql(
     loader,
     block: 'Block',
     query_string: str,
-    configuration: Dict = {},
+    configuration: Dict = None,
     should_query: bool = False,
 ) -> List[Any]:
+    if configuration is None:
+        configuration = {}
     queries = []
     fetch_query_at_indexes = []
 

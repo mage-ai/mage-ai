@@ -1,33 +1,37 @@
 import asyncio
+import dateutil.parser
 import enum
-import pytz
 import traceback
 import uuid
-
-from croniter import croniter
 from datetime import datetime, timedelta, timezone
+from dateutil.relativedelta import relativedelta
+from typing import Dict, List
+
+import pytz
+from croniter import croniter
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Table,
+    or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
-from typing import Dict, List
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
     is_dynamic_block,
+    is_dynamic_block_child,
 )
-from mage_ai.data_preparation.models.constants import ExecutorType
+from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -36,11 +40,14 @@ from mage_ai.data_preparation.models.triggers import (
     SettingsConfig,
     Trigger,
 )
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.base import Base, BaseModel
+from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
-from mage_ai.shared.hash import ignore_keys, index_by
+from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -62,7 +69,6 @@ class PipelineSchedule(BaseModel):
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
-    # The column name is repo_name, but
     repo_path = Column(String(255))
     settings = Column(JSON)
 
@@ -74,6 +80,15 @@ class PipelineSchedule(BaseModel):
         secondary=pipeline_schedule_event_matcher_association_table,
         back_populates='pipeline_schedules'
     )
+
+    @classproperty
+    def repo_query(cls):
+        return cls.query.filter(
+            or_(
+                PipelineSchedule.repo_path == get_repo_path(),
+                PipelineSchedule.repo_path.is_(None),
+            )
+        )
 
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
@@ -105,7 +120,9 @@ class PipelineSchedule(BaseModel):
     @classmethod
     @safe_db_query
     def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
-        query = self.query.filter(self.status == ScheduleStatus.ACTIVE)
+        query = self.repo_query.filter(
+            self.status == ScheduleStatus.ACTIVE,
+        )
         if pipeline_uuids is not None:
             query = query.filter(PipelineSchedule.pipeline_uuid.in_(pipeline_uuids))
         return query.all()
@@ -121,7 +138,7 @@ class PipelineSchedule(BaseModel):
     @safe_db_query
     def create_or_update(self, trigger_config: Trigger):
         try:
-            existing_trigger = PipelineSchedule.query.filter(
+            existing_trigger = PipelineSchedule.repo_query.filter(
                 self.name == trigger_config.name,
                 self.pipeline_uuid == trigger_config.pipeline_uuid,
             ).one_or_none()
@@ -251,8 +268,29 @@ class PipelineRun(BaseModel):
                     ])
 
     @property
+    def initial_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.INITIAL]
+
+    @property
+    def completed_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.COMPLETED]
+
+    @property
+    def failed_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.FAILED]
+
+    @property
     def pipeline(self) -> 'Pipeline':
         return Pipeline.get(self.pipeline_uuid)
+
+    @property
+    def pipeline_type(self) -> PipelineType:
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+
+        return self.pipeline.type if pipeline is not None else None
 
     @property
     def logs(self):
@@ -283,14 +321,21 @@ class PipelineRun(BaseModel):
 
     @classmethod
     @safe_db_query
-    def active_runs(
+    def active_runs_for_pipelines(
         self,
-        pipeline_uuids: List[str] = None,
+        pipeline_uuids: List[str],
         include_block_runs: bool = False,
     ) -> List['PipelineRun']:
-        query = self.query.filter(self.status == self.PipelineRunStatus.RUNNING)
-        if pipeline_uuids is not None:
-            query = query.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
+        # Filter by schedules because pipelines across repos can potentially
+        # have the same uuid
+        repo_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.pipeline_uuid.in_(pipeline_uuids)
+        ).all()
+        schedule_ids = [s.id for s in repo_schedules]
+        query = self.query.filter(
+            self.status == self.PipelineRunStatus.RUNNING,
+            self.pipeline_schedule_id.in_(schedule_ids),
+        )
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()
@@ -385,13 +430,114 @@ class PipelineRun(BaseModel):
         )
 
     def all_blocks_completed(self, include_failed_blocks: bool = False) -> bool:
-        statuses = [BlockRun.BlockRunStatus.COMPLETED]
+        statuses = [
+            BlockRun.BlockRunStatus.COMPLETED,
+            BlockRun.BlockRunStatus.CONDITION_FAILED,
+        ]
         if include_failed_blocks:
             statuses.extend([
                 BlockRun.BlockRunStatus.FAILED,
                 BlockRun.BlockRunStatus.UPSTREAM_FAILED,
             ])
         return all(b.status in statuses for b in self.block_runs)
+
+    def get_variables(self, extra_variables: Dict = None) -> Dict:
+        if extra_variables is None:
+            extra_variables = dict()
+
+        pipeline_run_variables = self.variables or {}
+        event_variables = self.event_variables or {}
+
+        variables = merge_dict(
+            merge_dict(
+                get_global_variables(self.pipeline_uuid) or dict(),
+                self.pipeline_schedule.variables or dict(),
+            ),
+            pipeline_run_variables,
+        )
+
+        # For backwards compatibility
+        for k, v in event_variables.items():
+            if k not in variables:
+                variables[k] = v
+
+        if self.execution_date:
+            variables['ds'] = self.execution_date.strftime('%Y-%m-%d')
+            variables['hr'] = self.execution_date.strftime('%H')
+
+        variables['env'] = ENV_PROD
+        variables['event'] = merge_dict(variables.get('event', {}), event_variables)
+        variables['execution_date'] = self.execution_date
+        variables['execution_partition'] = self.execution_partition
+
+        interval_end_datetime = variables.get('interval_end_datetime')
+        interval_seconds = variables.get('interval_seconds')
+        interval_start_datetime = variables.get('interval_start_datetime')
+        interval_start_datetime_previous = variables.get('interval_start_datetime_previous')
+
+        if interval_end_datetime or \
+                interval_seconds or \
+                interval_start_datetime or \
+                interval_start_datetime_previous:
+            if interval_end_datetime:
+                try:
+                    variables['interval_end_datetime'] = dateutil.parser.parse(
+                        interval_end_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime:
+                try:
+                    variables['interval_start_datetime'] = dateutil.parser.parse(
+                        interval_start_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime_previous:
+                try:
+                    variables['interval_start_datetime_previous'] = dateutil.parser.parse(
+                        interval_start_datetime_previous,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+        elif self.execution_date and ScheduleType.TIME == self.pipeline_schedule.schedule_type:
+            interval_end_datetime = None
+            interval_seconds = None
+            interval_start_datetime = self.execution_date
+            interval_start_datetime_previous = None
+
+            if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24
+            elif ScheduleInterval.HOURLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 1
+            elif ScheduleInterval.MONTHLY == self.pipeline_schedule.schedule_interval:
+                interval_end_datetime = interval_start_datetime + relativedelta(months=1)
+                interval_seconds = (
+                    interval_end_datetime.timestamp() - interval_start_datetime.timestamp()
+                )
+            elif ScheduleInterval.WEEKLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24 * 7
+
+            if interval_seconds and not interval_end_datetime:
+                interval_end_datetime = interval_start_datetime + timedelta(
+                    seconds=interval_seconds,
+                )
+
+            if interval_seconds and interval_start_datetime:
+                interval_start_datetime_previous = interval_start_datetime - timedelta(
+                    seconds=interval_seconds,
+                )
+
+            variables['interval_end_datetime'] = interval_end_datetime
+            variables['interval_seconds'] = interval_seconds
+            variables['interval_start_datetime'] = interval_start_datetime
+            variables['interval_start_datetime_previous'] = interval_start_datetime_previous
+
+        variables.update(extra_variables)
+
+        return variables
 
 
 class BlockRun(BaseModel):
@@ -403,6 +549,7 @@ class BlockRun(BaseModel):
         FAILED = 'failed'
         CANCELLED = 'cancelled'
         UPSTREAM_FAILED = 'upstream_failed'
+        CONDITION_FAILED = 'condition_failed'
 
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'), index=True)
     block_uuid = Column(String(255))
@@ -459,7 +606,12 @@ class BlockRun(BaseModel):
         # The block_run’s block_uuid for replicated blocks will be in this format:
         # [block_uuid]:[replicated_block_uuid]
         # We need to use the original block_uuid to get the proper output.
-        if block.replicated_block:
+
+        # Block runs for dynamic child blocks will have the following block UUID:
+        # [block.uuid]:[index]
+        # Don’t use the original UUID even if the block is a replica because it will get rid of
+        # the dynamic child block index.
+        if block.replicated_block and not is_dynamic_block_child(block):
             block_uuid = block.uuid
 
         return block.get_outputs(

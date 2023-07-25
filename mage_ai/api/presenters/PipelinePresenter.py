@@ -12,6 +12,10 @@ class PipelinePresenter(BasePresenter):
         'executor_count',
         'executor_type',
         'name',
+        'notification_config',
+        'retry_config',
+        'spark_config',
+        'tags',
         'type',
         'updated_at',
         'uuid',
@@ -28,6 +32,10 @@ class PipelinePresenter(BasePresenter):
             include_extensions = include_extensions[0]
 
         if constants.DETAIL == display_format:
+            include_block_pipelines = query.get('include_block_pipelines', [False])
+            if include_block_pipelines:
+                include_block_pipelines = include_block_pipelines[0]
+
             include_content = query.get('includes_content', [True])
             if include_content:
                 include_content = include_content[0]
@@ -42,8 +50,10 @@ class PipelinePresenter(BasePresenter):
 
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
+                include_block_pipelines=include_block_pipelines,
                 include_block_tags=True,
                 include_callback_blocks=True,
+                include_conditional_blocks=True,
                 include_content=include_content,
                 include_extensions=include_extensions,
                 include_outputs=include_outputs,

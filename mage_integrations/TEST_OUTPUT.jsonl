@@ -1,0 +1,2 @@
+{"type": "SCHEMA", "stream": "Account", "schema": {"properties": {"Name": {"type": "string"}}, "type": "object"}}
+{"type": "RECORD", "stream": "Account", "record": {"Name": "target-salesforce Test Account"}}

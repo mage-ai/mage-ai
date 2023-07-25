@@ -1,11 +1,26 @@
+import os
+import re
+import shutil
+import subprocess
+import sys
+import uuid
 from contextlib import redirect_stdout
 from datetime import datetime
-from jinja2 import Template
 from logging import Logger
+from typing import Callable, Dict, List, Tuple
+
+import aiofiles
+import simplejson
+import yaml
+from jinja2 import Template
+from pandas import DataFrame
+
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.sql import bigquery, clickhouse
 from mage_ai.data_preparation.models.block.sql import (
-    bigquery,
     execute_sql_code as execute_sql_code_orig,
+)
+from mage_ai.data_preparation.models.block.sql import (
     mssql,
     mysql,
     postgres,
@@ -15,32 +30,40 @@ from mage_ai.data_preparation.models.block.sql import (
     trino,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name, files_in_path
-from pandas import DataFrame
-from typing import Callable, Dict, List, Tuple
-import aiofiles
-import os
-import re
-import shutil
-import simplejson
-import subprocess
-import sys
-import uuid
-import yaml
-
 
 PROFILES_FILE_NAME = 'profiles.yml'
+
+
+def get_dbt_project_name_from_settings(project_folder_name: str) -> Dict:
+    project_full_path = os.path.join(get_repo_path(), 'dbt', project_folder_name)
+    dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
+
+    dbt_project = None
+    project_name = project_folder_name
+    profile_name = project_folder_name
+
+    if os.path.isfile(dbt_project_full_path):
+        with open(dbt_project_full_path, 'r') as f:
+            dbt_project = yaml.safe_load(f)
+            project_name = dbt_project.get('name') or project_folder_name
+            profile_name = dbt_project.get('profile') or project_name
+
+    return dict(
+        profile_name=profile_name,
+        project_name=project_name,
+    )
 
 
 def parse_attributes(block) -> Dict:
@@ -194,14 +217,21 @@ def add_blocks_upstream_from_refs(
             )
             added_blocks += new_block.upstream_blocks
         else:
-            new_block = block.__class__.create(
+            existing_block = block.pipeline.get_block(
                 uuid,
                 block.type,
-                get_repo_path(),
-                configuration=configuration,
-                language=block.language,
-                pipeline=block.pipeline,
             )
+            if existing_block is None:
+                new_block = block.__class__.create(
+                    uuid,
+                    block.type,
+                    get_repo_path(),
+                    configuration=configuration,
+                    language=block.language,
+                    pipeline=block.pipeline,
+                )
+            else:
+                new_block = existing_block
 
         added_blocks.append(new_block)
         current_upstream_blocks.append(new_block)
@@ -587,6 +617,23 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.CLICKHOUSE == profile_type:
+        database = profile.get('schema')
+        interface = profile.get('driver')
+
+        config_file_loader = ConfigFileLoader(config=dict(
+            CLICKHOUSE_DATABASE=database,
+            CLICKHOUSE_HOST=profile.get('host'),
+            CLICKHOUSE_INTERFACE=interface,
+            CLICKHOUSE_PASSWORD=profile.get('password'),
+            CLICKHOUSE_PORT=profile.get('port'),
+            CLICKHOUSE_USERNAME=profile.get('user'),
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
 
     if not config_file_loader or not configuration:
         attr = parse_attributes(block)
@@ -723,6 +770,15 @@ def create_upstream_tables(
                 block,
                 **kwargs_shared,
             )
+    elif DataSource.CLICKHOUSE == data_provider:
+        from mage_ai.io.clickhouse import ClickHouse
+
+        loader = ClickHouse.with_config(config_file_loader)
+        clickhouse.create_upstream_block_tables(
+            loader,
+            block,
+            **kwargs_shared,
+        )
 
     block.upstream_blocks = upstream_blocks_init
 
@@ -920,6 +976,11 @@ def execute_query(
 
         with Trino.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
+    elif DataSource.CLICKHOUSE == data_provider:
+        from mage_ai.io.clickhouse import ClickHouse
+
+        loader = ClickHouse.with_config(config_file_loader)
+        return loader.load(query_string, **shared_kwargs)
 
 
 def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
@@ -939,7 +1000,7 @@ def build_command_line_arguments(
         variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
-    dbt_command = 'run'
+    dbt_command = (block.configuration or {}).get('dbt', {}).get('command', 'run')
 
     if run_tests:
         dbt_command = 'test'

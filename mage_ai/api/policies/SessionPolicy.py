@@ -1,12 +1,13 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
+from mage_ai.orchestration.constants import Entity
 
 
 class SessionPolicy(BasePolicy):
     @property
     def entity(self):
-        return None, None
+        return Entity.ANY, None
 
 
 SessionPolicy.allow_actions([
@@ -45,6 +46,8 @@ SessionPolicy.allow_write([
     'email',
     'password',
     'username',
+    'token',
+    'provider',
 ], scopes=[
     OauthScope.CLIENT_PUBLIC,
 ], on_action=[

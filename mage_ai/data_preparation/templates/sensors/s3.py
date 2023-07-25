@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
@@ -8,7 +8,7 @@ if 'sensor' not in globals():
 
 
 @sensor
-def check_condition(**kwargs) -> bool:
+def check_condition(*args, **kwargs) -> bool:
     """
     Template code for checking if a file or folder exists in a S3 bucket
 

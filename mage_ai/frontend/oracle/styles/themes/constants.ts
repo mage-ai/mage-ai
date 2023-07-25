@@ -35,6 +35,7 @@ export type ThemeType = {
     codeTextarea: string;
     danger: string;
     dark: string;
+    dashboard: string;
     header: string;
     menu: string;
     muted: string;
@@ -50,6 +51,7 @@ export type ThemeType = {
     scrollbarTrack: string;
     success: string;
     table: string;
+    tag: string;
   };
   borders: {
     contrast: string;

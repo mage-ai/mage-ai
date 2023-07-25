@@ -22,7 +22,11 @@ import { capitalize, removeUnderscore } from '@utils/string';
 type ToggleMenuProps = {
   children: any;
   compact?: boolean;
-  onClickCallback: () => void;
+  onClickCallback: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
   onClickOutside: () => void;
   onSecondaryClick: () => void;
   open: boolean;
@@ -35,7 +39,9 @@ type ToggleMenuProps = {
   query: { [keyof: string]: string[] };
   setOpen: (open: boolean) => void;
   toggleValueMapping?: {
-    [keyof: string]: string;
+    [keyof: string]: {
+      [keyof: string]: string;
+    };
   };
 };
 
@@ -100,7 +106,7 @@ function ToggleMenu({
                 Object.entries((optionsState || options)?.[highlightedOptionKey] || {}).map(([value, enabled]) => (
                   <ToggleValueStyle key={value}>
                     <Text>
-                      {toggleValueMapping?.[value] || removeUnderscore(capitalize(value))}
+                      {toggleValueMapping?.[highlightedOptionKey]?.[value] || removeUnderscore(capitalize(value))}
                     </Text>
                     <ToggleSwitch
                       checked={enabled}
@@ -132,7 +138,11 @@ function ToggleMenu({
                     return query;
                   }, {});
 
-                onClickCallback?.();
+                onClickCallback?.(
+                  query,
+                  updatedQuery,
+                );
+
                 goToWithFilters(
                   query,
                   updatedQuery,

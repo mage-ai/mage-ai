@@ -1,0 +1,81 @@
+---
+title: "Create pipeline"
+api: "POST /api/pipelines"
+---
+`POST /api/pipelines`
+
+<ParamField query="callbacks" type="array of objects">
+  Array of [callback](/development/blocks/callbacks) block objects.  Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="conditionals" type="array of objects">
+  Array of [conditional](/development/blocks/conditionals/) block objects.  Same shape as `blocks`.
+</ParamField>
+
+<ParamField query="name" type="string" required>
+  Human readable name of block.
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Type of block:
+  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
+</ParamField>
+
+<ParamField query="clone_pipeline_uuid" type="string">
+  If supplied, the uuid of a pipeline to clone.
+</ParamField>
+
+<ParamField query="extensions" type="array of objects">
+  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
+</ParamField>
+
+<CodeGroup>
+  ```curl cURL
+  curl --request POST 
+  -H 'Content-Type: application/json' 
+  -H 'Cookie: oauth_token=some_really_long_string'
+  -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
+  -d '{"pipeline": {"name": "arwen-starlight", "type": "python"}}' 
+  --url http://localhost:6789/api/pipelines
+  ```
+  ```python Python
+  import requests
+
+  headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+    "Cookie": "oauth_token=some_really_long_string"
+  }
+
+  json_data = {
+    'pipeline': {
+      "name": "arwen-starlight",
+      "type": 'python'
+      }
+  }
+  
+  r = requests.post('http://localhost:6789/api/pipelines', headers=headers, json=json_data)
+  ```
+</CodeGroup>
+
+```json
+{
+  "pipeline": {
+    "data_integration": null,
+    "description": null,
+    "executor_config": {},
+    "executor_count": 1,
+    "executor_type": null,
+    "name": "arwen-starlight",
+    "notification_config": {},
+    "type": "python",
+    "updated_at": null,
+    "uuid": "arwen_starlight",
+    "spark_config": {},
+    "blocks": [],
+    "callbacks": [],
+    "conditionals": [],
+    "widgets": []
+  }
+}
+```

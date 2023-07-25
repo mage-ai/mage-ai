@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 from mage_ai.streaming.sources.kafka import KafkaSource
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import patch
 
 
 class KafkaTests(TestCase):

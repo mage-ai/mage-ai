@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import RoleType from '@interfaces/RoleType';
@@ -25,7 +26,9 @@ function UserWorkspacesEdit({
   user,
   workspaces,
 }: UserWorkspacesEditProps) {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserType>();
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
 
   useEffect(() => {
     if (user) {
@@ -33,7 +36,7 @@ function UserWorkspacesEdit({
     }
   }, [user]);
 
-  const workspaceEntityIDs = workspaces?.map(({ repo_path }) => repo_path);
+  const workspaceEntityIDs = workspaces?.map(({ project_uuid }: WorkspaceType) => project_uuid);
   const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
     entity: 'project',
     entity_ids: workspaceEntityIDs,
@@ -44,13 +47,11 @@ function UserWorkspacesEdit({
 
     return roles?.reduce(
       (obj, role) => {
-        const repoPath = role.permissions[0].entity_id;
-
-        // const name = repoPath.split('/').slice(-1)
-        const existingRoles = obj[repoPath] || [];
+        const projectUUID = role.permissions[0].entity_id;
+        const existingRoles = obj[projectUUID] || [];
         return {
           ...obj,
-          [repoPath]: [...existingRoles, role],
+          [projectUUID]: [...existingRoles, role],
         };
       },
       {},
@@ -62,12 +63,10 @@ function UserWorkspacesEdit({
     const roles = u?.roles_new;
     return roles?.reduce(
       (obj, role) => {
-        const repoPath = role?.permissions?.[0]?.entity_id;
-
-        // const name = repoPath.split('/').slice(-1)
+        const projectUUID = role?.permissions?.[0]?.entity_id;
         return {
           ...obj,
-          [repoPath]: role,
+          [projectUUID]: role,
         };
       },
       {},
@@ -79,17 +78,8 @@ function UserWorkspacesEdit({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            user: userServer,
-          }) => {
-            toast.success(
-              'User roles successfully updated.',
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `user-update-success-${userServer.id}`,
-              },
-            );
-            fetchUser();
+          callback: () => {
+            router.push('/manage/users');
           },
           onErrorCallback: ({
             error: {
@@ -114,6 +104,23 @@ function UserWorkspacesEdit({
 
   return (
     <>
+      <Spacing p={2}>
+        <Button
+          disabled={buttonDisabled}
+          loading={isLoading}
+          onClick={() => {
+            const updated_profile = {
+              ...profile,
+              roles_new: profile?.roles_new?.map(({ id }: RoleType) => id),
+            };
+            // @ts-ignore
+            updateUser({ user: updated_profile });
+          }}
+          primary
+        >
+          Update workspace roles
+        </Button>
+      </Spacing>
       <Table
         columnFlex={[1, 1]}
         columns={[
@@ -126,10 +133,10 @@ function UserWorkspacesEdit({
         ]}
         rows={workspaces?.map(({
           name,
-          repo_path,
+          project_uuid,
         }: WorkspaceType) => {
-          const roles = rolesByWorkspace?.[repo_path] || [];
-          const userRole = userRoleByWorkspace?.[repo_path];
+          const roles = rolesByWorkspace?.[project_uuid] || [];
+          const userRole = userRoleByWorkspace?.[project_uuid];
           return [
             <Text bold key="name">
               {name}
@@ -139,12 +146,11 @@ function UserWorkspacesEdit({
               // label="Roles"
               // @ts-ignore
               onChange={e => {
-                // setButtonDisabled(false);
+                setButtonDisabled(false);
                 const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
                 if (newRole) {
                   setProfile(prev => {
                     const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
-                    console.log('prev roles:', prevRoles);
                     const updatedProfile: UserType = {
                       roles_new: [...prevRoles, newRole],
                     };
@@ -169,22 +175,6 @@ function UserWorkspacesEdit({
           ];
         })}
       />
-      <Spacing p={2}>
-        <Button
-          loading={isLoading}
-          onClick={() => {
-            const updated_profile = {
-              ...profile,
-              roles_new: profile?.roles_new?.map(({ id }: RoleType) => id),
-            };
-            // @ts-ignore
-            updateUser({ user: updated_profile });
-          }}
-          primary
-        >
-          Update roles
-        </Button>
-      </Spacing>
     </>
   );
 }

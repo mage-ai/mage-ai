@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import uuid
 from unittest.mock import patch
 
 import yaml
@@ -36,7 +37,11 @@ class PipelineTest(DBTestCase):
             executor_count=1,
             executor_type=None,
             name='test pipeline 2',
+            notification_config=dict(),
             uuid='test_pipeline_2',
+            tags=[],
+            retry_config={},
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -105,6 +110,7 @@ class PipelineTest(DBTestCase):
                 ),
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[
                 dict(
@@ -135,7 +141,7 @@ class PipelineTest(DBTestCase):
             'test_pipeline_b',
             repo_path=self.repo_path,
         )
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Pipeline test_pipeline_a already exists.'):
             asyncio.run(pipeline2.update(dict(name='test_pipeline_a', uuid='test_pipeline_b')))
         self.assertEqual(pipeline1.name, 'test_pipeline_a')
         self.assertEqual(pipeline2.name, 'test_pipeline_b')
@@ -171,7 +177,11 @@ class PipelineTest(DBTestCase):
             executor_count=1,
             executor_type=None,
             name='test pipeline 3',
+            notification_config=dict(),
             uuid='test_pipeline_3',
+            tags=[],
+            retry_config={},
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -224,6 +234,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -249,7 +260,11 @@ class PipelineTest(DBTestCase):
             executor_count=1,
             executor_type=None,
             name='test pipeline 4',
+            notification_config=dict(),
             uuid='test_pipeline_4',
+            tags=[],
+            retry_config={},
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -318,6 +333,7 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
@@ -349,7 +365,11 @@ class PipelineTest(DBTestCase):
             executor_count=1,
             executor_type=None,
             name='test pipeline 5',
+            notification_config=dict(),
             uuid='test_pipeline_5',
+            tags=[],
+            retry_config={},
+            spark_config=dict(),
             type='python',
             blocks=[
                 dict(
@@ -466,11 +486,13 @@ class PipelineTest(DBTestCase):
                 )
             ],
             callbacks=[],
+            conditionals=[],
             updated_at=None,
             widgets=[],
         ))
 
-    def test_delete(self):
+    @patch('mage_ai.data_preparation.repo_manager.get_project_uuid')
+    def test_delete(self, mock_project_uuid):
         pipeline = Pipeline.create(
             'test pipeline 6',
             repo_path=self.repo_path,
@@ -485,6 +507,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block3, upstream_block_uuids=['block2'])
         pipeline.add_block(block4)
         pipeline.add_block(block5)
+        mock_project_uuid.return_value = uuid.uuid4().hex
         pipeline.delete()
         self.assertFalse(os.access(pipeline.dir_path, os.F_OK))
         self.assertTrue(os.access(block1.file_path, os.F_OK))
@@ -570,54 +593,59 @@ class PipelineTest(DBTestCase):
             config_json = yaml.full_load(f)
             self.assertEqual(
                 config_json,
-                {
-                    "data_integration": None,
-                    "description": None,
-                    "executor_config": {},
-                    "executor_count": 1,
-                    "executor_type": None,
-                    "extensions": {},
-                    "name": "test_pipeline_9",
-                    "type": "integration",
-                    "updated_at": None,
-                    "uuid": "test_pipeline_9",
-                    "blocks": [
-                        {
-                            "all_upstream_blocks_executed": True,
-                            "color": None,
-                            "configuration": {},
-                            "downstream_blocks": ["destination_block"],
-                            "executor_config": None,
-                            "executor_type": "local_python",
-                            "has_callback": False,
-                            "name": "source_block",
-                            "language": "python",
-                            "retry_config": None,
-                            "status": "not_executed",
-                            "type": "data_loader",
-                            "upstream_blocks": [],
-                            "uuid": "source_block",
-                        },
-                        {
-                            "all_upstream_blocks_executed": False,
-                            "color": None,
-                            "configuration": {},
-                            "downstream_blocks": [],
-                            "executor_config": None,
-                            "executor_type": "local_python",
-                            "has_callback": False,
-                            "name": "destination_block",
-                            "language": "python",
-                            "retry_config": None,
-                            "status": "not_executed",
-                            "type": "transformer",
-                            "upstream_blocks": ["source_block"],
-                            "uuid": "destination_block",
-                        },
+                dict(
+                    data_integration=None,
+                    description=None,
+                    executor_config={},
+                    executor_count=1,
+                    executor_type=None,
+                    extensions={},
+                    name='test_pipeline_9',
+                    notification_config={},
+                    tags=[],
+                    retry_config={},
+                    spark_config={},
+                    type='integration',
+                    updated_at=None,
+                    uuid='test_pipeline_9',
+                    blocks=[
+                        dict(
+                            all_upstream_blocks_executed=True,
+                            color=None,
+                            configuration={},
+                            downstream_blocks=['destination_block'],
+                            executor_config=None,
+                            executor_type='local_python',
+                            has_callback=False,
+                            name='source_block',
+                            language='python',
+                            retry_config=None,
+                            status='not_executed',
+                            type='data_loader',
+                            upstream_blocks=[],
+                            uuid='source_block',
+                        ),
+                        dict(
+                            all_upstream_blocks_executed=False,
+                            color=None,
+                            configuration={},
+                            downstream_blocks=[],
+                            executor_config=None,
+                            executor_type='local_python',
+                            has_callback=False,
+                            name='destination_block',
+                            language='python',
+                            retry_config=None,
+                            status='not_executed',
+                            type='transformer',
+                            upstream_blocks=['source_block'],
+                            uuid='destination_block',
+                        ),
                     ],
-                    "callbacks": [],
-                    "widgets": [],
-                },
+                    callbacks=[],
+                    conditionals=[],
+                    widgets=[],
+                ),
             )
         pipeline_load = Pipeline.get('test_pipeline_9')
         self.assertEqual(pipeline_load.to_dict()['data_integration'], expected_catalog_config)

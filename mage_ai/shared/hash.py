@@ -1,3 +1,4 @@
+import json
 import math
 import re
 from functools import reduce
@@ -38,6 +39,16 @@ def flatten(input_data):
             final_data[k1] = v1
 
     return final_data
+
+
+def get_json_value(str_value, arr_or_string):
+    if not str_value:
+        return str_value
+    try:
+        obj_arg = json.loads(str_value)
+    except Exception:
+        return str_value
+    return dig(obj_arg, arr_or_string)
 
 
 def ignore_keys(d, keys):
@@ -96,6 +107,8 @@ def index_by(func, arr):
 
 def merge_dict(a, b):
     c = a.copy()
+    if not b:
+        return c
     c.update(b)
     return c
 

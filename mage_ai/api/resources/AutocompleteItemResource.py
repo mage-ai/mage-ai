@@ -1,11 +1,11 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.autocomplete.utils import (
-    build_file_content_mapping,
-    PATHS_TO_TRAVERSE,
     FILES_TO_READ,
+    PATHS_TO_TRAVERSE,
+    build_file_content_mapping,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
 

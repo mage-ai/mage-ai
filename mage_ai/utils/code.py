@@ -1,7 +1,8 @@
-from mage_ai.autocomplete.utils import extract_all_imports
-from mage_ai.data_preparation.repo_manager import get_repo_path
 import importlib
 import re
+
+from mage_ai.autocomplete.utils import extract_all_imports
+from mage_ai.settings.repo import get_repo_path
 
 
 def reload_all_repo_modules(content: str) -> None:

@@ -1,0 +1,45 @@
+---
+title: "Read backfills"
+api: "GET /api/backfills"
+---
+`GET /api/backfills`
+
+<ParamField query="_limit" type="integer">
+  Maximum number of logs to be returned in the API response.
+
+  Example: `20`
+</ParamField>
+
+<ParamField query="_offset" type="integer">
+  Read logs after N number of logs, where N equals `_offset`.
+
+  Example: `10`
+</ParamField>
+
+<ParamField query="pipeline_uuid" type="string">
+  The pipeline uuid for which to read backfills.
+</ParamField>
+
+<ParamField query="include_run_count" type="boolean">
+  A boolean which indicates wheter to return the run count in the response metadata object.
+</ParamField>
+
+<CodeGroup>
+```curl cURL
+curl --request GET \
+  --url 'http://localhost:6789/api/backfills?_limit=20&_offset=0&include_run_count=true&pipeline_uuid=example_pipeline&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+  --header 'OAUTH-TOKEN=some_really_long_string' \
+```
+</CodeGroup>
+
+```json
+{
+  "backfills": [
+    ...
+  ],
+  "metadata": {
+    "count": 3,
+    "next": false
+  }
+}
+```

@@ -117,6 +117,9 @@ In this case, you will also need to configure the following variables:
 | `LDAP_BASE_DN`         | The base DN of the server                                    | `dc=example,dc=com`         |
 | `LDAP_AUTHENTICATION_FILTER` | The authentication filter to use in template format using the variable `username` | `(&(\|(objectClass=inetOrgPerson)(objectClass=groupOfNames))(cn={username}))` |
 | `LDAP_AUTHORIZATION_FILTER` | The authorization filter to use in template format using the variable `user_dn` | `(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))` |
+| `LDAP_GROUP_FIELD` | Name of user attribute to use to determine a user's LDAP group. | `memberOf` |
+| `LDAP_ROLES_MAPPING` | Mapping of user LDAP group to Mage roles. Must be in JSON string format. | `'{"Admin": ["Admin"]}'` |
+| `LDAP_DEFAULT_ACCESS` | Default access for a new user authenticated through LDAP (default user will have no role) | `Viewer`, `Editor`, `Admin` |
 
 Make sure to adjust the values of the variables to match your LDAP configuration.
 

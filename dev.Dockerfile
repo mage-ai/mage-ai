@@ -9,15 +9,15 @@ USER root
 # Download ODBC headers for pyodbc
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
-RUN apt -y update
-RUN ACCEPT_EULA=Y apt -y install msodbcsql18
-RUN apt -y install unixodbc-dev
+RUN apt-get -y update
+RUN ACCEPT_EULA=Y apt-get -y install msodbcsql18
+RUN apt-get -y install unixodbc-dev
 
 # Install NFS dependencies, and pymssql dependencies
-RUN apt -y install curl freetds-dev freetds-bin
+RUN apt-get -y install curl freetds-dev freetds-bin
 
 # Install R
-# RUN apt install -y r-base
+# RUN apt-get install -y r-base
 # RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 # RUN R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
@@ -31,8 +31,6 @@ RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-
 RUN ${PIP} install "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 RUN ${PIP} install -r requirements.txt
 
-COPY ./mage_ai /home/src/mage_ai
-
 # Set up spark kernel (Uncomment the code below to set it up)
 RUN ${PIP} install sparkmagic
 RUN mkdir ~/.sparkmagic
@@ -44,9 +42,13 @@ RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cu
 
 # Install node modules used in front-end
 RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
-RUN apt install nodejs
+RUN apt-get install -y nodejs
+RUN apt-get install -y npm
 RUN npm install --global yarn
 RUN yarn global add next
+
+# Copy code and setup frontend.
+COPY ./mage_ai /home/src/mage_ai
 RUN cd /home/src/mage_ai/frontend && yarn install
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"

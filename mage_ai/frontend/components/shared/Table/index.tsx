@@ -21,7 +21,6 @@ import {
   TableStyle,
 } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
 
 const MENU_WIDTH: number = UNIT * 20;
 
@@ -48,11 +47,6 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
-  grouping?: {
-    column: string;
-    columnIndex: number;
-    values: string[];
-  };
   highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
@@ -62,8 +56,10 @@ type TableProps = {
   onRightClickRow?: (index: number, event?: any) => void;
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
-  rows: any[][];
+  rowGroupHeaders?: string[];
   rowVerticalPadding?: number;
+  rows: any[][];
+  rowsGroupedByIndex?: string[][];
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
@@ -80,7 +76,6 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
-  grouping,
   highlightRowOnHover,
   isSelectedRow,
   noBorder,
@@ -90,8 +85,10 @@ function Table({
   onRightClickRow,
   renderRightClickMenu,
   renderRightClickMenuItems,
-  rows,
+  rowGroupHeaders,
   rowVerticalPadding,
+  rows,
+  rowsGroupedByIndex,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -349,27 +346,16 @@ function Table({
   ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
 
   const tableEl = useMemo(() => {
-    if (grouping && grouping?.column && grouping?.values?.length > 0) {
-      const {
-        columnIndex: groupingColumnIndex,
-        values: groupingValues,
-      } = grouping;
-      const groupedRowElsByValue = rowEls?.reduce((acc, rowEl) => {
-        const groupingValue = rowEl?.props?.children?.[groupingColumnIndex]?.props?.children?.props?.children;
-        const groupingTitle = capitalize(groupingValue);
-        if (groupingValues.includes(groupingValue)) {
-          acc[groupingTitle] = (acc[groupingTitle] || []).concat(rowEl);
-        }
+    if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {
+      // @ts-ignore
+      return rowsGroupedByIndex?.reduce((acc, indexes: number[], idx: number) => {
+        const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
+        if (els?.length >= 1) {
+          const header = rowGroupHeaders[idx];
 
-        return acc;
-      }, {});
-      const rowElGroupings = Object.entries(groupedRowElsByValue)
-        .sort((a, b) => a[0].localeCompare(b[0]));
-
-      return (
-        <>
-          {rowElGroupings.map(([groupingValue, groupingRowEls], idx) => (
-            <Spacing key={groupingValue} mb={idx === rowElGroupings.length - 1 ? 0 : 2}>
+          acc.push(
+            // @ts-ignore
+            <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
               <Accordion
                 visibleMapping={{
                   '0': true,
@@ -377,7 +363,7 @@ function Table({
               >
                 <AccordionPanel
                   noPaddingContent
-                  title={groupingValue}
+                  title={header}
                 >
                   <TableStyle
                     borderCollapseSeparate={borderCollapseSeparate}
@@ -385,15 +371,17 @@ function Table({
                   >
                     <>
                       {(columns?.length >= 1 && !noHeader) && headerRowEl}
-                      {groupingRowEls}
+                      {els}
                     </>
                   </TableStyle>
                 </AccordionPanel>
               </Accordion>
-            </Spacing>
-          ))}
-        </>
-      );
+            </Spacing>,
+          );
+        }
+
+        return acc;
+      }, []);
     }
 
     return (
@@ -409,10 +397,11 @@ function Table({
     borderCollapseSeparate,
     columnBorders,
     columns?.length,
-    grouping,
     headerRowEl,
     noHeader,
     rowEls,
+    rowGroupHeaders,
+    rowsGroupedByIndex,
   ]);
 
   return (

@@ -1,9 +1,8 @@
 import UserType, { RoleValueEnum } from '@interfaces/UserType';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { Settings, WorkspacesIcon, WorkspacesUsersIcon } from '@oracle/icons';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
-
 
 export enum WorkspacesPageNameEnum {
   WORKSPACES = 'workspaces',
@@ -13,6 +12,7 @@ export enum WorkspacesPageNameEnum {
 
 export function buildNavigationItems(
   { owner, roles }: UserType,
+  projectType: string,
   pageName: string,
 ) {
   const workspaceItems = [
@@ -27,7 +27,7 @@ export function buildNavigationItems(
     },
   ];
 
-  if (owner || roles === RoleValueEnum.ADMIN) {
+  if (owner) {
     workspaceItems.push({
       Icon: WorkspacesUsersIcon,
       id: WorkspacesPageNameEnum.USERS,
@@ -38,8 +38,8 @@ export function buildNavigationItems(
       },
     });
   }
-  if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
-    
+
+  if (projectType == ProjectTypeEnum.MAIN) {
     workspaceItems.push({
       Icon: Settings,
       id: WorkspacesPageNameEnum.SETTINGS,

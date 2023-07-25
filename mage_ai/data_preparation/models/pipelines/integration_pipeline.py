@@ -10,7 +10,7 @@ import yaml
 
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import (
-    build_config_json,
+    build_config,
     get_catalog,
     interpolate_variables,
 )
@@ -23,6 +23,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
+from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
 PYTHON = 'python3'
@@ -179,6 +180,7 @@ class IntegrationPipeline(Pipeline):
         elif BlockType.DATA_EXPORTER == block_type:
             file_path = self.destination_file_path
 
+        config_interpolated = interpolate_variables(config, self.__global_variables())
         try:
             if file_path:
                 run_args = [
@@ -186,7 +188,7 @@ class IntegrationPipeline(Pipeline):
                     file_path,
                     '--config_json',
                     simplejson.dumps(
-                        interpolate_variables(config, self.__global_variables()),
+                        config_interpolated,
                         default=encode_complex,
                         ignore_nan=True,
                     ),
@@ -200,8 +202,8 @@ class IntegrationPipeline(Pipeline):
                     timeout=10,
                 )
                 proc.check_returncode()
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode('utf-8').split('\n')
+        except subprocess.CalledProcessError as err:
+            stderr = err.stderr.decode('utf-8').split('\n')
 
             json_object = {}
             error = ''
@@ -212,7 +214,9 @@ class IntegrationPipeline(Pipeline):
                         error = dig(json_object, 'tags.error')
                     except Exception:
                         error = line
-            raise Exception(error)
+                elif not error and line.startswith('CRITICAL'):
+                    error = line
+            raise Exception(filter_out_config_values(error, config_interpolated))
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
@@ -224,6 +228,10 @@ class IntegrationPipeline(Pipeline):
             file_path = self.destination_file_path
 
         streams_updated = set()
+        config, config_json = build_config(
+            self.data_loader.file_path,
+            self.__global_variables(),
+        )
         try:
             streams = streams if streams else \
                 list(map(lambda s: s['tap_stream_id'], self.streams()))
@@ -232,7 +240,7 @@ class IntegrationPipeline(Pipeline):
                     PYTHON,
                     file_path,
                     '--config_json',
-                    build_config_json(self.data_loader.file_path, self.__global_variables()),
+                    config_json,
                     '--load_sample_data',
                     '--log_to_stdout',
                     '1',
@@ -250,7 +258,7 @@ class IntegrationPipeline(Pipeline):
                 proc.check_returncode()
 
                 output = proc.stdout.decode()
-                print_logs_from_output(output)
+                print_logs_from_output(output, config=config)
 
                 pipeline = Pipeline(self.uuid)
                 block = pipeline.get_block(self.data_loader.uuid)
@@ -277,7 +285,7 @@ class IntegrationPipeline(Pipeline):
             stderr = e.stderr.decode('utf-8').split('\n')
 
             json_object = {}
-            error = None
+            error = ''
             for line in stderr:
                 if line.startswith('ERROR'):
                     try:
@@ -285,10 +293,13 @@ class IntegrationPipeline(Pipeline):
                         error = dig(json_object, 'tags.error')
                     except Exception:
                         error = line
+            error = filter_out_config_values(error, config)
             if not error:
-                raise Exception('The sample data was not able to be loaded. Please check \
-                                if the stream still exists. If it does not, click the "View and \
-                                select streams" button and confirm the valid streams.')
+                raise Exception('The sample data was not able to be loaded. Please check if the ' +
+                                'stream still exists. If it does not, click the "View and select ' +
+                                'streams" button and confirm the valid streams. If it does, ' +
+                                'loading sample data for this source may not currently ' +
+                                'be supported.')
             raise Exception(error)
 
     def count_records(self) -> List[Dict]:
@@ -299,78 +310,91 @@ class IntegrationPipeline(Pipeline):
                 tap_stream_id = stream_data['tap_stream_id']
                 destination_table = stream_data.get('destination_table', tap_stream_id)
 
-                try:
-                    run_args = [
-                        PYTHON,
-                        self.source_file_path,
-                        '--config_json',
-                        build_config_json(self.data_loader.file_path, self.__global_variables()),
-                        '--settings',
-                        self.settings_file_path,
-                        '--state',
-                        self.source_state_file_path(
-                            destination_table=destination_table,
-                            stream=tap_stream_id,
-                        ),
-                        '--selected_streams_json',
-                        json.dumps([tap_stream_id]),
-                        '--count_records',
-                    ]
-
-                    proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    proc.check_returncode()
-
-                    arr += json.loads(parse_logs_and_json(proc.stdout.decode()))
-                except subprocess.CalledProcessError as e:
-                    message = e.stderr.decode('utf-8')
-                    raise Exception(message)
+                config, config_json = build_config(
+                    self.data_loader.file_path,
+                    self.__global_variables(),
+                )
+                arr += json.loads(
+                    self.__run_in_subprocess(
+                        [
+                            PYTHON,
+                            self.source_file_path,
+                            '--config_json',
+                            config_json,
+                            '--settings',
+                            self.settings_file_path,
+                            '--state',
+                            self.source_state_file_path(
+                                destination_table=destination_table,
+                                stream=tap_stream_id,
+                            ),
+                            '--selected_streams_json',
+                            json.dumps([tap_stream_id]),
+                            '--count_records',
+                        ],
+                        config=config,
+                    )
+                )
 
         return arr
 
     def discover(self, streams: List[str] = None) -> Dict:
         if self.source_file_path and self.data_loader.file_path:
-            try:
-                run_args = [
-                    PYTHON,
-                    self.source_file_path,
-                    '--config_json',
-                    build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--discover',
+            config, config_json = build_config(
+                self.data_loader.file_path,
+                self.__global_variables(),
+            )
+            run_args = [
+                PYTHON,
+                self.source_file_path,
+                '--config_json',
+                config_json,
+                '--discover',
+            ]
+            if streams:
+                run_args += [
+                    '--selected_streams_json',
+                    json.dumps(streams),
                 ]
-                if streams:
-                    run_args += [
-                        '--selected_streams_json',
-                        json.dumps(streams),
-                    ]
-
-                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc.check_returncode()
-
-                return json.loads(parse_logs_and_json(proc.stdout.decode()))
-
-            except subprocess.CalledProcessError as e:
-                message = e.stderr.decode('utf-8')
-                raise Exception(message)
+            return json.loads(
+                self.__run_in_subprocess(
+                    run_args,
+                    config=config,
+                )
+            )
 
     def discover_streams(self) -> List[str]:
         if self.source_file_path and self.data_loader.file_path:
-            try:
-                run_args = [
-                    PYTHON,
-                    self.source_file_path,
-                    '--config_json',
-                    build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--discover',
-                    '--discover_streams',
-                ]
+            config, config_json = build_config(
+                self.data_loader.file_path,
+                self.__global_variables(),
+            )
+            return json.loads(
+                self.__run_in_subprocess(
+                    [
+                        PYTHON,
+                        self.source_file_path,
+                        '--config_json',
+                        config_json,
+                        '--discover',
+                        '--discover_streams',
+                    ],
+                    config=config,
+                )
+            )
 
-                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc.check_returncode()
+    def __run_in_subprocess(self, run_args: List[str], config: Dict = None) -> str:
+        try:
+            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc.check_returncode()
 
-                return json.loads(parse_logs_and_json(proc.stdout.decode()))
-            except subprocess.CalledProcessError as e:
-                message = e.stderr.decode('utf-8')
-                raise Exception(message)
+            return parse_logs_and_json(
+                proc.stdout.decode(),
+                config=config,
+            )
+        except subprocess.CalledProcessError as e:
+            message = e.stderr.decode('utf-8')
+            raise Exception(filter_out_config_values(message, config))
 
     def streams(self, variables: Dict = None) -> List[Dict]:
         if variables is None:

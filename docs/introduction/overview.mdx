@@ -22,6 +22,7 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://img.shields.io/pypi/v/mage-ai?color=orange"
       alt="Python package version"
@@ -33,12 +34,14 @@ icon: "hat-wizard"
       marginTop: "0.125rem",
       marginBottom: "0.125rem",
       marginLeft: "0.25rem",
+      cursor: "default",
     }}
     href="https://anaconda.org/conda-forge/mage-ai"
   >
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://anaconda.org/conda-forge/mage-ai/badges/version.svg"
       alt="Anaconda version"
@@ -56,6 +59,7 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red"
       alt="Apache version"
@@ -73,6 +77,7 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack"
       alt="Slack community"
@@ -90,6 +95,7 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github"
       alt="GitHub Stars"
@@ -107,6 +113,7 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
       src="https://img.shields.io/docker/pulls/mageai/mageai.svg"
       alt="Docker pulls"
@@ -124,8 +131,9 @@ icon: "hat-wizard"
     <img
       style={{
         margin: 0,
+        cursor: "pointer",
       }}
-      src="https://static.pepy.tech/personalized-badge/mage-ai?period=total&units=international_system&left_color=grey&right_color=purple&left_text=pip%20installs"
+      src="https://static.pepy.tech/personalized-badge/mage-ai?period=total&units=international_system&left_color=grey&right_color=blue&left_text=pip%20installs"
       alt="pip installs"
     />
   </a>
@@ -246,12 +254,11 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 
 ### Install using Docker
 
-1. Create a new project and launch tool (change `demo_project` to any other name
-   if you want):
+1. Create a new project and launch tool (change `[project_name]` to any name you want):
 
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-  /app/run_app.sh mage start demo_project
+  /app/run_app.sh mage start [project_name]
 ```
 
   - If you want to run Mage locally on a different port, change the first port after `-p`
@@ -259,7 +266,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
   ```bash
   docker run -it -p 6790:6789 -v $(pwd):/home/src mageai/mageai \
-    /app/run_app.sh mage start demo_project
+    /app/run_app.sh mage start [project_name]
   ```
 
 2. Open http://localhost:6789 in your browser and build a pipeline.
@@ -287,11 +294,10 @@ For additional packages (e.g. `spark`, `postgres`, etc), please see
 If you run into errors, please see
 [Install errors](/getting-started/setup#errors).
 
-2. Create new project and launch tool (change `demo_project` to any other name
-   if you want):
+2. Create a new project and launch tool (change `[project_name]` to any name you want):
 
 ```bash
-mage start demo_project
+mage start [project_name]
 ```
 
 3. Open http://localhost:6789 in your browser and build a pipeline.
@@ -332,7 +338,7 @@ Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
   <Card
     title="Set up DBT models and orchestrate DBT runs"
     icon="folder-gear"
-    href="/integrations/dbt-models"
+    href="/tutorials/setup-dbt"
   ></Card>
   <Card
     title="Train model on Titanic dataset"
@@ -342,7 +348,7 @@ Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
   <Card
     title="Integrate Mage into an existing Airflow project"
     icon="file-import"
-    href="/integrations/airflow"
+    href="/guides/integrate-mage-airflow"
   ></Card>
 </CardGroup>
 
@@ -355,9 +361,9 @@ Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
 | 🎶  | [Orchestration](/design/data-pipeline-management)                                 | Schedule and manage data pipelines with observability.                 |
 | --- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | 📓  | [Notebook](/about/features#notebook-for-building-data-pipelines) | Interactive Python, SQL, & R editor for coding data pipelines.         |
-| 🏗️  | [Data integrations](/integrations/data-integrations)             | Synchronize data from 3rd party sources to your internal destinations. |
+| 🏗️  | [Data integrations](/data-integrations)                          | Synchronize data from 3rd party sources to your internal destinations. |
 | 🚰  | [Streaming pipelines](/guides/streaming-pipeline)                | Ingest and transform real-time data.                                   |
-| ❎  | [DBT](integrations/dbt)                                          | Build, run, and manage your DBT models with Mage.                      |
+| ❎  | [DBT](/dbt)                                                      | Build, run, and manage your DBT models with Mage.                      |
 
 **A sample data pipeline defined across 3 files ➝**
 

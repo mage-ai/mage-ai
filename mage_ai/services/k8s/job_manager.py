@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Dict, Union
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -15,7 +16,7 @@ class JobManager():
         job_name: str = 'mage-job',
         namespace: str = DEFAULT_NAMESPACE,
         logger=None,
-        logging_tags=dict(),
+        logging_tags: Dict = None,
     ):
         self.job_name = job_name
         self.namespace = namespace
@@ -51,7 +52,7 @@ class JobManager():
     def run_job(
         self,
         command: str,
-        k8s_config=None,
+        k8s_config: Union[K8sExecutorConfig, Dict] = None,
     ):
         if not self.job_exists():
             if type(k8s_config) is dict:
@@ -85,7 +86,7 @@ class JobManager():
         self,
         command: str,
         k8s_config: K8sExecutorConfig = None,
-    ):
+    ) -> client.V1Job:
         # Configureate Pod template container
         mage_server_container_spec = self.pod_config.spec.containers[0]
 
@@ -111,14 +112,17 @@ class JobManager():
             **container_kwargs,
         )
         # Create and configurate a spec section
+        pod_spec = dict(
+            containers=[container],
+            image_pull_secrets=self.pod_config.spec.image_pull_secrets,
+            restart_policy='Never',
+            volumes=self.pod_config.spec.volumes,
+        )
+        if k8s_config and k8s_config.service_account_name:
+            pod_spec['service_account_name'] = k8s_config.service_account_name
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={'name': self.job_name}),
-            spec=client.V1PodSpec(
-                restart_policy='Never',
-                containers=[container],
-                image_pull_secrets=self.pod_config.spec.image_pull_secrets,
-                volumes=self.pod_config.spec.volumes,
-            ),
+            spec=client.V1PodSpec(**pod_spec),
         )
         # Create the specification of deployment
         spec = client.V1JobSpec(template=template, backoff_limit=0)
@@ -136,16 +140,19 @@ class JobManager():
             body=job,
             namespace=self.namespace,
         )
-        self._print("Job created. status='%s'" % str(api_response.status))
+        self._print(f"Job created. status='{api_response.status}'")
 
     def delete_job(self):
-        api_response = self.batch_api_client.delete_namespaced_job(
-            name=self.job_name,
-            namespace=self.namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=0))
-        self._print("Job deleted. status='%s'" % str(api_response.status))
+        try:
+            api_response = self.batch_api_client.delete_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=0))
+            self._print("Job deleted. status='%s'" % str(api_response.status))
+        except Exception as e:
+            self._print(f'Failed to delete job {self.job_name} with error {e}')
 
     def job_exists(self):
         try:

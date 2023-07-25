@@ -1,26 +1,29 @@
+import json
+from typing import Dict, List, Tuple
+
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from mage_integrations.destinations.snowflake.constants import SNOWFLAKE_COLUMN_TYPE_VARIANT
+from mage_integrations.destinations.snowflake.constants import (
+    SNOWFLAKE_COLUMN_TYPE_VARIANT,
+)
 from mage_integrations.destinations.snowflake.utils import (
     build_alter_table_command,
     convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
-    clean_column_name,
     build_create_table_command,
     build_insert_command,
+    clean_column_name,
     column_type_mapping,
     convert_column_to_type,
 )
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.strings import is_number
-from typing import Dict, List, Tuple
-import json
 
 
 def convert_array(value, column_settings):
@@ -63,7 +66,7 @@ def convert_column_if_json(value, column_type):
 
 class Snowflake(Destination):
     @property
-    def column_identifier(self) -> str:
+    def quote(self) -> str:
         if self.disable_double_quotes:
             return ''
         return '"'
@@ -104,7 +107,7 @@ class Snowflake(Destination):
                 table_name,
             ),
             unique_constraints=unique_constraints,
-            column_identifier=self.column_identifier,
+            column_identifier=self.quote,
         )
 
         return [
@@ -151,7 +154,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     schema_name,
                     table_name,
                 ),
-                column_identifier=self.column_identifier,
+                column_identifier=self.quote,
             ),
         ]
 
@@ -180,7 +183,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
-            column_identifier=self.column_identifier,
+            column_identifier=self.quote,
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -217,18 +220,18 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             ])]
 
             unique_constraints_clean = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in unique_constraints
             ]
             columns_cleaned = [
-                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                self._wrap_with_quotes(clean_column_name(col))
                 for col in columns
             ]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (SELECT * FROM {full_table_name_temp}) AS b',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
@@ -303,7 +306,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
         arr = []
 
-        for idx, array_of_tuples in enumerate(data):
+        for _, array_of_tuples in enumerate(data):
             for t in array_of_tuples:
                 if len(t) >= 1 and type(t[0]) is int:
                     arr.append(t)

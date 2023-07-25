@@ -1153,9 +1153,6 @@ class Stripe(Source):
     def test_connection(self) -> None:
         configure_stripe_client()
 
-    def load_data(self, **kwargs):
-        pass
-
 
 @utils.handle_top_exception(LOGGER)
 def main():

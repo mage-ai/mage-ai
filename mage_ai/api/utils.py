@@ -1,5 +1,8 @@
+from datetime import datetime
 from typing import List, Tuple
 
+from mage_ai.api.errors import ApiError
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import (
     Oauth2AccessToken,
     Permission,
@@ -29,7 +32,7 @@ def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2Acc
 
 def is_owner(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return (user and user.owner) or \
@@ -39,32 +42,32 @@ def is_owner(
 
 def has_at_least_admin_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
+        is_owner(user, entity, entity_id) or \
         (user.roles and user.roles & 1 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.ADMIN != 0)
 
 
 def has_at_least_editor_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
-        has_at_least_admin_role(user) or \
+        is_owner(user, entity, entity_id) or \
+        has_at_least_admin_role(user, entity, entity_id) or \
         (user.roles and user.roles & 2 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.EDITOR != 0)
 
 
 def has_at_least_editor_role_and_notebook_edit_access(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and \
@@ -73,7 +76,7 @@ def has_at_least_editor_role_and_notebook_edit_access(
 
 def has_at_least_editor_role_and_pipeline_edit_access(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not is_disable_pipeline_edit_access() and \
@@ -82,21 +85,21 @@ def has_at_least_editor_role_and_pipeline_edit_access(
 
 def has_at_least_viewer_role(
     user: User,
-    entity: Permission.Entity = None,
+    entity: Entity = None,
     entity_id: str = None,
 ) -> bool:
     return not user or \
         (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-        is_owner(user) or \
-        has_at_least_admin_role(user) or \
-        has_at_least_editor_role(user) or \
+        is_owner(user, entity, entity_id) or \
+        has_at_least_admin_role(user, entity, entity_id) or \
+        has_at_least_editor_role(user, entity, entity_id) or \
         (user.roles and user.roles & 4 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.VIEWER != 0)
 
 
 def get_access_for_roles(
     roles: List[Role],
-    entity: Permission.Entity,
+    entity: Entity,
     entity_id: str = None,
 ):
     access = 0
@@ -120,3 +123,28 @@ def parse_cookie_header(cookies_raw):
             cookies[cookie_name] = cookie_value
 
     return cookies
+
+
+def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
+    start_timestamp = query_arg.get('start_timestamp', [None])
+    if start_timestamp:
+        start_timestamp = start_timestamp[0]
+    end_timestamp = query_arg.get('end_timestamp', [None])
+    if end_timestamp:
+        end_timestamp = end_timestamp[0]
+
+    error = ApiError.RESOURCE_INVALID.copy()
+    if start_timestamp:
+        try:
+            start_timestamp = datetime.fromtimestamp(int(start_timestamp))
+        except (ValueError, OverflowError):
+            error.update(message='Value is invalid for start_timestamp.')
+            raise ApiError(error)
+    if end_timestamp:
+        try:
+            end_timestamp = datetime.fromtimestamp(int(end_timestamp))
+        except (ValueError, OverflowError):
+            error.update(message='Value is invalid for end_timestamp.')
+            raise ApiError(error)
+
+    return start_timestamp, end_timestamp

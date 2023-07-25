@@ -7,6 +7,7 @@ import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
@@ -19,10 +20,12 @@ import PipelineScheduleType, {
   ScheduleStatusEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
+import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -59,6 +62,7 @@ import {
 import { convertSeconds } from '../utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
+import { indexBy } from '@utils/array';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
@@ -163,9 +167,14 @@ function TriggerDetail({
     );
   }, [
     fetchPipelineRuns,
-    pipeline,
     pipelineRuns,
+    pipelineScheduleID,
+    pipelineUUID,
+    q,
+    router,
     selectedRun,
+    setErrors,
+    totalRuns,
   ]);
 
   const [selectedTab, setSelectedTab] = useState(TABS[0]);
@@ -180,6 +189,37 @@ function TriggerDetail({
         response, {
           callback: () => {
             fetchPipelineSchedule();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const {
+    data: dataPipelineTriggers,
+    mutate: fetchPipelineTriggers,
+  } = api.pipeline_triggers.pipelines.list(pipelineUUID);
+  const pipelineTriggersByName: {
+    [name: string]: PipelineTriggerType;
+  } = useMemo(() => indexBy(dataPipelineTriggers?.pipeline_triggers || [], ({ name }) => name), [
+      dataPipelineTriggers,
+    ]);
+  const triggerExistsInCode = useMemo(() => !!pipelineTriggersByName?.[pipelineSchedule?.name], [
+    pipelineSchedule,
+    pipelineTriggersByName,
+  ]);
+
+  const [createPipelineTrigger, { isLoading: isLoadingCreatePipelineTrigger }] = useMutation(
+    api.pipeline_triggers.pipelines.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineTriggers();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -617,6 +657,50 @@ function TriggerDetail({
               {dbtSettingsTable}
             </Spacing>
           )}
+
+          <Spacing my={UNITS_BETWEEN_SECTIONS}>
+            <Spacing px={PADDING_UNITS}>
+              <Headline level={5}>
+                {triggerExistsInCode && 'Trigger exists in code'}
+                {!triggerExistsInCode && 'Store trigger in code'}
+              </Headline>
+
+              <Spacing mt={1}>
+                <Text default>
+                  Save or update the trigger and its settings in the
+                  pipeline’s metadata and version control the trigger using Git.
+                  For more information, please read the <Link
+                    href="https://docs.mage.ai/guides/triggers/configure-triggers-in-code"
+                    openNewWindow
+                  >
+                    documentation
+                  </Link>.
+                </Text>
+              </Spacing>
+
+              <Spacing mt={PADDING_UNITS}>
+                {!dataPipelineTriggers && <Spinner inverted />}
+                {dataPipelineTriggers && (
+                  <Button
+                    disabled={!pipelineSchedule?.id}
+                    loading={isLoadingCreatePipelineTrigger}
+                    onClick={() => {
+                      // @ts-ignore
+                      createPipelineTrigger({
+                        pipeline_trigger: {
+                          pipeline_schedule_id: pipelineSchedule?.id,
+                        },
+                      });
+                    }}
+                    secondary
+                  >
+                    {triggerExistsInCode && 'Update trigger in code'}
+                    {!triggerExistsInCode && 'Save trigger in code'}
+                  </Button>
+                )}
+              </Spacing>
+            </Spacing>
+          </Spacing>
         </BeforeStyle>
       )}
       beforeWidth={BEFORE_WIDTH}

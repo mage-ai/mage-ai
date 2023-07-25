@@ -5,6 +5,7 @@ from mage_ai.api.utils import (
     is_owner,
 )
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.tests.base_test import DBTestCase
 
@@ -39,6 +40,29 @@ class UtilsTest(DBTestCase):
             },
         )
 
+    def test_get_user_access_for_user_with_no_permissions(self):
+        password_salt = generate_salt()
+        user = User.create(
+            email='no_access@admin.com',
+            password_hash=create_bcrypt_hash('admin', password_salt),
+            password_salt=password_salt,
+            username='no_access',
+        )
+
+        access = user.get_access(None)
+        self.assertEqual(0, access)
+
+        access = user.get_access(Entity.ANY)
+        self.assertEqual(0, access)
+
+        access = user.get_access(Entity.GLOBAL, None)
+        self.assertEqual(0, access)
+
+        access = user.get_access(Entity.PIPELINE, 'test')
+        self.assertEqual(0, access)
+
+        self.assertFalse(is_owner(user))
+
     def test_get_user_access_for_global_owner(self):
         password_salt = generate_salt()
         user = User.create(
@@ -48,13 +72,17 @@ class UtilsTest(DBTestCase):
             roles_new=[Role.query.filter(Role.name == 'Owner').first()],
             username='admin',
         )
+
         access = user.get_access(None)
+        self.assertEqual(0, access)
+
+        access = user.get_access(Entity.ANY)
         self.assertEqual(1, access)
 
-        access = user.get_access(Permission.Entity.GLOBAL, None)
+        access = user.get_access(Entity.GLOBAL, None)
         self.assertEqual(1, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Entity.PIPELINE, 'test')
         self.assertEqual(1, access)
 
         self.assertTrue(is_owner(user))
@@ -69,7 +97,7 @@ class UtilsTest(DBTestCase):
                 name='pipeline_editor_1',
                 permissions=[
                     Permission.create(
-                        entity=Permission.Entity.PIPELINE,
+                        entity=Entity.PIPELINE,
                         entity_id='test',
                         access=4,
                     )
@@ -77,19 +105,20 @@ class UtilsTest(DBTestCase):
             )],
             username='editor',
         )
-        access = user.get_access(None)
+        access = user.get_access(Entity.ANY)
         self.assertEqual(4, access)
 
-        access = user.get_access(Permission.Entity.GLOBAL, None)
+        access = user.get_access(Entity.GLOBAL, None)
         self.assertEqual(0, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Entity.PIPELINE, 'test')
         self.assertEqual(4, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'not_test')
+        access = user.get_access(Entity.PIPELINE, 'not_test')
         self.assertEqual(0, access)
 
-        self.assertTrue(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test'))
+        self.assertTrue(has_at_least_viewer_role(user, Entity.PIPELINE, 'test'))
+        self.assertTrue(has_at_least_editor_role(user, Entity.PIPELINE, 'test'))
 
     def test_get_user_access_for_role_with_multiple_permissions(self):
         password_salt = generate_salt()
@@ -101,7 +130,7 @@ class UtilsTest(DBTestCase):
                 name='pipeline_editor_2',
                 permissions=[
                     Permission.create(
-                        entity=Permission.Entity.PIPELINE,
+                        entity=Entity.PIPELINE,
                         entity_id='test',
                         access=4,
                     )
@@ -110,12 +139,12 @@ class UtilsTest(DBTestCase):
                 name='pipeline_viewer',
                 permissions=[
                     Permission.create(
-                        entity=Permission.Entity.PIPELINE,
+                        entity=Entity.PIPELINE,
                         entity_id='test',
                         access=8,
                     ),
                     Permission.create(
-                        entity=Permission.Entity.PIPELINE,
+                        entity=Entity.PIPELINE,
                         entity_id='test1',
                         access=8,
                     )
@@ -123,21 +152,21 @@ class UtilsTest(DBTestCase):
             )],
             username='editor2',
         )
-        access = user.get_access(None)
+        access = user.get_access(Entity.ANY)
         self.assertEqual(12, access)
 
-        access = user.get_access(Permission.Entity.GLOBAL, None)
+        access = user.get_access(Entity.GLOBAL, None)
         self.assertEqual(0, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Entity.PIPELINE, 'test')
         self.assertEqual(12, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'test1')
+        access = user.get_access(Entity.PIPELINE, 'test1')
         self.assertEqual(8, access)
 
-        access = user.get_access(Permission.Entity.PIPELINE, 'not_test')
+        access = user.get_access(Entity.PIPELINE, 'not_test')
         self.assertEqual(0, access)
 
-        self.assertTrue(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test'))
-        self.assertFalse(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test1'))
-        self.assertTrue(has_at_least_viewer_role(user, Permission.Entity.PIPELINE, 'test1'))
+        self.assertTrue(has_at_least_editor_role(user, Entity.PIPELINE, 'test'))
+        self.assertFalse(has_at_least_editor_role(user, Entity.PIPELINE, 'test1'))
+        self.assertTrue(has_at_least_viewer_role(user, Entity.PIPELINE, 'test1'))

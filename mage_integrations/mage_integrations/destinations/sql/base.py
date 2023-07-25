@@ -1,3 +1,7 @@
+import argparse
+import sys
+from typing import Dict, List, Tuple
+
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     MAX_QUERY_STRING_SIZE,
@@ -8,14 +12,12 @@ from mage_integrations.destinations.constants import (
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Dict, List, Tuple
-import argparse
-import sys
 
 
 class Destination(BaseDestination):
     DATABASE_CONFIG_KEY = 'database'
     SCHEMA_CONFIG_KEY = 'schema'
+    TABLE_CONFIG_KEY = 'table'
 
     BATCH_SIZE = 1000
 
@@ -26,13 +28,17 @@ class Destination(BaseDestination):
         self.records_inserted = 0
         self.records_updated = 0
 
+    @property
+    def quote(self):
+        return ''
+
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         tags = dict(
             database_name=database_name,
@@ -88,7 +94,7 @@ class Destination(BaseDestination):
     ) -> List[str]:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
@@ -160,8 +166,10 @@ class Destination(BaseDestination):
         self,
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[str]:
+        if tags is None:
+            tags = {}
         query_strings = []
 
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
@@ -179,11 +187,13 @@ class Destination(BaseDestination):
         record_data: List[Dict],
         stream: str,
         idx: int = 0,
-        tags: Dict = {},
+        tags: Dict = None,
     ):
+        if tags is None:
+            tags = {}
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
+        table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
@@ -204,9 +214,12 @@ class Destination(BaseDestination):
             unique_constraints=unique_constraints,
         )
 
-        self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(tags2, dict(
-            insert_commands=len(cmds)
-        )))
+        self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(
+            tags2,
+            dict(
+                insert_commands=len(cmds)
+            ),
+        ))
         return cmds
 
     def process_queries(
@@ -214,8 +227,10 @@ class Destination(BaseDestination):
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[List[Tuple]]:
+        if tags is None:
+            tags = {}
         results = []
 
         if self.debug:
@@ -282,7 +297,7 @@ class Destination(BaseDestination):
         schema_name: str,
     ) -> List[str]:
         return [
-            f'CREATE SCHEMA IF NOT EXISTS {schema_name}',
+            f'CREATE SCHEMA IF NOT EXISTS {self._wrap_with_quotes(schema_name)}',
         ]
 
     def build_create_table_commands(
@@ -334,6 +349,9 @@ class Destination(BaseDestination):
         unique_conflict_method: str = None,
     ) -> Tuple[int, int]:
         return self.records_inserted, self.records_updated
+
+    def _wrap_with_quotes(self, name):
+        return f'{self.quote}{name}{self.quote}'
 
 
 def main(destination_class):

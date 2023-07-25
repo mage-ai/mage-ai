@@ -198,6 +198,7 @@ const AccordionPanel = ({
   onEntered,
   onExited,
   singlePanel,
+  smallTitle,
   title,
   titleXPadding,
   visible,
@@ -238,14 +239,18 @@ const AccordionPanel = ({
 
             {beforeTitleElement && <Spacing ml={1} />}
 
-            <Text
-              bold
-              default={!visible}
-              large
-              wind={highlighted}
-            >
-              {title}
-            </Text>
+            {typeof title !== 'string' && title}
+
+            {typeof title === 'string' && (
+              <Text
+                bold
+                default={!visible}
+                large={!smallTitle}
+                wind={highlighted}
+              >
+                {title}
+              </Text>
+            )}
           </FlexContainer>
         </Spacing>
 

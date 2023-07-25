@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Panel from '@oracle/components/Panel';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';

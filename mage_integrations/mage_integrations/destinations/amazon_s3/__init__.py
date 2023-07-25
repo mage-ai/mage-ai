@@ -1,14 +1,16 @@
-from botocore.config import Config
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.utils import update_record_with_internal_columns
+import argparse
+import os
+import sys
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Dict, List
-import argparse
+
 import boto3
-import os
 import pandas as pd
-import sys
+from botocore.config import Config
+
+from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 
 
 class AmazonS3(Destination):
@@ -28,6 +30,10 @@ class AmazonS3(Destination):
     def region(self) -> str:
         return self.config.get('aws_region', 'us-west-2')
 
+    @property
+    def endpoint(self) -> str:
+        return self.config.get("aws_endpoint")
+
     def build_client(self):
         config = Config(
            retries={
@@ -42,6 +48,7 @@ class AmazonS3(Destination):
             aws_secret_access_key=self.config.get('aws_secret_access_key'),
             config=config,
             region_name=self.region,
+            endpoint_url=self.endpoint,
         )
 
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:

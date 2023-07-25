@@ -14,19 +14,26 @@ from tornado.log import enable_pretty_logging
 from tornado.options import options
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.cache.block import BlockCache
+from mage_ai.cache.tag import TagCache
+from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     init_repo,
-    set_repo_path,
+    update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.data_preparation.sync import GitConfig
+from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
+from mage_ai.server.api.clusters import ClusterType
+from mage_ai.server.api.downloads import ApiDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -64,6 +71,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
+from mage_ai.settings.repo import set_repo_path
 from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -110,6 +118,8 @@ def make_app():
 
     routes = [
         (r'/', MainPageHandler),
+        (r'/files', MainPageHandler),
+        (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
@@ -118,7 +128,8 @@ def make_app():
         (r'/sign-in', MainPageHandler),
         (r'/terminal', MainPageHandler),
         (r'/triggers', MainPageHandler),
-        (r'/manage', ManagePageHandler),
+        (r'/manage', MainPageHandler),
+        (r'/manage/(.*)', MainPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -158,6 +169,13 @@ def make_app():
             ApiTriggerPipelineHandler,
         ),
 
+        # Download block output
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
+            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            ApiDownloadHandler,
+        ),
+
         # API v1 routes
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
@@ -173,6 +191,9 @@ def make_app():
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
+        (r'/files', MainPageHandler),
+        (r'/templates', MainPageHandler),
+        (r'/version-control', MainPageHandler),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
@@ -211,6 +232,24 @@ async def main(
 
     db_connection.start_session(force=True)
 
+    # Git sync if option is enabled
+    preferences = get_preferences()
+    if preferences.sync_config:
+        sync_config = GitConfig.load(config=preferences.sync_config)
+        if sync_config.sync_on_start:
+            try:
+                sync = GitSync(sync_config)
+                sync.sync_data()
+                print(
+                    f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch}'
+                )
+            except Exception as err:
+                print(
+                    f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                    f', branch: {sync_config.branch} with error: {str(err)}'
+                )
+
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
         # We need to sleep for a few seconds after creating all the tables or else there
@@ -223,7 +262,7 @@ async def main(
         # Fetch legacy owner user to check if we need to batch update the users with new roles.
         legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
 
-        default_owner_role = Role.get_role('Owner')
+        default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
         owner_users = default_owner_role.users if default_owner_role else []
         if not legacy_owner_user and len(owner_users) == 0:
             print('User with owner permission doesn’t exist, creating owner user.')
@@ -259,6 +298,11 @@ async def main(
                 user_id=owner_user.id,
             )
 
+    print('Initializing block cache.')
+    await BlockCache.initialize_cache(replace=True)
+    print('Initializing tag cache.')
+    await TagCache.initialize_cache(replace=True)
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -282,6 +326,9 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
     instance_type: InstanceType = InstanceType.SERVER_AND_SCHEDULER,
+    project_type: ProjectType = ProjectType.STANDALONE,
+    cluster_type: ClusterType = None,
+    project_uuid: str = None,
 ):
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -289,13 +336,19 @@ def start_server(
 
     # Set project path in environment variable
     if project:
-        project = project = os.path.abspath(project)
+        project = os.path.abspath(project)
     else:
         project = os.path.join(os.getcwd(), 'default_repo')
 
     if not os.path.exists(project):
-        init_repo(project)
+        init_repo(
+            project,
+            project_type=project_type,
+            cluster_type=cluster_type,
+            project_uuid=project_uuid,
+        )
     set_repo_path(project)
+    update_project_uuid()
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
@@ -356,6 +409,8 @@ if __name__ == '__main__':
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
     instance_type = args.instance_type
+    project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
+    cluster_type = os.getenv('CLUSTER_TYPE')
 
     start_server(
         host=host,
@@ -364,4 +419,6 @@ if __name__ == '__main__':
         manage=manage,
         dbt_docs=dbt_docs,
         instance_type=instance_type,
+        project_type=project_type,
+        cluster_type=cluster_type,
     )

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -17,15 +17,19 @@ import {
   KEY_CODE_ENTER,
   KEY_SYMBOL_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { PADDING_HORIZONTAL_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_HORIZONTAL_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
 import { setUser } from '@utils/session';
+import { MicrosoftIcon } from '@oracle/icons';
+import { OathProviderEnum } from '@interfaces/OauthType';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
+const KEY_TOKEN = 'token';
+const KEY_PROVIDER = 'provider';
 
 type SignFormProps = {
   title: string;
@@ -59,7 +63,13 @@ function SignForm({
               const query = queryFromUrl(window.location.href);
 
               if (typeof window !== 'undefined' && query.redirect_url) {
-                url = `${query.redirect_url}?${queryString(ignoreKeys(query, ['redirect_url']))}`;
+                const qs = queryString(
+                  ignoreKeys(
+                    query,
+                    ['redirect_url', 'access_token', 'provider'],
+                  ),
+                );
+                url = `${query.redirect_url}?${qs}`;
               }
 
               router.push(url);
@@ -75,6 +85,32 @@ function SignForm({
 
   const create = useCallback(payload => AuthToken.logout(() => createRequest(payload)), [
     createRequest,
+  ]);
+
+  const { data: dataOauthAD } = api.oauths.detail(OathProviderEnum.ACTIVE_DIRECTORY, {
+    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
+  });
+  const adOauthUrl = useMemo(() => dataOauthAD?.oauth?.url, [dataOauthAD]);
+
+  const { 
+    access_token: accessTokenFromURL,
+    provider,
+  } = queryFromUrl() || {};
+
+  useEffect(() => {
+    if (accessTokenFromURL && provider) {
+      // @ts-ignore
+      createRequest({
+        session: {
+          [KEY_PROVIDER]: provider,
+          [KEY_TOKEN]: accessTokenFromURL,
+        },
+      });
+    }
+  }, [
+    accessTokenFromURL,
+    createRequest,
+    provider,
   ]);
 
   return (
@@ -169,6 +205,20 @@ function SignForm({
                     Sign into Mage
                   </KeyboardShortcutButton>
                 </Spacing>
+                
+                {adOauthUrl && (
+                  <Spacing mt={4}>
+                    <KeyboardShortcutButton
+                      beforeElement={<MicrosoftIcon size={UNIT * 2} />}
+                      bold
+                      inline
+                      onClick={() => AuthToken.logout(() => router.push(adOauthUrl))}
+                      uuid="SignForm/active_directory"
+                    >
+                      Sign in with Microsoft
+                    </KeyboardShortcutButton>
+                  </Spacing>
+                )}
               </form>
             </ContainerStyle>
           </Spacing>

@@ -1,12 +1,13 @@
-from mage_ai.cluster_manager.cluster_manager import ClusterManager
-from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
-from mage_ai.services.aws.emr.launcher import create_cluster
-from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
-from pathlib import Path
 import json
 import os
+from pathlib import Path
+
+from mage_ai.cluster_manager.cluster_manager import ClusterManager
+from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
+from mage_ai.services.aws.emr.launcher import create_cluster
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 
 CLUSTER_NAME = 'mage-data-prep'
 

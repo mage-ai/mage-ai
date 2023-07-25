@@ -13,6 +13,7 @@ import {
 
 export type BadgeProps = {
   children?: any;
+  color?: string;
   cyan?: boolean;
   disabled?: boolean;
   inverted?: boolean;
@@ -71,6 +72,11 @@ const BadgeStyle = styled.p<BadgeProps>`
   ${props => props.disabled && `
     background-color: ${(props.theme || dark).feature.disabled};
     color: ${(props.theme || dark).content.disabled};
+  `}
+
+  ${props => props.color && `
+    background-color: ${props.color} !important;
+    color: ${(props.theme || dark).content.active};
   `}
 
   ${props => props.quantifier && `

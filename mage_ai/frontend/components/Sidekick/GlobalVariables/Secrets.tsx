@@ -234,6 +234,7 @@ function Secrets({
           )}
           {secrets?.map((secret: SecretType) => (
             <VariableRow
+              copyText={secret.name}
               deleteVariable={() => deleteSecret(secret.name)}
               fetchVariables={fetchSecrets}
               hideEdit

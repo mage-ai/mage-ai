@@ -1,0 +1,103 @@
+---
+title: "Kubernetes"
+sidebarTitle: "Kubernetes"
+description: "Creating workspaces in Kubernetes"
+---
+
+### Setup
+
+We recommend using Helm to set up your Kubernetes cluster. You can find our Mage Helm
+documentation [here](/production/deploying-to-cloud/using-helm). You will need to create
+a persistent volume for your cluster
+
+You will need to include your Kubernetes namespace as an environment variable when setting
+up your Kubernetes deployment. Here is a sample config for the `values.yaml` file for the
+Helm chart:
+
+```yaml
+volumes:
+  - name: mage-fs
+    persistentVolumeClaim:
+      claimName: gke-mage-pvc
+
+
+env:
+  - name: KUBE_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: PROJECT_TYPE
+    value: main
+  - name: MAGE_DATABASE_CONNECTION_URL
+    value: <database_connection_url>
+  - name: REQUIRE_USER_AUTHENTICATION
+    value: "1"
+```
+
+### Permissions
+
+Once your cluster and initial deployment is created, you will also need to give your
+Kubernetes service account some permissions in order to create the necessary resources.
+You can run the folliwng `kubectl` command to create the `ClusterRole` required for 
+managing the Kubernetes resources.
+
+```bash
+cat <<EOF | kubectl apply -f -
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manage-role
+rules:
+  - apiGroups:
+      - ""
+      - apps
+    resources:
+      - nodes
+      - persistentvolumeclaims
+      - services
+      - statefulsets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+EOF
+```
+
+Once the cluster role is created, you will need to bind the role to the 
+service account. You will need to change the service account name if it is not `default`:
+
+```bash
+kubectl create clusterrolebinding manage-role-binding \
+  --clusterrole=manage-role  \
+  --serviceaccount=default:default
+```
+
+### Usage
+
+Once you start Mage and log in, you should land on the workspaces dashboard (/manage).
+
+<Frame>
+    <img
+        alt="Workspaces dashboard"
+        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces.png?raw=true"
+		/>
+</Frame>
+
+To create a new workspace, you can press the "Create new workspace" button in the top left. A modal
+should appear where you can configure some workspace settings.
+
+<Frame>
+    <img
+        alt="Kubernetes configuration"
+        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces-k8s-settings.png?raw=true"
+		/>
+</Frame>
+
+Here are the fields you can currently customize through the Mage UI for Kubernetes.
+
+| Field | Description |
+| --- | --- |
+| Workspace name | Name of workspace. This name will be used to create all resources for the workspace. |
+| Service account name | Kubernetes service account to use to create the resources. Defaults to current pod's service account name. |
+| Storage class name | Name of storage class to provision storage from for the stateful set. Defaults to current pvc's storage class name. |
+| Storage request size | Amount of storage to provision for the persistent volume claim (in GB). Defaults to current pvc's storage request. |
+| Access mode | Access mode for persistent volume claim. [More info in Kubernetes docs.](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) Defaults to current pvc's access mode. |
+| Configure container | Customize the configuration for the pod container. [Configuration options](https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md) |

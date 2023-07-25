@@ -7,7 +7,8 @@ from mage_ai.authentication.passwords import (
     generate_salt,
     verify_password,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.shared.hash import extract, ignore_keys
@@ -30,7 +31,7 @@ class UserResource(DatabaseResource):
             order_by(User.username.asc())
         )
 
-        if user.is_admin:
+        if user and user.is_admin:
             results = list(filter(lambda user: user.project_access & 3 == 0, results))
 
         return results
@@ -48,18 +49,12 @@ class UserResource(DatabaseResource):
         role_ids = payload.get('roles_new', [])
         roles_new = self.check_roles(role_ids)
 
-        missing_values = []
-        if len(roles_new) == 0:
-            missing_values.append('roles')
-
         payload['roles_new'] = roles_new
 
+        missing_values = []
         for key in ['email', 'password']:
             if not payload.get(key):
                 missing_values.append(key)
-
-        if len(roles_new) == 0:
-            missing_values.append('roles')
 
         if len(missing_values) >= 1:
             error.update(
@@ -126,18 +121,13 @@ class UserResource(DatabaseResource):
             role_ids = payload.get('roles_new', [])
             roles_new = self.check_roles(role_ids)
 
-            missing_values = []
-            if len(roles_new) == 0:
-                missing_values.append('roles')
-
             payload['roles_new'] = roles_new
 
-            if len(missing_values) >= 1:
-                error.update(
-                    {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
-                raise ApiError(error)
-
-            access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
+            access = get_access_for_roles(
+                roles_new,
+                Entity.PROJECT,
+                get_project_uuid(),
+            )
 
             if self.current_user.is_admin:
                 if self.owner:
@@ -190,6 +180,9 @@ class UserResource(DatabaseResource):
             'password',
             'password_confirmation',
             'password_current',
+            'owner',
+            'project_access',
+            'roles_display',
         ]), **kwargs)
 
     @safe_db_query

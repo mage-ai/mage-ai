@@ -1,9 +1,10 @@
+import re
 from datetime import datetime
+from typing import List, Tuple
+
 from mage_integrations.connections.base import Connection as BaseConnection
 from mage_integrations.connections.utils.sql import clean_query
 from mage_integrations.utils.dictionary import merge_dict
-from typing import List, Tuple
-import re
 
 
 class Connection(BaseConnection):

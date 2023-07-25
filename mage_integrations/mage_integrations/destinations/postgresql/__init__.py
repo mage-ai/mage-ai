@@ -1,22 +1,35 @@
+from typing import Dict, List, Tuple
+
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     INTERNAL_COLUMN_CREATED_AT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
+from mage_integrations.destinations.postgresql.utils import (
+    convert_array,
+    convert_column_type,
+)
 from mage_integrations.destinations.sql.base import Destination, main
-from mage_integrations.destinations.postgresql.utils import convert_column_type, convert_array
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
+    clean_column_name,
+)
+from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
-from mage_integrations.destinations.sql.utils import clean_column_name
-from typing import Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
+    @property
+    def quote(self) -> str:
+        return '"'
+
+    def full_table_name(self, schema_name: str, table_name: str):
+        return f'{self._wrap_with_quotes(schema_name)}.{self._wrap_with_quotes(table_name)}'
+
     def build_connection(self) -> PostgreSQLConnection:
         return PostgreSQLConnection(
             database=self.config['database'],
@@ -39,9 +52,10 @@ class PostgreSQL(Destination):
             build_create_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{schema_name}.{table_name}',
+                full_table_name=self.full_table_name(schema_name, table_name),
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
+                column_identifier=self.quote,
             ),
         ]
 
@@ -73,7 +87,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             build_alter_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
-                full_table_name=f'{schema_name}.{table_name}',
+                full_table_name=self.full_table_name(schema_name, table_name),
+                column_identifier=self.quote,
             ),
         ]
 
@@ -94,19 +109,25 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             records=records,
             convert_array_func=self.convert_array,
             string_parse_func=self.string_parse_func,
+            column_identifier=self.quote,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
 
         commands = [
-            f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
+            f'INSERT INTO {self.full_table_name(schema_name, table_name)} ({insert_columns})',
             f'VALUES {insert_values}',
         ]
 
         if unique_constraints and unique_conflict_method:
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns
-                               if col != INTERNAL_COLUMN_CREATED_AT]
+            unique_constraints = [
+                self._wrap_with_quotes(clean_column_name(col))
+                for col in unique_constraints
+            ]
+            columns_cleaned = [
+                self._wrap_with_quotes(clean_column_name(col))
+                for col in columns if col != INTERNAL_COLUMN_CREATED_AT
+            ]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:

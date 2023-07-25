@@ -26,6 +26,9 @@ export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = 'upstream_block_configura
 export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = 'table_name';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
 
+export const CONFIG_KEY_DBT = 'dbt';
+export const CONFIG_KEY_DBT_COMMAND = 'command';
+
 export const VARIABLE_NAMES = [
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
@@ -107,6 +110,9 @@ export interface ConfigurationType {
   [VARIABLE_NAME_Y]?: string;
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
+  dbt?: {
+    command?: string;
+  };
   dynamic?: boolean;
   file_path?: string;
   reduce_output?: boolean;

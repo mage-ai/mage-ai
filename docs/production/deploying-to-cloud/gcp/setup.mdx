@@ -72,96 +72,7 @@ gcloud init
 gcloud auth application-default login
 ```
 
-## 3. Push Docker image to GCP Artifact Registry
-
-GCP doesn’t support using Docker images from Docker Hub. We’ll need to pull the
-Mage Docker image, tag it, and push it to
-[GCP Artifact Registry](https://cloud.google.com/artifact-registry).
-
-Here are the steps we’ll take:
-
-1.  Create a repository on
-    [GCP Artifact Registry](https://console.cloud.google.com/artifacts) by
-    clicking the **`+ CREATE REPOSITORY`** button.
-
-    - Fill in the **Name**
-    - Choose Docker as the **Format**
-    - Choose any **Location type**
-    - Choose any **Encryption**
-    - Click **`CREATE`**
-
-2.  Click on the newly created repository (e.g. `mage-docker`).
-3. Near the top of the page, click the link **`SETUP INSTRUCTIONS`** or read these
-    [instructions](https://cloud.google.com/artifact-registry/docs/docker/authentication)
-    to set up authentication for Docker.
-
-    - Run the following command in your terminal:
-
-        ```bash
-        gcloud auth configure-docker [region]-docker.pkg.dev
-        ```
-
-    - An example command could look like this:
-
-        ```bash
-        gcloud auth configure-docker us-west2-docker.pkg.dev
-        ```
-
-4. Pull the Mage Docker image:
-
-    ```bash
-    docker pull mageai/mageai:latest
-    ```
-
-    - If your local workstation is using macOS and a silicon chip (e.g. M1, M2,
-    etc), then run this command instead:
-
-        ```bash
-        docker pull --platform linux/amd64 mageai/mageai:latest
-        ```
-
-5.  Tag the pulled Mage docker image or use a previously tagged Docker image you
-    built when following this [CI/CD guide](/production/ci-cd):
-
-    - Sample commands if using vanilla Mage Docker image:
-
-        ```bash
-        docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-        ```
-
-        - An example command could look like this:
-
-            ```bash
-            docker tag mageai/mageai:latest us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-            ```
-
-    - Sample commands if using previously tagged a custom Docker image using the tag `mageprod:latest`:
-
-        ```bash
-        docker tag mageprod:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-        ```
-
-        - An example command could look like this if you previously tagged your custom Docker image with the tag `mageprod:latest`:
-
-            ```bash
-            docker tag mageprod:latest us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-            ```
-
-6.  Push the local Docker image to GCP Artifact Registry:
-
-    ```bash
-    docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-    ```
-
-    - An example command could look like this:
-
-        ```bash
-        docker push us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-        ```
-
----
-
-## 4. Customize Terraform settings
+## 3. Customize Terraform settings
 
 **Project ID (REQUIRED)**
 
@@ -178,23 +89,19 @@ variable "project_id" {
 }
 ```
 
-**Docker image (REQUIRED)**
+**Docker Image (REQUIRED)**
 
-In the repository you created in GCP Artifact Repository, you’ll see a list of
-Docker images. Click on an image name, then copy the full path to the image
-(e.g. `us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai`).
-
-In the file
-[./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf),
-you can change the `default` value under `docker_image`:
+Google Cloud Run supports pulling Docker images directly from Docker Hub. To use the latest Mage image (default):
 
 ```js
 variable "docker_image" {
   type        = string
-  description = "The Docker image url in the Artifact Registry repository to be deployed to Cloud Run"
-  default     = "us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai"
+  description = "The docker image to deploy to Cloud Run."
+  default     = "mageai/mageai:latest"
 }
 ```
+
+Simply change the tag to adjust the version of Mage you want to deploy. If you need to build your own image, you can push it to Docker Hub or follow our guide to use [GCP Artifact Registry](/production/deploying-to-cloud/gcp/gcp-artifact-registry).
 
 **Application Name**
 
@@ -401,9 +308,7 @@ Other variables defined in
 [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 can also be customized to your needs.
 
----
-
-## 5. Deploy
+## 4. Deploy
 
 1. Change directory into scripts folder:
    ```bash

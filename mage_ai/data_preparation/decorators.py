@@ -9,6 +9,10 @@ def callback(function):
     return function
 
 
+def condition(function):
+    return function
+
+
 def custom(function):
     return function
 

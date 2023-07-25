@@ -127,7 +127,7 @@ function PipelineBlockRuns({
       onClickRow={(rowIndex: number) => {
         setSelectedRun((prev) => {
           const run = blockRuns[rowIndex];
-          const newRun = prev?.id !== run.id ? run : null
+          const newRun = prev?.id !== run.id ? run : null;
 
           if (newRun) {
             setSelectedTabSidekick(prev => {
@@ -144,6 +144,7 @@ function PipelineBlockRuns({
       }}
       pipeline={pipeline}
       selectedRun={selectedRun}
+      setErrors={setErrors}
     />
   ), [
     blockRuns,

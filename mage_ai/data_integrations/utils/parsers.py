@@ -1,8 +1,12 @@
 import json
+from typing import Dict
+
 import yaml
 
+from mage_ai.shared.security import filter_out_config_values
 
-def parse_logs_and_json(input_string: str) -> str:
+
+def parse_logs_and_json(input_string: str, config: Dict = None) -> str:
     logs = []
     lines = []
 
@@ -19,7 +23,7 @@ def parse_logs_and_json(input_string: str) -> str:
             lines.append(line)
 
     for log in logs:
-        print(log)
+        print(filter_out_config_values(log, config))
 
     return ''.join(lines)
 

@@ -2,7 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BackfillPresenter import BackfillPresenter
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.constants import Entity
 
 
 class BackfillPolicy(BasePolicy):
@@ -10,7 +10,7 @@ class BackfillPolicy(BasePolicy):
     def entity(self):
         parent_model = self.options.get('parent_model')
         if parent_model:
-            return Permission.Entity.PIPELINE, parent_model.uuid
+            return Entity.PIPELINE, parent_model.uuid
 
         return super().entity
 
@@ -24,6 +24,7 @@ BackfillPolicy.allow_actions([
 
 BackfillPolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -44,6 +45,7 @@ BackfillPolicy.allow_read([] + BackfillPresenter.default_attributes, scopes=[
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
+    constants.DELETE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 BackfillPolicy.allow_write([

@@ -1,12 +1,15 @@
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import PandasTypes
-from mage_ai.io.base import QUERY_ROW_LIMIT
-from mage_ai.io.sql import BaseSQL
-from pandas import DataFrame, Series
-from typing import Any, IO, List, Union
-import json
+from typing import IO, Any, List, Union
+
 import numpy as np
 import pyodbc
+import simplejson
+from pandas import DataFrame, Series
+
+from mage_ai.io.base import QUERY_ROW_LIMIT
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.export_utils import PandasTypes
+from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.parsers import encode_complex
 
 
 class MSSQL(BaseSQL):
@@ -47,6 +50,9 @@ class MSSQL(BaseSQL):
             user=config[ConfigKey.MSSQL_USER],
         )
 
+    def default_schema(self) -> str:
+        return self.settings.get('schema') or 'dbo'
+
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to MSSQL database'):
             driver = self.settings['driver']
@@ -65,6 +71,16 @@ class MSSQL(BaseSQL):
             )
             self._ctx = pyodbc.connect(connection_string)
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return '\n'.join([
+                'IF NOT EXISTS (',
+                f'SELECT * FROM information_schema.schemata WHERE schema_name = \'{schema_name}\')',
+                f'BEGIN EXEC(\'CREATE SCHEMA {schema_name}\') END'
+            ])
+
     def build_create_table_as_command(
         self,
         table_name: str,
@@ -79,7 +95,7 @@ class MSSQL(BaseSQL):
         with self.conn.cursor() as cur:
             cur.execute('\n'.join([
                 'SELECT TOP 1 * FROM information_schema.tables ',
-                f'WHERE table_name = \'{table_name}\'',
+                f'WHERE table_schema = \'{schema_name}\' AND table_name = \'{table_name}\'',
             ]))
             return len(cur.fetchall()) >= 1
 
@@ -93,6 +109,21 @@ class MSSQL(BaseSQL):
         buffer: Union[IO, None] = None,
         **kwargs,
     ) -> None:
+        def serialize_obj(val):
+            if type(val) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
         values_placeholder = ', '.join(["?" for i in range(len(df.columns))])
         values = []
         df_ = df.copy()
@@ -100,14 +131,18 @@ class MSSQL(BaseSQL):
         for col in columns:
             dtype = df_[col].dtype
             if dtype == PandasTypes.OBJECT:
-                df_[col] = df_[col].apply(lambda x: json.dumps(x))
+                df_[col] = df_[col].apply(lambda x: serialize_obj(x))
             elif dtype in (
                 PandasTypes.MIXED,
                 PandasTypes.UNKNOWN_ARRAY,
                 PandasTypes.COMPLEX,
             ):
                 df_[col] = df_[col].astype('string')
-        for i, row in df_.iterrows():
+
+            # Remove extraneous surrounding double quotes
+            # that get added while performing conversion to string.
+            df_[col] = df_[col].apply(lambda x: x.strip('"'))
+        for _, row in df_.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'

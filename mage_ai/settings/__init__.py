@@ -1,6 +1,5 @@
 import os
 
-
 DEBUG = os.getenv('DEBUG', False)
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
@@ -24,6 +23,7 @@ def is_disable_pipeline_edit_access():
     return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
 
 
+# ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
@@ -36,7 +36,17 @@ LDAP_AUTHENTICATION_FILTER = os.getenv('LDAP_AUTHENTICATION_FILTER',
 LDAP_AUTHORIZATION_FILTER = os.getenv('LDAP_AUTHORIZATION_FILTER',
                                       '(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))')
 LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
+# values: Viewer, Editor, Admin
+LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
+LDAP_GROUP_FIELD = os.getenv('LDAP_GROUP_FIELD', 'memberOf')
+LDAP_ROLES_MAPPING = os.getenv('LDAP_ROLES_MAPPING', None)
 
+ACTIVE_DIRECTORY_DIRECTORY_ID = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID', None)
+
+# ----------------------------------------------------------
+
+HOSTNAME = os.getenv('HOSTNAME')
+REDIS_URL = os.getenv('REDIS_URL')
 SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 
 SHELL_COMMAND = os.getenv('SHELL_COMMAND', None)
@@ -46,4 +56,34 @@ USE_UNIQUE_TERMINAL = os.getenv('USE_UNIQUE_TERMINAL', None)
 SENTRY_DSN = os.getenv('SENTRY_DSN', None)
 SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 
-MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or 'http://localhost:6789'
+# New relic enable environment variable
+ENABLE_NEW_RELIC = os.getenv('ENABLE_NEW_RELIC', False)
+NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
+
+DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
+MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
+
+# List of environment variables used to configure Mage. The value of these settings
+# will be copied between workspaces.
+MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
+    'DISABLE_NOTEBOOK_EDIT_ACCESS',
+    'REQUIRE_USER_AUTHENTICATION',
+    'AUTHENTICATION_MODE',
+    'LDAP_SERVER',
+    'LDAP_BIND_DN',
+    'LDAP_BIND_PASSWORD',
+    'LDAP_BASE_DN',
+    'LDAP_AUTHENTICATION_FILTER',
+    'LDAP_AUTHORIZATION_FILTER',
+    'LDAP_ADMIN_USERNAME',
+    'LDAP_DEFAULT_ACCESS',
+    'LDAP_GROUP_FIELD',
+    'LDAP_ROLES_MAPPING',
+    'SERVER_VERBOSITY',
+    'SHELL_COMMAND',
+    'USE_UNIQUE_TERMINAL',
+    'SENTRY_DSN',
+    'SENTRY_TRACES_SAMPLE_RATE',
+    'MAGE_PUBLIC_HOST',
+    'ACTIVE_DIRECTORY_DIRECTORY_ID',
+]

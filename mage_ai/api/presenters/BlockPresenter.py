@@ -11,6 +11,7 @@ class BlockPresenter(BasePresenter):
         'all_upstream_blocks_executed',
         'callback_blocks',
         'color',
+        'conditional_blocks',
         'configuration',
         'downstream_blocks',
         'executor_config',
@@ -27,7 +28,7 @@ class BlockPresenter(BasePresenter):
         'uuid',
     ]
 
-    def present(self, **kwargs):
+    async def present(self, **kwargs):
         display_format = kwargs['format']
 
         if display_format in [constants.CREATE, constants.UPDATE]:
@@ -66,6 +67,12 @@ class BlockPresenter(BasePresenter):
                 ))
 
             return data
+        elif 'with_settings' == display_format:
+            data = dict(
+                pipelines=await self.resource.get_pipelines_from_cache(),
+            )
+
+            return data
 
         return self.model.to_dict()
 
@@ -82,5 +89,12 @@ BlockPresenter.register_format(
     [
         'content',
         'outputs',
+    ],
+)
+
+BlockPresenter.register_format(
+    'with_settings',
+    [
+        'pipelines',
     ],
 )

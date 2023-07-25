@@ -72,9 +72,6 @@ class Chargebee(Source):
             for stream in available_streams
         }
 
-    def test_connection(self):
-        pass
-
 
 if __name__ == '__main__':
     main(Chargebee)

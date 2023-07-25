@@ -1,12 +1,7 @@
 import os
 from enum import Enum
 
-PIPELINES_FOLDER = 'pipelines'
-PIPELINE_CONFIG_FILE = 'metadata.yaml'
-PREFERENCES_FILE = '.preferences.yaml'
 DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
-
-
 DATAFRAME_ANALYSIS_KEYS = frozenset(
     [
         'metadata',
@@ -15,14 +10,18 @@ DATAFRAME_ANALYSIS_KEYS = frozenset(
         'suggestions',
     ]
 )
-DATAFRAME_ANALYSIS_MAX_ROWS = 100_000
 DATAFRAME_ANALYSIS_MAX_COLUMNS = 100
-DATAFRAME_SAMPLE_COUNT_PREVIEW = 10
+DATAFRAME_ANALYSIS_MAX_ROWS = 100_000
 DATAFRAME_SAMPLE_COUNT = 1000
+DATAFRAME_SAMPLE_COUNT_PREVIEW = 10
 DATAFRAME_SAMPLE_MAX_COLUMNS = 1000
-MAX_PRINT_OUTPUT_LINES = int(os.getenv('MAX_PRINT_OUTPUT_LINES', 1000) or 1000)
-VARIABLE_DIR = '.variables'
 LOGS_DIR = '.logs'
+MAX_PRINT_OUTPUT_LINES = int(os.getenv('MAX_PRINT_OUTPUT_LINES', 1000) or 1000)
+PIPELINE_CONFIG_FILE = 'metadata.yaml'
+PIPELINES_FOLDER = 'pipelines'
+PREFERENCES_FILE = '.preferences.yaml'
+REPO_CONFIG_FILE = 'metadata.yaml'
+VARIABLE_DIR = '.variables'
 
 
 class BlockLanguage(str, Enum):
@@ -42,6 +41,7 @@ class BlockStatus(str, Enum):
 
 class BlockType(str, Enum):
     CALLBACK = 'callback'
+    CONDITIONAL = 'conditional'
     CHART = 'chart'
     CUSTOM = 'custom'
     DATA_EXPORTER = 'data_exporter'

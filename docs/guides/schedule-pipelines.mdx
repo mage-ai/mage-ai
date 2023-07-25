@@ -15,3 +15,27 @@ You can schedule your pipeline to run on these intervals:
 - _Streaming pipeline_: coming soon
 Learn more about how to
 [schedule pipelines](/design/data-pipeline-management#create-trigger).
+
+## Extra runtime variables from pipeline run
+
+If your pipeline run belongs to a trigger that is scheduled, then the following extra
+variables are available in your Python block’s keyword arguments (e.g. `kwargs`).
+
+| Key | Description | Example |
+| --- | --- | --- |
+| `interval_start_datetime` | The `datetime` when the pipeline run is scheduled for. | `datetime.datetime(2023, 7, 23, 7, 0, 0, 0)` |
+| `interval_end_datetime` | The `datetime` when the next pipeline run is scheduled for. | `datetime.datetime(2023, 7, 24, 7, 0, 0, 0)` |
+| `interval_seconds` | The number of seconds between the current pipeline run and the next pipeline run. | `86400` |
+| `interval_start_datetime_previous` | The `datetime` when the previous pipeline run was scheduled for. | `datetime.datetime(2023, 7, 22, 7, 0, 0, 0)` |
+
+### SQL block
+
+If you’re using a SQL block, here is an example of how you can access these variables:
+
+```sql
+SELECT
+    '{{ interval_start_datetime }}' AS interval_start_datetime
+    , '{{ interval_end_datetime }}' AS interval_end_datetime
+    , '{{ interval_seconds }}' AS interval_seconds
+    , '{{ interval_start_datetime_previous }}' AS interval_start_datetime_previous
+```

@@ -2,13 +2,10 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.WorkspacePresenter import WorkspacePresenter
-from mage_ai.orchestration.db.models.oauth import Permission
 
 
 class WorkspacePolicy(BasePolicy):
-    @property
-    def entity(self):
-        return Permission.Entity.GLOBAL, None
+    pass
 
 
 WorkspacePolicy.allow_actions([
@@ -16,7 +13,7 @@ WorkspacePolicy.allow_actions([
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 WorkspacePolicy.allow_actions([
     constants.CREATE,
@@ -31,11 +28,9 @@ WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes, scopes=[
 ], on_action=[
     constants.DETAIL,
     constants.LIST,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
-WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes + [
-    'success',
-], scopes=[
+WorkspacePolicy.allow_read(WorkspacePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -50,6 +45,8 @@ WorkspacePolicy.allow_write([
     'storage_class_name',
     'service_account_name',
     'container_config',
+    'storage_access_mode',
+    'storage_request_size',
     'cluster_name',
     'task_definition',
     'container_name',
@@ -72,4 +69,4 @@ WorkspacePolicy.allow_query([
     constants.DETAIL,
     constants.LIST,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.has_at_least_viewer_role())

@@ -1,9 +1,10 @@
+from typing import List, Tuple
+
 from google.cloud.bigquery import Client, dbapi
 from google.oauth2 import service_account
+
 from mage_integrations.connections.sql.base import Connection
 from mage_integrations.connections.utils.google import CredentialsInfoType
-from mage_integrations.connections.utils.sql import clean_query
-from typing import List, Tuple
 
 
 class BigQuery(Connection):
@@ -14,17 +15,12 @@ class BigQuery(Connection):
         location: str = None,
         **kwargs,
     ):
-        if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('BigQuery connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
         super().__init__(**kwargs)
         self.credentials_info = credentials_info
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.location = location
 
-        if self.credentials_info is None:
-            if self.path_to_credentials_json_file is None:
-                raise Exception('No valid credentials provided.')
+        if self.credentials_info is None and self.path_to_credentials_json_file is not None:
             self.credentials_info = service_account.Credentials.from_service_account_file(
                 self.path_to_credentials_json_file,
             )

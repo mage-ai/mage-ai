@@ -126,7 +126,7 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
 
   ${props => props.warning && `
-    color: ${(props.theme || dark).accent.yellow};
+    color: ${(props.theme || dark).accent.yellow} !important;
   `}
 
   ${props => props.danger && `

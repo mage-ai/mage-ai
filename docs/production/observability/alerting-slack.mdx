@@ -46,32 +46,65 @@ Follow these steps to add that webhook URL to your project settings:
 4. In the `metadata.yaml` file, add a section with the following
    configuration or update the existing `notification_config` section:
 
-```yaml
-notification_config:
-  alert_on:
-    - trigger_failure
-    - trigger_passed_sla
-```
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
 
-If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
 
-Options:
+    Options:
 
-- `trigger_failure`: alert when a run of a trigger fails
-- `trigger_success`: alert when a run of a trigger succeeds
-- `trigger_passed_sla`: alert when a run of a trigger passes sla
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a SLA is missed. 
+      - In this context, SLA (Service Level Agreement) is an expected amount of time for the pipeline to complete. 
+      - If the pipeline runs _longer_ than the SLA, an alert will be sent. 
 
 5. In the `metadata.yaml` file, add the following values:
 
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      slack_config:
+        webhook_url: ...
+    ```
+
+    Change the `webhook_url` value to be the webhook URL you created from Slack.
+
+## Customize message templates
+You can customize message templates in `notification_config`. Here is an example config:
 ```yaml
 notification_config:
   alert_on:
     ...
   slack_config:
-    webhook_url: ...
+    ...
+  message_templates:
+    failure:
+      details: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message."
+    success:
+      details: ...
+    passed_sla:
+      details: ...
 ```
+You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
+you can specify either `summary` or `details`.
+* If you specify the `summary`, the slack message will be your `summary` + the url of the pipeline run page
+* If you specify the `details`, the `details` will be used as your slack message directly
 
-1. Change the `webhook_url` value to be the webhook URL you created from Slack.
+To interpolate variables in the messaget template, you can use `{variable_name}` syntax.
+Hare are the supported variables: `execution_time`, `pipeline_run_url`, `pipeline_schedule_id`,
+`pipeline_schedule_name`, `pipeline_uuid`.
+
+For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+the host url you want to use in the notification messages.
 
 ---
 

@@ -1,33 +1,38 @@
-from google.cloud.storage import Client
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.utils import update_record_with_internal_columns
+import argparse
+import os
+import sys
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Dict, List
-import argparse
-import os
+
 import pandas as pd
-import sys
+from google.cloud.storage import Client
+
+from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 
 
 class GoogleCloudStorage(Destination):
     @property
     def bucket(self) -> str:
         return self.config['bucket']
-    
+
     @property
     def file_type(self) -> str:
         return self.config.get('file_type')
-    
+
     @property
     def object_key_path(self) -> str:
-        return self.config['object_key_path']
-    
+        return self.config.get('object_key_path', '')
+
     def build_client(self) -> Client:
-        return Client.from_service_account_json(
-            json_credentials_path=self.config['google_application_credentials']
-        )
-        
+        credential_file = self.config.get('google_application_credentials')
+        if credential_file:
+            return Client.from_service_account_json(
+                json_credentials_path=credential_file,
+            )
+        return Client()
+
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         client = self.build_client()
 
@@ -69,11 +74,11 @@ class GoogleCloudStorage(Destination):
             object_key = os.path.join(object_key, curr_time.strftime(date_partition_format))
 
         object_key = os.path.join(object_key, filename)
-        
+
         bucket = client.bucket(self.bucket)
         blob = bucket.blob(object_key)
         blob.upload_from_file(buffer)
-        
+
         tags.update(
             records_inserted=len(record_data),
         )
