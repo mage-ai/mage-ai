@@ -1,6 +1,7 @@
 import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
     DIRECTORY_FOR_PIPELINE_TEMPLATES,
@@ -51,7 +52,7 @@ class CustomTemplateResource(GenericResource):
         )
 
     @classmethod
-    def create(self, payload, user, **kwargs):
+    async def create(self, payload, user, **kwargs):
         custom_template = None
         object_type = payload.get(OBJECT_TYPE_KEY)
         template_uuid = payload.get('template_uuid')
@@ -76,6 +77,9 @@ class CustomTemplateResource(GenericResource):
                 )
 
                 custom_template.save()
+
+                cache = await BlockActionObjectCache.initialize_cache()
+                cache.update_custom_block_template(custom_template)
         elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
 
@@ -120,13 +124,21 @@ class CustomTemplateResource(GenericResource):
             print(f'[WARNING] CustomTemplateResource.member: {err}')
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
-    def delete(self, **kwargs):
+    async def delete(self, **kwargs):
+        cache = await BlockActionObjectCache.initialize_cache()
+        cache.update_custom_block_template(self.model, remove=True)
         self.model.delete
 
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
+        cache = await BlockActionObjectCache.initialize_cache()
+
+        cache.update_custom_block_template(self.model, remove=True)
+
         for key, value in ignore_keys(payload, [
             'uuid',
             OBJECT_TYPE_KEY,
         ]).items():
             setattr(self.model, key, value)
         self.model.save()
+
+        cache.update_custom_block_template(self.model)

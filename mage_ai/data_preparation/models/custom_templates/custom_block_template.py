@@ -112,7 +112,7 @@ class CustomBlockTemplate(BaseConfig):
         language_to_use = language or self.language
         filename = '.'.join([
             self.template_uuid,
-            BLOCK_LANGUAGE_TO_FILE_EXTENSION[language_to_use],
+            BLOCK_LANGUAGE_TO_FILE_EXTENSION.get(language_to_use, ''),
         ])
 
         return File(
@@ -130,11 +130,16 @@ class CustomBlockTemplate(BaseConfig):
         if content:
             return Template(content).render(**(variables or {}))
 
-    def to_dict(self) -> Dict:
-        return merge_dict(self.to_dict_base(), dict(
+    def to_dict(self, include_content: bool = False) -> Dict:
+        data = merge_dict(self.to_dict_base(), dict(
             template_uuid=self.template_uuid,
             uuid=self.uuid,
         ))
+
+        if include_content:
+            data['content'] = self.load_template_content()
+
+        return data
 
     def to_dict_base(self) -> Dict:
         return dict(

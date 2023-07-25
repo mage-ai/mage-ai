@@ -17,7 +17,6 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import {
   PADDING_UNITS,
@@ -25,7 +24,6 @@ import {
 } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type ConfigureBlockProps = {
   block: BlockType;
@@ -170,9 +168,6 @@ function ConfigureBlock({
           <KeyboardShortcutButton
             bold
             inline
-            keyboardShortcutValidation={({
-              keyMapping,
-            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => onSave({
               ...blockAttributes,
               name: blockAttributes?.name || defaultName,
