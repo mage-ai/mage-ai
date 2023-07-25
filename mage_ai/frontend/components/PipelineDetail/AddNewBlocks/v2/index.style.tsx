@@ -7,14 +7,25 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ICON_SIZE = PADDING_UNITS * UNIT;
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{
+  compact?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
-  padding: ${2.5 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).dashboard};
     border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
     box-shadow: ${(props.theme.shadow || dark.shadow).frame};
+  `}
+
+  ${props => !props.compact && `
+    padding-left: ${2.5 * UNIT}px;
+    padding-right: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    padding-left: ${1.5 * UNIT}px;
+    padding-right: ${1.5 * UNIT}px;
   `}
 `;
 
@@ -28,12 +39,41 @@ export const DividerStyle = styled.div`
 `;
 
 export const ButtonWrapper = styled.div<{
+  compact?: boolean;
   increasedZIndex?: boolean;
 }>`
   position: relative;
 
   ${props => props.increasedZIndex && `
     z-index: 3;
+  `}
+
+  ${props => !props.compact && `
+    padding-bottom: ${2.5 * UNIT}px;
+    padding-top: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    padding-bottom: ${1.5 * UNIT}px;
+    padding-top: ${1.5 * UNIT}px;
+  `}
+`;
+
+export const TextInputFocusAreaStyle = styled.div<{
+  compact?: boolean;
+}>`
+  width: 100%;
+
+  &:hover {
+    cursor: text;
+  }
+
+  ${props => !props.compact && `
+    height: ${2.5 * UNIT}px;
+  `}
+
+  ${props => props.compact && `
+    height: ${1.5 * UNIT}px;
   `}
 `;
 

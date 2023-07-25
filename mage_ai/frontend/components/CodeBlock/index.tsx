@@ -2236,7 +2236,13 @@ function CodeBlock({
             }}
           >
             {addNewBlocksVisible && addNewBlock && (
-              <Spacing mt={2}>
+              <Spacing
+                mt={2}
+                mx={2}
+                style={{
+                  width: '100%',
+                }}
+              >
                 <AddNewBlocks
                   addNewBlock={(newBlock: BlockRequestPayloadType) => {
                     let content = newBlock.content;

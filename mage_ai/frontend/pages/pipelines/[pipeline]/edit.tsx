@@ -2049,7 +2049,6 @@ function PipelineDetailPage({
         onCreateCallback,
         name,
       ) => new Promise(() => {
-        console.log(block?.block_action_object)
         if (ObjectType.BLOCK_FILE === block?.block_action_object?.object_type
           || (
           BlockTypeEnum.DBT === block?.type

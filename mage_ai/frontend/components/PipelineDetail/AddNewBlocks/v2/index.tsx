@@ -45,6 +45,7 @@ import {
   ICON_SIZE,
   RowStyle,
   SearchStyle,
+  TextInputFocusAreaStyle,
 } from './index.style';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
@@ -59,6 +60,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 const BUTTON_INDEX_TEMPLATES = 0;
 const BUTTON_INDEX_CUSTOM = 1;
+const BUTTON_INDEX_MARKDOWN = 0;
 
 type AddNewBlocksV2Props = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -68,6 +70,7 @@ type AddNewBlocksV2Props = {
       [language: string]: FlyoutMenuItemType;
     };
   };
+  compact?: boolean;
   itemsDBT: FlyoutMenuItemType[];
   pipelineType: PipelineTypeEnum;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
@@ -83,6 +86,7 @@ function AddNewBlocksV2({
   addNewBlock,
   blockIdx,
   blockTemplatesByBlockType,
+  compact,
   itemsDBT,
   pipelineType,
   setAddNewBlockMenuOpenIdx,
@@ -384,16 +388,29 @@ function AddNewBlocksV2({
       searchResult,
     ]);
 
+  const focusArea = useMemo(() => (
+    <TextInputFocusAreaStyle
+      compact={compact}
+      onClick={() => refTextInput?.current?.focus()}
+    />
+  ), [
+    compact,
+    refTextInput,
+  ]);
+
   return (
     <ClickOutside
       onClickOutside={closeButtonMenu}
       open
     >
-      <ContainerStyle>
+      <ContainerStyle compact={compact}>
         <FlexContainer
           alignItems="center"
         >
-          <ButtonWrapper increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}>
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
+          >
             <FlyoutMenuWrapper
               disableKeyboardShortcuts
               items={itemsTemplates}
@@ -431,7 +448,10 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <ButtonWrapper increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}>
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
+          >
             <FlyoutMenuWrapper
               disableKeyboardShortcuts
               items={itemsCustom}
@@ -469,28 +489,33 @@ function AddNewBlocksV2({
 
           <Spacing mr={3} />
 
-          <Tooltip
-            block
-            label="Add a markdown block for documentation"
-            size={null}
-            widthFitContent
+          <ButtonWrapper
+            compact={compact}
+            increasedZIndex={BUTTON_INDEX_MARKDOWN === buttonMenuOpenIndex}
           >
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                e.preventDefault();
-                addNewBlock({
-                  language: BlockLanguageEnum.MARKDOWN,
-                  type: BlockTypeEnum.MARKDOWN,
-                });
-              }}
+            <Tooltip
+              block
+              label="Add a markdown block for documentation"
+              size={null}
+              widthFitContent
             >
-              <MarkdownPen size={ICON_SIZE} />
-            </Button>
-          </Tooltip>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  e.preventDefault();
+                  addNewBlock({
+                    language: BlockLanguageEnum.MARKDOWN,
+                    type: BlockTypeEnum.MARKDOWN,
+                  });
+                }}
+              >
+                <MarkdownPen size={ICON_SIZE} />
+              </Button>
+            </Tooltip>
+          </ButtonWrapper>
 
           <Spacing mr={3} />
 
@@ -499,6 +524,7 @@ function AddNewBlocksV2({
           <Spacing mr={3} />
 
           <SearchStyle>
+            {focusArea}
             <TextInput
               fullWidth
               noBackground
@@ -514,6 +540,7 @@ function AddNewBlocksV2({
               ref={refTextInput}
               value={inputValue || ''}
             />
+            {focusArea}
 
             <DropdownStyle
               topOffset={refTextInput?.current?.getBoundingClientRect().height}

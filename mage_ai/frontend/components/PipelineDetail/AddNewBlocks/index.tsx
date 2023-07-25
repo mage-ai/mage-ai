@@ -314,6 +314,7 @@ function AddNewBlocks({
         addNewBlock={addNewBlock}
         blockIdx={blockIdx}
         blockTemplatesByBlockType={blockTemplatesByBlockType}
+        compact={compact}
         itemsDBT={itemsDBT}
         pipelineType={pipelineType}
         setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
