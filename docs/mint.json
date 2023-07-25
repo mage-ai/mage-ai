@@ -550,13 +550,6 @@
       ]
     },
     {
-      "group": "OAuth access tokens",
-      "pages": [
-        "api-reference/oauth-access-tokens/overview",
-        "api-reference/oauth-access-tokens/read-logs"
-      ]
-    },
-    {
       "group": "Pipeline runs",
       "pages": [
         "api-reference/pipeline-runs/overview",
