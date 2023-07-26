@@ -23,9 +23,10 @@ LlmPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
+
 LlmPolicy.allow_read([
+    'response',
     'use_case',
-    'request',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -34,8 +35,8 @@ LlmPolicy.allow_read([
 
 
 LlmPolicy.allow_write([
+    'request',
     'use_case',
-    'response',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

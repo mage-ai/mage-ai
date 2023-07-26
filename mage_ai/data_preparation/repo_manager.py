@@ -84,6 +84,7 @@ class RepoConfig:
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
+            self.openai_api_key = repo_config.get('openai_api_key')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
