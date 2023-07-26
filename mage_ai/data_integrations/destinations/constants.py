@@ -4,6 +4,7 @@ DESTINATIONS = [
     dict(name='Clickhouse'),
     dict(name='Delta Lake S3'),
     dict(name='Google Cloud Storage'),
+    dict(name='MongoDB'),
     dict(
         module_name='MSSQL',
         name='Microsoft SQL Server',
