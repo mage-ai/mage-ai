@@ -71,7 +71,12 @@ class VariableResource(GenericResource):
                     block=dict(uuid=uuid),
                     pipeline=dict(uuid=pipeline_uuid),
                     variables=[
-                        get_variable_value(variable_manager, pipeline_uuid, uuid, var) for var in arr
+                        get_variable_value(
+                            variable_manager,
+                            pipeline_uuid,
+                            uuid,
+                            var,
+                        ) for var in arr
                         # Not return printed outputs
                         if var == 'df' or var.startswith('output')
                     ],
