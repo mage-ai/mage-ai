@@ -69,25 +69,6 @@ Project-level data is stored in the `mage_data` directory— located at the same
 `mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI. Here are the locations for various components of `mage_data`:
 
 - SQLite DB: `mage_data/[project_folder]/mage-ai.db`
-  - The SQLite DB stores project-level metadata, such as pipeline and block run data. Here's a sample tree tables in the `tables` schema:
-   ```
-    └── tables
-        ├── backfill
-        ├── block_run
-        ├── event_matcher
-        ├── oauth2_access_token
-        ├── oauth2_application
-        ├── permission
-        ├── pipeline_run
-        ├── pipeline_schedule
-        ├── pipeline_schedule_event_matcher_association
-        ├── role
-        ├── secret
-        ├── sqlite_master
-        ├── user
-        └── user_role
-    ```
-  - You can connect to the SQLite DB like any other database. The JDBC URL is `jdbc:sqlite:/YOUR_PATH/mage-ai/mage_ai/orchestration/db/mage-ai.db` by default.
 - Block output: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.variables/`
 - Pipeline and block logs: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.logs/`
 - Cache: `mage_data/[project_folder]/.cache`
