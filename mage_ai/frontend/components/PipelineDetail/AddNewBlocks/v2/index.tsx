@@ -209,6 +209,41 @@ function AddNewBlocksV2({
     pipelineType,
   ]);
 
+  const buildNonPythonItems = useCallback((blockType: BlockTypeEnum) => [
+    {
+      isGroupingTitle: true,
+      label: () => 'SQL',
+      uuid: `${BlockLanguageEnum.SQL}/${blockType}/group`,
+    },
+    {
+      label: () => 'Base template (generic)',
+      onClick: () => {
+        addNewBlock({
+          language: BlockLanguageEnum.SQL,
+          type: blockType,
+        });
+      },
+      uuid: `${BlockLanguageEnum.SQL}/${blockType}/Base template (generic)`,
+    },
+    {
+      isGroupingTitle: true,
+      label: () => 'R',
+      uuid: `${BlockLanguageEnum.R}/${blockType}/group`,
+    },
+    {
+      label: () => 'Base template (generic)',
+      onClick: () => {
+        addNewBlock({
+          language: BlockLanguageEnum.R,
+          type: blockType,
+        });
+      },
+      uuid: `${BlockLanguageEnum.R}/${blockType}/Base template (generic)`,
+    },
+  ], [
+    addNewBlock,
+  ]);
+
   const itemsTemplates = useMemo(() => [
     {
       beforeIcon: (
@@ -219,7 +254,13 @@ function AddNewBlocksV2({
           size={ICON_SIZE}
         />
       ),
-      items: itemsDataLoader,
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_LOADER}/group`,
+        },
+      ].concat(itemsDataLoader).concat(buildNonPythonItems(BlockTypeEnum.DATA_LOADER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
       uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
     },
@@ -232,7 +273,13 @@ function AddNewBlocksV2({
           size={ICON_SIZE}
         />
       ),
-      items: itemsTransformer,
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
+        },
+      ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
       uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
     },
@@ -245,7 +292,13 @@ function AddNewBlocksV2({
           size={ICON_SIZE}
         />
       ),
-      items: itemsDataExporter,
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_EXPORTER}/group`,
+        },
+      ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
       uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
     },
@@ -258,7 +311,13 @@ function AddNewBlocksV2({
           size={ICON_SIZE}
         />
       ),
-      items: itemsSensors,
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
+        },
+      ].concat(itemsSensors),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
       uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
     },
@@ -299,6 +358,7 @@ function AddNewBlocksV2({
     },
   ], [
     addNewBlock,
+    buildNonPythonItems,
     itemsDataExporter,
     itemsDataLoader,
     itemsDBT,
@@ -310,13 +370,36 @@ function AddNewBlocksV2({
   const itemsCustom = useMemo(() => [
     {
       beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
-      label: () => 'Custom block',
+      label: () => 'Python block',
       onClick: () => {
         addNewBlock({
+          language: BlockLanguageEnum.PYTHON,
           type: BlockTypeEnum.CUSTOM,
         });
       },
-      uuid: 'custom_block',
+      uuid: 'Python',
+    },
+    {
+      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
+      label: () => 'SQL block',
+      onClick: () => {
+        addNewBlock({
+          language: BlockLanguageEnum.SQL,
+          type: BlockTypeEnum.CUSTOM,
+        });
+      },
+      uuid: 'SQL',
+    },
+    {
+      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
+      label: () => 'R block',
+      onClick: () => {
+        addNewBlock({
+          language: BlockLanguageEnum.R,
+          type: BlockTypeEnum.CUSTOM,
+        });
+      },
+      uuid: 'R',
     },
     {
       beforeIcon: <PenWriting default size={ICON_SIZE} />,
