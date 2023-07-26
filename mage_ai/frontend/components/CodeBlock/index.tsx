@@ -174,7 +174,7 @@ type CodeBlockProps = {
   }) => void;
   pipeline: PipelineType;
   project?: ProjectType;
-  runBlock: (payload: {
+  runBlock?: (payload: {
     block: BlockType;
     code: string;
     runDownstream?: boolean;
@@ -491,7 +491,7 @@ function CodeBlock({
       setSelectedTab(TAB_DBT_LOGS_UUID);
     }
 
-    runBlock({
+    runBlock?.({
       block: blockPayload,
       code: code || content,
       runDownstream: runDownstream || hasDownstreamWidgets,
@@ -1330,26 +1330,28 @@ function CodeBlock({
                 )}
               </Flex>
 
-              <CommandButtons
-                addNewBlock={addNewBlock}
-                addWidget={addWidget}
-                block={block}
-                blocks={blocks}
-                deleteBlock={deleteBlock}
-                executionState={executionState}
-                fetchFileTree={fetchFileTree}
-                fetchPipeline={fetchPipeline}
-                hideExtraButtons={hideExtraCommandButtons}
-                interruptKernel={interruptKernel}
-                isEditingBlock={isEditingBlock}
-                openSidekickView={openSidekickView}
-                pipeline={pipeline}
-                runBlock={hideRunButton ? null : runBlockAndTrack}
-                savePipelineContent={savePipelineContent}
-                setErrors={setErrors}
-                setIsEditingBlock={setIsEditingBlock}
-                setOutputCollapsed={setOutputCollapsed}
-              />
+              {runBlock && (
+                <CommandButtons
+                  addNewBlock={addNewBlock}
+                  addWidget={addWidget}
+                  block={block}
+                  blocks={blocks}
+                  deleteBlock={deleteBlock}
+                  executionState={executionState}
+                  fetchFileTree={fetchFileTree}
+                  fetchPipeline={fetchPipeline}
+                  hideExtraButtons={hideExtraCommandButtons}
+                  interruptKernel={interruptKernel}
+                  isEditingBlock={isEditingBlock}
+                  openSidekickView={openSidekickView}
+                  pipeline={pipeline}
+                  runBlock={hideRunButton ? null : runBlockAndTrack}
+                  savePipelineContent={savePipelineContent}
+                  setErrors={setErrors}
+                  setIsEditingBlock={setIsEditingBlock}
+                  setOutputCollapsed={setOutputCollapsed}
+                />
+              )}
 
               {!hideExtraCommandButtons && (
                 <Spacing px={1}>

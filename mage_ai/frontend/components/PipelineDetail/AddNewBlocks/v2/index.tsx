@@ -869,6 +869,15 @@ function AddNewBlocksV2({
                       onCancel: () => {
                         setSetupAILater(true);
                       },
+                      onSaveSuccess: (project: ProjectType) => {
+                        if (project?.openai_api_key) {
+                          addNewBlock({
+                            block_action_object: blockActionObject,
+                          });
+                          setInputValue(null);
+                          setSearchResult(null);
+                        }
+                      },
                     });
                   } else {
                     addNewBlock({

@@ -55,6 +55,7 @@ export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
 export const KERNELS: 'kernels' = 'kernels';
+export const LLMS = 'llms';
 export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
 export const OAUTHS = 'oauths';
@@ -116,6 +117,7 @@ const RESOURCES: any[][] = [
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
   [KERNELS],
+  [LLMS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
   [OAUTHS],

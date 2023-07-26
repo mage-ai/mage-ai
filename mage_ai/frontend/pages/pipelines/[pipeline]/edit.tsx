@@ -1356,31 +1356,34 @@ function PipelineDetailPage({
     name: string,
     onCreateCallback?: (block: BlockType) => void,
   }) => (
-    <ConfigureBlock
-      block={block}
-      defaultName={name}
-      onClose={hideAddBlockModal}
-      onSave={(opts: {
-        color?: BlockColorEnum;
-        language?: BlockLanguageEnum;
-        name?: string;
-      } = {}) => addNewBlockAtIndex(
-        {
-          ...block,
-          ...ignoreKeys(opts, ['name']),
-        },
-        idx,
-        onCreateCallback,
-        opts?.name,
-      ).then(() => hideAddBlockModal())}
-      pipeline={pipeline}
-    />
+    <ErrorProvider>
+      <ConfigureBlock
+        block={block}
+        defaultName={name}
+        onClose={hideAddBlockModal}
+        onSave={(opts: {
+          color?: BlockColorEnum;
+          language?: BlockLanguageEnum;
+          name?: string;
+        } = {}) => addNewBlockAtIndex(
+          {
+            ...block,
+            ...ignoreKeys(opts, ['name']),
+          },
+          idx,
+          onCreateCallback,
+          opts?.name,
+        ).then(() => hideAddBlockModal())}
+        pipeline={pipeline}
+      />
+    </ErrorProvider>
   ), {
   }, [
     addNewBlockAtIndex,
     pipeline,
   ], {
     background: true,
+    disableEscape: true,
     uuid: 'configure_block_name_and_create',
   });
 
@@ -1388,10 +1391,12 @@ function PipelineDetailPage({
     cancelButtonText,
     header,
     onCancel,
+    onSaveSuccess,
   }: {
     cancelButtonText?: string;
     header?: any;
     onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
   }) => (
     <ErrorProvider>
       <Preferences
@@ -1402,9 +1407,10 @@ function PipelineDetailPage({
           onCancel?.();
           hideConfigureProjectModal();
         }}
-        onSaveSuccess={() => {
+        onSaveSuccess={(project: ProjectType) => {
           fetchProjects();
           hideConfigureProjectModal();
+          onSaveSuccess?.(project);
         }}
       />
     </ErrorProvider>
@@ -1933,6 +1939,7 @@ function PipelineDetailPage({
         onClickCustomTemplate={(customTemplate) => {
           addNewBlock({
             config: {
+              custom_template: customTemplate,
               custom_template_uuid: customTemplate?.template_uuid,
             },
           });
