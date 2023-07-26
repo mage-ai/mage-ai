@@ -9,8 +9,11 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import Link from '@oracle/elements/Link';
 import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
+import Panel from '@oracle/components/Panel';
 import PenWriting from '@oracle/icons/custom/PenWriting';
+import ProjectType from '@interfaces/ProjectType';
 import SearchResultType, { SearchResultTypeEnum } from '@interfaces/SearchResultType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -25,6 +28,8 @@ import {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
+  AISparkle,
+  AlertTriangle,
   ArrowsAdjustingFrameSquare,
   BlockBlank,
   BlockCubePolygon,
@@ -55,14 +60,18 @@ import {
   KEY_SYMBOL_META,
   KEY_CODE_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { LOCAL_STORAGE_KEY_SETUP_AI_LATER } from '@storage/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { UNITS_BETWEEN_SECTIONS, UNIT } from '@oracle/styles/units/spacing';
+import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getdataSourceMenuItems } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+
+// WORKING ON storing a user clicking setup later on the project modal
 
 const BUTTON_INDEX_TEMPLATES = 0;
 const BUTTON_INDEX_CUSTOM = 1;
@@ -80,6 +89,7 @@ type AddNewBlocksV2Props = {
   focused?: boolean;
   itemsDBT: FlyoutMenuItemType[];
   pipelineType: PipelineTypeEnum;
+  project?: ProjectType;
   searchTextInputRef?: any;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setFocused?: (focused: boolean) => void;
@@ -89,6 +99,7 @@ type AddNewBlocksV2Props = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
+  showConfigureProjectModal?: () => void;
 };
 
 function AddNewBlocksV2({
@@ -99,10 +110,12 @@ function AddNewBlocksV2({
   focused: focusedProp,
   itemsDBT,
   pipelineType,
+  project,
   searchTextInputRef,
   setAddNewBlockMenuOpenIdx,
   setFocused: setFocusedProp,
   showBrowseTemplates,
+  showConfigureProjectModal,
 }: AddNewBlocksV2Props) {
   const buttonRefTemplates = useRef(null);
   const buttonRefCustom = useRef(null);
@@ -120,6 +133,21 @@ function AddNewBlocksV2({
   const [focusedState, setFocusedState] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>(null);
   const [searchResult, setSearchResult] = useState<SearchResultType>(null);
+  const [setupAILater, setSetupAILaterState] = useState<boolean>(null);
+  const setSetupAILater = useCallback((val: boolean) => {
+    setSetupAILaterState(val);
+    set(LOCAL_STORAGE_KEY_SETUP_AI_LATER, val);
+  }, []);
+
+  useEffect(() => {
+    if (setupAILater === null) {
+      const val = get(LOCAL_STORAGE_KEY_SETUP_AI_LATER, false);
+      setSetupAILater(val);
+    }
+  }, [
+    setSetupAILater,
+    setupAILater,
+  ]);
 
   const focused = useMemo(() => {
     if (typeof focusedProp !== 'undefined') {
@@ -506,15 +534,38 @@ function AddNewBlocksV2({
 
   const results: BlockActionObjectType[] =
     useMemo(() => searchResult?.results || [], [searchResult]);
-  const autocompleteItems =
-    useMemo(() => results?.map((blockActionObject: BlockActionObjectType) => ({
+  const autocompleteItems = useMemo(() => {
+    const q = searchResult?.uuid;
+
+    const arr = results?.map((blockActionObject: BlockActionObjectType) => ({
       itemObject: blockActionObject,
-      searchQueries: [searchResult?.uuid],
+      searchQueries: [q],
       value: blockActionObject?.uuid,
-    })), [
-      results,
-      searchResult,
-    ]);
+    }));
+
+    if (q) {
+      const generateBlock = {
+        itemObject: {
+          description: q,
+          object_type: ObjectType.GENERATE_BLOCK,
+          title: 'Generate block that',
+        },
+        searchQueries: [q],
+        value: 'generate_block',
+      };
+      if (setupAILater) {
+        arr.push(generateBlock);
+      } else {
+        arr.unshift(generateBlock);
+      }
+    }
+
+    return arr;
+  }, [
+    results,
+    searchResult,
+    setupAILater,
+  ]);
 
   const focusArea = useMemo(() => (
     <TextInputFocusAreaStyle
@@ -525,6 +576,8 @@ function AddNewBlocksV2({
     compact,
     refTextInput,
   ]);
+
+  const hasOpenAIAPIKey = useMemo(() => !!project?.openai_api_key, [project]);
 
   return (
     <ClickOutside
@@ -709,13 +762,23 @@ function AddNewBlocksV2({
                       } = blockActionObject;
 
                       const iconProps: {
+                        default?: boolean;
                         fill?: string;
                         size: number;
+                        warning?: boolean;
                       } = {
                         fill: getColorsForBlockType(blockType).accent,
                         size: ICON_SIZE,
                       };
-                      const Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
+                      let Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
+
+                      const isGenerateBlock = ObjectType.GENERATE_BLOCK === objectType;
+                      if (isGenerateBlock) {
+                        Icon = AISparkle;
+                        iconProps.default = false;
+                        iconProps.fill = null;
+                        iconProps.warning = true;
+                      }
 
                       const displayText =
                         `${title}${description ? ': ' + description : ''}`.slice(0, 80);
@@ -744,7 +807,7 @@ function AddNewBlocksV2({
                           <Spacing mr={1} />
 
                           <Text monospace muted uppercase>
-                            {ABBREV_BLOCK_LANGUAGE_MAPPING[language]}
+                            {isGenerateBlock ? 'AI' : ABBREV_BLOCK_LANGUAGE_MAPPING[language]}
                           </Text>
 
                           <Spacing mr={1} />
@@ -760,17 +823,60 @@ function AddNewBlocksV2({
                           {ObjectType.MAGE_TEMPLATE === objectType && (
                             <BlockCubePolygon muted size={ICON_SIZE} />
                           )}
+
+                          {isGenerateBlock && hasOpenAIAPIKey && (
+                            <AISparkle muted size={ICON_SIZE} />
+                          )}
+                          {isGenerateBlock && !hasOpenAIAPIKey && (
+                            <AlertTriangle muted size={ICON_SIZE} />
+                          )}
                         </RowStyle>
                       );
                     },
                   },
                 ]}
-                onSelectItem={({ itemObject: blockActionObject }: ItemType) => {
-                  addNewBlock({
-                    block_action_object: blockActionObject,
-                  });
-                  setInputValue(null);
-                  setSearchResult(null);
+                onSelectItem={({
+                  itemObject: blockActionObject,
+                }: ItemType) => {
+                  const {
+                    object_type: objectType,
+                  } = blockActionObject;
+
+                  if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
+                    showConfigureProjectModal?.({
+                      cancelButtonText: 'Set this up later',
+                      header: (
+                        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+                          <Panel>
+                            <Text warning>
+                              You need to add an OpenAI API key to your project before you can
+                              generate blocks using AI.
+                            </Text>
+
+                            <Spacing mt={1}>
+                              <Text warning>
+                                Read <Link
+                                  href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                                  openNewWindow
+                                >
+                                  OpenAI’s documentation
+                                </Link> to get your API key.
+                              </Text>
+                            </Spacing>
+                          </Panel>
+                        </Spacing>
+                      ),
+                      onCancel: () => {
+                        setSetupAILater(true);
+                      },
+                    });
+                  } else {
+                    addNewBlock({
+                      block_action_object: blockActionObject,
+                    });
+                    setInputValue(null);
+                    setSearchResult(null);
+                  }
                 }}
                 uuid={componentUUID}
               />

@@ -53,6 +53,7 @@ import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -172,6 +173,7 @@ type CodeBlockProps = {
     blockUUID: string;
   }) => void;
   pipeline: PipelineType;
+  project?: ProjectType;
   runBlock: (payload: {
     block: BlockType;
     code: string;
@@ -200,6 +202,7 @@ type CodeBlockProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
+  showConfigureProjectModal?: () => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -240,6 +243,7 @@ function CodeBlock({
   onDrop,
   openSidekickView,
   pipeline,
+  project,
   runBlock,
   runningBlocks,
   savePipelineContent,
@@ -255,6 +259,7 @@ function CodeBlock({
   setSelectedOutputBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showConfigureProjectModal,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -2303,9 +2308,11 @@ function CodeBlock({
                   hideDbt={isStreamingPipeline}
                   onClickAddSingleDBTModel={onClickAddSingleDBTModel}
                   pipeline={pipeline}
+                  project={project}
                   setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
                   showBrowseTemplates={showBrowseTemplates}
+                  showConfigureProjectModal={showConfigureProjectModal}
                 />
               </Spacing>
             )}

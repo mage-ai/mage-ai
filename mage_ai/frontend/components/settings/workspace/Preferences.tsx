@@ -14,13 +14,26 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
-import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
+import { ContainerStyle } from './index.style';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
-import { get } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
-function Preferences() {
+type PreferencesProps = {
+  cancelButtonText?: string;
+  contained?: boolean;
+  header?: any;
+  onCancel?: () => void;
+  onSaveSuccess?: (project: ProjectType) => void;
+};
+
+function Preferences({
+  cancelButtonText,
+  contained,
+  header,
+  onCancel,
+  onSaveSuccess,
+}: PreferencesProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'settings/workspace/preferences',
   });
@@ -47,6 +60,10 @@ function Preferences() {
           callback: ({ project: p }) => {
             fetchProjects();
             setProjectAttributes(p);
+
+            if (onSaveSuccess) {
+              onSaveSuccess?.(p);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -63,8 +80,10 @@ function Preferences() {
     project: payload,
   }), [updateProjectBase]);
 
-  return (
+  const el = (
     <>
+      {header}
+
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
@@ -177,20 +196,45 @@ function Preferences() {
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />
 
-      <Button
-        loading={isLoadingUpdateProject}
-        onClick={() => {
-          updateProject({
-            help_improve_mage: projectAttributes?.help_improve_mage,
-            openai_api_key: projectAttributes?.openai_api_key,
-          });
-        }}
-        primary
-      >
-        Save project settings
-      </Button>
+      <FlexContainer alignItems="center">
+        <Button
+          loading={isLoadingUpdateProject}
+          onClick={() => {
+            updateProject({
+              help_improve_mage: projectAttributes?.help_improve_mage,
+              openai_api_key: projectAttributes?.openai_api_key,
+            });
+          }}
+          primary
+        >
+          Save project settings
+        </Button>
+
+        {onCancel && (
+          <>
+            <Spacing mr={PADDING_UNITS} />
+
+            <Button
+              onClick={onCancel}
+              secondary
+            >
+              {cancelButtonText || 'Cancel'}
+            </Button>
+          </>
+        )}
+      </FlexContainer>
     </>
   );
+
+  if (contained) {
+    return (
+      <ContainerStyle>
+        {el}
+      </ContainerStyle>
+    );
+  }
+
+  return el;
 }
 
 export default Preferences;
