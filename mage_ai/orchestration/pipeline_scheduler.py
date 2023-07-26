@@ -214,6 +214,8 @@ class PipelineScheduler:
                     pipeline=self.pipeline,
                     pipeline_run=self.pipeline_run,
                 )
+                # Cancel block runs that are still in progress for the pipeline run.
+                cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_streams(block_runs)
             else:
@@ -1159,6 +1161,27 @@ def stop_pipeline_run(
     pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
     # Cancel all the block runs
+    cancel_block_runs_and_jobs(pipeline_run, pipeline)
+
+
+def cancel_block_runs_and_jobs(
+    pipeline_run: PipelineRun,
+    pipeline: Pipeline = None,
+) -> None:
+    """Cancel in progress block runs and jobs for a pipeline run.
+
+    This function cancels blocks runs for the pipeline run. If a pipeline object
+    is provided, it also kills the jobs associated with the pipeline run and its
+    integration streams if applicable.
+
+    Args:
+        pipeline_run (PipelineRun): The pipeline run to stop.
+        pipeline (Pipeline, optional): The pipeline associated with the pipeline run.
+            Defaults to None.
+
+    Returns:
+        None
+    """
     block_runs_to_cancel = []
     running_blocks = []
     for b in pipeline_run.block_runs:
