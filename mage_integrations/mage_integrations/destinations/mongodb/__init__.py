@@ -5,7 +5,7 @@ from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.mongodb.target_mongodb.target import TargetMongoDb
 
 
-class Mongodb(Destination):
+class MongoDb(Destination):
     def process(self, input_buffer) -> None:
         self.config['state_path'] = self.state_file_path
         TargetMongoDb(config=self.config, logger=self.logger).listen_override(
@@ -13,7 +13,7 @@ class Mongodb(Destination):
 
 
 if __name__ == '__main__':
-    destination = Mongodb(
+    destination = MongoDb(
         argument_parser=argparse.ArgumentParser(),
         batch_processing=True,
     )
