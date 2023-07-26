@@ -53,6 +53,7 @@ import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/cons
 import {
   KEY_SYMBOL_FORWARD_SLASH,
   KEY_SYMBOL_META,
+  KEY_CODE_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -106,8 +107,9 @@ function AddNewBlocksV2({
   const buttonRefTemplates = useRef(null);
   const buttonRefCustom = useRef(null);
   const timeoutRef = useRef(null);
+  const refTextInputInit = useRef(null);
   const refTextInput =
-    typeof searchTextInputRef !== 'undefined' ? searchTextInputRef : useRef(null);
+    typeof searchTextInputRef !== 'undefined' ? searchTextInputRef : refTextInputInit;
 
   const componentUUID = useMemo(() => `AddNewBlocksV2/${blockIdx}`, [blockIdx]);
   const [showError] = useError(null, {}, [], {
@@ -295,6 +297,7 @@ function AddNewBlocksV2({
           label: () => 'Python',
           uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_LOADER}/group`,
         },
+        // @ts-ignore
       ].concat(itemsDataLoader).concat(buildNonPythonItems(BlockTypeEnum.DATA_LOADER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
       uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
@@ -314,6 +317,7 @@ function AddNewBlocksV2({
           label: () => 'Python',
           uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
         },
+        // @ts-ignore
       ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
       uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
@@ -333,6 +337,7 @@ function AddNewBlocksV2({
           label: () => 'Python',
           uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_EXPORTER}/group`,
         },
+        // @ts-ignore
       ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER)),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
       uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
@@ -352,6 +357,7 @@ function AddNewBlocksV2({
           label: () => 'Python',
           uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
         },
+        // @ts-ignore
       ].concat(itemsSensors),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
       uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,

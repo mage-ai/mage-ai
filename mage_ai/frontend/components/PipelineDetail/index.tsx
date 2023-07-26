@@ -201,7 +201,7 @@ function PipelineDetail({
   const searchTextInputRef = useRef(null);
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
-  const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(true);
+  const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
@@ -283,8 +283,15 @@ function PipelineDetail({
             || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
         )) {
           event.preventDefault();
-          setFocusedAddNewBlockSearch(false);
+          setFocusedAddNewBlockSearch(true);
           searchTextInputRef?.current?.focus();
+        } else if (useV2
+          && focusedAddNewBlockSearch
+          && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
+        ) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(false);
+          searchTextInputRef?.current?.blur();
         } else if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
@@ -345,6 +352,7 @@ function PipelineDetail({
       anyInputFocused,
       blockRefs.current,
       blocks,
+      focusedAddNewBlockSearch,
       interruptKernel,
       isIntegration,
       numberOfBlocks,
@@ -679,7 +687,7 @@ function PipelineDetail({
     setSelectedStream,
   ]);
 
-  const addNewBlocksMemo = useMemo(() => (
+  const addNewBlocksMemo = useMemo(() => pipeline && (
     <AddNewBlocks
       addNewBlock={(newBlock: BlockRequestPayloadType) => {
         const block = blocks[blocks.length - 1];
