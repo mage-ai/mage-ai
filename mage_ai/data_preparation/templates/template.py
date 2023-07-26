@@ -59,9 +59,17 @@ def fetch_template_source(
         return template_source
 
     if 'template_path' in config:
+        template_variables_to_render = dict(
+            code=config.get('existing_code', ''),
+        )
+
+        template_variables = config.get('template_variables')
+        if template_variables:
+            template_variables_to_render.update(template_variables)
+
         return (
             template_env.get_template(config['template_path']).render(
-                code=config.get('existing_code', ''),
+                **template_variables_to_render,
             )
         )
     elif block_type == BlockType.DATA_LOADER:

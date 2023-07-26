@@ -132,6 +132,7 @@ export function groupBlockTemplates(
     language,
     name,
     path,
+    template_variables: templateVariables,
   }) => {
     if (!mapping[blockType]) {
       mapping[blockType] = {};
@@ -150,6 +151,7 @@ export function groupBlockTemplates(
       onClick: () => addNewBlock({
         config: {
           template_path: path,
+          template_variables: templateVariables,
         },
         language,
         type: blockType,
