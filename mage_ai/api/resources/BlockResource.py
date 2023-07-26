@@ -59,6 +59,7 @@ class BlockResource(GenericResource):
                 block_type = object_from_cache.get('block_type')
                 language = object_from_cache.get('language')
                 payload_config['template_path'] = object_from_cache.get('path')
+                payload_config['template_variables'] = object_from_cache.get('template_variables')
 
         """
         New DBT models include "content" in its block create payload,

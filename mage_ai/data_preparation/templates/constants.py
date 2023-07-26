@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.io.base import DataSource
 from mage_ai.shared.hash import index_by
 
 GROUP_AGGREGATE = 'Aggregate'
@@ -229,21 +230,36 @@ TEMPLATES_ONLY_FOR_V2 = [
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
         name='Amazon Redshift',
-        path='transformers/redshift.py',
+        path='transformers/data_warehouse_transformer.jinja',
+        template_variables=dict(
+            additional_args='\n        loader.commit() # Permanently apply database changes',
+            data_source=DataSource.REDSHIFT.value,
+            data_source_handler='Redshift',
+        ),
     ),
     dict(
         block_type=BlockType.TRANSFORMER,
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
         name='Google BigQuery',
-        path='sensors/bigquery.py',
+        path='transformers/data_warehouse_transformer.jinja',
+        template_variables=dict(
+            additional_args='',
+            data_source=DataSource.BIGQUERY.value,
+            data_source_handler='BigQuery',
+        ),
     ),
     dict(
         block_type=BlockType.TRANSFORMER,
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
         name='Snowflake',
-        path='transformers/snowflake.py',
+        path='transformers/data_warehouse_transformer.jinja',
+        template_variables=dict(
+            additional_args='\n        loader.commit() # Permanently apply database changes',
+            data_source=DataSource.SNOWFLAKE.value,
+            data_source_handler='Snowflake',
+        ),
     ),
     #   Databases
     dict(
@@ -251,7 +267,12 @@ TEMPLATES_ONLY_FOR_V2 = [
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
         name='PostgreSQL',
-        path='transformers/postgres.py',
+        path='transformers/data_warehouse_transformer.jinja',
+        template_variables=dict(
+            additional_args='\n        loader.commit() # Permanently apply database changes',
+            data_source=DataSource.POSTGRES.value,
+            data_source_handler='Postgres',
+        ),
     ),
     #   Row actions
     dict(

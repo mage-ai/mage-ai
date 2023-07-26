@@ -40,6 +40,7 @@ export const KEY_CODE_Y = 89;
 export const KEY_CODE_META = 'metaKey';
 export const KEY_CODE_META_LEFT = 91;
 export const KEY_CODE_META_RIGHT = 93;
+export const KEY_CODE_FORWARD_SLASH = 191;
 export const KEY_CODE_META_FIREFOX = 224;
 export const KEY_CODE_METAS = [
   KEY_CODE_META_LEFT,
@@ -124,6 +125,7 @@ export const KEY_SYMBOL_CONTROL = 'ctrl';
 export const KEY_SYMBOL_DELETE = 'del';
 export const KEY_SYMBOL_ENTER = 'enter';
 export const KEY_SYMBOL_ESCAPE = 'esc';
+export const KEY_SYMBOL_FORWARD_SLASH = '/';
 export const KEY_SYMBOL_META = '⌘';
 export const KEY_SYMBOL_SHIFT = '⇧';
 export const KEY_SYMBOL_TAB = 'tab';

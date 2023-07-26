@@ -51,6 +51,7 @@ function ConfigureBlock({
     language?: BlockLanguageEnum;
     name?: string;
   }>({
+    language: block?.language,
     name: defaultName,
   });
   const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(

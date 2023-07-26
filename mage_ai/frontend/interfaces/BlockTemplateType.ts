@@ -7,4 +7,7 @@ export default interface BlockType {
   language: string;
   name: string;
   path: string;
+  template_variables?: {
+    [key: string]: string | number;
+  };
 }

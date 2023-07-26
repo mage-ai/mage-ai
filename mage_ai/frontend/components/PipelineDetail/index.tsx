@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { CSSTransition } from 'react-transition-group';
@@ -54,6 +55,7 @@ import {
   KEY_CODE_D,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
+  KEY_CODE_FORWARD_SLASH,
   KEY_CODE_I,
   KEY_CODE_META,
   KEY_CODE_NUMBER_0,
@@ -196,7 +198,10 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  const searchTextInputRef = useRef(null);
+
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
+  const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
@@ -273,7 +278,21 @@ function PipelineDetail({
           setPipelineContentTouched(true);
         }
       } else if (!isIntegration) {
-        if (selectedBlock) {
+        if (useV2 && (
+          onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
+        )) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(true);
+          searchTextInputRef?.current?.focus();
+        } else if (useV2
+          && focusedAddNewBlockSearch
+          && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
+        ) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(false);
+          searchTextInputRef?.current?.blur();
+        } else if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 
@@ -333,18 +352,21 @@ function PipelineDetail({
       anyInputFocused,
       blockRefs.current,
       blocks,
+      focusedAddNewBlockSearch,
       interruptKernel,
       isIntegration,
       numberOfBlocks,
       pipelineContentTouched,
       restartKernel,
       savePipelineContent,
+      searchTextInputRef,
       selectedBlock,
       selectedBlockPrevious,
       setPipelineContentTouched,
       setSelectedBlock,
       setTextareaFocused,
       textareaFocused,
+      useV2,
     ],
   );
 
@@ -665,7 +687,7 @@ function PipelineDetail({
     setSelectedStream,
   ]);
 
-  const addNewBlocksMemo = useMemo(() => (
+  const addNewBlocksMemo = useMemo(() => pipeline && (
     <AddNewBlocks
       addNewBlock={(newBlock: BlockRequestPayloadType) => {
         const block = blocks[blocks.length - 1];
@@ -713,6 +735,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         setTextareaFocused(true);
       }}
       blockTemplates={blockTemplates}
+      focusedAddNewBlockSearch={focusedAddNewBlockSearch}
       hideCustom={isIntegration || isStreaming}
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
@@ -721,18 +744,23 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       hideSensor={isIntegration}
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
+      searchTextInputRef={searchTextInputRef}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
+      setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
       showBrowseTemplates={showBrowseTemplates}
     />
   ), [
     addNewBlockAtIndex,
     blockTemplates,
     blocks,
+    focusedAddNewBlockSearch,
     isIntegration,
     isStreaming,
     numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
+    searchTextInputRef,
+    setFocusedAddNewBlockSearch,
     setSelectedBlock,
     setTextareaFocused,
     showBrowseTemplates,
