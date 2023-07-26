@@ -1164,7 +1164,10 @@ def stop_pipeline_run(
     cancel_block_runs_and_jobs(pipeline_run, pipeline)
 
 
-def cancel_block_runs_and_jobs(pipeline_run, pipeline):
+def cancel_block_runs_and_jobs(
+    pipeline_run: PipelineRun,
+    pipeline: Pipeline = None,
+) -> None:
     """Cancel in progress block runs and jobs for a pipeline run.
 
     This function cancels blocks runs for the pipeline run. If a pipeline object
