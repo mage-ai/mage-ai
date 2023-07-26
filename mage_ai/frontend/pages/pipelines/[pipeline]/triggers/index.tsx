@@ -60,7 +60,9 @@ function PipelineSchedules({
 
   const {
     data: dataGlobalVariables,
-  } = api.variables.pipelines.list(pipelineUUID, {}, {
+  } = api.variables.pipelines.list(pipelineUUID, {
+    global_only: true,
+  }, {
     revalidateOnFocus: false,
   });
   const globalVariables = dataGlobalVariables?.variables;

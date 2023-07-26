@@ -25,7 +25,7 @@ type VariableRowProps = {
   obfuscate?: boolean;
   pipelineUUID: string;
   variable: VariableType;
-}
+};
 
 function VariableRow({
   copyText: copyTextProp,
@@ -56,7 +56,7 @@ function VariableRow({
           callback: () => {
             setEdit(false);
             fetchVariables();
-          }
+          },
         },
       ),
     },
@@ -64,7 +64,7 @@ function VariableRow({
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
-      let updatedValue = variableValue
+      let updatedValue = variableValue;
       try {
         updatedValue = JSON.parse(variableValue);
       } catch {
