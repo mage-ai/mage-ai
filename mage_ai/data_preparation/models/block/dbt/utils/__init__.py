@@ -568,6 +568,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             SNOWFLAKE_DEFAULT_SCHEMA=profile.get('schema'),
             SNOWFLAKE_DEFAULT_WH=profile.get('warehouse'),
             SNOWFLAKE_USER=profile.get('user'),
+            SNOWFLAKE_ROLE=profile.get('role'),
         )
 
         if 'password' in profile:
