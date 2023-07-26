@@ -43,8 +43,6 @@ terminado==0.17.1
 tornado==6.1
 typer[all]==0.7.0
 typing-extensions==4.5.0
-hologram>=0.0.16
-
 
 # extras
 aws-secretsmanager-caching==1.1.1.5
