@@ -112,7 +112,6 @@ class PipelineScheduler:
         """Start the pipeline run.
 
         This method starts the pipeline run by performing necessary actions
-        * Sync data from a Git repository if configured
         * Update the pipeline run status
         * Optionally scheduling the pipeline execution
 
@@ -127,25 +126,6 @@ class PipelineScheduler:
             return True
 
         tags = self.__build_tags()
-
-        preferences = get_preferences()
-        if preferences.sync_config:
-            sync_config = GitConfig.load(config=preferences.sync_config)
-            if sync_config.sync_on_pipeline_run:
-                sync = GitSync(sync_config)
-                try:
-                    sync.sync_data()
-                    self.logger.info(
-                        f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
-                        f', branch: {sync_config.branch}',
-                        **tags,
-                    )
-                except Exception as err:
-                    self.logger.warning(
-                        f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                        f', branch: {sync_config.branch} with error: {str(err)}',
-                        **tags,
-                    )
 
         is_integration = PipelineType.INTEGRATION == self.pipeline.type
 
@@ -201,7 +181,7 @@ class PipelineScheduler:
         else:
             if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
-                    tags = self.__build_tags()
+                    tags = self.build_tags()
                     calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
                 if self.pipeline_run.any_blocks_failed():
@@ -275,7 +255,7 @@ class PipelineScheduler:
 
         self.logger.info(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
-            **self.__build_tags(
+            **self.build_tags(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
             ),
@@ -309,7 +289,7 @@ class PipelineScheduler:
 
         self.logger.info(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
-            **self.__build_tags(
+            **self.build_tags(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
             ),
@@ -331,7 +311,7 @@ class PipelineScheduler:
         if 'error' in kwargs:
             metrics['error'] = kwargs['error']
 
-        tags = self.__build_tags(
+        tags = self.build_tags(
             block_run_id=block_run.id,
             block_uuid=block_run.block_uuid,
         )
@@ -438,6 +418,16 @@ class PipelineScheduler:
                 executable_block_runs.append(block_run)
 
         return executable_block_runs
+
+    def build_tags(self, **kwargs):
+        base_tags = dict(
+            pipeline_run_id=self.pipeline_run.id,
+            pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
+            pipeline_uuid=self.pipeline.uuid,
+        )
+        if HOSTNAME:
+            base_tags['hostname'] = HOSTNAME
+        return merge_dict(kwargs, base_tags)
 
     def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
         """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
@@ -558,7 +548,7 @@ class PipelineScheduler:
                 self.pipeline_run.id,
                 b.id,
                 self.pipeline_run.get_variables(),
-                self.__build_tags(**tags),
+                self.build_tags(**tags),
             )
 
     def __schedule_integration_streams(self, block_runs: List[BlockRun] = None) -> None:
@@ -593,7 +583,7 @@ class PipelineScheduler:
             ]
 
         if len(block_runs_to_schedule) > 0:
-            tags = self.__build_tags()
+            tags = self.build_tags()
 
             block_run_stream_ids = set()
             for br in block_runs_to_schedule:
@@ -723,7 +713,7 @@ class PipelineScheduler:
             return
         self.logger.info(
             f'Start a process for PipelineRun {self.pipeline_run.id}',
-            **self.__build_tags(),
+            **self.build_tags(),
         )
         job_manager.add_job(
             JobType.PIPELINE_RUN,
@@ -732,7 +722,7 @@ class PipelineScheduler:
             # args
             self.pipeline_run.id,
             self.pipeline_run.get_variables(),
-            self.__build_tags(),
+            self.build_tags(),
         )
 
     def __fetch_crashed_block_runs(self) -> None:
@@ -759,16 +749,6 @@ class PipelineScheduler:
 
         return crashed_runs
 
-    def __build_tags(self, **kwargs):
-        base_tags = dict(
-            pipeline_run_id=self.pipeline_run.id,
-            pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
-            pipeline_uuid=self.pipeline.uuid,
-        )
-        if HOSTNAME:
-            base_tags['hostname'] = HOSTNAME
-        return merge_dict(kwargs, base_tags)
-
     def __run_heartbeat(self) -> None:
         load1, load5, load15, cpu_count = get_compute()
         cpu_usage = load15 / cpu_count if cpu_count else None
@@ -776,7 +756,7 @@ class PipelineScheduler:
         free_memory, used_memory, total_memory = get_memory()
         memory_usage = used_memory / total_memory if total_memory else None
 
-        tags = self.__build_tags(
+        tags = self.build_tags(
             cpu=load15,
             cpu_total=cpu_count,
             cpu_usage=cpu_usage,
@@ -1293,7 +1273,8 @@ def check_sla():
 def schedule_all():
     """
     1. Check whether any new pipeline runs need to be scheduled.
-    2. In active pipeline runs, check whether any block runs need to be scheduled.
+    2. Run git sync if "sync_on_pipeline_run" is enabled.
+    3. In active pipeline runs, check whether any block runs need to be scheduled.
     """
     db_connection.session.expire_all()
 
@@ -1344,6 +1325,12 @@ def schedule_all():
     pipeline_by_uuid = dict()
     concurrency_config_by_uuid = dict()
 
+    preferences = get_preferences()
+    sync_config = None
+    if preferences.sync_config:
+        sync_config = GitConfig.load(config=preferences.sync_config)
+
+    git_sync_result = dict()
     for pipeline_schedule in active_pipeline_schedules:
         lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
         if not lock.try_acquire_lock(lock_key):
@@ -1390,7 +1377,6 @@ def schedule_all():
 
         if should_schedule and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
-
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -1411,6 +1397,18 @@ def schedule_all():
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
+                # sync Git if configured and not already synced by another pipeline run
+                git_sync_lock_key = 'git_sync'
+                if sync_config and sync_config.sync_on_pipeline_run:
+                    if not git_sync_result and lock.try_acquire_lock(git_sync_lock_key):
+                        try:
+                            sync = GitSync(sync_config)
+                            sync.sync_data()
+                            git_sync_result = dict(status='success')
+                        except Exception as err:
+                            git_sync_result = dict(status='failed', error=str(err))
+                        lock.release_lock(git_sync_lock_key)
+
                 pipeline_run = PipelineRun.create(**payload)
                 initial_pipeline_runs.append(pipeline_run)
 
@@ -1424,6 +1422,23 @@ def schedule_all():
             initial_pipeline_runs.sort(key=lambda x: x.execution_date)
             for r in initial_pipeline_runs[:pipeline_run_quota]:
                 pipeline_scheduler = PipelineScheduler(r)
+                # Log Git sync status for new pipeline runs
+                log_tags = pipeline_scheduler.build_tags()
+                git_sync_status = git_sync_result.get('status')
+                if git_sync_status == 'success':
+                    pipeline_scheduler.logger.info(
+                        'Successfully synced data from git repo: '
+                        f'{sync_config.remote_repo_link}, branch: {sync_config.branch}',
+                        **log_tags,
+                    )
+                elif git_sync_status == 'failed':
+                    pipeline_scheduler.logger.warning(
+                        f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                        f', branch: {sync_config.branch} with error: ' +
+                        str(git_sync_result.get('error')),
+                        **log_tags,
+                    )
+
                 pipeline_scheduler.start(should_schedule=False)
         lock.release_lock(lock_key)
 
