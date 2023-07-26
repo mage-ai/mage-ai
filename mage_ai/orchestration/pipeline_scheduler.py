@@ -29,13 +29,8 @@ from mage_ai.data_preparation.models.triggers import (
     get_triggers_by_pipeline,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
-<<<<<<< HEAD
-from mage_ai.data_preparation.sync import GitConfig
-from mage_ai.data_preparation.sync.git_sync import GitSync
-from mage_ai.orchestration.concurrency import ConcurrencyConfig
-=======
 from mage_ai.data_preparation.sync.git_sync import get_sync_config
->>>>>>> 2dfe5f334 ([dy] Update for other trigger types)
+from mage_ai.orchestration.concurrency import ConcurrencyConfig
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,

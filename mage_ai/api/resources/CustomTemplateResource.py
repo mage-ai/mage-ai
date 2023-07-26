@@ -1,4 +1,5 @@
 import urllib.parse
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache

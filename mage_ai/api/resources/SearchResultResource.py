@@ -1,12 +1,17 @@
+from typing import Dict
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_BLOCK_FILE,
     OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType, PipelineType
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineType,
+)
 from mage_ai.services.search.constants import SEARCH_TYPE_BLOCK_ACTION_OBJECTS
-from typing import Dict
 
 
 def filter_results(result: Dict) -> bool:
