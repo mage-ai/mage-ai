@@ -87,7 +87,7 @@ Project-level data is stored in the `mage_data` directory— located at the same
         ├── user
         └── user_role
     ```
-  - You can connect to the SQLite DB like any other database. The JDBC URL is `jdbc:sqlite:/YOUR_PATH/mage-ai/mage_ai/orchestration/db/mage-ai.db` by default.
+  - You can connect to the SQLite DB like any other database. The JDBC URL is `/home/src/mage_data/[project_folder]/mage-ai.db` by default for Docker installs or `~/.mage_data/[project_folder]/mage-ai.db` for pip installs.
 - Block output: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.variables/`
 - Pipeline and block logs: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.logs/`
 - Cache: `mage_data/[project_folder]/.cache`
