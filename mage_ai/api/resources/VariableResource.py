@@ -46,6 +46,7 @@ class VariableResource(GenericResource):
         if global_only:
             global_only = global_only[0]
 
+        # Get global variables from project's path
         global_variables = [
             dict(
                 uuid=uuid,
@@ -63,7 +64,6 @@ class VariableResource(GenericResource):
         ]
         variables = global_variables_arr
         if not global_only:
-            # Get global variables from project's path
             variable_manager = VariableManager(variables_dir=get_variables_dir())
             variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
             variables = [
