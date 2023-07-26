@@ -30,5 +30,11 @@ class Generator:
             return await LLMPipelineWizard().async_generate_block_with_description(
                 request.get('block_description'),
             )
+        elif use_case == LLMUseCase.GENERATE_PIPELINE_WITH_DESCRIPTION:
+            from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
+
+            return await LLMPipelineWizard().async_generate_pipeline_with_description(
+                request.get('pipeline_description'),
+            )
 
         raise Exception(f'Use case {use_case} is not supported yet.')
