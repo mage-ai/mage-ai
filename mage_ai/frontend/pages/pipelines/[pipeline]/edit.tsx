@@ -513,11 +513,12 @@ function PipelineDetailPage({
     data: blockOutputData,
     mutate: fetchSampleData,
   } = api.block_outputs.detail(
-    selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
+    (!afterHidden && selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
-      && selectedOutputBlock?.uuid
-      && encodeURIComponent(selectedOutputBlock?.uuid),
-    { pipeline_uuid: !afterHidden && pipelineUUID },
+      && selectedOutputBlock?.uuid)
+      ? encodeURIComponent(selectedOutputBlock?.uuid)
+      : null,
+    { pipeline_uuid: pipelineUUID },
   );
   const blockSampleData = useMemo(() => blockOutputData?.block_output, [blockOutputData]);
   const sampleData: SampleDataType = useMemo(() => {
@@ -534,7 +535,7 @@ function PipelineDetailPage({
     data: blockAnalysis,
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
-    !afterHidden && pipelineUUID,
+    !afterHidden ? pipelineUUID : null,
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
       && selectedOutputBlock?.uuid
