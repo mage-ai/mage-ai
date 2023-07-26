@@ -450,6 +450,7 @@ function AddNewBlocksV2({
       // @ts-ignore
       createSearchResult({
         search_result: {
+          pipeline_type: pipelineType,
           query: val,
           ratio: 70,
           type: SearchResultTypeEnum.BLOCK_ACTION_OBJECTS,
@@ -458,6 +459,7 @@ function AddNewBlocksV2({
     }, 500);
   }, [
     createSearchResult,
+    pipelineType,
     timeoutRef,
   ]);
 

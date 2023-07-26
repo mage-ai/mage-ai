@@ -21,6 +21,7 @@ SearchResultPolicy.allow_read(SearchResultPresenter.default_attributes, scopes=[
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 SearchResultPolicy.allow_write([
+    'pipeline_type',
     'query',
     'ratio',
     'type',
