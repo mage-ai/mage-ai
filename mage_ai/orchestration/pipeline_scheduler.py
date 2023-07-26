@@ -28,11 +28,14 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
     get_triggers_by_pipeline,
 )
-from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config
+<<<<<<< HEAD
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.concurrency import ConcurrencyConfig
+=======
+from mage_ai.data_preparation.sync.git_sync import get_sync_config
+>>>>>>> 2dfe5f334 ([dy] Update for other trigger types)
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
@@ -46,6 +49,7 @@ from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
+from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.settings import HOSTNAME
@@ -1325,12 +1329,8 @@ def schedule_all():
     pipeline_by_uuid = dict()
     concurrency_config_by_uuid = dict()
 
-    preferences = get_preferences()
-    sync_config = None
-    if preferences.sync_config:
-        sync_config = GitConfig.load(config=preferences.sync_config)
-
-    git_sync_result = dict()
+    sync_config = get_sync_config()
+    pipeline_schedules_to_schedule = []
     for pipeline_schedule in active_pipeline_schedules:
         lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
         if not lock.try_acquire_lock(lock_key):
@@ -1377,6 +1377,18 @@ def schedule_all():
 
         if should_schedule and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
+            pipeline_schedules_to_schedule.append(pipeline_schedule)
+
+    if len(pipeline_schedules_to_schedule) > 0:
+        git_sync_result = None
+        if sync_config and sync_config.sync_on_pipeline_run:
+            git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
+
+        for pipeline_schedule in pipeline_schedules_to_schedule:
+            lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
+            if not lock.try_acquire_lock(lock_key):
+                continue
+            pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -1397,18 +1409,6 @@ def schedule_all():
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
-                # sync Git if configured and not already synced by another pipeline run
-                git_sync_lock_key = 'git_sync'
-                if sync_config and sync_config.sync_on_pipeline_run:
-                    if not git_sync_result and lock.try_acquire_lock(git_sync_lock_key):
-                        try:
-                            sync = GitSync(sync_config)
-                            sync.sync_data()
-                            git_sync_result = dict(status='success')
-                        except Exception as err:
-                            git_sync_result = dict(status='failed', error=str(err))
-                        lock.release_lock(git_sync_lock_key)
-
                 pipeline_run = PipelineRun.create(**payload)
                 initial_pipeline_runs.append(pipeline_run)
 
@@ -1422,25 +1422,15 @@ def schedule_all():
             initial_pipeline_runs.sort(key=lambda x: x.execution_date)
             for r in initial_pipeline_runs[:pipeline_run_quota]:
                 pipeline_scheduler = PipelineScheduler(r)
-                # Log Git sync status for new pipeline runs
-                log_tags = pipeline_scheduler.build_tags()
-                git_sync_status = git_sync_result.get('status')
-                if git_sync_status == 'success':
-                    pipeline_scheduler.logger.info(
-                        'Successfully synced data from git repo: '
-                        f'{sync_config.remote_repo_link}, branch: {sync_config.branch}',
-                        **log_tags,
-                    )
-                elif git_sync_status == 'failed':
-                    pipeline_scheduler.logger.warning(
-                        f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                        f', branch: {sync_config.branch} with error: ' +
-                        str(git_sync_result.get('error')),
-                        **log_tags,
-                    )
+                # Log Git sync status for new pipeline runs if a git sync result exists
+                log_git_sync(
+                    git_sync_result,
+                    pipeline_scheduler.logger,
+                    pipeline_scheduler.build_tags(),
+                )
 
                 pipeline_scheduler.start(should_schedule=False)
-        lock.release_lock(lock_key)
+            lock.release_lock(lock_key)
 
     # Schedule active pipeline runs
     active_pipeline_runs = PipelineRun.active_runs_for_pipelines(
@@ -1465,21 +1455,39 @@ def schedule_with_event(event: Dict = None):
         event = dict()
     logger.info(f'Schedule with event {event}')
     all_event_matchers = EventMatcher.active_event_matchers()
+
+    matched_pipeline_schedules = []
     for e in all_event_matchers:
         if e.match(event):
             logger.info(f'Event matched with {e}')
-            pipeline_schedules = e.active_pipeline_schedules()
-            for p in pipeline_schedules:
-                payload = dict(
-                    execution_date=datetime.now(),
-                    pipeline_schedule_id=p.id,
-                    pipeline_uuid=p.pipeline_uuid,
-                    variables=merge_dict(p.variables or dict(), dict(event=event)),
-                )
-                pipeline_run = PipelineRun.create(**payload)
-                PipelineScheduler(pipeline_run).start(should_schedule=True)
+            matched_pipeline_schedules.extend(e.active_pipeline_schedules())
         else:
             logger.info(f'Event not matched with {e}')
+
+    if len(matched_pipeline_schedules) > 0:
+        sync_config = get_sync_config()
+
+        git_sync_result = None
+        if sync_config and sync_config.sync_on_pipeline_run:
+            git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
+
+        for p in matched_pipeline_schedules:
+            payload = dict(
+                execution_date=datetime.now(),
+                pipeline_schedule_id=p.id,
+                pipeline_uuid=p.pipeline_uuid,
+                variables=merge_dict(p.variables or dict(), dict(event=event)),
+            )
+            pipeline_run = PipelineRun.create(**payload)
+            pipeline_scheduler = PipelineScheduler(pipeline_run)
+
+            log_git_sync(
+                git_sync_result,
+                pipeline_scheduler.logger,
+                pipeline_scheduler.build_tags(),
+            )
+
+            pipeline_scheduler.start(should_schedule=True)
 
 
 def sync_schedules(pipeline_uuids: List[str]):
