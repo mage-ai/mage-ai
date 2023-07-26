@@ -55,3 +55,11 @@ VariablePolicy.allow_write([
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access())
+
+VariablePolicy.allow_query([
+    'global_only',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())
