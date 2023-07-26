@@ -28,6 +28,7 @@ import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
+import { setFilters } from '@storage/pipelines';
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -189,7 +190,10 @@ function Toolbar({
         }
       }}
       onClickOutside={closeFilterButtonMenu}
-      onSecondaryClick={() => router.push('/pipelines')}
+      onSecondaryClick={() => {
+        setFilters({});
+        router.push('/pipelines');
+      }}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
