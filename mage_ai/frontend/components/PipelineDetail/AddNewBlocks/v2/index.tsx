@@ -8,6 +8,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
 import PenWriting from '@oracle/icons/custom/PenWriting';
 import SearchResultType, { SearchResultTypeEnum } from '@interfaces/SearchResultType';
@@ -49,7 +50,10 @@ import {
 } from './index.style';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
-import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
+import {
+  KEY_SYMBOL_FORWARD_SLASH,
+  KEY_SYMBOL_META,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -72,9 +76,12 @@ type AddNewBlocksV2Props = {
     };
   };
   compact?: boolean;
+  focused?: boolean;
   itemsDBT: FlyoutMenuItemType[];
   pipelineType: PipelineTypeEnum;
+  searchTextInputRef?: any;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
+  setFocused?: (focused: boolean) => void;
   showBrowseTemplates?: (opts?: {
     addNew?: boolean;
     addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -88,15 +95,19 @@ function AddNewBlocksV2({
   blockIdx,
   blockTemplatesByBlockType,
   compact,
+  focused: focusedProp,
   itemsDBT,
   pipelineType,
+  searchTextInputRef,
   setAddNewBlockMenuOpenIdx,
+  setFocused: setFocusedProp,
   showBrowseTemplates,
 }: AddNewBlocksV2Props) {
   const buttonRefTemplates = useRef(null);
   const buttonRefCustom = useRef(null);
   const timeoutRef = useRef(null);
-  const refTextInput = useRef(null);
+  const refTextInput =
+    typeof searchTextInputRef !== 'undefined' ? searchTextInputRef : useRef(null);
 
   const componentUUID = useMemo(() => `AddNewBlocksV2/${blockIdx}`, [blockIdx]);
   const [showError] = useError(null, {}, [], {
@@ -104,9 +115,31 @@ function AddNewBlocksV2({
   });
 
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(null);
-  const [focused, setFocused] = useState<boolean>(false);
+  const [focusedState, setFocusedState] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>(null);
   const [searchResult, setSearchResult] = useState<SearchResultType>(null);
+
+  const focused = useMemo(() => {
+    if (typeof focusedProp !== 'undefined') {
+      return focusedProp;
+    }
+
+    return focusedState;
+  }, [
+    focusedProp,
+    focusedState,
+  ]);
+
+  const setFocused = useCallback((prev) => {
+    if (typeof setFocusedProp !== 'undefined') {
+      return setFocusedProp(prev);
+    }
+
+    return setFocusedState(prev);
+  }, [
+    setFocusedProp,
+    setFocusedState,
+  ]);
 
   const {
     registerOnKeyDown,
@@ -121,9 +154,11 @@ function AddNewBlocksV2({
   registerOnKeyDown?.(
     componentUUID,
     (event, keyMapping) => {
-      if (focused && keyMapping[KEY_CODE_ESCAPE]) {
-        setFocused(false);
-        refTextInput?.current?.blur();
+      if (focused) {
+        if (keyMapping[KEY_CODE_ESCAPE]) {
+          setFocused(false);
+          refTextInput?.current?.blur();
+        }
       }
     },
     [
@@ -490,7 +525,7 @@ function AddNewBlocksV2({
       onClickOutside={closeButtonMenu}
       open
     >
-      <ContainerStyle compact={compact}>
+      <ContainerStyle compact={compact} focused={focused}>
         <FlexContainer
           alignItems="center"
         >
@@ -527,7 +562,10 @@ function AddNewBlocksV2({
                     handleBlockZIndex(BUTTON_INDEX_TEMPLATES);
                   }}
                 >
-                  <TemplateShapes size={ICON_SIZE} />
+                  <TemplateShapes
+                    secondary={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
+                    size={ICON_SIZE}
+                  />
                 </Button>
               </Tooltip>
             </FlyoutMenuWrapper>
@@ -568,7 +606,10 @@ function AddNewBlocksV2({
                     handleBlockZIndex(BUTTON_INDEX_CUSTOM);
                   }}
                 >
-                  <BlockBlank size={ICON_SIZE} />
+                  <BlockBlank
+                    secondary={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
+                    size={ICON_SIZE}
+                  />
                 </Button>
               </Tooltip>
             </FlyoutMenuWrapper>
@@ -612,21 +653,28 @@ function AddNewBlocksV2({
 
           <SearchStyle>
             {focusArea}
-            <TextInput
-              fullWidth
-              noBackground
-              noBorder
-              // Need setTimeout because when clicking a row, the onBlur will be triggered.
-              // If the onBlur triggers too soon, clicking a row does nothing.
-              onBlur={() => setTimeout(() => setFocused(false), 150)}
-              onChange={onUserTyping}
-              onFocus={() => setFocused(true)}
-              paddingHorizontal={0}
-              paddingVertical={0}
-              placeholder="Search for a block to add..."
-              ref={refTextInput}
-              value={inputValue || ''}
-            />
+            <FlexContainer alignItems="center" fullWidth>
+              <TextInput
+                fullWidth
+                noBackground
+                noBorder
+                // Need setTimeout because when clicking a row, the onBlur will be triggered.
+                // If the onBlur triggers too soon, clicking a row does nothing.
+                onBlur={() => setTimeout(() => setFocused(false), 150)}
+                onChange={onUserTyping}
+                onFocus={() => setFocused(true)}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="Search for a block..."
+                ref={refTextInput}
+                value={inputValue || ''}
+              />
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                disabled
+                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
+              />
+            </FlexContainer>
             {focusArea}
 
             <DropdownStyle
@@ -664,7 +712,7 @@ function AddNewBlocksV2({
                       const Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
 
                       const displayText =
-                        `${title}${description ? ': ' + description : ''}`.slice(0, 40);
+                        `${title}${description ? ': ' + description : ''}`.slice(0, 80);
 
                       return (
                         <RowStyle
@@ -682,7 +730,7 @@ function AddNewBlocksV2({
 
                             <Spacing mr={2} />
 
-                            <Text default textOverflow>
+                            <Text default overflowWrap textOverflow>
                               {displayText}
                             </Text>
                           </Flex>

@@ -59,6 +59,8 @@ class SearchResultResource(GenericResource):
                 if PipelineType.PYTHON == pipeline_type:
                     results = list(filter(filter_results, results))
 
+                results = results[:12]
+
         return self(dict(
             results=results,
             type=search_type,

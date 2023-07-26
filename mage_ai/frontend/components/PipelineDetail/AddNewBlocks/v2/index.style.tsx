@@ -4,18 +4,29 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { transition } from '@oracle/styles/mixins';
 
 export const ICON_SIZE = PADDING_UNITS * UNIT;
 
 export const ContainerStyle = styled.div<{
+  focused?: boolean;
   compact?: boolean;
 }>`
+  ${transition()}
+
   border-radius: ${BORDER_RADIUS}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).dashboard};
-    border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
     box-shadow: ${(props.theme.shadow || dark.shadow).frame};
+  `}
+
+  ${props => !props.focused && `
+    border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
+  `}
+
+  ${props => props.focused && `
+    border: 1px solid ${(props.theme.interactive || dark.interactive).hoverBorder};
   `}
 
   ${props => !props.compact && `

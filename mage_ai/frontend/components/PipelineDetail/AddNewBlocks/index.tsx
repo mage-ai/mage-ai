@@ -40,6 +40,7 @@ type AddNewBlocksProps = {
   blockIdx?: number;
   blockTemplates?: BlockTemplateType[];
   compact?: boolean;
+  focusedAddNewBlockSearch?: boolean;
   hideDataExporter?: boolean;
   hideDataLoader?: boolean;
   hideDbt?: boolean;
@@ -51,8 +52,10 @@ type AddNewBlocksProps = {
   hideTransformerDataSources?: boolean;
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
+  searchTextInputRef?: any;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
+  setFocusedAddNewBlockSearch?: (focused: boolean) => void;
   showBrowseTemplates?: (opts?: {
     addNew?: boolean;
     blockType?: BlockTypeEnum;
@@ -73,6 +76,7 @@ function AddNewBlocks({
   blockIdx,
   blockTemplates,
   compact,
+  focusedAddNewBlockSearch,
   hideCustom,
   hideDataExporter,
   hideDataLoader,
@@ -84,8 +88,10 @@ function AddNewBlocks({
   hideTransformerDataSources,
   onClickAddSingleDBTModel,
   pipeline,
+  searchTextInputRef,
   setAddNewBlockMenuOpenIdx,
   setCreatingNewDBTModel,
+  setFocusedAddNewBlockSearch,
   showBrowseTemplates,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
@@ -315,9 +321,12 @@ function AddNewBlocks({
         blockIdx={blockIdx}
         blockTemplatesByBlockType={blockTemplatesByBlockType}
         compact={compact}
+        focused={focusedAddNewBlockSearch}
         itemsDBT={itemsDBT}
         pipelineType={pipelineType}
+        searchTextInputRef={searchTextInputRef}
         setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+        setFocused={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
       />
     );
