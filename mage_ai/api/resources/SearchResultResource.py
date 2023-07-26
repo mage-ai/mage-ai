@@ -29,6 +29,13 @@ def filter_results(result: Dict) -> bool:
     if BlockLanguage.YAML == language and BlockType.DBT != block_type:
         return False
 
+    if block_type in [
+        BlockType.CALLBACK,
+        BlockType.CONDITIONAL,
+        BlockType.EXTENSION,
+    ]:
+        return False
+
     return True
 
 
