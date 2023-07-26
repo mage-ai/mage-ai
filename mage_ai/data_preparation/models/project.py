@@ -21,6 +21,10 @@ class Project():
     def project_uuid(self) -> str:
         return self.repo_config.project_uuid
 
+    @property
+    def openai_api_key(self) -> str:
+        return self.repo_config.openai_api_key
+
     async def latest_version(self) -> str:
         try:
             async with aiohttp.ClientSession() as session:

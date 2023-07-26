@@ -48,6 +48,7 @@ import PipelineType, {
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
@@ -147,6 +148,31 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
+
+  const { data, mutate: fetchProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+
+  const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+    api.projects.useUpdate(projectName),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchProjects();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const updateProject = useCallback((payload: {
+    openai_api_key?: string;
+  }) => updateProjectBase({
+    project: payload,
+  }), [updateProjectBase]);
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
