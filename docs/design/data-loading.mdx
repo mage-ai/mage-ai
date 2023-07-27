@@ -778,6 +778,7 @@ ORACLEDB_USER: OracleDB username
 ORACLEDB_PASSWORD: OracleDB password
 ORACLEDB_HOST: OracleDB host
 ORACLEDB_PORT: OracleDB port
+ORACLEDB_SERVICE: OracleDB service
 ```
 
 <h3> Constructor </h3>
@@ -791,6 +792,7 @@ Initializes the OracleDB data loading client.
     -   `password (str)`: The login password for the user.
     -   `host (str)`: Host address for database.
     -   `port (int)`: Port on which the database is running Defaults to 3306.
+    -   `service (str)`: OracleDB service
     -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
     -   `**kwargs`: Additional settings for creating psycopg2 connection
 
