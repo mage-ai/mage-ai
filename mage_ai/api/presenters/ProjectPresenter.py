@@ -1,5 +1,4 @@
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.shared.hash import extract
 
 
 class ProjectPresenter(BasePresenter):
