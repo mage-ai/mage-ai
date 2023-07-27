@@ -1289,6 +1289,7 @@ def schedule_all():
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
             pipeline_uuid = pipeline_schedule.pipeline_uuid
+            # Add the pipeline schedule’s runtime history in the pipeline run’s metrics
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,

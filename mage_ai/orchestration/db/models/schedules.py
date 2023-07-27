@@ -212,6 +212,8 @@ class PipelineSchedule(BaseModel):
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
                 return False
+            # If there is a pipeline_run with an execution_date the same as the
+            # current_execution_date, then don’t schedule
             if not find(
                 lambda x: compare(
                     x.execution_date.replace(tzinfo=pytz.UTC),
@@ -221,6 +223,73 @@ class PipelineSchedule(BaseModel):
             ):
                 return True
         return False
+
+    def runtime_history(self, sample_size: int = None) -> Dict:
+        pipeline_runs = PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id == self.id,
+            PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+        ).order_by(PipelineRun.execution_date.desc()).limit(sample_size if sample_size else 7).all()
+
+        pipeline_run_ids = [pr.id for pr in pipeline_runs]
+
+        block_runs = BlockRun.query.filter(
+            BlockRun.pipeline_run_id.in_(pipeline_run_ids),
+            BlockRun.status == BlockRun.BlockRunStatus.COMPLETED,
+        ).all()
+
+        block_runs_by_block_uuid = {}
+        block_runs_by_pipeline_run_id = {}
+
+        for block_run in block_runs:
+            pipeline_run_id = block_run.pipeline_run_id
+            if pipeline_run_id not in block_runs_by_pipeline_run_id:
+                block_runs_by_pipeline_run_id[pipeline_run_id] = []
+            block_runs_by_pipeline_run_id[pipeline_run_id].append(block_run)
+
+            block_uuid = block_run.block_uuid
+            if block_uuid not in block_runs_by_block_uuid:
+                block_runs_by_block_uuid[block_uuid] = []
+            block_runs_by_block_uuid[block_uuid].append(block_run)
+
+        pipeline_run_runtime_by_pipeline_run_id = {}
+        for pipeline_run in pipeline_runs:
+            brs = block_runs_by_pipeline_run_id.get(pipeline_run.id, [])
+            brs_runtime = sum(map(
+                lambda br: (br.completed_at - br.started_at).total_seconds(),
+                brs,
+            ))
+            pipeline_run_runtime_by_pipeline_run_id[pipeline_run.id] = (
+                pipeline_run.completed_at - pipeline_run.created_at
+            ).total_seconds() - brs_runtime
+
+        block_run_runtimes_by_block_uuid = {}
+        for block_uuid, brs in block_runs_by_block_uuid.items():
+            block_run_runtimes_by_block_uuid[block_uuid] = list(
+                map(lambda br: (br.completed_at - br.started_at).total_seconds(), brs),
+            )
+
+        pipeline_run_runtimes = list(pipeline_run_runtime_by_pipeline_run_id.values())
+
+        return dict(
+            block_run_runtimes=block_run_runtimes_by_block_uuid,
+            pipeline_run_runtimes=pipeline_run_runtimes,
+        )
+
+    def runtime_average(self, sample_size: int = None) -> float:
+        data = self.runtime_history(sample_size)
+        block_run_runtimes_by_block_uuid = data['block_run_runtimes']
+        pipeline_run_runtimes = data['pipeline_run_runtimes']
+
+        block_run_runtimes_average_by_block_uuid = {}
+        for block_uuid, runtimes in block_run_runtimes_by_block_uuid.items():
+            block_run_runtimes_average_by_block_uuid[block_uuid] = sum(runtimes) / len(runtimes)
+
+        pipeline_run_additional_time_average = \
+            sum(pipeline_run_runtimes) / len(pipeline_run_runtimes)
+        block_runs_runtime_average = sum(block_run_runtimes_average_by_block_uuid.values())
+        total_runtime_average = pipeline_run_additional_time_average + block_runs_runtime_average
+
+        return total_runtime_average
 
 
 class PipelineRun(BaseModel):
