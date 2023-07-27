@@ -384,7 +384,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             if unique_constraints and unique_conflict_method:
                 full_table_name = self.full_table_name(database, schema, table)
                 full_table_name_temp = self.full_table_name_temp(database, schema, table)
-                drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
+                drop_temp_table_command = [f'DROP TABLE IF EXISTS {full_table_name_temp}']
 
                 results += self.build_connection().execute(drop_temp_table_command, commit=True)
 
