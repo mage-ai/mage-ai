@@ -63,7 +63,12 @@ type AddNewBlocksProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
-  showConfigureProjectModal?: () => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;

@@ -148,7 +148,12 @@ type PipelineDetailProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
-  showConfigureProjectModal?: () => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;

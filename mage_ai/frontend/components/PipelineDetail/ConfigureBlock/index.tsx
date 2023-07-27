@@ -141,6 +141,7 @@ function ConfigureBlock({
 
   useEffect(() => {
     if (isGenerateBlock && generateBlockCommand && !llm) {
+      // @ts-ignore
       createLLM({
         llm: {
           request: {
@@ -204,7 +205,7 @@ function ConfigureBlock({
         {isGenerateBlock && isLoadingCreateLLM && (
           <FlexContainer alignItems="center" justifyContent="space-between">
             <Text>
-              Generating block using AI
+              Block generated using AI
             </Text>
 
             <Spinner inverted />
@@ -331,6 +332,7 @@ function ConfigureBlock({
                     noBackground
                     onClick={customTemplate
                       ? null
+                      // @ts-ignore
                       : () => setBlockAttributes(prev => ({
                         ...prev,
                         language: v,
@@ -408,6 +410,7 @@ function ConfigureBlock({
         <RowStyle display="block">
           <Spacing pr={PADDING_UNITS} py={1}>
             <DndProvider backend={HTML5Backend}>
+              {/* @ts-ignore */}
               <CodeBlock
                 block={{
                   ...blockAttributes,

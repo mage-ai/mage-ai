@@ -202,7 +202,12 @@ type CodeBlockProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
-  showConfigureProjectModal?: () => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 

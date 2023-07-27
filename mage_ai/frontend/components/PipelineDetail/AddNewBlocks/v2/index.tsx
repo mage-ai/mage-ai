@@ -99,7 +99,12 @@ type AddNewBlocksV2Props = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
-  showConfigureProjectModal?: () => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
 };
 
 function AddNewBlocksV2({
@@ -548,14 +553,16 @@ function AddNewBlocksV2({
         itemObject: {
           description: q,
           object_type: ObjectType.GENERATE_BLOCK,
-          title: 'Generate block that',
+          title: 'Generate block using AI (beta)',
         },
         searchQueries: [q],
         value: 'generate_block',
       };
       if (setupAILater) {
+        // @ts-ignore
         arr.push(generateBlock);
       } else {
+        // @ts-ignore
         arr.unshift(generateBlock);
       }
     }
@@ -843,6 +850,7 @@ function AddNewBlocksV2({
                   } = blockActionObject;
 
                   if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
+
                     showConfigureProjectModal?.({
                       cancelButtonText: 'Set this up later',
                       header: (

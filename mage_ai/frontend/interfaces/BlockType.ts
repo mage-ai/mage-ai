@@ -161,6 +161,26 @@ enum ObjectType {
   MAGE_TEMPLATE = 'mage_template',
 }
 
+export interface BlockRequestConfigType {
+  action_type?: ActionTypeEnum;
+  axis?: AxisEnum;
+  custom_template?: {
+    block_type?: BlockTypeEnum;
+    description?: string;
+    groups?: string[];
+    language?: string;
+    name?: string;
+    path?: string;
+    template_variables?: {
+      [key: string]: string | number;
+    };
+  };
+  custom_template_uuid?: string;
+  data_source?: DataSourceTypeEnum;
+  suggested_action?: SuggestionType;
+  template_path?: string;
+}
+
 export interface BlockRequestPayloadType {
   block_action_object?: {
     block_type?: BlockTypeEnum;
@@ -171,14 +191,7 @@ export interface BlockRequestPayloadType {
     uuid: string;
   };
   color?: BlockColorEnum;
-  config?: {
-    action_type?: ActionTypeEnum;
-    axis?: AxisEnum;
-    custom_template_uuid?: string;
-    data_source?: DataSourceTypeEnum;
-    suggested_action?: SuggestionType;
-    template_path?: string;
-  };
+  config?: BlockRequestConfigType;
   configuration?: ConfigurationType;
   content?: string;
   converted_from_type?: string;
@@ -217,6 +230,7 @@ export default interface BlockType {
   callback_content?: string;
   conditional_blocks?: string[];
   color?: BlockColorEnum;
+  config?: BlockRequestConfigType;
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
