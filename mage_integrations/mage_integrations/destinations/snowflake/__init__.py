@@ -380,9 +380,9 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             database = self.config.get(self.DATABASE_CONFIG_KEY)
             schema = self.config.get(self.SCHEMA_CONFIG_KEY)
             table = self.config.get(self.TABLE_CONFIG_KEY)
+            full_table_name = self.full_table_name(database, schema, table)
 
             if unique_constraints and unique_conflict_method:
-                full_table_name = self.full_table_name(database, schema, table)
                 full_table_name_temp = self.full_table_name_temp(database, schema, table)
                 drop_temp_table_command = [f'DROP TABLE IF EXISTS {full_table_name_temp}']
 
@@ -391,6 +391,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added to results
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
                 self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+                self.logger.info(
+                    f'write_dataframe_to_table completed to: {full_table_name_temp}')
 
                 merge_command = [self.build_merge_command(
                     columns=df.columns,
@@ -399,13 +401,15 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     unique_conflict_method=unique_conflict_method,
                     unique_constraints=unique_constraints,
                 )]
-                self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
-                results += self.build_connection().execute(merge_command, commit=True)
 
+                self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
                 self.logger.info(f'Dropping temporary table: {full_table_name_temp}')
-                results += self.build_connection().execute(drop_temp_table_command, commit=True)
+                results += self.build_connection().execute(
+                    merge_command + drop_temp_table_command, commit=True)
+                self.logger.info(f'Merged and dropped temporary table: {full_table_name_temp}')
             else:
                 results += self.write_dataframe_to_table(df, database, schema, table)
+                self.logger.info(f'write_dataframe_to_table completed to {full_table_name}')
 
             return results
 
