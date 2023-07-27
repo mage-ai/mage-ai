@@ -1,6 +1,7 @@
 import os
 import traceback
 from datetime import datetime, timedelta
+from sqlalchemy import asc, desc, func
 from typing import Any, Dict, List, Set, Tuple
 
 import pytz
@@ -1281,21 +1282,62 @@ def schedule_all():
         backfills,
     )
 
+    active_pipeline_schedule_ids_with_landing_time_enabled = []
+    for pipeline_schedule in active_pipeline_schedules:
+        if pipeline_schedule.landing_time_enabled():
+            active_pipeline_schedule_ids_with_landing_time_enabled.append(pipeline_schedule.id)
+
+    previous_pipeline_run_by_pipeline_schedule_id = {}
+    if len(active_pipeline_schedule_ids_with_landing_time_enabled) >= 1:
+        row_number_column = (func.
+            row_number().
+            over(
+                order_by=desc(PipelineRun.execution_date),
+                partition_by=PipelineRun.pipeline_schedule_id,
+            ).
+            label('row_number')
+        )
+
+        query = PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id.in_(
+                active_pipeline_schedule_ids_with_landing_time_enabled,
+            ),
+            PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+        )
+        query = query.add_column(row_number_column)
+        query = query.from_self().filter(row_number_column == 1)
+        for tup in query.all():
+            pr, _ = tup
+            previous_pipeline_run_by_pipeline_schedule_id[pr.pipeline_schedule_id] = pr
+
     for pipeline_schedule in active_pipeline_schedules:
         lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
         if not lock.try_acquire_lock(lock_key):
             continue
-        if pipeline_schedule.should_schedule() and \
+
+        previous_runtimes = []
+        if pipeline_schedule.landing_time_enabled():
+            previous_pipeline_run = previous_pipeline_run_by_pipeline_schedule_id.get(
+                pipeline_schedule.id,
+            )
+            if previous_pipeline_run:
+                previous_runtimes = pipeline_schedule.runtime_history(
+                    pipeline_run=previous_pipeline_run,
+                )
+
+        if pipeline_schedule.should_schedule(previous_runtimes=previous_runtimes) and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
             pipeline_uuid = pipeline_schedule.pipeline_uuid
-            # Add the pipeline schedule’s runtime history in the pipeline run’s metrics
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
                 pipeline_uuid=pipeline_uuid,
                 variables=pipeline_schedule.variables,
             )
+
+            if len(previous_runtimes) >= 1:
+                payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
             pipeline = Pipeline.get(pipeline_uuid)
             is_integration = PipelineType.INTEGRATION == pipeline.type

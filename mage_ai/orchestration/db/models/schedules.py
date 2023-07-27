@@ -5,6 +5,7 @@ import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
+from statistics import stdev
 from typing import Dict, List
 
 import pytz
@@ -165,36 +166,73 @@ class PipelineSchedule(BaseModel):
 
     def current_execution_date(self) -> datetime:
         now = datetime.now(timezone.utc)
+        current_execution_date = None
 
         if self.schedule_interval is None:
             return None
 
         if self.schedule_interval == '@once':
-            return now
+            current_execution_date = now
         elif self.schedule_interval == '@daily':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0)
         elif self.schedule_interval == '@hourly':
-            return now.replace(second=0, microsecond=0, minute=0)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0)
         elif self.schedule_interval == '@weekly':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
         elif self.schedule_interval == '@monthly':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
             cron_itr = croniter(self.schedule_interval, now)
-            return cron_itr.get_prev(datetime)
+            current_execution_date = cron_itr.get_prev(datetime)
+
+        if self.landing_time_enabled() and self.start_time:
+            if self.schedule_interval == '@hourly':
+                current_execution_date = current_execution_date.replace(
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                )
+            elif self.schedule_interval == '@daily':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                )
+            elif self.schedule_interval == '@weekly':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                ) + timedelta(days=start_time.weekday())
+            elif self.schedule_interval == '@monthly':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                ) + timedelta(days=int(start_time.strftime('%d')) - 1)
+
+        return current_execution_date
 
     @safe_db_query
-    def should_schedule(self) -> bool:
+    def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
+        now = datetime.now()
+
         if self.status != ScheduleStatus.ACTIVE:
             return False
 
-        if self.start_time is not None and compare(datetime.now(), self.start_time) == -1:
+        if not self.landing_time_enabled() and \
+                self.start_time is not None and \
+                compare(now, self.start_time) == -1:
+
             return False
 
         try:
             Pipeline.get(self.pipeline_uuid)
         except Exception:
+            print(
+                f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
+                    + f'for pipeline schedule ID {self.id}.',
+            )
             return False
 
         if self.schedule_interval == '@once':
@@ -221,75 +259,87 @@ class PipelineSchedule(BaseModel):
                 ) == 0,
                 self.pipeline_runs
             ):
-                return True
+                if self.landing_time_enabled():
+                    if len(previous_runtimes) == 0:
+                        return True
+                    else:
+                        runtime = sum(previous_runtimes) / len(previous_runtimes)
+                        sd = stdev(previous_runtimes)
+                        if datetime.now(timezone.utc) >= current_execution_date - timedelta(
+                            seconds=runtime + sd,
+                        ):
+                            return True
+                else:
+                    return True
         return False
 
-    def runtime_history(self, sample_size: int = None) -> Dict:
-        pipeline_runs = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == self.id,
-            PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
-        ).order_by(PipelineRun.execution_date.desc()).limit(sample_size if sample_size else 7).all()
+    def landing_time_enabled(self) -> bool:
+        return (self.settings or {}).get('landing_time_enabled', False)
 
-        pipeline_run_ids = [pr.id for pr in pipeline_runs]
+    def runtime_history(
+        self,
+        pipeline_run = None,
+        sample_size: int = None,
+    ) -> List[float]:
+        sample_size_to_use = sample_size if sample_size else 7
+        previous_runtimes = []
 
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id.in_(pipeline_run_ids),
-            BlockRun.status == BlockRun.BlockRunStatus.COMPLETED,
-        ).all()
+        if pipeline_run:
+            previous_runtimes += (pipeline_run.metrics or {}).get('previous_runtimes', [])
 
-        block_runs_by_block_uuid = {}
-        block_runs_by_pipeline_run_id = {}
-
-        for block_run in block_runs:
-            pipeline_run_id = block_run.pipeline_run_id
-            if pipeline_run_id not in block_runs_by_pipeline_run_id:
-                block_runs_by_pipeline_run_id[pipeline_run_id] = []
-            block_runs_by_pipeline_run_id[pipeline_run_id].append(block_run)
-
-            block_uuid = block_run.block_uuid
-            if block_uuid not in block_runs_by_block_uuid:
-                block_runs_by_block_uuid[block_uuid] = []
-            block_runs_by_block_uuid[block_uuid].append(block_run)
-
-        pipeline_run_runtime_by_pipeline_run_id = {}
-        for pipeline_run in pipeline_runs:
-            brs = block_runs_by_pipeline_run_id.get(pipeline_run.id, [])
-            brs_runtime = sum(map(
-                lambda br: (br.completed_at - br.started_at).total_seconds(),
-                brs,
-            ))
-            pipeline_run_runtime_by_pipeline_run_id[pipeline_run.id] = (
-                pipeline_run.completed_at - pipeline_run.created_at
-            ).total_seconds() - brs_runtime
-
-        block_run_runtimes_by_block_uuid = {}
-        for block_uuid, brs in block_runs_by_block_uuid.items():
-            block_run_runtimes_by_block_uuid[block_uuid] = list(
-                map(lambda br: (br.completed_at - br.started_at).total_seconds(), brs),
+        if len(previous_runtimes) < sample_size_to_use - 1 if pipeline_run else sample_size_to_use:
+            pipeline_runs = (PipelineRun.
+                query.
+                filter(
+                    PipelineRun.pipeline_schedule_id == self.id,
+                    PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+                )
             )
 
-        pipeline_run_runtimes = list(pipeline_run_runtime_by_pipeline_run_id.values())
+            if pipeline_run:
+                pipeline_runs = (pipeline_runs.
+                    filter(
+                        PipelineRun.id != pipeline_run.id,
+                    )
+                )
 
-        return dict(
-            block_run_runtimes=block_run_runtimes_by_block_uuid,
-            pipeline_run_runtimes=pipeline_run_runtimes,
+            pipeline_runs = (pipeline_runs.
+                order_by(PipelineRun.execution_date.desc()).
+                limit(sample_size_to_use).
+                all()
+            )
+
+            pipeline_runs = sorted(
+                pipeline_runs,
+                key=lambda pr: pr.execution_date,
+                reverse=True,
+            )
+
+            for pipeline_run in pipeline_runs:
+                runtime = (
+                    pipeline_run.completed_at - pipeline_run.created_at
+                ).total_seconds()
+                previous_runtimes.append(runtime)
+
+        if pipeline_run:
+            runtime = (
+                pipeline_run.completed_at - pipeline_run.created_at
+            ).total_seconds()
+            previous_runtimes = [runtime] + previous_runtimes
+
+        return previous_runtimes[:sample_size_to_use]
+
+    def runtime_average(
+        self,
+        pipeline_run = None,
+        sample_size: int = None,
+    ) -> float:
+        previous_runtimes = self.runtime_history(
+            pipeline_run=pipeline_run,
+            sample_size=sample_size,
         )
 
-    def runtime_average(self, sample_size: int = None) -> float:
-        data = self.runtime_history(sample_size)
-        block_run_runtimes_by_block_uuid = data['block_run_runtimes']
-        pipeline_run_runtimes = data['pipeline_run_runtimes']
-
-        block_run_runtimes_average_by_block_uuid = {}
-        for block_uuid, runtimes in block_run_runtimes_by_block_uuid.items():
-            block_run_runtimes_average_by_block_uuid[block_uuid] = sum(runtimes) / len(runtimes)
-
-        pipeline_run_additional_time_average = \
-            sum(pipeline_run_runtimes) / len(pipeline_run_runtimes)
-        block_runs_runtime_average = sum(block_run_runtimes_average_by_block_uuid.values())
-        total_runtime_average = pipeline_run_additional_time_average + block_runs_runtime_average
-
-        return total_runtime_average
+        return sum(previous_runtimes) / len(previous_runtimes)
 
 
 class PipelineRun(BaseModel):
