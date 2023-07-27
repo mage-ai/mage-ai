@@ -1350,11 +1350,13 @@ function CodeBlock({
                   isEditingBlock={isEditingBlock}
                   openSidekickView={openSidekickView}
                   pipeline={pipeline}
+                  project={project}
                   runBlock={hideRunButton ? null : runBlockAndTrack}
                   savePipelineContent={savePipelineContent}
                   setErrors={setErrors}
                   setIsEditingBlock={setIsEditingBlock}
                   setOutputCollapsed={setOutputCollapsed}
+                  showConfigureProjectModal={showConfigureProjectModal}
                 />
               )}
 

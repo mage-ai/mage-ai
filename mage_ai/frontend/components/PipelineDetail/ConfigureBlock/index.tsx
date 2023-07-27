@@ -455,6 +455,7 @@ function ConfigureBlock({
           <KeyboardShortcutButton
             bold
             centerText
+            disabled={isLoadingCreateLLM}
             onClick={() => onSave({
               ...blockAttributes,
               name: blockAttributes?.name || defaultName,

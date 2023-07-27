@@ -3,12 +3,19 @@ import asyncio
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
+from mage_ai.ai.constants import LLMUseCase
 from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
+from mage_ai.api.resources.BlockResource import BlockResource
+from mage_ai.api.resources.LlmResource import LlmResource
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
 )
-from mage_ai.data_preparation.models.constants import PipelineStatus
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineStatus,
+)
 from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
     CustomPipelineTemplate,
 )
@@ -23,7 +30,8 @@ from mage_ai.orchestration.pipeline_scheduler import (
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.hash import group_by, ignore_keys
+from mage_ai.shared.array import find_index
+from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -226,6 +234,66 @@ class PipelineResource(BaseResource):
         update_content = query.get('update_content', [False])
         if update_content:
             update_content = update_content[0]
+
+        llm_payload = payload.get('llm')
+        if llm_payload:
+            llm_use_case = llm_payload.get('use_case')
+            llm_request = llm_payload.get('request')
+
+            if 'pipeline_uuid' not in llm_payload:
+                llm_payload['pipeline_uuid'] = self.model.uuid
+
+            llm_resource = await LlmResource.create(llm_payload, self.current_user, **kwargs)
+            llm_response = llm_resource.model.get('response')
+
+            pipeline_doc = None
+            block_docs = []
+            blocks = self.model.blocks_by_uuid.values()
+
+            async def _add_markdown_block(block_doc: str, block_uuid: str, priority: int):
+                return await BlockResource.create(dict(
+                    content=block_doc.strip() if block_doc else block_doc,
+                    language=BlockLanguage.MARKDOWN,
+                    name=f'Documentation for {block_uuid}',
+                    priority=priority,
+                    type=BlockType.MARKDOWN,
+                ), self.current_user, **merge_dict(kwargs, dict(
+                    parent_model=self.model,
+                )))
+
+            if LLMUseCase.GENERATE_COMMENT_FOR_BLOCK == llm_use_case:
+                pass
+            elif LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
+                block_doc = llm_response.get('block_doc')
+                if block_doc:
+                    block_uuid = llm_request.get('block_uuid')
+                    priority = find_index(lambda x: x.uuid == block_uuid, blocks)
+                    await _add_markdown_block(block_doc, block_uuid, priority)
+            elif LLMUseCase.GENERATE_DOC_FOR_PIPELINE == llm_use_case:
+                block_docs = llm_response.get('block_docs', [])
+                pipeline_doc = llm_response.get('pipeline_doc')
+
+                if pipeline_doc:
+                    lines = []
+                    if payload.get('description'):
+                        lines.append(payload.get('description'))
+                    lines.append(pipeline_doc)
+                    payload['description'] = '\n'.join(lines).strip()
+
+            if block_docs and len(block_docs) >= 1:
+                blocks_with_docs = list(zip(block_docs, blocks))
+                blocks_with_docs.reverse()
+                blocks_with_docs_length = len(blocks_with_docs)
+
+                for idx, tup in enumerate(blocks_with_docs):
+                    priority = blocks_with_docs_length - (idx + 1)
+                    block_doc, block = tup
+
+                    if block_doc:
+                        await _add_markdown_block(block_doc, block.uuid, priority)
+
+            if pipeline_doc:
+                await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
 
         await self.model.update(
             ignore_keys(payload, ['add_upstream_for_block_uuid']),

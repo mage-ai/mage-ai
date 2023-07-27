@@ -15,7 +15,11 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import LLMType, { LLMUseCaseEnum } from '@interfaces/LLMType';
+import Link from '@oracle/elements/Link';
+import Panel from '@oracle/components/Panel';
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -25,6 +29,7 @@ import dark from '@oracle/styles/themes/dark';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
+  AISparkle,
   Charts,
   Check,
   Close,
@@ -40,7 +45,7 @@ import {
   KEY_SYMBOL_I,
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
@@ -71,6 +76,7 @@ type CommandButtonsProps = {
     blockUUID: string;
   }) => void;
   pipeline?: PipelineType;
+  project?: ProjectType;
   runBlock?: (payload: {
     block: BlockType;
     code?: string;
@@ -90,6 +96,12 @@ type CommandButtonsProps = {
   setIsEditingBlock?: (isEditingBlock: any) => void;
   setOutputCollapsed: (outputCollapsed: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -106,11 +118,13 @@ function CommandButtons({
   isEditingBlock,
   openSidekickView,
   pipeline,
+  project,
   runBlock,
   setIsEditingBlock,
   savePipelineContent,
   setErrors,
   setOutputCollapsed,
+  showConfigureProjectModal,
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
@@ -123,6 +137,7 @@ function CommandButtons({
   const refConvertBlock = useRef(null);
   const refExecuteActions = useRef(null);
   const refMoreActions = useRef(null);
+  const refAIActions = useRef(null);
 
   const pipelineType = pipeline?.type;
 
@@ -130,6 +145,7 @@ function CommandButtons({
   const [showConvertMenu, setShowConvertMenu] = useState<boolean>(false);
   const [showExecuteActions, setShowExecuteActions] = useState<boolean>(false);
   const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
+  const [showAIActions, setShowAIActions] = useState<boolean>(false);
 
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
@@ -177,6 +193,114 @@ function CommandButtons({
       ),
     },
   );
+
+  const itemsAIActions = useMemo(() => {
+    const shouldShowModal = !project?.openai_api_key;
+    const showModal = (llm: LLMType) => {
+      showConfigureProjectModal?.({
+        header: (
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Panel>
+              <Text warning>
+                You need to add an OpenAI API key to your project before you can
+                generate blocks using AI.
+              </Text>
+
+              <Spacing mt={1}>
+                <Text warning>
+                  Read <Link
+                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                    openNewWindow
+                  >
+                    OpenAI’s documentation
+                  </Link> to get your API key.
+                </Text>
+              </Spacing>
+            </Panel>
+          </Spacing>
+        ),
+        onSaveSuccess: (project: ProjectType) => {
+          if (project?.openai_api_key) {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+      });
+    };
+
+    const llm: LLMType = {
+      request: {
+        block_uuid: block?.uuid,
+        pipeline_uuid: pipeline?.uuid,
+      },
+    };
+
+    return [
+      {
+        label: () => 'Document block',
+        onClick: () => {
+          llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_BLOCK;
+
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+        uuid: 'Document block',
+      },
+      // {
+      //   label: () => 'Add comments in block',
+      //   onClick: () => {
+      //     llm.use_case = LLMUseCaseEnum.GENERATE_COMMENT_FOR_BLOCK;
+
+      //     if (shouldShowModal) {
+      //       showModal(llm);
+      //     } else {
+      //       updatePipeline({
+      //         pipeline: {
+      //           llm,
+      //         },
+      //       });
+      //     }
+      //   },
+      //   uuid: 'Add comments in block',
+      // },
+      {
+        label: () => 'Document pipeline and all blocks',
+        onClick: () => {
+          llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_PIPELINE;
+
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+        uuid: 'Document pipeline and all blocks',
+      },
+    ];
+  }, [
+    block,
+    pipeline,
+    project,
+    showConfigureProjectModal,
+    updatePipeline,
+  ]);
 
   return (
     <FlexContainer
@@ -437,6 +561,57 @@ function CommandButtons({
             </Button>
           </Tooltip>
         </Spacing>
+      )}
+
+      {!hideExtraButtons && (
+        <div ref={refAIActions}>
+          <Spacing ml={PADDING_UNITS}>
+            {isLoadingUpdatePipeline && (
+              <Spinner inverted small />
+            )}
+
+            {!isLoadingUpdatePipeline && (
+              <Tooltip
+                appearBefore
+                default
+                label={(
+                  <Text>
+                    AI actions
+                  </Text>
+                )}
+                size={DEFAULT_ICON_SIZE}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowAIActions(currState => !currState)}
+                >
+                  <AISparkle default size={DEFAULT_ICON_SIZE} />
+                </Button>
+              </Tooltip>
+            )}
+          </Spacing>
+        </div>
+      )}
+
+      {!hideExtraButtons && (
+        <ClickOutside
+          disableEscape
+          onClickOutside={() => setShowAIActions(false)}
+          open={showAIActions}
+        >
+          <FlyoutMenu
+            items={itemsAIActions}
+            onClickCallback={() => setShowAIActions(false)}
+            open={showAIActions}
+            parentRef={refAIActions}
+            rightOffset={UNIT * 4.75}
+            topOffset={UNIT * 2}
+            uuid="FileHeaderMenu/AI_actions"
+          />
+        </ClickOutside>
       )}
 
       {!hideExtraButtons && (
