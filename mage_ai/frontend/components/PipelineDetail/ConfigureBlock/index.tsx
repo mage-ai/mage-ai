@@ -108,27 +108,23 @@ function ConfigureBlock({
           callback: ({
             llm,
           }) => {
-            const generatedCode = llm?.response;
-            if (!blockAttributes?.content) {
-              let blockType;
-              if (generatedCode) {
-                Object.values(BlockTypeEnum).forEach((bt) => {
-                  if (!blockType && generatedCode?.includes(`@${bt}`)) {
-                    blockType = bt;
-                  }
-                });
-              }
+            const {
+              block_type: blockType,
+              configuration,
+              content,
+              language,
+            } = llm?.response || {};
 
-              setBlockAttributes(prev => ({
-                ...prev,
-                block_action_object: null,
-                content: generatedCode,
-                language: BlockLanguageEnum.PYTHON,
-                type: blockType,
-              }));
+            setBlockAttributes(prev => ({
+              ...prev,
+              block_action_object: null,
+              configuration: configuration,
+              content,
+              language,
+              type: blockType,
+            }));
 
-              setLLM(llm);
-            }
+            setLLM(llm);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -205,7 +201,7 @@ function ConfigureBlock({
         {isGenerateBlock && isLoadingCreateLLM && (
           <FlexContainer alignItems="center" justifyContent="space-between">
             <Text>
-              Block generated using AI
+              Generating block using AI...
             </Text>
 
             <Spinner inverted />
@@ -236,7 +232,7 @@ function ConfigureBlock({
           <Spacing py={1}>
             <Spacing mb={1}>
               <Text default>
-                Generated block that:
+                Block generated using AI
               </Text>
             </Spacing>
 
