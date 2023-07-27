@@ -55,6 +55,7 @@ class Pipeline:
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
+        self.concurrency_config = dict()
         self.data_integration = None
         self.description = None
         self.executor_config = dict()
@@ -471,6 +472,7 @@ class Pipeline:
 
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
+        self.concurrency_config = config.get('concurrency_config') or dict()
         self.conditional_configs = config.get('conditionals') or []
         self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
@@ -588,6 +590,7 @@ class Pipeline:
 
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
+            concurrency_config=self.concurrency_config,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
             executor_config=self.executor_config,
@@ -882,7 +885,9 @@ class Pipeline:
                     if block is None:
                         continue
                     if 'content' in block_data:
-                        from mage_ai.cache.block_action_object import BlockActionObjectCache
+                        from mage_ai.cache.block_action_object import (
+                            BlockActionObjectCache,
+                        )
 
                         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                         await block.update_content_async(block_data['content'], widget=widget)
@@ -948,7 +953,9 @@ class Pipeline:
 
                         should_save_async = should_save_async or True
                     elif name and name != block.name:
-                        from mage_ai.cache.block_action_object import BlockActionObjectCache
+                        from mage_ai.cache.block_action_object import (
+                            BlockActionObjectCache,
+                        )
 
                         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)

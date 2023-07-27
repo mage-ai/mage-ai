@@ -32,6 +32,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.orchestration.concurrency import ConcurrencyConfig
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
@@ -97,13 +98,17 @@ class PipelineScheduler:
             )
         )
 
+        self.concurrency_config = ConcurrencyConfig.load(
+            config=self.pipeline.concurrency_config
+        )
+
         # Other pipeline scheduling settings
         self.allow_blocks_to_fail = (
             self.pipeline_schedule.get_settings().allow_blocks_to_fail
             if self.pipeline_schedule else False
         )
 
-    def start(self, should_schedule: bool = True) -> None:
+    def start(self, should_schedule: bool = True) -> bool:
         """Start the pipeline run.
 
         This method starts the pipeline run by performing necessary actions
@@ -116,11 +121,15 @@ class PipelineScheduler:
                 the pipeline execution. Defaults to True.
 
         Returns:
-            None
+            bool: Whether the pipeline run is started successfully
         """
+        if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
+            return True
+
+        tags = self.__build_tags()
+
         preferences = get_preferences()
         if preferences.sync_config:
-            tags = self.__build_tags()
             sync_config = GitConfig.load(config=preferences.sync_config)
             if sync_config.sync_on_pipeline_run:
                 sync = GitSync(sync_config)
@@ -138,11 +147,39 @@ class PipelineScheduler:
                         **tags,
                     )
 
-        if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
-            return
+        is_integration = PipelineType.INTEGRATION == self.pipeline.type
+
+        try:
+            block_runs = BlockRun.query.filter(
+                BlockRun.pipeline_run_id == self.pipeline_run.id).all()
+
+            if len(block_runs) == 0:
+                if is_integration:
+                    clear_source_output_files(
+                        self.pipeline_run,
+                        self.logger,
+                    )
+                    initialize_state_and_runs(
+                        self.pipeline_run,
+                        self.logger,
+                        self.pipeline_run.get_variables(),
+                    )
+                else:
+                    self.pipeline_run.create_block_runs()
+        except Exception as e:
+            self.logger.exception(
+                'Fail to initialize block runs',
+                **merge_dict(tags, dict(
+                    error=e,
+                )),
+            )
+            self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+            return False
+
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         if should_schedule:
             self.schedule()
+        return True
 
     def stop(self) -> None:
         stop_pipeline_run(
@@ -151,8 +188,10 @@ class PipelineScheduler:
         )
 
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
-        if lock.try_acquire_lock(f'pipeline_run_{self.pipeline_run.id}', timeout=10):
-            self.__run_heartbeat()
+        if not lock.try_acquire_lock(f'pipeline_run_{self.pipeline_run.id}', timeout=10):
+            return
+
+        self.__run_heartbeat()
 
         for b in self.pipeline_run.block_runs:
             b.refresh()
@@ -493,7 +532,15 @@ class PipelineScheduler:
         block_runs_to_schedule = \
             self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
-        for b in block_runs_to_schedule:
+        block_run_quota = len(block_runs_to_schedule)
+        if self.concurrency_config.block_run_limit is not None:
+            queued_or_running_block_runs = self.pipeline_run.queued_or_running_block_runs
+            block_run_quota = self.concurrency_config.block_run_limit -\
+                len(queued_or_running_block_runs)
+            if block_run_quota <= 0:
+                return
+
+        for b in block_runs_to_schedule[:block_run_quota]:
             tags = dict(
                 block_run_id=b.id,
                 block_uuid=b.block_uuid,
@@ -1090,22 +1137,6 @@ def configure_pipeline_run_payload(
     return payload, is_integration
 
 
-def start_scheduler(pipeline_run: PipelineRun) -> None:
-    pipeline_scheduler = PipelineScheduler(pipeline_run)
-    is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
-
-    if is_integration:
-        initialize_state_and_runs(
-            pipeline_run,
-            pipeline_scheduler.logger,
-            pipeline_run.get_variables(),
-        )
-    else:
-        pipeline_run.create_block_runs()
-
-    pipeline_scheduler.start(should_schedule=False)
-
-
 @safe_db_query
 def retry_pipeline_run(
     pipeline_run: Dict,
@@ -1131,8 +1162,6 @@ def retry_pipeline_run(
         pipeline_uuid=pipeline_run_model.pipeline_uuid,
         variables=pipeline_run.get('variables', {}),
     )
-    start_scheduler(new_pipeline_run)
-
     return new_pipeline_run
 
 
@@ -1270,6 +1299,7 @@ def schedule_all():
 
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
+    # Sync schedules from yaml file to DB
     sync_schedules(list(repo_pipelines))
 
     active_pipeline_schedules = \
@@ -1311,6 +1341,9 @@ def schedule_all():
             pr, _ = tup
             previous_pipeline_run_by_pipeline_schedule_id[pr.pipeline_schedule_id] = pr
 
+    pipeline_by_uuid = dict()
+    concurrency_config_by_uuid = dict()
+
     for pipeline_schedule in active_pipeline_schedules:
         lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
         if not lock.try_acquire_lock(lock_key):
@@ -1326,10 +1359,38 @@ def schedule_all():
                     pipeline_run=previous_pipeline_run,
                 )
 
-        if pipeline_schedule.should_schedule(previous_runtimes=previous_runtimes) and \
+        # Decide whether to schedule any pipeline runs
+        should_schedule = pipeline_schedule.should_schedule(previous_runtimes=previous_runtimes)
+        initial_pipeline_runs = [
+            r for r in pipeline_schedule.pipeline_runs
+            if r.status == PipelineRun.PipelineRunStatus.INITIAL
+        ]
+
+        if not should_schedule and not initial_pipeline_runs:
+            continue
+
+        pipeline_uuid = pipeline_schedule.pipeline_uuid
+        if pipeline_uuid not in pipeline_by_uuid:
+            pipeline = pipeline_by_uuid.setdefault(pipeline_uuid, Pipeline.get(pipeline_uuid))
+        else:
+            pipeline = pipeline_by_uuid[pipeline_uuid]
+
+        if pipeline_uuid not in concurrency_config_by_uuid:
+            concurrency_config = concurrency_config_by_uuid.setdefault(
+                pipeline_uuid,
+                ConcurrencyConfig.load(config=pipeline.concurrency_config),
+            )
+        else:
+            concurrency_config = concurrency_config_by_uuid[pipeline_uuid]
+
+        running_pipeline_runs = [
+            r for r in pipeline_schedule.pipeline_runs
+            if r.status == PipelineRun.PipelineRunStatus.RUNNING
+        ]
+
+        if should_schedule and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
-            pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -1341,42 +1402,34 @@ def schedule_all():
                 payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
             pipeline = Pipeline.get(pipeline_uuid)
+
             is_integration = PipelineType.INTEGRATION == pipeline.type
             if is_integration:
                 payload['create_block_runs'] = False
 
-            running_pipeline_run = find(
-                lambda r: r.status in [
-                    PipelineRun.PipelineRunStatus.INITIAL,
-                    PipelineRun.PipelineRunStatus.RUNNING,
-                ],
-                pipeline_schedule.pipeline_runs
-            )
             if pipeline_schedule.get_settings().skip_if_previous_running and \
-                    running_pipeline_run is not None:
+                    (initial_pipeline_runs or running_pipeline_runs):
+                # Cancel the current pipeline run if previous pipeline runs haven't completed
                 payload['create_block_runs'] = False
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
                 pipeline_run = PipelineRun.create(**payload)
-                pipeline_scheduler = PipelineScheduler(pipeline_run)
-                if is_integration:
-                    block_runs = BlockRun.query.filter(
-                        BlockRun.pipeline_run_id == pipeline_run.id).all()
-                    if len(block_runs) == 0:
-                        clear_source_output_files(
-                            pipeline_run,
-                            pipeline_scheduler.logger,
-                        )
-                        initialize_state_and_runs(
-                            pipeline_run,
-                            pipeline_scheduler.logger,
-                            pipeline_run.get_variables(),
-                        )
+                initial_pipeline_runs.append(pipeline_run)
 
+        # Enforce pipeline concurrency limit
+        pipeline_run_quota = len(initial_pipeline_runs)
+        if concurrency_config.pipeline_run_limit:
+            pipeline_run_quota = concurrency_config.pipeline_run_limit - \
+                len(running_pipeline_runs)
+
+        if pipeline_run_quota > 0:
+            for r in initial_pipeline_runs[:pipeline_run_quota]:
+                pipeline_scheduler = PipelineScheduler(r)
                 pipeline_scheduler.start(should_schedule=False)
         lock.release_lock(lock_key)
 
+    # Schedule active pipeline runs
     active_pipeline_runs = PipelineRun.active_runs_for_pipelines(
         pipeline_uuids=repo_pipelines,
         include_block_runs=True,
