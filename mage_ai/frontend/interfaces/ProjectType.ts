@@ -10,7 +10,7 @@ export enum ProjectTypeEnum {
 
 export default interface ProjectType {
   features?: {
-    [key: FeatureUUIDEnum]: number;
+    [key: string]: boolean;
   };
   help_improve_mage?: boolean;
   latest_version: string;

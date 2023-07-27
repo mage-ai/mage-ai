@@ -8,7 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -74,6 +74,9 @@ function Preferences({
     },
   );
   const updateProject = useCallback((payload: {
+    features?: {
+      [key: string]: boolean;
+    };
     help_improve_mage?: boolean;
     openai_api_key?: string;
   }) => updateProjectBase({
@@ -193,7 +196,7 @@ function Preferences({
               <Spacing mr={PADDING_UNITS} />
 
               <ToggleSwitch
-                checked={v}
+                checked={!!v}
                 onCheck={() => setProjectAttributes(prev => ({
                   ...prev,
                   features: {
