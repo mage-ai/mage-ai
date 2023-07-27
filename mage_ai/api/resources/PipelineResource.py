@@ -246,6 +246,7 @@ class PipelineResource(BaseResource):
             llm_resource = await LlmResource.create(llm_payload, self.current_user, **kwargs)
             llm_response = llm_resource.model.get('response')
 
+            pipeline_doc = None
             block_docs = []
             blocks = self.model.blocks_by_uuid.values()
 
@@ -288,10 +289,13 @@ class PipelineResource(BaseResource):
 
                 for idx, tup in enumerate(blocks_with_docs):
                     priority = blocks_with_docs_length - (idx + 1)
-                    block_doc, block = blocks_with_docs
+                    block_doc, block = tup
 
                     if block_doc:
                         await _add_markdown_block(block_doc, block.uuid, priority)
+
+            if pipeline_doc:
+                await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
 
         await self.model.update(
             ignore_keys(payload, ['add_upstream_for_block_uuid']),
