@@ -154,11 +154,16 @@ class LLMPipelineWizard:
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
-            return fetch_template_source(
+            return dict(
                 block_type=block_type,
-                config=config,
+                configuration=config,
+                content=fetch_template_source(
+                    block_type=block_type,
+                    config=config,
+                    language=block_language,
+                    pipeline_type=pipeline_type,
+                ),
                 language=block_language,
-                pipeline_type=pipeline_type,
             )
         else:
             logger.error("Failed to interpret the description as a block template.")
