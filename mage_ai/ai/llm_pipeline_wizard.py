@@ -141,7 +141,7 @@ class LLMPipelineWizard:
         config['data_source'] = function_args.get(DataSource.__name__, None)
         return block_type, block_language, pipeline_type, config
 
-    async def async_generate_block_with_description(self, block_description: str) -> str:
+    async def async_generate_block_with_description(self, block_description: str) -> dict:
         messages = [{"role": "user", "content": block_description}]
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
