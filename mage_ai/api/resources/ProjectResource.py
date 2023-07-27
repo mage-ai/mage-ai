@@ -48,7 +48,6 @@ class ProjectResource(GenericResource):
         repo_config = get_repo_config()
 
         data = {}
-        features = self.model.get('features') or {}
         should_log_project = self.model.get('help_improve_mage') or False
 
         if 'features' in payload:
