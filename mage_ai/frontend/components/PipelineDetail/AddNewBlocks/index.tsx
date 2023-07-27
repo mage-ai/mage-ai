@@ -8,9 +8,9 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Edit, Sensor as SensorIcon } from '@oracle/icons';
+import { Add, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -324,7 +324,17 @@ function AddNewBlocks({
     setCreatingNewDBTModel,
   ]);
 
-  if (PipelineTypeEnum.PYTHON === pipelineType && !isPySpark) {
+  const useV2 = useMemo(
+    () => PipelineTypeEnum.PYTHON === pipelineType && !isPySpark
+      && project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
+    [
+      isPySpark,
+      pipelineType,
+      project,
+    ],
+  );
+
+  if (useV2) {
     return (
       <AddNewBlocksV2
         addNewBlock={addNewBlock}

@@ -10,6 +10,7 @@ class EventActionType(str, enum.Enum):
 
 class EventObjectType(str, enum.Enum):
     ERROR = 'error'
+    FEATURE = 'feature'
     PIPELINE = 'pipeline'
     PIPELINE_RUN = 'pipeline_run'
     PROJECT = 'project'

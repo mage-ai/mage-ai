@@ -22,7 +22,25 @@ class UsageStatisticLogger():
         if not self.help_improve_mage:
             return False
 
-        return await self.__send_message(EventObjectType.PROJECT, EventActionType.IMPRESSION)
+        features = {}
+
+        for k, v in (self.project.features or {}).items():
+            features[k] = 1 if v else 0
+
+        if self.project.repo_config.openai_api_key and \
+                len(self.project.repo_config.openai_api_key) >= 1:
+
+            features['openai'] = 1
+        else:
+            features['openai'] = 0
+
+        return await self.__send_message(
+            EventObjectType.PROJECT,
+            EventActionType.IMPRESSION,
+            dict(
+                features=features,
+            ),
+        )
 
     @safe_db_query
     async def pipeline_runs_impression(self, count_func: Callable) -> bool:

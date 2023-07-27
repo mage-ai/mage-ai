@@ -8,7 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -74,6 +74,9 @@ function Preferences({
     },
   );
   const updateProject = useCallback((payload: {
+    features?: {
+      [key: string]: boolean;
+    };
     help_improve_mage?: boolean;
     openai_api_key?: string;
   }) => updateProjectBase({
@@ -176,6 +179,43 @@ function Preferences({
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
             <Headline level={5}>
+              Features
+            </Headline>
+          </Spacing>
+
+          {Object.entries(projectAttributes?.features || {}).map(([k, v]) => (
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+              key={k}
+            >
+              <Text default monospace>
+                {k}
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <ToggleSwitch
+                checked={!!v}
+                onCheck={() => setProjectAttributes(prev => ({
+                  ...prev,
+                  features: {
+                    ...projectAttributes?.features,
+                    [k]: !v,
+                  },
+                }))}
+              />
+            </FlexContainer>
+          ))}
+        </Spacing>
+      </Panel>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS} />
+
+      <Panel noPadding>
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Headline level={5}>
               OpenAI
             </Headline>
           </Spacing>
@@ -201,6 +241,7 @@ function Preferences({
           loading={isLoadingUpdateProject}
           onClick={() => {
             updateProject({
+              features: projectAttributes?.features,
               help_improve_mage: projectAttributes?.help_improve_mage,
               openai_api_key: projectAttributes?.openai_api_key,
             });
