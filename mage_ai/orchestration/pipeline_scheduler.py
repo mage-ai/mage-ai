@@ -1424,6 +1424,7 @@ def schedule_all():
                 len(running_pipeline_runs)
 
         if pipeline_run_quota > 0:
+            initial_pipeline_runs.sort(key=lambda x: x.execution_date)
             for r in initial_pipeline_runs[:pipeline_run_quota]:
                 pipeline_scheduler = PipelineScheduler(r)
                 pipeline_scheduler.start(should_schedule=False)
