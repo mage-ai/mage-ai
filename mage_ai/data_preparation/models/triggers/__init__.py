@@ -40,6 +40,7 @@ class ScheduleInterval(str, enum.Enum):
 class SettingsConfig(BaseConfig):
     skip_if_previous_running: bool = False
     allow_blocks_to_fail: bool = False
+    landing_time_enabled: bool = False
 
 
 @dataclass
