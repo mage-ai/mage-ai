@@ -61,6 +61,6 @@ jobs:
         run: yarn install && yarn export_prod
         working-directory: mage_ai/frontend/
       - name: Run Playwright tests
-        run: cd mage_ai/frontend && yarn playwright install chromium && yarn playwright test
+        run: cd mage_ai/frontend && yarn playwright install chromium && yarn playwright test -c playwright.config.ci.ts
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:.
