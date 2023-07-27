@@ -32,6 +32,7 @@ import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -113,6 +114,7 @@ type PipelineDetailProps = {
   }) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
+  project?: ProjectType;
   restartKernel: () => void;
   runBlock: (payload: {
     block: BlockType;
@@ -146,6 +148,12 @@ type PipelineDetailProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -177,6 +185,7 @@ function PipelineDetail({
   openSidekickView,
   pipeline,
   pipelineContentTouched,
+  project,
   restartKernel,
   runBlock,
   runningBlocks = [],
@@ -195,6 +204,7 @@ function PipelineDetail({
   setSelectedStream,
   setTextareaFocused,
   showBrowseTemplates,
+  showConfigureProjectModal,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -571,6 +581,7 @@ function PipelineDetail({
             onDrop={onDrop}
             openSidekickView={openSidekickView}
             pipeline={pipeline}
+            project={project}
             ref={currentBlockRef}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
@@ -587,6 +598,7 @@ function PipelineDetail({
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
             showBrowseTemplates={showBrowseTemplates}
+            showConfigureProjectModal={showConfigureProjectModal}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -627,6 +639,7 @@ function PipelineDetail({
     onDrop,
     openSidekickView,
     pipeline,
+    project,
     runBlock,
     runningBlocks,
     runningBlocksByUUID,
@@ -642,6 +655,7 @@ function PipelineDetail({
     setSelectedOutputBlock,
     setTextareaFocused,
     showBrowseTemplates,
+    showConfigureProjectModal,
     textareaFocused,
     updateBlock,
     widgets,
@@ -744,10 +758,12 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       hideSensor={isIntegration}
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
+      project={project}
       searchTextInputRef={searchTextInputRef}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
       setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
       showBrowseTemplates={showBrowseTemplates}
+      showConfigureProjectModal={showConfigureProjectModal}
     />
   ), [
     addNewBlockAtIndex,
@@ -759,11 +775,13 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
+    project,
     searchTextInputRef,
     setFocusedAddNewBlockSearch,
     setSelectedBlock,
     setTextareaFocused,
     showBrowseTemplates,
+    showConfigureProjectModal,
   ]);
 
   return (

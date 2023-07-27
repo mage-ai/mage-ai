@@ -53,6 +53,7 @@ import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -172,7 +173,8 @@ type CodeBlockProps = {
     blockUUID: string;
   }) => void;
   pipeline: PipelineType;
-  runBlock: (payload: {
+  project?: ProjectType;
+  runBlock?: (payload: {
     block: BlockType;
     code: string;
     runDownstream?: boolean;
@@ -199,6 +201,12 @@ type CodeBlockProps = {
     addNew?: boolean;
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
+  }) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -240,6 +248,7 @@ function CodeBlock({
   onDrop,
   openSidekickView,
   pipeline,
+  project,
   runBlock,
   runningBlocks,
   savePipelineContent,
@@ -255,6 +264,7 @@ function CodeBlock({
   setSelectedOutputBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showConfigureProjectModal,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -486,7 +496,7 @@ function CodeBlock({
       setSelectedTab(TAB_DBT_LOGS_UUID);
     }
 
-    runBlock({
+    runBlock?.({
       block: blockPayload,
       code: code || content,
       runDownstream: runDownstream || hasDownstreamWidgets,
@@ -1325,26 +1335,28 @@ function CodeBlock({
                 )}
               </Flex>
 
-              <CommandButtons
-                addNewBlock={addNewBlock}
-                addWidget={addWidget}
-                block={block}
-                blocks={blocks}
-                deleteBlock={deleteBlock}
-                executionState={executionState}
-                fetchFileTree={fetchFileTree}
-                fetchPipeline={fetchPipeline}
-                hideExtraButtons={hideExtraCommandButtons}
-                interruptKernel={interruptKernel}
-                isEditingBlock={isEditingBlock}
-                openSidekickView={openSidekickView}
-                pipeline={pipeline}
-                runBlock={hideRunButton ? null : runBlockAndTrack}
-                savePipelineContent={savePipelineContent}
-                setErrors={setErrors}
-                setIsEditingBlock={setIsEditingBlock}
-                setOutputCollapsed={setOutputCollapsed}
-              />
+              {runBlock && (
+                <CommandButtons
+                  addNewBlock={addNewBlock}
+                  addWidget={addWidget}
+                  block={block}
+                  blocks={blocks}
+                  deleteBlock={deleteBlock}
+                  executionState={executionState}
+                  fetchFileTree={fetchFileTree}
+                  fetchPipeline={fetchPipeline}
+                  hideExtraButtons={hideExtraCommandButtons}
+                  interruptKernel={interruptKernel}
+                  isEditingBlock={isEditingBlock}
+                  openSidekickView={openSidekickView}
+                  pipeline={pipeline}
+                  runBlock={hideRunButton ? null : runBlockAndTrack}
+                  savePipelineContent={savePipelineContent}
+                  setErrors={setErrors}
+                  setIsEditingBlock={setIsEditingBlock}
+                  setOutputCollapsed={setOutputCollapsed}
+                />
+              )}
 
               {!hideExtraCommandButtons && (
                 <Spacing px={1}>
@@ -2303,9 +2315,11 @@ function CodeBlock({
                   hideDbt={isStreamingPipeline}
                   onClickAddSingleDBTModel={onClickAddSingleDBTModel}
                   pipeline={pipeline}
+                  project={project}
                   setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
                   showBrowseTemplates={showBrowseTemplates}
+                  showConfigureProjectModal={showConfigureProjectModal}
                 />
               </Spacing>
             )}

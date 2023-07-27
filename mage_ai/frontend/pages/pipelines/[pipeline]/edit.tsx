@@ -47,7 +47,9 @@ import PipelineType, {
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
@@ -147,6 +149,9 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
+
+  const { data: dataProject, mutate: fetchProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProject?.projects?.[0], [dataProject]);
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -1351,32 +1356,70 @@ function PipelineDetailPage({
     name: string,
     onCreateCallback?: (block: BlockType) => void,
   }) => (
-    <ConfigureBlock
-      block={block}
-      defaultName={name}
-      onClose={hideAddBlockModal}
-      onSave={(opts: {
-        color?: BlockColorEnum;
-        language?: BlockLanguageEnum;
-        name?: string;
-      } = {}) => addNewBlockAtIndex(
-        {
-          ...block,
-          ...ignoreKeys(opts, ['name']),
-        },
-        idx,
-        onCreateCallback,
-        opts?.name,
-      ).then(() => hideAddBlockModal())}
-      pipeline={pipeline}
-    />
+    <ErrorProvider>
+      <ConfigureBlock
+        block={block}
+        defaultName={name}
+        onClose={hideAddBlockModal}
+        onSave={(opts: {
+          color?: BlockColorEnum;
+          language?: BlockLanguageEnum;
+          name?: string;
+        } = {}) => addNewBlockAtIndex(
+          {
+            ...block,
+            ...ignoreKeys(opts, ['name']),
+          },
+          idx,
+          onCreateCallback,
+          opts?.name,
+        ).then(() => hideAddBlockModal())}
+        pipeline={pipeline}
+      />
+    </ErrorProvider>
   ), {
   }, [
     addNewBlockAtIndex,
     pipeline,
   ], {
     background: true,
+    disableEscape: true,
     uuid: 'configure_block_name_and_create',
+  });
+
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
+    cancelButtonText,
+    header,
+    onCancel,
+    onSaveSuccess,
+  }: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => (
+    <ErrorProvider>
+      <Preferences
+        cancelButtonText={cancelButtonText}
+        contained
+        header={header}
+        onCancel={() => {
+          onCancel?.();
+          hideConfigureProjectModal();
+        }}
+        onSaveSuccess={(project: ProjectType) => {
+          fetchProjects();
+          hideConfigureProjectModal();
+          onSaveSuccess?.(project);
+        }}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    fetchProjects,
+  ], {
+    background: true,
+    uuid: 'configure_project',
   });
 
   // Widgets
@@ -1896,6 +1939,7 @@ function PipelineDetailPage({
         onClickCustomTemplate={(customTemplate) => {
           addNewBlock({
             config: {
+              custom_template: customTemplate,
               custom_template_uuid: customTemplate?.template_uuid,
             },
           });
@@ -2097,6 +2141,7 @@ function PipelineDetailPage({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
+      project={project}
       restartKernel={restartKernel}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
@@ -2116,6 +2161,7 @@ function PipelineDetailPage({
       setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showConfigureProjectModal={showConfigureProjectModal}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2147,6 +2193,7 @@ function PipelineDetailPage({
     openSidekickView,
     pipeline,
     pipelineContentTouched,
+    project,
     restartKernel,
     runBlock,
     runningBlocks,
@@ -2161,6 +2208,7 @@ function PipelineDetailPage({
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
+    showConfigureProjectModal,
     textareaFocused,
     widgets,
   ]);

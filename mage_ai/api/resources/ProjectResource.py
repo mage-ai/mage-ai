@@ -58,6 +58,9 @@ class ProjectResource(GenericResource):
 
             data['help_improve_mage'] = payload['help_improve_mage']
 
+        if 'openai_api_key' in payload:
+            data['openai_api_key'] = payload.get('openai_api_key')
+
         if len(data.keys()) >= 1:
             repo_config.save(**data)
 

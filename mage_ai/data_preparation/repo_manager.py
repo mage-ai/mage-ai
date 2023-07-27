@@ -84,6 +84,7 @@ class RepoConfig:
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
+            self.openai_api_key = repo_config.get('openai_api_key')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
@@ -115,20 +116,21 @@ class RepoConfig:
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
-            project_type=self.project_type,
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
+            help_improve_mage=self.help_improve_mage,
             notification_config=self.notification_config,
+            openai_api_key=self.openai_api_key,
+            project_type=self.project_type,
+            project_uuid=self.project_uuid,
             queue_config=self.queue_config,
+            remote_variables_dir=self.remote_variables_dir,
             repo_path=self.repo_path,
+            spark_config=self.spark_config,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
             variables_retention_period=self.variables_retention_period,
-            remote_variables_dir=self.remote_variables_dir,
-            project_uuid=self.project_uuid,
-            help_improve_mage=self.help_improve_mage,
-            spark_config=self.spark_config,
         )
 
     def save(self, **kwargs) -> None:

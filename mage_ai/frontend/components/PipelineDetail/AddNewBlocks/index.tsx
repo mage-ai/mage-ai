@@ -8,6 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
 import { Add, Edit, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
@@ -52,6 +53,7 @@ type AddNewBlocksProps = {
   hideTransformerDataSources?: boolean;
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
+  project?: ProjectType;
   searchTextInputRef?: any;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
@@ -60,6 +62,12 @@ type AddNewBlocksProps = {
     addNew?: boolean;
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
+  }) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
 };
 
@@ -88,11 +96,13 @@ function AddNewBlocks({
   hideTransformerDataSources,
   onClickAddSingleDBTModel,
   pipeline,
+  project,
   searchTextInputRef,
   setAddNewBlockMenuOpenIdx,
   setCreatingNewDBTModel,
   setFocusedAddNewBlockSearch,
   showBrowseTemplates,
+  showConfigureProjectModal,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -324,10 +334,12 @@ function AddNewBlocks({
         focused={focusedAddNewBlockSearch}
         itemsDBT={itemsDBT}
         pipelineType={pipelineType}
+        project={project}
         searchTextInputRef={searchTextInputRef}
         setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
         setFocused={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
+        showConfigureProjectModal={showConfigureProjectModal}
       />
     );
   }

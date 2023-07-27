@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 import openai
 from langchain.chains import LLMChain
@@ -15,7 +16,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.io.base import DataSource
 from mage_ai.server.logger import Logger
@@ -96,7 +97,11 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
 
 class LLMPipelineWizard:
     def __init__(self):
-        self.llm = OpenAI(temperature=0)
+        repo_config = get_repo_config()
+        openai_api_key = repo_config.openai_api_key or os.getenv('OPENAI_API_KEY')
+        openai.api_key = openai_api_key
+        print('WTFFFFFFFFFFFFFFF', openai.api_key)
+        self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
 
     async def __async_llm_generate_documentation(
         self,
