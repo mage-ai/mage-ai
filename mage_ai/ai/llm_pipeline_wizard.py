@@ -100,7 +100,6 @@ class LLMPipelineWizard:
         repo_config = get_repo_config()
         openai_api_key = repo_config.openai_api_key or os.getenv('OPENAI_API_KEY')
         openai.api_key = openai_api_key
-        print('WTFFFFFFFFFFFFFFF', openai.api_key)
         self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
 
     async def __async_llm_generate_documentation(

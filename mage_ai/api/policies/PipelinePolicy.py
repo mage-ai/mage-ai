@@ -96,6 +96,7 @@ PipelinePolicy.allow_write([
     'callbacks',
     'conditionals',
     'extensions',
+    'llm',
     'schedules',
 ] + PipelinePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,

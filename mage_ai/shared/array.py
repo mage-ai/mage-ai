@@ -24,6 +24,13 @@ def find(condition, arr, map=None):
         return None
 
 
+def find_index(condition, arr):
+    for idx, item in enumerate(arr):
+        if condition(item):
+            return idx
+    return -1
+
+
 def sample(arr):
     return arr[random.randrange(0, len(arr))]
 

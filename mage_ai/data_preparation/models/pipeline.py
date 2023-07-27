@@ -1015,7 +1015,7 @@ class Pipeline:
         blocks_by_uuid,
         block,
         upstream_blocks,
-        priority=None,
+        priority: int = None,
     ):
         mapping = blocks_by_uuid.copy()
 
