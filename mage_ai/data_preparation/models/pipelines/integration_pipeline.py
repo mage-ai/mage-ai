@@ -203,11 +203,11 @@ class IntegrationPipeline(Pipeline):
                 )
                 proc.check_returncode()
         except subprocess.CalledProcessError as err:
-            stderr = err.stderr.decode('utf-8').split('\n')
+            stderr = err.stderr.decode('utf-8')
 
             json_object = {}
-            error = ''
-            for line in stderr:
+            error = stderr
+            for line in stderr.split('\n'):
                 if line.startswith('ERROR'):
                     try:
                         json_object = next(extract_json_objects(line))

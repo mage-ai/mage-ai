@@ -36,7 +36,7 @@ def filter_out_config_values(log: str, config: Dict) -> str:
     if not log or not config:
         return log
     values = config.values()
-    secret_values = [v for v in values if isinstance(v, str) and len(v) >= MIN_SECRET_LENGTH]
+    secret_values = [v for v in values if v and isinstance(v, str) and len(v) >= MIN_SECRET_LENGTH]
     return filter_out_values(log, secret_values)
 
 
