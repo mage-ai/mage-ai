@@ -256,6 +256,23 @@ function CommandButtons({
         },
         uuid: 'Document block',
       },
+      // {
+      //   label: () => 'Add comments in block',
+      //   onClick: () => {
+      //     llm.use_case = LLMUseCaseEnum.GENERATE_COMMENT_FOR_BLOCK;
+
+      //     if (shouldShowModal) {
+      //       showModal(llm);
+      //     } else {
+      //       updatePipeline({
+      //         pipeline: {
+      //           llm,
+      //         },
+      //       });
+      //     }
+      //   },
+      //   uuid: 'Add comments in block',
+      // },
       {
         label: () => 'Document pipeline and all blocks',
         onClick: () => {

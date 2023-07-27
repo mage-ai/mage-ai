@@ -279,8 +279,6 @@ class PipelineResource(BaseResource):
                         lines.append(payload.get('description'))
                     lines.append(pipeline_doc)
                     payload['description'] = '\n'.join(lines).strip()
-            elif LLMUseCase.GENERATE_BLOCK_WITH_DESCRIPTION == llm_use_case:
-                pass
 
             if block_docs and len(block_docs) >= 1:
                 blocks_with_docs = list(zip(block_docs, blocks))
