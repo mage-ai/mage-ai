@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import importlib.util
 import json
 import os
 import sys
@@ -8,13 +9,13 @@ import traceback
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
-from jinja2 import Template
 from logging import Logger
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set, Tuple, Union
 
 import pandas as pd
 import simplejson
+from jinja2 import Template
 
 from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
@@ -1072,9 +1073,7 @@ class Block:
                 **kwargs,
             )
 
-        output_message = dict(output=outputs)
-
-        return output_message
+        return dict(output=outputs)
 
     def _execute_block(
         self,
@@ -1152,12 +1151,26 @@ class Block:
         global_vars: Dict = None,
         test_execution: bool = False,
     ) -> Dict:
+        block_function_updated = block_function
+        if test_execution:
+            try:
+                spec = importlib.util.spec_from_file_location(
+                    self.uuid, self.file_path,
+                )
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[self.uuid] = module
+                spec.loader.exec_module(module)
+
+                block_function_updated = getattr(module, block_function.__name__)
+            except Exception:
+                print('Error importing block function dynamically from block file.')
+
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
-            output = block_function(*input_vars, **global_vars)
+            output = block_function_updated(*input_vars, **global_vars)
         else:
-            output = block_function(*input_vars)
+            output = block_function_updated(*input_vars)
         return output
 
     def exists(self) -> bool:
@@ -2155,7 +2168,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
-            # TAG_CONDITION,
             TAG_DYNAMIC,
             TAG_DYNAMIC_CHILD,
             TAG_REDUCE_OUTPUT,
@@ -2175,9 +2187,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if self.replicated_block:
             arr.append(TAG_REPLICA)
-
-        # if len(self.conditional_blocks) > 0:
-        #     arr.append(TAG_CONDITION)
 
         return arr
 
@@ -2512,7 +2521,7 @@ class CallbackBlock(AddonBlock):
             for callback_function in callback_functions_legacy:
                 callback_function(**global_vars_copy)
 
-            for idx, callback_function in enumerate(callback_functions):
+            for callback_function in callback_functions:
                 try:
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output.

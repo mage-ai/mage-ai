@@ -81,9 +81,11 @@ def run_pipeline(
     def add_pipeline_message(
         message: str,
         execution_state: str = 'busy',
-        metadata: Dict[str, str] = dict(),
+        metadata: Dict[str, str] = None,
         msg_type: str = 'stream_pipeline',
     ):
+        if metadata is None:
+            metadata = dict()
         msg = dict(
             message=message,
             execution_state=execution_state,
@@ -131,9 +133,11 @@ def run_pipeline(
 def publish_pipeline_message(
     message: str,
     execution_state: str = 'busy',
-    metadata: Dict[str, str] = dict(),
+    metadata: Dict[str, str] = None,
     msg_type: str = 'stream_pipeline',
 ) -> None:
+    if metadata is None:
+        metadata = dict()
     msg_id = str(uuid.uuid4())
     WebSocketServer.send_message(
         dict(
@@ -274,7 +278,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
     @classmethod
-    def send_message(self, message: dict) -> None:
+    def send_message(cls, message: dict) -> None:
         def should_filter_message(message):
             if message.get('data') is None and message.get('error') is None \
                     and message.get('execution_state') is None and message.get('type') is None:
@@ -321,7 +325,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         error = message.get('error')
         if error:
-            message['data'] = self.__format_error(error)
+            message['data'] = cls.format_error(error)
 
         output_dict = dict(
             block_type=block_type,
@@ -340,10 +344,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if block_uuid or pipeline_uuid:
             logger.info(
                 f'[{block_uuid}] Sending message for {msg_id} to '
-                f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
+                f'{len(cls.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
             )
 
-            for client in self.clients:
+            for client in cls.clients:
                 client.write_message(json.dumps(message_final))
 
     def __execute_block(
@@ -442,17 +446,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             if run_downstream:
                 # This will only run downstream blocks that are charts/widgets
-                for block in block.downstream_blocks:
-                    if BlockType.CHART != block.type:
+                for downstream_block in block.downstream_blocks:
+                    if BlockType.CHART != downstream_block.type:
                         continue
 
                     self.on_message(json.dumps(dict(
                         api_key=message.get('api_key'),
-                        code=block.file.content(),
+                        code=downstream_block.file.content(),
                         pipeline_uuid=pipeline_uuid,
                         token=message.get('token'),
-                        type=block.type,
-                        uuid=block.uuid,
+                        type=downstream_block.type,
+                        uuid=downstream_block.uuid,
                     )))
 
     def __execute_pipeline(
@@ -540,9 +544,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
 
-    def __format_error(error: List[str]) -> List[str]:
+    @classmethod
+    def format_error(cls, error: List[str]) -> List[str]:
         initial_regex = r'.*execute_custom_code\(\).*'
-        end_regex = r'.*Block.[_a-z]*\(.*'
+        end_regex = r'.*execute_block_function.*'
         initial_idx = 0
         end_idx = 0
         for idx, line in enumerate(error):
@@ -575,12 +580,14 @@ class StreamBlockOutputToQueue(object):
         queue,
         block_uuid,
         execution_state='busy',
-        metadata=dict(),
+        metadata=None,
         msg_type='stream_pipeline',
     ):
         self.queue = queue
         self.block_uuid = block_uuid
         self.execution_state = execution_state
+        if metadata is None:
+            metadata = dict()
         self.metadata = metadata
         self.msg_type = msg_type
 
