@@ -392,13 +392,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
                 self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
 
-                merge_command = self.build_merge_command(
+                merge_command = [self.build_merge_command(
                     columns=df.columns,
                     full_table_name=full_table_name,
                     full_table_name_temp=full_table_name_temp,
                     unique_conflict_method=unique_conflict_method,
                     unique_constraints=unique_constraints,
-                )
+                )]
                 self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
                 results += self.build_connection().execute(merge_command, commit=True)
 
