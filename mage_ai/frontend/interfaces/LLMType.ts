@@ -9,7 +9,7 @@ export enum LLMUseCaseEnum {
 
 export default interface LLMType {
   request?: {
-    block_description: string;
+    block_description?: string;
     block_uuid?: string;
     pipeline_uuid?: string;
   };

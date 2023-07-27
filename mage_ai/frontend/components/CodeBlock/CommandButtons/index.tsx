@@ -221,6 +221,7 @@ function CommandButtons({
         ),
         onSaveSuccess: (project: ProjectType) => {
           if (project?.openai_api_key) {
+            // @ts-ignore
             updatePipeline({
               pipeline: {
                 llm,
@@ -247,6 +248,7 @@ function CommandButtons({
           if (shouldShowModal) {
             showModal(llm);
           } else {
+            // @ts-ignore
             updatePipeline({
               pipeline: {
                 llm,
@@ -281,6 +283,7 @@ function CommandButtons({
           if (shouldShowModal) {
             showModal(llm);
           } else {
+            // @ts-ignore
             updatePipeline({
               pipeline: {
                 llm,
