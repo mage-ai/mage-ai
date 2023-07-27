@@ -1,8 +1,10 @@
 import aiohttp
 
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.repo import get_repo_path
+from typing import Dict
 
 
 class Project():
@@ -24,6 +26,17 @@ class Project():
     @property
     def openai_api_key(self) -> str:
         return self.repo_config.openai_api_key
+
+    @property
+    def features(self) -> Dict:
+        data = {}
+        features = self.repo_config.features
+
+        for uuid in FeatureUUID:
+            key = uuid.value
+            data[key] = features.get(key) if features else None
+
+        return data
 
     async def latest_version(self) -> str:
         try:

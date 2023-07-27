@@ -176,6 +176,43 @@ function Preferences({
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
             <Headline level={5}>
+              Features
+            </Headline>
+          </Spacing>
+
+          {Object.entries(projectAttributes?.features || {}).map(([k, v]) => (
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+              key={k}
+            >
+              <Text default monospace>
+                {k}
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <ToggleSwitch
+                checked={v}
+                onCheck={() => setProjectAttributes(prev => ({
+                  ...prev,
+                  features: {
+                    ...projectAttributes?.features,
+                    [k]: !v,
+                  },
+                }))}
+              />
+            </FlexContainer>
+          ))}
+        </Spacing>
+      </Panel>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS} />
+
+      <Panel noPadding>
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Headline level={5}>
               OpenAI
             </Headline>
           </Spacing>
@@ -201,6 +238,7 @@ function Preferences({
           loading={isLoadingUpdateProject}
           onClick={() => {
             updateProject({
+              features: projectAttributes?.features,
               help_improve_mage: projectAttributes?.help_improve_mage,
               openai_api_key: projectAttributes?.openai_api_key,
             });

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import NextLink from 'next/link';
 import React, {
   createRef,
   useCallback,
@@ -30,10 +31,12 @@ import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -239,9 +242,16 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  const useV2 = useMemo(() => PipelineTypeEnum.PYTHON === pipeline?.type, [pipeline]);
+  const useV2AddNewBlock = useMemo(
+    () => PipelineTypeEnum.PYTHON === pipeline?.type
+      && project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
+    [
+      pipeline,
+      project,
+    ],
+  );
   const { data: dataBlockTemplates } = api.block_templates.list({
-    show_all: useV2 ? 1 : null,
+    show_all: useV2AddNewBlock ? 1 : null,
   }, {
     revalidateOnFocus: false,
   });
@@ -288,14 +298,14 @@ function PipelineDetail({
           setPipelineContentTouched(true);
         }
       } else if (!isIntegration) {
-        if (useV2 && (
+        if (useV2AddNewBlock && (
           onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
             || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
         )) {
           event.preventDefault();
           setFocusedAddNewBlockSearch(true);
           searchTextInputRef?.current?.focus();
-        } else if (useV2
+        } else if (useV2AddNewBlock
           && focusedAddNewBlockSearch
           && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
         ) {
@@ -376,7 +386,7 @@ function PipelineDetail({
       setSelectedBlock,
       setTextareaFocused,
       textareaFocused,
-      useV2,
+      useV2AddNewBlock,
     ],
   );
 
@@ -702,69 +712,92 @@ function PipelineDetail({
   ]);
 
   const addNewBlocksMemo = useMemo(() => pipeline && (
-    <AddNewBlocks
-      addNewBlock={(newBlock: BlockRequestPayloadType) => {
-        const block = blocks[blocks.length - 1];
+    <>
+      <AddNewBlocks
+        addNewBlock={(newBlock: BlockRequestPayloadType) => {
+          const block = blocks[blocks.length - 1];
 
-        let content = null;
-        let configuration = newBlock.configuration || {};
-        const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+          let content = null;
+          let configuration = newBlock.configuration || {};
+          const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
-        if (block) {
-          if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-            && BlockTypeEnum.SCRATCHPAD === newBlock.type
-          ) {
-            content = `from mage_ai.data_preparation.variable_manager import get_variable
+          if (block) {
+            if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+              && BlockTypeEnum.SCRATCHPAD === newBlock.type
+            ) {
+              content = `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
-`;
+  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
+  `;
+            }
+
+            if (BlockLanguageEnum.SQL === block.language) {
+              configuration = {
+                ...selectKeys(block.configuration, [
+                  CONFIG_KEY_DATA_PROVIDER,
+                  CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                  CONFIG_KEY_EXPORT_WRITE_POLICY,
+                ]),
+                ...configuration,
+              };
+            }
           }
 
-          if (BlockLanguageEnum.SQL === block.language) {
-            configuration = {
-              ...selectKeys(block.configuration, [
-                CONFIG_KEY_DATA_PROVIDER,
-                CONFIG_KEY_DATA_PROVIDER_DATABASE,
-                CONFIG_KEY_DATA_PROVIDER_PROFILE,
-                CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-                CONFIG_KEY_EXPORT_WRITE_POLICY,
-              ]),
-              ...configuration,
-            };
+          if (BlockLanguageEnum.SQL === newBlock.language) {
+            content = addSqlBlockNote(content);
           }
-        }
+          content = addScratchpadNote(newBlock, content);
 
-        if (BlockLanguageEnum.SQL === newBlock.language) {
-          content = addSqlBlockNote(content);
-        }
-        content = addScratchpadNote(newBlock, content);
+          addNewBlockAtIndex({
+            ...newBlock,
+            configuration,
+            content,
+            upstream_blocks: upstreamBlocks,
+          }, numberOfBlocks, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
+        blockTemplates={blockTemplates}
+        focusedAddNewBlockSearch={focusedAddNewBlockSearch}
+        hideCustom={isIntegration || isStreaming}
+        hideDataExporter={isIntegration}
+        hideDataLoader={isIntegration}
+        hideDbt={isIntegration || isStreaming}
+        hideScratchpad={isIntegration}
+        hideSensor={isIntegration}
+        onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+        pipeline={pipeline}
+        project={project}
+        searchTextInputRef={searchTextInputRef}
+        setCreatingNewDBTModel={setCreatingNewDBTModel}
+        setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
+        showBrowseTemplates={showBrowseTemplates}
+        showConfigureProjectModal={showConfigureProjectModal}
+      />
 
-        addNewBlockAtIndex({
-          ...newBlock,
-          configuration,
-          content,
-          upstream_blocks: upstreamBlocks,
-        }, numberOfBlocks, setSelectedBlock);
-        setTextareaFocused(true);
-      }}
-      blockTemplates={blockTemplates}
-      focusedAddNewBlockSearch={focusedAddNewBlockSearch}
-      hideCustom={isIntegration || isStreaming}
-      hideDataExporter={isIntegration}
-      hideDataLoader={isIntegration}
-      hideDbt={isIntegration || isStreaming}
-      hideScratchpad={isIntegration}
-      hideSensor={isIntegration}
-      onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-      pipeline={pipeline}
-      project={project}
-      searchTextInputRef={searchTextInputRef}
-      setCreatingNewDBTModel={setCreatingNewDBTModel}
-      setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
-      showBrowseTemplates={showBrowseTemplates}
-      showConfigureProjectModal={showConfigureProjectModal}
-    />
+      {!useV2AddNewBlock && (
+        <Spacing mt={1}>
+          <Text muted small>
+            Want to try the new add block UI?
+            <br />
+            Turn on the feature named <Text bold inline muted small>
+              {FeatureUUIDEnum.ADD_NEW_BLOCK_V2}
+            </Text> in your <NextLink
+              href="/settings/workspace/preferences"
+              passHref
+            >
+              <Link muted underline>
+                <Text bold inline muted small>
+                  project settings
+                </Text>
+              </Link>
+            </NextLink>.
+          </Text>
+        </Spacing>
+      )}
+    </>
   ), [
     addNewBlockAtIndex,
     blockTemplates,
@@ -782,6 +815,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    useV2AddNewBlock,
   ]);
 
   return (

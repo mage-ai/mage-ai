@@ -11,6 +11,7 @@ async def build_project(repo_config=None, **kwargs):
     project = Project(repo_config=repo_config)
 
     model = merge_dict(project.repo_config.to_dict(), dict(
+        features=project.features,
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
@@ -47,7 +48,16 @@ class ProjectResource(GenericResource):
         repo_config = get_repo_config()
 
         data = {}
-        should_log_project = False
+        features = self.model.get('features') or {}
+        should_log_project = self.model.get('help_improve_mage') or False
+
+        if 'features' in payload:
+            for k, v in payload.get('features', {}).items():
+                feature = (repo_config.features or {}).get(k)
+                if (feature and not v) or (not feature and v):
+                    if 'features' not in data:
+                        data['features'] = {}
+                    data['features'][k] = v
 
         if 'help_improve_mage' in payload:
             if payload['help_improve_mage']:
@@ -59,7 +69,9 @@ class ProjectResource(GenericResource):
             data['help_improve_mage'] = payload['help_improve_mage']
 
         if 'openai_api_key' in payload:
-            data['openai_api_key'] = payload.get('openai_api_key')
+            openai_api_key = payload.get('openai_api_key')
+            if repo_config.openai_api_key != openai_api_key:
+                data['openai_api_key'] = payload.get('openai_api_key')
 
         if len(data.keys()) >= 1:
             repo_config.save(**data)

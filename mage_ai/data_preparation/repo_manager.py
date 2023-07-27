@@ -76,10 +76,10 @@ class RepoConfig:
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
+            self.features = repo_config.get('features', {})
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.k8s_executor_config = repo_config.get('k8s_executor_config')
             self.spark_config = repo_config.get('spark_config')
-
             self.notification_config = repo_config.get('notification_config', dict())
             self.queue_config = repo_config.get('queue_config', dict())
             self.project_uuid = repo_config.get('project_uuid')
@@ -119,6 +119,7 @@ class RepoConfig:
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
+            features=self.features,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
             help_improve_mage=self.help_improve_mage,
             notification_config=self.notification_config,
