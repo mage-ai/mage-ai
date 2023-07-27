@@ -614,7 +614,12 @@ function AddNewBlocksV2({
                 widthFitContent
               >
                 <Button
-                  iconOnly
+                  beforeIcon={
+                    <TemplateShapes
+                      secondary={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
+                      size={ICON_SIZE}
+                    />
+                  }
                   noBackground
                   noBorder
                   noPadding
@@ -628,10 +633,7 @@ function AddNewBlocksV2({
                     handleBlockZIndex(BUTTON_INDEX_TEMPLATES);
                   }}
                 >
-                  <TemplateShapes
-                    secondary={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
-                    size={ICON_SIZE}
-                  />
+                  Templates
                 </Button>
               </Tooltip>
             </FlyoutMenuWrapper>
@@ -658,7 +660,12 @@ function AddNewBlocksV2({
                 widthFitContent
               >
                 <Button
-                  iconOnly
+                  beforeIcon={
+                    <BlockBlank
+                      secondary={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
+                      size={ICON_SIZE}
+                    />
+                  }
                   noBackground
                   noBorder
                   noPadding
@@ -672,10 +679,7 @@ function AddNewBlocksV2({
                     handleBlockZIndex(BUTTON_INDEX_CUSTOM);
                   }}
                 >
-                  <BlockBlank
-                    secondary={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
-                    size={ICON_SIZE}
-                  />
+                  Custom
                 </Button>
               </Tooltip>
             </FlyoutMenuWrapper>
@@ -694,7 +698,9 @@ function AddNewBlocksV2({
               widthFitContent
             >
               <Button
-                iconOnly
+                beforeIcon={
+                  <MarkdownPen size={ICON_SIZE} />
+                }
                 noBackground
                 noBorder
                 noPadding
@@ -706,7 +712,7 @@ function AddNewBlocksV2({
                   });
                 }}
               >
-                <MarkdownPen size={ICON_SIZE} />
+                Markdown
               </Button>
             </Tooltip>
           </ButtonWrapper>
