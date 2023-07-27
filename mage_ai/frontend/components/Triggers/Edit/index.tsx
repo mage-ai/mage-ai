@@ -414,12 +414,45 @@ function Edit({
       [
         <FlexContainer
           alignItems="center"
+          key="frequency"
+        >
+          <Schedule default size={1.5 * UNIT} />
+          <Spacing mr={1} />
+          <Text default>
+            Enable landing time
+          </Text>
+        </FlexContainer>,
+
+        <div key="frequency_input">
+          <ToggleSwitch
+            checked={!!settings?.landing_time_enabled}
+            onCheck={() => {
+              setSettings(prev => ({
+                ...prev,
+                landing_time_enabled: !settings?.landing_time_enabled,
+              }));
+            }}
+          />
+
+          <Spacing mt={1} p={1}>
+            <Text muted small>
+              Instead of starting at a specific time,
+              this trigger will schedule pipeline runs at a time where it will finish
+              by the specified time below.
+            </Text>
+          </Spacing>
+        </div>,
+      ],
+      [
+        <FlexContainer
+          alignItems="center"
           key="start_time"
         >
           <CalendarDate default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
-            Start date and time
+            {settings?.landing_time_enabled && 'When pipeline should complete'}
+            {!settings?.landing_time_enabled && 'Start date and time'}
           </Text>
         </FlexContainer>,
         <div
@@ -533,6 +566,7 @@ function Edit({
     isStreamingPipeline,
     name,
     scheduleInterval,
+    settings,
     showCalendar,
     time,
   ]);
