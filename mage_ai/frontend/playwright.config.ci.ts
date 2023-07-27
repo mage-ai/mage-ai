@@ -40,8 +40,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'python3 mage_ai/cli/main.py start test_project',
-    cwd: '../..',
+    command: 'python mage_ai/cli/main.py start test_project',
+    cwd: '../../',
+    env: {
+      PYTHONPATH: '.',
+    },
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:6789',
   },
