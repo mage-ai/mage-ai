@@ -10,11 +10,19 @@ from mage_ai.io.sql import BaseSQL
 
 
 class OracleDB(BaseSQL):
-    def __init__(self, user, password, host, port, verbose: bool = False, **kwargs) -> None:
+    def __init__(self,
+                 user,
+                 password,
+                 host,
+                 port,
+                 service_name,
+                 verbose: bool = False,
+                 **kwargs) -> None:
         super().__init__(user=user,
                          password=password,
                          host=host,
                          port=port,
+                         service_name=service_name,
                          verbose=verbose,
                          **kwargs)
 
@@ -24,7 +32,8 @@ class OracleDB(BaseSQL):
             user=config[ConfigKey.ORACLEDB_USER],
             password=config[ConfigKey.ORACLEDB_PASSWORD],
             host=config[ConfigKey.ORACLEDB_HOST],
-            port=config[ConfigKey.ORACLEDB_PORT]
+            port=config[ConfigKey.ORACLEDB_PORT],
+            service_name=config[ConfigKey.ORACLEDB_SERVICE]
         )
 
     def open(self) -> None:
