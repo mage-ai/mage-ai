@@ -1,7 +1,7 @@
 import os
 import traceback
 from datetime import datetime, timedelta
-from sqlalchemy import asc, desc, func
+from sqlalchemy import desc, func
 from typing import Any, Dict, List, Set, Tuple
 
 import pytz
@@ -1289,13 +1289,14 @@ def schedule_all():
 
     previous_pipeline_run_by_pipeline_schedule_id = {}
     if len(active_pipeline_schedule_ids_with_landing_time_enabled) >= 1:
-        row_number_column = (func.
-            row_number().
-            over(
-                order_by=desc(PipelineRun.execution_date),
-                partition_by=PipelineRun.pipeline_schedule_id,
-            ).
-            label('row_number')
+        row_number_column = (
+                func.
+                row_number().
+                over(
+                    order_by=desc(PipelineRun.execution_date),
+                    partition_by=PipelineRun.pipeline_schedule_id,
+                ).
+                label('row_number')
         )
 
         query = PipelineRun.query.filter(

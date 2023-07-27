@@ -204,13 +204,13 @@ class PipelineSchedule(BaseModel):
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
-                ) + timedelta(days=start_time.weekday())
+                ) + timedelta(days=self.start_time.weekday())
             elif self.schedule_interval == '@monthly':
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
-                ) + timedelta(days=int(start_time.strftime('%d')) - 1)
+                ) + timedelta(days=int(self.start_time.strftime('%d')) - 1)
 
         return current_execution_date
 
@@ -232,7 +232,7 @@ class PipelineSchedule(BaseModel):
         except Exception:
             print(
                 f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
-                    + f'for pipeline schedule ID {self.id}.',
+                + f'for pipeline schedule ID {self.id}.',
             )
             return False
 
@@ -279,7 +279,7 @@ class PipelineSchedule(BaseModel):
 
     def runtime_history(
         self,
-        pipeline_run = None,
+        pipeline_run=None,
         sample_size: int = None,
     ) -> List[float]:
         sample_size_to_use = sample_size if sample_size else 7
@@ -289,7 +289,8 @@ class PipelineSchedule(BaseModel):
             previous_runtimes += (pipeline_run.metrics or {}).get('previous_runtimes', [])
 
         if len(previous_runtimes) < sample_size_to_use - 1 if pipeline_run else sample_size_to_use:
-            pipeline_runs = (PipelineRun.
+            pipeline_runs = (
+                PipelineRun.
                 query.
                 filter(
                     PipelineRun.pipeline_schedule_id == self.id,
@@ -298,13 +299,15 @@ class PipelineSchedule(BaseModel):
             )
 
             if pipeline_run:
-                pipeline_runs = (pipeline_runs.
+                pipeline_runs = (
+                    pipeline_runs.
                     filter(
                         PipelineRun.id != pipeline_run.id,
                     )
                 )
 
-            pipeline_runs = (pipeline_runs.
+            pipeline_runs = (
+                pipeline_runs.
                 order_by(PipelineRun.execution_date.desc()).
                 limit(sample_size_to_use).
                 all()
@@ -332,7 +335,7 @@ class PipelineSchedule(BaseModel):
 
     def runtime_average(
         self,
-        pipeline_run = None,
+        pipeline_run=None,
         sample_size: int = None,
     ) -> float:
         previous_runtimes = self.runtime_history(
