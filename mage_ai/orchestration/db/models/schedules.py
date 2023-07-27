@@ -5,6 +5,7 @@ import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
+from math import ceil
 from statistics import stdev
 from typing import Dict, List
 
@@ -263,8 +264,8 @@ class PipelineSchedule(BaseModel):
                     if len(previous_runtimes) == 0:
                         return True
                     else:
-                        runtime = sum(previous_runtimes) / len(previous_runtimes)
-                        sd = stdev(previous_runtimes)
+                        runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
+                        sd = ceil(stdev(previous_runtimes))
                         if datetime.now(timezone.utc) >= current_execution_date - timedelta(
                             seconds=runtime + sd,
                         ):
