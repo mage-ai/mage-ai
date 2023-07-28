@@ -216,14 +216,14 @@ def make_app():
         replace_base_path(base_path)
         updated_routes = []
         for route in routes:
-            updated_routes.append((route[0].replace('/', '/test-workspace/', 1), *route[1:]))
-        template_dir
+            updated_routes.append((route[0].replace('/', f'/{base_path}/', 1), *route[1:]))
+        template_dir = 'frontend_dist_base_path'
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
         updated_routes,
         autoreload=True,
-        template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
+        template_path=os.path.join(os.path.dirname(__file__), template_dir),
     )
 
 

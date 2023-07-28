@@ -41,7 +41,7 @@ jobs:
           name: Build and export
           command: ( cd mage_ai/frontend && yarn install && yarn export_prod )
       - run:
-          name: Build and export (2)
+          name: Build and export base path version
           command: |
             mv mage_ai/frontend/next-base-path.config.js mage_ai/frontend/next.config.js
             ( cd mage_ai/frontend && yarn install && yarn export_prod )

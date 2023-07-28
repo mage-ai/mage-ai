@@ -5,13 +5,13 @@ import api from '@api';
 
 const Home = () => {
   const router = useRouter();
-  const basePath = completePath.split('?')[0];
 
   const routerBasePath = router.basePath;
   let completePath = router.asPath;
   if (routerBasePath && !completePath.startsWith(routerBasePath)) {
     completePath = `${routerBasePath}${completePath}`;
   }
+  const basePath = completePath.split('?')[0];
 
   const { data: data } = api.statuses.list();
   const dataStatus = useMemo(() => data?.statuses?.[0], [data]);
