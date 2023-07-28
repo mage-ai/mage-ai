@@ -567,16 +567,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         All the lines in the error between the initial_idx and end_idx (or custom_block_end_idx)
         will be filtered out in the return value.
 
-        :param error: The list of strings representing the error message, where each element
-                    corresponds to a line of the error message.
-        :type error: List[str]
-        :param block_uuid: The UUID of the block to identify the end of the specific block within
-                        the error message. If not provided, the method will use the default
-                        'execute_block_function' string to search for the end of the block.
-        :type block_uuid: str, optional
-        :return: A formatted error message with unnecessary lines removed and hard-to-read font
-                replaced, making it more user-friendly.
-        :rtype: List[str]
+        Args:
+            error (List[str]): The list of strings representing the error message, where each
+                element corresponds to a line of the error message.
+            block_uuid (str, optional): The UUID of the block to identify the end of the specific
+                block within the error message. If not provided, the method will use the default
+                'execute_block_function' string to search for the end of the block.
+
+        Returns:
+            List[str]: A formatted error message with unnecessary lines removed and hard-to-read
+                font replaced, making it more user-friendly.
         """
         initial_regex = r'.*execute_custom_code\(\).*'
         end_search_string = block_uuid if block_uuid else 'execute_block_function'
