@@ -61,7 +61,7 @@ const DEFAULT_NAV_ITEMS = [
       {
         Icon: Schedule,
         id: 'pipeline-runs',
-        label: () => 'Pipelines runs',
+        label: () => 'Pipeline runs',
         linkProps: {
           href: '/pipeline-runs',
         },

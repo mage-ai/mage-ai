@@ -6,9 +6,9 @@ from typing import Callable, Dict, List, Union
 import dateutil.parser
 import enum
 
-
 NO_PIPELINE_SCHEDULE_ID = 'no_pipeline_schedule_id'
 NO_PIPELINE_SCHEDULE_NAME = 'no_pipeline_schedule_name'
+
 
 class MonitorStatsType(str, enum.Enum):
     PIPELINE_RUN_COUNT = 'pipeline_run_count'
