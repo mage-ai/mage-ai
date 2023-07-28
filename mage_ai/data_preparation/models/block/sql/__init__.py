@@ -40,10 +40,10 @@ def execute_sql_code(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
+    from_notebook: bool = False,
     global_vars: Dict = None,
     config_file_loader: Any = None,
     configuration: Dict = None,
-    test_execution: bool = False,
 ) -> List[Any]:
     configuration = configuration if configuration else block.configuration
     use_raw_sql = configuration.get('use_raw_sql')
@@ -67,7 +67,7 @@ def execute_sql_code(
     should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
     limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
-    if test_execution:
+    if from_notebook:
         limit = min(limit, QUERY_ROW_LIMIT)
     else:
         limit = QUERY_ROW_LIMIT
@@ -589,6 +589,7 @@ class SQLBlock(Block):
         dynamic_upstream_block_uuids: List[str] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        from_notebook: bool = False,
         global_vars: Dict = None,
         **kwargs,
     ) -> List:
@@ -603,6 +604,6 @@ class SQLBlock(Block):
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             execution_partition=execution_partition,
+            from_notebook=from_notebook,
             global_vars=global_vars,
-            test_execution=kwargs.get('test_execution'),
         )
