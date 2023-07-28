@@ -1401,10 +1401,7 @@ def schedule_all():
             if len(previous_runtimes) >= 1:
                 payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
-            pipeline = Pipeline.get(pipeline_uuid)
-
-            is_integration = PipelineType.INTEGRATION == pipeline.type
-            if is_integration:
+            if PipelineType.INTEGRATION == pipeline.type:
                 payload['create_block_runs'] = False
 
             if pipeline_schedule.get_settings().skip_if_previous_running and \
