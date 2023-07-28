@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.triggers import ScheduleInterval
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
