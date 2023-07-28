@@ -24,7 +24,7 @@ def check_status(
     pipeline_uuid: str,
     execution_date: datetime,
     block_uuid: str = None,
-    hours:int = 24,
+    hours: int = 24,
 ) -> bool:
     __validate_pipeline_and_block(pipeline_uuid, block_uuid)
 
