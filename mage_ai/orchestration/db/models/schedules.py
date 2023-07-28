@@ -3,7 +3,6 @@ import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
