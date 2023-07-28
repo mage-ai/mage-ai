@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleInterval
@@ -25,25 +25,23 @@ def check_status(
     pipeline_uuid: str,
     execution_date: datetime,
     block_uuid: str = None,
+    hours:int = 24,
 ) -> bool:
     __validate_pipeline_and_block(pipeline_uuid, block_uuid)
 
+    execution_date = execution_date.replace(tzinfo=timezone.utc)
     pipeline_run = (
         PipelineRun
         .query
         .join(PipelineRun.pipeline_schedule)
         .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
-        .filter(PipelineRun.execution_date >= execution_date - timedelta(days=1))
+        .filter(PipelineRun.execution_date >= execution_date - timedelta(hours=hours))
+        .filter(PipelineRun.execution_date <= execution_date)
         .order_by(PipelineRun.execution_date.desc())
         .first()
     )
 
     if pipeline_run is None:
-        return False
-
-    if pipeline_run.execution_date != execution_date and \
-        pipeline_run.pipeline_schedule.schedule_interval != \
-            ScheduleInterval.ONCE:
         return False
 
     pipeline_run.refresh()
