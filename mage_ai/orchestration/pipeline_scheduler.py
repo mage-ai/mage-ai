@@ -124,7 +124,7 @@ class PipelineScheduler:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
             return True
 
-        tags = self.__build_tags()
+        tags = self.build_tags()
 
         is_integration = PipelineType.INTEGRATION == self.pipeline.type
 
