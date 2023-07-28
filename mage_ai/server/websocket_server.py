@@ -548,8 +548,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     def format_error(cls, error: List[str]) -> List[str]:
         initial_regex = r'.*execute_custom_code\(\).*'
         end_regex = r'.*execute_block_function.*'
+        custom_block_end_regex = r'.*data_preparation\/models\/block.*'
         initial_idx = 0
         end_idx = 0
+        custom_block_end_idx = 0
         for idx, line in enumerate(error):
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             line_without_ansi = ansi_escape.sub('', line)
@@ -557,6 +559,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 initial_idx = idx
             if re.match(end_regex, line_without_ansi):
                 end_idx = idx
+            if re.match(custom_block_end_regex, line_without_ansi):
+                custom_block_end_idx = idx
 
         # Replace hard-to-read dark blue font with yellow font
         error = [e.replace('[0;34m', '[0;33m') for e in error]
@@ -564,6 +568,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         try:
             if initial_idx and end_idx:
                 return error[:initial_idx - 1] + error[end_idx + 1:]
+            elif initial_idx and custom_block_end_idx:
+                return error[:initial_idx - 1] + error[custom_block_end_idx:]
         except Exception:
             pass
 
