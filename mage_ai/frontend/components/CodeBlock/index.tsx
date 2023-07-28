@@ -1158,6 +1158,7 @@ function CodeBlock({
                     <Text
                       color={color}
                       monospace
+                      noWrapping
                     >
                       {(
                         isDBT
@@ -1265,7 +1266,7 @@ function CodeBlock({
                     <Spacing mr={2} />
 
                     {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
-                      && mainContainerWidth > 700) && (
+                      && mainContainerWidth > 800) && (
                       <Tooltip
                         appearBefore
                         block
@@ -1295,6 +1296,7 @@ function CodeBlock({
                           <FlexContainer alignItems="center">
                             <Text
                               monospace={numberOfParentBlocks >= 1}
+                              noWrapping
                               small
                               underline={numberOfParentBlocks === 0}
                             >
@@ -1311,7 +1313,7 @@ function CodeBlock({
                       </Tooltip>
                     )}
 
-                    {blockPipelinesLength >= 2 && (
+                    {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
                       <Spacing ml={2}>
                         <Tooltip
                           block
@@ -1322,6 +1324,7 @@ function CodeBlock({
                           <Link
                             default
                             monospace
+                            noWrapping
                             onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
                             preventDefault
                             small

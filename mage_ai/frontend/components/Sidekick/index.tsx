@@ -484,7 +484,10 @@ function Sidekick({
 
       <SidekickContainerStyle
         fullWidth
-        heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+        heightOffset={(ViewKeyEnum.TERMINAL === activeView || activeView === ViewKeyEnum.TREE)
+          ? 0
+          : SCROLLBAR_WIDTH
+        }
         onBlur={() => {
           if (!selectedFilePath) {
             setDisableShortcuts(false);
@@ -497,17 +500,18 @@ function Sidekick({
             setAllowCodeBlockShortcuts?.(true);
           }
         }}
+        overflowHidden={activeView === ViewKeyEnum.TREE}
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
-                blocks={blocks}
                 blockRefs={blockRefs}
+                blocks={blocks}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
-                height={heightWindow - heightOffset - finalOutputHeight}
+                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
                 messages={messages}
                 // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
