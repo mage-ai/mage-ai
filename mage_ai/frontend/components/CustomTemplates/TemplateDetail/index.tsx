@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -25,6 +26,7 @@ import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import useConfirmLeave from '@utils/hooks/useConfirmLeave';
 import usePrevious from '@utils/usePrevious';
 import {
   BLOCK_TYPE_NAME_MAPPING,
@@ -93,6 +95,7 @@ function TemplateDetail({
   });
 
   const [codeBlockKey, setCodeBlockKey] = useState<number>(Number(new Date()));
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
@@ -154,10 +157,13 @@ function TemplateDetail({
             if (onCreateCustomTemplate) {
               onCreateCustomTemplate?.(ct);
             } else {
-              router.push(
-                '/templates/[...slug]',
-                `/templates/${encodeURIComponent(ct?.template_uuid)}`,
-              );
+              setIsRedirecting(true);
+              setTimeout(() => {
+                router.push(
+                  '/templates/[...slug]',
+                  `/templates/${encodeURIComponent(ct?.template_uuid)}`,
+                );
+              }, 1);
             }
           },
           onErrorCallback: (response, errors) => showError({
@@ -189,6 +195,14 @@ function TemplateDetail({
 
             setTemplateAttributesState(ct);
             setTouched(false);
+
+            toast.success(
+              'Template successfully saved.',
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: 'custom_block_template',
+              },
+            );
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -211,12 +225,11 @@ function TemplateDetail({
         || (!isMarkdown && !templateAttributes?.language);
     }
 
-    return !touched;
+    return false;
   }, [
     isMarkdown,
     isNewCustomTemplate,
     templateAttributes,
-    touched,
   ]);
 
   const {
@@ -528,8 +541,14 @@ function TemplateDetail({
     heightOffset,
   ]);
 
+  const { ConfirmLeaveModal } = useConfirmLeave({
+    shouldWarn: !isRedirecting && touched,
+    warningMessage: 'You have unsaved changes. Are you sure you want to leave?',
+  });
+
   return (
     <ContainerStyle>
+      <ConfirmLeaveModal />
       <NavigationStyle height={contained ? heightFinal : null}>
         <FlexContainer
           flexDirection="column"
@@ -572,6 +591,7 @@ function TemplateDetail({
                       ...prev,
                       template_uuid: e.target.value,
                     }))}
+                    placeholder="e.g. some_template_name"
                     primary
                     setContentOnMount
                     value={templateAttributes?.template_uuid || ''}

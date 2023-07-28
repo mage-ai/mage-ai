@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.custom_templates.utils import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.shared.hash import ignore_keys
+from mage_ai.shared.utils import clean_name
 
 OBJECT_TYPE_KEY = 'object_type'
 
@@ -56,6 +57,10 @@ class CustomTemplateResource(GenericResource):
         custom_template = None
         object_type = payload.get(OBJECT_TYPE_KEY)
         template_uuid = payload.get('template_uuid')
+
+        if template_uuid:
+            template_uuid = clean_name(template_uuid)
+            payload['template_uuid'] = template_uuid
 
         if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
@@ -130,9 +135,18 @@ class CustomTemplateResource(GenericResource):
         self.model.delete
 
     async def update(self, payload, **kwargs):
-        cache = await BlockActionObjectCache.initialize_cache()
+        template_uuid = payload.get('template_uuid')
 
-        cache.update_custom_block_template(self.model, remove=True)
+        if template_uuid:
+            template_uuid = clean_name(template_uuid)
+            payload['template_uuid'] = template_uuid
+
+        object_type = payload.get('object_type')
+
+        cache = None
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
+            cache = await BlockActionObjectCache.initialize_cache()
+            cache.update_custom_block_template(self.model, remove=True)
 
         for key, value in ignore_keys(payload, [
             'uuid',
@@ -141,4 +155,5 @@ class CustomTemplateResource(GenericResource):
             setattr(self.model, key, value)
         self.model.save()
 
-        cache.update_custom_block_template(self.model)
+        if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type and cache:
+            cache.update_custom_block_template(self.model)

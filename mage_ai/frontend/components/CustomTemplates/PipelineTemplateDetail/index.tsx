@@ -1,4 +1,5 @@
 import NextLink from 'next/link';
+import { toast } from 'react-toastify';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
@@ -17,6 +18,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import useConfirmLeave from '@utils/hooks/useConfirmLeave';
 import usePrevious from '@utils/usePrevious';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
@@ -68,6 +70,7 @@ function PipelineTemplateDetail({
     uuid: 'CustomTemplates/PipelineTemplateDetail',
   });
 
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
   const [templateAttributes, setTemplateAttributesState] =
     useState<CustomTemplateType | {
@@ -105,11 +108,10 @@ function PipelineTemplateDetail({
       return !templateAttributes?.template_uuid;
     }
 
-    return !touched;
+    return false;
   }, [
     isNewCustomTemplate,
     templateAttributes,
-    touched,
   ]);
 
   const [beforeHidden, setBeforeHidden] = useState<boolean>(false);
@@ -127,10 +129,13 @@ function PipelineTemplateDetail({
               onMutateSuccess?.();
             }
 
-            router.push(
-              '/templates/[...slug]',
-              `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
-            );
+            setIsRedirecting(true);
+            setTimeout(() => {
+              router.push(
+                '/templates/[...slug]',
+                `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
+              );
+            }, 1);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -170,6 +175,14 @@ function PipelineTemplateDetail({
             } else {
               setTemplateAttributesState(ct);
               setTouched(false);
+
+              toast.success(
+                'Template successfully saved.',
+                {
+                  position: toast.POSITION.BOTTOM_RIGHT,
+                  toastId: 'custom_pipeline_template',
+                },
+              );
             }
           },
           onErrorCallback: (response, errors) => showError({
@@ -281,6 +294,7 @@ function PipelineTemplateDetail({
                   ...prev,
                   template_uuid: e.target.value,
                 }))}
+                placeholder="e.g. some_template_name"
                 primary
                 setContentOnMount
                 value={templateAttributes?.template_uuid || ''}
@@ -359,6 +373,11 @@ function PipelineTemplateDetail({
     templateAttributes,
   ]);
 
+  const { ConfirmLeaveModal } = useConfirmLeave({
+    shouldWarn: !isRedirecting && touched,
+    warningMessage: 'You have unsaved changes. Are you sure you want to leave?',
+  });
+
   return (
     // @ts-ignore
     <TripleLayout
@@ -370,6 +389,7 @@ function PipelineTemplateDetail({
       setBeforeHidden={setBeforeHidden}
       setBeforeWidth={setBeforeWidth}
     >
+      <ConfirmLeaveModal />
       <DependencyGraph
         blocks={blocks}
         height={heightWindow}
