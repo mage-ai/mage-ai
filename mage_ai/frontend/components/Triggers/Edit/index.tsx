@@ -46,6 +46,7 @@ import {
   CalendarDate,
   Code,
   Schedule,
+  Switch,
   Trash,
 } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
@@ -151,7 +152,7 @@ function Edit({
   }, [settingsInit]);
 
   const [date, setDate] = useState<Date>(null);
-  const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00', second: '00' });
+  const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
   const [landingTimeData, setLandingTimeData] = useState<{
     dayOfMonth?: number;
     dayOfWeek?: number;
@@ -311,7 +312,7 @@ function Edit({
       ScheduleIntervalEnum.HOURLY,
       ScheduleIntervalEnum.MONTHLY,
       ScheduleIntervalEnum.WEEKLY,
-    ].includes(scheduleInterval),
+    ].includes(scheduleInterval as ScheduleIntervalEnum),
     [
       scheduleInterval,
       scheduleType,
@@ -512,7 +513,7 @@ function Edit({
       ScheduleIntervalEnum.DAILY,
       ScheduleIntervalEnum.MONTHLY,
       ScheduleIntervalEnum.WEEKLY,
-    ].includes(scheduleInterval)) {
+    ].includes(scheduleInterval as ScheduleIntervalEnum)) {
       inputs.unshift(
         <Spacing key="Hour" mr={1}>
           <Spacing mb={1}>
@@ -706,7 +707,7 @@ function Edit({
           alignItems="center"
           key="frequency"
         >
-          <Schedule default size={1.5 * UNIT} />
+          <Switch default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
             Enable landing time
@@ -748,10 +749,10 @@ function Edit({
           alignItems="center"
           key="runtime_average"
         >
-          <CalendarDate default size={1.5 * UNIT} />
+          <Schedule default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
-            Runtime average
+            Average runtime
           </Text>
         </FlexContainer>,
         <FlexContainer
