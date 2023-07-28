@@ -1,15 +1,15 @@
 ---
-title: "Running DBT tests"
+title: "Running dbt tests"
 sidebarTitle: "Testing"
 ---
 
-You can write tests for your DBT models by following
-[DBT’s documentation](https://docs.getdbt.com/docs/build/tests).
+You can write tests for your dbt models by following
+[dbt’s documentation](https://docs.getdbt.com/docs/build/tests).
 
-When a pipeline runs, each DBT model block will run and then each test
-associated with that DBT model will be ran.
+When a pipeline runs, each dbt model block will run and then each test
+associated with that dbt model will be ran.
 
-For example, if you add a DBT block to your pipeline for a DBT model named
+For example, if you add a dbt block to your pipeline for a dbt model named
 `my_third_dbt_model` and a test file named `test_my_third_dbt_model.sql` with
 the following folder structure:
 
@@ -26,10 +26,10 @@ demo_project/
 ```
 
 Then whenever your pipeline runs, the test in `test_my_third_dbt_model.sql`
-will also be ran after the DBT run for the model `my_third_dbt_model` is
+will also be ran after the dbt run for the model `my_third_dbt_model` is
 complete.
 
-Any errors in the DBT test will also fail the pipeline run. The output of the
+Any errors in the dbt test will also fail the pipeline run. The output of the
 test will be logged and viewable when inspecting the pipeline’s run and logs.
 
 ---
@@ -57,7 +57,7 @@ Note that the model file and test file have the same name (e.g.
 
 ## Example
 
-The content of the DBT model named `my_third_dbt_model` is:
+The content of the dbt model named `my_third_dbt_model` is:
 
 ```sql
 SELECT 1 AS n_constant_number
@@ -115,8 +115,8 @@ Traceback (most recent call last):
   File "/home/src/mage_ai/data_preparation/models/block/__init__.py", line 94, in execute_and_run_tests
     run_dbt_tests(
   File "/home/src/mage_ai/data_preparation/models/block/dbt/utils/__init__.py", line 466, in run_dbt_tests
-    raise Exception('DBT test failed.')
-Exception: DBT test failed.
+    raise Exception('dbt test failed.')
+Exception: dbt test failed.
 ```
 
 ### Successful test

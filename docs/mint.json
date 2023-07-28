@@ -31,24 +31,22 @@
     "name": "Documentation",
     "icon": "book-open"
   },
-  "anchors": [
+  "primaryTab": {
+    "name": "Docs"
+  },
+  "tabs": [
     {
-      "name": "API Reference",
-      "icon": "square-terminal",
+      "name": "API",
       "url": "api-reference"
     },
     {
-      "name": "Watch 2 min demo",
-      "icon": "circle-play",
-      "url": "https://www.youtube.com/watch?v=hrsErfPDits"
-    },
+      "name": "Guides",
+      "url": "guides"
+    }
+  ],
+  "anchors": [
     {
-      "name": "Play with live tool",
-      "icon": "bullseye-pointer",
-      "url": "https://demo.mage.ai"
-    },
-    {
-      "name": "Get instant help",
+      "name": "Join our community",
       "icon": "slack",
       "url": "https://www.mage.ai/chat"
     }
@@ -63,23 +61,28 @@
       ]
     },
     {
-      "group": "Tutorials",
+      "group": "Get Started",
       "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        "guides/setup-dbt",
         {
-          "group": "ETL pipeline",
+          "group": "Machine learning pipelines",
           "pages": [
-            "tutorials/load-api-data",
-            "tutorials/etl/complete-project"
+            "guides/train-model",
+            "guides/train/complete-project"
           ]
         },
-        "guides/data-integration-pipeline",
-        "tutorials/setup-dbt",
-        "tutorials/examples",
         {
-          "group": "Machine learning pipeline",
+          "group": "Blocks",
           "pages": [
-            "tutorials/train-model",
-            "tutorials/train/complete-project"
+            "guides/blocks/transformer-blocks",
+            "guides/blocks/sql-blocks",
+            "guides/blocks/dynamic-blocks",
+            "guides/blocks/custom-blocks",
+            "guides/blocks/markdown-blocks",
+            "guides/blocks/r-blocks",
+            "integrations/polars"
           ]
         }
       ]
@@ -110,6 +113,7 @@
       "group": "Data integrations",
       "pages": [
         "data-integrations/overview",
+        "data-integrations/configuration",
         {
           "group": "Sources",
           "pages": [
@@ -126,24 +130,46 @@
             "data-integrations/destinations/add-new-destination",
             "data-integrations/destinations/adapt-existing-destination"
           ]
-        },
-        "data-integrations/configuration"
+        }
       ]
     },
     {
-      "group": "DBT",
+      "group": "dbt",
       "pages": [
         "dbt/overview",
-        "dbt/add-existing-dbt",
-        "dbt/run-single-model",
-        "dbt/run-selected-model",
-        "dbt/snapshots",
-        "dbt/run-dbt-spark",
-        "dbt/running-dbt-tests",
-        "dbt/sources",
-        "dbt/connection-profiles",
-        "dbt/incremental-models",
-        "dbt/docs"
+        {
+          "group": "Configuration",
+          "pages": [
+            "dbt/sources",
+            "dbt/connection-profiles",
+            "dbt/run-dbt-spark"
+          ]
+        },
+        {
+          "group": "Models",
+          "pages": [
+            "dbt/add-existing-dbt",
+            "dbt/incremental-models",
+            "dbt/run-single-model",
+            "dbt/run-selected-model"
+          ]
+        },
+        {
+          "group": "Commands",
+          "pages": [
+            "dbt/docs",
+            "dbt/snapshots",
+            "dbt/running-dbt-tests"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Pipeline Development",
+      "pages": [
+        "guides/batch-pipeline",
+        "guides/data-integration-pipeline",
+        "guides/streaming-pipeline"
       ]
     },
     {
@@ -151,43 +177,30 @@
       "pages": [
         "development/project/setup",
         {
-          "group": "Pipelines",
-          "pages": [
-            "guides/batch-pipeline",
-            "guides/data-integration-pipeline",
-            "guides/streaming-pipeline"
-          ]
-        },
-        {
           "group": "Blocks",
           "pages": [
             {
               "group": "Data loader",
               "pages": [
                 "design/data-loading",
-                "guides/load-data-s3",
-                "guides/io_config",
                 "development/blocks/data_loaders/templates"
               ]
             },
             {
               "group": "Transformer",
               "pages": [
-                "guides/transformer-blocks",
                 "development/blocks/transformers/templates"
               ]
             },
             {
               "group": "Data exporter",
               "pages": [
-                "guides/export-data-s3",
                 "development/blocks/data_exporters/templates"
               ]
             },
             {
               "group": "Sensors",
               "pages": [
-                "guides/sensors",
                 "development/blocks/sensors/templates"
               ]
             },
@@ -208,14 +221,9 @@
             {
               "group": "SQL",
               "pages": [
-                "guides/sql-blocks",
                 "development/blocks/sql/trino"
               ]
-            },
-            "guides/r-blocks",
-            "guides/blocks/dynamic-blocks",
-            "guides/blocks/custom-blocks",
-            "guides/blocks/markdown-blocks"
+            }
           ]
         },
         {
@@ -325,11 +333,12 @@
             "orchestration/pipeline-runs/retrying-block-runs",
             "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
-        }
+        },
+        "guides/integrate-mage-airflow"
       ]
     },
     {
-      "group": "Production",
+      "group": "Deployment",
       "pages": [
         {
           "group": "Authentication",
@@ -399,7 +408,8 @@
           "pages": [
             "production/configuring-production-settings/overview",
             "production/configuring-production-settings/secrets",
-            "production/configuring-production-settings/compute-resource"
+            "production/configuring-production-settings/compute-resource",
+            "getting-started/kernels"
           ]
         },
         {
@@ -438,10 +448,15 @@
     {
       "group": "Integrations",
       "pages": [
-        "integrations/spark-pyspark",
-        "integrations/databricks",
         {
-          "group": "Data",
+          "group": "Computation",
+          "pages": [
+            "integrations/spark-pyspark",
+            "integrations/databricks"
+          ]
+        },
+        {
+          "group": "Storage",
           "pages": [
             "integrations/databases/BigQuery",
             "integrations/databases/ClickHouse",
@@ -456,53 +471,38 @@
           ]
         },
         {
-          "group": "Airflow",
+          "group": "Orchestration",
           "pages": [
             "integrations/airflow",
-            "guides/integrate-mage-airflow"
-          ]
-        },
-        {
-          "group": "Prefect",
-          "pages": [
             "integrations/prefect"
           ]
         },
-        "integrations/airbyte",
-        "integrations/dbt-cloud",
-        "integrations/hightouch",
-        "integrations/stitch",
-        "integrations/metaplane",
-        "integrations/great-expectations",
-        "integrations/polars"
-      ]
-    },
-    {
-      "group": "Guides",
-      "pages": [
         {
-          "group": "Visualizations",
+          "group": "Integration",
           "pages": [
-            "contributing/charts/how-to-add"
+            "integrations/airbyte",
+            "integrations/stitch"
           ]
         },
         {
-          "group": "Misc",
+          "group": "Transformation",
           "pages": [
-            "getting-started/kernels"
+            "integrations/dbt-cloud"
+          ]
+        },
+        {
+          "group": "Observability",
+          "pages": [
+            "integrations/great-expectations",
+            "integrations/metaplane"
+          ]
+        },
+        {
+          "group": "Reverse ETL",
+          "pages": [
+            "integrations/hightouch"
           ]
         }
-      ]
-    },
-    {
-      "group": "Community",
-      "pages": [
-        "community/github",
-        "community/slack",
-        "community/linkedin",
-        "community/twitter",
-        "community/blog",
-        "community/contact"
       ]
     },
     {
@@ -517,9 +517,15 @@
         {
           "group": "Frontend",
           "pages": [
-            "contributing/frontend/overview"
+            "contributing/frontend/overview",
+            "contributing/charts/how-to-add"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "group": "Usage Statistics",
+      "pages": [
         "contributing/statistics/overview"
       ]
     },
@@ -527,9 +533,14 @@
       "group": "API",
       "pages": [
         "api-reference/overview",
-        "api-reference/resources",
-        "api-reference/policies",
-        "api-reference/presenters"
+        {
+          "group": "Concepts",
+          "pages": [
+            "api-reference/resources",
+            "api-reference/policies",
+            "api-reference/presenters"
+          ]
+        }
       ]
     },
     {
@@ -589,14 +600,6 @@
         "api-reference/sessions/overview",
         "api-reference/sessions/create-session"
       ]
-    },
-    {
-      "group": "About",
-      "pages": [
-        "about/features",
-        "about/releases",
-        "about/roadmap"
-      ]
     }
   ],
   "backgroundImage": "/background.png",
@@ -604,7 +607,8 @@
     "linkedin": "https://www.linkedin.com/company/magetech/",
     "twitter": "https://twitter.com/mage_ai",
     "facebook": "https://www.facebook.com/mageai",
-    "instagram": "https://www.instagram.com/mage_ai/"
+    "instagram": "https://www.instagram.com/mage_ai/",
+    "github": "https://www.github.com/mage-ai"
   },
   "analytics": {
     "amplitude": {
