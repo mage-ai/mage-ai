@@ -343,9 +343,9 @@ class PipelineSchedule(BaseModel):
                 reverse=True,
             )
 
-            for pipeline_run in pipeline_runs:
+            for pr in pipeline_runs:
                 runtime = (
-                    pipeline_run.completed_at - pipeline_run.created_at
+                    pr.completed_at - pr.created_at
                 ).total_seconds()
                 previous_runtimes.append(runtime)
 
@@ -370,7 +370,7 @@ class PipelineSchedule(BaseModel):
         if len(previous_runtimes) == 0:
             return None
 
-        return sum(previous_runtimes) / len(previous_runtimes)
+        return round(sum(previous_runtimes) / len(previous_runtimes), 2)
 
 
 class PipelineRun(BaseModel):

@@ -4,7 +4,11 @@ from datetime import datetime
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.triggers import ScheduleStatus
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
@@ -99,6 +103,230 @@ class PipelineScheduleTests(DBTestCase):
         pipeline_schedule2.update(status=ScheduleStatus.ACTIVE)
         self.assertFalse(pipeline_schedule1.should_schedule())
         self.assertTrue(pipeline_schedule2.should_schedule())
+
+    def test_landing_time_enabled(self):
+        for schedule_type in [
+            ScheduleType.API,
+            ScheduleType.EVENT,
+        ]:
+            self.assertFalse(PipelineSchedule.create(
+                pipeline_uuid='test_pipeline',
+                schedule_interval=ScheduleInterval.HOURLY,
+                schedule_type=schedule_type,
+                settings=dict(landing_time_enabled=True),
+            ).landing_time_enabled())
+
+        for schedule_interval in [
+            '* * * * *',
+            ScheduleInterval.ONCE,
+        ]:
+            self.assertFalse(PipelineSchedule.create(
+                pipeline_uuid='test_pipeline',
+                schedule_interval=schedule_interval,
+                schedule_type=ScheduleType.TIME,
+                settings=dict(landing_time_enabled=True),
+            ).landing_time_enabled())
+
+        self.assertFalse(PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=False),
+        ).landing_time_enabled())
+
+        self.assertFalse(PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings={},
+        ).landing_time_enabled())
+
+        self.assertTrue(PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+        ).landing_time_enabled())
+
+    @freeze_time('2023-12-10 12:00:00')
+    def test_runtime_history(self):
+        pipeline_schedule = PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+        )
+        self.assertEqual(pipeline_schedule.runtime_history(), [])
+
+        pipeline_schedule2 = PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+        )
+
+        for created_at_hour, completed_at_hour, execution_date_hour in [
+            (1, 2, 4),
+            (2, 4, 3),
+            (1, 7, 2),
+            (2, 9, 1),
+            (9, 11, 0),
+            (11, 14, 5),
+            (14, 18, 6),
+            (18, 23, 7),
+        ]:
+            created_at = datetime(2023, 12, 10, created_at_hour, 0, 0)
+            completed_at = datetime(2023, 12, 10, completed_at_hour, 0, 0)
+            execution_date = datetime(2023, 12, 10, execution_date_hour, 0, 0)
+
+            for ps in [pipeline_schedule, pipeline_schedule2]:
+                PipelineRun.create(
+                    completed_at=completed_at,
+                    created_at=created_at,
+                    execution_date=execution_date,
+                    pipeline_schedule_id=ps.id,
+                    pipeline_uuid=ps.pipeline_uuid,
+                    status=PipelineRun.PipelineRunStatus.COMPLETED,
+                    variables=ps.variables,
+                )
+
+        created_at = datetime(2023, 12, 10, 0, 0, 0)
+        completed_at = datetime(2023, 12, 10, 23, 0, 0)
+        execution_date = datetime(2023, 12, 10, 23, 59, 59)
+        PipelineRun.create(
+            completed_at=completed_at,
+            created_at=created_at,
+            execution_date=execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.FAILED,
+            variables=pipeline_schedule.variables,
+        )
+
+        self.assertEqual(pipeline_schedule.runtime_history(), [
+            (5 * 3600.0),
+            (4 * 3600.0),
+            (3 * 3600.0),
+            (1 * 3600.0),
+            (2 * 3600.0),
+            (6 * 3600.0),
+            (7 * 3600.0),
+        ])
+
+        created_at = datetime(2023, 12, 10, 0, 0, 0)
+        completed_at = datetime(2023, 12, 10, 23, 0, 0)
+        execution_date = datetime(2023, 12, 10, 23, 59, 59)
+        pipeline_run = PipelineRun.create(
+            completed_at=completed_at,
+            created_at=created_at,
+            execution_date=execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+
+        self.assertEqual(pipeline_schedule.runtime_history(pipeline_run=pipeline_run), [
+            (23 * 3600.0),
+            (5 * 3600.0),
+            (4 * 3600.0),
+            (3 * 3600.0),
+            (1 * 3600.0),
+            (2 * 3600.0),
+            (6 * 3600.0),
+        ])
+        self.assertEqual(pipeline_schedule.runtime_history(
+            pipeline_run=pipeline_run,
+            sample_size=5,
+        ), [
+            (23 * 3600.0),
+            (5 * 3600.0),
+            (4 * 3600.0),
+            (3 * 3600.0),
+            (1 * 3600.0),
+        ])
+
+        created_at = datetime(2023, 12, 10, 0, 0, 0)
+        completed_at = datetime(2023, 12, 10, 22, 0, 0)
+        execution_date = datetime(2023, 12, 11, 23, 59, 59)
+        pipeline_run = PipelineRun.create(
+            completed_at=completed_at,
+            created_at=created_at,
+            execution_date=execution_date,
+            metrics=dict(previous_runtimes=[
+                1.0,
+                2.0,
+                3.0,
+                4.0,
+                5.0,
+                6.0,
+                7.0,
+                8.0,
+            ]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+
+        self.assertEqual(pipeline_schedule.runtime_history(pipeline_run=pipeline_run), [
+            (22 * 3600.0),
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+        ])
+
+        self.assertEqual(pipeline_schedule.runtime_history(
+            pipeline_run=pipeline_run,
+            sample_size=3,
+        ), [
+            (22 * 3600.0),
+            1.0,
+            2.0,
+        ])
+
+    def test_runtime_average(self):
+        pipeline_schedule = PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+        )
+        self.assertEqual(pipeline_schedule.runtime_average(), None)
+
+        created_at = datetime(2023, 12, 10, 0, 0, 0)
+        completed_at = datetime(2023, 12, 10, 9, 0, 0)
+        execution_date = datetime(2023, 12, 11, 23, 59, 59)
+        pipeline_run = PipelineRun.create(
+            completed_at=completed_at,
+            created_at=created_at,
+            execution_date=execution_date,
+            metrics=dict(previous_runtimes=[
+                1 * 3600.0,
+                2 * 3600.0,
+                3 * 3600.0,
+                4 * 3600.0,
+                5 * 3600.0,
+                6 * 3600.0,
+                7 * 3600.0,
+                8 * 3600.0,
+            ]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+        self.assertEqual(pipeline_schedule.runtime_average(
+            pipeline_run=pipeline_run,
+        ), 15428.57)
+
+        self.assertEqual(pipeline_schedule.runtime_average(
+            pipeline_run=pipeline_run,
+            sample_size=5,
+        ), 13680.0)
 
 
 class PipelineRunTests(DBTestCase):
