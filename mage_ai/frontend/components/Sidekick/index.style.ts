@@ -12,6 +12,7 @@ export const TABLE_COLUMN_HEADER_HEIGHT = COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3
 export const SidekickContainerStyle = styled.div<{
   fullWidth: boolean;
   heightOffset: number;
+  overflowHidden?: boolean;
 }>`
   ${ScrollbarStyledCss}
 
@@ -21,6 +22,10 @@ export const SidekickContainerStyle = styled.div<{
 
   ${props => `
     height: calc(100vh - ${ALL_HEADERS_HEIGHT}px - ${props.heightOffset}px);
+  `}
+
+  ${props => props.overflowHidden && `
+    overflow: hidden;
   `}
 `;
 
