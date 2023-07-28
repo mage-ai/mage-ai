@@ -70,10 +70,11 @@ class MonitorStats:
                 continue
             if p.pipeline_schedule_id not in stats_by_schedule_id:
                 if p.pipeline_schedule_id is None:
-                    stats_by_schedule_id[NO_PIPELINE_SCHEDULE_ID] = dict(
-                        name=NO_PIPELINE_SCHEDULE_NAME,
-                        data=dict(),
-                    )
+                    if NO_PIPELINE_SCHEDULE_ID not in stats_by_schedule_id:
+                        stats_by_schedule_id[NO_PIPELINE_SCHEDULE_ID] = dict(
+                            name=NO_PIPELINE_SCHEDULE_NAME,
+                            data=dict(),
+                        )
                 else:
                     stats_by_schedule_id[p.pipeline_schedule_id] = dict(
                         name=p.pipeline_schedule_name,
