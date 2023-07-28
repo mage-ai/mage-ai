@@ -1292,10 +1292,10 @@ def schedule_all():
         backfills,
     )
 
-    active_pipeline_schedule_ids_with_landing_time_enabled = []
+    active_pipeline_schedule_ids_with_landing_time_enabled = set()
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.landing_time_enabled():
-            active_pipeline_schedule_ids_with_landing_time_enabled.append(pipeline_schedule.id)
+            active_pipeline_schedule_ids_with_landing_time_enabled.add(pipeline_schedule.id)
 
     previous_pipeline_run_by_pipeline_schedule_id = {}
     if len(active_pipeline_schedule_ids_with_landing_time_enabled) >= 1:
@@ -1324,15 +1324,15 @@ def schedule_all():
     pipeline_by_uuid = dict()
     concurrency_config_by_uuid = dict()
 
+    git_sync_result = None
     sync_config = get_sync_config()
-    pipeline_schedules_to_schedule = []
     for pipeline_schedule in active_pipeline_schedules:
         lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
         if not lock.try_acquire_lock(lock_key):
             continue
 
         previous_runtimes = []
-        if pipeline_schedule.landing_time_enabled():
+        if pipeline_schedule.id in active_pipeline_schedule_ids_with_landing_time_enabled:
             previous_pipeline_run = previous_pipeline_run_by_pipeline_schedule_id.get(
                 pipeline_schedule.id,
             )
@@ -1349,6 +1349,7 @@ def schedule_all():
         ]
 
         if not should_schedule and not initial_pipeline_runs:
+            lock.release_lock(lock_key)
             continue
 
         pipeline_uuid = pipeline_schedule.pipeline_uuid
@@ -1372,18 +1373,11 @@ def schedule_all():
 
         if should_schedule and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
-            pipeline_schedules_to_schedule.append(pipeline_schedule)
+            # Perform git sync if "sync_on_pipeline_run" is enabled and no other git sync has been
+            # run for this scheduler loop.
+            if not git_sync_result and sync_config and sync_config.sync_on_pipeline_run:
+                git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
 
-    if len(pipeline_schedules_to_schedule) > 0:
-        git_sync_result = None
-        if sync_config and sync_config.sync_on_pipeline_run:
-            git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
-
-        for pipeline_schedule in pipeline_schedules_to_schedule:
-            lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
-            if not lock.try_acquire_lock(lock_key):
-                continue
-            pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -1405,6 +1399,14 @@ def schedule_all():
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
                 pipeline_run = PipelineRun.create(**payload)
+                # Log Git sync status for new pipeline runs if a git sync result exists
+                if git_sync_result:
+                    pipeline_scheduler = PipelineScheduler(pipeline_run)
+                    log_git_sync(
+                        git_sync_result,
+                        pipeline_scheduler.logger,
+                        pipeline_scheduler.build_tags(),
+                    )
                 initial_pipeline_runs.append(pipeline_run)
 
         # Enforce pipeline concurrency limit
@@ -1416,16 +1418,9 @@ def schedule_all():
         if pipeline_run_quota > 0:
             initial_pipeline_runs.sort(key=lambda x: x.execution_date)
             for r in initial_pipeline_runs[:pipeline_run_quota]:
-                pipeline_scheduler = PipelineScheduler(r)
-                # Log Git sync status for new pipeline runs if a git sync result exists
-                log_git_sync(
-                    git_sync_result,
-                    pipeline_scheduler.logger,
-                    pipeline_scheduler.build_tags(),
-                )
+                PipelineScheduler(r).start(should_schedule=False)
 
-                pipeline_scheduler.start(should_schedule=False)
-            lock.release_lock(lock_key)
+        lock.release_lock(lock_key)
 
     # Schedule active pipeline runs
     active_pipeline_runs = PipelineRun.active_runs_for_pipelines(
