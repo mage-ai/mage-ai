@@ -18,6 +18,7 @@ function TriggerDetailPage({
   pipelineUUID,
   subpath,
 }: TriggerDetailPageProps) {
+  const isEdit = PAGE_NAME_EDIT === subpath;
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const {
@@ -30,7 +31,9 @@ function TriggerDetailPage({
   const {
     data: pipelineScheduleData,
     mutate: fetchPipelineSchedule,
-  } = api.pipeline_schedules.detail(pipelineScheduleId);
+  } = api.pipeline_schedules.detail(pipelineScheduleId, {
+    _format: isEdit ? 'with_runtime_average' : null,
+  });
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -44,7 +47,7 @@ function TriggerDetailPage({
     uuid: pipelineUUID,
   };
 
-  if (PAGE_NAME_EDIT === subpath) {
+  if (isEdit) {
     return (
       <TriggerEdit
         errors={errors}

@@ -66,6 +66,7 @@ export default interface PipelineScheduleType {
   name?: string;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
+  runtime_average?: float;
   schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;
   settings?: PipelineScheduleSettingsType;

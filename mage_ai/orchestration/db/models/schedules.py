@@ -275,6 +275,17 @@ class PipelineSchedule(BaseModel):
         return False
 
     def landing_time_enabled(self) -> bool:
+        if ScheduleType.TIME != self.schedule_type:
+            return False
+
+        if self.schedule_interval not in [
+            '@daily',
+            '@hourly',
+            '@monthly',
+            '@weekly',
+        ]:
+            return False
+
         return (self.settings or {}).get('landing_time_enabled', False)
 
     def runtime_history(
@@ -342,6 +353,9 @@ class PipelineSchedule(BaseModel):
             pipeline_run=pipeline_run,
             sample_size=sample_size,
         )
+
+        if len(previous_runtimes) == 0:
+            return None
 
         return sum(previous_runtimes) / len(previous_runtimes)
 

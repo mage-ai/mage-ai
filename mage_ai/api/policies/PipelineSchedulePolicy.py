@@ -47,6 +47,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'runtime_average',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

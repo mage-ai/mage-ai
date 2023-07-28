@@ -21,18 +21,23 @@ class PipelineSchedulePresenter(BasePresenter):
     ]
 
     async def present(self, **kwargs):
-        if constants.LIST == kwargs['format']:
+        display_format = kwargs['format']
+        data = self.model.to_dict()
+
+        if constants.LIST == display_format:
             return self.model.to_dict(include_attributes=[
                 'event_matchers',
                 'last_pipeline_run_status',
                 'pipeline_runs_count',
             ])
-        elif kwargs['format'] in [constants.DETAIL, constants.UPDATE]:
+        elif display_format in [constants.DETAIL, constants.UPDATE]:
             return self.model.to_dict(include_attributes=[
                 'event_matchers',
             ])
+        elif 'with_runtime_average' == display_format:
+            data['runtime_average'] = self.model.runtime_average()
 
-        return self.model.to_dict()
+        return data
 
 
 PipelineSchedulePresenter.register_format(
@@ -49,5 +54,13 @@ PipelineSchedulePresenter.register_formats([
     constants.UPDATE,
 ], PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
+    ],
+)
+
+
+PipelineSchedulePresenter.register_formats([
+    'with_runtime_average',
+], PipelineSchedulePresenter.default_attributes + [
+        'runtime_average',
     ],
 )
