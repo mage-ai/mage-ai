@@ -187,6 +187,12 @@ class PipelineSchedule(BaseModel):
             cron_itr = croniter(self.schedule_interval, now)
             current_execution_date = cron_itr.get_prev(datetime)
 
+        # If landing time is enabled, the start_time is used as the date and time the schedule
+        # should finish running by.
+
+        # For example, if start_time is 2023-12-01 12:25:00
+        # and if the schedule_interval is @daily, then the schedule should finish running by
+        # every day by 12:25:00.
         if self.landing_time_enabled() and self.start_time:
             if self.schedule_interval == '@hourly':
                 current_execution_date = current_execution_date.replace(
@@ -265,7 +271,14 @@ class PipelineSchedule(BaseModel):
                         return True
                     else:
                         runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
-                        sd = ceil(stdev(previous_runtimes))
+
+                        if len(previous_runtimes) >= 2:
+                            sd = ceil(stdev(previous_runtimes))
+                        else:
+                            sd = 0
+
+                        # This may cause duplicate pipeline runs to be scheduled if
+                        # there is more than 1 scheduler running.
                         if datetime.now(timezone.utc) >= current_execution_date - timedelta(
                             seconds=runtime + sd,
                         ):
