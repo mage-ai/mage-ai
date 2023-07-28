@@ -9,7 +9,6 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.pipeline_scheduler import (
     configure_pipeline_run_payload,
-    start_scheduler,
     stop_pipeline_run,
 )
 
@@ -183,12 +182,6 @@ class PipelineRunResource(DatabaseResource):
             pipeline.type,
             payload,
         )
-
-        def _create_callback(resource):
-            pipeline_run = resource.model
-            start_scheduler(pipeline_run)
-
-        self.on_create_callback = _create_callback
 
         return super().create(configured_payload, user, **kwargs)
 

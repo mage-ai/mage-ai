@@ -1,10 +1,11 @@
+from typing import Dict
+
 import aiohttp
 
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.repo import get_repo_path
-from typing import Dict
 
 
 class Project():

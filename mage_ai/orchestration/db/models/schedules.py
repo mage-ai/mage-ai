@@ -1,16 +1,16 @@
 import asyncio
-import dateutil.parser
 import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
 
+import dateutil.parser
 import pytz
 from croniter import croniter
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -394,6 +394,16 @@ class PipelineRun(BaseModel):
     def initial_block_runs(self) -> List['BlockRun']:
         return [b for b in self.block_runs
                 if b.status == BlockRun.BlockRunStatus.INITIAL]
+
+    @property
+    def queued_or_running_block_runs(self) -> List['BlockRun']:
+        return [
+            b for b in self.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.QUEUED,
+                BlockRun.BlockRunStatus.RUNNING,
+            ]
+        ]
 
     @property
     def completed_block_runs(self) -> List['BlockRun']:

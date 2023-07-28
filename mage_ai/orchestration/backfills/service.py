@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from mage_ai.data_preparation.models.triggers import (
-    ScheduleInterval,
-    ScheduleStatus,
-)
-from mage_ai.orchestration.db.models.schedules import Backfill, PipelineRun, PipelineSchedule
-from mage_ai.shared.hash import merge_dict
 from typing import Dict, List
+
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
+
+from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleStatus
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    PipelineRun,
+    PipelineSchedule,
+)
+from mage_ai.shared.hash import merge_dict
 
 
 def start_backfill(backfill: Backfill) -> List[PipelineRun]:
@@ -39,7 +42,6 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
             execution_date=execution_date,
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=backfill.pipeline_uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
             variables=merge_dict(backfill_variables or {}, backfill_run_variables),
         )
         pipeline_runs.append(pipeline_run)
