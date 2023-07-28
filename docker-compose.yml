@@ -5,41 +5,52 @@ services:
     build:
       context: .
       dockerfile: ./dev.Dockerfile
-    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+    command: "bash scripts/run_app.sh python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
     environment:
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      # - AZURE_KEY_VAULT_URL=https://magetestkeyvault.vault.azure.net/
+      # - AZURE_CLIENT_ID=7b86c2e6-21f4-4d27-840a-5a672d11b3ed
+      # - AZURE_CLIENT_SECRET=u2H8Q~aTRGtEVDDORqeCUJp1QdFUsEp58fCT-aZr
+      # - AZURE_TENANT_ID=312c7fd5-5a7f-46e4-ba4d-a3a6958c23ca
       - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
       - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
       - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
       - ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
-      - ENV=dev
+      - ENV=prod
       - GCP_PROJECT_ID=$GCP_PROJECT_ID
       - GCP_REGION=$GCP_REGION
-      - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+      # - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:magepassword@test-postgres-cdc.cxj4djmtpwkx.us-west-2.rds.amazonaws.com:5432/postgres
+      - MAGE_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
       - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
       - NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
       - OPENAI_API_KEY=$OPENAI_API_KEY
-      - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+      - REQUIRE_USER_AUTHENTICATION=1
       - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
-      - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
-      - LDAP_SERVER=$LDAP_SERVER
-      - LDAP_BIND_DN=$LDAP_BIND_DN
-      - LDAP_BIND_PASSWORD=$LDAP_BIND_PASSWORD
-      - LDAP_BASE_DN=$LDAP_BASE_DN
-      - LDAP_AUTHENTICATION_FILTER=$LDAP_AUTHENTICATION_FILTER
-      - LDAP_AUTHORIZATION_FILTER=$LDAP_AUTHORIZATION_FILTER
-      - LDAP_ADMIN_USERNAME=$LDAP_ADMIN_USERNAME
+      # - AUTHENTICATION_MODE=ldap
+      # - LDAP_SERVER=ldap://openldap:1389
+      # - LDAP_BIND_DN=cn=admin,dc=example,dc=org
+      # - LDAP_BIND_PASSWORD=adminpassword
+      # - LDAP_BASE_DN=dc=example,dc=orgg
+      # - LDAP_AUTHENTICATION_FILTER=$LDAP_AUTHENTICATION_FILTER
+      # - LDAP_AUTHORIZATION_FILTER=$LDAP_AUTHORIZATION_FILTER
+      # - LDAP_ADMIN_USERNAME=admin
       - SERVER_VERBOSITY=$SERVER_VERBOSITY
+      - TZ=America/Los_Angeles
     ports:
       - 6789:6789
     volumes:
       - .:/home/src
       - ~/.aws:/root/.aws
+      - ~/.gcp:/root/.gcp
       - ~/.mage_data:/root/.mage_data
+      - ~/.ssh:/root/.ssh
+      - pgdata2:/var/lib/postgresql/data
     restart: on-failure:5
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging
+    networks:
+      - mage-app
   app:
     image: mage/data
     build:
@@ -72,3 +83,11 @@ services:
       - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
       - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
     working_dir: /home/src/mage_ai/frontend
+networks:
+  mage-app:
+    name: mage-app
+    external: true
+
+volumes:
+  pgdata2:
+
