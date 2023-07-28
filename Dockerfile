@@ -1,4 +1,4 @@
-FROM python:3.10
+sdfasfsafasdfFROM python:3.10
 LABEL description="Deploy Mage on ECS"
 ARG PIP=pip3
 USER root
