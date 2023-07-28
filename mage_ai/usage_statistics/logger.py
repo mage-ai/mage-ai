@@ -1,13 +1,19 @@
+import json
+import platform
+from typing import Callable, Dict
+
+import aiohttp
+
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
-from mage_ai.usage_statistics.constants import API_ENDPOINT, EventActionType, EventObjectType
-from typing import Callable, Dict
-import aiohttp
-import json
-import platform
+from mage_ai.usage_statistics.constants import (
+    API_ENDPOINT,
+    EventActionType,
+    EventObjectType,
+)
 
 
 class UsageStatisticLogger():
@@ -71,7 +77,10 @@ class UsageStatisticLogger():
             users=User.query.count(),
         ))
 
-    async def __send_message(self, object_name: str, action_name: str, data: Dict = {}) -> bool:
+    async def __send_message(self, object_name: str, action_name: str, data: Dict = None) -> bool:
+        if data is None:
+            data = {}
+
         data_to_send = merge_dict(
             merge_dict(self.__shared_metadata(), dict(
                 action=action_name,
