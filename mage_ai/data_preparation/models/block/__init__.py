@@ -1163,10 +1163,10 @@ class Block:
                     )
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
+                    block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
                 except Exception:
                     print('Error initializing block module.')
-                block_function_updated = getattr(self.module, block_function.__name__)
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
