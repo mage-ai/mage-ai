@@ -1,6 +1,6 @@
 import os
-from datetime import datetime
-
+from croniter import croniter
+from datetime import datetime, timezone
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,
@@ -327,6 +328,108 @@ class PipelineScheduleTests(DBTestCase):
             pipeline_run=pipeline_run,
             sample_size=5,
         ), 13680.0)
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_current_execution_date(self):
+        now = datetime.now(timezone.utc)
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_type=ScheduleType.TIME,
+        )
+
+        self.assertEqual(PipelineSchedule.create(**shared_attrs).current_execution_date(), None)
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.ONCE,
+            ))).current_execution_date(),
+            datetime(2023, 10, 11, 12, 13, 14).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.HOURLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 11, 12, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.DAILY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 11, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.WEEKLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 9, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.MONTHLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        cron_itr = croniter('* * * * *', now)
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval='* * * * *',
+            ))).current_execution_date(),
+            cron_itr.get_prev(datetime),
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_current_execution_date_when_landing_time_enabled(self):
+        now = datetime.now(timezone.utc)
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval='@once',
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            start_time=datetime(2024, 11, 12, 13, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(PipelineSchedule.create(**shared_attrs).current_execution_date(), now)
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.HOURLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 11, 12, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.DAILY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 11, 13, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.WEEKLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 10, 13, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.MONTHLY,
+            ))).current_execution_date(),
+            datetime(2023, 10, 12, 13, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        cron_itr = croniter('* * * * *', now)
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval='* * * * *',
+            ))).current_execution_date(),
+            cron_itr.get_prev(datetime),
+        )
 
 
 class PipelineRunTests(DBTestCase):
