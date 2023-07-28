@@ -7,6 +7,9 @@ import dateutil.parser
 import enum
 
 
+NO_PIPELINE_SCHEDULE_ID = 'no_pipeline_schedule_id'
+NO_PIPELINE_SCHEDULE_NAME = 'no_pipeline_schedule_name'
+
 class MonitorStatsType(str, enum.Enum):
     PIPELINE_RUN_COUNT = 'pipeline_run_count'
     PIPELINE_RUN_TIME = 'pipeline_run_time'
@@ -63,15 +66,23 @@ class MonitorStats:
         stats_by_schedule_id = dict()
         pipeline_type_by_pipeline_uuid = dict()
         for p in pipeline_runs:
-            if p.pipeline_schedule is None:
+            if p.pipeline_schedule is None and not group_by_pipeline_type:
                 continue
             if p.pipeline_schedule_id not in stats_by_schedule_id:
-                stats_by_schedule_id[p.pipeline_schedule_id] = dict(
-                    name=p.pipeline_schedule_name,
-                    data=dict(),
-                )
+                if p.pipeline_schedule_id is None:
+                    stats_by_schedule_id[NO_PIPELINE_SCHEDULE_ID] = dict(
+                        name=NO_PIPELINE_SCHEDULE_NAME,
+                        data=dict(),
+                    )
+                else:
+                    stats_by_schedule_id[p.pipeline_schedule_id] = dict(
+                        name=p.pipeline_schedule_name,
+                        data=dict(),
+                    )
             created_at_formatted = p.created_at.strftime('%Y-%m-%d')
-            data = stats_by_schedule_id[p.pipeline_schedule_id]['data']
+            data = stats_by_schedule_id[p.pipeline_schedule_id]['data'] \
+                if p.pipeline_schedule_id is not None \
+                else stats_by_schedule_id[NO_PIPELINE_SCHEDULE_ID]['data']
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
             if group_by_pipeline_type:
