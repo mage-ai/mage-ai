@@ -19,11 +19,11 @@ class IntegrationBlock(Block):
         self,
         outputs_from_input_vars,
         execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
         input_vars: List = None,
         logger: Logger = None,
         logging_tags: Dict = None,
-        global_vars: Dict = None,
-        test_execution: bool = False,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         **kwargs,
@@ -214,8 +214,8 @@ class IntegrationBlock(Block):
                                 df = self.execute_block_function(
                                     block_function,
                                     input_vars,
-                                    input_kwargs,
-                                    test_execution,
+                                    global_vars=input_kwargs,
+                                    from_notebook=from_notebook,
                                 )
                                 if df_sample is None:
                                     df_sample = df

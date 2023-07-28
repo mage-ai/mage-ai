@@ -202,9 +202,9 @@ def run_blocks_sync(
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
+                from_notebook=not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=True,
-                test_execution=not run_sensors,
             )
 
             if run_tests:
@@ -278,6 +278,8 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
+
+        self.module = None
 
     @property
     def uuid(self) -> str:
@@ -767,11 +769,11 @@ class Block:
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        from_notebook: bool = False,
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
         run_all_blocks: bool = False,
-        test_execution: bool = False,
         update_status: bool = True,
         store_variables: bool = True,
         verify_output: bool = True,
@@ -825,10 +827,10 @@ class Block:
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
                 execution_partition=execution_partition,
+                from_notebook=from_notebook,
                 global_vars=global_vars,
                 logger=logger,
                 logging_tags=logging_tags,
-                test_execution=test_execution,
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
                 dynamic_block_index=dynamic_block_index,
@@ -912,9 +914,9 @@ class Block:
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
+                    from_notebook=not run_sensors,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
-                    test_execution=not run_sensors,
                     update_status=update_status,
                 )
             )
@@ -923,9 +925,9 @@ class Block:
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
+                from_notebook=not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
-                test_execution=not run_sensors,
                 update_status=update_status,
             )
 
@@ -998,11 +1000,11 @@ class Block:
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
         input_args: List = None,
         logger: Logger = None,
         logging_tags: Dict = None,
-        global_vars: Dict = None,
-        test_execution: bool = False,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
@@ -1061,11 +1063,11 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars_copy,
                 input_vars=input_vars,
                 logger=logger,
                 logging_tags=logging_tags,
-                global_vars=global_vars_copy,
-                test_execution=test_execution,
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
@@ -1082,11 +1084,11 @@ class Block:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
         input_vars: List = None,
         logger: Logger = None,
         logging_tags: Dict = None,
-        global_vars: Dict = None,
-        test_execution: bool = False,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
@@ -1131,8 +1133,8 @@ class Block:
                 outputs = self.execute_block_function(
                     block_function,
                     input_vars,
-                    global_vars,
-                    test_execution,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
                 )
 
             if outputs is None:
@@ -1148,22 +1150,23 @@ class Block:
         self,
         block_function: Callable,
         input_vars: List,
+        from_notebook: bool = False,
         global_vars: Dict = None,
-        test_execution: bool = False,
     ) -> Dict:
         block_function_updated = block_function
-        if test_execution:
-            try:
-                spec = importlib.util.spec_from_file_location(
-                    self.uuid, self.file_path,
-                )
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[self.uuid] = module
-                spec.loader.exec_module(module)
-
-                block_function_updated = getattr(module, block_function.__name__)
-            except Exception:
-                print('Error importing block function dynamically from block file.')
+        if from_notebook:
+            # Initialize module
+            if self.language == BlockLanguage.PYTHON:
+                try:
+                    spec = importlib.util.spec_from_file_location(
+                        self.uuid, self.file_path,
+                    )
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    self.module = module
+                except Exception:
+                    print('Error initializing block module.')
+                block_function_updated = getattr(self.module, block_function.__name__)
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
@@ -1740,12 +1743,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        from_notebook: bool = False,
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
         update_tests: bool = True,
         dynamic_block_uuid: str = None,
-        from_notebook: bool = False,
     ) -> None:
         if global_vars is None:
             global_vars = dict()
@@ -1795,16 +1798,19 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         with redirect_stdout(stdout):
             tests_passed = 0
             for func in test_functions:
+                test_function = func
+                if from_notebook and self.module:
+                    test_function = getattr(self.module, func.__name__)
                 try:
-                    sig = signature(func)
+                    sig = signature(test_function)
                     has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
                     if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        func(*outputs, **global_vars)
+                        test_function(*outputs, **global_vars)
                     else:
-                        func(*outputs)
+                        test_function(*outputs)
                     tests_passed += 1
                 except AssertionError as err:
-                    error_message = f'FAIL: {func.__name__} (block: {self.uuid})'
+                    error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
                     stacktrace = traceback.format_exc()
 
                     if from_notebook:
@@ -2323,15 +2329,15 @@ class SensorBlock(Block):
         self,
         block_function: Callable,
         input_vars: List,
+        from_notebook: bool = False,
         global_vars: Dict = None,
-        test_execution: bool = False,
     ) -> List:
-        if test_execution:
+        if from_notebook:
             return super().execute_block_function(
                 block_function,
                 input_vars,
+                from_notebook=from_notebook,
                 global_vars=global_vars,
-                test_execution=test_execution,
             )
         else:
             sig = signature(block_function)
