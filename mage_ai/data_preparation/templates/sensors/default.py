@@ -13,4 +13,5 @@ def check_condition(*args, **kwargs) -> bool:
         'pipeline_uuid',
         kwargs['execution_date'],
         block_uuid='block_uuid',  # optional if you want the sensor to wait on a specific block
+        hours=24,  # optional if you want to check for a specific time window. Default is 24 hours.
     )
