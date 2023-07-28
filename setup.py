@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.4',
+    version='0.9.9',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -60,9 +60,9 @@ setuptools.setup(
             'clickhouse-connect==0.5.20',
         ],
         'dbt': [
-            'dbt-bigquery==1.4.0',
-            'dbt-core==1.4.0',
-            'dbt-postgres==1.4.0',
+            'dbt-bigquery==1.4.3',
+            'dbt-core==1.4.6',
+            'dbt-postgres==1.4.6',
             'dbt-redshift==1.4.0',
             'dbt-snowflake==1.4.0',
             'dbt-spark==1.4.0',
@@ -117,9 +117,9 @@ setuptools.setup(
             'clickhouse-connect==0.5.20',
             'confluent-avro',
             'db-dtypes==1.0.5',
-            'dbt-bigquery==1.4.0',
-            'dbt-core==1.4.0',
-            'dbt-postgres==1.4.0',
+            'dbt-bigquery==1.4.3',
+            'dbt-core==1.4.6',
+            'dbt-postgres==1.4.6',
             'dbt-redshift==1.4.0',
             'dbt-snowflake==1.4.0',
             'dbt-spark==1.4.0',
@@ -150,6 +150,7 @@ setuptools.setup(
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==2.7.9',
             'sshtunnel==0.4.0',
+            'thefuzz[speedup]==0.19.0',
         ],
     },
 )

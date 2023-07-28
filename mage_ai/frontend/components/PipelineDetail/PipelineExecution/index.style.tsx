@@ -1,7 +1,13 @@
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import styled from 'styled-components';
 
 export const OUTPUT_HEIGHT = 300;
+
+export const OutputHeaderStyle = styled.div`
+  ${hideScrollBar()}
+
+  overflow-x: auto;
+`;
 
 export const OutputContainerStyle = styled.div<{
   height?: number;

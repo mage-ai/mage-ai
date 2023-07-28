@@ -1,10 +1,10 @@
 import json
 import os
+import subprocess
 from logging import Logger
 from typing import Dict, List
 
 import pandas as pd
-from jupyter_server import subprocess
 
 from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
@@ -19,16 +19,19 @@ class IntegrationBlock(Block):
         self,
         outputs_from_input_vars,
         execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
         input_vars: List = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
-        global_vars: Dict = None,
-        test_execution: bool = False,
+        logging_tags: Dict = None,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         **kwargs,
     ) -> List:
         from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
+
+        if logging_tags is None:
+            logging_tags = dict()
 
         index = self.template_runtime_configuration.get('index', None)
         is_last_block_run = self.template_runtime_configuration.get('is_last_block_run', False)
@@ -211,8 +214,8 @@ class IntegrationBlock(Block):
                                 df = self.execute_block_function(
                                     block_function,
                                     input_vars,
-                                    input_kwargs,
-                                    test_execution,
+                                    global_vars=input_kwargs,
+                                    from_notebook=from_notebook,
                                 )
                                 if df_sample is None:
                                     df_sample = df

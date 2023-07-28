@@ -185,7 +185,7 @@ export const getMoreActionsItems = (
       // If current block’s downstream has other dynamic blocks,
       // disable this button
       const otherDynamicBlocks = [];
-      downstreamBlocks.forEach((uuid1: string) => {
+      downstreamBlocks?.forEach((uuid1: string) => {
         const b = blocksMapping?.[uuid1];
         if (b) {
           b.upstream_blocks.forEach((uuid2: string) => {

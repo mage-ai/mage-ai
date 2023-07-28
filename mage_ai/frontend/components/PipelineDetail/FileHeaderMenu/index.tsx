@@ -177,6 +177,20 @@ function FileHeaderMenu({
       },
       uuid: 'Pipeline settings',
     },
+    {
+      label: () => 'Browse custom templates',
+      linkProps: {
+        href: '/templates',
+      },
+      uuid: 'browse_custom_templates',
+    },
+    {
+      label: () => 'Create custom templates',
+      linkProps: {
+        href: '/templates?new=1',
+      },
+      uuid: 'create_custom_templates',
+    },
   ], [pipeline]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';

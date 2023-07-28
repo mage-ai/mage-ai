@@ -17,7 +17,9 @@ import { ChevronRight } from '@oracle/icons';
 import { FilterQueryType } from '@components/Logs/Filter';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
+import { TAB_DETAILS, TAB_ERRORS } from '@components/Logs/Detail';
 import { TableContainer, TableHeadStyle, TableRowStyle } from './index.style';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WIDTH_OF_SINGLE_CHARACTER_MONOSPACE } from '@components/DataTable';
@@ -31,6 +33,7 @@ export const LOG_UUID_PARAM = 'log_uuid';
 type LogsTableProps = {
   blocksByUUID: { [keyof: string]: BlockType };
   logs: LogType[];
+  onRowClick?: (tab?: TabType) => void;
   pipeline: PipelineType;
   query: FilterQueryType;
   setSelectedLog: (log: LogType) => void;
@@ -40,6 +43,7 @@ type LogsTableProps = {
 function LogsTable({
   blocksByUUID,
   logs,
+  onRowClick,
   pipeline,
   query,
   setSelectedLog,
@@ -92,7 +96,6 @@ function LogsTable({
     const {
       blocksByUUID,
       logs,
-      pipeline,
       themeContext,
     } = data;
     const { content, data: logData, name } = logs[index];
@@ -183,6 +186,12 @@ function LogsTable({
             logUUID = null;
           }
 
+          if (log.data?.error) {
+            onRowClick?.(TAB_ERRORS);
+          } else {
+            onRowClick?.(TAB_DETAILS);
+          }
+
           goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
           setSelectedLog(logUUID ? log : null);
         }}
@@ -240,7 +249,13 @@ function LogsTable({
         </Flex>
       </TableRowStyle>
     );
-  }, [blockUUIDColWidth, isIntegration, query, setSelectedLog]);
+  }, [
+    blockUUIDColWidth,
+    isIntegration,
+    onRowClick,
+    query,
+    setSelectedLog,
+  ]);
 
   return (
     <TableContainer>

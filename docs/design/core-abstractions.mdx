@@ -69,6 +69,25 @@ Project-level data is stored in the `mage_data` directory— located at the same
 `mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI. Here are the locations for various components of `mage_data`:
 
 - SQLite DB: `mage_data/[project_folder]/mage-ai.db`
+  - The SQLite DB stores project-level metadata, such as pipeline and block run data. Here's a sample tree tables in the `tables` schema:
+   ```
+    └── tables
+        ├── backfill
+        ├── block_run
+        ├── event_matcher
+        ├── oauth2_access_token
+        ├── oauth2_application
+        ├── permission
+        ├── pipeline_run
+        ├── pipeline_schedule
+        ├── pipeline_schedule_event_matcher_association
+        ├── role
+        ├── secret
+        ├── sqlite_master
+        ├── user
+        └── user_role
+    ```
+  - You can connect to the SQLite DB like any other database. The JDBC URL `jdbc:sqlite:PATH`, where PATH is `/home/src/mage_data/[project_folder]/mage-ai.db` for Docker installs or `~/.mage_data/[project_folder]/mage-ai.db` for pip installs.
 - Block output: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.variables/`
 - Pipeline and block logs: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.logs/`
 - Cache: `mage_data/[project_folder]/.cache`
@@ -94,11 +113,9 @@ mage init [project_name]
 
 ## Pipeline
 
-A pipeline contains references to all the blocks of code you want to run, charts
-for visualizing data, and organizes the dependency between each block of code.
+A pipeline contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code.
 
-Each pipeline is represented by a YAML file. Here is an
-[example](https://github.com/mage-ai/demo%5Fetl%5Fpipeline/blob/master/pipelines/etl%5Fdemo/metadata.yaml).
+Each pipeline is represented by a YAML file. Here is an [example](https://github.com/mage-ai/demo%5Fetl%5Fpipeline/blob/master/pipelines/etl%5Fdemo/metadata.yaml).
 
 This is what it could look like in the notebook UI:
 
@@ -106,6 +123,8 @@ This is what it could look like in the notebook UI:
   alt="Pipeline"
   src="https://github.com/mage-ai/mage-ai/raw/master/media/data-pipeline-overview.jpg"
 />
+
+Pipelines can be filtered, tagged, and grouped by various properties. See our [docs page](/pipelines/pipeline-tagging) for more info.
 
 ## Block
 
@@ -187,7 +206,9 @@ def check_condition(**kwargs) -> bool:
 <Note>
   This example is using a helper function called `check_status` that handles the
   logic for retrieving the status of a pipeline run for `transform_users` on the
-  current execution date.
+  current execution date. You can opetionally pass block uuid and hours 
+  parameters to `check_status` to check the status of a block run or within a
+  interval of time.
 </Note>
 
 ## Data product

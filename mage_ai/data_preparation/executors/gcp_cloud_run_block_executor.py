@@ -25,7 +25,11 @@ class GcpCloudRunBlockExecutor(BlockExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-        cmd = self._run_commands(block_run_id, global_vars, **kwargs)
+        cmd = self._run_commands(
+            block_run_id=block_run_id,
+            global_vars=global_vars,
+            **kwargs,
+        )
         cloud_run.run_job(
             ' '.join(cmd),
             f'mage-data-prep-block-{block_run_id}',

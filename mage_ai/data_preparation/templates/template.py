@@ -59,9 +59,17 @@ def fetch_template_source(
         return template_source
 
     if 'template_path' in config:
+        template_variables_to_render = dict(
+            code=config.get('existing_code', ''),
+        )
+
+        template_variables = config.get('template_variables')
+        if template_variables:
+            template_variables_to_render.update(template_variables)
+
         return (
             template_env.get_template(config['template_path']).render(
-                code=config.get('existing_code', ''),
+                **template_variables_to_render,
             )
         )
     elif block_type == BlockType.DATA_LOADER:
@@ -91,6 +99,8 @@ def fetch_template_source(
         )
     elif block_type == BlockType.CALLBACK:
         template_source = __fetch_callback_templates()
+    elif block_type == BlockType.CONDITIONAL:
+        template_source = __fetch_conditional_templates()
 
     return template_source
 
@@ -281,6 +291,14 @@ def __fetch_custom_templates(
 
 def __fetch_callback_templates() -> str:
     template_path = 'callbacks/default.py'
+    return (
+        template_env.get_template(template_path).render()
+        + '\n'
+    )
+
+
+def __fetch_conditional_templates() -> str:
+    template_path = 'conditionals/base.jinja'
     return (
         template_env.get_template(template_path).render()
         + '\n'

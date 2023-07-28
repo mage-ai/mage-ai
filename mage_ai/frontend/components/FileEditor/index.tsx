@@ -184,7 +184,13 @@ function FileEditor({
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
 
-  const fileExtension = useMemo(() => file?.path.match(regex)[0]?.split('.')[1], [regex, file]);
+  const fileExtension = useMemo(() => (
+    file?.path?.match(regex) === null
+      ? FileExtensionEnum.TXT
+      : file?.path?.match(regex)?.[0]?.split('.')[1]
+  ),
+    [regex, file],
+  );
 
   const codeEditorEl = useMemo(() => {
     if (file?.path) {

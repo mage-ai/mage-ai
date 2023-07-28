@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from mage_ai.data_preparation.models.triggers import (
-    ScheduleInterval,
-    ScheduleStatus,
-)
-from mage_ai.orchestration.db.models.schedules import Backfill, PipelineRun, PipelineSchedule
-from mage_ai.shared.hash import merge_dict
 from typing import Dict, List
+
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
+
+from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleStatus
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    PipelineRun,
+    PipelineSchedule,
+)
+from mage_ai.shared.hash import merge_dict
 
 
 def start_backfill(backfill: Backfill) -> List[PipelineRun]:
@@ -33,12 +36,12 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
         execution_date = None
         if 'execution_date' in backfill_run_variables:
             execution_date = dateutil.parser.parse(backfill_run_variables['execution_date'])
+
         pipeline_run = PipelineRun.create(
             backfill_id=backfill.id,
             execution_date=execution_date,
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=backfill.pipeline_uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
             variables=merge_dict(backfill_variables or {}, backfill_run_variables),
         )
         pipeline_runs.append(pipeline_run)
@@ -75,11 +78,54 @@ def __build_variables_list(backfill: Backfill) -> List[Dict]:
         return []
 
     dates = __build_dates(backfill)
-    return [{
-        'ds': execution_date.strftime('%Y-%m-%d'),
-        'execution_date': execution_date.isoformat(),
-        'hr': execution_date.strftime('%H'),
-    } for execution_date in dates]
+    number_of_dates = len(dates)
+
+    arr = []
+
+    for idx, execution_date in enumerate(dates):
+        interval_end_datetime = None
+        interval_seconds = None
+        interval_start_datetime = execution_date
+        interval_start_datetime_previous = None
+
+        if idx < number_of_dates - 1:
+            interval_end_datetime = dates[idx + 1]
+            interval_seconds = (
+                interval_end_datetime.timestamp() - interval_start_datetime.timestamp()
+            )
+        elif idx >= 1 and idx == number_of_dates - 1:
+            # Last date
+            interval_start_datetime_previous = dates[idx - 1]
+            interval_seconds = (
+                interval_start_datetime.timestamp() - interval_start_datetime_previous.timestamp()
+            )
+            interval_end_datetime = interval_start_datetime + timedelta(seconds=interval_seconds)
+
+        if not interval_start_datetime_previous and (interval_seconds and interval_start_datetime):
+            interval_start_datetime_previous = interval_start_datetime - timedelta(
+                seconds=interval_seconds,
+            )
+
+        if interval_end_datetime:
+            interval_end_datetime = interval_end_datetime.isoformat()
+
+        if interval_start_datetime:
+            interval_start_datetime = interval_start_datetime.isoformat()
+
+        if interval_start_datetime_previous:
+            interval_start_datetime_previous = interval_start_datetime_previous.isoformat()
+
+        arr.append(dict(
+            ds=execution_date.strftime('%Y-%m-%d'),
+            execution_date=execution_date.isoformat(),
+            hr=execution_date.strftime('%H'),
+            interval_end_datetime=interval_end_datetime,
+            interval_seconds=interval_seconds,
+            interval_start_datetime=interval_start_datetime,
+            interval_start_datetime_previous=interval_start_datetime_previous,
+        ))
+
+    return arr
 
 
 def __build_dates(backfill: Backfill) -> List[datetime]:

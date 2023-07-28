@@ -73,6 +73,7 @@ function AddonBlock({
   setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
+  showBrowseTemplates,
   textareaFocused,
 }: AddonBlockProps) {
   const refParent = useRef(null);
@@ -141,6 +142,7 @@ function AddonBlock({
     {
       blockTemplatesByBlockType,
       languages: [BlockLanguageEnum.PYTHON],
+      showBrowseTemplates,
     },
   ), [
     addNewBlock,

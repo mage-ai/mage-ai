@@ -347,7 +347,6 @@
               "pages": [
                 "production/ci-cd/local-cloud/repository-setup",
                 "production/ci-cd/local-cloud/github-actions",
-                "production/ci-cd/staging-production/github-actions",
                 "production/ci-cd/local-cloud/gitlab-ci-cd",
                 "production/ci-cd/local-cloud/buildkite"
               ]
@@ -376,7 +375,8 @@
               "group": "GCP",
               "pages": [
                 "production/deploying-to-cloud/gcp/setup",
-                "production/deploying-to-cloud/gcp/resources"
+                "production/deploying-to-cloud/gcp/resources",
+                "production/deploying-to-cloud/gcp/gcp-artifact-registry"
               ]
             },
             {
@@ -536,10 +536,10 @@
       "group": "Backfills",
       "pages": [
         "api-reference/backfills/overview",
-        "api-reference/backfills/create-backfills",
-        "api-reference/backfills/delete-backfill",
         "api-reference/backfills/read-backfills",
-        "api-reference/backfills/update-backfill"
+        "api-reference/backfills/create-backfills",
+        "api-reference/backfills/update-backfill",
+        "api-reference/backfills/delete-backfill"
       ]
     },
     {
@@ -550,10 +550,17 @@
       ]
     },
     {
+      "group": "OAuth access tokens",
+      "pages": [
+        "api-reference/oauth-access-tokens/overview",
+        "api-reference/oauth-access-tokens/read-oauth-access-tokens"
+      ]
+    },
+    {
       "group": "Pipeline runs",
       "pages": [
         "api-reference/pipeline-runs/overview",
-        "api-reference/pipeline-runs/get-pipeline-runs",
+        "api-reference/pipeline-runs/read-pipeline-runs",
         "api-reference/pipeline-runs/trigger-pipeline"
       ]
     },
@@ -572,8 +579,8 @@
         "api-reference/pipelines/overview",
         "api-reference/pipelines/read-pipeline",
         "api-reference/pipelines/create-pipeline",
-        "api-reference/pipelines/delete-pipeline",
-        "api-reference/pipelines/update-pipeline"
+        "api-reference/pipelines/update-pipeline",
+        "api-reference/pipelines/delete-pipeline"
       ]
     },
     {

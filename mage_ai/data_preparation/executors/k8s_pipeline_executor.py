@@ -27,7 +27,7 @@ class K8sPipelineExecutor(PipelineExecutor):
         **kwargs,
     ) -> None:
         cmd = f'/app/run_app.sh '\
-              f'python mage_ai/cli/main.py run {self.pipeline.repo_config.repo_path} '\
+              f'mage run {self.pipeline.repo_config.repo_path} '\
               f'{self.pipeline.uuid}'
         options = [
             '--executor-type local_python',

@@ -12,6 +12,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   [Google BigQuery](#bigquery)
 -   [Google Cloud Storage](#googlecloudstorage)
 -   [MySQL](#mysql)
+-   [OracleDB](#oracledb)
 -   [PostgreSQL](#postgresql)
 -   [Snowflake](#snowflake)
 
@@ -770,6 +771,89 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## OracleDB
+```yaml
+ORACLEDB_USER: OracleDB username
+ORACLEDB_PASSWORD: OracleDB password
+ORACLEDB_HOST: OracleDB host
+ORACLEDB_PORT: OracleDB port
+ORACLEDB_SERVICE: OracleDB service
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the OracleDB data loading client.
+
+-   **Args**:
+    -   `user (str)`: The user for connecting to the database with.
+    -   `password (str)`: The login password for the user.
+    -   `host (str)`: Host address for database.
+    -   `port (int)`: Port on which the database is running Defaults to 3306.
+    -   `service (str)`: OracleDB service
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating psycopg2 connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Postgres`
+
+Creates OracleDB data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`OracleDB`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected OracleDB database. Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the OracleDB database.
+    -   `**kwargs`: Additional parameters to pass to the query.
+
+**_export_** - `export(df: DataFrame, schema_name: str, table_name: str, if_exists: str, index: bool, **kwargs) -> None`
+
+Exports data frame to the OracleDB database from a Pandas data frame. If table doesn't exist, the table is automatically created. The `schema_name` can be set as `None` since it is not required for OracleDB loaders.
+
+Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export to the OracleDB database.
+    -   `schema_name (str)`: Not required for OracleDB loaders. Set to `None`.
+    -   `table_name (str)`: Name of the table to export data to (excluding database).
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+
+        Defaults to `'replace'`.
+
+    -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
+    -   `**kwargs`: Additional arguments to pass to writer.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to OracleDB database.
 
 ## MySQL
 

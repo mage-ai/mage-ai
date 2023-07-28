@@ -3,10 +3,14 @@ import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
+from math import ceil
+from statistics import stdev
 from typing import Dict, List
 
+import dateutil.parser
 import pytz
 from croniter import croniter
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -67,7 +71,6 @@ class PipelineSchedule(BaseModel):
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
-    # The column name is repo_name, but
     repo_path = Column(String(255))
     settings = Column(JSON)
 
@@ -164,36 +167,79 @@ class PipelineSchedule(BaseModel):
 
     def current_execution_date(self) -> datetime:
         now = datetime.now(timezone.utc)
+        current_execution_date = None
 
         if self.schedule_interval is None:
             return None
 
         if self.schedule_interval == '@once':
-            return now
+            current_execution_date = now
         elif self.schedule_interval == '@daily':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0)
         elif self.schedule_interval == '@hourly':
-            return now.replace(second=0, microsecond=0, minute=0)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0)
         elif self.schedule_interval == '@weekly':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
         elif self.schedule_interval == '@monthly':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
+            current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
             cron_itr = croniter(self.schedule_interval, now)
-            return cron_itr.get_prev(datetime)
+            current_execution_date = cron_itr.get_prev(datetime)
+
+        # If landing time is enabled, the start_time is used as the date and time the schedule
+        # should finish running by.
+
+        # For example, if start_time is 2023-12-01 12:25:00
+        # and if the schedule_interval is @daily, then the schedule should finish running by
+        # every day by 12:25:00.
+        if self.landing_time_enabled() and self.start_time:
+            if self.schedule_interval == '@hourly':
+                current_execution_date = current_execution_date.replace(
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                )
+            elif self.schedule_interval == '@daily':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                )
+            elif self.schedule_interval == '@weekly':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                ) + timedelta(days=self.start_time.weekday())
+            elif self.schedule_interval == '@monthly':
+                current_execution_date = current_execution_date.replace(
+                    hour=self.start_time.hour,
+                    minute=self.start_time.minute,
+                    second=self.start_time.second,
+                ) + timedelta(days=int(self.start_time.strftime('%d')) - 1)
+
+        return current_execution_date
 
     @safe_db_query
-    def should_schedule(self) -> bool:
+    def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
+        now = datetime.now()
+
         if self.status != ScheduleStatus.ACTIVE:
             return False
 
-        if self.start_time is not None and compare(datetime.now(), self.start_time) == -1:
+        if not self.landing_time_enabled() and \
+                self.start_time is not None and \
+                compare(now, self.start_time) == -1:
+
             return False
 
         try:
             Pipeline.get(self.pipeline_uuid)
         except Exception:
+            print(
+                f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
+                + f'for pipeline schedule ID {self.id}.',
+            )
             return False
 
         if self.schedule_interval == '@once':
@@ -211,6 +257,8 @@ class PipelineSchedule(BaseModel):
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
                 return False
+            # If there is a pipeline_run with an execution_date the same as the
+            # current_execution_date, then don’t schedule
             if not find(
                 lambda x: compare(
                     x.execution_date.replace(tzinfo=pytz.UTC),
@@ -218,8 +266,111 @@ class PipelineSchedule(BaseModel):
                 ) == 0,
                 self.pipeline_runs
             ):
-                return True
+                if self.landing_time_enabled():
+                    if len(previous_runtimes) == 0:
+                        return True
+                    else:
+                        runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
+
+                        if len(previous_runtimes) >= 2:
+                            sd = ceil(stdev(previous_runtimes))
+                        else:
+                            sd = 0
+
+                        # This may cause duplicate pipeline runs to be scheduled if
+                        # there is more than 1 scheduler running.
+                        if datetime.now(timezone.utc) >= current_execution_date - timedelta(
+                            seconds=runtime + sd,
+                        ):
+                            return True
+                else:
+                    return True
         return False
+
+    def landing_time_enabled(self) -> bool:
+        if ScheduleType.TIME != self.schedule_type:
+            return False
+
+        if self.schedule_interval not in [
+            '@daily',
+            '@hourly',
+            '@monthly',
+            '@weekly',
+        ]:
+            return False
+
+        return (self.settings or {}).get('landing_time_enabled', False)
+
+    def runtime_history(
+        self,
+        pipeline_run=None,
+        sample_size: int = None,
+    ) -> List[float]:
+        sample_size_to_use = sample_size if sample_size else 7
+        previous_runtimes = []
+
+        if pipeline_run:
+            previous_runtimes += (pipeline_run.metrics or {}).get('previous_runtimes', [])
+
+        if len(previous_runtimes) < sample_size_to_use - 1 if pipeline_run else sample_size_to_use:
+            pipeline_runs = (
+                PipelineRun.
+                query.
+                filter(
+                    PipelineRun.pipeline_schedule_id == self.id,
+                    PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+                )
+            )
+
+            if pipeline_run:
+                pipeline_runs = (
+                    pipeline_runs.
+                    filter(
+                        PipelineRun.id != pipeline_run.id,
+                    )
+                )
+
+            pipeline_runs = (
+                pipeline_runs.
+                order_by(PipelineRun.execution_date.desc()).
+                limit(sample_size_to_use).
+                all()
+            )
+
+            pipeline_runs = sorted(
+                pipeline_runs,
+                key=lambda pr: pr.execution_date,
+                reverse=True,
+            )
+
+            for pipeline_run in pipeline_runs:
+                runtime = (
+                    pipeline_run.completed_at - pipeline_run.created_at
+                ).total_seconds()
+                previous_runtimes.append(runtime)
+
+        if pipeline_run:
+            runtime = (
+                pipeline_run.completed_at - pipeline_run.created_at
+            ).total_seconds()
+            previous_runtimes = [runtime] + previous_runtimes
+
+        return previous_runtimes[:sample_size_to_use]
+
+    def runtime_average(
+        self,
+        pipeline_run=None,
+        sample_size: int = None,
+    ) -> float:
+        previous_runtimes = self.runtime_history(
+            pipeline_run=pipeline_run,
+            sample_size=sample_size,
+        )
+
+        if len(previous_runtimes) == 0:
+            return None
+
+        return sum(previous_runtimes) / len(previous_runtimes)
 
 
 class PipelineRun(BaseModel):
@@ -265,6 +416,31 @@ class PipelineRun(BaseModel):
                         str(self.pipeline_schedule_id),
                         self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
                     ])
+
+    @property
+    def initial_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.INITIAL]
+
+    @property
+    def queued_or_running_block_runs(self) -> List['BlockRun']:
+        return [
+            b for b in self.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.QUEUED,
+                BlockRun.BlockRunStatus.RUNNING,
+            ]
+        ]
+
+    @property
+    def completed_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.COMPLETED]
+
+    @property
+    def failed_block_runs(self) -> List['BlockRun']:
+        return [b for b in self.block_runs
+                if b.status == BlockRun.BlockRunStatus.FAILED]
 
     @property
     def pipeline(self) -> 'Pipeline':
@@ -453,6 +629,72 @@ class PipelineRun(BaseModel):
         variables['event'] = merge_dict(variables.get('event', {}), event_variables)
         variables['execution_date'] = self.execution_date
         variables['execution_partition'] = self.execution_partition
+
+        interval_end_datetime = variables.get('interval_end_datetime')
+        interval_seconds = variables.get('interval_seconds')
+        interval_start_datetime = variables.get('interval_start_datetime')
+        interval_start_datetime_previous = variables.get('interval_start_datetime_previous')
+
+        if interval_end_datetime or \
+                interval_seconds or \
+                interval_start_datetime or \
+                interval_start_datetime_previous:
+            if interval_end_datetime:
+                try:
+                    variables['interval_end_datetime'] = dateutil.parser.parse(
+                        interval_end_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime:
+                try:
+                    variables['interval_start_datetime'] = dateutil.parser.parse(
+                        interval_start_datetime,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+
+            if interval_start_datetime_previous:
+                try:
+                    variables['interval_start_datetime_previous'] = dateutil.parser.parse(
+                        interval_start_datetime_previous,
+                    )
+                except Exception as err:
+                    print(f'[ERROR] PipelineRun.get_variables: {err}')
+        elif self.execution_date and ScheduleType.TIME == self.pipeline_schedule.schedule_type:
+            interval_end_datetime = None
+            interval_seconds = None
+            interval_start_datetime = self.execution_date
+            interval_start_datetime_previous = None
+
+            if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24
+            elif ScheduleInterval.HOURLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 1
+            elif ScheduleInterval.MONTHLY == self.pipeline_schedule.schedule_interval:
+                interval_end_datetime = interval_start_datetime + relativedelta(months=1)
+                interval_seconds = (
+                    interval_end_datetime.timestamp() - interval_start_datetime.timestamp()
+                )
+            elif ScheduleInterval.WEEKLY == self.pipeline_schedule.schedule_interval:
+                interval_seconds = 60 * 60 * 24 * 7
+
+            if interval_seconds and not interval_end_datetime:
+                interval_end_datetime = interval_start_datetime + timedelta(
+                    seconds=interval_seconds,
+                )
+
+            if interval_seconds and interval_start_datetime:
+                interval_start_datetime_previous = interval_start_datetime - timedelta(
+                    seconds=interval_seconds,
+                )
+
+            variables['interval_end_datetime'] = interval_end_datetime
+            variables['interval_seconds'] = interval_seconds
+            variables['interval_start_datetime'] = interval_start_datetime
+            variables['interval_start_datetime_previous'] = interval_start_datetime_previous
+
         variables.update(extra_variables)
 
         return variables

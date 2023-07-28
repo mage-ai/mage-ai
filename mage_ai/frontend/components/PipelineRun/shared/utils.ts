@@ -130,7 +130,9 @@ export const getAllPipelineRunDataGrouped = (
             const currentNumUngrouped = currentStatsUngrouped?.[status]
               ? currentStatsUngrouped[status]
               : 0;
-            updatedStatsUngrouped[status] = currentNumUngrouped + num;
+            updatedStatsUngrouped[status] = updatedStatsUngrouped?.[status]
+              ? updatedStatsUngrouped[status] + num
+              : currentNumUngrouped + num;
 
             if (runStatusesToDisplaySet.has(status)) {
               totalPipelineRunCountByPipelineType[pipelineType][status] =

@@ -23,11 +23,12 @@ from mage_ai.orchestration.run_status_checker import check_status
 
 
 @sensor
-def check_condition(**kwargs) -> bool:
+def check_condition(*args, **kwargs) -> bool:
     return check_status(
         'pipeline_uuid',
         kwargs['execution_date'],
         block_uuid='block_uuid',
+        hours=24,
     )
 ```
 
@@ -37,6 +38,13 @@ checking whether or not it’s finished running successfully.
 The `block_uuid` positional argument is optional. If you add a value for the `block_uuid`
 positional argument, then the sensor will check the status of the block in that pipeline.
 Only when that specific block is finished running successfully, then the sensor will be complete.
+
+The 'hours' positional argument is optional. If you add a value for the 'hours' positional argument,
+then the sensor will check the status of the pipeline for that many hours in past from execution_date.
+The default value is 24 hours.
+
+Sensors can also have upstream block dependencies. The output of the upstream blocks will be passed
+into the sensor in the `args` parameter like in other Mage block types.
 
 ## Templates
 
@@ -63,7 +71,7 @@ from os import path
 
 
 @sensor
-def query_bigquery_and_check_condition(**kwargs) -> bool:
+def query_bigquery_and_check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -91,7 +99,7 @@ from os import path
 
 
 @sensor
-def query_mysql_and_check_condition(**kwargs) -> bool:
+def query_mysql_and_check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -120,7 +128,7 @@ from os import path
 
 
 @sensor
-def query_postgres_and_check_condition(**kwargs) -> bool:
+def query_postgres_and_check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -149,7 +157,7 @@ from os import path
 
 
 @sensor
-def query_redshift_and_check_condition(**kwargs) -> bool:
+def query_redshift_and_check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -178,7 +186,7 @@ from os import path
 
 
 @sensor
-def check_condition(**kwargs) -> bool:
+def check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -203,7 +211,7 @@ from os import path
 
 
 @sensor
-def query_snowflake_and_check_condition(**kwargs) -> bool:
+def query_snowflake_and_check_condition(*args, **kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 

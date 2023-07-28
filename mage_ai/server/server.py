@@ -16,6 +16,7 @@ from tornado.options import options
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
@@ -135,6 +136,7 @@ def make_app():
 
     routes = [
         (r'/', MainPageHandler),
+        (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
@@ -324,8 +326,12 @@ async def main(
 
     print('Initializing block cache.')
     await BlockCache.initialize_cache(replace=True)
+
     print('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)
+
+    print('Initializing block action object cache.')
+    await BlockActionObjectCache.initialize_cache(replace=True)
 
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(

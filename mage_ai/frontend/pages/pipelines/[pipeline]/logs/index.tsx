@@ -14,7 +14,7 @@ import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import LogDetail from '@components/Logs/Detail';
+import LogDetail, { TAB_DETAILS } from '@components/Logs/Detail';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -34,11 +34,12 @@ import {
 } from '@components/Logs/Toolbar/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
-import { initializeLogs } from '@utils/models/log';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
+import { initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
@@ -63,6 +64,7 @@ function PipelineLogsPage({
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const [scrollToBottom, setScrollToBottom] = useState(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
+  const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -292,6 +294,7 @@ function PipelineLogsPage({
     <LogsTable
       blocksByUUID={blocksByUUID}
       logs={logsFiltered}
+      onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
       setSelectedLog={setSelectedLog}
@@ -308,6 +311,8 @@ function PipelineLogsPage({
             goToWithQuery({ [LOG_UUID_PARAM]: null });
             setSelectedLog(null);
           }}
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
         />
       )}
       afterHidden={!selectedLog}

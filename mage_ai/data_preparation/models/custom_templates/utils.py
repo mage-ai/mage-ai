@@ -1,12 +1,13 @@
 import os
-from mage_ai.data_preparation.models.file import File
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.custom_templates.constants import (
     CUSTOM_TEMPLATES_DIRECTORY,
     CUSTOM_TEMPLATES_DIRECTORY_ENVIRONMENT_VARIABLE,
 )
+from mage_ai.data_preparation.models.file import File
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by
-from typing import Dict, List
 
 
 def custom_templates_directory() -> str:
@@ -32,6 +33,8 @@ def flatten_files(
     children: List[Dict],
     parent_names: List[str] = None,
 ) -> List[Dict]:
+    if not children:
+        return []
     arr = []
 
     for child1 in children:
@@ -57,8 +60,9 @@ def group_and_hydrate_files(
 
     arr = []
 
-    for template_uuid, group in groups.items():
+    for template_uuid, _ in groups.items():
         custom_template = custom_template_class.load(template_uuid=template_uuid)
-        arr.append(custom_template)
+        if custom_template:
+            arr.append(custom_template)
 
     return arr

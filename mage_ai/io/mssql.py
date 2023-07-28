@@ -141,7 +141,7 @@ class MSSQL(BaseSQL):
 
             # Remove extraneous surrounding double quotes
             # that get added while performing conversion to string.
-            df_[col] = df_[col].apply(lambda x: x.strip('"'))
+            df_[col] = df_[col].apply(lambda x: x.strip('"') if x and isinstance(x, str) else x)
         for _, row in df_.iterrows():
             values.append(tuple(row))
 

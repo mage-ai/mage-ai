@@ -5,6 +5,59 @@ description: "The front-end client (e.g. browser) creates, reads, updates, and d
 resources by using the backend server’s API."
 ---
 
+## Quickstart
+
+Want to jump-in and interact with Mage via API? Replace the variables at the top of this snippet and use it to get started with authetication!
+
+### Initialize Session
+
+``` python
+import requests
+import json
+
+API_KEY = "YOUR_API_KEY"
+EMAIL = "EMAIL"
+PASSWORD = "USER_PASSWORD"
+
+base_url = 'http://localhost:6789'
+
+headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": API_KEY
+}
+
+json_data = {
+    "session": {
+        "email": EMAIL,
+        "password": PASSWORD
+    }
+}
+
+s = requests.Session()
+s.headers = headers
+sessions_url = base_url + "/api/sessions"
+
+r = s.post(url=sessions_url, json=json_data)
+mage_session = r.json().get('session')
+```
+
+### Authenticate
+
+```python
+token = mage_session.get('token')
+s.headers['Cookie'] = f'oauth_token={token}'
+```
+
+### Get Pipelines
+
+```python
+pipelines_url = base_url + '/api/pipelines'
+r = s.get(pipelines_url)
+list_pipelines = r.json()
+
+print(list_pipelines)
+```
+
 ## Components
 
 There are 3 components to an API endpoint:
@@ -58,7 +111,12 @@ Most API endpoints require authentication. The API request must include the foll
 
 ### API key
 
-The API request must include the API key in the query parameter as `api_key` or in the request payload body as `api_key`.
+The API request must include the API key in the query parameter as `api_key` or in the request payload body as `api_key`. You can find your API key quickly by navigating to the GUI and checking the request log from the container:
+
+<img
+  alt="terminal with API key"
+  src="/media/local-auth.png"
+/>
 
 ### OAuth token
 

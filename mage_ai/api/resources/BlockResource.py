@@ -3,6 +3,12 @@ import urllib.parse
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
+from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.block_action_object.constants import (
+    OBJECT_TYPE_BLOCK_FILE,
+    OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
+    OBJECT_TYPE_MAGE_TEMPLATE,
+)
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
@@ -10,6 +16,9 @@ from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
     BlockType,
+)
+from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
+    CustomBlockTemplate,
 )
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
@@ -26,6 +35,31 @@ class BlockResource(GenericResource):
         content = payload.get('content')
         language = payload.get('language')
         name = payload.get('name')
+        block_name = name or payload.get('uuid')
+
+        payload_config = payload.get('config') or {}
+
+        block_action_object = payload.get('block_action_object')
+        if block_action_object:
+            object_type = block_action_object.get('object_type')
+
+            cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+            mapping = cache_block_action_object.load_all_data()
+            objects_mapping = mapping.get(object_type)
+            object_uuid = block_action_object.get('uuid')
+            object_from_cache = objects_mapping.get(object_uuid)
+
+            if OBJECT_TYPE_BLOCK_FILE == object_type:
+                block_name = object_from_cache.get('uuid')
+                block_type = object_from_cache.get('type')
+                language = object_from_cache.get('language')
+            elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
+                payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
+            elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
+                block_type = object_from_cache.get('block_type')
+                language = object_from_cache.get('language')
+                payload_config['template_path'] = object_from_cache.get('path')
+                payload_config['template_variables'] = object_from_cache.get('template_variables')
 
         """
         New DBT models include "content" in its block create payload,
@@ -46,7 +80,7 @@ class BlockResource(GenericResource):
 
         block_attributes = dict(
             color=payload.get('color'),
-            config=payload.get('config'),
+            config=payload_config,
             configuration=payload.get('configuration'),
             extension_uuid=payload.get('extension_uuid'),
             language=language,
@@ -70,12 +104,24 @@ class BlockResource(GenericResource):
                 )
                 raise ApiError(error)
 
-        block = Block.create(
-            name or payload.get('uuid'),
-            block_type,
-            get_repo_path(),
-            **block_attributes,
-        )
+        if payload_config and payload_config.get('custom_template_uuid'):
+            template_uuid = payload_config.get('custom_template_uuid')
+            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+            block = custom_template.create_block(
+                block_name,
+                pipeline,
+                extension_uuid=block_attributes.get('extension_uuid'),
+                priority=block_attributes.get('priority'),
+                upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
+            )
+            content = custom_template.load_template_content()
+        else:
+            block = Block.create(
+                block_name,
+                block_type,
+                get_repo_path(),
+                **block_attributes,
+            )
 
         if content:
             if payload.get('converted_from'):
@@ -85,6 +131,9 @@ class BlockResource(GenericResource):
 
         cache = await BlockCache.initialize_cache()
         cache.add_pipeline(block, pipeline)
+
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(block)
 
         return self(block, user, **kwargs)
 
@@ -171,10 +220,16 @@ class BlockResource(GenericResource):
         if pipeline:
             cache.remove_pipeline(self.model, pipeline.uuid)
 
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         return self.model.delete(force=force)
 
     @safe_db_query
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
+        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+        cache_block_action_object.update_block(self.model, remove=True)
+
         query = kwargs.get('query', {})
         update_state = query.get('update_state', [False])
         if update_state:
@@ -183,6 +238,8 @@ class BlockResource(GenericResource):
             payload,
             update_state=update_state,
         )
+
+        cache_block_action_object.update_block(self.model)
 
     async def get_pipelines_from_cache(self):
         await BlockCache.initialize_cache()

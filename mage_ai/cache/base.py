@@ -38,6 +38,9 @@ class BaseCache():
         value_fetched = self.storage.read_json_file(self.__build_path(key), None)
         return value_fetched
 
+    def load_all_data(self):
+        return self.get(self.cache_key)
+
     def set(self, key: str, value: Any) -> None:
         self.storage.write_json_file(self.__build_path(key), value)
 

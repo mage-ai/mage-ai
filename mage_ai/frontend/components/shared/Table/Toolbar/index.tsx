@@ -28,6 +28,7 @@ import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
+import { setFilters } from '@storage/pipelines';
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -53,7 +54,12 @@ type ToolbarProps = {
   groupButtonProps?: {
     menuItems: FlyoutMenuItemType[];
     groupByLabel?: string;
-  }
+  };
+  onFilterApply?: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
   query?: {
     [keyof: string]: string[];
   };
@@ -83,6 +89,7 @@ function Toolbar({
   filterValueLabelMapping,
   groupButtonProps,
   moreActionsMenuItems,
+  onFilterApply,
   query = {},
   searchProps,
   secondaryActionButtonProps,
@@ -174,9 +181,19 @@ function Toolbar({
   const filterButtonEl = useMemo(() => (
     <ToggleMenu
       compact
-      onClickCallback={closeFilterButtonMenu}
+      onClickCallback={(query, updatedQuery) => {
+        if (onFilterApply) {
+          onFilterApply?.(query, updatedQuery);
+        }
+        if (closeFilterButtonMenu) {
+          closeFilterButtonMenu?.();
+        }
+      }}
       onClickOutside={closeFilterButtonMenu}
-      onSecondaryClick={() => router.push('/pipelines')}
+      onSecondaryClick={() => {
+        setFilters({});
+        router.push('/pipelines');
+      }}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
@@ -208,6 +225,7 @@ function Toolbar({
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
     filtersAppliedCount,
+    onFilterApply,
     query,
     router,
   ]);

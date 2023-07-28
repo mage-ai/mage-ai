@@ -20,7 +20,7 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
   set,
 } from '@storage/localStorage';
-import { OutputContainerStyle } from './index.style';
+import { OutputContainerStyle, OutputHeaderStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type PipelineExecutionProps = {
@@ -58,62 +58,71 @@ function PipelineExecution({
 
   return (
     <>
-      <FlexContainer alignItems="center" justifyContent="space-between">
-        <Flex>
-          <Button
-            beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-            compact={isPipelineExecuting}
-            disabled={isPipelineExecuting}
-            loading={isPipelineExecuting}
-            onClick={executePipeline}
-            success
-          >
-            <Text
-              bold
-              inverted
-              primary={false}
+      <OutputHeaderStyle>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex>
+            <Button
+              beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+              compact={isPipelineExecuting}
+              disabled={isPipelineExecuting}
+              loading={isPipelineExecuting}
+              onClick={executePipeline}
+              success
             >
-              Execute pipeline
-            </Text>
-          </Button>
-          <Spacing ml={1} />
-          {isPipelineExecuting && (
-            <>
-              <Button
-                beforeIcon={<Close inverted size={UNIT * 2}/>}
-                onClick={cancelPipeline}
-                success
+              <Text
+                bold
+                inverted
+                noWrapping
+                primary={false}
               >
-                <Text
-                  bold
-                  inverted
-                  primary={false}
+                Execute pipeline
+              </Text>
+            </Button>
+            <Spacing ml={1} />
+            {isPipelineExecuting && (
+              <>
+                <Button
+                  beforeIcon={<Close inverted size={UNIT * 2}/>}
+                  onClick={cancelPipeline}
+                  success
                 >
-                  Cancel pipeline
-                </Text>
-              </Button>
-              <Spacing ml={1} />
-            </>
-          )}
-          <Button
-            onClick={checkIfPipelineRunning}
-            secondary
-          >
-            Running status
-          </Button>
-        </Flex>
-        <Flex alignItems="center">
-          <Spacing ml={1} />
-          <Text>
-            Hide
-          </Text>
-          <Spacing mr={1} />
-          <ToggleSwitch
-            checked={pipelineExecutionHidden}
-            onCheck={togglePipelineExecution}
-          />
-        </Flex>
-      </FlexContainer>
+                  <Text
+                    bold
+                    inverted
+                    noWrapping
+                    primary={false}
+                  >
+                    Cancel pipeline
+                  </Text>
+                </Button>
+                <Spacing ml={1} />
+              </>
+            )}
+            <Button
+              onClick={checkIfPipelineRunning}
+              secondary
+            >
+              <Text
+                bold
+                noWrapping
+              >
+                Running status
+              </Text>
+            </Button>
+          </Flex>
+          <Flex alignItems="center">
+            <Spacing ml={1} />
+            <Text>
+              Hide
+            </Text>
+            <Spacing mr={1} />
+            <ToggleSwitch
+              checked={pipelineExecutionHidden}
+              onCheck={togglePipelineExecution}
+            />
+          </Flex>
+        </FlexContainer>
+      </OutputHeaderStyle>
 
 
       {!pipelineExecutionHidden &&

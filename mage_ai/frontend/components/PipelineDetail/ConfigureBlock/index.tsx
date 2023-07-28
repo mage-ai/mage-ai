@@ -1,25 +1,55 @@
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import BlockCubeGradient from '@oracle/icons/custom/BlockCubeGradient';
+import BlockType, {
+  BLOCK_TYPE_NAME_MAPPING,
+  BlockColorEnum,
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+  LANGUAGE_DISPLAY_MAPPING,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Checkbox from '@oracle/elements/Checkbox';
+import CodeBlock from '@components/CodeBlock';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Panel from '@oracle/components/Panel';
+import LLMType, { LLMUseCaseEnum } from '@interfaces/LLMType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
-import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
-import { get, set } from '@storage/localStorage';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import api from '@api';
+import {
+  AISparkle,
+  Locked,
+} from '@oracle/icons';
+import {
+  ContainerStyle,
+  FooterStyle,
+  HeaderStyle,
+  RowStyle,
+} from './index.style';
+import { ObjectType } from '@interfaces/BlockActionObjectType';
+import {
+  PADDING_UNITS,
+  UNIT,
+} from '@oracle/styles/units/spacing';
+import { capitalize } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 
 type ConfigureBlockProps = {
-  block: BlockType;
+  block: BlockType | BlockRequestPayloadType;
   defaultName: string;
   onClose: () => void;
   onSave: (opts: {
+    color?: BlockColorEnum;
+    language?: BlockLanguageEnum;
     name: string;
   }) => void;
   pipeline: PipelineType;
@@ -32,11 +62,22 @@ function ConfigureBlock({
   onSave,
   pipeline,
 }: ConfigureBlockProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'ConfigureBlock',
+  });
+
   const refTextInput = useRef(null);
-  const [blockName, setBlockName] = useState<string>(defaultName);
-  const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(
-    !!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS),
-  );
+  const [blockAttributes, setBlockAttributes] = useState<{
+    color?: BlockColorEnum;
+    content?: string;
+    language?: BlockLanguageEnum;
+    name?: string;
+    type?: BlockTypeEnum;
+  }>({
+    language: block?.language,
+    name: defaultName,
+    type: block?.type,
+  });
 
   useEffect(() => {
     refTextInput?.current?.focus();
@@ -46,36 +87,351 @@ function ConfigureBlock({
     pipeline,
   ]);
 
-  const title = useMemo(() => {
-    const blockType = block?.type;
+  const isCustomBlock = useMemo(() => BlockTypeEnum.CUSTOM === block?.type, [block]);
+  const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
 
+  // @ts-ignore
+  const blockActionObject = useMemo(() => block?.block_action_object, [block]);
+  const isGenerateBlock =
+    useMemo(() => ObjectType.GENERATE_BLOCK === blockActionObject?.object_type, [blockActionObject]);
+  const generateBlockCommand = useMemo(() => isGenerateBlock && blockActionObject?.description, [
+    blockActionObject,
+    isGenerateBlock,
+  ]);
+
+  const [llm, setLLM] = useState<LLMType>(null);
+  const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
+    api.llms.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            llm,
+          }) => {
+            const {
+              block_type: blockType,
+              configuration,
+              content,
+              language,
+            } = llm?.response || {};
+
+            setBlockAttributes(prev => ({
+              ...prev,
+              block_action_object: null,
+              configuration: configuration,
+              content,
+              language,
+              type: blockType,
+            }));
+
+            setLLM(llm);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  useEffect(() => {
+    if (isGenerateBlock && generateBlockCommand && !llm) {
+      // @ts-ignore
+      createLLM({
+        llm: {
+          request: {
+            block_description: generateBlockCommand,
+          },
+          use_case: LLMUseCaseEnum.GENERATE_BLOCK_WITH_DESCRIPTION,
+        },
+      });
+    }
+  }, [
+    createLLM,
+    generateBlockCommand,
+    isGenerateBlock,
+    llm,
+  ]);
+
+  const customTemplate = useMemo(() => {
+    if (block?.config?.custom_template) {
+      return block?.config?.custom_template;
+    } else if ([
+      ObjectType.CUSTOM_BLOCK_TEMPLATE,
+      ObjectType.MAGE_TEMPLATE,
+    ].includes(blockActionObject?.object_type)) {
+      return {
+        ...blockActionObject,
+        name: blockActionObject?.title,
+      };
+    }
+  }, [
+    block,
+    blockActionObject,
+  ]);
+
+  const title = useMemo(() => {
+    let blockType = blockAttributes?.type || block?.type;
+
+    if (customTemplate) {
+      blockType = customTemplate?.block_type;
+    }
+
+    let tt = BLOCK_TYPE_NAME_MAPPING[blockType];
     if (isIntegrationPipeline) {
       if (BlockTypeEnum.DATA_LOADER === blockType) {
-        return 'Source';
+        tt = 'Source';
       } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
-        return 'Destination';
+        tt = 'Destination';
       }
     }
 
-    return BLOCK_TYPE_NAME_MAPPING[blockType];
-  }, [block, isIntegrationPipeline]);
+    return tt;
+  }, [
+    block,
+    blockAttributes,
+    customTemplate,
+    isIntegrationPipeline,
+  ]);
 
   return (
-    <Panel>
-      <Text bold>
-        {title} block name
-      </Text>
+    <ContainerStyle width={isGenerateBlock && blockAttributes?.content && (80 * UNIT)}>
+      <HeaderStyle>
+        {isGenerateBlock && isLoadingCreateLLM && (
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Text>
+              Generating block using AI...
+            </Text>
 
-      <Spacing mt={1}>
+            <Spinner inverted />
+          </FlexContainer>
+        )}
+
+        {isGenerateBlock && !isLoadingCreateLLM && (
+          <FlexContainer
+            alignItems="center"
+            justifyContent="center"
+          >
+            <AISparkle size={5 * UNIT} warning />
+          </FlexContainer>
+        )}
+
+        {!isGenerateBlock && (
+          <FlexContainer
+            alignItems="center"
+            justifyContent="center"
+          >
+            <BlockCubeGradient size={15 * UNIT} />
+          </FlexContainer>
+        )}
+      </HeaderStyle>
+
+      {isGenerateBlock && !isLoadingCreateLLM && (
+        <RowStyle>
+          <Spacing py={1}>
+            <Spacing mb={1}>
+              <Text default>
+                Block generated using AI
+              </Text>
+            </Spacing>
+
+            <Text textOverflow>
+              {generateBlockCommand}
+            </Text>
+          </Spacing>
+        </RowStyle>
+      )}
+
+      {customTemplate && (
+        <RowStyle>
+          <Spacing py={1}>
+            <Spacing mb={1}>
+              <Text default>
+                Template
+              </Text>
+            </Spacing>
+
+            <Text textOverflow>
+              {(customTemplate?.name || customTemplate?.template_uuid)?.slice(0, 40)}
+            </Text>
+          </Spacing>
+        </RowStyle>
+      )}
+
+      <RowStyle>
+        <Text default>
+          Name
+        </Text>
+
         <TextInput
-          monospace
-          onChange={e => setBlockName(e.target.value)}
+          alignRight
+          noBackground
+          noBorder
+          // @ts-ignore
+          onChange={e => setBlockAttributes(prev => ({
+            ...prev,
+            name: e.target.value,
+          }))}
+          paddingVertical={UNIT}
+          placeholder="Block name..."
           ref={refTextInput}
-          value={blockName}
+          value={blockAttributes?.name || ''}
         />
-      </Spacing>
+      </RowStyle>
 
-      <Spacing mt={2}>
+      <RowStyle>
+        <Text default>
+          Type
+        </Text>
+
+        <Spacing mr={PADDING_UNITS} py={1}>
+          <FlexContainer alignItems="center">
+            <Text muted>
+              {title}
+            </Text>
+
+            <Spacing mr={1} />
+
+            <Locked muted />
+          </FlexContainer>
+        </Spacing>
+      </RowStyle>
+
+      {!isMarkdown && (isCustomBlock || customTemplate || blockAttributes?.language) && (
+        <RowStyle paddingVerticalAddition={3}>
+          <Text default>
+            Language
+          </Text>
+
+          <FlexContainer alignItems="center">
+            {[
+              BlockLanguageEnum.PYTHON,
+              BlockLanguageEnum.SQL,
+              BlockLanguageEnum.R,
+            ].reduce((acc, v: string) => {
+              const language =
+                customTemplate ? customTemplate?.language : blockAttributes?.language;
+              const selected = language === v;
+
+              if (!isCustomBlock && !selected) {
+                return acc;
+              }
+
+              acc.push(
+                <Spacing key={v} ml={1}>
+                  <Button
+                    borderColor={!selected ? 'transparent' : null}
+                    compact
+                    default={!isCustomBlock && !selected}
+                    disabled={!isCustomBlock && !selected}
+                    noBackground
+                    onClick={customTemplate
+                      ? null
+                      // @ts-ignore
+                      : () => setBlockAttributes(prev => ({
+                        ...prev,
+                        language: v,
+                      }))
+                    }
+                    selected={selected}
+                  >
+                    {LANGUAGE_DISPLAY_MAPPING[v]}
+                  </Button>
+                </Spacing>,
+              );
+
+              return acc;
+            }, [])}
+
+            {!isCustomBlock && (
+              <>
+                <Spacing mr={1} />
+                <Locked muted />
+              </>
+            )}
+
+            <Spacing mr={isCustomBlock ? 1 : 2} />
+          </FlexContainer>
+        </RowStyle>
+      )}
+
+      {(isCustomBlock || customTemplate?.color || blockAttributes?.color) && (
+        <RowStyle>
+          <Text default>
+            Color
+          </Text>
+
+          {isCustomBlock && (
+            <Select
+              alignRight
+              noBackground
+              noBorder
+              // @ts-ignore
+              onChange={e => setBlockAttributes(prev => ({
+                ...prev,
+                color: e.target.value,
+              }))}
+              value={customTemplate
+                ? customTemplate?.color || ''
+                : blockAttributes?.color || ''
+              }
+            >
+              <option value="" />
+              {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
+                <option key={color} value={color}>
+                  {capitalize(color)}
+                </option>
+              ))}
+            </Select>
+          )}
+
+          {!isCustomBlock && (
+            <Spacing mr={PADDING_UNITS} py={1}>
+              <FlexContainer alignItems="center">
+                <Text muted>
+                  {capitalize(customTemplate?.color || blockAttributes?.color || '')}
+                </Text>
+
+                <Spacing mr={1} />
+
+                <Locked muted />
+              </FlexContainer>
+            </Spacing>
+          )}
+        </RowStyle>
+      )}
+
+      {isGenerateBlock && blockAttributes?.content && (
+        <RowStyle display="block">
+          <Spacing pr={PADDING_UNITS} py={1}>
+            <DndProvider backend={HTML5Backend}>
+              {/* @ts-ignore */}
+              <CodeBlock
+                block={{
+                  ...blockAttributes,
+                  uuid: generateBlockCommand,
+                }}
+                defaultValue={blockAttributes?.content}
+                disableDrag
+                hideExtraCommandButtons
+                hideExtraConfiguration
+                hideHeaderInteractiveInformation
+                key={generateBlockCommand}
+                noDivider
+                onChange={val => setBlockAttributes(prev => ({
+                  ...prev,
+                  content: val,
+                }))}
+                selected
+                textareaFocused
+              />
+            </DndProvider>
+          </Spacing>
+        </RowStyle>
+      )}
+
+      {/*<Spacing mt={PADDING_UNITS}>
         <FlexContainer alignItems="center">
           <Checkbox
             checked={automaticallyNameBlocks}
@@ -92,18 +448,17 @@ function ConfigureBlock({
             }}
           />
         </FlexContainer>
-      </Spacing>
+      </Spacing>*/}
 
-      <Spacing mt={3}>
-        <FlexContainer>
+      <FooterStyle>
+        <FlexContainer fullWidth>
           <KeyboardShortcutButton
             bold
-            inline
-            keyboardShortcutValidation={({
-              keyMapping,
-            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
+            centerText
+            disabled={isLoadingCreateLLM}
             onClick={() => onSave({
-              name: blockName || defaultName,
+              ...blockAttributes,
+              name: blockAttributes?.name || defaultName,
             })}
             primary
             tabIndex={0}
@@ -121,8 +476,8 @@ function ConfigureBlock({
             </Button>
           </Spacing>
         </FlexContainer>
-      </Spacing>
-    </Panel>
+      </FooterStyle>
+    </ContainerStyle>
   );
 }
 

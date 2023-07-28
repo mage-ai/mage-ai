@@ -42,9 +42,11 @@ class VariableResource(GenericResource):
     def collection(self, query, meta, user, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
 
+        global_only = query.get('global_only', [False])
+        if global_only:
+            global_only = global_only[0]
+
         # Get global variables from project's path
-        variable_manager = VariableManager(variables_dir=get_variables_dir())
-        variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
         global_variables = [
             dict(
                 uuid=uuid,
@@ -60,18 +62,27 @@ class VariableResource(GenericResource):
                 variables=global_variables,
             )
         ]
-        variables = [
-            dict(
-                block=dict(uuid=uuid),
-                pipeline=dict(uuid=pipeline_uuid),
-                variables=[
-                    get_variable_value(variable_manager, pipeline_uuid, uuid, var) for var in arr
-                    # Not return printed outputs
-                    if var == 'df' or var.startswith('output')
-                  ],
-            )
-            for uuid, arr in variables_dict.items() if uuid != 'global'
-        ] + global_variables_arr
+        variables = global_variables_arr
+        if not global_only:
+            variable_manager = VariableManager(variables_dir=get_variables_dir())
+            variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
+            variables = [
+                dict(
+                    block=dict(uuid=uuid),
+                    pipeline=dict(uuid=pipeline_uuid),
+                    variables=[
+                        get_variable_value(
+                            variable_manager,
+                            pipeline_uuid,
+                            uuid,
+                            var,
+                        ) for var in arr
+                        # Not return printed outputs
+                        if var == 'df' or var.startswith('output')
+                    ],
+                )
+                for uuid, arr in variables_dict.items() if uuid != 'global'
+            ] + global_variables_arr
 
         return self.build_result_set(
             variables,

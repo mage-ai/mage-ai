@@ -25,6 +25,7 @@ const SpacingStyle = styled.div<{
 `;
 
 export type KeyboardTextGroupProps = {
+  addPlusSignBetweenKeys?: boolean
   borderless?: boolean;
   disabled?: boolean;
   keyTextGroups: NumberOrString[][];
@@ -36,6 +37,7 @@ export type KeyboardTextGroupProps = {
 };
 
 function KeyboardTextGroup({
+  addPlusSignBetweenKeys,
   borderless,
   disabled,
   keyTextGroups,
@@ -56,6 +58,19 @@ function KeyboardTextGroup({
 
       if (idx2 >= 1) {
         combo.push(<SpacingStyle key={`spacing-${keyText}`} small={small} />);
+        if (addPlusSignBetweenKeys) {
+          combo.push(
+            <Text
+              disabled={disabled}
+              key={`spacing-${keyText}-plus-sign`}
+              monospace={monospace}
+              small={small}
+            >
+              +
+            </Text>,
+          );
+          combo.push(<SpacingStyle key={`spacing-${keyText}-after-plus-sign`} small={small} />);
+        }
       }
 
       combo.push(
@@ -67,7 +82,7 @@ function KeyboardTextGroup({
           keyText={keyText}
           monospace={monospace}
           mutedDisabled={mutedDisabled}
-        />
+        />,
       );
     });
 

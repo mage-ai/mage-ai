@@ -30,6 +30,7 @@ const BadgeStyle = styled.p<BadgeProps>`
   display: inline;
   font-family: ${FONT_FAMILY_REGULAR};
   margin: 0;
+  white-space: nowrap;
   ${REGULAR};
 
   ${props => props.small && `

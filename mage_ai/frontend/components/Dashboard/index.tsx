@@ -35,6 +35,7 @@ export type DashboardSharedProps = {
 };
 
 type DashboardProps = {
+  addProjectBreadcrumbToCustomBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children?: any;
   errors?: ErrorsType;
@@ -47,6 +48,7 @@ type DashboardProps = {
 } & DashboardSharedProps;
 
 function Dashboard({
+  addProjectBreadcrumbToCustomBreadcrumbs,
   after,
   afterHidden,
   afterWidth: afterWidthProp,
@@ -90,17 +92,22 @@ function Dashboard({
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
   const projects = dataProjects?.projects;
 
+  const breadcrumbProject = {
+    label: () => projects?.[0]?.name,
+    linkProps: {
+      href: '/',
+    },
+  };
   const breadcrumbs = [];
   if (breadcrumbsProp) {
+    if (addProjectBreadcrumbToCustomBreadcrumbs) {
+      breadcrumbs.push(breadcrumbProject);
+    }
+
     breadcrumbs.push(...breadcrumbsProp);
   } else if (projects?.length >= 1) {
     breadcrumbs.push(...[
-      {
-        label: () => projects[0]?.name,
-        linkProps: {
-          href: '/',
-        },
-      },
+      breadcrumbProject,
       {
         bold: true,
         label: () => title,

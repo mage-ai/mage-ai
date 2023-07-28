@@ -35,3 +35,12 @@ ProjectPolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+ProjectPolicy.allow_write([
+    'features',
+    'openai_api_key',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role())

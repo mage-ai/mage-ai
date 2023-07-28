@@ -27,10 +27,19 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
+from mage_ai.data_preparation.repo_manager import (
+    RepoConfig,
+    get_project_uuid,
+    get_repo_config,
+)
+from mage_ai.data_preparation.shared.secrets import (
+    delete_secrets_dir,
+    rename_pipeline_secrets_dir,
+)
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
@@ -46,6 +55,7 @@ class Pipeline:
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
+        self.concurrency_config = dict()
         self.data_integration = None
         self.description = None
         self.executor_config = dict()
@@ -462,6 +472,7 @@ class Pipeline:
 
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
+        self.concurrency_config = config.get('concurrency_config') or dict()
         self.conditional_configs = config.get('conditionals') or []
         self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
@@ -579,6 +590,7 @@ class Pipeline:
 
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
+            concurrency_config=self.concurrency_config,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
             executor_config=self.executor_config,
@@ -775,6 +787,12 @@ class Pipeline:
             await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+            # Update pipeline secrets directory.
+            try:
+                rename_pipeline_secrets_dir(get_project_uuid(), old_uuid, new_uuid)
+            except Exception as err:
+                print(f'Could not rename pipeline secrets directory with error: {str(err)}')
+
             should_update_block_cache = True
             should_update_tag_cache = True
 
@@ -867,7 +885,13 @@ class Pipeline:
                     if block is None:
                         continue
                     if 'content' in block_data:
+                        from mage_ai.cache.block_action_object import (
+                            BlockActionObjectCache,
+                        )
+
+                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                         await block.update_content_async(block_data['content'], widget=widget)
+                        cache_block_action_object.update_block(block)
                     if 'callback_content' in block_data \
                             and block.callback_block:
                         await block.callback_block.update_content_async(
@@ -929,7 +953,14 @@ class Pipeline:
 
                         should_save_async = should_save_async or True
                     elif name and name != block.name:
+                        from mage_ai.cache.block_action_object import (
+                            BlockActionObjectCache,
+                        )
+
+                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+                        cache_block_action_object.update_block(block, remove=True)
                         block.update(extract(block_data, ['name']))
+                        cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
                         should_save_async = should_save_async or True
 
@@ -991,7 +1022,7 @@ class Pipeline:
         blocks_by_uuid,
         block,
         upstream_blocks,
-        priority=None,
+        priority: int = None,
     ):
         mapping = blocks_by_uuid.copy()
 
@@ -1307,6 +1338,12 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
+
+        # Delete secret directory when deleting pipeline
+        try:
+            delete_secrets_dir(Entity.PIPELINE, get_project_uuid(), self.uuid)
+        except Exception as err:
+            print(f'Could not delete secrets directory due to {str(err)}')
 
     def delete_block(
         self,

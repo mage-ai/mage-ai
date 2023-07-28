@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
+import Breadcrumbs, { BreadcrumbType as BreadcrumbTypeOrig } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -12,7 +13,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
-import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
@@ -24,7 +24,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
-import { ChevronRight } from '@oracle/icons';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
@@ -35,15 +34,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 
-export type BreadcrumbType = {
-  bold?: boolean;
-  danger?: string;
-  label: () => string;
-  linkProps?: {
-    href: string;
-    as: string;
-  };
-};
+export type BreadcrumbType = BreadcrumbTypeOrig;
 
 export type MenuItemType = {
   label: () => string;
@@ -77,7 +68,14 @@ function Header({
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_custom_branches.detail('test', {}, { revalidateOnFocus: false });
+  } = api.git_custom_branches.detail(
+    'test',
+    {
+      _format: 'with_basic_details',
+    },
+    {
+      revalidateOnFocus: false,
+    });
   const branch = useMemo(() => dataGitBranch?.['git_custom_branch']?.['name'], [dataGitBranch]);
 
   const {
@@ -108,73 +106,6 @@ function Header({
     },
   }], [breadcrumbsProp, project]);
   const { pipeline: pipelineUUID } = router.query;
-  const breadcrumbEls = useMemo(() => {
-    const count = breadcrumbs.length;
-    const arr = [];
-
-    breadcrumbs.forEach(({
-      bold,
-      danger,
-      label,
-      linkProps,
-    }, idx: number) => {
-      const title = label();
-      const showDivider = count >= 2 && idx >= 1;
-
-      if (showDivider) {
-        arr.push(
-          <Spacing
-            key={`divider-${title}`}
-            mx={1}
-          >
-            <ChevronRight muted />
-          </Spacing>,
-        );
-      }
-
-      const titleEl = (
-        <Text
-          bold={bold}
-          danger={danger}
-          default={!bold}
-          monospace
-        >
-          {title}
-        </Text>
-      );
-      let el = (
-        <Spacing
-          key={`breadcrumb-${title}`}
-          ml={idx === 0 ? 2 : 0}
-        >
-          {titleEl}
-        </Spacing>
-      );
-
-      if (linkProps) {
-        el = (
-          <NextLink
-            {...linkProps}
-            key={`breadcrumb-link-${title}`}
-            passHref
-          >
-            <Link
-              block
-              default={!bold}
-              noOutline
-              sameColorAsText={bold}
-            >
-              {el}
-            </Link>
-          </NextLink>
-        );
-      }
-
-      arr.push(el);
-    });
-
-    return arr;
-  }, [breadcrumbs]);
 
   const { latest_version: latesetVersion } = project || {};
 
@@ -254,7 +185,9 @@ function Header({
 
             {!version && logoLink}
 
-            {breadcrumbEls}
+            <Breadcrumbs
+              breadcrumbs={breadcrumbs}
+            />
           </Flex>
 
           <Flex alignItems="center">

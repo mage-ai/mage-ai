@@ -165,6 +165,7 @@ function Sidekick({
   setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
+  showBrowseTemplates,
   statistics,
   textareaFocused,
   treeRef,
@@ -188,9 +189,9 @@ function Sidekick({
   } = editingBlock?.upstreamBlocks || {};
 
   const columns = (sampleData?.columns || []).slice(0, MAX_COLUMNS);
-  const rows = sampleData?.rows || [];
-  const columnTypes = metadata?.column_types || {};
-  const insightsOverview = insights?.[1] || {};
+  const rows = useMemo(() => sampleData?.rows || [], [sampleData]);
+  const columnTypes = useMemo(() => metadata?.column_types || {}, [metadata]);
+  const insightsOverview = useMemo(() => insights?.[1] || {}, [insights]);
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
       uuid,
@@ -292,6 +293,7 @@ function Sidekick({
     setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
   }), [
     addNewBlockAtIndex,
@@ -317,6 +319,7 @@ function Sidekick({
     setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
     textareaFocused,
   ]);
 
@@ -481,7 +484,10 @@ function Sidekick({
 
       <SidekickContainerStyle
         fullWidth
-        heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+        heightOffset={(ViewKeyEnum.TERMINAL === activeView || activeView === ViewKeyEnum.TREE)
+          ? 0
+          : SCROLLBAR_WIDTH
+        }
         onBlur={() => {
           if (!selectedFilePath) {
             setDisableShortcuts(false);
@@ -494,17 +500,18 @@ function Sidekick({
             setAllowCodeBlockShortcuts?.(true);
           }
         }}
+        overflowHidden={activeView === ViewKeyEnum.TREE}
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
-                blocks={blocks}
                 blockRefs={blockRefs}
+                blocks={blocks}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
-                height={heightWindow - heightOffset - finalOutputHeight}
+                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
                 messages={messages}
                 // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {

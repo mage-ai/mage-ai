@@ -1,9 +1,11 @@
 import * as path from 'path';
+import NextLink from 'next/link';
 import React, {
   createRef,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { CSSTransition } from 'react-transition-group';
@@ -29,9 +31,12 @@ import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -54,6 +59,7 @@ import {
   KEY_CODE_D,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
+  KEY_CODE_FORWARD_SLASH,
   KEY_CODE_I,
   KEY_CODE_META,
   KEY_CODE_NUMBER_0,
@@ -111,6 +117,7 @@ type PipelineDetailProps = {
   }) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
+  project?: ProjectType;
   restartKernel: () => void;
   runBlock: (payload: {
     block: BlockType;
@@ -139,6 +146,17 @@ type PipelineDetailProps = {
   setSelectedOutputBlock: (block: BlockType) => void;
   setSelectedStream: (stream: string) => void;
   setTextareaFocused: (value: boolean) => void;
+  showBrowseTemplates?: (opts?: {
+    addNew?: boolean;
+    blockType?: BlockTypeEnum;
+    language?: BlockLanguageEnum;
+  }) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -170,6 +188,7 @@ function PipelineDetail({
   openSidekickView,
   pipeline,
   pipelineContentTouched,
+  project,
   restartKernel,
   runBlock,
   runningBlocks = [],
@@ -187,10 +206,15 @@ function PipelineDetail({
   setSelectedOutputBlock,
   setSelectedStream,
   setTextareaFocused,
+  showBrowseTemplates,
+  showConfigureProjectModal,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  const searchTextInputRef = useRef(null);
+
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
+  const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
@@ -218,7 +242,17 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  const { data: dataBlockTemplates } = api.block_templates.list({}, {
+  const useV2AddNewBlock = useMemo(
+    () => PipelineTypeEnum.PYTHON === pipeline?.type
+      && project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
+    [
+      pipeline,
+      project,
+    ],
+  );
+  const { data: dataBlockTemplates } = api.block_templates.list({
+    show_all: useV2AddNewBlock ? true : false,
+  }, {
     revalidateOnFocus: false,
   });
   const blockTemplates: BlockTemplateType[] =
@@ -264,7 +298,21 @@ function PipelineDetail({
           setPipelineContentTouched(true);
         }
       } else if (!isIntegration) {
-        if (selectedBlock) {
+        if (useV2AddNewBlock && (
+          onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
+        )) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(true);
+          searchTextInputRef?.current?.focus();
+        } else if (useV2AddNewBlock
+          && focusedAddNewBlockSearch
+          && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
+        ) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(false);
+          searchTextInputRef?.current?.blur();
+        } else if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 
@@ -324,18 +372,21 @@ function PipelineDetail({
       anyInputFocused,
       blockRefs.current,
       blocks,
+      focusedAddNewBlockSearch,
       interruptKernel,
       isIntegration,
       numberOfBlocks,
       pipelineContentTouched,
       restartKernel,
       savePipelineContent,
+      searchTextInputRef,
       selectedBlock,
       selectedBlockPrevious,
       setPipelineContentTouched,
       setSelectedBlock,
       setTextareaFocused,
       textareaFocused,
+      useV2AddNewBlock,
     ],
   );
 
@@ -540,6 +591,7 @@ function PipelineDetail({
             onDrop={onDrop}
             openSidekickView={openSidekickView}
             pipeline={pipeline}
+            project={project}
             ref={currentBlockRef}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
@@ -555,6 +607,8 @@ function PipelineDetail({
             setSelectedBlock={setSelectedBlock}
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
+            showBrowseTemplates={showBrowseTemplates}
+            showConfigureProjectModal={showConfigureProjectModal}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -595,6 +649,7 @@ function PipelineDetail({
     onDrop,
     openSidekickView,
     pipeline,
+    project,
     runBlock,
     runningBlocks,
     runningBlocksByUUID,
@@ -609,6 +664,8 @@ function PipelineDetail({
     setSelectedBlock,
     setSelectedOutputBlock,
     setTextareaFocused,
+    showBrowseTemplates,
+    showConfigureProjectModal,
     textareaFocused,
     updateBlock,
     widgets,
@@ -654,75 +711,111 @@ function PipelineDetail({
     setSelectedStream,
   ]);
 
-  const addNewBlocksMemo = useMemo(() => (
-    <AddNewBlocks
-      addNewBlock={(newBlock: BlockRequestPayloadType) => {
-        const block = blocks[blocks.length - 1];
+  const addNewBlocksMemo = useMemo(() => pipeline && (
+    <>
+      <AddNewBlocks
+        addNewBlock={(newBlock: BlockRequestPayloadType) => {
+          const block = blocks[blocks.length - 1];
 
-        let content = null;
-        let configuration = newBlock.configuration || {};
-        const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+          let content = null;
+          let configuration = newBlock.configuration || {};
+          const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
-        if (block) {
-          if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-            && BlockTypeEnum.SCRATCHPAD === newBlock.type
-          ) {
-            content = `from mage_ai.data_preparation.variable_manager import get_variable
+          if (block) {
+            if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+              && BlockTypeEnum.SCRATCHPAD === newBlock.type
+            ) {
+              content = `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
-`;
+  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
+  `;
+            }
+
+            if (BlockLanguageEnum.SQL === block.language) {
+              configuration = {
+                ...selectKeys(block.configuration, [
+                  CONFIG_KEY_DATA_PROVIDER,
+                  CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                  CONFIG_KEY_EXPORT_WRITE_POLICY,
+                ]),
+                ...configuration,
+              };
+            }
           }
 
-          if (BlockLanguageEnum.SQL === block.language) {
-            configuration = {
-              ...selectKeys(block.configuration, [
-                CONFIG_KEY_DATA_PROVIDER,
-                CONFIG_KEY_DATA_PROVIDER_DATABASE,
-                CONFIG_KEY_DATA_PROVIDER_PROFILE,
-                CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-                CONFIG_KEY_EXPORT_WRITE_POLICY,
-              ]),
-              ...configuration,
-            };
+          if (BlockLanguageEnum.SQL === newBlock.language) {
+            content = addSqlBlockNote(content);
           }
-        }
+          content = addScratchpadNote(newBlock, content);
 
-        if (BlockLanguageEnum.SQL === newBlock.language) {
-          content = addSqlBlockNote(content);
-        }
-        content = addScratchpadNote(newBlock, content);
+          addNewBlockAtIndex({
+            ...newBlock,
+            configuration,
+            content,
+            upstream_blocks: upstreamBlocks,
+          }, numberOfBlocks, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
+        blockTemplates={blockTemplates}
+        focusedAddNewBlockSearch={focusedAddNewBlockSearch}
+        hideCustom={isIntegration || isStreaming}
+        hideDataExporter={isIntegration}
+        hideDataLoader={isIntegration}
+        hideDbt={isIntegration || isStreaming}
+        hideScratchpad={isIntegration}
+        hideSensor={isIntegration}
+        onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+        pipeline={pipeline}
+        project={project}
+        searchTextInputRef={searchTextInputRef}
+        setCreatingNewDBTModel={setCreatingNewDBTModel}
+        setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
+        showBrowseTemplates={showBrowseTemplates}
+        showConfigureProjectModal={showConfigureProjectModal}
+      />
 
-        addNewBlockAtIndex({
-          ...newBlock,
-          configuration,
-          content,
-          upstream_blocks: upstreamBlocks,
-        }, numberOfBlocks, setSelectedBlock);
-        setTextareaFocused(true);
-      }}
-      blockTemplates={blockTemplates}
-      hideCustom={isIntegration || isStreaming}
-      hideDataExporter={isIntegration}
-      hideDataLoader={isIntegration}
-      hideDbt={isIntegration || isStreaming}
-      hideScratchpad={isIntegration}
-      hideSensor={isIntegration}
-      onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-      pipeline={pipeline}
-      setCreatingNewDBTModel={setCreatingNewDBTModel}
-    />
+      {!useV2AddNewBlock && (
+        <Spacing mt={1}>
+          <Text muted small>
+            Want to try the new add block UI?
+            <br />
+            Turn on the feature named <Text bold inline muted small>
+              {FeatureUUIDEnum.ADD_NEW_BLOCK_V2}
+            </Text> in your <NextLink
+              href="/settings/workspace/preferences"
+              passHref
+            >
+              <Link muted underline>
+                <Text bold inline muted small>
+                  project settings
+                </Text>
+              </Link>
+            </NextLink>.
+          </Text>
+        </Spacing>
+      )}
+    </>
   ), [
     addNewBlockAtIndex,
     blockTemplates,
     blocks,
+    focusedAddNewBlockSearch,
     isIntegration,
     isStreaming,
     numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
+    project,
+    searchTextInputRef,
+    setFocusedAddNewBlockSearch,
     setSelectedBlock,
     setTextareaFocused,
+    showBrowseTemplates,
+    showConfigureProjectModal,
+    useV2AddNewBlock,
   ]);
 
   return (
