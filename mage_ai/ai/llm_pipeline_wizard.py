@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import uuid
 
 import openai
 from langchain.chains import LLMChain
