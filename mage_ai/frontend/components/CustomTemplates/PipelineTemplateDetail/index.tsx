@@ -70,6 +70,7 @@ function PipelineTemplateDetail({
     uuid: 'CustomTemplates/PipelineTemplateDetail',
   });
 
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
   const [templateAttributes, setTemplateAttributesState] =
     useState<CustomTemplateType | {
@@ -128,10 +129,13 @@ function PipelineTemplateDetail({
               onMutateSuccess?.();
             }
 
-            router.push(
-              '/templates/[...slug]',
-              `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
-            );
+            setIsRedirecting(true);
+            setTimeout(() => {
+              router.push(
+                '/templates/[...slug]',
+                `/templates/${encodeURIComponent(ct?.template_uuid)}?object_type=${OBJECT_TYPE_PIPELINES}`,
+              );
+            }, 1);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -370,7 +374,7 @@ function PipelineTemplateDetail({
   ]);
 
   const { ConfirmLeaveModal } = useConfirmLeave({
-    shouldWarn: touched,
+    shouldWarn: !isRedirecting && touched,
     warningMessage: 'You have unsaved changes. Are you sure you want to leave?',
   });
 

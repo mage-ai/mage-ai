@@ -60,6 +60,7 @@ class CustomTemplateResource(GenericResource):
 
         if template_uuid:
             template_uuid = clean_name(template_uuid)
+            payload['template_uuid'] = template_uuid
 
         if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
@@ -134,6 +135,12 @@ class CustomTemplateResource(GenericResource):
         self.model.delete
 
     async def update(self, payload, **kwargs):
+        template_uuid = payload.get('template_uuid')
+
+        if template_uuid:
+            template_uuid = clean_name(template_uuid)
+            payload['template_uuid'] = template_uuid
+
         object_type = payload.get('object_type')
 
         cache = None

@@ -98,10 +98,17 @@ const useConfirmLeave = ({
         </FlexContainer>
       </Spacing>
     </Panel>
-  ), {}, [
+  ), {
+  }, [
     warningMessage,
   ], {
     background: true,
+    hideCallback: () => {
+      setNavigationConfig({
+        isModalOpen: false,
+        nextRoute: null,
+      });
+    },
     uuid: 'stale_pipeline_message',
   });
 

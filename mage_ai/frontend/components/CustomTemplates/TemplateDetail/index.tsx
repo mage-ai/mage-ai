@@ -95,6 +95,7 @@ function TemplateDetail({
   });
 
   const [codeBlockKey, setCodeBlockKey] = useState<number>(Number(new Date()));
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab
     ? NAV_TABS.find(({ uuid }) => uuid === defaultTab?.uuid)
@@ -156,10 +157,13 @@ function TemplateDetail({
             if (onCreateCustomTemplate) {
               onCreateCustomTemplate?.(ct);
             } else {
-              router.push(
-                '/templates/[...slug]',
-                `/templates/${encodeURIComponent(ct?.template_uuid)}`,
-              );
+              setIsRedirecting(true);
+              setTimeout(() => {
+                router.push(
+                  '/templates/[...slug]',
+                  `/templates/${encodeURIComponent(ct?.template_uuid)}`,
+                );
+              }, 1);
             }
           },
           onErrorCallback: (response, errors) => showError({
@@ -538,7 +542,7 @@ function TemplateDetail({
   ]);
 
   const { ConfirmLeaveModal } = useConfirmLeave({
-    shouldWarn: touched,
+    shouldWarn: !isRedirecting && touched,
     warningMessage: 'You have unsaved changes. Are you sure you want to leave?',
   });
 
