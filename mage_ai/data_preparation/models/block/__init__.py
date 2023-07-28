@@ -279,6 +279,7 @@ class Block:
         # Replicate block
         self.replicated_block = replicated_block
 
+        # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
 
     @property

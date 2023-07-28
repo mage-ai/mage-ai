@@ -546,16 +546,51 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def format_error(cls, error: List[str], block_uuid: str = None) -> List[str]:
+        """
+        Most errors that are returned from executed code will contain sections that are not
+        useful to the user because they will contain internal Mage method calls. The point
+        of this method is to remove those unnecessary lines and replace hard-to-read font with
+        more visible font.
+
+        The `initial_regex` pattern is used to find the start of the Mage method calls within the
+        error message. When a block is executed from a notebook, the start of the traceback will be
+        when the `execute_custom_code` method is called from the ipython kernel.
+
+        The `end_regex` pattern is used to find the end of the Mage method calls. If a block UUID
+        is provided, we will try to find the end by searching for the block UUID because the block
+        code should be executed within the `{block_uuid}.py` file. Otherwise, we will default to
+        using `execute_block_function` which is a method called when a block is executed.
+
+        The `custom_block_end_regex` pattern is used as a fallback if the `end_regex` pattern cannot
+        be found. If a block is not a standard Python block, this fallback regex will be used.
+
+        All the lines in the error between the initial_idx and end_idx (or custom_block_end_idx)
+        will be filtered out in the return value.
+
+        :param error: The list of strings representing the error message, where each element
+                    corresponds to a line of the error message.
+        :type error: List[str]
+        :param block_uuid: The UUID of the block to identify the end of the specific block within
+                        the error message. If not provided, the method will use the default
+                        'execute_block_function' string to search for the end of the block.
+        :type block_uuid: str, optional
+        :return: A formatted error message with unnecessary lines removed and hard-to-read font
+                replaced, making it more user-friendly.
+        :rtype: List[str]
+        """
         initial_regex = r'.*execute_custom_code\(\).*'
         end_search_string = block_uuid if block_uuid else 'execute_block_function'
         end_regex = r'.*' + re.escape(end_search_string) + r'.*'
         custom_block_end_regex = r'.*data_preparation\/models\/block.*'
+
         initial_idx = 0
         end_idx = 0
         custom_block_end_idx = 0
         for idx, line in enumerate(error):
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             line_without_ansi = ansi_escape.sub('', line)
+            # The "execute_custom_code" method may appear in multiple lines of the stack trace, so
+            # we just want to fetch the index of the first occurrence.
             if re.match(initial_regex, line_without_ansi) and not initial_idx:
                 initial_idx = idx
             if re.match(end_regex, line_without_ansi):
