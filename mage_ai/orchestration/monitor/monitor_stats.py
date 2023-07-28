@@ -80,9 +80,7 @@ class MonitorStats:
                     data=dict(),
                 )
             created_at_formatted = p.created_at.strftime('%Y-%m-%d')
-            data = stats_by_schedule_id[p.pipeline_schedule_id]['data'] \
-                if p.pipeline_schedule_id is not None \
-                else stats_by_schedule_id[NO_PIPELINE_SCHEDULE_ID]['data']
+            data = stats_by_schedule_id[pipeline_schedule_id]['data']
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
             if group_by_pipeline_type:
