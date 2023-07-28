@@ -325,7 +325,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         error = message.get('error')
         if error:
-            message['data'] = cls.format_error(error)
+            message['data'] = cls.format_error(error, block_uuid=block_uuid)
 
         output_dict = dict(
             block_type=block_type,
@@ -545,9 +545,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             set_current_message_task(task)
 
     @classmethod
-    def format_error(cls, error: List[str]) -> List[str]:
+    def format_error(cls, error: List[str], block_uuid: str = None) -> List[str]:
         initial_regex = r'.*execute_custom_code\(\).*'
-        end_regex = r'.*execute_block_function.*'
+        end_search_string = block_uuid if block_uuid else 'execute_block_function'
+        end_regex = r'.*' + re.escape(end_search_string) + r'.*'
         custom_block_end_regex = r'.*data_preparation\/models\/block.*'
         initial_idx = 0
         end_idx = 0
@@ -567,7 +568,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         try:
             if initial_idx and end_idx:
-                return error[:initial_idx - 1] + error[end_idx + 1:]
+                return error[:initial_idx - 1] + error[end_idx:]
             elif initial_idx and custom_block_end_idx:
                 return error[:initial_idx - 1] + error[custom_block_end_idx:]
         except Exception:
