@@ -267,13 +267,13 @@ class PipelineSchedule(BaseModel):
                 self.pipeline_runs
             ):
                 if self.landing_time_enabled():
-                    if len(previous_runtimes) == 0:
+                    if not previous_runtimes or len(previous_runtimes) == 0:
                         return True
                     else:
                         runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
 
                         if len(previous_runtimes) >= 2:
-                            sd = ceil(stdev(previous_runtimes))
+                            sd = ceil(stdev(previous_runtimes) / 2)
                         else:
                             sd = 0
 
@@ -343,9 +343,9 @@ class PipelineSchedule(BaseModel):
                 reverse=True,
             )
 
-            for pipeline_run in pipeline_runs:
+            for pr in pipeline_runs:
                 runtime = (
-                    pipeline_run.completed_at - pipeline_run.created_at
+                    pr.completed_at - pr.created_at
                 ).total_seconds()
                 previous_runtimes.append(runtime)
 
@@ -370,7 +370,7 @@ class PipelineSchedule(BaseModel):
         if len(previous_runtimes) == 0:
             return None
 
-        return sum(previous_runtimes) / len(previous_runtimes)
+        return round(sum(previous_runtimes) / len(previous_runtimes), 2)
 
 
 class PipelineRun(BaseModel):

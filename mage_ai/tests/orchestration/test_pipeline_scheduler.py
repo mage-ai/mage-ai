@@ -6,7 +6,11 @@ from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.triggers import ScheduleStatus
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -17,7 +21,8 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, check_sla
+from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, check_sla, schedule_all
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
@@ -94,6 +99,116 @@ class PipelineSchedulerTests(DBTestCase):
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
             self.assertEqual(mock_send_message.call_count, 1)
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            start_time=datetime(2023, 10, 12, 13, 13, 20),
+        )))
+
+        # No previous pipeline runs
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 0)
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 1)
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time_with_previous_runs(self):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            start_time=datetime(2023, 10, 12, 13, 13, 20),
+        )))
+
+        # No previous pipeline runs
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 0)
+
+        # With previous pipeline runs
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 30, 0, 0, 0),
+            metrics=dict(previous_runtimes=[100, 200, 300, 400, 500, 600, 700]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.FAILED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run = PipelineRun.create(
+            completed_at=datetime(2023, 10, 11, 12, 13, 15),
+            execution_date=datetime(2023, 10, 20, 0, 0, 0),
+            metrics=dict(previous_runtimes=[2, 3, 4, 5, 6, 7, 8]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run.update(created_at=datetime(2023, 10, 11, 12, 13, 14))
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 10, 0, 0, 0),
+            metrics=dict(previous_runtimes=[10, 20, 30, 40, 50, 60, 70]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 1)
 
     def test_schedule_all_blocks_completed_with_failures(self):
         pipeline_run = create_pipeline_run_with_schedule(
