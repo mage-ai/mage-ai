@@ -4,6 +4,7 @@ import yaml
 
 from dataclasses import dataclass, field
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
@@ -55,6 +56,10 @@ class GlobalDataProduct:
 
         return arr
 
+    @classmethod
+    def get(self, uuid: str):
+        return find(lambda x: x.uuid == uuid, self.load_all())
+
     def to_dict(self, include_uuid: bool = False) -> Dict:
         data = dict(
             object_type=self.object_type,
@@ -69,9 +74,16 @@ class GlobalDataProduct:
 
         return data
 
-    def save(self) -> None:
+    def delete(self) -> None:
+        self.save(delete=True)
+
+    def save(self, delete: bool = False) -> None:
         mapping = index_by(lambda x: x.uuid, self.load_all())
-        mapping[self.uuid] = self
+
+        if delete:
+            mapping.pop(self.uuid, None)
+        else:
+            mapping[self.uuid] = self
 
         mapping_new = {}
         for uuid, gdp in mapping.items():
@@ -83,3 +95,14 @@ class GlobalDataProduct:
         content = yaml.safe_dump(mapping_new)
         safe_write(self.file_path(), content)
 
+    def update(self, payload: Dict) -> None:
+        for key in [
+            'object_type',
+            'object_uuid',
+            'outdated_after',
+            'settings',
+            'start_outdated_at',
+        ]:
+            value = payload.get(key)
+            if getattr(self, key) != value:
+                setattr(self, key, value)
