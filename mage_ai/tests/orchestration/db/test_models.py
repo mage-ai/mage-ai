@@ -92,18 +92,169 @@ class PipelineScheduleTests(DBTestCase):
             set([pipeline_schedule2.id, pipeline_schedule3.id]),
         )
 
+    @freeze_time('2023-10-11 12:13:14')
     def test_should_schedule(self):
-        pipeline_schedule1 = PipelineSchedule.create(
+        shared_attrs = dict(
             pipeline_uuid='test_pipeline',
-            schedule_interval='@daily'
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
         )
-        pipeline_schedule2 = PipelineSchedule.create(
-            pipeline_uuid='test_pipeline',
-            schedule_interval='@daily'
+
+        self.assertFalse(PipelineSchedule.create(**shared_attrs).should_schedule())
+
+        self.assertFalse(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            start_time=datetime(2023, 10, 11, 12, 13, 15),
+            status=ScheduleStatus.ACTIVE,
+        ))).should_schedule())
+
+        self.assertFalse(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            pipeline_uuid='does_not_exist',
+            start_time=datetime(2023, 10, 11, 12, 13, 13),
+            status=ScheduleStatus.ACTIVE,
+        ))).should_schedule())
+
+        pipeline_schedule1 = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            schedule_interval=ScheduleInterval.ONCE,
+            start_time=datetime(2023, 10, 11, 12, 13, 13),
+            status=ScheduleStatus.ACTIVE,
+        )))
+        self.assertTrue(pipeline_schedule1.should_schedule())
+        PipelineRun.create(
+            pipeline_schedule_id=pipeline_schedule1.id,
+            pipeline_uuid=pipeline_schedule1.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        pipeline_schedule2.update(status=ScheduleStatus.ACTIVE)
         self.assertFalse(pipeline_schedule1.should_schedule())
-        self.assertTrue(pipeline_schedule2.should_schedule())
+
+        self.assertFalse(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            schedule_interval=None,
+            status=ScheduleStatus.ACTIVE
+        ))).should_schedule())
+
+        self.assertTrue(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            status=ScheduleStatus.ACTIVE
+        ))).should_schedule())
+
+        for schedule_interval, execution_date_true, execution_date_false in [
+            (
+                ScheduleInterval.HOURLY,
+                datetime(2023, 10, 11, 11, 0, 0),
+                datetime(2023, 10, 11, 12, 0, 0),
+            ),
+            (
+                ScheduleInterval.DAILY,
+                datetime(2023, 10, 10, 0, 0, 0),
+                datetime(2023, 10, 11, 0, 0, 0),
+            ),
+            (
+                ScheduleInterval.WEEKLY,
+                datetime(2023, 10, 2, 0, 0, 0),
+                datetime(2023, 10, 9, 0, 0, 0),
+            ),
+            (
+                ScheduleInterval.MONTHLY,
+                datetime(2023, 9, 1, 0, 0, 0),
+                datetime(2023, 10, 1, 0, 0, 0),
+            ),
+        ]:
+            pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=schedule_interval,
+                start_time=datetime(2023, 10, 11, 12, 13, 13),
+                status=ScheduleStatus.ACTIVE,
+            )))
+            PipelineRun.create(
+                execution_date=execution_date_true,
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                status=PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+            self.assertTrue(pipeline_schedule.should_schedule())
+            PipelineRun.create(
+                execution_date=execution_date_false,
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                status=PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+            self.assertFalse(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_should_schedule_when_landing_time_enabled(self):
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        # No previous runtimes
+        self.assertTrue(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            schedule_interval=ScheduleInterval.HOURLY,
+        ))).should_schedule())
+
+        for schedule_interval, previous_runtimes, landing_time_true, landing_time_false in [
+            (
+                ScheduleInterval.HOURLY,
+                # AVG: 4
+                # STD: 2
+                [1, 2, 3, 4, 5, 6, 7],
+                datetime(2023, 10, 12, 13, 13, 20),
+                datetime(2023, 10, 13, 14, 13, 21),
+            ),
+            (
+                ScheduleInterval.DAILY,
+                # AVG: 4000
+                # STD: 1081
+                [1000, 2000, 3000, 4000, 5000, 6000, 7000],
+                datetime(2023, 10, 12, 13, 37, 55),
+                datetime(2023, 10, 13, 13, 37, 56),
+            ),
+            (
+                # 2023-10-11 is a Wednesday
+                ScheduleInterval.WEEKLY,
+                # AVG: 216000
+                # STD: 46662
+                [
+                    1 * 86400,
+                    1.5 * 86400,
+                    2 * 86400,
+                    2.5 * 86400,
+                    3 * 86400,
+                    3.5 * 86400,
+                    4 * 86400,
+                ],
+                # 2023-10-21 is a Saturday
+                datetime(2023, 10, 21, 13, 10, 56),
+                datetime(2023, 10, 28, 13, 10, 57),
+            ),
+            (
+                ScheduleInterval.MONTHLY,
+                # AVG: 537,536
+                # STD: 131,304
+                # 7 days
+                # 17 hours
+                # 47 minutes
+                # 20 seconds
+                [
+                    3 * 86400,
+                    3.5 * 86400,
+                    5 * 86400,
+                    5.5 * 86400,
+                    7 * 86400,
+                    7.5 * 86400,
+                    12 * 86400,
+                ],
+                datetime(2023, 11, 19, 5, 50, 13),
+                datetime(2023, 12, 19, 5, 50, 14),
+            ),
+        ]:
+            self.assertTrue(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=schedule_interval,
+                start_time=landing_time_true,
+            ))).should_schedule(previous_runtimes=previous_runtimes))
+            self.assertFalse(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=schedule_interval,
+                start_time=landing_time_false,
+            ))).should_schedule(previous_runtimes=previous_runtimes))
 
     def test_landing_time_enabled(self):
         for schedule_type in [

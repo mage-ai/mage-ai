@@ -267,13 +267,13 @@ class PipelineSchedule(BaseModel):
                 self.pipeline_runs
             ):
                 if self.landing_time_enabled():
-                    if len(previous_runtimes) == 0:
+                    if not previous_runtimes or len(previous_runtimes) == 0:
                         return True
                     else:
                         runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
 
                         if len(previous_runtimes) >= 2:
-                            sd = ceil(stdev(previous_runtimes))
+                            sd = ceil(stdev(previous_runtimes) / 2)
                         else:
                             sd = 0
 
