@@ -564,8 +564,8 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         schema = profile.get('schema')
         config = dict(
             SNOWFLAKE_ACCOUNT=profile.get('account'),
-            SNOWFLAKE_DEFAULT_DB=profile.get('database'),
-            SNOWFLAKE_DEFAULT_SCHEMA=profile.get('schema'),
+            SNOWFLAKE_DEFAULT_DB=database,
+            SNOWFLAKE_DEFAULT_SCHEMA=schema,
             SNOWFLAKE_DEFAULT_WH=profile.get('warehouse'),
             SNOWFLAKE_USER=profile.get('user'),
             SNOWFLAKE_ROLE=profile.get('role'),
