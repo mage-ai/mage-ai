@@ -210,7 +210,6 @@ class PipelineSchedulerTests(DBTestCase):
             all()
         )), 1)
 
-
     def test_schedule_all_blocks_completed_with_failures(self):
         pipeline_run = create_pipeline_run_with_schedule(
             pipeline_uuid='test_pipeline',
