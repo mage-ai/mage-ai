@@ -12,10 +12,10 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
-    COLUMN_TYPE_VARIANT,
     REPLICATION_METHOD_FULL_TABLE,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
+from mage_integrations.sources.sql.base import Source
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
 from singer.schema import Schema
@@ -100,7 +100,7 @@ class Snowflake(Source):
                     column_types.append(COLUMN_TYPE_OBJECT)
                 elif 'json' in column_type or 'variant' in column_type:
                     column_properties = {}
-                    column_types.append(COLUMN_TYPE_VARIANT)
+                    column_types.append(COLUMN_TYPE_OBJECT)
                 elif 'uuid' in column_type:
                     column_format = COLUMN_FORMAT_UUID
                     column_types.append(COLUMN_TYPE_STRING)
