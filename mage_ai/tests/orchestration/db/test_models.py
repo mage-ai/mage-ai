@@ -1,6 +1,7 @@
 import os
-from croniter import croniter
 from datetime import datetime, timezone
+
+from croniter import croniter
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.constants import PipelineType

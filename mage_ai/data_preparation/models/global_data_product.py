@@ -1,14 +1,15 @@
 import enum
 import os
+from dataclasses import dataclass, field
+from typing import Dict, List
+
 import yaml
 
-from dataclasses import dataclass, field
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
-from typing import Dict, List
 
 
 class GlobalDataProductObjectType(str, enum.Enum):
