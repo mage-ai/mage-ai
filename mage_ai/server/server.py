@@ -193,6 +193,7 @@ def make_app():
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
         (r'/files', MainPageHandler),
+        (r'/global-data-products', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]

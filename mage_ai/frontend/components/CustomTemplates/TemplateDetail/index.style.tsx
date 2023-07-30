@@ -50,6 +50,7 @@ export const TabsStyle = styled.div`
 `;
 
 export const ButtonsStyle = styled.div`
+  margin-top: ${PADDING_UNITS * UNIT}px;
   width: 100%;
 
   ${props => `
