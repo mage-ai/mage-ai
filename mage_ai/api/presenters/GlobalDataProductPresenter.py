@@ -6,8 +6,8 @@ class GlobalDataProductPresenter(BasePresenter):
         'object_type',
         'object_uuid',
         'outdated_after',
+        'outdated_starting_at',
         'settings',
-        'start_outdated_at',
         'uuid',
     ]
 

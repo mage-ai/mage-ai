@@ -22,15 +22,15 @@ class GlobalDataProduct:
     object_type: str = None
     object_uuid: str = None
     outdated_after: Dict = field(default_factory=dict)
+    outdated_starting_at: Dict = field(default_factory=dict)
     settings: Dict = field(default_factory=dict)
-    start_outdated_at: Dict = field(default_factory=dict)
 
     def __init__(self, uuid: str, **kwargs):
         self.object_type = kwargs.get('object_type')
         self.object_uuid = kwargs.get('object_uuid')
         self.outdated_after = kwargs.get('outdated_after')
+        self.outdated_starting_at = kwargs.get('outdated_starting_at')
         self.settings = kwargs.get('settings')
-        self.start_outdated_at = kwargs.get('start_outdated_at')
         self.uuid = clean_name(uuid) if uuid else uuid
 
     @classmethod
@@ -65,8 +65,8 @@ class GlobalDataProduct:
             object_type=self.object_type,
             object_uuid=self.object_uuid,
             outdated_after=self.outdated_after,
+            outdated_starting_at=self.outdated_starting_at,
             settings=self.settings,
-            start_outdated_at=self.start_outdated_at,
         )
 
         if include_uuid:
@@ -86,7 +86,10 @@ class GlobalDataProduct:
             mapping[self.uuid] = self
 
         mapping_new = {}
-        for uuid, gdp in mapping.items():
+
+        items = sorted(list(mapping.items()), key=lambda tup: tup[0])
+        for tup in items:
+            uuid, gdp = tup
             mapping_new[uuid] = {}
             for k, v in gdp.to_dict().items():
                 if v is not None:
@@ -100,9 +103,16 @@ class GlobalDataProduct:
             'object_type',
             'object_uuid',
             'outdated_after',
+            'outdated_starting_at',
             'settings',
-            'start_outdated_at',
         ]:
             value = payload.get(key)
             if getattr(self, key) != value:
                 setattr(self, key, value)
+
+        uuid = payload.get('uuid')
+        if self.uuid != uuid:
+            self.delete()
+            self.uuid = uuid
+
+        self.save()
