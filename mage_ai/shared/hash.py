@@ -115,7 +115,7 @@ def merge_dict(a, b):
 
 def replace_dict_nan_value(d):
     def _replace_nan_value(v):
-        if type(v) == float and math.isnan(v):
+        if isinstance(v, float) and math.isnan(v):
             return None
         return v
     return {k: _replace_nan_value(v) for k, v in d.items()}

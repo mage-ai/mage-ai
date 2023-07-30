@@ -236,8 +236,8 @@ class Trino(BaseSQL):
             if df_col_dropna.count() == 0:
                 continue
             if dtypes[col] == PandasTypes.OBJECT \
-                    or (df_[col].dtype == PandasTypes.OBJECT and
-                        type(df_col_dropna.iloc[0]) != str):
+                    or (df_[col].dtype == PandasTypes.OBJECT and not
+                        isinstance(df_col_dropna.iloc[0], str)):
                 df_[col] = df_[col].apply(lambda x: serialize_obj(x))
         df_.replace({np.NaN: None}, inplace=True)
 

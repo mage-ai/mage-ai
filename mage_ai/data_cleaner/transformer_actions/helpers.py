@@ -41,7 +41,8 @@ def extract_join_feature_set_version_id(payload):
     if payload['action_type'] != ActionType.JOIN:
         return None
     join_feature_set_version_id = payload['action_arguments'][0]
-    if type(join_feature_set_version_id) == str and join_feature_set_version_id.startswith('%{'):
+    if isinstance(join_feature_set_version_id, str) and \
+            join_feature_set_version_id.startswith('%{'):
 
         join_feature_set_version_id = next(
             v['id']
