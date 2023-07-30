@@ -400,6 +400,7 @@ function GlobalDataProductDetail({
                   value: idx + 1,
                 })),
               },
+              // @ts-ignore
             ].map(({
               uuid,
               values,
@@ -434,6 +435,7 @@ function GlobalDataProductDetail({
                     {...sharedProps}
                     placeholder="Select a value"
                   >
+                    {/* @ts-ignore */}
                     {values.map(({
                       uuid,
                       value,
@@ -503,6 +505,7 @@ function GlobalDataProductDetail({
                   uuid: 'Partitions',
                 },
               ]}
+              // @ts-ignore
               rows={blocks?.map(({
                 uuid,
               }) => {
@@ -583,6 +586,7 @@ function GlobalDataProductDetail({
               disabled={buttonDisabled}
               fullWidth
               loading={isLoadingUpdateObject}
+              // @ts-ignore
               onClick={() => updateObject({
                 global_data_product: objectAttributes,
               })}
