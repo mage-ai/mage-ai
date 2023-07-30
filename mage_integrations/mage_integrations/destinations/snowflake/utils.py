@@ -1,3 +1,6 @@
+import json
+from typing import Dict, List
+
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
@@ -10,11 +13,11 @@ from mage_integrations.destinations.snowflake.constants import (
 from mage_integrations.destinations.sql.utils import (
     clean_column_name,
     convert_column_to_type,
+)
+from mage_integrations.destinations.sql.utils import (
     convert_column_type as convert_column_type_og,
 )
 from mage_integrations.utils.strings import is_number
-from typing import Dict, List
-import json
 
 
 def build_alter_table_command(
