@@ -13,7 +13,10 @@ class Client:
             'client',
             boto3.client(
                 's3',
+                aws_access_key_id=kwargs.get('aws_access_key_id'),
+                aws_secret_access_key=kwargs.get('aws_secret_access_key'),
                 config=botocore.client.Config(max_pool_connections=MAX_POOL_CONNECTIONS),
+                endpoint_url=kwargs.get('endpoint_url'),
             ),
         )
         self.transfer_config = s3transfer.TransferConfig(
