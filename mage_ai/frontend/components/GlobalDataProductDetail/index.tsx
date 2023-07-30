@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType, {
@@ -42,7 +43,7 @@ function GlobalDataProductDetail({
   });
 
   const [beforeHidden, setBeforeHidden] = useState<boolean>(false);
-  const [beforeWidth, setBeforeWidth] = useState<number>(400);
+  const [beforeWidth, setBeforeWidth] = useState<number>(600);
   const [touched, setTouched] = useState<boolean>(false);
   const [objectAttributes, setObjectAttributesState] =
     useState<GlobalDataProductType>(null);
@@ -463,6 +464,116 @@ function GlobalDataProductDetail({
             })}
           />
         </Spacing>
+
+        {blocks?.length >= 1 && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+            <Spacing mb={1}>
+              <Text bold>
+                Block data to output
+              </Text>
+              <Text muted small>
+                The data output from the block(s) you select below will be the data product
+                that is returned when a downstream entity is requesting data from this
+                global data product.
+              </Text>
+
+              <div style={{ marginTop: 4 }}>
+                <Text muted small>
+                  When requesting data from this global data product,
+                  the selected block(s) will return data from its most recent partition.
+                  You can override this by adding a value in the partitions setting. For example,
+                  if you set the partitions value to 5, then the selected block will return data
+                  from its 5 most recent partitions. If you set the partitions value to 0, then
+                  all the partitions will be returned.
+                </Text>
+              </div>
+            </Spacing>
+
+            <Table
+              columnFlex={[null, 1, null]}
+              columns={[
+                {
+                  label: () => '',
+                  uuid: 'selected',
+                },
+                {
+                  uuid: 'Block UUID',
+                },
+                {
+                  uuid: 'Partitions',
+                },
+              ]}
+              rows={blocks?.map(({
+                uuid,
+              }) => {
+                const settings = objectAttributes?.settings;
+                const blockSettings = settings?.[uuid];
+                const selected = !!blockSettings;
+
+                const setSelected = (value: boolean) => {
+                  setObjectAttributes(prev => {
+                    const settingsPrev = prev?.settings;
+
+                    if (value) {
+                      settingsPrev[uuid] = {};
+                    } else {
+                      delete settingsPrev?.[uuid];
+                    }
+
+                    return {
+                      ...prev,
+                      settings: settingsPrev,
+                    };
+                  });
+                };
+
+                return [
+                  <Checkbox
+                    checked={selected}
+                    key={`selected--${uuid}`}
+                    onClick={() => setSelected(!selected)}
+                  />,
+                  <NextLink
+                    as={`/pipelines/${objectAttributes?.object_uuid}/edit?block_uuid=${uuid}`}
+                    href={'/pipelines/[pipeline]/edit'}
+                    key={`block-uuid-${uuid}`}
+                    passHref
+                  >
+                    <Link
+                      monospace
+                      openNewWindow
+                      sameColorAsText
+                    >
+                      {uuid}
+                    </Link>
+                  </NextLink>,
+                  <TextInput
+                    compact
+                    key={`input-${uuid}`}
+                    monospace
+                    // @ts-ignore
+                    onChange={e => setObjectAttributes(prev => ({
+                      ...prev,
+                      settings: {
+                        ...prev?.settings,
+                        [uuid]: {
+                          ...prev?.settings?.[uuid],
+                          partitions: Number(e.target.value),
+                        },
+                      },
+                    }))}
+                    placeholder="1"
+                    primary
+                    setContentOnMount
+                    small
+                    type="number"
+                    value={objectAttributes?.settings?.[uuid]?.partitions || ''}
+                  />,
+                ];
+              })}
+            />
+          </Spacing>
+        )}
       </Flex>
 
       <ButtonsStyle>
@@ -484,6 +595,7 @@ function GlobalDataProductDetail({
       </ButtonsStyle>
     </FlexContainer>
   ), [
+    blocks,
     buttonDisabled,
     isLoadingUpdateObject,
     objectAttributes,
