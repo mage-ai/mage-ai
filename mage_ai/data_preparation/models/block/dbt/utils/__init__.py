@@ -176,9 +176,11 @@ def extract_sources(block_content) -> List[Tuple[str, str]]:
 def add_blocks_upstream_from_refs(
     block: 'Block',
     add_current_block: bool = False,
-    downstream_blocks: List['Block'] = [],
+    downstream_blocks: List['Block'] = None,
     read_only: bool = False,
 ) -> None:
+    if downstream_blocks is None:
+        downstream_blocks = []
     attributes_dict = parse_attributes(block)
     models_folder_path = attributes_dict['models_folder_path']
 
@@ -195,7 +197,7 @@ def add_blocks_upstream_from_refs(
 
     current_upstream_blocks = []
     added_blocks = []
-    for idx, ref in enumerate(extract_refs(block.content)):
+    for _, ref in enumerate(extract_refs(block.content)):
         if ref not in files_by_name:
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
@@ -805,7 +807,7 @@ def interpolate_input(
 
         return f'{__quoted(schema)}.{__quoted(tn)}'
 
-    for idx, upstream_block in enumerate(block.upstream_blocks):
+    for _, upstream_block in enumerate(block.upstream_blocks):
         if BlockType.DBT != upstream_block.type:
             continue
 
@@ -1188,10 +1190,15 @@ def create_temporary_profile(project_full_path: str, profiles_dir: str) -> Tuple
 def run_dbt_tests(
     block,
     build_block_output_stdout: Callable[..., object] = None,
-    global_vars: Dict = {},
+    global_vars: Dict = None,
     logger: Logger = None,
-    logging_tags: Dict = dict(),
+    logging_tags: Dict = None,
 ) -> None:
+    if global_vars is None:
+        global_vars = {}
+    if logging_tags is None:
+        logging_tags = {}
+
     if block.configuration.get('file_path') is not None:
         attributes_dict = parse_attributes(block)
         snapshot = attributes_dict['snapshot']
@@ -1228,7 +1235,7 @@ def run_dbt_tests(
 
     with redirect_stdout(stdout):
         lines = proc1.stdout.decode().split('\n')
-        for idx, line in enumerate(lines):
+        for _, line in enumerate(lines):
             print(line)
 
             match = re.search('ERROR=([0-9]+)', line)

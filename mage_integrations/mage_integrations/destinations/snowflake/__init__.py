@@ -1,6 +1,7 @@
+from typing import Dict, List, Tuple
+
 import pandas as pd
 from snowflake.connector.pandas_tools import write_pandas
-from typing import Dict, List, Tuple
 
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
@@ -398,7 +399,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 results += self.build_connection().execute(
                     drop_temp_table_command + create_temp_table_command, commit=True)
 
-                # Outputs of write_dataframe_to_table are for temporary table only, thus not added to results
+                # Outputs of write_dataframe_to_table are for temporary table only, thus not added
+                # to results
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
                 self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
                 self.logger.info(
@@ -422,6 +424,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 self.logger.info(f'write_dataframe_to_table completed to {full_table_name}')
 
             return results
+
 
 if __name__ == '__main__':
     main(Snowflake)

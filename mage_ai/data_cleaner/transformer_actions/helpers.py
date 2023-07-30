@@ -1,7 +1,8 @@
+import numpy as np
+
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.shared.utils import parse_list
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, VariableType
-import numpy as np
 
 DAY_SECONDS = 86400
 HOUR_SECONDS = 3600

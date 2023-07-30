@@ -21,7 +21,11 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, check_sla, schedule_all
+from mage_ai.orchestration.pipeline_scheduler import (
+    PipelineScheduler,
+    check_sla,
+    schedule_all,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
