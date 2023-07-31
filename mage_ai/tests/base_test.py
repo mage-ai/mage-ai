@@ -3,6 +3,7 @@ import shutil
 import sys
 import unittest
 
+from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.settings.repo import set_repo_path
@@ -59,7 +60,11 @@ class DBTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(self.repo_path)
+        try:
+            shutil.rmtree(self.repo_path)
+            shutil.rmtree(get_variables_dir())
+        except Exception:
+            pass
         db_connection.close_session()
 
         if os.path.isfile(TEST_DB):
@@ -74,3 +79,20 @@ class TestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        self.repo_path = os.getcwd() + '/test'
+        set_repo_path(self.repo_path)
+        if not os.path.exists(self.repo_path):
+            os.mkdir(self.repo_path)
+
+    @classmethod
+    def tearDownClass(self):
+        try:
+            shutil.rmtree(self.repo_path)
+            shutil.rmtree(get_variables_dir())
+        except Exception:
+            pass
+        super().tearDownClass()
