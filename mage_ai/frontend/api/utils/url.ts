@@ -65,11 +65,13 @@ export function getWebSocket(path='') {
     basePath = CLOUD_BASE_PATH;
   }
 
+  const host = getHostCore(windowDefined, LOCALHOST, PORT);
+
   let prefix = 'ws://';
   if (windowDefined && window.location.protocol?.match(/https/)) {
     prefix = 'wss://';
   }
-  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}${basePath}/websocket/${path}`;
+  return `${prefix}${host}${basePath}/websocket/${path}`;
 }
 
 export function buildUrl(

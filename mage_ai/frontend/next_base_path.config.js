@@ -1,8 +1,8 @@
-// Any changes in this file should be replicated in next_base_path.config.js
-
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
+  basePath: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_',
+  assetPrefix: '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_/',
   eslint: {
     ignoreDuringBuilds: true,
   },
