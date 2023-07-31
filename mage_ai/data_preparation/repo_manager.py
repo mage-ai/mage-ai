@@ -100,6 +100,7 @@ class RepoConfig:
             self.logging_config = repo_config.get('logging_config', dict())
 
             self.variables_retention_period = repo_config.get('variables_retention_period')
+            self.log_retention_period = repo_config.get('log_retention_period')
         except Exception:
             traceback.print_exc()
             pass

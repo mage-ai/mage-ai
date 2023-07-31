@@ -32,11 +32,10 @@ class S3LoggerManager(LoggerManager):
             endpoint_url=self.s3_config.endpoint_url,
         )
 
-    def output_logs_to_destination(self):
-        key = self.get_log_filepath()
-        self.s3_client.upload(key, self.stream.getvalue())
-
     def create_log_filepath_dir(self, path):
+        pass
+
+    def delete_old_logs(self):
         pass
 
     def get_log_filepath_prefix(self):
@@ -66,3 +65,7 @@ class S3LoggerManager(LoggerManager):
         TODO: Implement this method
         """
         return self.get_logs()
+
+    def output_logs_to_destination(self):
+        key = self.get_log_filepath()
+        self.s3_client.upload(key, self.stream.getvalue())

@@ -281,6 +281,25 @@ def clean_cached_variables(
 
 
 @app.command()
+def clean_old_logs(
+    project_path: str = CLEAN_VARIABLES_PROJECT_PATH_DEFAULT,
+    pipeline_uuid: str = CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT,
+):
+    from mage_ai.settings.repo import set_repo_path
+
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
+
+    from mage_ai.data_preparation.logging.logger_manager_factory import (
+        LoggerManagerFactory,
+    )
+
+    LoggerManagerFactory.get_logger_manager(
+        pipeline_uuid=pipeline_uuid,
+    ).delete_old_logs()
+
+
+@app.command()
 def create_spark_cluster(
     project_path: str = CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT,
 ):
