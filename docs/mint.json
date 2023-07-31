@@ -42,13 +42,17 @@
     {
       "name": "Guides",
       "url": "guides"
+    },
+    {
+      "name": "Live Support",
+      "url": "https://www.mage.ai/chat"
     }
   ],
   "anchors": [
     {
-      "name": "Join our community",
-      "icon": "slack",
-      "url": "https://www.mage.ai/chat"
+      "name": "Releases",
+      "icon": "release-notes",
+      "url": "/about/releases"
     }
   ],
   "navigation": [
@@ -110,7 +114,7 @@
       ]
     },
     {
-      "group": "Data integrations",
+      "group": "Data integration",
       "pages": [
         "data-integrations/overview",
         "data-integrations/configuration",
@@ -338,7 +342,7 @@
       ]
     },
     {
-      "group": "Deployment",
+      "group": "Cloud",
       "pages": [
         {
           "group": "Authentication",
@@ -520,12 +524,7 @@
             "contributing/frontend/overview",
             "contributing/charts/how-to-add"
           ]
-        }
-      ]
-    },
-    {
-      "group": "Usage Statistics",
-      "pages": [
+        },
         "contributing/statistics/overview"
       ]
     },
