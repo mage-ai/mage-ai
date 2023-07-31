@@ -130,9 +130,9 @@ class LoggerManager:
 
     def delete_old_logs(self):
         """
-        Delete old log files based on log_retention_period
+        Delete old log files based on log retention_period
         """
-        log_retention_period = self.repo_config.log_retention_period
+        log_retention_period = self.logging_config.retention_period
         if not log_retention_period:
             return
         min_partition = (datetime.utcnow() -
