@@ -59,11 +59,17 @@ export function getWebSocket(path='') {
   const LOCALHOST = 'localhost';
   const PORT = '6789';
 
+  const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
+  let basePath = '';
+  if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
+    basePath = CLOUD_BASE_PATH;
+  }
+
   let prefix = 'ws://';
   if (windowDefined && window.location.protocol?.match(/https/)) {
     prefix = 'wss://';
   }
-  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/${path}`;
+  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}${basePath}/websocket/${path}`;
 }
 
 export function buildUrl(

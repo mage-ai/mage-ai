@@ -9,6 +9,7 @@ import api from '@api';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { useMutation } from 'react-query';
 import { onSuccess } from '@api/utils/response';
+import { useRouter } from 'next/router';
 
 type PipelineSettingsProps = {
   pipeline: PipelineType;
@@ -17,6 +18,7 @@ type PipelineSettingsProps = {
 function PipelineSettings({
   pipeline: pipelineProp,
 }: PipelineSettingsProps) {
+  const router = useRouter();
   const [errors, setErrors] = useState<ErrorsType>(null);
   const pipelineUUID = pipelineProp?.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
@@ -35,7 +37,7 @@ function PipelineSettings({
               const { uuid } = resp.pipeline;
 
               if (pipelineUUID !== uuid) {
-                window.location.href = `/pipelines/${uuid}/settings`;
+                window.location.href = `${router.basePath}/pipelines/${uuid}/settings`;
               }
             }
           },

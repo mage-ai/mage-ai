@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import os
-import re
 import traceback
 import webbrowser
 from time import sleep
@@ -108,19 +107,20 @@ class ApiSchedulerHandler(BaseHandler):
 
 
 def replace_base_path(base_path):
-    import fnmatch
     import os
     directory = os.path.join(os.path.dirname(__file__), 'frontend_dist_base_path')
-    for path, dirs, files in os.walk(os.path.abspath(directory)):
-        for filename in fnmatch.filter(files, '*.js|*.html'):
-            filepath = os.path.join(path, filename)
-            with open(filepath) as f:
-                s = f.read()
-            s = s.replace('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_', base_path)
-            s = s.replace('src:url(/fonts', f'src:url(/{base_path}/fonts')
-            # replace favicon
-            with open(filepath, "w") as f:
-                f.write(s)
+    for path, _, files in os.walk(os.path.abspath(directory)):
+        for filename in files:
+            if filename.endswith(('.html', '.js', '.css')):
+                filepath = os.path.join(path, filename)
+                with open(filepath, encoding='utf-8') as f:
+                    s = f.read()
+                s = s.replace('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_', base_path)
+                s = s.replace('src:url(/fonts', f'src:url(/{base_path}/fonts')
+                s = s.replace('href="/favicon.ico"', f'href="/{base_path}/favicon.ico"')
+                # replace favicon
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(s)
 
 
 def make_app():
@@ -133,6 +133,18 @@ def make_app():
     if USE_UNIQUE_TERMINAL:
         term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
+
+    base_path = os.getenv('BASE_PATH')
+    update_routes = False
+
+    template_dir = 'frontend_dist'
+    if base_path:
+        template_dir = 'frontend_dist_base_path'
+        try:
+            replace_base_path(base_path)
+            update_routes = True
+        except Exception:
+            print('Failed to replace base path in frontend_dist_base_path')
 
     routes = [
         (r'/', MainPageHandler),
@@ -152,22 +164,22 @@ def make_app():
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/_next/static')},
         ),
         (
             r'/fonts/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/fonts')},
         ),
         (
             r'/images/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/images')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/images')},
         ),
         (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
+            {'path': os.path.join(os.path.dirname(__file__), template_dir)},
         ),
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
@@ -212,14 +224,15 @@ def make_app():
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
     ]
 
-    base_path = os.getenv('BASE_PATH')
-    template_dir = 'frontend_dist'
-    if base_path:
-        replace_base_path(base_path)
+    if update_routes:
         updated_routes = []
         for route in routes:
-            updated_routes.append((route[0].replace('/', f'/{base_path}/', 1), *route[1:]))
-        template_dir = 'frontend_dist_base_path'
+            if route[0] == r'/':
+                updated_routes.append((f'/{base_path}', *route[1:]))
+            else:
+                updated_routes.append((route[0].replace('/', f'/{base_path}/', 1), *route[1:]))
+    else:
+        updated_routes = routes
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(

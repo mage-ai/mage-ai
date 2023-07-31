@@ -80,7 +80,8 @@ function CreateSchedule({
           callback:
             (res) =>
               window.location.href =
-                `/pipelines/${pipeline?.uuid}/triggers/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
+                `${router.basePath}/pipelines/${pipeline?.uuid}/triggers/` +
+                `${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,

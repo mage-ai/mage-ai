@@ -911,6 +911,8 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  console.log('ROUTE BASE PATH:', router.basePath);
+
   // Files
   const openFile = useCallback((filePath: string) => {
     savePipelineContent();
@@ -976,7 +978,7 @@ function PipelineDetailPage({
         const { uuid } = resp.data.pipeline;
 
         if (pipelineUUID !== uuid) {
-          window.location.href = `/pipelines/${uuid}/edit`;
+          window.location.href = `${router.basePath}/pipelines/${uuid}/edit`;
         } else {
           fetchFileTree();
           if (type !== pipeline?.type) {
@@ -1005,6 +1007,7 @@ function PipelineDetailPage({
     openFile,
     pipeline?.type,
     pipelineUUID,
+    router,
     savePipelineContent,
   ]);
 

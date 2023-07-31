@@ -8,9 +8,9 @@ const Home = () => {
 
   const routerBasePath = router.basePath;
   let completePath = router.asPath;
-  if (routerBasePath && !completePath.startsWith(routerBasePath)) {
-    completePath = `${routerBasePath}${completePath}`;
-  }
+  // if (routerBasePath && !completePath.startsWith(routerBasePath)) {
+  //   completePath = `${routerBasePath}${completePath}`;
+  // }
   const basePath = completePath.split('?')[0];
 
   const { data: data } = api.statuses.list();
