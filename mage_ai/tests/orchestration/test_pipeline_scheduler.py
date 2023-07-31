@@ -12,7 +12,6 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
 )
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
@@ -448,24 +447,6 @@ class PipelineSchedulerTests(DBTestCase):
                     )
                     self.assertTrue(block_run2 is not None)
 
-    def test_sync_data_on_pipeline_run(self):
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_dynamic_pipeline',
-            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
-        )
-        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        preferences = get_preferences(repo_path=self.repo_path)
-        preferences.update_preferences(
-            dict(sync_config=dict(
-                remote_repo_link='test_git_repo',
-                repo_path=self.repo_path,
-                branch='main',
-                sync_on_pipeline_run=True,
-            )))
-        with patch.object(GitSync, 'sync_data') as mock_sync:
-            scheduler.start(should_schedule=False)
-            mock_sync.assert_called_once()
-
     @freeze_time('2023-05-01 01:20:33')
     def test_send_sla_message(self):
         pipeline = create_pipeline_with_blocks(
@@ -506,3 +487,38 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             check_sla()
             mock_send_message.assert_called_once()
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.utils.git.GitSync')
+    def test_sync_data_on_schedule_all(self, mock_git_sync):
+        git_sync_instance = MagicMock()
+        mock_git_sync.return_value = git_sync_instance
+        pipeline = create_pipeline_with_blocks(
+            'test git sync pipeline',
+            self.repo_path,
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 1, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        preferences = get_preferences(repo_path=self.repo_path)
+        preferences.update_preferences(
+            dict(sync_config=dict(
+                remote_repo_link='test_git_repo',
+                repo_path=self.repo_path,
+                branch='main',
+                sync_on_pipeline_run=True,
+            )))
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+            git_sync_instance.sync_data.assert_called_once()

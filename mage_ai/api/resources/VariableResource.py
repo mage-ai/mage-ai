@@ -1,6 +1,7 @@
+from typing import Dict
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.orchestration.db import safe_db_query
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.data_preparation.variable_manager import (
@@ -9,7 +10,7 @@ from mage_ai.data_preparation.variable_manager import (
     get_global_variables,
     set_global_variable,
 )
-from typing import Dict
+from mage_ai.orchestration.db import safe_db_query
 
 
 def get_variable_value(
