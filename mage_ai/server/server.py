@@ -79,6 +79,9 @@ from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
+STATIC_EXPORTS_FOLDER = 'frontend_dist'
+BASE_PATH_STATIC_EXPORTS_FOLDER = 'frontend_dist_base_path'
+
 
 class MainPageHandler(tornado.web.RequestHandler):
     def get(self, *args):
@@ -107,9 +110,15 @@ class ApiSchedulerHandler(BaseHandler):
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
 
 
-def replace_base_path(base_path):
-    import os
-    directory = os.path.join(os.path.dirname(__file__), 'frontend_dist_base_path')
+def replace_base_path(base_path: str) -> None:
+    """
+    This function will go through the BASE_PATH_STATIC_EXPORT_FOLDER and replace all the
+    occurrences of CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_ with the base_path parameter.
+
+    Args:
+        base_path (str): The base path to replace the placeholder with.
+    """
+    directory = os.path.join(os.path.dirname(__file__), BASE_PATH_STATIC_EXPORTS_FOLDER)
     for path, _, files in os.walk(os.path.abspath(directory)):
         for filename in files:
             if filename.endswith(('.html', '.js', '.css')):
@@ -135,7 +144,7 @@ def make_app(update_routes: bool = False):
         term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
 
-    template_dir = 'frontend_dist_base_path' if update_routes else 'frontend_dist'
+    template_dir = BASE_PATH_STATIC_EXPORTS_FOLDER if update_routes else STATIC_EXPORTS_FOLDER
     routes = [
         (r'/', MainPageHandler),
         (r'/files', MainPageHandler),
