@@ -97,6 +97,15 @@ in this project. Example config:
   ```
   Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
   is installed and run on your nodes to use the GPUs.
+* To futher customize the container config of the kubernetes executor, you can sepcify the `container_config` in the k8s executor config. Here is the example:
+  ```yaml
+  k8s_executor_config:
+    container_config:
+      image: mageai/mageai:0.9.7
+      env:
+      - name: USER_CODE_PATH
+        value: /home/src/k8s_project
+  ```
 
 ### AWS ECS executor
 
