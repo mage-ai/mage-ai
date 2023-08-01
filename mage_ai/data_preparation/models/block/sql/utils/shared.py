@@ -110,11 +110,11 @@ def interpolate_input(
 
         return '.'.join(list(filter(lambda x: x, [db, schema, tn])))
 
-    if not has_interpolated_inputs(query):
-        return query
-
     for idx, upstream_block in enumerate(block.upstream_blocks):
         matcher1 = '{} df_{} {}'.format('{{', idx + 1, '}}')
+        variable_pattern = build_variable_pattern(f'df_{idx + 1}')
+        if re.search(variable_pattern, query) is None:
+            continue
 
         is_sql = BlockLanguage.SQL == upstream_block.language
         if is_sql:
@@ -176,7 +176,7 @@ def interpolate_input(
 ) AS {table_name}"""
 
         query = re.sub(
-            build_variable_pattern(f'df_{idx + 1}'),
+            variable_pattern,
             replace_with,
             query,
         )
@@ -462,11 +462,6 @@ def has_create_or_insert_statement(text: str) -> bool:
 
     matches = extract_insert_statement_table_names(text)
     return len(matches) >= 1
-
-
-def has_interpolated_inputs(text: str) -> bool:
-    regex = r'{}[ ]*df_[0-9]+[ ]*{}'.format(r'\{\{', r'\}\}')
-    return bool(re.search(regex, text))
 
 
 def split_query_string(query_string: str) -> List[str]:
