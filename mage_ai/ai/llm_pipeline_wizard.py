@@ -46,8 +46,30 @@ PROMPT_FOR_SUMMARIZE_BLOCK_DOC = """
 A data pipeline reads data from source, transform the data and export data into another source.
 The content delimited by triple backticks contains explains of all components in one data pipeline.
 Write a detailed summarization of the data pipeline based on the content provided.
-```{block_content}```
-"""
+```{block_content}```"""
+PROMPT_TO_SPLIT_BLOCKS = """
+A BLOCK does one action either reading data from one data source, transforming the data from
+one format to another or exporting data into a data source.
+Based on the code description delimited by triple backticks, your task is to identify
+how many BLOCKS required and function for each BLOCK.
+
+Use the following format:
+BLOCK 1: <block function>
+BLOCK 2: <block function>
+BLOCK 3: <block function>
+...
+
+Example:
+<code description>: ```
+Read data from MySQL, filter out rows with book_price > 100, and save data to BigQuery.
+```
+
+Answer:
+BLOCK 1: load data from MySQL
+BLOCK 2: filter out rows with book_price > 100
+BLOCK 3: export data to BigQuery
+
+<code description>: ```{code_description}```"""
 TRANSFORMERS_FOLDER = 'transformers'
 CLASSIFICATION_FUNCTION_NAME = "classify_description"
 TEMPLATE_CLASSIFICATION_FUNCTION = [
@@ -62,31 +84,38 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
                     "description": "Type of the code block. It either "
                                    "loads data from a source, export data to a source "
                                    "or transform data from one format to another.",
-                    "enum": ["data_exporter", "data_loader", "transformer"]
+                    "enum": [f"{BlockType.__name__}__data_exporter",
+                             f"{BlockType.__name__}__data_loader",
+                             f"{BlockType.__name__}__transformer"]
                 },
                 BlockLanguage.__name__: {
                     "type": "string",
-                    "description": "Programming language of the code block.",
-                    "enum": [type.name.lower() for type in BlockLanguage]
+                    "description": "Programming language of the code block. "
+                                   f"Default value is {BlockLanguage.__name__}__python.",
+                    "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
+                             for type in BlockLanguage]
                 },
                 PipelineType.__name__: {
                     "type": "string",
-                    "description": "Type of pipeline description to build.",
-                    "enum": [type.name.lower() for type in PipelineType]
+                    "description": "Type of pipeline to build. Default value is "
+                                   f"{PipelineType.__name__}__python if pipeline type "
+                                   "is not mentioned in the description.",
+                    "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
+                             for type in PipelineType]
                 },
                 ActionType.__name__: {
                     "type": "string",
                     "description": f"If {BlockType.__name__} is transformer, "
                                    f"{ActionType.__name__} specifies what kind "
                                    "of action the code performs.",
-                    "enum": [type.name.lower() for type in ActionType]
+                    "enum": [f"{ActionType.__name__}__{type.name.lower()}" for type in ActionType]
                 },
                 DataSource.__name__: {
                     "type": "string",
                     "description": f"If {BlockType.__name__} is data_loader or "
                                    f"data_exporter, {DataSource.__name__} field specify "
                                    "where the data loads from or exports to.",
-                    "enum": [type.name.lower() for type in DataSource]
+                    "enum": [f"{DataSource.__name__}__{type.name.lower()}" for type in DataSource]
                 },
             },
             "required": [BlockType.__name__, BlockLanguage.__name__, PipelineType.__name__],
@@ -125,13 +154,24 @@ class LLMPipelineWizard:
                                 purpose=purpose,
                                 add_on_prompt=add_on_prompt)
 
+    def __parse_argument_value(self, value: str) -> str:
+        if value is None:
+            return None
+        return value.lower().split('__')[1]
+
     def __load_template_params(self, function_args: json):
-        block_type = BlockType(function_args[BlockType.__name__].lower())
+        block_type = BlockType(self.__parse_argument_value(function_args[BlockType.__name__]))
         block_language = BlockLanguage(
-                            function_args.get(BlockLanguage.__name__, "python").lower())
-        pipeline_type = PipelineType(function_args.get(PipelineType.__name__, "python").lower())
+                            self.__parse_argument_value(
+                                function_args.get(BlockLanguage.__name__)
+                            ) or "python")
+        pipeline_type = PipelineType(
+                            self.__parse_argument_value(
+                                function_args.get(PipelineType.__name__)
+                            ) or "python")
         config = {}
-        config['action_type'] = function_args.get(ActionType.__name__, None)
+        config['action_type'] = self.__parse_argument_value(
+                                    function_args.get(ActionType.__name__))
         if config['action_type']:
             if config['action_type'] in [
                 ActionType.FILTER,
@@ -142,7 +182,8 @@ class LLMPipelineWizard:
                 config['axis'] = Axis.ROW
             else:
                 config['axis'] = Axis.COLUMN
-        config['data_source'] = function_args.get(DataSource.__name__, None)
+        config['data_source'] = self.__parse_argument_value(
+                                    function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
     async def async_generate_block_with_description(self, block_description: str) -> dict:
@@ -172,6 +213,39 @@ class LLMPipelineWizard:
         else:
             logger.error("Failed to interpret the description as a block template.")
             return None
+
+    async def __async_split_description_by_blocks(self, code_description: str) -> str:
+        prompt_template = PromptTemplate(
+            input_variables=[
+                'code_description',
+            ],
+            template=PROMPT_TO_SPLIT_BLOCKS,
+        )
+        chain = LLMChain(llm=self.llm, prompt=prompt_template)
+        return await chain.arun(code_description=code_description)
+
+    async def __async_generate_blocks(self,
+                                      block_dict: dict,
+                                      block_id: int,
+                                      block_description: str) -> dict:
+        block = await self.async_generate_block_with_description(block_description)
+        block_dict[block_id] = block
+
+    async def async_generate_pipeline_with_description(self, pipeline_description: str) -> dict:
+        splited_block_descriptions = await self.__async_split_description_by_blocks(
+            pipeline_description)
+        blocks = {}
+        block_tasks = []
+        for line in splited_block_descriptions.strip().split('\n'):
+            if line.startswith("BLOCK") and ":" in line:
+                # Extract the block_id and block_description from the line
+                raw_block_id, block_description = line.split(":", 1)
+                block_id = raw_block_id.strip().split(" ")[-1]
+                block_description = block_description.strip()
+                block_tasks.append(
+                    self.__async_generate_blocks(blocks, block_id, block_description))
+        await asyncio.gather(*block_tasks)
+        return blocks
 
     async def async_generate_pipeline_documentation(
         self,
