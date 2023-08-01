@@ -51,8 +51,13 @@
   "anchors": [
     {
       "name": "Releases",
-      "icon": "release-notes",
-      "url": "/about/releases"
+      "icon": "megaphone",
+      "url": "https://docs.mage.ai/about/releases"
+    },
+    {
+      "name": "Roadmap",
+      "icon": "map",
+      "url": "https://docs.mage.ai/about/roadmap"
     }
   ],
   "navigation": [
@@ -95,20 +100,25 @@
       "group": "Design",
       "pages": [
         "design/core-design-principles",
-        "design/core-abstractions",
-        "design/data-pipeline-management",
         {
-          "group": "Blocks",
+          "group": "Abstractions",
           "pages": [
-            "design/blocks",
-            "design/blocks/data-loader",
-            "design/blocks/transformer",
-            "design/blocks/data-exporter",
-            "design/blocks/scratchpad",
-            "design/blocks/sensor",
-            "design/blocks/extension",
-            "design/blocks/dynamic-blocks",
-            "design/blocks/replicate-blocks"
+            "design/core-abstractions",
+            "design/data-pipeline-management",
+            {
+              "group": "Blocks",
+              "pages": [
+                "design/blocks",
+                "design/blocks/data-loader",
+                "design/blocks/transformer",
+                "design/blocks/data-exporter",
+                "design/blocks/scratchpad",
+                "design/blocks/sensor",
+                "design/blocks/extension",
+                "design/blocks/dynamic-blocks",
+                "design/blocks/replicate-blocks"
+              ]
+            }
           ]
         }
       ]
@@ -352,6 +362,15 @@
           ]
         },
         {
+          "group": "Configuration",
+          "pages": [
+            "production/configuring-production-settings/overview",
+            "production/configuring-production-settings/secrets",
+            "production/configuring-production-settings/compute-resource",
+            "getting-started/kernels"
+          ]
+        },
+        {
           "group": "CI/CD",
           "pages": [
             "production/ci-cd/overview",
@@ -373,47 +392,43 @@
             "production/deploying-to-cloud/using-terraform",
             "production/deploying-to-cloud/using-helm",
             {
-              "group": "AWS",
+              "group": "Providers",
               "pages": [
-                "production/deploying-to-cloud/aws/setup",
-                "production/deploying-to-cloud/aws/resources",
-                "production/deploying-to-cloud/aws/terraform-apply-policy",
-                "production/deploying-to-cloud/aws/terraform-destroy-policy",
-                "production/deploying-to-cloud/aws/emr-policy",
-                "production/deploying-to-cloud/aws-without-terraform",
-                "production/deploying-to-cloud/aws/code-pipeline"
-              ]
-            },
-            {
-              "group": "GCP",
-              "pages": [
-                "production/deploying-to-cloud/gcp/setup",
-                "production/deploying-to-cloud/gcp/resources",
-                "production/deploying-to-cloud/gcp/gcp-artifact-registry"
-              ]
-            },
-            {
-              "group": "Azure",
-              "pages": [
-                "production/deploying-to-cloud/azure/setup",
-                "production/deploying-to-cloud/azure/resources"
-              ]
-            },
-            {
-              "group": "DigitalOcean",
-              "pages": [
-                "production/deploying-to-cloud/digitalocean/setup"
+                {
+                  "group": "AWS",
+                  "pages": [
+                    "production/deploying-to-cloud/aws/setup",
+                    "production/deploying-to-cloud/aws/resources",
+                    "production/deploying-to-cloud/aws/terraform-apply-policy",
+                    "production/deploying-to-cloud/aws/terraform-destroy-policy",
+                    "production/deploying-to-cloud/aws/emr-policy",
+                    "production/deploying-to-cloud/aws-without-terraform",
+                    "production/deploying-to-cloud/aws/code-pipeline"
+                  ]
+                },
+                {
+                  "group": "Azure",
+                  "pages": [
+                    "production/deploying-to-cloud/azure/setup",
+                    "production/deploying-to-cloud/azure/resources"
+                  ]
+                },
+                {
+                  "group": "DigitalOcean",
+                  "pages": [
+                    "production/deploying-to-cloud/digitalocean/setup"
+                  ]
+                },
+                {
+                  "group": "GCP",
+                  "pages": [
+                    "production/deploying-to-cloud/gcp/setup",
+                    "production/deploying-to-cloud/gcp/resources",
+                    "production/deploying-to-cloud/gcp/gcp-artifact-registry"
+                  ]
+                }
               ]
             }
-          ]
-        },
-        {
-          "group": "Configuration",
-          "pages": [
-            "production/configuring-production-settings/overview",
-            "production/configuring-production-settings/secrets",
-            "production/configuring-production-settings/compute-resource",
-            "getting-started/kernels"
           ]
         },
         {
