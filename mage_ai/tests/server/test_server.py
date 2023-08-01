@@ -65,7 +65,7 @@ blah blah blah <link href="/favicon.ico" rel="icon"/>
 """
             )
         with patch(
-            'mage_ai.server.server.BASE_PATH_STATIC_EXPORTS_FOLDER',
+            'mage_ai.server.server.BASE_PATH_EXPORTS_FOLDER',
             os.path.join(os.getcwd(), 'test', 'static'),
         ):
             replace_base_path(base_path='test_prefix')
