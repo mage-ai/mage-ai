@@ -1313,7 +1313,7 @@ function CodeBlock({
                         <>
                           <Spacing ml={1} />
                           <Link
-                            // @ts-ignore
+                            noWrapping
                             onClick={() => savePipelineContent({
                               block: {
                                 name: newBlockUuid,
@@ -1337,6 +1337,7 @@ function CodeBlock({
                     <Spacing mr={2} />
 
                     {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
+                      && !isEditingBlockName
                       && mainContainerWidth > 800) && (
                       <Tooltip
                         appearBefore
