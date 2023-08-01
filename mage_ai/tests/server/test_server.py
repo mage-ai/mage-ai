@@ -1,8 +1,10 @@
+import asyncio
 import os
 import shutil
 from unittest.mock import patch
 
 import tornado.httputil
+import tornado.ioloop
 
 from mage_ai.server.server import make_app, replace_base_path
 from mage_ai.tests.base_test import TestCase
@@ -10,7 +12,14 @@ from mage_ai.tests.base_test import TestCase
 
 class ServerTests(TestCase):
     def setUp(self):
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         return super().setUp()
+
+    def tearDown(self):
+        self.loop.close()
+        tornado.ioloop.IOLoop.instance().stop()
+        return super().tearDown()
 
     def test_make_app(self):
         app = make_app()
