@@ -1,3 +1,4 @@
+import ast
 import asyncio
 import json
 import os
@@ -70,6 +71,15 @@ BLOCK 2: filter out rows with book_price > 100
 BLOCK 3: export data to BigQuery
 
 <code description>: ```{code_description}```"""
+PROMPT_FOR_FUNCTION_COMMENT = """
+The content within the triple backticks is a code block.
+Your task is to write comments for each function inside.
+
+```{block_content}```
+
+The comment should follow Google Docstring format.
+Return your response in JSON format with function name as key and the comment as value.
+"""
 TRANSFORMERS_FOLDER = 'transformers'
 CLASSIFICATION_FUNCTION_NAME = "classify_description"
 TEMPLATE_CLASSIFICATION_FUNCTION = [
@@ -246,6 +256,42 @@ class LLMPipelineWizard:
                     self.__async_generate_blocks(blocks, block_id, block_description))
         await asyncio.gather(*block_tasks)
         return blocks
+
+    def __insert_comments_in_functions(self, code: str, function_comments_json: dict):
+        # Parse the input code into an abstract syntax tree (AST).
+        tree = ast.parse(code)
+        # Traverse the AST and find function definitions.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                function_name = node.name
+                if function_comments_json.get(function_name):
+                    comment_text = function_comments_json[function_name]
+                    # Insert a comment node below a given node.
+                    if isinstance(node.body[0], ast.Expr) and \
+                       isinstance(node.body[0].value, ast.Constant):
+                        # If there is existing doc string, combine the new comment with it.
+                        existing_comment_node = node.body[0]
+                        existing_comment_text = node.body[0].value.value
+                        new_comment = ast.Expr(
+                            value=ast.Str(s=f"{comment_text}\n{existing_comment_text}"))
+                        node.body.remove(existing_comment_node)
+                    else:
+                        # Add newly generated doc string.
+                        new_comment = ast.Expr(value=ast.Str(s=comment_text))
+                    node.body.insert(0, new_comment)
+        return ast.unparse(tree)
+
+    async def async_generate_comment_for_block(self, block_content: str) -> str:
+        prompt_template = PromptTemplate(
+            input_variables=[
+                'block_content',
+            ],
+            template=PROMPT_FOR_FUNCTION_COMMENT,
+        )
+        chain = LLMChain(llm=self.llm, prompt=prompt_template)
+        function_comments = await chain.arun(block_content=block_content)
+        function_comments_json = json.loads(function_comments)
+        return self.__insert_comments_in_functions(block_content, function_comments_json)
 
     async def async_generate_pipeline_documentation(
         self,
