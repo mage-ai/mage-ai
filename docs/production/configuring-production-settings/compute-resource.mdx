@@ -123,6 +123,14 @@ There're 2 ways to customize the compute resource of ECS executor,
         memory: 2048
     ```
 
+The default wait timeout for the ECS task is 10 minutes. To customize the timeout, you can specify the `wait_timeout` (in seconds) field in `ecs_config`. Here is one example:
+```yaml
+ecs_config:
+  cpu: 1024
+  memory: 2048
+  wait_timeout: 1200
+```
+
 ### GCP Cloud Run executor
 
 If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to execute blocks.
