@@ -1,5 +1,6 @@
 """Salesforce target class."""
 import json
+import logging
 import sys
 import typing as t
 from collections import Counter, defaultdict
@@ -10,6 +11,8 @@ from singer_sdk.io_base import SingerMessageType
 from target_salesforce.sinks import SalesforceSink
 
 from mage_integrations.destinations.target import Target
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TargetSalesforce(Target):
@@ -84,7 +87,7 @@ class TargetSalesforce(Target):
     def __init__(self, *, config=None, parse_env_config: bool = False,
                  validate_config: bool = True, logger=None) -> None:
 
-        self._logger = logger
+        self._logger = logger if logger is not None else LOGGER
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
