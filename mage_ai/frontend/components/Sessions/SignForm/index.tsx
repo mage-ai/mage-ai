@@ -70,9 +70,10 @@ function SignForm({
                   ),
                 );
                 url = `${query.redirect_url}?${qs}`;
+                window.location.href = url;
+              } else {
+                router.push(url);
               }
-
-              router.push(url);
             });
           },
           onErrorCallback: ({ error }) => {
