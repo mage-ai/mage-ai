@@ -362,6 +362,7 @@
             {
               "group": "AWS",
               "pages": [
+                "production/deploying-to-cloud/aws/aws-ecs-architecture",
                 "production/deploying-to-cloud/aws/setup",
                 "production/deploying-to-cloud/aws/resources",
                 "production/deploying-to-cloud/aws/terraform-apply-policy",
