@@ -72,6 +72,7 @@ class SalesforceSink(BatchSink):
         session_creds = SalesforceAuth.from_credentials(
             parse_credentials(self.target.config),
             domain=self.target.config["domain"],
+            logger=self.logger
         ).login()
         self._sf_client = Salesforce(**asdict(session_creds))
         return self._sf_client

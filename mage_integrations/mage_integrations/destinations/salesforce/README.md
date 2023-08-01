@@ -21,6 +21,8 @@ action | How to handle incomming records by default (insert/update/upsert/delete
 allow_failures | Allows the target to continue persisting if a record fails to commit. Default is "False"| optional| 
 table_name | Allows the target to use a different source to this destination. (Read "limitations" section)| optional|
 
+To obtain OAuth credentials, follow this [guide](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/salesforce/README.md#how-to-get-your-client_id-client_secret-and-refresh_token)
+
 <br />
 
 ## Limitations

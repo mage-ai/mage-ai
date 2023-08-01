@@ -1,13 +1,10 @@
-import logging
-from dataclasses import dataclass
 import abc
-from typing import Union
-import requests
 from collections import namedtuple
+from dataclasses import dataclass
+from typing import Union
+
+import requests
 from simple_salesforce import SalesforceLogin
-
-
-LOGGER = logging.getLogger(__name__)
 
 OAuthCredentials = namedtuple(
     "OAuthCredentials", ("client_id", "client_secret", "refresh_token")
@@ -37,9 +34,10 @@ def parse_credentials(config: dict) -> Union[OAuthCredentials, PasswordCredentia
 
 
 class SalesforceAuth(metaclass=abc.ABCMeta):
-    def __init__(self, credentials, domain):
+    def __init__(self, credentials, domain, logger=None):
         self.domain = domain
         self._credentials = credentials
+        self.logger = logger
 
     @abc.abstractmethod
     def login(self) -> Session:
@@ -68,7 +66,7 @@ class SalesforceAuthOAuth(SalesforceAuth):
 
     def login(self):
         try:
-            LOGGER.info(f"Attempting login via OAuth2")
+            self.logger.info("Attempting login via OAuth2")
 
             resp = requests.post(
                 self._login_url,
@@ -79,7 +77,7 @@ class SalesforceAuthOAuth(SalesforceAuth):
             resp.raise_for_status()
             auth = resp.json()
 
-            LOGGER.info("OAuth2 login successful")
+            self.logger.info("OAuth2 login successful")
             return Session(auth["access_token"], instance_url=auth["instance_url"])
         except Exception as e:
             error_message = str(e)

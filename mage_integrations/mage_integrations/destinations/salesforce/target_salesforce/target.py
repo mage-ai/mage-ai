@@ -82,14 +82,14 @@ class TargetSalesforce(Target):
     default_sink_class = SalesforceSink
 
     def __init__(self, *, config=None, parse_env_config: bool = False,
-                 validate_config: bool = True, logger) -> None:
+                 validate_config: bool = True, logger=None) -> None:
 
-        self.loggers = logger
+        self._logger = logger
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
 
-        print(self.config.get("is_sandbox"))
+        logger.info(f'is_sandbox:{self.config.get("is_sandbox")}')
         if self.config.get("is_sandbox") is not None:
             raise ConfigValidationError("is_sandbox has been deprecated, use domain.\
                                          is_sandbox-False = 'login', is_sandbox-True = 'test'")
@@ -102,7 +102,7 @@ class TargetSalesforce(Target):
             Plugin logger.
         """
 
-        logger = self.loggers
+        logger = self._logger
 
         return logger
 
