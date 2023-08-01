@@ -2,7 +2,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.triggers.api import create_and_start_pipeline_run
+from mage_ai.orchestration.triggers.utils import create_and_start_pipeline_run
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.errors import UnauthenticatedRequestException
 import json

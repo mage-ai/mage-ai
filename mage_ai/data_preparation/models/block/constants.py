@@ -16,6 +16,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_LOADER: Block,
     BlockType.DBT: DBTBlock,
     BlockType.EXTENSION: ExtensionBlock,
+    BlockType.GLOBAL_DATA_PRODUCT: Block,
     BlockType.MARKDOWN: Block,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: Block,

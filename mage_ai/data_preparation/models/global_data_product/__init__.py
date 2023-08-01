@@ -1,20 +1,18 @@
-import enum
 import os
-from dataclasses import dataclass, field
-from typing import Dict, List
-
 import yaml
-
+from dataclasses import dataclass, field
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from mage_ai.data_preparation.models.global_data_product.constants import (
+    GlobalDataProductObjectType,
+)
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import index_by
+from mage_ai.shared.hash import extract, index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
-
-
-class GlobalDataProductObjectType(str, enum.Enum):
-    BLOCK = 'block'
-    PIPELINE = 'pipeline'
+from typing import Dict, List
 
 
 @dataclass
@@ -33,6 +31,7 @@ class GlobalDataProduct:
         self.outdated_starting_at = kwargs.get('outdated_starting_at')
         self.settings = kwargs.get('settings')
         self.uuid = clean_name(uuid) if uuid else uuid
+        self._object = None
 
     @classmethod
     def file_path(self) -> str:
@@ -60,6 +59,82 @@ class GlobalDataProduct:
     @classmethod
     def get(self, uuid: str):
         return find(lambda x: x.uuid == uuid, self.load_all())
+
+    @property
+    def pipeline(self) -> Pipeline:
+        if GlobalDataProductObjectType.PIPELINE == self.object_type:
+            if self._object:
+                return self._object
+            else:
+                self._object = Pipeline.get(self.object_uuid)
+
+        return self._object
+
+    @property
+    def pipeline_schedule_pipeline_uuid(self) -> str:
+        return f'{self.uuid}:{self.object_uuid}'
+
+    def get_outdated_at_delta(self, in_seconds: bool = False) -> relativedelta:
+        outdated_after = self.outdated_after or {}
+        delta = extract(outdated_after, [
+            'months',
+            'seconds',
+            'weeks',
+            'years',
+        ])
+
+        if len(delta) >= 1:
+            d = relativedelta(**delta)
+
+            if in_seconds:
+                now = datetime.utcnow()
+
+                return ((now + d) - now).timestamp()
+            else:
+                return d
+
+    def is_outdated_after(self, now: datetime = None) ->  bool:
+        outdated_starting_at = self.outdated_starting_at or {}
+        if len(outdated_starting_at) == 0:
+            return True
+
+        validations = []
+
+        for key, extract_value_from_datetime in [
+            ('day_of_month', lambda x: x.day),
+            ('day_of_week', lambda x: (x.weekday + 1) % 7),
+            ('day_of_year', lambda x: x.timetuple().tm_yday),
+            ('hour_of_day', lambda x: x.hour),
+            ('minute_of_hour', lambda x: x.minute),
+            ('month_of_year', lambda x: x.month),
+            ('second_of_minute', lambda x: x.second),
+            ('week_of_month', lambda x: week_of_month(x)),
+            ('week_of_year', lambda x: x.isocalendar().week),
+        ]:
+            value = outdated_starting_at.get(key, None)
+            if value is not None:
+                validations.append(value >= extract_value_from_datetime(
+                    now or datetime.utcnow(),
+                ))
+
+        return all(validations)
+
+    def is_outdated(self, pipeline_run: 'PipelineRun' = None) -> bool:
+        if not pipeline_run:
+            return True
+
+        now = datetime.utcnow()
+
+        execution_date = pipeline_run.execution_date
+        outdated_at_delta = self.get_outdated_at_delta()
+        if execution_date and outdated_at_delta:
+            execution_date += outdated_at_delta
+
+        outdated = execution_date and now >= execution_date
+        if not outdated:
+            return False
+
+        return self.is_outdated_after(now)
 
     def to_dict(self, include_uuid: bool = False) -> Dict:
         data = dict(

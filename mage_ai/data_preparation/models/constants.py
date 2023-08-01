@@ -48,6 +48,7 @@ class BlockType(str, Enum):
     DATA_LOADER = 'data_loader'
     DBT = 'dbt'
     EXTENSION = 'extension'
+    GLOBAL_DATA_PRODUCT = 'global_data_product'
     MARKDOWN = 'markdown'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
