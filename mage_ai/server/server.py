@@ -256,7 +256,7 @@ async def main(
         print('User authentication is enabled.')
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
-        sleep(3)
+        sleep(5)
 
         # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()
