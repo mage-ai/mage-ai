@@ -24,7 +24,7 @@ dask>=2022.2.0
 datadog==0.44.0
 db-dtypes==1.0.5
 
-# dbt
+# DBT
 dbt-bigquery==1.4.3
 dbt-clickhouse==1.4.0
 dbt-core==1.4.6
