@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import Router from 'next/router';
 import styled from 'styled-components';
 
 import Spacing from '@oracle/elements/Spacing';
@@ -213,7 +212,7 @@ export const ImageStyle = styled.div<{
   width: ${UNIT * 12}px;
 
   ${props => `
-    background-image: url(${Router.basePath}${props.imageUrl});
+    background-image: url(${props.imageUrl});
   `}
 
   ${props => props.size && `

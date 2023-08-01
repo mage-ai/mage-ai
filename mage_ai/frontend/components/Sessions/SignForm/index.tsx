@@ -238,7 +238,7 @@ function SignForm({
           px={PADDING_HORIZONTAL_UNITS}
           py={PADDING_HORIZONTAL_UNITS + 8}
         >
-          <BackgroundImageStyle src="/images/sessions/abstract.png">
+          <BackgroundImageStyle src={`${router.basePath}/images/sessions/abstract.png`}>
             Sign in abstract image
           </BackgroundImageStyle>
         </Spacing>

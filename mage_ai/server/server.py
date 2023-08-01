@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import shutil
 import traceback
 import webbrowser
 from time import sleep
@@ -79,8 +80,9 @@ from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
-STATIC_EXPORTS_FOLDER = 'frontend_dist'
-BASE_PATH_STATIC_EXPORTS_FOLDER = 'frontend_dist_base_path'
+EXPORTS_FOLDER = 'frontend_dist'
+BASE_PATH_EXPORTS_FOLDER = 'frontend_dist_base_path'
+BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
 BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
 
@@ -119,7 +121,7 @@ def replace_base_path(base_path: str) -> None:
     Args:
         base_path (str): The base path to replace the placeholder with.
     """
-    directory = os.path.join(os.path.dirname(__file__), BASE_PATH_STATIC_EXPORTS_FOLDER)
+    directory = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
     for path, _, files in os.walk(os.path.abspath(directory)):
         for filename in files:
             if filename.endswith(('.html', '.js', '.css')):
@@ -145,7 +147,7 @@ def make_app(update_routes: bool = False):
         term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
 
-    template_dir = BASE_PATH_STATIC_EXPORTS_FOLDER if update_routes else STATIC_EXPORTS_FOLDER
+    template_dir = BASE_PATH_EXPORTS_FOLDER if update_routes else EXPORTS_FOLDER
     routes = [
         (r'/', MainPageHandler),
         (r'/files', MainPageHandler),
@@ -259,6 +261,13 @@ async def main(
 
     if BASE_PATH:
         try:
+            # copy to new folder in case the base path is updated. we need to use the original
+            # frontend_dist_base_path folder as a template
+            src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
+            dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            shutil.copy2(src, dst)
             replace_base_path(BASE_PATH)
             update_routes = True
         except Exception:

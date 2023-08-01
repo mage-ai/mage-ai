@@ -1,4 +1,3 @@
-import Router from 'next/router';
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
@@ -26,7 +25,7 @@ export const BackgroundImageStyle = styled.div<{
   overflow: hidden;
 
   ${props => props.src && `
-    background-image: url(${Router.basePath}${props.src});
+    background-image: url(${props.src});
     background-size: cover;
     background-repeat: no-repeat;
     height: 100%;
