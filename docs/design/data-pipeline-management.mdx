@@ -219,6 +219,7 @@ Read more [here](/production/observability/monitoring).
 
 You can limit the concurrency of the block execution to reduce resource consumption.
 
+### Global concurrency
 You can configure the maximum number of concurrent block runs in project’s metadata.yaml via queue_config.
 
 ```yaml
@@ -226,6 +227,17 @@ queue_config:
   concurrency: 100
 ```
 The default value of concurrency is 20.
+
+### Pipeline level concurrency
+You can edit the `concurrency_config` in each pipeline's metadata.yaml file to enforce pipeline level concurrency.
+Here is the example:
+```yaml
+concurrency_config:
+  block_run_limit: 5
+  pipeline_run_limit: 3
+```
+* `block_run_limit` is to limit the concurrent blocks runs in one pipeline run.
+* `pipeline_run_limit` is to limit the concurrent pipeline runs in one pipeline trigger.
 
 ## Variable retention
 

@@ -24,6 +24,18 @@ logging_config:
   level: ERROR
 ```
 
+### Set log retention period
+To delete old logs in your peristent volume, you can specify the `retention_period` in the `logging_config`. Valid period units
+are 'h', 'd', and 'w'.
+
+Example logging config:
+```yaml
+logging_config:
+  retention_period: '15d'
+```
+
+Then you can run command `mage clean-old-logs [project_uuid]` to clean up old logs
+
 ## Logging to external destination
 
 ### S3
