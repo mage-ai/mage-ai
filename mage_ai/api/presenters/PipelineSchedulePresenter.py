@@ -1,11 +1,11 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.shared.hash import extract
 
 
 class PipelineSchedulePresenter(BasePresenter):
     default_attributes = [
         'created_at',
+        'global_data_product_uuid',
         'id',
         'name',
         'pipeline_uuid',
@@ -26,21 +26,19 @@ class PipelineSchedulePresenter(BasePresenter):
         data = self.model.to_dict()
 
         if constants.LIST == display_format:
-            data = self.model.to_dict(include_attributes=[
+            return self.model.to_dict(include_attributes=[
                 'event_matchers',
                 'last_pipeline_run_status',
                 'pipeline_runs_count',
             ])
         elif display_format in [constants.DETAIL, constants.UPDATE]:
-            data = self.model.to_dict(include_attributes=[
+            return self.model.to_dict(include_attributes=[
                 'event_matchers',
             ])
         elif 'with_runtime_average' == display_format:
             data['runtime_average'] = self.model.runtime_average()
 
-        keys = self.formats(display_format)
-
-        return extract(data, keys)
+        return data
 
 
 PipelineSchedulePresenter.register_format(
