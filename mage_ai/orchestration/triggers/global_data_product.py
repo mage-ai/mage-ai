@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from time import sleep
-from typing import List
+from typing import Dict, List, Optional
 
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
+from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.triggers.global_data_product.constants import (
+from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
     TRIGGER_NAME_FOR_GLOBAL_DATA_PRODUCT,
 )
@@ -36,16 +37,31 @@ def trigger_and_check_status(
     while True:
         pipeline_runs = (
             PipelineRun.
-            query.
+            select(
+                PipelineRun.backfill_id,
+                PipelineRun.completed_at,
+                PipelineRun.event_variables,
+                PipelineRun.execution_date,
+                PipelineRun.executor_type,
+                PipelineRun.metrics,
+                PipelineRun.passed_sla,
+                PipelineRun.pipeline_schedule_id,
+                PipelineRun.pipeline_uuid,
+                PipelineRun.status,
+                PipelineRun.variables,
+                PipelineSchedule.global_data_product_uuid,
+            ).
+            join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id).
             filter(
-                PipelineRun.pipeline_uuid == global_data_product.pipeline_schedule_pipeline_uuid,
+                PipelineRun.pipeline_uuid == global_data_product.object_uuid,
+                PipelineSchedule.global_data_product_uuid == global_data_product.uuid,
             ).
             order_by(PipelineRun.status.desc()).
             all()
         )
 
         # Check if most recent pipeline run has failed, canceled, or report the status
-        if tries >= 1 and if len(pipeline_runs) >= 1:
+        if tries >= 1 and len(pipeline_runs) >= 1:
             pipeline_run = pipeline_runs[0]
             status = pipeline_run.status.value
             message = (
@@ -119,6 +135,7 @@ def trigger_and_check_status(
                     global_data_product.pipeline,
                     pipeline_schedule,
                     dict(variables=variables),
+                    should_schedule=True,
                 )
                 if pr and verbose:
                     print(
@@ -141,7 +158,7 @@ def __clean_up_pipeline_runs(
 ) -> List[PipelineRun]:
     arr = []
 
-    outdated_at_delta = global_data_product.get_outdated_at_delta(in_seconds: True)
+    outdated_at_delta = global_data_product.get_outdated_at_delta(in_seconds=True)
 
     pipeline_runs_count = len(pipeline_runs)
     prs = sorted(pipeline_runs, key=lambda x: x.execution_date, reverse=True)
@@ -166,7 +183,7 @@ def __clean_up_pipeline_runs(
 
 
 def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:
-    pipeline_uuid = global_data_product.pipeline_schedule_pipeline_uuid
+    pipeline_uuid = global_data_product.object_uuid
     schedule_name = TRIGGER_NAME_FOR_GLOBAL_DATA_PRODUCT
     schedule_type = ScheduleType.TIME
 
@@ -175,6 +192,7 @@ def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) 
             PipelineSchedule.
             repo_query.
             filter(
+                PipelineSchedule.global_data_product_uuid == global_data_product.uuid,
                 PipelineSchedule.name == schedule_name,
                 PipelineSchedule.pipeline_uuid == pipeline_uuid,
                 PipelineSchedule.schedule_type == schedule_type,
@@ -201,6 +219,7 @@ def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) 
         timeout=10,
     ):
         pipeline_schedule = PipelineSchedule.create(
+            global_data_product_uuid=global_data_product.uuid,
             name=schedule_name,
             pipeline_uuid=pipeline_uuid,
             schedule_type=schedule_type,

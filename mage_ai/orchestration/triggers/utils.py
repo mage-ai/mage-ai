@@ -59,6 +59,7 @@ def create_and_start_pipeline_run(
     pipeline: Pipeline,
     pipeline_schedule: PipelineSchedule,
     payload: Dict = None,
+    should_schedule: bool = False,
 ) -> PipelineRun:
     if payload is None:
         payload = {}
@@ -93,6 +94,6 @@ def create_and_start_pipeline_run(
         pipeline_scheduler.logger,
         pipeline_scheduler.build_tags(),
     )
-    pipeline_scheduler.start(should_schedule=False)
+    pipeline_scheduler.start(should_schedule=should_schedule)
 
     return pipeline_run

@@ -70,10 +70,6 @@ class GlobalDataProduct:
 
         return self._object
 
-    @property
-    def pipeline_schedule_pipeline_uuid(self) -> str:
-        return f'{self.uuid}:{self.object_uuid}'
-
     def get_outdated_at_delta(self, in_seconds: bool = False) -> relativedelta:
         outdated_after = self.outdated_after or {}
         delta = extract(outdated_after, [
