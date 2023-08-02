@@ -1091,8 +1091,7 @@ def configure_pipeline_run_payload(
 ) -> Tuple[Dict, bool]:
     if payload is None:
         payload = dict()
-
-    if not payload.get('variables'):
+    if 'variables' not in payload:
         payload['variables'] = {}
 
     payload['pipeline_schedule_id'] = pipeline_schedule.id
