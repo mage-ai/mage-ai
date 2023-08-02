@@ -70,33 +70,6 @@
       ]
     },
     {
-      "group": "Get Started",
-      "pages": [
-        "guides/load-api-data",
-        "guides/data-integration-pipeline",
-        "guides/setup-dbt",
-        {
-          "group": "Machine learning pipelines",
-          "pages": [
-            "guides/train-model",
-            "guides/train/complete-project"
-          ]
-        },
-        {
-          "group": "Blocks",
-          "pages": [
-            "guides/blocks/transformer-blocks",
-            "guides/blocks/sql-blocks",
-            "guides/blocks/dynamic-blocks",
-            "guides/blocks/custom-blocks",
-            "guides/blocks/markdown-blocks",
-            "guides/blocks/r-blocks",
-            "integrations/polars"
-          ]
-        }
-      ]
-    },
-    {
       "group": "Design",
       "pages": [
         "design/core-design-principles",
@@ -179,17 +152,50 @@
       ]
     },
     {
+      "group": "Get Started",
+      "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        "guides/setup-dbt"
+      ]
+    },
+    {
       "group": "Pipeline Development",
       "pages": [
         "guides/batch-pipeline",
         "guides/data-integration-pipeline",
-        "guides/streaming-pipeline"
+        "guides/streaming-pipeline",
+        {
+          "group": "Machine learning pipelines",
+          "pages": [
+            "guides/train-model",
+            "guides/train/complete-project"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Blocks",
+      "pages": [
+        "guides/blocks/transformer-blocks",
+        "guides/blocks/sql-blocks",
+        "guides/blocks/dynamic-blocks",
+        "guides/blocks/custom-blocks",
+        "guides/blocks/markdown-blocks",
+        "guides/blocks/r-blocks"
       ]
     },
     {
       "group": "Development",
       "pages": [
-        "development/project/setup",
+        {
+          "group": "Project setup",
+          "pages": [
+            "development/project/setup",
+            "development/environment-variables",
+            "development/text-editor"
+          ]
+        },
         {
           "group": "Blocks",
           "pages": [
@@ -250,38 +256,38 @@
         {
           "group": "Streaming pipelines",
           "pages": [
-            "guides/streaming/overview",
-            "guides/streaming/streaming-pipeline-rabbitmq",
+            "streaming/overview",
+            "streaming/streaming-pipeline-rabbitmq",
             {
               "group": "Sources",
               "pages": [
-                "guides/streaming/sources/amazon-sqs",
-                "guides/streaming/sources/azure-event-hub",
-                "guides/streaming/sources/google-cloud-pubsub",
-                "guides/streaming/sources/kafka",
-                "guides/streaming/sources/kinesis"
+                "streaming/sources/amazon-sqs",
+                "streaming/sources/azure-event-hub",
+                "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/kafka",
+                "streaming/sources/kinesis"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
-                "guides/streaming/destinations/amazon-s3",
-                "guides/streaming/destinations/dummy",
-                "guides/streaming/destinations/kafka",
-                "guides/streaming/destinations/kinesis",
-                "guides/streaming/destinations/mongodb",
-                "guides/streaming/destinations/opensearch",
-                "guides/streaming/destinations/redshift"
+                "streaming/destinations/amazon-s3",
+                "streaming/destinations/dummy",
+                "streaming/destinations/kafka",
+                "streaming/destinations/kinesis",
+                "streaming/destinations/mongodb",
+                "streaming/destinations/opensearch",
+                "streaming/destinations/redshift"
               ]
             },
-            "guides/streaming/contributing"
+            "streaming/contributing"
           ]
         },
         "production/configuring-production-settings/runtime-variable",
         {
           "group": "Testing",
           "pages": [
-            "guides/data-validation",
+            "development/data-validation",
             "development/testing/great-expectations",
             "development/testing/unit-tests"
           ]
@@ -300,7 +306,6 @@
             "development/versioning/file-versions"
           ]
         },
-        "development/environment-variables",
         {
           "group": "Team management",
           "pages": [
@@ -310,7 +315,6 @@
             "developing-in-the-cloud/cloud-dev-environments/kubernetes"
           ]
         },
-        "development/text-editor",
         "development/troubleshooting"
       ]
     },
@@ -320,18 +324,18 @@
         {
           "group": "Schedules and triggers",
           "pages": [
-            "guides/triggering-pipelines",
-            "guides/schedule-pipelines",
+            "orchestration/triggers/triggering-pipelines",
+            "orchestration/triggers/schedule-pipelines",
             {
               "group": "Event triggers",
               "pages": [
-                "guides/triggers/events/overview",
-                "guides/triggers/events/aws"
+                "orchestration/triggers/events/overview",
+                "orchestration/triggers/events/aws"
               ]
             },
-            "guides/trigger-pipeline-api",
+            "orchestration/triggers/trigger-pipeline-api",
             "orchestration/triggers/trigger-pipeline",
-            "guides/triggers/configure-triggers-in-code"
+            "orchestration/triggers/configure-triggers-in-code"
           ]
         },
         {
@@ -506,7 +510,8 @@
         {
           "group": "Transformation",
           "pages": [
-            "integrations/dbt-cloud"
+            "integrations/dbt-cloud",
+            "integrations/polars"
           ]
         },
         {
