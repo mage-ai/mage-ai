@@ -1,6 +1,7 @@
 import argparse
-import traceback
 import sys
+import traceback
+
 from sqlalchemy import create_engine
 from clickhouse_sqlalchemy import make_session
 from mage_integrations.destinations.base import Destination
