@@ -28,7 +28,10 @@ class PipelineScheduleResource(DatabaseResource):
                 query.
                 options(selectinload(PipelineSchedule.event_matchers)).
                 options(selectinload(PipelineSchedule.pipeline_runs)).
-                filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
+                filter(
+                    PipelineSchedule.global_data_product_uuid is None,
+                    PipelineSchedule.pipeline_uuid == pipeline.uuid,
+                ).
                 order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
             )
 

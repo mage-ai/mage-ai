@@ -48,6 +48,7 @@ class BlockType(str, Enum):
     DATA_LOADER = 'data_loader'
     DBT = 'dbt'
     EXTENSION = 'extension'
+    GLOBAL_DATA_PRODUCT = 'global_data_product'
     MARKDOWN = 'markdown'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
@@ -126,6 +127,7 @@ CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.DATA_LOADER,
     BlockType.DBT,
     BlockType.EXTENSION,
+    BlockType.GLOBAL_DATA_PRODUCT,
     BlockType.SENSOR,
     BlockType.TRANSFORMER,
 ]
