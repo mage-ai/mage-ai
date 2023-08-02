@@ -1,12 +1,10 @@
-from sqlalchemy.orm import selectinload
-
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import (
     configure_pipeline_run_payload,
     stop_pipeline_run,
@@ -34,6 +32,10 @@ class PipelineRunResource(DatabaseResource):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
 
+        global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
+        if global_data_product_uuid:
+            global_data_product_uuid = global_data_product_uuid[0]
+
         status = query_arg.get('status', [None])
         if status:
             status = status[0]
@@ -54,10 +56,32 @@ class PipelineRunResource(DatabaseResource):
 
         results = (
             PipelineRun.
-            query.
-            options(selectinload(PipelineRun.block_runs)).
-            options(selectinload(PipelineRun.pipeline_schedule))
+            select(
+                PipelineRun.backfill_id,
+                PipelineRun.completed_at,
+                PipelineRun.created_at,
+                PipelineRun.event_variables,
+                PipelineRun.execution_date,
+                PipelineRun.executor_type,
+                PipelineRun.id,
+                PipelineRun.metrics,
+                PipelineRun.passed_sla,
+                PipelineRun.pipeline_schedule_id,
+                PipelineRun.pipeline_uuid,
+                PipelineRun.status,
+                PipelineRun.updated_at,
+                PipelineRun.variables,
+                PipelineSchedule.global_data_product_uuid,
+            ).
+            join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
         )
+
+        if global_data_product_uuid is not None:
+            results = results.filter(
+                PipelineSchedule.global_data_product_uuid == global_data_product_uuid,
+            )
+        else:
+            results = results.filter(PipelineSchedule.global_data_product_uuid is None)
 
         if backfill_id is not None:
             results = results.filter(PipelineRun.backfill_id == int(backfill_id))
@@ -89,6 +113,24 @@ class PipelineRunResource(DatabaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
+        def _build_pipeline_runs(prs):
+            return [PipelineRun(
+                backfill_id=pr.backfill_id,
+                completed_at=pr.completed_at,
+                created_at=pr.created_at,
+                event_variables=pr.event_variables,
+                execution_date=pr.execution_date,
+                executor_type=pr.executor_type,
+                id=pr.id,
+                metrics=pr.metrics,
+                passed_sla=pr.passed_sla,
+                pipeline_schedule_id=pr.pipeline_schedule_id,
+                pipeline_uuid=pr.pipeline_uuid,
+                status=pr.status,
+                updated_at=pr.updated_at,
+                variables=pr.variables,
+            ) for pr in prs]
+
         total_results = self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
@@ -102,7 +144,7 @@ class PipelineRunResource(DatabaseResource):
         if pipeline_type is not None:
             pipeline_type_by_pipeline_uuid = dict()
             try:
-                pipeline_runs = total_results.all()
+                pipeline_runs = _build_pipeline_runs(total_results.all())
                 results = []
                 for run in pipeline_runs:
                     if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
@@ -114,9 +156,9 @@ class PipelineRunResource(DatabaseResource):
                 results = results[offset:(offset + limit)]
             except Exception as err:
                 print('ERROR filtering pipeline runs:', err)
-                results = total_results.limit(limit + 1).offset(offset).all()
+                results = _build_pipeline_runs(total_results.limit(limit + 1).offset(offset).all())
         else:
-            results = total_results.limit(limit + 1).offset(offset).all()
+            results = _build_pipeline_runs(total_results.limit(limit + 1).offset(offset).all())
 
         pipeline_schedule_id = None
         parent_model = kwargs.get('parent_model')
@@ -152,7 +194,7 @@ class PipelineRunResource(DatabaseResource):
                     lambda x: x.execution_date not in filter_dates,
                     results,
                 ),
-            ) + additional_results.all()
+            ) + _build_pipeline_runs(additional_results.all())
 
         results_size = len(results)
         has_next = results_size > limit

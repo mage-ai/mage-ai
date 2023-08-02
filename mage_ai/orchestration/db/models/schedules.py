@@ -73,6 +73,7 @@ class PipelineSchedule(BaseModel):
     token = Column(String(255), index=True, default=None)
     repo_path = Column(String(255))
     settings = Column(JSON)
+    global_data_product_uuid = Column(String(255), index=True, default=None)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
@@ -601,7 +602,7 @@ class PipelineRun(BaseModel):
             ])
         return all(b.status in statuses for b in self.block_runs)
 
-    def get_variables(self, extra_variables: Dict = None) -> Dict:
+    def get_variables(self, extra_variables: Dict = None, pipeline_uuid: str = None) -> Dict:
         if extra_variables is None:
             extra_variables = dict()
 
@@ -610,7 +611,7 @@ class PipelineRun(BaseModel):
 
         variables = merge_dict(
             merge_dict(
-                get_global_variables(self.pipeline_uuid) or dict(),
+                get_global_variables(pipeline_uuid or self.pipeline_uuid) or dict(),
                 self.pipeline_schedule.variables or dict(),
             ),
             pipeline_run_variables,
