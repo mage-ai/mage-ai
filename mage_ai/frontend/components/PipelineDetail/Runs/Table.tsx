@@ -27,7 +27,7 @@ import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTCString } from '@components/Triggers/utils';
-import { indexBy, pushAtIndex } from '@utils/array';
+import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 

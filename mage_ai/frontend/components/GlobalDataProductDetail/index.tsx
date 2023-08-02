@@ -16,6 +16,7 @@ import GlobalDataProductType, {
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
