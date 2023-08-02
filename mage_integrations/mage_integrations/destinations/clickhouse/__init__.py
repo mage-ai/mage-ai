@@ -1,5 +1,6 @@
 import argparse
 import traceback
+import sys
 from sqlalchemy import create_engine
 from clickhouse_sqlalchemy import make_session
 from mage_integrations.destinations.base import Destination
@@ -9,7 +10,7 @@ from mage_integrations.destinations.clickhouse.target_clickhouse.target import (
 
 
 class Clickhouse(Destination):
-    def process(self) -> None:
+    def process(self, input_buffer) -> None:
         self.config['state_path'] = self.state_file_path
         class_name = self.__class__.__name__
         try:
@@ -39,4 +40,4 @@ if __name__ == '__main__':
         argument_parser=argparse.ArgumentParser(),
         batch_processing=True,
     )
-    destination.process()
+    destination.process(sys.stdin.buffer)
