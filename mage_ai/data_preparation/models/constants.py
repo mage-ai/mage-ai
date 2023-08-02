@@ -127,6 +127,7 @@ CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.DATA_LOADER,
     BlockType.DBT,
     BlockType.EXTENSION,
+    BlockType.GLOBAL_DATA_PRODUCT,
     BlockType.SENSOR,
     BlockType.TRANSFORMER,
 ]

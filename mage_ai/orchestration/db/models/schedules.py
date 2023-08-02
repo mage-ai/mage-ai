@@ -503,6 +503,7 @@ class PipelineRun(BaseModel):
 
     @classmethod
     def create(self, create_block_runs: bool = True, **kwargs) -> 'PipelineRun':
+        print('WTFFFFFFFFFFFFFFFFF', kwargs)
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
         if pipeline_uuid is not None and create_block_runs:

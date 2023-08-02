@@ -21,7 +21,7 @@ lock = DistributedLock()
 
 
 def trigger_and_check_status(
-    global_data_product_uuid: str,
+    global_data_product: GlobalDataProduct,
     variables: Dict = None,
     check_status: bool = True,
     error_on_failure: bool = True,
@@ -29,7 +29,6 @@ def trigger_and_check_status(
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
 ):
-    global_data_product = GlobalDataProduct.get(global_data_product_uuid)
     tries = 0
 
     poll_start = datetime.utcnow().replace(tzinfo=timezone.utc)

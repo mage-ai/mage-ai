@@ -1553,7 +1553,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = self.outputs
 
-            if check_if_file_exists and not self.replicated_block:
+            if check_if_file_exists and not \
+                    self.replicated_block and \
+                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1590,7 +1593,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = await self.outputs_async()
 
-            if check_if_file_exists and not self.replicated_block:
+            if check_if_file_exists and not \
+                    self.replicated_block and \
+                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
