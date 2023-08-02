@@ -15,7 +15,6 @@ import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import {
   SECTION_ITEM_UUID_USERS,
   SECTION_UUID_WORKSPACE,
@@ -28,7 +27,10 @@ import { queryFromUrl } from '@utils/url';
 
 function UsersListPage() {
   const router = useRouter();
-  const { id: currentUserID, owner: isOwner } = getUser() || {};
+  const {
+    id: currentUserID,
+    owner: isOwner,
+  } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;

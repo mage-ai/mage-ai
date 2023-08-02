@@ -14,6 +14,7 @@ DESTINATIONS = [
     dict(name='OracleDB'),
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
+    dict(name='Salesforce'),
     dict(name='Snowflake'),
     dict(name='Trino'),
 ]

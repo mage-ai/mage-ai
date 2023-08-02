@@ -86,7 +86,12 @@ class AzureBlobStorage(BaseFile):
     ) -> None:
         """
         Exports data frame to an Azure Blob Storage container.
+
+        Pass upload_kwargs as dict to specify additional keyword
+        arguments to pass to the upload_blob
         """
+
+        upload_kwargs = kwargs.pop('upload_kwargs', None)
         if format is None:
             format = self._get_file_format(blob_path)
 
@@ -100,7 +105,10 @@ class AzureBlobStorage(BaseFile):
             buffer = BytesIO()
             self._write(df, format, buffer, **kwargs)
             buffer.seek(0)
-            blob_client.upload_blob(buffer.read())
+            if upload_kwargs and isinstance(upload_kwargs, dict):
+                blob_client.upload_blob(buffer.read(), **upload_kwargs)
+            else:
+                blob_client.upload_blob(buffer.read())
 
     def exists(
         self,
