@@ -19,7 +19,6 @@ import { range } from 'lodash';
 import { scaleLinear, scaleOrdinal } from '@visx/scale';
 
 import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import YAxisLabelContainer from './shared/YAxisLabelContainer';
 import dark from '@oracle/styles/themes/dark';
@@ -48,7 +47,8 @@ type SharedProps = {
   data: DataProps[];
   events?: boolean;
   getX?: (opts: any) => number;
-  getY?: (opts: any) => number;
+  getY?: (opts: any, idx?: number) => number;
+  getYScaleValues?: (yValues: any[]) => number[];
   gridProps?: any;
   height: number;
   hideGridX?: boolean;
@@ -81,6 +81,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   events = false,
   getX: getXProp,
   getY: getYProp,
+  getYScaleValues,
   gridProps = {},
   height,
   hideGridX,
@@ -123,7 +124,9 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const yMax = height - margin.top - margin.bottom;
   const xHalfwayPoint = xMax / 2;
 
-  const maxNumberOfYValues = Math.max(...data.map(({ y }) => y?.length || 0));
+  const maxNumberOfYValues = data.length === 0
+    ? 0
+    : Math.max(...data.map(({ y }) => y?.length || 0));
   const xScale = useMemo(() => scaleLinear<number>({
     domain: [Math.min(...xValues), Math.max(...xValues)],
     range: [0, xMax],
@@ -131,8 +134,16 @@ const LineSeries = withTooltip<LineSeriesProps>(({
     xMax,
     xValues,
   ]);
-  const yScaleMin = Math.min(...data.map(({ y }) => Math.min(...(y || []))));
-  const yScaleMax = Math.max(...data.map(({ y }) => Math.max(...(y || []))));
+  const yScaleMin = Math.min(...data.map(({ y }) => (Math.min(
+    ...(getYScaleValues
+      ? getYScaleValues(y)
+      : (y || [])),
+  ))));
+  const yScaleMax = Math.max(...data.map(({ y }) => (Math.max(
+    ...(getYScaleValues
+      ? getYScaleValues(y)
+      : (y || [])),
+  ))));
   const yScale = useMemo(() => scaleLinear<number>({
     domain: [
       yScaleMin,
@@ -177,8 +188,9 @@ const LineSeries = withTooltip<LineSeriesProps>(({
       }
 
       const tooltipTopData = range(0, maxNumberOfYValues).map(i => yScale(getY(d, i)));
+      const tooltipTopDataUndefined = tooltipTopData.some(val => typeof val === 'undefined');
 
-      if (getY(d)) {
+      if (getY(d) || (getYScaleValues && !tooltipTopDataUndefined)) {
         showTooltip({
           tooltipData: {
             ...d,
@@ -193,9 +205,11 @@ const LineSeries = withTooltip<LineSeriesProps>(({
       data,
       getX,
       getY,
+      getYScaleValues,
       margin,
       showTooltip,
       xScale,
+      xValues,
       yScale,
     ],
   );
