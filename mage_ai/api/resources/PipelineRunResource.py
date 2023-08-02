@@ -1,5 +1,3 @@
-from sqlalchemy.orm import selectinload
-
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
@@ -83,7 +81,7 @@ class PipelineRunResource(DatabaseResource):
                 PipelineSchedule.global_data_product_uuid == global_data_product_uuid,
             )
         else:
-            results = results.filter(PipelineSchedule.global_data_product_uuid == None)
+            results = results.filter(PipelineSchedule.global_data_product_uuid is None)
 
         if backfill_id is not None:
             results = results.filter(PipelineRun.backfill_id == int(backfill_id))
