@@ -16,6 +16,10 @@ from mage_ai.settings.repo import get_repo_name as get_repo_name_new
 from mage_ai.settings.repo import get_repo_path as get_repo_path_new
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 
+yml = ruamel.yaml.YAML()
+yml.preserve_quotes = True
+yml.indent(mapping=2, sequence=2, offset=0)
+
 
 class ProjectType(str, Enum):
     MAIN = 'main'
@@ -25,9 +29,32 @@ class ProjectType(str, Enum):
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
-        from mage_ai.data_preparation.shared.utils import get_template_vars
         self.repo_path = repo_path or get_repo_path_new()
         self.repo_name = os.path.basename(self.repo_path)
+        self.project_uuid = None
+        self.project_type = None
+        self.cluster_type = None
+
+        self.remote_variables_dir = None
+        self.azure_container_instance_config = None
+        self.ecs_config = None
+        self.emr_config = None
+        self.features = None
+        self.gcp_cloud_run_config = None
+        self.k8s_executor_config = None
+        self.spark_config = None
+        self.notification_config = None
+        self.queue_config = None
+        self.help_improve_mage = None
+        self.openai_api_key = None
+        self.retry_config = None
+        self.ldap_config = None
+        self.s3_bucket = None
+        self.s3_path_prefix = None
+        self.logging_config = None
+        self.variables_retention_period = None
+
+        from mage_ai.data_preparation.shared.utils import get_template_vars
         try:
             if not config_dict:
                 if os.path.exists(self.metadata_path):
@@ -135,10 +162,6 @@ class RepoConfig:
         )
 
     def save(self, **kwargs) -> None:
-        yml = ruamel.yaml.YAML()
-        yml.preserve_quotes = True
-        yml.indent(mapping=2, sequence=2, offset=0)
-
         if os.path.exists(self.metadata_path):
             with open(self.metadata_path) as f:
                 data = yml.load(f)
@@ -212,20 +235,20 @@ def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
 
 
-config = get_repo_config()
 project_uuid = None
 try:
-    project_uuid = config.project_uuid
+    with get_repo_config().metadata_path as f:
+        config = yml.load(f) or {}
+        project_uuid = config.get('project_uuid')
 except Exception:
     pass
 
 
 def update_project_uuid():
     global project_uuid
-    project_uuid = get_repo_config().project_uuid
     if not project_uuid:
         puuid = uuid.uuid4().hex
-        config.save(project_uuid=puuid)
+        get_repo_config().save(project_uuid=puuid)
         project_uuid = puuid
 
 

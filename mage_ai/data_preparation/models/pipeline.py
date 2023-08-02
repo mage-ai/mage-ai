@@ -40,7 +40,6 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
@@ -740,29 +739,9 @@ class Pipeline:
 
         return merge_dict(self.to_dict_base(), data)
 
-    @safe_db_query
-    def __transfer_related_models(self, old_uuid, new_uuid):
-        from mage_ai.orchestration.db.models.schedules import (
-            Backfill,
-            PipelineRun,
-            PipelineSchedule,
-        )
-
-        # Migrate pipeline schedules
-        PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({
-            PipelineSchedule.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        # Migrate pipeline runs (block runs have foreign key ref to PipelineRun id)
-        PipelineRun.query.filter(PipelineRun.pipeline_uuid == old_uuid).update({
-            PipelineRun.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        # Migrate backfills
-        Backfill.query.filter(Backfill.pipeline_uuid == old_uuid).update({
-            Backfill.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        db_connection.session.commit()
-
     async def update(self, data, update_content=False):
+        from mage_ai.orchestration.db.utils import transfer_related_models_for_pipeline
+
         old_uuid = None
         should_update_block_cache = False
         should_update_tag_cache = False
@@ -785,7 +764,7 @@ class Pipeline:
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
             await self.save_async()
-            self.__transfer_related_models(old_uuid, new_uuid)
+            transfer_related_models_for_pipeline(old_uuid, new_uuid)
 
             # Update pipeline secrets directory.
             try:
