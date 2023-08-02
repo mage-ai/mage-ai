@@ -7,9 +7,13 @@ from collections import Counter, defaultdict
 
 from singer_sdk import typing as th
 from singer_sdk.io_base import SingerMessageType
-from target_clickhouse.sinks import ClickhouseSink
+from mage_integrations.destinations.clickhouse.target_clickhouse.sinks import ClickhouseSink
 
 from mage_integrations.destinations.target import SQLTarget
+
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TargetClickhouse(SQLTarget):
@@ -28,9 +32,9 @@ class TargetClickhouse(SQLTarget):
     default_sink_class = ClickhouseSink
 
     def __init__(self, *, config=None, parse_env_config: bool = False,
-                 validate_config: bool = True, logger) -> None:
+                 validate_config: bool = True, logger=None) -> None:
 
-        self.loggers = logger
+        self._logger = logger if logger is not None else LOGGER
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
@@ -43,7 +47,7 @@ class TargetClickhouse(SQLTarget):
             Plugin logger.
         """
 
-        logger = self.loggers
+        logger = self._logger
 
         return logger
 
