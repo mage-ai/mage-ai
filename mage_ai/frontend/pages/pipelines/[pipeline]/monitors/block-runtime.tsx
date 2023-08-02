@@ -174,7 +174,7 @@ function BlockRuntimeMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRuntimeData &&
+        {blockRuntimeData?.[ALL_BLOCKS_KEY]?.length > 0 &&
           Object.entries(blockRuntimeData).map(([blockUuid, data], idx) => (
             <Spacing
               key={`${blockUuid}_${idx}`}
