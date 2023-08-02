@@ -1,13 +1,16 @@
-from botocore.config import Config
-import boto3
 import os
 import uuid
+
+import boto3
+from botocore.config import Config
+
+from mage_ai.services.aws import get_aws_region_name
 
 EVENT_RULE_LIMIT = 100
 
 
 def get_all_event_rules():
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     client = boto3.client('events', config=config)
     response = client.list_rules(
@@ -31,7 +34,7 @@ def update_event_rule_targets(name):
     lambda_function_name = os.getenv('LAMBDA_FUNCTION_NAME')
     if lambda_function_arn is None or lambda_function_name is None:
         return
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     client = boto3.client('events', config=config)
     event_rule_info = client.describe_rule(Name=name)
