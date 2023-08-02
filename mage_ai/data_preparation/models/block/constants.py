@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.block import (
 )
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.extension.block import ExtensionBlock
+from mage_ai.data_preparation.models.block.global_data_product import GlobalDataProductBlock
 from mage_ai.data_preparation.models.constants import BlockType
 
 BLOCK_TYPE_TO_CLASS = {
@@ -16,6 +17,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_LOADER: Block,
     BlockType.DBT: DBTBlock,
     BlockType.EXTENSION: ExtensionBlock,
+    BlockType.GLOBAL_DATA_PRODUCT: GlobalDataProductBlock,
     BlockType.MARKDOWN: Block,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: Block,

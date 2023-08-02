@@ -1,8 +1,8 @@
 import json
+import pandas as pd
 from typing import Any, Dict, List, Tuple
 
-import pandas as pd
-
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
@@ -595,6 +595,11 @@ def fetch_input_variables(
             upstream_block_uuids_final.append(upstream_block_uuid)
             upstream_block = pipeline.get_block(upstream_block_uuid)
             should_reduce = should_reduce_output(upstream_block)
+
+            if BlockType.GLOBAL_DATA_PRODUCT == upstream_block.type:
+                global_data_product = upstream_block.get_global_data_product()
+                input_vars[idx] = global_data_product.get_outputs()
+                continue
 
             variables = input_variables_by_uuid[upstream_block_uuid]
             variable_values = [
