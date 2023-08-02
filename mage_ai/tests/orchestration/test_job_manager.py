@@ -1,10 +1,11 @@
+from unittest.mock import MagicMock
+
 from mage_ai.orchestration.job_manager import JobManager, JobType
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import MagicMock
 
 
-class JobMnagerTests(TestCase):
+class JobManagerTests(TestCase):
     def setUp(self):
         self.mock_queue = MagicMock()
         QueueFactory.get_queue = MagicMock(return_value=self.mock_queue)

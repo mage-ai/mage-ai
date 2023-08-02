@@ -41,9 +41,15 @@ jobs:
           name: Build and export
           command: ( cd mage_ai/frontend && yarn install && yarn export_prod )
       - run:
+          name: Build and export base path version
+          command: |
+            mv mage_ai/frontend/next_base_path.config.js mage_ai/frontend/next.config.js
+            ( cd mage_ai/frontend && yarn install && yarn export_prod_base_path )
+      - run:
           name: Update frontend build
           command: |
             git add mage_ai/server/frontend_dist
+            git add mage_ai/server/frontend_dist_base_path_template
             git commit -m "[CI] Update production build"
             git push origin master
 

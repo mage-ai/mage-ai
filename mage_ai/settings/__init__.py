@@ -63,6 +63,10 @@ NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
 
+# The base path variable should not include a leading forward slash
+# e.g. BASE_PATH = 'test_prefix' -> localhost:6789/test_prefix/pipelines
+BASE_PATH = os.getenv('MAGE_BASE_PATH')
+
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
 MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
