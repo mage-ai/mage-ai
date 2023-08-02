@@ -6,7 +6,7 @@
 
 ## Config
 
-You must enter the following credentials when configuring this source:
+You must enter the following credentials when configuring this destination:
 
 | Key | Description | Sample value
 | --- | --- | --- |
