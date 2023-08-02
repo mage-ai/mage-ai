@@ -49,7 +49,7 @@ jobs:
           name: Update frontend build
           command: |
             git add mage_ai/server/frontend_dist
-            git add mage_ai/server/frontend_dist_base_path
+            git add mage_ai/server/frontend_dist_base_path_template
             git commit -m "[CI] Update production build"
             git push origin master
 
