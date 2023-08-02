@@ -102,13 +102,13 @@ def trigger_and_check_status(
             if not global_data_product.is_outdated(pipeline_run):
                 if verbose:
                     next_run_at = global_data_product.next_run_at(pipeline_run)
-                    completed_at = pipeline_run.completed_at
+                    execution_date = pipeline_run.execution_date
                     seconds = next_run_at.timestamp() - now.timestamp()
 
                     print(
                         f'Global data product {global_data_product.uuid} is up-to-date: '
                         f'most recent pipeline run {pipeline_run.id} '
-                        f'completed at {completed_at.isoformat()}. '
+                        f'executed at {execution_date.isoformat()}. '
                         f'Will be outdated after {next_run_at.isoformat()} '
                         f'in {round(seconds)} seconds.'
                     )
