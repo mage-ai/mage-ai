@@ -33,31 +33,7 @@ def trigger_and_check_status(
 
     poll_start = datetime.utcnow().replace(tzinfo=timezone.utc)
     while True:
-        pipeline_runs = (
-            PipelineRun.
-            select(
-                PipelineRun.backfill_id,
-                PipelineRun.completed_at,
-                PipelineRun.event_variables,
-                PipelineRun.execution_date,
-                PipelineRun.executor_type,
-                PipelineRun.id,
-                PipelineRun.metrics,
-                PipelineRun.passed_sla,
-                PipelineRun.pipeline_schedule_id,
-                PipelineRun.pipeline_uuid,
-                PipelineRun.status,
-                PipelineRun.variables,
-                PipelineSchedule.global_data_product_uuid,
-            ).
-            join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id).
-            filter(
-                PipelineRun.pipeline_uuid == global_data_product.object_uuid,
-                PipelineSchedule.global_data_product_uuid == global_data_product.uuid,
-            ).
-            order_by(PipelineRun.execution_date.desc()).
-            all()
-        )
+        pipeline_runs = global_data_product.pipeline_runs()
 
         # Check if most recent pipeline run has failed, canceled, or report the status
         if tries >= 1 and len(pipeline_runs) >= 1:

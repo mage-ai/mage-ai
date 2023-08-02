@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.global_data_product.constants import (
     GlobalDataProductObjectType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, index_by
@@ -69,6 +70,47 @@ class GlobalDataProduct:
                 self._object = Pipeline.get(self.object_uuid)
 
         return self._object
+
+    def get_outputs(self) -> Dict:
+        data = {}
+
+        if not self.settings or len(self.settings) == 0:
+            return data
+
+        if GlobalDataProductObjectType.PIPELINE == self.object_type:
+            pipeline_runs = self.pipeline_runs(status=PipelineRun.PipelineRunStatus.COMPLETED)
+
+            for block_uuid, block_settings in self.settings.items():
+                block = self.pipeline.get_block(block_uuid)
+
+                partitions = 1
+                if block_settings and 'partitions' in block_settings:
+                    partitions = int(block_settings.get('partitions', 1))
+
+                if partitions and partitions >= 1:
+                    arr = pipeline_runs[:partitions]
+                else:
+                    arr = pipeline_runs
+
+                data[block_uuid] = []
+                for row in arr:
+                    pipeline_run = PipelineRun(
+                        execution_date=row.execution_date,
+                        pipeline_schedule_id=row.pipeline_schedule_id,
+                        variables=row.variables,
+                    )
+                    output_variable_objects = block.output_variable_objects(
+                        execution_partition=pipeline_run.execution_partition,
+                    )
+
+                    for v in output_variable_objects:
+                        data[block_uuid].append(self.pipeline.variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            block.uuid,
+                            v.uuid,
+                        ))
+
+        return data
 
     def get_outdated_at_delta(self, in_seconds: bool = False) -> relativedelta:
         outdated_after = self.outdated_after or {}
@@ -136,6 +178,50 @@ class GlobalDataProduct:
             return False
 
         return self.is_outdated_after(now)
+
+    def pipeline_runs(
+        self,
+        limit: int = None,
+        status: PipelineRun.PipelineRunStatus = None,
+    ) -> List[PipelineRun]:
+        pipeline_runs = (
+            PipelineRun.
+            select(
+                PipelineRun.backfill_id,
+                PipelineRun.completed_at,
+                PipelineRun.event_variables,
+                PipelineRun.execution_date,
+                PipelineRun.executor_type,
+                PipelineRun.id,
+                PipelineRun.metrics,
+                PipelineRun.passed_sla,
+                PipelineRun.pipeline_schedule_id,
+                PipelineRun.pipeline_uuid,
+                PipelineRun.status,
+                PipelineRun.variables,
+                PipelineSchedule.global_data_product_uuid,
+            ).
+            join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id).
+            filter(
+                PipelineRun.pipeline_uuid == self.object_uuid,
+                PipelineSchedule.global_data_product_uuid == self.uuid,
+            )
+        )
+
+        if status:
+            pipeline_runs = (
+                pipeline_runs.
+                filter(
+                    PipelineRun.status == status,
+                )
+            )
+
+        pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.desc())
+
+        if limit is not None:
+            pipeline_runs = pipeline_runs.limit(limit)
+
+        return pipeline_runs.all()
 
     def to_dict(self, include_uuid: bool = False) -> Dict:
         data = dict(
