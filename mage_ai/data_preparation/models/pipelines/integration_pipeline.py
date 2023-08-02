@@ -217,6 +217,8 @@ class IntegrationPipeline(Pipeline):
                 elif not error and line.startswith('CRITICAL'):
                     error = line
             raise Exception(filter_out_config_values(error, config_interpolated))
+        except Exception as err:
+            raise Exception(filter_out_config_values(str(err), config_interpolated))
 
     def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA

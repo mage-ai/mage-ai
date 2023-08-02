@@ -23,7 +23,16 @@ def run_task(
     if wait_for_completion:
         arn = response['tasks'][0]['taskArn']
         waiter = client.get_waiter('tasks_stopped')
-        waiter.wait(cluster=ecs_config.cluster, tasks=[arn])
+        wait_kwargs = dict(
+            cluster=ecs_config.cluster,
+            tasks=[arn],
+        )
+        if ecs_config.wait_timeout:
+            wait_kwargs['WaiterConfig'] = {
+                'Delay': 15,
+                'MaxAttempts': int(ecs_config.wait_timeout / 15),
+            }
+        waiter.wait(**wait_kwargs)
 
         tasks = client.describe_tasks(
             cluster=ecs_config.cluster,

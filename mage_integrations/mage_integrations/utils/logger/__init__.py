@@ -87,7 +87,7 @@ class Logger():
             elif LOG_LEVEL_INFO == level:
                 method = 'info'
             elif LOG_LEVEL_DEBUG == level:
-                method =  'debug'
+                method = 'debug'
 
             getattr(self.logger, method)(f'[{now.isoformat()}] {json_string}')
         else:
