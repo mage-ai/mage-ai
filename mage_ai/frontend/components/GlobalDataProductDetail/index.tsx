@@ -7,18 +7,22 @@ import { useRouter } from 'next/router';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType, {
   GlobalDataProductObjectTypeEnum,
 } from '@interfaces/GlobalDataProductType';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import TriggersTable from '@components/Triggers/Table';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -607,6 +611,33 @@ function GlobalDataProductDetail({
     updateObject,
   ]);
 
+  const {
+    data: dataPipelineSchedules,
+  } = api.pipeline_schedules.list(
+    {
+      global_data_product_uuid: globalDataProduct?.uuid,
+    },
+    {},
+    {
+      pauseFetch: !globalDataProduct?.uuid,
+    },
+  );
+  const pipelineSchedules: PipelineScheduleType[] =
+    useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
+
+  const {
+    data: dataPipelineRuns,
+  } = api.pipeline_runs.list(
+    {
+      global_data_product_uuid: globalDataProduct?.uuid,
+    },
+    {},
+    {
+      pauseFetch: !globalDataProduct?.uuid,
+    },
+  );
+  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+
   return (
     // @ts-ignore
     <TripleLayout
@@ -624,7 +655,32 @@ function GlobalDataProductDetail({
       setBeforeHidden={setBeforeHidden}
       setBeforeWidth={setBeforeWidth}
     >
+      <Spacing p={PADDING_UNITS}>
+        <Headline>
+          Triggers
+        </Headline>
+      </Spacing>
 
+      <Divider light />
+
+      <TriggersTable
+        disableActions
+        pipeline={pipeline}
+        pipelineSchedules={pipelineSchedules}
+      />
+
+      <Spacing p={PADDING_UNITS}>
+        <Headline>
+          Runs
+        </Headline>
+      </Spacing>
+
+      <Divider light />
+
+      <PipelineRunsTable
+        hideTriggerColumn
+        pipelineRuns={pipelineRuns}
+      />
     </TripleLayout>
   );
 }

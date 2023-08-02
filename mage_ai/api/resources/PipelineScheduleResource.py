@@ -22,18 +22,29 @@ class PipelineScheduleResource(DatabaseResource):
     def collection(self, query_arg, meta, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
+        global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
+        if global_data_product_uuid:
+            global_data_product_uuid = global_data_product_uuid[0]
+
         query = PipelineSchedule.repo_query
-        if pipeline:
-            return (
+        if global_data_product_uuid or pipeline:
+            query = (
                 query.
                 options(selectinload(PipelineSchedule.event_matchers)).
-                options(selectinload(PipelineSchedule.pipeline_runs)).
-                filter(
+                options(selectinload(PipelineSchedule.pipeline_runs))
+            )
+
+            if global_data_product_uuid:
+                query = query.filter(
+                    PipelineSchedule.global_data_product_uuid == global_data_product_uuid,
+                )
+            else:
+                query = query.filter(
                     PipelineSchedule.global_data_product_uuid.is_(None),
                     PipelineSchedule.pipeline_uuid == pipeline.uuid,
-                ).
-                order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
-            )
+                )
+
+            return query.order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
 
         order_by = query_arg.get('order_by', [None])
         if order_by[0]:
