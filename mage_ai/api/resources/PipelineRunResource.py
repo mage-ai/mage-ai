@@ -1,3 +1,5 @@
+from sqlalchemy.orm import selectinload
+
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
@@ -7,7 +9,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
-    PipelineSchedule,
+    # PipelineSchedule,
 )
 from mage_ai.orchestration.pipeline_scheduler import (
     configure_pipeline_run_payload,
