@@ -1,4 +1,5 @@
 import argparse
+import sys
 import traceback
 
 import pymongo
@@ -8,7 +9,7 @@ from mage_integrations.destinations.mongodb.target_mongodb.target import TargetM
 
 
 class MongoDb(Destination):
-    def process(self) -> None:
+    def process(self, input_buffer) -> None:
         self.config['state_path'] = self.state_file_path
         class_name = self.__class__.__name__
         try:
@@ -39,4 +40,4 @@ if __name__ == '__main__':
         argument_parser=argparse.ArgumentParser(),
         batch_processing=True,
     )
-    destination.process()
+    destination.process(sys.stdin.buffer)
