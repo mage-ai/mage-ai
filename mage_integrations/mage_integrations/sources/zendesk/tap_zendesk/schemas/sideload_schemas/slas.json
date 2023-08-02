@@ -1,0 +1,51 @@
+{
+ "type": [
+            "null",
+              "object"
+            ],
+  "properties": {
+    "slas": {
+     "type": [
+            "null",
+              "object"
+            ],
+      "properties": {
+        "policy_metrics": {
+          "type": "array",
+          "items":{
+             "type": [
+            "null",
+              "object"
+            ],
+              "properties": {
+                "breach_at": {
+                  "type": [
+            "null",
+              "string"
+            ]
+                },
+                "stage": {
+                  "type": [
+            "null",
+              "string"
+            ]
+                },
+                "metric": {
+                  "type": [
+            "null",
+              "string"
+            ]
+                },
+                "hours": {
+                 "type": [
+            "null",
+              "string"
+            ]
+                }
+              }
+          }
+        }
+      }
+    }
+  }
+}
