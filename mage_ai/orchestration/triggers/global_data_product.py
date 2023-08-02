@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 from time import sleep
 from typing import Dict, List, Optional
 
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.triggers import ScheduleType
-from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
@@ -33,7 +32,7 @@ def trigger_and_check_status(
     global_data_product = GlobalDataProduct.get(global_data_product_uuid)
     tries = 0
 
-    poll_start = datetime.utcnow()
+    poll_start = datetime.utcnow().replace(tzinfo=timezone.utc)
     while True:
         pipeline_runs = (
             PipelineRun.
@@ -43,6 +42,7 @@ def trigger_and_check_status(
                 PipelineRun.event_variables,
                 PipelineRun.execution_date,
                 PipelineRun.executor_type,
+                PipelineRun.id,
                 PipelineRun.metrics,
                 PipelineRun.passed_sla,
                 PipelineRun.pipeline_schedule_id,
@@ -56,7 +56,7 @@ def trigger_and_check_status(
                 PipelineRun.pipeline_uuid == global_data_product.object_uuid,
                 PipelineSchedule.global_data_product_uuid == global_data_product.uuid,
             ).
-            order_by(PipelineRun.status.desc()).
+            order_by(PipelineRun.execution_date.desc()).
             all()
         )
 
@@ -79,7 +79,7 @@ def trigger_and_check_status(
                 break
 
         # Check if polling has timed out
-        now = datetime.utcnow()
+        now = datetime.utcnow().replace(tzinfo=timezone.utc)
         if (
             poll_timeout is not None and
             now > poll_start + timedelta(seconds=poll_timeout)
@@ -101,9 +101,16 @@ def trigger_and_check_status(
             pipeline_run = completed_pipeline_runs[0]
             if not global_data_product.is_outdated(pipeline_run):
                 if verbose:
+                    next_run_at = global_data_product.next_run_at(pipeline_run)
+                    completed_at = pipeline_run.completed_at
+                    seconds = next_run_at.timestamp() - now.timestamp()
+
                     print(
                         f'Global data product {global_data_product.uuid} is up-to-date: '
-                        f'most recently completed at {pipeline_run.completed_at.isoformat()}.'
+                        f'most recent pipeline run {pipeline_run.id} '
+                        f'completed at {completed_at.isoformat()}. '
+                        f'Will be outdated after {next_run_at.isoformat()} '
+                        f'in {round(seconds)} seconds.'
                     )
 
                 break

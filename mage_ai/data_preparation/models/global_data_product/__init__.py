@@ -1,7 +1,7 @@
 import os
 import yaml
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from mage_ai.data_preparation.models.global_data_product.constants import (
     GlobalDataProductObjectType,
@@ -83,7 +83,7 @@ class GlobalDataProduct:
             d = relativedelta(**delta)
 
             if in_seconds:
-                now = datetime.utcnow()
+                now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
                 return ((now + d) - now).timestamp()
             else:
@@ -110,21 +110,26 @@ class GlobalDataProduct:
             value = outdated_starting_at.get(key, None)
             if value is not None:
                 validations.append(value >= extract_value_from_datetime(
-                    now or datetime.utcnow(),
+                    now or datetime.utcnow().replace(tzinfo=timezone.utc),
                 ))
 
         return all(validations)
+
+    def next_run_at(self, pipeline_run: 'PipelineRun') -> datetime:
+        execution_date = pipeline_run.execution_date
+        outdated_at_delta = self.get_outdated_at_delta()
+        if execution_date and outdated_at_delta:
+            execution_date += outdated_at_delta
+
+        return execution_date
 
     def is_outdated(self, pipeline_run: 'PipelineRun' = None) -> bool:
         if not pipeline_run:
             return True
 
-        now = datetime.utcnow()
+        now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
-        execution_date = pipeline_run.execution_date
-        outdated_at_delta = self.get_outdated_at_delta()
-        if execution_date and outdated_at_delta:
-            execution_date += outdated_at_delta
+        execution_date = self.next_run_at(pipeline_run)
 
         outdated = execution_date and now >= execution_date
         if not outdated:
