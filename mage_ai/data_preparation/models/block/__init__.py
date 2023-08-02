@@ -489,19 +489,19 @@ class Block:
     @classmethod
     def create(
         self,
-        name: str,
-        block_type: str,
-        repo_path: str,
-        color: str = None,
-        configuration: Dict = None,
+        name,
+        block_type,
+        repo_path,
+        color=None,
+        configuration=None,
         extension_uuid: str = None,
-        language: str = None,
+        language=None,
         pipeline=None,
-        priority: int = None,
+        priority=None,
         replicated_block: str = None,
-        upstream_block_uuids: List[str] = None,
-        config: Dict = None,
-        widget: bool = False,
+        upstream_block_uuids=None,
+        config=None,
+        widget=False,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -535,10 +535,7 @@ class Block:
                     extension_uuid=extension_uuid,
                 ):
                     raise Exception(f'Block {uuid} already exists. Please use a different name.')
-            elif BlockType.GLOBAL_DATA_PRODUCT != block_type:
-                # Only create a file on the filesystem if the block type isn’t a global data product
-                # because global data products reference a data product which already has its
-                # own files.
+            else:
                 load_template(
                     block_type,
                     config,
@@ -1553,10 +1550,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = self.outputs
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
-
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1593,10 +1587,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = await self.outputs_async()
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
-
+            if check_if_file_exists and not self.replicated_block:
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
