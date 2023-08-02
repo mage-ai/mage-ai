@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from time import sleep
 from typing import Dict, List, Optional
 
@@ -14,8 +13,7 @@ from mage_ai.orchestration.triggers.utils import (
     create_and_start_pipeline_run,
 )
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
-from mage_ai.shared.dates import week_of_month
-from mage_ai.shared.hash import extract, group_by
+from mage_ai.shared.hash import group_by
 
 lock = DistributedLock()
 

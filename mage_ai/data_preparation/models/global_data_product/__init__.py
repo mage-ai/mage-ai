@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.dates import week_of_month
 from mage_ai.shared.hash import extract, index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
@@ -131,7 +132,7 @@ class GlobalDataProduct:
             else:
                 return d
 
-    def is_outdated_after(self, now: datetime = None) ->  bool:
+    def is_outdated_after(self, now: datetime = None) -> bool:
         outdated_starting_at = self.outdated_starting_at or {}
         if len(outdated_starting_at) == 0:
             return True

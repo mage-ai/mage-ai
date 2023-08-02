@@ -489,14 +489,14 @@ class Block:
     @classmethod
     def create(
         self,
-        name: str ,
+        name: str,
         block_type: str,
         repo_path: str,
         color: str = None,
         configuration: Dict = None,
         extension_uuid: str = None,
         language: str = None,
-        pipeline: 'Pipeline' = None,
+        pipeline=None,
         priority: int = None,
         replicated_block: str = None,
         upstream_block_uuids: List[str] = None,
