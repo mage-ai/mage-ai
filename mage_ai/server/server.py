@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import signal
 import traceback
 import webbrowser
 from time import sleep
@@ -223,7 +224,7 @@ async def main(
             )
         port += 1
 
-    app.listen(
+    server = app.listen(
         port,
         address=host if host != 'localhost' else None,
     )
@@ -316,13 +317,22 @@ async def main(
     )
     periodic_callback.start()
 
-    get_messages(
-        lambda content: WebSocketServer.send_message(
-            parse_output_message(content),
-        ),
-    )
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGTERM, loop.create_task, stop_server())
 
-    await asyncio.Event().wait()
+    try:
+        asyncio.run(get_messages(
+            lambda content: WebSocketServer.send_message(
+                parse_output_message(content),
+            ),
+        ))
+    except asyncio.CancelledError:
+        pass
+
+    periodic_callback.stop()
+    server.stop()
+    await server.close_all_connections()
+    scheduler_manager.stop_scheduler()
 
 
 def start_server(
@@ -390,13 +400,25 @@ def start_server(
             enable_pretty_logging()
 
             # Start web server
-            asyncio.run(
-                main(
-                    host=host,
-                    port=port,
-                    project=project,
+            try:
+                asyncio.run(
+                    main(
+                        host=host,
+                        port=port,
+                        project=project,
+                    )
                 )
-            )
+            except asyncio.CancelledError:
+                print('Server has shut down')
+
+
+async def stop_server():
+    current_task = asyncio.current_task()
+    other_tasks = [t for t in asyncio.all_tasks() if t is not current_task]
+    for task in other_tasks:
+        if not task.done():
+            task.cancel()
+    await asyncio.gather(*other_tasks, return_exceptions=True)
 
 
 if __name__ == '__main__':
