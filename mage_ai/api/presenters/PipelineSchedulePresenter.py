@@ -2,6 +2,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 from mage_ai.shared.hash import extract
 
+
 class PipelineSchedulePresenter(BasePresenter):
     default_attributes = [
         'created_at',
