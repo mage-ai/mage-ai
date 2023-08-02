@@ -190,6 +190,7 @@ class GlobalDataProduct:
             select(
                 PipelineRun.backfill_id,
                 PipelineRun.completed_at,
+                PipelineRun.created_at,
                 PipelineRun.event_variables,
                 PipelineRun.execution_date,
                 PipelineRun.executor_type,
@@ -199,6 +200,7 @@ class GlobalDataProduct:
                 PipelineRun.pipeline_schedule_id,
                 PipelineRun.pipeline_uuid,
                 PipelineRun.status,
+                PipelineRun.updated_at,
                 PipelineRun.variables,
                 PipelineSchedule.global_data_product_uuid,
             ).
