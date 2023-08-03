@@ -167,7 +167,7 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
+                'image': 'mageai/mageai-manage-instance-test:latest',
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -317,8 +317,8 @@ class WorkloadManager:
 
         k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
 
-        if ingress_name:
-            self.update_ingress_paths(ingress_name, service_name, name)
+        # if ingress_name:
+        #     self.update_ingress_paths(ingress_name, service_name, name)
 
         return k8s_service
 
