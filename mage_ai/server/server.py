@@ -115,14 +115,18 @@ class ApiSchedulerHandler(BaseHandler):
 
 def replace_base_path(base_path: str) -> None:
     """
-    This function will go through the BASE_PATH_STATIC_EXPORT_FOLDER and replace all the
+    This function will create and go through the BASE_PATH_EXPORTS_FOLDER and replace all the
     occurrences of CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_ with the base_path parameter.
 
     Args:
         base_path (str): The base path to replace the placeholder with.
     """
-    directory = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
-    for path, _, files in os.walk(os.path.abspath(directory)):
+    src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
+    dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+    for path, _, files in os.walk(os.path.abspath(dst)):
         for filename in files:
             if filename.endswith(('.html', '.js', '.css')):
                 filepath = os.path.join(path, filename)
@@ -261,13 +265,6 @@ async def main(
 
     if BASE_PATH:
         try:
-            # copy to new folder in case the base path is updated. we need to use the original
-            # frontend_dist_base_path_template folder as a template
-            src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
-            dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
-            if os.path.exists(dst):
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
             replace_base_path(BASE_PATH)
             update_routes = True
         except Exception:
