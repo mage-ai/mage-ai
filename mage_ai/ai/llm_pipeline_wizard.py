@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 from typing import Dict
+import re
 
 import openai
 from langchain.chains import LLMChain
@@ -53,23 +54,24 @@ PROMPT_TO_SPLIT_BLOCKS = """
 A BLOCK does one action either reading data from one data source, transforming the data from
 one format to another or exporting data into a data source.
 Based on the code description delimited by triple backticks, your task is to identify
-how many BLOCKS required and function for each BLOCK.
+how many BLOCKS required, function for each BLOCK and upstream blocks between BLOCKs.
 
 Use the following format:
-BLOCK 1: <block function>
-BLOCK 2: <block function>
-BLOCK 3: <block function>
+BLOCK 1: function: <block function>. upstream: <upstream blocks>
+BLOCK 2: function: <block function>. upstream: <upstream blocks>
+BLOCK 3: function: <block function>. upstream: <upstream blocks>
 ...
 
 Example:
 <code description>: ```
-Read data from MySQL, filter out rows with book_price > 100, and save data to BigQuery.
+Read data from MySQL and Postgres, filter out rows with book_price > 100, and save data to BigQuery.
 ```
 
 Answer:
-BLOCK 1: load data from MySQL
-BLOCK 2: filter out rows with book_price > 100
-BLOCK 3: export data to BigQuery
+BLOCK 1: function: load data from MySQL. upstream:
+BLOCK 2: function: load data from Postgres. upstream:
+BLOCK 3: function: filter out rows with book_price > 100. upstream: 1, 2
+BLOCK 4: function: export data to BigQuery. upstream: 3
 
 <code description>: ```{code_description}```"""
 PROMPT_FOR_FUNCTION_COMMENT = """
@@ -81,6 +83,7 @@ Your task is to write comments for each function inside.
 The comment should follow Google Docstring format.
 Return your response in JSON format with function name as key and the comment as value.
 """
+BLOCK_SPLIT_PATTERN = r"BLOCK\s+(\w+):\s+function:\s+(.*?)\.\s+upstream:\s*(.*?)$"
 TRANSFORMERS_FOLDER = 'transformers'
 CLASSIFICATION_FUNCTION_NAME = "classify_description"
 TEMPLATE_CLASSIFICATION_FUNCTION = [
@@ -197,7 +200,10 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
-    async def async_generate_block_with_description(self, block_description: str) -> dict:
+    async def async_generate_block_with_description(
+            self,
+            block_description: str,
+            upstream_blocks: [str]) -> dict:
         messages = [{"role": "user", "content": block_description}]
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
@@ -220,6 +226,7 @@ class LLMPipelineWizard:
                     pipeline_type=pipeline_type,
                 ),
                 language=block_language,
+                upstream_blocks=upstream_blocks,
             )
         else:
             logger.error("Failed to interpret the description as a block template.")
@@ -238,11 +245,12 @@ class LLMPipelineWizard:
     async def __async_generate_blocks(self,
                                       block_dict: dict,
                                       block_id: int,
-                                      block_description: str) -> dict:
-        block = await self.async_generate_block_with_description(block_description)
+                                      block_description: str,
+                                      upstream_blocks: [str]) -> dict:
+        block = await self.async_generate_block_with_description(block_description, upstream_blocks)
         block_dict[block_id] = block
 
-    async def async_generate_pipeline_with_description(self, pipeline_description: str) -> dict:
+    async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
         splited_block_descriptions = await self.__async_split_description_by_blocks(
             pipeline_description)
         blocks = {}
@@ -250,11 +258,17 @@ class LLMPipelineWizard:
         for line in splited_block_descriptions.strip().split('\n'):
             if line.startswith("BLOCK") and ":" in line:
                 # Extract the block_id and block_description from the line
-                raw_block_id, block_description = line.split(":", 1)
-                block_id = raw_block_id.strip().split(" ")[-1]
-                block_description = block_description.strip()
-                block_tasks.append(
-                    self.__async_generate_blocks(blocks, block_id, block_description))
+                match = re.search(BLOCK_SPLIT_PATTERN, line)
+                if match:
+                    block_id = match.group(1)
+                    block_description = match.group(2).strip()
+                    upstream_blocks = match.group(3).split(", ")
+                    block_tasks.append(
+                        self.__async_generate_blocks(
+                            blocks,
+                            block_id,
+                            block_description,
+                            upstream_blocks))
         await asyncio.gather(*block_tasks)
         return blocks
 
