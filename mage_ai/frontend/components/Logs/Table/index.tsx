@@ -1,7 +1,7 @@
 import Ansi from 'ansi-to-react';
 import NextLink from 'next/link';
 import { FixedSizeList } from 'react-window';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
@@ -32,6 +32,7 @@ export const LOG_UUID_PARAM = 'log_uuid';
 
 type LogsTableProps = {
   blocksByUUID: { [keyof: string]: BlockType };
+  tableInnerRef: React.RefObject<any>;
   logs: LogType[];
   onRowClick?: (tab?: TabType) => void;
   pipeline: PipelineType;
@@ -42,6 +43,7 @@ type LogsTableProps = {
 
 function LogsTable({
   blocksByUUID,
+  tableInnerRef,
   logs,
   onRowClick,
   pipeline,
@@ -54,6 +56,13 @@ function LogsTable({
     () => PipelineTypeEnum.INTEGRATION === pipeline?.type,
     [pipeline.type],
   );
+
+  useEffect(() => {
+    tableInnerRef?.current?.scrollIntoView(false);
+  }, [
+    logs,
+    tableInnerRef,
+  ]);
 
   let blockUUIDs = Object.keys(blocksByUUID || {});
   if (isIntegration) {
@@ -91,6 +100,7 @@ function LogsTable({
       uuid: '_',
     },
   ];
+
 
   const renderRow = useCallback(({ data, index, style }) => {
     const {
@@ -286,6 +296,7 @@ function LogsTable({
       <FixedSizeList
         // window height - header - subheader - table header - footer
         height={windowHeight - HEADER_HEIGHT - 86 - 34 - 58}
+        innerRef={tableInnerRef}
         itemCount={logs.length}
         itemData={{
           blocksByUUID,

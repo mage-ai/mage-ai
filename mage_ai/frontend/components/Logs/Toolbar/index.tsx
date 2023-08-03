@@ -51,6 +51,13 @@ const SHARED_LOG_QUERY_PARAMS = {
   [OFFSET_PARAM]: 0,
 };
 
+export const SHARED_BUTTON_PROPS = {
+  blackBorder: true,
+  inline: true,
+  paddingBottom: UNIT * 0.75,
+  paddingTop: UNIT * 0.75,
+};
+
 function LogToolbar({
   allPastLogsLoaded,
   loadNewerLogInterval,
@@ -116,12 +123,9 @@ function LogToolbar({
     <Spacing py={1}>
       <FlexContainer alignItems="center">
         <KeyboardShortcutButton
-          blackBorder
+          {...SHARED_BUTTON_PROPS}
           disabled={allPastLogsLoaded}
-          inline
           onClick={loadPastLogInterval}
-          paddingBottom={UNIT * 0.75}
-          paddingTop={UNIT * 0.75}
           uuid="logs/load_older_logs"
         >
           {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
@@ -130,12 +134,9 @@ function LogToolbar({
         <Spacing mr={1} />
 
         <KeyboardShortcutButton
-          blackBorder
+          {...SHARED_BUTTON_PROPS}
           disabled={q?._offset <= 0}
-          inline
           onClick={loadNewerLogInterval}
-          paddingBottom={UNIT * 0.75}
-          paddingTop={UNIT * 0.75}
           uuid="logs/load_newer_logs"
         >
           Load newer logs
