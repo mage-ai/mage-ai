@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from time import sleep
 from typing import Dict, Optional
 
-from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
@@ -70,16 +69,17 @@ def create_and_start_pipeline_run(
 
     pipeline_run = PipelineRun.create(**configured_payload)
 
-    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-    pipeline_scheduler = PipelineScheduler(pipeline_run)
+    # Do not start the pipeline run immediately due to concurrency control
+    # from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+    # pipeline_scheduler = PipelineScheduler(pipeline_run)
 
-    if is_integration:
-        initialize_state_and_runs(
-            pipeline_run,
-            pipeline_scheduler.logger,
-            pipeline_run.get_variables(),
-        )
+    # if is_integration:
+    #     initialize_state_and_runs(
+    #         pipeline_run,
+    #         pipeline_scheduler.logger,
+    #         pipeline_run.get_variables(),
+    #     )
 
-    pipeline_scheduler.start(should_schedule=should_schedule)
+    # pipeline_scheduler.start(should_schedule=should_schedule)
 
     return pipeline_run

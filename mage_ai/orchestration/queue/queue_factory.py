@@ -9,7 +9,8 @@ class QueueFactory:
     def get_queue(self):
         if self.queue is not None:
             return self.queue
-        queue_config = QueueConfig.load(config=get_repo_config().queue_config)
+
+        queue_config = QueueConfig.load(config=get_repo_config().queue_config or dict())
         if queue_config.queue_type == QueueType.CELERY:
             from mage_ai.orchestration.queue.celery_queue import CeleryQueue
             self.queue = CeleryQueue(queue_config)
