@@ -76,6 +76,10 @@ class RepoConfig:
             else:
                 repo_config = config_dict
 
+            # config_dict is passed into the RepoConfig in certain cases where the metadata
+            # may not be able to be read. In these cases, we will try to get the variables_dir
+            # from the config_dict. Otherwise, we will set the variables_dir with
+            # `get_variables_dir`.
             if config_dict and config_dict.get('variables_dir'):
                 self.variables_dir = os.path.abspath(
                     os.path.join(self.repo_path, config_dict.get('variables_dir'))
@@ -238,8 +242,8 @@ def get_variables_dir(
         1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
         2. 'variables_dir' from repo_config argument
         3. 'variables_dir' from project's metadata.yaml file
-            This method will only read from the metadata.yaml file if the repo_config
-            argument is None.
+            This method will either read from the metadata.yaml file or the repo_config argument.
+            It will not read from both.
         4. DEFAULT_MAGE_DATA_DIR
 
     Args:
