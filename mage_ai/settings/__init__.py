@@ -27,9 +27,7 @@ def is_disable_pipeline_edit_access():
 
 #------------------------- DISABLE TERMINAL ----------------------#'
 
-DISABLE_TERMINAL = 1 if os.environ.get("DISABLE_TERMINAL") == "1" else 0
-def is_terminal_access_disable():
-    return DISABLE_TERMINAL >= 1
+DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', 0)
 
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
