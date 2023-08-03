@@ -38,6 +38,7 @@ class WorkloadManager:
         self.load_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
+        self.networking_client = client.NetworkingV1Api()
 
         self.namespace = namespace
         if not self.namespace:
@@ -53,14 +54,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        try:
-            config.load_incluster_config()
-            return True
-        except Exception:
-            pass
+        # try:
+        #     config.load_incluster_config()
+        #     return True
+        # except Exception:
+        #     pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/k8s_main_project/kubeconfig')
         except Exception:
             pass
 
@@ -144,11 +145,22 @@ class WorkloadManager:
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
+
+        # ingress_name = kwargs.get('ingress_name')
+        ingress_name = 'mageai'
+
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
             project_uuid=project_uuid,
             container_config=container_config,
+            set_base_path=ingress_name is not None,
         )
         container_config['env'] = env_vars
 
@@ -303,7 +315,37 @@ class WorkloadManager:
             }
         }
 
-        return self.core_client.create_namespaced_service(self.namespace, service)
+        k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
+
+        if ingress_name:
+            self.update_ingress_paths(ingress_name, service_name, name)
+
+        return k8s_service
+
+    def update_ingress_paths(self, ingress_name: str, service_name: str, workspace_name: str):
+        ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
+        ingress.spec.rules.append(
+            client.V1IngressRule(
+                host=ingress.spec.rules[0].host,
+                http=client.V1HTTPIngressRuleValue(
+                    paths=[
+                        client.V1HTTPIngressPath(
+                            backend=client.V1IngressBackend(
+                                service=client.V1IngressServiceBackend(
+                                    name=service_name,
+                                    port=client.V1ServiceBackendPort(
+                                        number=6789
+                                    )
+                                )
+                            ),
+                            path=f'/{workspace_name}(/|$)(.*)',
+                            path_type='Prefix',
+                        )
+                    ]
+                ),
+            )
+        )
+        self.networking_client.patch_namespaced_ingress(ingress_name, self.namespace, ingress)
 
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
@@ -314,7 +356,8 @@ class WorkloadManager:
         name,
         project_type: str = 'standalone',
         project_uuid: str = None,
-        container_config: Dict = None
+        container_config: Dict = None,
+        set_base_path: bool = False,
     ) -> List:
         env_vars = [
             {
@@ -322,6 +365,11 @@ class WorkloadManager:
                 'value': name,
             }
         ]
+        if set_base_path:
+            env_vars.append({
+                'name': 'MAGE_BASE_PATH',
+                'value': name,
+            })
         if project_type:
             env_vars.append({
                 'name': 'PROJECT_TYPE',
@@ -434,7 +482,7 @@ class WorkloadManager:
 
     def __create_persistent_volume(
         self,
-        name,
+        name: str,
         volume_host_path=None,
         storage_request_size='2Gi',
         access_mode=None,
