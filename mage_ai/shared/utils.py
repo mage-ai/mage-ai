@@ -58,7 +58,7 @@ def convert_pandas_dtype_to_python_type(dtype):
         return int
     elif 'float' in dtype:
         return float
-    elif dtype == 'bool':
+    elif dtype in ['bool', 'boolean']:
         return bool
     elif 'datetime' in dtype:
         return datetime
