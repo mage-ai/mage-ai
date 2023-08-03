@@ -13,6 +13,7 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LogDetail, { TAB_DETAILS } from '@components/Logs/Detail';
@@ -25,22 +26,24 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import LogsTable, { LOG_UUID_PARAM } from '@components/Logs/Table';
 import LogToolbar, { SHARED_BUTTON_PROPS } from '@components/Logs/Toolbar';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 
-import { ChevronDown } from '@oracle/icons';
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,
   LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
 } from '@components/Logs/Toolbar/constants';
+import { LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS } from '@storage/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
+import { get, set } from '@storage/localStorage';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
 import { initializeLogs } from '@utils/models/log';
@@ -68,6 +71,7 @@ function PipelineLogsPage({
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
+  const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -285,9 +289,15 @@ function PipelineLogsPage({
       });
     }
   }, [greaterLogCount, limit, offset, q]);
+  const toggleAutoScrollLogs = useCallback(() => {
+    const autoScrollLogsVal = !autoScrollLogs;
+    setAutoScrollLogs(autoScrollLogsVal);
+    set(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, autoScrollLogsVal);
+  }, [autoScrollLogs]);
 
   const LogsTableMemo = useMemo(() => (
     <LogsTable
+      autoScrollLogs={autoScrollLogs}
       blocksByUUID={blocksByUUID}
       logs={logsFiltered}
       onRowClick={setSelectedTab}
@@ -297,7 +307,7 @@ function PipelineLogsPage({
       tableInnerRef={tableInnerRef}
       themeContext={themeContext}
     />
-  ), [blocksByUUID, logsFiltered, pipeline, query, themeContext]);
+  ), [autoScrollLogs, blocksByUUID, logsFiltered, pipeline, query, themeContext]);
 
   return (
     <PipelineDetailPage
@@ -363,7 +373,7 @@ function PipelineLogsPage({
       {!isLoading && logsFiltered.length >= 1 && LogsTableMemo}
 
       <Spacing p={`${UNIT * 1.5}px`}>
-        <FlexContainer>
+        <FlexContainer alignItems="center">
           <KeyboardShortcutButton
             {...SHARED_BUTTON_PROPS}
             onClick={() => {
@@ -397,6 +407,20 @@ function PipelineLogsPage({
           >
             Scroll to bottom
           </KeyboardShortcutButton>
+
+          <Spacing mr={1} />
+
+          <Flex>
+            <Text>
+              Auto-scroll to new logs
+            </Text>
+            <Spacing mr={1} />
+            <ToggleSwitch
+              checked={autoScrollLogs}
+              compact
+              onCheck={toggleAutoScrollLogs}
+            />
+          </Flex>
         </FlexContainer>
       </Spacing>
     </PipelineDetailPage>

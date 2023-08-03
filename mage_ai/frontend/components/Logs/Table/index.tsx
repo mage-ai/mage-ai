@@ -31,6 +31,7 @@ import { useWindowSize } from '@utils/sizes';
 export const LOG_UUID_PARAM = 'log_uuid';
 
 type LogsTableProps = {
+  autoScrollLogs?: boolean;
   blocksByUUID: { [keyof: string]: BlockType };
   tableInnerRef: React.RefObject<any>;
   logs: LogType[];
@@ -42,6 +43,7 @@ type LogsTableProps = {
 };
 
 function LogsTable({
+  autoScrollLogs,
   blocksByUUID,
   tableInnerRef,
   logs,
@@ -58,8 +60,11 @@ function LogsTable({
   );
 
   useEffect(() => {
-    tableInnerRef?.current?.scrollIntoView(false);
+    if (autoScrollLogs) {
+      tableInnerRef?.current?.scrollIntoView(false);
+    }
   }, [
+    autoScrollLogs,
     logs,
     tableInnerRef,
   ]);
