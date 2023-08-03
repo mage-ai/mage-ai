@@ -19,9 +19,17 @@ except ValueError:
     DISABLE_NOTEBOOK_EDIT_ACCESS = 1 if os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS') else 0
 
 
+
+
 def is_disable_pipeline_edit_access():
     return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
 
+
+#------------------------- DISABLE TERMINAL ----------------------#'
+
+DISABLE_TERMINAL = 1 if os.environ.get("DISABLE_TERMINAL") == "1" else 0
+def is_terminal_access_disable():
+    return DISABLE_TERMINAL >= 1
 
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \

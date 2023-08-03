@@ -10,6 +10,7 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
+    is_terminal_access_disable,
     is_disable_pipeline_edit_access,
 )
 
@@ -104,10 +105,14 @@ class TerminalWebsocketServer(terminado.TermSocket):
         api_key = message.get('api_key')
         token = message.get('token')
         command = message.get('command')
+        
+    #If terminal access disable return
+        if is_terminal_access_disable():
+             return self.send_json_message(
+                    ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
 
         if REQUIRE_USER_AUTHENTICATION or is_disable_pipeline_edit_access():
             valid = False
-
             if api_key and token:
                 oauth_client = Oauth2Application.query.filter(
                     Oauth2Application.client_id == api_key,
