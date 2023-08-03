@@ -262,7 +262,7 @@ async def main(
     if BASE_PATH:
         try:
             # copy to new folder in case the base path is updated. we need to use the original
-            # frontend_dist_base_path folder as a template
+            # frontend_dist_base_path_template folder as a template
             src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
             dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
             if os.path.exists(dst):
