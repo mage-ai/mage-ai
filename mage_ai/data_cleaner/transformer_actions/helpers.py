@@ -1,7 +1,8 @@
+import numpy as np
+
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.shared.utils import parse_list
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, VariableType
-import numpy as np
 
 DAY_SECONDS = 86400
 HOUR_SECONDS = 3600
@@ -41,7 +42,8 @@ def extract_join_feature_set_version_id(payload):
     if payload['action_type'] != ActionType.JOIN:
         return None
     join_feature_set_version_id = payload['action_arguments'][0]
-    if type(join_feature_set_version_id) == str and join_feature_set_version_id.startswith('%{'):
+    if isinstance(join_feature_set_version_id, str) and \
+            join_feature_set_version_id.startswith('%{'):
 
         join_feature_set_version_id = next(
             v['id']

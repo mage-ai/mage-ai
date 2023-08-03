@@ -26,30 +26,6 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ## 2. Set up DBT project
 
-### Install DBT
-
-<Warning>
-   Skip this step if you’re using Mage in Docker.
-   The Mage Docker image already has dbt installed.
-</Warning>
-
-1. Open Mage and go to the terminal page: http://localhost:6789/terminal
-2. Add `dbt-postgres` to your project’s dependencies file (`requirements.txt`)
-   by typing the following into the terminal in your browser:
-
-   ```bash
-   echo dbt-postgres > demo_project/requirements.txt
-   ```
-
-3. Install your project’s dependencies using `pip` by typing the following:
-
-   ```bash
-   pip install -r demo_project/requirements.txt
-   ```
-
-   For more information on installing DBT, read their
-   [documentation](https://docs.getdbt.com/docs/get-started/pip-install).
-
 ### Create DBT project
 
 1. Open Mage and go to the terminal page: http://localhost:6789/terminal
@@ -87,13 +63,13 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
      target: dev
      outputs:
        dev:
-         dbname: mage/demo
-         host: db.bit.io
-         password: v2_43Yy3_5LtqyXUE3ew6PrqH2y8zQyH
+         dbname: xyleviup
+         host: queenie.db.elephantsql.com
+         password: edSrMWH7Mww-lTKpp-jPHX9sYSNLy7LG
          port: 5432
          schema: dbt_demo
          type: postgres
-         user: demo
+         user: xyleviup
    ```
 4. Save the `profiles.yml` file by pressing `Command (⌘)` + `S`.
 5. Close the file by pressing the **`X`** button on the right side of the file

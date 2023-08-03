@@ -251,7 +251,7 @@ function PipelineDetail({
     ],
   );
   const { data: dataBlockTemplates } = api.block_templates.list({
-    show_all: useV2AddNewBlock ? 1 : null,
+    show_all: useV2AddNewBlock ? true : false,
   }, {
     revalidateOnFocus: false,
   });

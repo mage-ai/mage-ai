@@ -21,6 +21,7 @@ class EcsConfig(BaseConfig):
     network_configuration: Dict = None
     cpu: int = 512
     memory: int = 1024
+    wait_timeout: int = 600
 
     @classmethod
     def load_extra_config(self):

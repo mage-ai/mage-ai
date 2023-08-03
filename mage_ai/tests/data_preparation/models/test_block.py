@@ -324,7 +324,7 @@ def sensor(*args):
     return df is not None
             ''')
         asyncio.run(block1.execute())
-        output = block2.execute_sync(test_execution=True)
+        output = block2.execute_sync(from_notebook=True)
         self.assertEqual(output['output'][0], True)
 
     @patch('builtins.print')

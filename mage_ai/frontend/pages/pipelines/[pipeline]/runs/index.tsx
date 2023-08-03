@@ -169,7 +169,12 @@ function PipelineRuns({
     mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list(
     pipelineRunsRequestQuery,
-    { refreshInterval: 5000 },
+    {
+      refreshInterval: 5000,
+    },
+    {
+      pauseFetch: !pipelineUUID,
+    },
   );
   const pipelineRuns: PipelineRunType[] = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const totalRuns: number = useMemo(() => isPipelineRunsTab

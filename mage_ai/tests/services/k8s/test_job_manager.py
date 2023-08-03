@@ -1,7 +1,11 @@
+import os
+from unittest.mock import MagicMock, call, patch
+
+from kubernetes import client
+
+from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.job_manager import JobManager
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import MagicMock, call, patch
-import os
 
 
 @patch.dict(os.environ, {'HOSTNAME': 'mage-server'})
@@ -97,6 +101,53 @@ class JobManagerTests(TestCase):
             kind='Job',
             metadata=mock_v1_object_meta,
             spec=mock_v1_job_spec,
+        )
+
+    @patch('mage_ai.services.k8s.job_manager.client.CoreV1Api')
+    @patch('mage_ai.services.k8s.job_manager.os.getenv')
+    def test_create_job_object_with_container_config(self, mock_getenv, mock_core_api_client):
+        mock_getenv.return_value = "pod_name"
+
+        job_manager = JobManager(
+            job_name='test_job_name',
+            namespace='test_namespace',
+        )
+
+        # Create a mock pod configuration for the CoreV1Api
+        mock_pod_config = MagicMock()
+        mock_container_spec = MagicMock()
+        mock_container_spec.image = "test_image"
+        mock_container_spec.env = [
+            client.V1EnvVar(name="VAR1", value="VALUE1"),
+            client.V1EnvVar(name="VAR2", value="VALUE2"),
+        ]
+        mock_pod_config.spec.containers = [mock_container_spec]
+
+        # Create a mock K8sExecutorConfig with container_config
+        k8s_config = K8sExecutorConfig()
+        k8s_config.container_config = {
+            "image_pull_policy": "Always",
+            "env": [client.V1EnvVar(name="VAR3", value="VALUE3")],
+            "resources": client.V1ResourceRequirements(limits={"cpu": "1000m"}),
+        }
+
+        # Call the method to create the job object
+        command = "echo 'hello world'"
+        job = job_manager.create_job_object(command, k8s_config)
+
+        # Assertions
+        self.assertEqual(job.spec.template.spec.containers[0].image_pull_policy, "Always")
+        self.assertEqual(job.spec.template.spec.containers[0].env, [
+            # client.V1EnvVar(name="VAR1", value="VALUE1"),
+            # client.V1EnvVar(name="VAR2", value="VALUE2"),
+            client.V1EnvVar(name="VAR3", value="VALUE3"),
+        ])
+        self.assertEqual(
+            job.spec.template.spec.containers[0].resources,
+            client.V1ResourceRequirements(
+                limits={"cpu": "1000m"},
+                requests=None,
+            )
         )
 
     @patch('mage_ai.services.k8s.job_manager.client')

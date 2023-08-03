@@ -1,10 +1,11 @@
+import uuid
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-import uuid
 
 
 async def build_project(repo_config=None, **kwargs):

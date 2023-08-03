@@ -176,8 +176,8 @@ class DBTBlock(Block):
         self,
         outputs_from_input_vars,
         execution_partition: str = None,
+        from_notebook: bool = False,
         global_vars: Dict = None,
-        test_execution: bool = False,
         runtime_arguments: Dict = None,
         run_settings: Dict = None,
         **kwargs,
@@ -188,8 +188,8 @@ class DBTBlock(Block):
         Args:
             outputs_from_input_vars:
             execution_partition (str, optional): The execution partition.
+            from_notebook (bool, optional): Whether it is an execution from the notebook.
             global_vars (Dict, optional): The global variables.
-            test_execution (bool, optional): Whether it is a test execution.
             runtime_arguments (Dict, optional): The runtime arguments.
             run_settings (Dict, optional): The run settings.
             **kwargs: Additional keyword arguments.
@@ -201,7 +201,7 @@ class DBTBlock(Block):
         variables = merge_dict(global_vars, runtime_arguments or {})
 
         if run_settings:
-            test_execution = not (
+            from_notebook = not (
                 run_settings.get('build_model', False) or
                 run_settings.get('run_model', False) or
                 run_settings.get('test_model', False)
@@ -211,7 +211,7 @@ class DBTBlock(Block):
             self,
             variables,
             run_settings=run_settings,
-            test_execution=test_execution,
+            test_execution=from_notebook,
         )
 
         project_full_path = command_line_dict['project_full_path']
@@ -232,10 +232,10 @@ class DBTBlock(Block):
                     execution_partition=execution_partition,
                     profile_target=dbt_profile_target,
                     # TODO (tommy dang): this is creating unnecessary tables in notebook
-                    # cache_upstream_dbt_models=test_execution,
+                    # cache_upstream_dbt_models=from_notebook,
                 )
 
-            stdout = None if test_execution else subprocess.PIPE
+            stdout = None if from_notebook else subprocess.PIPE
 
             cmds = [
                 'dbt',
@@ -261,7 +261,7 @@ class DBTBlock(Block):
 
             snapshot = dbt_command == 'snapshot'
 
-            if is_sql and test_execution:
+            if is_sql and from_notebook:
                 subprocess.run(
                     cmds,
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
@@ -280,7 +280,7 @@ class DBTBlock(Block):
                         override_outputs=True,
                     )
                     outputs = [df]
-            elif not test_execution:
+            elif not from_notebook:
                 proc = subprocess.Popen(
                     cmds,
                     bufsize=1,
@@ -295,7 +295,7 @@ class DBTBlock(Block):
                 if proc.returncode != 0 and proc.returncode is not None:
                     raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-            if not test_execution:
+            if not from_notebook:
                 target_path = None
                 if self.configuration.get('file_path') is not None:
                     attributes_dict = parse_attributes(self)

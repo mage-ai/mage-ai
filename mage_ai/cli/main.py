@@ -97,7 +97,12 @@ RUN_SKIP_SENSORS_DEFAULT = typer.Option(
 RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT = typer.Option(
     None, help='runtime configuration of data integration block runs.'
 )
-
+CLEAN_LOGS_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project to clean old logs.'
+)
+CLEAN_LOGS_PIPELINE_UUID_DEFAULT = typer.Option(
+    None, help='uuid of the pipeline to clean.'
+)
 CLEAN_VARIABLES_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project to clean variables.'
 )
@@ -278,6 +283,25 @@ def clean_cached_variables(
     from mage_ai.data_preparation.variable_manager import clean_variables
 
     clean_variables(pipeline_uuid=pipeline_uuid)
+
+
+@app.command()
+def clean_old_logs(
+    project_path: str = CLEAN_LOGS_PROJECT_PATH_DEFAULT,
+    pipeline_uuid: str = CLEAN_LOGS_PIPELINE_UUID_DEFAULT,
+):
+    from mage_ai.settings.repo import set_repo_path
+
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
+
+    from mage_ai.data_preparation.logging.logger_manager_factory import (
+        LoggerManagerFactory,
+    )
+
+    LoggerManagerFactory.get_logger_manager(
+        pipeline_uuid=pipeline_uuid,
+    ).delete_old_logs()
 
 
 @app.command()

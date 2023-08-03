@@ -58,7 +58,12 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
     qString = `?${qString}`;
   }
 
-  const newUrl = `${href.split('?')[0]}${qString}`;
+  let newUrl = `${href.split('?')[0]}${qString}`;
+
+  const basePath = Router.router.basePath;
+  if (basePath && newUrl.startsWith(basePath)) {
+    newUrl = newUrl.replace(basePath, '');
+  }
 
   // This will force the page to re-render all the components.
   return method(Router.router.pathname, newUrl, {

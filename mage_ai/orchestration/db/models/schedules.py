@@ -1,16 +1,16 @@
 import asyncio
-import dateutil.parser
 import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
 
+import dateutil.parser
 import pytz
 from croniter import croniter
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -73,6 +73,7 @@ class PipelineSchedule(BaseModel):
     token = Column(String(255), index=True, default=None)
     repo_path = Column(String(255))
     settings = Column(JSON)
+    global_data_product_uuid = Column(String(255), index=True, default=None)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
@@ -187,6 +188,12 @@ class PipelineSchedule(BaseModel):
             cron_itr = croniter(self.schedule_interval, now)
             current_execution_date = cron_itr.get_prev(datetime)
 
+        # If landing time is enabled, the start_time is used as the date and time the schedule
+        # should finish running by.
+
+        # For example, if start_time is 2023-12-01 12:25:00
+        # and if the schedule_interval is @daily, then the schedule should finish running by
+        # every day by 12:25:00.
         if self.landing_time_enabled() and self.start_time:
             if self.schedule_interval == '@hourly':
                 current_execution_date = current_execution_date.replace(
@@ -261,11 +268,18 @@ class PipelineSchedule(BaseModel):
                 self.pipeline_runs
             ):
                 if self.landing_time_enabled():
-                    if len(previous_runtimes) == 0:
+                    if not previous_runtimes or len(previous_runtimes) == 0:
                         return True
                     else:
                         runtime = ceil(sum(previous_runtimes) / len(previous_runtimes))
-                        sd = ceil(stdev(previous_runtimes))
+
+                        if len(previous_runtimes) >= 2:
+                            sd = ceil(stdev(previous_runtimes) / 2)
+                        else:
+                            sd = 0
+
+                        # This may cause duplicate pipeline runs to be scheduled if
+                        # there is more than 1 scheduler running.
                         if datetime.now(timezone.utc) >= current_execution_date - timedelta(
                             seconds=runtime + sd,
                         ):
@@ -275,6 +289,17 @@ class PipelineSchedule(BaseModel):
         return False
 
     def landing_time_enabled(self) -> bool:
+        if ScheduleType.TIME != self.schedule_type:
+            return False
+
+        if self.schedule_interval not in [
+            '@daily',
+            '@hourly',
+            '@monthly',
+            '@weekly',
+        ]:
+            return False
+
         return (self.settings or {}).get('landing_time_enabled', False)
 
     def runtime_history(
@@ -319,9 +344,9 @@ class PipelineSchedule(BaseModel):
                 reverse=True,
             )
 
-            for pipeline_run in pipeline_runs:
+            for pr in pipeline_runs:
                 runtime = (
-                    pipeline_run.completed_at - pipeline_run.created_at
+                    pr.completed_at - pr.created_at
                 ).total_seconds()
                 previous_runtimes.append(runtime)
 
@@ -343,7 +368,10 @@ class PipelineSchedule(BaseModel):
             sample_size=sample_size,
         )
 
-        return sum(previous_runtimes) / len(previous_runtimes)
+        if len(previous_runtimes) == 0:
+            return None
+
+        return round(sum(previous_runtimes) / len(previous_runtimes), 2)
 
 
 class PipelineRun(BaseModel):
@@ -394,6 +422,16 @@ class PipelineRun(BaseModel):
     def initial_block_runs(self) -> List['BlockRun']:
         return [b for b in self.block_runs
                 if b.status == BlockRun.BlockRunStatus.INITIAL]
+
+    @property
+    def queued_or_running_block_runs(self) -> List['BlockRun']:
+        return [
+            b for b in self.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.QUEUED,
+                BlockRun.BlockRunStatus.RUNNING,
+            ]
+        ]
 
     @property
     def completed_block_runs(self) -> List['BlockRun']:
@@ -564,7 +602,7 @@ class PipelineRun(BaseModel):
             ])
         return all(b.status in statuses for b in self.block_runs)
 
-    def get_variables(self, extra_variables: Dict = None) -> Dict:
+    def get_variables(self, extra_variables: Dict = None, pipeline_uuid: str = None) -> Dict:
         if extra_variables is None:
             extra_variables = dict()
 
@@ -573,7 +611,7 @@ class PipelineRun(BaseModel):
 
         variables = merge_dict(
             merge_dict(
-                get_global_variables(self.pipeline_uuid) or dict(),
+                get_global_variables(pipeline_uuid or self.pipeline_uuid) or dict(),
                 self.pipeline_schedule.variables or dict(),
             ),
             pipeline_run_variables,

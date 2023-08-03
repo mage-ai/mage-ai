@@ -6,16 +6,22 @@ import dark from '@oracle/styles/themes/dark';
 
 const HEIGHT = 26;
 const WIDTH = 46;
+const COMPACT_HEIGHT = 20;
+const COMPACT_WIDTH = 35;
 
 type ToggleSwitchProps = {
   checked: boolean;
+  compact?: boolean;
   disabled?: boolean;
   monotone?: boolean;
   onCheck: Dispatch<SetStateAction<boolean>>;
 } & InputWrapperProps;
 
 const ToggleSwitchStyle = styled.label<
-  InputWrapperProps & { monotone?: boolean }
+  InputWrapperProps & {
+    compact?: boolean;
+    monotone?: boolean;
+  }
 >`
   ${SHARED_INPUT_STYLES}
 
@@ -24,6 +30,12 @@ const ToggleSwitchStyle = styled.label<
   width: ${WIDTH}px;
   min-width: ${WIDTH}px;
   height: ${HEIGHT}px;
+
+  ${props => props.compact && `
+    width: ${COMPACT_WIDTH}px;
+    min-width: ${COMPACT_WIDTH}px;
+    height: ${COMPACT_HEIGHT}px;
+  `}
 
   & input[type="checkbox"] {
     display: none;
@@ -45,17 +57,17 @@ const ToggleSwitchStyle = styled.label<
   & span::before {
     position: absolute;
     content: "";
-    left: 2px;
-    top: 2px;
-    width: 22px;
-    height: 22px;
+    left: ${({ compact }) => (compact ? '1' : '2')}px;
+    top: ${({ compact }) => (compact ? '1' : '2')}px;
+    width: ${({ compact }) => (compact ? '18' : '22')}px;
+    height: ${({ compact }) => (compact ? '18' : '22')}px;
     background-color: #787A85;
     border-radius: 50%;
     transition: transform 0.3s ease;
   }
 
   & input[type="checkbox"]:checked + span::before {
-    transform: translateX(20px);
+    transform: ${({ compact }) => (compact ? 'translateX(15px)' : 'translateX(20px)')};
   }
 
   ${(props) =>

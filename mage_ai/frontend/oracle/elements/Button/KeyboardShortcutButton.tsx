@@ -416,10 +416,6 @@ const AnchorStyle = styled.a<KeyboardShortcutButtonProps>`
   ${SHARED_LINK_STYLES}
 `;
 
-const SpanStyle = styled.span`
-  margin-right: ${UNIT * 1}px;
-`;
-
 function KeyboardShortcutButton({
   Icon,
   afterElement,

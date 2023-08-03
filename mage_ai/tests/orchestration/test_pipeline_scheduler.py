@@ -6,9 +6,12 @@ from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.triggers import ScheduleStatus
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
@@ -17,7 +20,12 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, check_sla
+from mage_ai.orchestration.pipeline_scheduler import (
+    PipelineScheduler,
+    check_sla,
+    schedule_all,
+)
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
@@ -94,6 +102,116 @@ class PipelineSchedulerTests(DBTestCase):
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
             self.assertEqual(mock_send_message.call_count, 1)
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            start_time=datetime(2023, 10, 12, 13, 13, 20),
+        )))
+
+        # No previous pipeline runs
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 0)
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 1)
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time_with_previous_runs(self):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+            start_time=datetime(2023, 10, 12, 13, 13, 20),
+        )))
+
+        # No previous pipeline runs
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 0)
+
+        # With previous pipeline runs
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 30, 0, 0, 0),
+            metrics=dict(previous_runtimes=[100, 200, 300, 400, 500, 600, 700]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.FAILED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run = PipelineRun.create(
+            completed_at=datetime(2023, 10, 11, 12, 13, 15),
+            execution_date=datetime(2023, 10, 20, 0, 0, 0),
+            metrics=dict(previous_runtimes=[2, 3, 4, 5, 6, 7, 8]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run.update(created_at=datetime(2023, 10, 11, 12, 13, 14))
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 10, 0, 0, 0),
+            metrics=dict(previous_runtimes=[10, 20, 30, 40, 50, 60, 70]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(len((
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).
+            all()
+        )), 1)
 
     def test_schedule_all_blocks_completed_with_failures(self):
         pipeline_run = create_pipeline_run_with_schedule(
@@ -329,24 +447,6 @@ class PipelineSchedulerTests(DBTestCase):
                     )
                     self.assertTrue(block_run2 is not None)
 
-    def test_sync_data_on_pipeline_run(self):
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_dynamic_pipeline',
-            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
-        )
-        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        preferences = get_preferences(repo_path=self.repo_path)
-        preferences.update_preferences(
-            dict(sync_config=dict(
-                remote_repo_link='test_git_repo',
-                repo_path=self.repo_path,
-                branch='main',
-                sync_on_pipeline_run=True,
-            )))
-        with patch.object(GitSync, 'sync_data') as mock_sync:
-            scheduler.start(should_schedule=False)
-            mock_sync.assert_called_once()
-
     @freeze_time('2023-05-01 01:20:33')
     def test_send_sla_message(self):
         pipeline = create_pipeline_with_blocks(
@@ -387,3 +487,38 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             check_sla()
             mock_send_message.assert_called_once()
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.utils.git.GitSync')
+    def test_sync_data_on_schedule_all(self, mock_git_sync):
+        git_sync_instance = MagicMock()
+        mock_git_sync.return_value = git_sync_instance
+        pipeline = create_pipeline_with_blocks(
+            'test git sync pipeline',
+            self.repo_path,
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 1, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        preferences = get_preferences(repo_path=self.repo_path)
+        preferences.update_preferences(
+            dict(sync_config=dict(
+                remote_repo_link='test_git_repo',
+                repo_path=self.repo_path,
+                branch='main',
+                sync_on_pipeline_run=True,
+            )))
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+            git_sync_instance.sync_data.assert_called_once()

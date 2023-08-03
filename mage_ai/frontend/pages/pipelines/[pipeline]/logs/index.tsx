@@ -13,6 +13,8 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LogDetail, { TAB_DETAILS } from '@components/Logs/Detail';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
@@ -23,22 +25,27 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import LogsTable, { LOG_UUID_PARAM } from '@components/Logs/Table';
-import LogToolbar from '@components/Logs/Toolbar';
+import LogToolbar, { SHARED_BUTTON_PROPS } from '@components/Logs/Toolbar';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
+
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,
   LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
 } from '@components/Logs/Toolbar/constants';
+import { LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS } from '@storage/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
+import { get, set } from '@storage/localStorage';
 import { goToWithQuery } from '@utils/routing';
-import { ignoreKeys, isEqual } from '@utils/hash';
+import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
 import { initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -56,15 +63,15 @@ function PipelineLogsPage({
   pipeline: pipelineProp,
 }: PipelineLogsPageProp) {
   const themeContext = useContext(ThemeContext);
-  const bottomOfPageButtonRef = useRef(null);
+  const tableInnerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
 
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
-  const [scrollToBottom, setScrollToBottom] = useState(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
+  const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -173,42 +180,45 @@ function PipelineLogsPage({
   ]);
 
   const logsFiltered: LogType[] = useMemo(() => logsAll
-      .filter(({ data }: LogType) => {
-        const evals = [];
+    .filter(({ data }: LogType) => {
+      const evals = [];
 
-        if (!query) {
-          return true;
-        }
+      if (!query) {
+        return true;
+      }
 
-        if (query['level[]']) {
-          evals.push(query['level[]'].includes(data?.level));
-        }
-        if (query['block_type[]']) {
-          let blockUUID = data?.block_uuid;
-          if (isIntegrationPipeline) {
-            const blockUUIDWithoutStreamIndex = data?.block_uuid?.split(':')
-              .slice(0, 2)
-              .join(':');
-            blockUUID = blockUUIDWithoutStreamIndex;
-          }
-          evals.push(query['block_type[]'].includes(blocksByUUID[blockUUID]?.type));
-        }
-        if (query[PIPELINE_RUN_ID_PARAM]) {
-          const pipelineRunId = data?.pipeline_run_id;
-          evals.push(query[PIPELINE_RUN_ID_PARAM].includes(String(pipelineRunId)));
-        }
-        if (query[BLOCK_RUN_ID_PARAM]) {
-          const blockRunId = data?.block_run_id;
-          evals.push(query[BLOCK_RUN_ID_PARAM].includes(String(blockRunId)));
-        }
+      // Filter out empty logs
+      evals.push(!isEmptyObject(data));
 
-        return evals.every(v => v);
-      }), [
-        blocksByUUID,
-        isIntegrationPipeline,
-        logsAll,
-        query,
-    ]);
+      if (query['level[]']) {
+        evals.push(query['level[]'].includes(data?.level));
+      }
+      if (query['block_type[]']) {
+        let blockUUID = data?.block_uuid;
+        if (isIntegrationPipeline) {
+          const blockUUIDWithoutStreamIndex = data?.block_uuid?.split(':')
+            .slice(0, 2)
+            .join(':');
+          blockUUID = blockUUIDWithoutStreamIndex;
+        }
+        evals.push(query['block_type[]'].includes(blocksByUUID[blockUUID]?.type));
+      }
+      if (query[PIPELINE_RUN_ID_PARAM]) {
+        const pipelineRunId = data?.pipeline_run_id;
+        evals.push(query[PIPELINE_RUN_ID_PARAM].includes(String(pipelineRunId)));
+      }
+      if (query[BLOCK_RUN_ID_PARAM]) {
+        const blockRunId = data?.block_run_id;
+        evals.push(query[BLOCK_RUN_ID_PARAM].includes(String(blockRunId)));
+      }
+
+      return evals.every(v => v);
+    }), [
+      blocksByUUID,
+      isIntegrationPipeline,
+      logsAll,
+      query,
+  ]);
   const filteredLogCount = logsFiltered.length;
 
   const qPrev = usePrevious(q);
@@ -241,16 +251,6 @@ function PipelineLogsPage({
     q,
     selectedLog,
     selectedLogPrev,
-  ]);
-
-  useEffect(() => {
-    if (scrollToBottom && !isLoading) {
-      bottomOfPageButtonRef?.current?.scrollIntoView();
-      setScrollToBottom(false);
-    }
-  }, [
-    scrollToBottom,
-    isLoading,
   ]);
 
   const { _limit, _offset } = q;
@@ -289,18 +289,25 @@ function PipelineLogsPage({
       });
     }
   }, [greaterLogCount, limit, offset, q]);
+  const toggleAutoScrollLogs = useCallback(() => {
+    const autoScrollLogsVal = !autoScrollLogs;
+    setAutoScrollLogs(autoScrollLogsVal);
+    set(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, autoScrollLogsVal);
+  }, [autoScrollLogs]);
 
   const LogsTableMemo = useMemo(() => (
     <LogsTable
+      autoScrollLogs={autoScrollLogs}
       blocksByUUID={blocksByUUID}
       logs={logsFiltered}
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
       setSelectedLog={setSelectedLog}
+      tableInnerRef={tableInnerRef}
       themeContext={themeContext}
     />
-  ), [blocksByUUID, logsFiltered, pipeline, query, themeContext]);
+  ), [autoScrollLogs, blocksByUUID, logsFiltered, pipeline, query, themeContext]);
 
   return (
     <PipelineDetailPage
@@ -365,27 +372,56 @@ function PipelineLogsPage({
 
       {!isLoading && logsFiltered.length >= 1 && LogsTableMemo}
 
-      <Spacing p={`${UNIT * 1.5}px`} ref={bottomOfPageButtonRef}>
-        <KeyboardShortcutButton
-          blackBorder
-          inline
-          onClick={() => {
-            setScrollToBottom(true);
-            if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
-              fetchLogs(null);
-            } else {
-              goToWithQuery({
-                _limit: LOG_FILE_COUNT_INTERVAL,
-                _offset: 0,
+      <Spacing p={`${UNIT * 1.5}px`}>
+        <FlexContainer alignItems="center">
+          <KeyboardShortcutButton
+            {...SHARED_BUTTON_PROPS}
+            onClick={() => {
+              if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
+                fetchLogs(null);
+              } else {
+                goToWithQuery({
+                  _limit: LOG_FILE_COUNT_INTERVAL,
+                  _offset: 0,
+                });
+              }
+            }}
+            uuid="logs/toolbar/load_newest"
+          >
+            Load latest logs
+          </KeyboardShortcutButton>
+
+          <Spacing mr={1} />
+
+          <KeyboardShortcutButton
+            {...SHARED_BUTTON_PROPS}
+            backgroundColor={dark.background.page}
+            onClick={() => {
+              tableInnerRef?.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest',
               });
-            }
-          }}
-          paddingBottom={UNIT * 0.75}
-          paddingTop={UNIT * 0.75}
-          uuid="logs/toolbar/load_newest"
-        >
-          Load latest logs
-        </KeyboardShortcutButton>
+            }}
+            uuid="logs/toolbar/scroll_to_bottomt"
+          >
+            Scroll to bottom
+          </KeyboardShortcutButton>
+
+          <Spacing mr={1} />
+
+          <Flex>
+            <Text>
+              Auto-scroll to new logs
+            </Text>
+            <Spacing mr={1} />
+            <ToggleSwitch
+              checked={autoScrollLogs}
+              compact
+              onCheck={toggleAutoScrollLogs}
+            />
+          </Flex>
+        </FlexContainer>
       </Spacing>
     </PipelineDetailPage>
   );

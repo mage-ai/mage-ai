@@ -309,17 +309,17 @@ def execute_custom_code():
 
     block_output = block.execute_with_callback(
         custom_code=code,
+        from_notebook=True,
         global_vars=global_vars,
         output_messages_to_logs={output_messages_to_logs},
         run_settings=json.loads('{run_settings_json}'),
-        test_execution=True,
         update_status={update_status},
     )
     if {run_tests}:
         block.run_tests(
             custom_code=code,
-            global_vars=global_vars,
             from_notebook=True,
+            global_vars=global_vars,
             update_tests=False,
         )
     output = block_output['output'] or []

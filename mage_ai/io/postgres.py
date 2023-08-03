@@ -1,16 +1,18 @@
+from typing import IO, List, Union
+
+import numpy as np
+import pandas as pd
+import simplejson
+from pandas import DataFrame, Series
+from psycopg2 import _psycopg, connect
+from sshtunnel import SSHTunnelForwarder
+
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import is_port_in_use
-from pandas import DataFrame, Series
-from psycopg2 import connect, _psycopg
-from sshtunnel import SSHTunnelForwarder
-from typing import IO, List, Union
-import numpy as np
-import pandas as pd
-import simplejson
 
 
 class Postgres(BaseSQL):
@@ -307,8 +309,8 @@ class Postgres(BaseSQL):
             if df_col_dropna.count() == 0:
                 continue
             if dtypes[col] == PandasTypes.OBJECT \
-                    or (df_[col].dtype == PandasTypes.OBJECT and
-                        type(df_col_dropna.iloc[0]) != str):
+                    or (df_[col].dtype == PandasTypes.OBJECT and not
+                        isinstance(df_col_dropna.iloc[0], str)):
                 df_[col] = df_[col].apply(lambda x: serialize_obj(x))
         df_.replace({np.NaN: None}, inplace=True)
 
@@ -318,7 +320,7 @@ class Postgres(BaseSQL):
             # Use INSERT command
             values_placeholder = ', '.join(["%s" for i in range(len(columns))])
             values = []
-            for i, row in df_.iterrows():
+            for _, row in df_.iterrows():
                 values.append(tuple(row))
             commands = [
                 f'INSERT INTO {full_table_name} ({insert_columns})',

@@ -19,6 +19,7 @@ import {
   PipelineV3,
   Schedule,
   Settings,
+  HexagonAll,
   TemplateShapes,
   Terminal,
 } from '@oracle/icons';
@@ -61,11 +62,19 @@ const DEFAULT_NAV_ITEMS = [
       {
         Icon: Schedule,
         id: 'pipeline-runs',
-        label: () => 'Pipelines runs',
+        label: () => 'Pipeline runs',
         linkProps: {
           href: '/pipeline-runs',
         },
       },
+      // {
+      //   Icon: HexagonAll,
+      //   id: 'global-data-products',
+      //   label: () => 'Global data products',
+      //   linkProps: {
+      //     href: '/global-data-products',
+      //   },
+      // },
     ],
   },
   {

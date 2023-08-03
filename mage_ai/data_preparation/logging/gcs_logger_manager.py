@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+
 from google.cloud import storage
 from google.oauth2 import service_account
+
 from mage_ai.data_preparation.logging.logger_manager import LoggerManager
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.shared.config import BaseConfig
@@ -26,13 +28,10 @@ class GCSLoggerManager(LoggerManager):
         )
         self.gcs_client = storage.Client(credentials=credentials)
 
-    def output_logs_to_destination(self):
-        key = self.get_log_filepath()
-        bucket = self.gcs_client.get_bucket(self.gcs_config.bucket)
-        blob = bucket.blob(key)
-        blob.upload_from_string(self.stream.getvalue())
-
     def create_log_filepath_dir(self, path):
+        pass
+
+    def delete_old_logs(self):
         pass
 
     def get_log_filepath_prefix(self):
@@ -64,3 +63,9 @@ class GCSLoggerManager(LoggerManager):
         TODO: Implement this method
         """
         return self.get_logs()
+
+    def output_logs_to_destination(self):
+        key = self.get_log_filepath()
+        bucket = self.gcs_client.get_bucket(self.gcs_config.bucket)
+        blob = bucket.blob(key)
+        blob.upload_from_string(self.stream.getvalue())

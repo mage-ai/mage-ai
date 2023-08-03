@@ -254,6 +254,10 @@ export function prettyUnitOfTime(secs) {
 }
 
 export function isNumeric(str) {
+  if (typeof str === 'undefined' || str === null) {
+    return false;
+  }
+
   return !isNaN(str);
 }
 

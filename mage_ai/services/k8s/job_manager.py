@@ -107,6 +107,8 @@ class JobManager():
             container_kwargs['resources'] = client.V1ResourceRequirements(
                 **resource_kwargs,
             )
+        if k8s_config and k8s_config.container_config:
+            container_kwargs = merge_dict(container_kwargs, k8s_config.container_config)
 
         container = client.V1Container(
             **container_kwargs,

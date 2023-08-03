@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PRE
 class PipelinePresenter(BasePresenter):
     default_attributes = [
         'blocks',
+        'concurrency_config',
         'data_integration',
         'description',
         'executor_config',

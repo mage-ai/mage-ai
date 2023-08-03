@@ -81,9 +81,11 @@ def run_pipeline(
     def add_pipeline_message(
         message: str,
         execution_state: str = 'busy',
-        metadata: Dict[str, str] = dict(),
+        metadata: Dict[str, str] = None,
         msg_type: str = 'stream_pipeline',
     ):
+        if metadata is None:
+            metadata = dict()
         msg = dict(
             message=message,
             execution_state=execution_state,
@@ -131,9 +133,11 @@ def run_pipeline(
 def publish_pipeline_message(
     message: str,
     execution_state: str = 'busy',
-    metadata: Dict[str, str] = dict(),
+    metadata: Dict[str, str] = None,
     msg_type: str = 'stream_pipeline',
 ) -> None:
+    if metadata is None:
+        metadata = dict()
     msg_id = str(uuid.uuid4())
     WebSocketServer.send_message(
         dict(
@@ -274,7 +278,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
     @classmethod
-    def send_message(self, message: dict) -> None:
+    def send_message(cls, message: dict) -> None:
         def should_filter_message(message):
             if message.get('data') is None and message.get('error') is None \
                     and message.get('execution_state') is None and message.get('type') is None:
@@ -321,7 +325,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         error = message.get('error')
         if error:
-            message['data'] = self.__format_error(error)
+            message['data'] = cls.format_error(error, block_uuid=block_uuid)
 
         output_dict = dict(
             block_type=block_type,
@@ -340,10 +344,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if block_uuid or pipeline_uuid:
             logger.info(
                 f'[{block_uuid}] Sending message for {msg_id} to '
-                f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
+                f'{len(cls.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
             )
 
-            for client in self.clients:
+            for client in cls.clients:
                 client.write_message(json.dumps(message_final))
 
     def __execute_block(
@@ -442,17 +446,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             if run_downstream:
                 # This will only run downstream blocks that are charts/widgets
-                for block in block.downstream_blocks:
-                    if BlockType.CHART != block.type:
+                for downstream_block in block.downstream_blocks:
+                    if BlockType.CHART != downstream_block.type:
                         continue
 
                     self.on_message(json.dumps(dict(
                         api_key=message.get('api_key'),
-                        code=block.file.content(),
+                        code=downstream_block.file.content(),
                         pipeline_uuid=pipeline_uuid,
                         token=message.get('token'),
-                        type=block.type,
-                        uuid=block.uuid,
+                        type=downstream_block.type,
+                        uuid=downstream_block.uuid,
                     )))
 
     def __execute_pipeline(
@@ -540,25 +544,68 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
 
-    def __format_error(error: List[str]) -> List[str]:
+    @classmethod
+    def format_error(cls, error: List[str], block_uuid: str = None) -> List[str]:
+        """
+        Most errors that are returned from executed code will contain sections that are not
+        useful to the user because they will contain internal Mage method calls. The point
+        of this method is to remove those unnecessary lines and replace hard-to-read font with
+        more visible font.
+
+        The `initial_regex` pattern is used to find the start of the Mage method calls within the
+        error message. When a block is executed from a notebook, the start of the traceback will be
+        when the `execute_custom_code` method is called from the ipython kernel.
+
+        The `end_regex` pattern is used to find the end of the Mage method calls. If a block UUID
+        is provided, we will try to find the end by searching for the block UUID because the block
+        code should be executed within the `{block_uuid}.py` file. Otherwise, we will default to
+        using `execute_block_function` which is a method called when a block is executed.
+
+        The `custom_block_end_regex` pattern is used as a fallback if the `end_regex` pattern cannot
+        be found. If a block is not a standard Python block, this fallback regex will be used.
+
+        All the lines in the error between the initial_idx and end_idx (or custom_block_end_idx)
+        will be filtered out in the return value.
+
+        Args:
+            error (List[str]): The list of strings representing the error message, where each
+                element corresponds to a line of the error message.
+            block_uuid (str, optional): The UUID of the block to identify the end of the specific
+                block within the error message. If not provided, the method will use the default
+                'execute_block_function' string to search for the end of the block.
+
+        Returns:
+            List[str]: A formatted error message with unnecessary lines removed and hard-to-read
+                font replaced, making it more user-friendly.
+        """
         initial_regex = r'.*execute_custom_code\(\).*'
-        end_regex = r'.*Block.[_a-z]*\(.*'
+        end_search_string = block_uuid if block_uuid else 'execute_block_function'
+        end_regex = r'.*' + re.escape(end_search_string) + r'.*'
+        custom_block_end_regex = r'.*data_preparation\/models\/block.*'
+
         initial_idx = 0
         end_idx = 0
+        custom_block_end_idx = 0
         for idx, line in enumerate(error):
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             line_without_ansi = ansi_escape.sub('', line)
+            # The "execute_custom_code" method may appear in multiple lines of the stack trace, so
+            # we just want to fetch the index of the first occurrence.
             if re.match(initial_regex, line_without_ansi) and not initial_idx:
                 initial_idx = idx
             if re.match(end_regex, line_without_ansi):
                 end_idx = idx
+            if re.match(custom_block_end_regex, line_without_ansi):
+                custom_block_end_idx = idx
 
         # Replace hard-to-read dark blue font with yellow font
         error = [e.replace('[0;34m', '[0;33m') for e in error]
 
         try:
             if initial_idx and end_idx:
-                return error[:initial_idx - 1] + error[end_idx + 1:]
+                return error[:initial_idx - 1] + error[end_idx:]
+            elif initial_idx and custom_block_end_idx:
+                return error[:initial_idx - 1] + error[custom_block_end_idx:]
         except Exception:
             pass
 
@@ -575,12 +622,14 @@ class StreamBlockOutputToQueue(object):
         queue,
         block_uuid,
         execution_state='busy',
-        metadata=dict(),
+        metadata=None,
         msg_type='stream_pipeline',
     ):
         self.queue = queue
         self.block_uuid = block_uuid
         self.execution_state = execution_state
+        if metadata is None:
+            metadata = dict()
         self.metadata = metadata
         self.msg_type = msg_type
 

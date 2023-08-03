@@ -24,6 +24,18 @@ logging_config:
   level: ERROR
 ```
 
+### Set log retention period
+To delete old logs in your peristent volume, you can specify the `retention_period` in the `logging_config`. Valid period units
+are 'h', 'd', and 'w'.
+
+Example logging config:
+```yaml
+logging_config:
+  retention_period: '15d'
+```
+
+Then you can run command `mage clean-old-logs [project_uuid]` to clean up old logs
+
 ## Logging to external destination
 
 ### S3
@@ -38,7 +50,17 @@ logging_config:
   destination_config:
     bucket: <bucket name>
     prefix: <prefix path>
+    aws_access_key_id: <(optional) AWS access key ID>
+    aws_secret_access_key: <(optional) AWS secret access key>
+    endpoint_url: <(optional) custom endpoint url>
 ```
+
+To authenticate with S3, the credentials need to be configured in one of the following ways:
+- Configure credentials in the `logging_config`.
+- Configure credentials in environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+- Authenticate with IAM role. Grant S3 access to the IAM role of the cloud instance.
+
+The `endpoint_url` can be configured to connect to S3 compatible services (e.g. MinIO).
 
 ### Google Cloud Storage
 

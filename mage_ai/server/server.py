@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import shutil
 import traceback
 import webbrowser
 from time import sleep
@@ -65,6 +66,7 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    BASE_PATH,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
     REQUIRE_USER_AUTHENTICATION,
@@ -77,6 +79,11 @@ from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+
+EXPORTS_FOLDER = 'frontend_dist'
+BASE_PATH_EXPORTS_FOLDER = 'frontend_dist_base_path'
+BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
+BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -106,7 +113,30 @@ class ApiSchedulerHandler(BaseHandler):
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
 
 
-def make_app():
+def replace_base_path(base_path: str) -> None:
+    """
+    This function will go through the BASE_PATH_STATIC_EXPORT_FOLDER and replace all the
+    occurrences of CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_ with the base_path parameter.
+
+    Args:
+        base_path (str): The base path to replace the placeholder with.
+    """
+    directory = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
+    for path, _, files in os.walk(os.path.abspath(directory)):
+        for filename in files:
+            if filename.endswith(('.html', '.js', '.css')):
+                filepath = os.path.join(path, filename)
+                with open(filepath, encoding='utf-8') as f:
+                    s = f.read()
+                s = s.replace(BASE_PATH_PLACEHOLDER, base_path)
+                s = s.replace('src:url(/fonts', f'src:url(/{base_path}/fonts')
+                s = s.replace('href="/favicon.ico"', f'href="/{base_path}/favicon.ico"')
+                # replace favicon
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(s)
+
+
+def make_app(update_routes: bool = False):
     shell_command = SHELL_COMMAND
     if shell_command is None:
         shell_command = 'bash'
@@ -117,6 +147,7 @@ def make_app():
         term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
 
+    template_dir = BASE_PATH_EXPORTS_FOLDER if update_routes else EXPORTS_FOLDER
     routes = [
         (r'/', MainPageHandler),
         (r'/files', MainPageHandler),
@@ -131,25 +162,27 @@ def make_app():
         (r'/triggers', MainPageHandler),
         (r'/manage', MainPageHandler),
         (r'/manage/(.*)', MainPageHandler),
+        (r'/templates', MainPageHandler),
+        (r'/version-control', MainPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/_next/static')},
         ),
         (
             r'/fonts/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/fonts')},
         ),
         (
             r'/images/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/images')},
+            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/images')},
         ),
         (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
+            {'path': os.path.join(os.path.dirname(__file__), template_dir)},
         ),
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
@@ -193,14 +226,26 @@ def make_app():
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
         (r'/files', MainPageHandler),
+        (r'/global-data-products', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if update_routes:
+        updated_routes = []
+        for route in routes:
+            if route[0] == r'/':
+                updated_routes.append((f'/{BASE_PATH}', *route[1:]))
+            else:
+                updated_routes.append((route[0].replace('/', f'/{BASE_PATH}/', 1), *route[1:]))
+    else:
+        updated_routes = routes
+
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
-        routes,
+        updated_routes,
         autoreload=True,
-        template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
+        template_path=os.path.join(os.path.dirname(__file__), template_dir),
     )
 
 
@@ -211,7 +256,26 @@ async def main(
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
-    app = make_app()
+    # Update base path if environment variable is set
+    update_routes = False
+
+    if BASE_PATH:
+        try:
+            # copy to new folder in case the base path is updated. we need to use the original
+            # frontend_dist_base_path folder as a template
+            src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
+            dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            else:
+                os.makedirs(dst)
+            shutil.copytree(src, dst)
+            replace_base_path(BASE_PATH)
+            update_routes = True
+        except Exception:
+            print('Failed to replace base path, using default routes.')
+
+    app = make_app(update_routes=update_routes)
 
     port = int(port)
     max_port = port + 100
@@ -228,6 +292,8 @@ async def main(
     )
 
     url = f'http://{host or "localhost"}:{port}'
+    if update_routes:
+        url = f'{url}/{BASE_PATH}'
     webbrowser.open_new_tab(url)
     print(f'Mage is running at {url} and serving project {project}')
 
@@ -255,7 +321,7 @@ async def main(
         print('User authentication is enabled.')
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
-        sleep(3)
+        sleep(5)
 
         # Create new roles on existing users. This should only need to be run once.
         Role.create_default_roles()

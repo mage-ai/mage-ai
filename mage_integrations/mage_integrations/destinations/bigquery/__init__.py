@@ -65,7 +65,7 @@ class BigQuery(Destination):
         return '`'
 
     def __init__(self, **kwargs):
-        Destination.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.use_batch_load = self.config.get('use_batch_load')
 
     def build_connection(self) -> BigQueryConnection:

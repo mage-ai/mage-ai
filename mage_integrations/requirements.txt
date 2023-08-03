@@ -20,12 +20,13 @@ psycopg2-binary==2.9.3
 pyarrow==10.0.1
 pymongo==4.3.3
 pymongo_schema==0.4.1
-pymssql @ git+https://github.com/dy46/pymssql.git@master
+pymssql
 python-dateutil==2.8.2
 python-magic==0.4.27
 redshift-connector==2.0.909
 requests==2.27.1
 requests_mock==1.10.0
+simple_salesforce
 simplejson==3.17.6
 singer_sdk==0.30.0
 snowflake-connector-python==2.9.0

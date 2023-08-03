@@ -1,10 +1,15 @@
-from datetime import datetime, timedelta
-from mage_ai.shared.hash import group_by, merge_dict
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from sqlalchemy.orm import joinedload
-from typing import Callable, Dict, List, Union
-import dateutil.parser
 import enum
+from datetime import datetime, timedelta
+from typing import Callable, Dict, List, Union
+
+import dateutil.parser
+from sqlalchemy.orm import joinedload
+
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.hash import group_by, merge_dict
+
+NO_PIPELINE_SCHEDULE_ID = 'no_pipeline_schedule_id'
+NO_PIPELINE_SCHEDULE_NAME = 'no_pipeline_schedule_name'
 
 
 class MonitorStatsType(str, enum.Enum):
@@ -63,15 +68,21 @@ class MonitorStats:
         stats_by_schedule_id = dict()
         pipeline_type_by_pipeline_uuid = dict()
         for p in pipeline_runs:
-            if p.pipeline_schedule is None:
+            if p.pipeline_schedule is None and not group_by_pipeline_type:
                 continue
-            if p.pipeline_schedule_id not in stats_by_schedule_id:
-                stats_by_schedule_id[p.pipeline_schedule_id] = dict(
-                    name=p.pipeline_schedule_name,
+            if p.pipeline_schedule_id is None:
+                pipeline_schedule_id = NO_PIPELINE_SCHEDULE_ID
+                pipeline_schedule_name = NO_PIPELINE_SCHEDULE_NAME
+            else:
+                pipeline_schedule_id = p.pipeline_schedule_id
+                pipeline_schedule_name = p.pipeline_schedule_name
+            if pipeline_schedule_id not in stats_by_schedule_id:
+                stats_by_schedule_id[pipeline_schedule_id] = dict(
+                    name=pipeline_schedule_name,
                     data=dict(),
                 )
             created_at_formatted = p.created_at.strftime('%Y-%m-%d')
-            data = stats_by_schedule_id[p.pipeline_schedule_id]['data']
+            data = stats_by_schedule_id[pipeline_schedule_id]['data']
             if created_at_formatted not in data:
                 data[created_at_formatted] = dict()
             if group_by_pipeline_type:
