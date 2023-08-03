@@ -2,6 +2,7 @@ import ast
 import asyncio
 import json
 import os
+from typing import Dict
 
 import openai
 from langchain.chains import LLMChain
@@ -257,15 +258,15 @@ class LLMPipelineWizard:
         await asyncio.gather(*block_tasks)
         return blocks
 
-    def __insert_comments_in_functions(self, code: str, function_comments_json: dict):
+    def __insert_comments_in_functions(self, code: str, function_comments: Dict):
         # Parse the input code into an abstract syntax tree (AST).
         tree = ast.parse(code)
         # Traverse the AST and find function definitions.
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 function_name = node.name
-                if function_comments_json.get(function_name):
-                    comment_text = function_comments_json[function_name]
+                if function_comments.get(function_name):
+                    comment_text = function_comments[function_name]
                     # Insert a comment node below a given node.
                     if isinstance(node.body[0], ast.Expr) and \
                        isinstance(node.body[0].value, ast.Constant):
@@ -289,9 +290,9 @@ class LLMPipelineWizard:
             template=PROMPT_FOR_FUNCTION_COMMENT,
         )
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        function_comments = await chain.arun(block_content=block_content)
-        function_comments_json = json.loads(function_comments)
-        return self.__insert_comments_in_functions(block_content, function_comments_json)
+        function_comments_json = await chain.arun(block_content=block_content)
+        function_comments = json.loads(function_comments_json)
+        return self.__insert_comments_in_functions(block_content, function_comments)
 
     async def async_generate_pipeline_documentation(
         self,
