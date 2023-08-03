@@ -1138,7 +1138,10 @@ function CodeBlock({
               <Flex alignItems="center" flex={1}>
                 <FlexContainer alignItems="center">
                   <Badge monospace>
-                    {ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]}
+                    {BlockTypeEnum.GLOBAL_DATA_PRODUCT === block?.type
+                      ? 'GDP'
+                      : ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]
+                    }
                   </Badge>
 
                   <Spacing mr={1} />
