@@ -563,7 +563,7 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {!hideExtraButtons && (
+      {!hideExtraButtons && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== block?.type && (
         <div ref={refAIActions}>
           <Spacing ml={PADDING_UNITS}>
             {isLoadingUpdatePipeline && (
