@@ -69,6 +69,7 @@ import {
   ArrowDown,
   ChevronDown,
   ChevronUp,
+  DiamondShared,
   FileFill,
   Info,
   ParentEmpty,
@@ -1366,45 +1367,51 @@ function CodeBlock({
                           }}
                           >
                           <FlexContainer alignItems="center">
+                            {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
+                            {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+
+                            <Spacing mr={1} />
+
                             <Text
+                              default
                               monospace={numberOfParentBlocks >= 1}
                               noWrapping
                               small
                               underline={numberOfParentBlocks === 0}
                             >
-                              {numberOfParentBlocks === 0 && 'Edit parent blocks'}
-                              {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
+                              {numberOfParentBlocks === 0 && 'Edit parents'}
+                              {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
                             </Text>
-
-                            <Spacing mr={1} />
-
-                            {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
-                            {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
                           </FlexContainer>
                         </Button>
                       </Tooltip>
                     )}
 
                     {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
-                      <Spacing ml={2}>
+                      <>
+                        <Spacing ml={2} />
                         <Tooltip
                           block
                           label={`This block is used in ${blockPipelinesLength} pipelines.`}
                           size={null}
                           widthFitContent
                         >
-                          <Link
-                            default
-                            monospace
-                            noWrapping
-                            onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
-                            preventDefault
-                            small
-                          >
-                            {blockPipelinesLength} pipelines
-                          </Link>
+                          <FlexContainer alignItems="center">
+                            <DiamondShared size={14} />
+                            <Spacing ml={1} />
+                            <Link
+                              default
+                              monospace
+                              noWrapping
+                              onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+                              preventDefault
+                              small
+                            >
+                              {blockPipelinesLength} pipelines
+                            </Link>
+                          </FlexContainer>
                         </Tooltip>
-                      </Spacing>
+                      </>
                     )}
                   </>
                 )}
