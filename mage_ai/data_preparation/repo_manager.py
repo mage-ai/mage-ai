@@ -259,13 +259,14 @@ def get_variables_dir(
         variables_dir = repo_config.get('variables_dir')
     else:
         from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
-            config_file = Template(f.read()).render(
-                **get_template_vars_no_db()
-            )
-            repo_config = yaml.full_load(config_file) or {}
-            if repo_config.get('variables_dir'):
-                variables_dir = os.path.expanduser(repo_config.get('variables_dir'))
+        if os.path.exists(get_metadata_path()):
+            with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+                config_file = Template(f.read()).render(
+                    **get_template_vars_no_db()
+                )
+                repo_config = yaml.full_load(config_file) or {}
+                if repo_config.get('variables_dir'):
+                    variables_dir = os.path.expanduser(repo_config.get('variables_dir'))
     if variables_dir is None:
         variables_dir = DEFAULT_MAGE_DATA_DIR
 
