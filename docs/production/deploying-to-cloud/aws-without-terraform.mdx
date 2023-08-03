@@ -205,31 +205,7 @@ allowing you to perform tasks like:
 
 Follow the steps below to launch the Mage app on your ECS cluster:
 
-1. Create a new Docker image for launching the Mage App. Below is an example
-   Dockerfile:
-
-   ```Dockerfile
-    FROM python
-    LABEL description="Deploy Mage on ECS"
-    ARG PIP=pip3
-    USER root
-
-    # Install Mage
-    RUN ${PIP} install mage-ai
-
-    # Set up spark kernel
-    RUN mkdir ~/.sparkmagic
-    RUN wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json
-    RUN mv example_config.json ~/.sparkmagic/config.json
-    RUN sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
-    RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
-
-    ENV PYTHONPATH="${PYTHONPATH}:/home/src"
-    WORKDIR /home/src
-   ```
-
-   Upload this Docker image to a repository like Amazon ECR so ECS tasks can
-   pull and create Docker containers using this image.
+1. Create a new Docker image for launching the Mage App— you can start with [our template](https://github.com/mage-ai/docker/blob/master/Dockerfile). Upload this Docker image to a repository like Amazon ECR so ECS tasks can pull and create Docker containers using this image.
 
 2. Create a new ECS cluster. Both Fargate and EC2 based clusters work for this
    task.
@@ -271,18 +247,22 @@ Follow the steps below to launch the Mage app on your ECS cluster:
    You must specify:
 
    - `"image"` - Docker image URI. If using ECR, you can use the template above
-     and fill in the following information: | Parameter | Description | |
-     ---------------------- | ---------------------------------------- | |
-     `aws-account-id` | AWS Account ID | | `region` | Region in which ECR is
-     being used | | `your-image-repo-name` | Name of the repository holding your
-     repo | | `tag` | tag for the version of the image to use |
+     and fill in the following information:
+      | Parameter              | Description                              |
+      | ---------------------- | ---------------------------------------- |
+      | `aws-account-id`       | AWS Account ID                           |
+      | `region`               | Region in which ECR is being used        |
+      | `your-image-repo-name` | Name of the repository holding your repo |
+      | `tag`                  | tag for the version of the image to use  |
    - `"executionRoleArn"` - Name of the
      [ECS Task Execution Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html).
      Assigning this role enables this task to make AWS API calls. This is needed
      to pull the Docker image from an ECR repository. Fill in the following
-     information: | Parameter | Description | | ------------------------------ |
-     ------------------------------- | | `aws-account-id` | AWS Account ID | |
-     `ecs-task-execution-role-name` | Name of task execution IAM role |
+     information:
+      | Parameter                      | Description                     |
+      | ------------------------------ | ------------------------------- |
+      | `aws-account-id`               | AWS Account ID                  |
+      | `ecs-task-execution-role-name` | Name of task execution IAM role |
 
      This parameter can be ignored if you are not using Amazon ECR
 
@@ -315,45 +295,9 @@ Follow the steps below to setup running a Mage pipeline in ECS.
 pipeline you wish to deploy to ECS. Make sure this repository includes any data
 files and configuration setting files needed for the pipeline to run.
 
-1. Create a new Docker image for running your pipeline. Below is an example
-   Dockerfile:
-
-   ```Dockerfile
-    FROM python
-    LABEL description="Run Mage Pipeline on ECS"
-    ARG PIP=pip3
-    USER root
-
-    # Install Mage
-    RUN ${PIP} install mage-ai
-
-    # Copy your local Mage repository to image
-    COPY ./default_repo /home/src/default_repo
-
-    # Set up spark kernel
-    RUN mkdir ~/.sparkmagic
-    RUN wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json
-    RUN mv example_config.json ~/.sparkmagic/config.json
-    RUN sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
-    RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
-
-    # Update Environment Variables
-    ENV PYTHONPATH="${PYTHONPATH}:/home/src"
-    ENV MAGE_REPO_PATH="/home/src/default_repo"
-
-    WORKDIR /home/src
-   ```
-
-   Make sure to add any other environment variables defined locally to the image
-   to be able to access those secrets in the cluster.
-
-   Upload this Docker image to a repository like Amazon ECR so ECS tasks can
-   pull and deploy containers using the image.
-
-2. If not already created, create a new ECS cluster. This task can be run on
-   both Fargate and EC2 based instances
-3. Create a new task definition based off the template below. This task calls
-   `mage run` on your pipeline when started.
+1. Create a new Docker image for running your pipeline— you can start with [our template](https://github.com/mage-ai/docker/blob/master/Dockerfile). Make sure to add any other environment variables defined locally to the image to be able to access those secrets in the cluster. Upload this Docker image to a repository like Amazon ECR so ECS tasks can pull and deploy containers using the image.
+2. If not already created, create a new ECS cluster. This task can be run on both Fargate and EC2 based instances
+3. Create a new task definition based off the template below. This task calls `mage run` on your pipeline when started.
 
    ```json
    {
@@ -380,18 +324,22 @@ files and configuration setting files needed for the pipeline to run.
    You must specify:
 
    - `"image"` - Docker image URI. If using ECR, you can use the template above
-     and fill in the following information: | Parameter | Description | |
-     ---------------------- | ---------------------------------------- | |
-     `aws-account-id` | AWS Account ID | | `region` | Region in which ECR is
-     being used | | `your-image-repo-name` | Name of the repository holding your
-     repo | | `tag` | tag for the version of the image to use |
+     and fill in the following information:
+      | Parameter              | Description                              |
+      | ---------------------- | ---------------------------------------- |
+      | `aws-account-id`       | AWS Account ID                           |
+      | `region`               | Region in which ECR is being used        |
+      | `your-image-repo-name` | Name of the repository holding your repo |
+      | `tag`                  | tag for the version of the image to use  |
    - `"executionRoleArn"` - Name of the
      [ECS Task Execution Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html).
      Assigning this role enables this task to make AWS API calls. This is needed
      to pull the Docker image from an ECR repository. Fill in the following
-     information: | Parameter | Description | | ------------------------------ |
-     ------------------------------- | | `aws_account_id` | AWS Account ID | |
-     `ecs-task-execution-role-name` | Name of task execution IAM role |
+     information:
+      | Parameter                      | Description                     |
+      | ------------------------------ | ------------------------------- |
+      | `aws-account-id`               | AWS Account ID                  |
+      | `ecs-task-execution-role-name` | Name of task execution IAM role |
 
      This parameter can be ignored if you are not using Amazon ECR
 
