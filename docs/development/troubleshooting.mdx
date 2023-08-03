@@ -73,3 +73,9 @@ The provided token is malformed or otherwise invalid.
 ```
 
 This [Stack Overflow](https://stackoverflow.com/questions/54837248/an-error-occurred-invalidtoken-when-calling-the-listbuckets-operation-the-pr) article details the issue. Removing the `AWS_SESSION_TOKEN` line from the `io_config.yaml` should resolve the problem.
+
+## Mage doesn't load properly when running locally
+
+When attempting to connect to Mage with a port _other_ than `6789`, the browser may not render the page correctly with `localhost:port`.
+
+Instead, use `127.0.0.1:port` to connect to Mage.
