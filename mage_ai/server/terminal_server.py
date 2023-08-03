@@ -107,7 +107,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
         command = message.get('command')
         
     #If terminal access disable return
-        if DISABLE_TERMINAL == "1":
+        if DISABLE_TERMINAL:
              return self.send_json_message(
                     ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
 
