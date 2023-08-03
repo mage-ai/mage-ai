@@ -267,8 +267,6 @@ async def main(
             dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
             if os.path.exists(dst):
                 shutil.rmtree(dst)
-            else:
-                os.makedirs(dst)
             shutil.copytree(src, dst)
             replace_base_path(BASE_PATH)
             update_routes = True
