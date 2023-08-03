@@ -27,8 +27,16 @@ class ProjectType(str, Enum):
     STANDALONE = 'standalone'
 
 
+def get_metadata_path():
+    return os.path.join(get_repo_path_new(), 'metadata.yaml')
+
+
 class RepoConfig:
-    def __init__(self, repo_path: str = None, config_dict: Dict = None):
+    def __init__(
+        self,
+        repo_path: str = None,
+        config_dict: Dict = None,
+    ):
         self.repo_path = repo_path or get_repo_path_new()
         self.repo_name = os.path.basename(self.repo_path)
         self.project_uuid = None
@@ -68,30 +76,15 @@ class RepoConfig:
             else:
                 repo_config = config_dict
 
-            # Priority:
-            # 1. 'variables_dir' from config_dict
-            # 1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
-            # 2. 'variables_dir' from project's metadata.yaml file
-            # 3. DEFAULT_MAGE_DATA_DIR
-            if config_dict is not None and config_dict.get('variables_dir'):
-                self.variables_dir = config_dict.get('variables_dir')
-            elif os.getenv(MAGE_DATA_DIR_ENV_VAR):
-                self.variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
-            else:
-                self.variables_dir = os.path.expanduser(
-                    repo_config.get('variables_dir', DEFAULT_MAGE_DATA_DIR),
+            if config_dict and config_dict.get('variables_dir'):
+                self.variables_dir = os.path.abspath(
+                    os.path.join(self.repo_path, config_dict.get('variables_dir'))
                 )
-            if self.variables_dir is not None and not self.variables_dir.startswith('s3'):
-                if os.path.isabs(self.variables_dir) and self.variables_dir != self.repo_path and (
-                    not config_dict or not config_dict.get('variables_dir')
-                ):
-                    # If the variables_dir is an absolute path, not same as repo_path, and
-                    # from config file
-                    self.variables_dir = os.path.join(self.variables_dir, self.repo_name)
-                else:
-                    self.variables_dir = os.path.abspath(
-                        os.path.join(self.repo_path, self.variables_dir),
-                    )
+            else:
+                self.variables_dir = get_variables_dir(
+                    repo_path=self.repo_path,
+                    repo_config=repo_config
+                )
             os.makedirs(self.variables_dir, exist_ok=True)
 
             self.project_type = repo_config.get('project_type')
@@ -139,7 +132,10 @@ class RepoConfig:
 
     @property
     def metadata_path(self) -> str:
-        return os.path.join(self.repo_path, 'metadata.yaml')
+        if self.repo_path:
+            return os.path.join(self.repo_path, 'metadata.yaml')
+        else:
+            return get_metadata_path()
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
@@ -231,13 +227,63 @@ def get_project_type(repo_path=None) -> ProjectType:
         return ProjectType.STANDALONE
 
 
-def get_variables_dir(repo_path: str = None) -> str:
-    return get_repo_config(repo_path=repo_path).variables_dir
+def get_variables_dir(
+    repo_path: str = None,
+    repo_config: Dict = None,
+) -> str:
+    """
+    Fetches the variables directory for the project.
+
+    Priority:
+        1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
+        2. 'variables_dir' from repo_config argument
+        3. 'variables_dir' from project's metadata.yaml file
+            This method will only read from the metadata.yaml file if the repo_config
+            argument is None.
+        4. DEFAULT_MAGE_DATA_DIR
+
+    Args:
+        repo_path (str): Path to the project's root directory
+        repo_config (Dict): Dictionary containing the project's metadata.yaml file
+
+    Returns:
+        str: Path to the variables directory
+    """
+    if repo_path is None:
+        repo_path = get_repo_path_new()
+    repo_name = os.path.basename(repo_path)
+    variables_dir = None
+    if os.getenv(MAGE_DATA_DIR_ENV_VAR):
+        variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
+    elif repo_config is not None:
+        variables_dir = repo_config.get('variables_dir')
+    else:
+        from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+            config_file = Template(f.read()).render(
+                **get_template_vars_no_db()
+            )
+            repo_config = yaml.full_load(config_file) or {}
+            if repo_config.get('variables_dir'):
+                variables_dir = os.path.expanduser(repo_config.get('variables_dir'))
+    if variables_dir is None:
+        variables_dir = DEFAULT_MAGE_DATA_DIR
+
+    if not variables_dir.startswith('s3'):
+        if os.path.isabs(variables_dir) and variables_dir != repo_path:
+            # If the variables_dir is an absolute path and not same as repo_path
+            variables_dir = os.path.join(variables_dir, repo_name)
+        else:
+            variables_dir = os.path.abspath(
+                os.path.join(repo_path, variables_dir),
+            )
+        os.makedirs(variables_dir, exist_ok=True)
+    return variables_dir
 
 
 project_uuid = None
 try:
-    with get_repo_config().metadata_path as f:
+    with get_metadata_path() as f:
         config = yml.load(f) or {}
         project_uuid = config.get('project_uuid')
 except Exception:
