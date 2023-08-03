@@ -157,6 +157,9 @@ type PipelineDetailProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -208,6 +211,7 @@ function PipelineDetail({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -609,6 +613,7 @@ function PipelineDetail({
             setTextareaFocused={setTextareaFocused}
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
+            showGlobalDataProducts={showGlobalDataProducts}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -666,6 +671,7 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     textareaFocused,
     updateBlock,
     widgets,
@@ -775,9 +781,10 @@ function PipelineDetail({
         setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
         showConfigureProjectModal={showConfigureProjectModal}
+        showGlobalDataProducts={showGlobalDataProducts}
       />
 
-      {!useV2AddNewBlock && (
+      {!useV2AddNewBlock && !isIntegration && !isStreaming && (
         <Spacing mt={1}>
           <Text muted small>
             Want to try the new add block UI?
@@ -815,6 +822,7 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     useV2AddNewBlock,
   ]);
 

@@ -31,6 +31,8 @@ import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
+import GlobalDataProducts from '@components/GlobalDataProducts';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KernelOutputType, {
@@ -38,6 +40,7 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
@@ -1957,6 +1960,35 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
+  const [showGlobalDataProducts, hideGlobalDataProducts] = useModal(({
+    addNewBlock,
+  }: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
+  }) => (
+    <ErrorProvider>
+      <Panel>
+        <GlobalDataProducts
+          onClickRow={(globalDataProduct: GlobalDataProductType) => {
+            addNewBlock({
+              configuration: {
+                global_data_product: {
+                  uuid: globalDataProduct?.uuid,
+                },
+              },
+              type: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+            });
+            hideGlobalDataProducts();
+          }}
+        />
+      </Panel>
+    </ErrorProvider>
+  ), {
+  }, [
+  ], {
+    background: true,
+    uuid: 'global_data_products',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -2162,6 +2194,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
+      showGlobalDataProducts={showGlobalDataProducts}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2209,6 +2242,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     textareaFocused,
     widgets,
   ]);

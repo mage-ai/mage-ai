@@ -208,6 +208,9 @@ type CodeBlockProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -265,6 +268,7 @@ function CodeBlock({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -2325,6 +2329,7 @@ function CodeBlock({
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
                   showBrowseTemplates={showBrowseTemplates}
                   showConfigureProjectModal={showConfigureProjectModal}
+                  showGlobalDataProducts={showGlobalDataProducts}
                 />
               </Spacing>
             )}
