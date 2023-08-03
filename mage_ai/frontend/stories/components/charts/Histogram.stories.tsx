@@ -14,7 +14,7 @@ export default {
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
-  <ThemeBlock>
+  <ThemeBlock sideBySide>
     {/*@ts-ignore*/}
     <Histogram {...props} />
   </ThemeBlock>
