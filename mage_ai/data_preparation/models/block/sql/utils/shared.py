@@ -455,12 +455,26 @@ def extract_insert_statement_table_names(text: str) -> List[str]:
     return matches
 
 
+def extract_drop_statement_table_names(text: str) -> List[str]:
+    matches = re.findall(
+        r'drop table(?: if exists)*',
+        remove_comments(text),
+        re.IGNORECASE,
+    )
+    return matches
+
+
 def has_create_or_insert_statement(text: str) -> bool:
     table_name = extract_create_statement_table_name(text)
     if table_name:
         return True
 
     matches = extract_insert_statement_table_names(text)
+    return len(matches) >= 1
+
+
+def has_drop_statement(text: str) -> bool:
+    matches = extract_drop_statement_table_names(text)
     return len(matches) >= 1
 
 

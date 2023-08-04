@@ -17,6 +17,7 @@ from mage_ai.data_preparation.models.block.sql import (
 )
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
+    has_drop_statement,
     interpolate_vars,
     split_query_string,
     table_name_parts_from_query,
@@ -556,9 +557,10 @@ def execute_raw_sql(
     fetch_query_at_indexes = []
 
     has_create_or_insert = has_create_or_insert_statement(query_string)
+    has_drop = has_drop_statement(query_string)
 
     for query in split_query_string(query_string):
-        if has_create_or_insert:
+        if has_create_or_insert or has_drop:
             queries.append(query)
             fetch_query_at_indexes.append(False)
         else:
