@@ -178,7 +178,9 @@ class Snowflake(BaseSQLConnection):
 
         if not table_name and not full_table_name:
             # Try to find table name via query
-            table_name = table_name_parts_from_query(query_string)[2]
+            table_name = table_name_parts_from_query(query_string)
+            if table_name is not None:
+                table_name = table_name[2]
 
         with self.printer.print_msg(print_message):
             with self.conn.cursor() as cur:
@@ -334,9 +336,6 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
 
         if ConfigKey.SNOWFLAKE_PASSWORD in config:
             conn_kwargs['password'] = config[ConfigKey.SNOWFLAKE_PASSWORD]
-
-        if ConfigKey.SNOWFLAKE_TABLE_NAME in config:
-            conn_kwargs['table_name'] = config[ConfigKey.SNOWFLAKE_TABLE_NAME]
 
         elif ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH in config:
             with open(config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH], 'rb') as key:
