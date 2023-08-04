@@ -1,10 +1,10 @@
 import json
-import os
 from typing import Dict, List
 
 import boto3
 from botocore.config import Config
 
+from mage_ai.services.aws import get_aws_region_name
 from mage_ai.services.aws.ecs.config import EcsConfig
 
 
@@ -63,7 +63,7 @@ def stop_task(task_arn: str, cluster: str = None) -> None:
 
 
 def list_tasks(cluster) -> List[Dict]:
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     ecs_client = boto3.client('ecs', config=config)
 
@@ -81,7 +81,7 @@ def list_tasks(cluster) -> List[Dict]:
 
 
 def list_services(cluster) -> List[Dict]:
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     ecs_client = boto3.client('ecs', config=config)
 

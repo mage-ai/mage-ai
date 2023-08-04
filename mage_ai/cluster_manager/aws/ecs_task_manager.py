@@ -6,6 +6,7 @@ from typing import Dict, List
 import boto3
 from botocore.config import Config
 
+from mage_ai.services.aws import get_aws_region_name
 from mage_ai.services.aws.ecs.config import EcsConfig
 from mage_ai.services.aws.ecs.ecs import list_services, list_tasks, run_task, stop_task
 from mage_ai.shared.array import find
@@ -37,7 +38,7 @@ class EcsTaskManager:
             json.dump(metadata, file)
 
     def list_tasks(self):
-        region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+        region_name = get_aws_region_name()
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
@@ -77,7 +78,7 @@ class EcsTaskManager:
         return tasks + stopped_instances
 
     def create_task(self, name: str, task_definition: str, container_name: str):
-        region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+        region_name = get_aws_region_name()
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
