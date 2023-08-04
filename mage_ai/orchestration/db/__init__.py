@@ -1,10 +1,10 @@
 import logging
 import os
+from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from urllib.parse import parse_qs, urlparse
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import (
@@ -46,6 +46,13 @@ elif not db_connection_url:
             # For new projects, create mage-ai.db in variables dir
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
         db_kwargs['connect_args']['check_same_thread'] = False
+
+url_parsed = urlparse(db_connection_url)
+if url_parsed.password:
+    db_connection_url = db_connection_url.replace(
+        url_parsed.password,
+        quote_plus(url_parsed.password),
+    )
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50

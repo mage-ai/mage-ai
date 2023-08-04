@@ -20,7 +20,7 @@ logger = Logger().new_server_logger(__name__)
 
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
-    
+
     database_manager.run_migrations()
 
     # sentry_dsn = SENTRY_DSN
