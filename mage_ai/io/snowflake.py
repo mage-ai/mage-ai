@@ -1,13 +1,17 @@
+from typing import Dict, List, Union
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.shared.hash import merge_dict
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
-from typing import Dict, List, Union
 
+from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    table_name_parts_from_query,
+)
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLConnection, ExportWritePolicy
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.shared.hash import merge_dict
 
 DEFAULT_LOGIN_TIMEOUT = 20
 # NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
@@ -172,6 +176,12 @@ class Snowflake(BaseSQLConnection):
 
         query_string = self._clean_query(query_string)
 
+        if not table_name and not full_table_name:
+            # Try to find table name via query
+            table_name = table_name_parts_from_query(query_string)
+            if table_name is not None:
+                table_name = table_name[2]
+
         with self.printer.print_msg(print_message):
             with self.conn.cursor() as cur:
                 columns = None
@@ -326,6 +336,7 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
 
         if ConfigKey.SNOWFLAKE_PASSWORD in config:
             conn_kwargs['password'] = config[ConfigKey.SNOWFLAKE_PASSWORD]
+
         elif ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH in config:
             with open(config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH], 'rb') as key:
                 password = None
