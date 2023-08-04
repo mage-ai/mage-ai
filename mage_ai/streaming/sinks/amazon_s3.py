@@ -31,10 +31,10 @@ class AmazonS3Sink(BaseSink):
     def init_client(self):
         self.client = boto3.client('s3')
         self.last_upload_time = None
-        if self.buffer:
-            self.upload_data_to_s3()
         self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data_to_s3)
         self.timer.start()
+        if self.buffer:
+            self.upload_data_to_s3()
 
     def write(self, data: Dict):
         self._print(f'Ingest data {data}, time={time.time()}')
