@@ -152,8 +152,7 @@ class WorkloadManager:
             access_mode=storage_access_mode,
         )
 
-        # ingress_name = kwargs.get('ingress_name')
-        ingress_name = 'mageai'
+        ingress_name = kwargs.get('ingress_name')
 
         env_vars = self.__populate_env_vars(
             name,
@@ -317,39 +316,40 @@ class WorkloadManager:
 
         k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
 
-        # if ingress_name:
-        #     self.update_ingress_paths(ingress_name, service_name, name)
+        if ingress_name:
+            self.update_ingress_paths(ingress_name, service_name, name)
 
         return k8s_service
 
     def update_ingress_paths(self, ingress_name: str, service_name: str, workspace_name: str):
         ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
-        ingress.spec.rules.append(
-            client.V1IngressRule(
-                host=ingress.spec.rules[0].host,
-                http=client.V1HTTPIngressRuleValue(
-                    paths=[
-                        client.V1HTTPIngressPath(
-                            backend=client.V1IngressBackend(
-                                service=client.V1IngressServiceBackend(
-                                    name=service_name,
-                                    port=client.V1ServiceBackendPort(
-                                        number=6789
-                                    )
-                                )
-                            ),
-                            path=f'/{workspace_name}(/|$)(.*)',
-                            path_type='Prefix',
+        rule = ingress.spec.rules[0]
+        paths = rule.http.paths
+        paths.insert(
+            0,
+            client.V1HTTPIngressPath(
+                backend=client.V1IngressBackend(
+                    service=client.V1IngressServiceBackend(
+                        name=service_name,
+                        port=client.V1ServiceBackendPort(
+                            number=6789
                         )
-                    ]
+                    )
                 ),
+                path=f'/{workspace_name}',
+                path_type='Prefix',
             )
+        )
+        ingress.spec.rules[0] = client.V1IngressRule(
+            host=rule.host,
+            http=client.V1HTTPIngressRuleValue(paths=paths),
         )
         self.networking_client.patch_namespaced_ingress(ingress_name, self.namespace, ingress)
 
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
+        # TODO: remove service from ingress paths
 
     def __populate_env_vars(
         self,
