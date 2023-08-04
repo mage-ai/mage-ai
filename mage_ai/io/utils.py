@@ -16,6 +16,8 @@ def format_value(value):
 
     if type(value) is str:
         value = escape_quotes(value)
+    else:
+        value = escape_quotes(str(value))
 
     return f"'{value}'"
 
