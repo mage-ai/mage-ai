@@ -1,9 +1,32 @@
 from mage_ai.data_preparation.models.block.sql import split_query_string
-from mage_ai.data_preparation.models.block.sql.utils.shared import table_name_parts_from_query
+from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    has_drop_statement,
+    table_name_parts_from_query,
+)
 from mage_ai.tests.base_test import TestCase
 
 
 class BlockTest(TestCase):
+    def test_has_drop_statement(self):
+        text1 = """
+CREATE TABLE TEST_TABLE AS
+SELECT * FROM USER;
+"""
+        text2 = """
+DROP TABLE IF EXISTS TEST_TABLE
+"""
+        text3 = """
+drop table TEST_TABLE
+"""
+        text4 = """
+-- Delete the old table
+drop table if exists test_table;
+"""
+        self.assertFalse(has_drop_statement(text1))
+        self.assertTrue(has_drop_statement(text2))
+        self.assertTrue(has_drop_statement(text3))
+        self.assertTrue(has_drop_statement(text4))
+
     def test_split_query_string(self):
         query_string = """
 COPY public.temp_table FROM 's3://bucket/object_key/filename.csv'
