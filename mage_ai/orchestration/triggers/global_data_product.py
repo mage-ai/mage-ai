@@ -72,19 +72,31 @@ def trigger_and_check_status(
         ), key=lambda x: x.execution_date, reverse=True)
         if len(completed_pipeline_runs) >= 1:
             pipeline_run = completed_pipeline_runs[0]
-            if not global_data_product.is_outdated(pipeline_run):
+            is_outdated, is_outdated_after = global_data_product.is_outdated(pipeline_run)
+            if not is_outdated or not is_outdated_after:
                 if verbose:
                     next_run_at = global_data_product.next_run_at(pipeline_run)
                     execution_date = pipeline_run.execution_date
                     seconds = next_run_at.timestamp() - now.timestamp()
 
-                    print(
-                        f'Global data product {global_data_product.uuid} is up-to-date: '
-                        f'most recent pipeline run {pipeline_run.id} '
-                        f'executed at {execution_date.isoformat()}. '
-                        f'Will be outdated after {next_run_at.isoformat()} '
-                        f'in {round(seconds)} seconds.'
-                    )
+                    if not is_outdated:
+                        print(
+                            f'Global data product {global_data_product.uuid} is up-to-date: '
+                            f'most recent pipeline run {pipeline_run.id} '
+                            f'executed at {execution_date.isoformat()}. '
+                            f'Will be outdated after {next_run_at.isoformat()} '
+                            f'in {round(seconds)} seconds.'
+                        )
+                    elif not is_outdated_after:
+                        arr = []
+                        if global_data_product.outdated_starting_at:
+                            for k, v in (global_data_product.outdated_starting_at or {}).items():
+                                arr.append(f'{k.replace("_", " ")}: {v}')
+
+                        print(
+                            f'Global data product {global_data_product.uuid} is not yet outdated. '
+                            f'It’ll be outdated after a specific moment in time - {", ".join(arr)}'
+                        )
 
                 break
 

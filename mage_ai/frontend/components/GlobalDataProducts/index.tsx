@@ -15,19 +15,30 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
 type GlobalDataProductsProps = {
+  globalDataProducts?: GlobalDataProductType[];
   onClickRow?: (globalDataProduct: GlobalDataProductType) => void;
 };
 
 function GlobalDataProducts({
+  globalDataProducts: globalDataProductsProps,
   onClickRow,
 }: GlobalDataProductsProps) {
   const router = useRouter();
 
-  const { data: dataGlobalProducts } = api.global_data_products.list();
+  const { data: dataGlobalProducts } = api.global_data_products.list({}, {}, {
+    pauseFetch: !!globalDataProductsProps,
+  });
   const globalDataProducts: GlobalDataProductType[] =
-    useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
+    useMemo(() => globalDataProductsProps
+      || dataGlobalProducts?.global_data_products
+      || [],
+    [
+      dataGlobalProducts,
+      globalDataProductsProps,
+    ],
+  );
 
-  if (!dataGlobalProducts) {
+  if (!dataGlobalProducts && !globalDataProductsProps) {
     return (
       <Spacing p={PADDING_UNITS}>
         <Spinner />

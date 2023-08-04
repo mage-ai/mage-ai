@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import React, {
   useCallback,
   useContext,
@@ -46,6 +47,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
@@ -157,6 +159,7 @@ type CodeBlockProps = {
   extraContent?: any;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  globalDataProducts?: GlobalDataProductType[];
   hideExtraCommandButtons?: boolean;
   hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
@@ -235,6 +238,7 @@ function CodeBlock({
   extraContent,
   fetchFileTree,
   fetchPipeline,
+  globalDataProducts,
   height,
   hideExtraCommandButtons,
   hideExtraConfiguration,
@@ -291,6 +295,10 @@ function CodeBlock({
   const blockPipelinesLength = useMemo(() => Object.values(pipelines || {})?.length || 1, [
     pipelines,
   ]);
+  const globalDataProduct =
+    useMemo(() => blockConfiguration?.global_data_product, [blockConfiguration]);
+  const globalDataProductsByUUID =
+    useMemo(() => indexBy(globalDataProducts || [], ({ uuid }) => uuid), [globalDataProducts]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
@@ -822,16 +830,49 @@ function CodeBlock({
     }
 
     if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType) {
-      return (
-        <>
-          {/*
-            Global data product detail fields go here:
+      const gdp = globalDataProductsByUUID?.[globalDataProduct?.uuid];
 
-            outdated after
-            outdated starting at
-            settings
-          */}
-        </>
+      return (
+        <CodeHelperStyle>
+          <Spacing mb={PADDING_UNITS} mt={1}>
+            <Text monospace muted small>
+              UUID
+            </Text>
+            <Text monospace>
+              {gdp?.uuid}
+            </Text>
+          </Spacing>
+
+          <Spacing mb={PADDING_UNITS}>
+            <Text monospace muted small>
+              {capitalize(gdp?.object_type || '')}
+            </Text>
+            <NextLink
+              as={`/pipelines/${gdp?.object_uuid}/edit`}
+              href={'/pipelines/[pipeline]/edit'}
+              passHref
+            >
+              <Link
+                monospace
+                openNewWindow
+              >
+                {gdp?.object_uuid}
+              </Link>
+            </NextLink>
+          </Spacing>
+
+          <Spacing mb={1}>
+            <Text monospace muted small>
+              Override global data product settings
+            </Text>
+            <Link
+              monospace
+              onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+            >
+              Customize block settings
+            </Link>
+          </Spacing>
+        </CodeHelperStyle>
       );
     }
 
@@ -919,12 +960,15 @@ function CodeBlock({
     callbackContent,
     content,
     dbtProjectName,
+    globalDataProduct,
+    globalDataProductsByUUID,
     hasCallback,
     height,
     hideRunButton,
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
+    openSidekickView,
     replicatedBlockUUID,
     runBlockAndTrack,
     selected,

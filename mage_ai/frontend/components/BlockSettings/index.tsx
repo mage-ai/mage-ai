@@ -10,10 +10,16 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalDataProductType, {
+  GlobalDataProductObjectTypeEnum,
+} from '@interfaces/GlobalDataProductType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
+import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
 import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
+import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -24,10 +30,12 @@ import usePrevious from '@utils/usePrevious';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { isEmptyObject } from '@utils/hash';
 import { capitalize } from '@utils/string';
+import { indexBy } from '@utils/array';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -35,6 +43,7 @@ type BlockSettingsProps = {
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  globalDataProducts?: GlobalDataProductType[];
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
 };
@@ -43,6 +52,7 @@ function BlockSettings({
   block,
   fetchFileTree,
   fetchPipeline,
+  globalDataProducts,
   pipeline,
   setSelectedBlock,
 }: BlockSettingsProps) {
@@ -50,16 +60,39 @@ function BlockSettings({
   const refExecutorTypeTextInput = useRef(null);
 
   const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
-  const pipelineRetryConfig: PipelineRetryConfigType = useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+  const pipelineRetryConfig: PipelineRetryConfigType =
+    useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+
+  const {
+    configuration,
+    type: blockType,
+    uuid: blockUUID,
+  } = block;
 
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockSettings/index',
   });
 
+  const globalDataProductsByUUID =
+    useMemo(() => indexBy(globalDataProducts || [], ({ uuid }) => uuid), [globalDataProducts]);
+  const globalDataProduct = useMemo(() => {
+    const gdpUUID = configuration?.global_data_product?.uuid;
+
+    if (gdpUUID && globalDataProductsByUUID) {
+      return globalDataProductsByUUID?.[gdpUUID];
+    }
+  }, [
+    configuration,
+    globalDataProductsByUUID,
+  ]);
+
   const {
-    type: blockType,
-    uuid: blockUUID,
-  } = block;
+    data: dataPipeline,
+  } = api.pipelines.detail(
+    GlobalDataProductObjectTypeEnum.PIPELINE === globalDataProduct?.object_type
+      && globalDataProduct?.object_uuid,
+  );
+  const globalDataProductPipeline = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
 
   const [blockAttributes, setBlockAttributesState] = useState<BlockType>(null);
   const [blockAttributesTouched, setBlockAttributesTouched] = useState<boolean>(false);
@@ -72,7 +105,8 @@ function BlockSettings({
     }
   }, [block, blockPrev]);
 
-  const blockRetryConfig: BlockRetryConfigType = useMemo(() => blockAttributes?.retry_config || {}, [blockAttributes]);
+  const blockRetryConfig: BlockRetryConfigType =
+    useMemo(() => blockAttributes?.retry_config || {}, [blockAttributes]);
   const setBlockAttributes = useCallback((handlePrevious) => {
     setBlockAttributesTouched(true);
     setBlockAttributesState(handlePrevious);
@@ -202,11 +236,25 @@ function BlockSettings({
     pipelineRetryConfig,
   ]);
 
+  const objectAttributes = useMemo(() => blockAttributes?.configuration?.global_data_product || {}, [
+    blockAttributes,
+  ]);
+  const setObjectAttributes = useCallback(prev2 => setBlockAttributes(prev => ({
+    ...prev,
+    configuration: {
+      ...blockAttributes?.configuration,
+      global_data_product: prev2(blockAttributes?.configuration?.global_data_product),
+    },
+  })), [
+    blockAttributes,
+    setBlockAttributes,
+  ]);
+
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Spacing py={PADDING_UNITS}>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <TextInput
               label="Name"
               // @ts-ignore
@@ -241,7 +289,7 @@ function BlockSettings({
             )}
           </Spacing>
 
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline>
               Executor type
             </Headline>
@@ -319,7 +367,7 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline>
               Retry configuration
             </Headline>
@@ -442,22 +490,63 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
-          <Button
-            disabled={!blockAttributesTouched}
-            loading={isLoadingUpdateBlock}
-            // @ts-ignore
-            onClick={() => updateBlock({
-              block: {
-                color: blockAttributes?.color,
-                executor_type: blockAttributes?.executor_type,
-                name: blockAttributes?.name,
-                retry_config: blockRetryConfig,
-              },
-            })}
-            primary
-          >
-            Update block settings
-          </Button>
+          {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline>
+                  Override global data product settings
+                </Headline>
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <OutdatedAfterField
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <OutdatedStartingAtField
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <SettingsField
+                  blocks={globalDataProductPipeline?.blocks}
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+            </Spacing>
+          )}
+
+          <Spacing px={PADDING_UNITS}>
+            <Button
+              disabled={!blockAttributesTouched}
+              loading={isLoadingUpdateBlock}
+              // @ts-ignore
+              onClick={() => updateBlock({
+                block: {
+                  color: blockAttributes?.color,
+                  configuration: blockAttributes?.configuration,
+                  executor_type: blockAttributes?.executor_type,
+                  name: blockAttributes?.name,
+                  retry_config: blockRetryConfig,
+                },
+              })}
+              primary
+            >
+              Update block settings
+            </Button>
+          </Spacing>
         </Spacing>
       </Spacing>
 

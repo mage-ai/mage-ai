@@ -28,6 +28,7 @@ import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType, { FileExtensionEnum } from '@interfaces/FileType';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -100,6 +101,7 @@ type PipelineDetailProps = {
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   files: FileType[];
+  globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
   hiddenBlocks: {
     [uuid: string]: BlockType;
@@ -180,6 +182,7 @@ function PipelineDetail({
   fetchPipeline,
   fetchSampleData,
   files,
+  globalDataProducts,
   globalVariables,
   hiddenBlocks,
   interruptKernel,
@@ -582,6 +585,7 @@ function PipelineDetail({
             executionState={executionState}
             fetchFileTree={fetchFileTree}
             fetchPipeline={fetchPipeline}
+            globalDataProducts={globalDataProducts}
             hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
             interruptKernel={interruptKernel}
             key={uuid}
@@ -640,6 +644,7 @@ function PipelineDetail({
     disableShortcuts,
     fetchFileTree,
     fetchPipeline,
+    globalDataProducts,
     hiddenBlocks,
     interruptKernel,
     isIntegration,

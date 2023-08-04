@@ -1960,6 +1960,10 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
+  const { data: dataGlobalProducts } = api.global_data_products.list();
+  const globalDataProducts: GlobalDataProductType[] =
+    useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
+
   const [showGlobalDataProducts, hideGlobalDataProducts] = useModal(({
     addNewBlock,
   }: {
@@ -1968,6 +1972,7 @@ function PipelineDetailPage({
     <ErrorProvider>
       <Panel>
         <GlobalDataProducts
+          globalDataProducts={globalDataProducts}
           onClickRow={(globalDataProduct: GlobalDataProductType) => {
             addNewBlock({
               configuration: {
@@ -1984,6 +1989,7 @@ function PipelineDetailPage({
     </ErrorProvider>
   ), {
   }, [
+    globalDataProducts,
   ], {
     background: true,
     uuid: 'global_data_products',
@@ -2014,6 +2020,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       insights={insights}
       interruptKernel={interruptKernel}
@@ -2072,6 +2079,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSecrets,
     fetchVariables,
+    globalDataProducts,
     globalVariables,
     insights,
     interruptKernel,
@@ -2161,6 +2169,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
@@ -2215,6 +2224,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSampleData,
     files,
+    globalDataProducts,
     globalVariables,
     hiddenBlocks,
     interruptKernel,
