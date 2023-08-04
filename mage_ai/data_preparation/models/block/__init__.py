@@ -278,6 +278,12 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
+        self.replicated_block_object = Block(
+            self.replicated_block,
+            self.replicated_block,
+            self.type,
+            language=self.language,
+        )
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -294,12 +300,7 @@ class Block:
     @property
     def content(self) -> str:
         if self.replicated_block:
-            self._content = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content
+            self._content = self.replicated_block_object.content
 
         if self._content is None:
             self._content = self.file.content()
@@ -1166,12 +1167,7 @@ class Block:
                     block_file_path = self.file_path
                     if self.replicated_block:
                         block_uuid = self.replicated_block
-                        block_file_path = Block(
-                            self.replicated_block,
-                            self.replicated_block,
-                            self.type,
-                            language=self.language,
-                        ).file_path
+                        block_file_path = self.replicated_block_object.file_path
                     spec = importlib.util.spec_from_file_location(
                         block_uuid, block_file_path,
                     )
