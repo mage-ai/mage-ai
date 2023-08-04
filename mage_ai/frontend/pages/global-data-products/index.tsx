@@ -1,9 +1,15 @@
+import Dashboard from '@components/Dashboard';
 import GlobalDataProductsPageComponent from '@components/GlobalDataProducts';
 import PrivateRoute from '@components/shared/PrivateRoute';
 
 function GlobalDataProductsPage() {
   return (
-    <GlobalDataProductsPageComponent />
+    <Dashboard
+      title="Global data products"
+      uuid="GlobalDataProducts/index"
+    >
+      <GlobalDataProductsPageComponent />
+    </Dashboard>
   );
 }
 

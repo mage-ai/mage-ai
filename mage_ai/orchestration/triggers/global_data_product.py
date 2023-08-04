@@ -27,6 +27,7 @@ def trigger_and_check_status(
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
 ):
+    pipeline_run_created = None
     tries = 0
 
     poll_start = datetime.utcnow().replace(tzinfo=timezone.utc)
@@ -72,19 +73,38 @@ def trigger_and_check_status(
         ), key=lambda x: x.execution_date, reverse=True)
         if len(completed_pipeline_runs) >= 1:
             pipeline_run = completed_pipeline_runs[0]
-            if not global_data_product.is_outdated(pipeline_run):
+
+            if pipeline_run_created and pipeline_run_created.id == pipeline_run.id:
+                break
+
+            is_outdated, is_outdated_after = global_data_product.is_outdated(pipeline_run)
+            if not is_outdated or not is_outdated_after:
                 if verbose:
                     next_run_at = global_data_product.next_run_at(pipeline_run)
                     execution_date = pipeline_run.execution_date
                     seconds = next_run_at.timestamp() - now.timestamp()
 
-                    print(
-                        f'Global data product {global_data_product.uuid} is up-to-date: '
-                        f'most recent pipeline run {pipeline_run.id} '
-                        f'executed at {execution_date.isoformat()}. '
-                        f'Will be outdated after {next_run_at.isoformat()} '
-                        f'in {round(seconds)} seconds.'
-                    )
+                    if not is_outdated:
+                        print(
+                            f'Global data product {global_data_product.uuid} is up-to-date: '
+                            f'most recent pipeline run {pipeline_run.id} '
+                            f'executed at {execution_date.isoformat()}. '
+                            f'Will be outdated after {next_run_at.isoformat()} '
+                            f'in {round(seconds)} seconds.'
+                        )
+                    elif not is_outdated_after:
+                        arr = []
+                        for k, d in global_data_product.is_outdated_after(
+                            return_values=True,
+                        ).items():
+                            current = d.get('current')
+                            value = d.get('value')
+                            arr.append(f'{k.replace("_", " ")}: {value} (currently {current})')
+
+                        print(
+                            f'Global data product {global_data_product.uuid} is not yet outdated. '
+                            f'It’ll be outdated after a specific moment in time - {", ".join(arr)}'
+                        )
 
                 break
 
@@ -105,23 +125,34 @@ def trigger_and_check_status(
                         f'global data product {global_data_product.uuid}: '
                         'overlaps with a previous pipeline run.'
                     )
-        elif pipeline_runs_count == 0:
+        elif pipeline_runs_count == 0 and tries == 0:
             if lock.try_acquire_lock(
                 __lock_key_for_creating_pipeline_run(global_data_product),
                 timeout=10,
             ):
                 pipeline_schedule = __fetch_or_create_pipeline_schedule(global_data_product)
-                pr = create_and_start_pipeline_run(
-                    global_data_product.pipeline,
-                    pipeline_schedule,
-                    dict(variables=variables),
-                    should_schedule=True,
-                )
-                if pr and verbose:
-                    print(
-                        f'Created pipeline run {pr.id} for '
-                        f'global data product {global_data_product.uuid}.'
+                try:
+                    pipeline_run_created = create_and_start_pipeline_run(
+                        global_data_product.pipeline,
+                        pipeline_schedule,
+                        dict(variables=variables),
+                        should_schedule=True,
                     )
+                    if pipeline_run_created:
+                        if verbose:
+                            print(
+                                f'Created pipeline run {pipeline_run_created.id} for '
+                                f'global data product {global_data_product.uuid}.'
+                            )
+                except AssertionError as err:
+                    if 'can only test a child process' in str(err):
+                        print(
+                            '[WARNING] triggers.global_data_product.trigger_and_check_status '
+                            f'({global_data_product.uuid}): '
+                            f'{err}'
+                        )
+                    else:
+                        raise err
 
                 lock.release_lock(__lock_key_for_creating_pipeline_run(global_data_product))
 

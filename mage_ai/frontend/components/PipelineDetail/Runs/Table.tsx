@@ -222,7 +222,8 @@ type PipelineRunsTableProps = {
   allowBulkSelect?: boolean;
   disableRowSelect?: boolean;
   emptyMessage?: string;
-  fetchPipelineRuns: () => void;
+  fetchPipelineRuns?: () => void;
+  hideTriggerColumn?: boolean;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
@@ -236,6 +237,7 @@ function PipelineRunsTable({
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
+  hideTriggerColumn,
   onClickRow,
   pipelineRuns,
   selectedRun,
@@ -260,7 +262,7 @@ function PipelineRunsTable({
         response, {
           callback: () => {
             setCancelingRunId(null);
-            fetchPipelineRuns();
+            fetchPipelineRuns?.();
           },
           onErrorCallback: (response, errors) => {
             setCancelingRunId(null);
@@ -274,7 +276,7 @@ function PipelineRunsTable({
     },
   );
 
-  const columnFlex = [null, 1, 2, 1, 1, null];
+  const columnFlex = [null, 1, 2];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -285,9 +287,17 @@ function PipelineRunsTable({
     {
       uuid: 'Date',
     },
-    {
+  ];
+
+  if (!hideTriggerColumn) {
+    columnFlex.push(1);
+    columns.push({
       uuid: 'Trigger',
-    },
+    });
+  }
+
+  columnFlex.push(...[1, null, null]);
+  columns.push(...[
     {
       uuid: 'Block runs',
     },
@@ -297,7 +307,7 @@ function PipelineRunsTable({
     {
       uuid: 'Logs',
     },
-  ];
+  ]);
 
   const allRunsSelected =  useMemo(() =>
     pipelineRuns.every(({ id }) => !!selectedRuns?.[id]),
@@ -396,9 +406,17 @@ function PipelineRunsTable({
                   <Text default key="row_date_retry" monospace muted>
                     -
                   </Text>,
-                  <Text default key="row_trigger_retry" monospace muted>
-                    -
-                  </Text>,
+                ];
+
+                if (!hideTriggerColumn) {
+                  arr.push(
+                    <Text default key="row_trigger_retry" monospace muted>
+                      -
+                    </Text>,
+                  );
+                }
+
+                arr.push(...[
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -423,8 +441,7 @@ function PipelineRunsTable({
                   >
                     <TodoList default size={2 * UNIT} />
                   </Button>,
-                ];
-
+                ]);
               } else {
                 arr = [
                   <RetryButton
@@ -446,16 +463,24 @@ function PipelineRunsTable({
                   <Text default key="row_date" monospace>
                     {(executionDate && getTimeInUTCString(executionDate)) || '-'}
                   </Text>,
-                  <NextLink
-                    as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-                    href={'/pipelines/[pipeline]/triggers/[...slug]'}
-                    key="row_trigger"
-                    passHref
-                  >
-                    <Link bold sameColorAsText>
-                      {pipelineScheduleName}
-                    </Link>
-                  </NextLink>,
+                ]
+
+                if (!hideTriggerColumn) {
+                  arr.push(
+                    <NextLink
+                      as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+                      href={'/pipelines/[pipeline]/triggers/[...slug]'}
+                      key="row_trigger"
+                      passHref
+                    >
+                      <Link bold sameColorAsText>
+                        {pipelineScheduleName}
+                      </Link>
+                    </NextLink>,
+                  );
+                }
+
+                arr.push(...[
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -485,7 +510,7 @@ function PipelineRunsTable({
                   >
                     <TodoList default size={2 * UNIT} />
                   </Button>,
-                ];
+                ]);
               }
 
               if (allowBulkSelect) {

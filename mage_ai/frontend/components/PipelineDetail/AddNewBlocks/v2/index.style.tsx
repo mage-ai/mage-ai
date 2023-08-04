@@ -60,13 +60,13 @@ export const ButtonWrapper = styled.div<{
   `}
 
   ${props => !props.compact && `
-    padding-bottom: ${2.5 * UNIT}px;
-    padding-top: ${2.5 * UNIT}px;
+    margin-bottom: ${2.5 * UNIT}px;
+    margin-top: ${2.5 * UNIT}px;
   `}
 
   ${props => props.compact && `
-    padding-bottom: ${1.5 * UNIT}px;
-    padding-top: ${1.5 * UNIT}px;
+    margin-bottom: ${1.5 * UNIT}px;
+    margin-top: ${1.5 * UNIT}px;
   `}
 `;
 

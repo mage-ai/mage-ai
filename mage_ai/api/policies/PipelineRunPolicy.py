@@ -90,6 +90,7 @@ PipelineRunPolicy.allow_write([
 PipelineRunPolicy.allow_query([
     'backfill_id',
     'end_timestamp',
+    'global_data_product_uuid',
     'include_pipeline_type',
     'order_by[]',
     'pipeline_type',

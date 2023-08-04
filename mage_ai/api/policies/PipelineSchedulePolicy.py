@@ -97,6 +97,7 @@ PipelineSchedulePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineSchedulePolicy.allow_query([
+    'global_data_product_uuid',
     'order_by',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

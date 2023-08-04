@@ -31,6 +31,8 @@ import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
+import GlobalDataProducts from '@components/GlobalDataProducts';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KernelOutputType, {
@@ -38,6 +40,7 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
@@ -1958,6 +1961,41 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
+  const { data: dataGlobalProducts } = api.global_data_products.list();
+  const globalDataProducts: GlobalDataProductType[] =
+    useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
+
+  const [showGlobalDataProducts, hideGlobalDataProducts] = useModal(({
+    addNewBlock,
+  }: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
+  }) => (
+    <ErrorProvider>
+      <Panel>
+        <GlobalDataProducts
+          globalDataProducts={globalDataProducts}
+          onClickRow={(globalDataProduct: GlobalDataProductType) => {
+            addNewBlock({
+              configuration: {
+                global_data_product: {
+                  uuid: globalDataProduct?.uuid,
+                },
+              },
+              type: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+            });
+            hideGlobalDataProducts();
+          }}
+        />
+      </Panel>
+    </ErrorProvider>
+  ), {
+  }, [
+    globalDataProducts,
+  ], {
+    background: true,
+    uuid: 'global_data_products',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1983,6 +2021,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       insights={insights}
       interruptKernel={interruptKernel}
@@ -2041,6 +2080,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSecrets,
     fetchVariables,
+    globalDataProducts,
     globalVariables,
     insights,
     interruptKernel,
@@ -2130,6 +2170,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
@@ -2163,6 +2204,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
+      showGlobalDataProducts={showGlobalDataProducts}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2183,6 +2225,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSampleData,
     files,
+    globalDataProducts,
     globalVariables,
     hiddenBlocks,
     interruptKernel,
@@ -2210,6 +2253,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     textareaFocused,
     widgets,
   ]);

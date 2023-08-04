@@ -132,10 +132,14 @@ class GlobalDataProduct:
             else:
                 return d
 
-    def is_outdated_after(self, now: datetime = None) -> bool:
+    def is_outdated_after(self, now: datetime = None, return_values: bool = False) -> bool:
+        values = {}
         outdated_starting_at = self.outdated_starting_at or {}
         if len(outdated_starting_at) == 0:
-            return True
+            if return_values:
+                return values
+            else:
+                return True
 
         validations = []
 
@@ -152,9 +156,17 @@ class GlobalDataProduct:
         ]:
             value = outdated_starting_at.get(key, None)
             if value is not None:
-                validations.append(value >= extract_value_from_datetime(
+                value2 = extract_value_from_datetime(
                     now or datetime.utcnow().replace(tzinfo=timezone.utc),
-                ))
+                )
+                values[key] = dict(
+                    current=value2,
+                    value=value,
+                )
+                validations.append(value2 >= value)
+
+        if return_values:
+            return values
 
         return all(validations)
 
@@ -166,19 +178,20 @@ class GlobalDataProduct:
 
         return execution_date
 
-    def is_outdated(self, pipeline_run: 'PipelineRun' = None) -> bool:
+    def is_outdated(self, pipeline_run: 'PipelineRun' = None) -> List[bool]:
         if not pipeline_run:
-            return True
+            return [True, True]
 
         now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
         execution_date = self.next_run_at(pipeline_run)
 
         outdated = execution_date and now >= execution_date
-        if not outdated:
-            return False
 
-        return self.is_outdated_after(now)
+        return [
+            outdated,
+            self.is_outdated_after(now),
+        ]
 
     def pipeline_runs(
         self,

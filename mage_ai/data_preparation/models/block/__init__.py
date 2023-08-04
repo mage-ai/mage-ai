@@ -1647,6 +1647,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         ):
             self.__update_conditional_blocks(data['conditional_blocks'])
 
+        if 'configuration' in data and data['configuration'] != self.configuration:
+            self.configuration = data['configuration']
+            self.__update_pipeline_block()
+
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']
             self.__update_pipeline_block()
