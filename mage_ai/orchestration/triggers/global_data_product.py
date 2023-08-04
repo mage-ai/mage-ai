@@ -27,6 +27,7 @@ def trigger_and_check_status(
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
 ):
+    pipeline_run_created = None
     tries = 0
 
     poll_start = datetime.utcnow().replace(tzinfo=timezone.utc)
@@ -72,6 +73,10 @@ def trigger_and_check_status(
         ), key=lambda x: x.execution_date, reverse=True)
         if len(completed_pipeline_runs) >= 1:
             pipeline_run = completed_pipeline_runs[0]
+
+            if pipeline_run_created and pipeline_run_created.id == pipeline_run.id:
+                break
+
             is_outdated, is_outdated_after = global_data_product.is_outdated(pipeline_run)
             if not is_outdated or not is_outdated_after:
                 if verbose:
@@ -126,17 +131,19 @@ def trigger_and_check_status(
                 timeout=10,
             ):
                 pipeline_schedule = __fetch_or_create_pipeline_schedule(global_data_product)
-                pr = create_and_start_pipeline_run(
+                pipeline_run_created = create_and_start_pipeline_run(
                     global_data_product.pipeline,
                     pipeline_schedule,
                     dict(variables=variables),
                     should_schedule=True,
                 )
-                if pr and verbose:
-                    print(
-                        f'Created pipeline run {pr.id} for '
-                        f'global data product {global_data_product.uuid}.'
-                    )
+                if pipeline_run_created:
+                    already_created_pipeline_run = True
+                    if verbose:
+                        print(
+                            f'Created pipeline run {pipeline_run_created.id} for '
+                            f'global data product {global_data_product.uuid}.'
+                        )
 
                 lock.release_lock(__lock_key_for_creating_pipeline_run(global_data_product))
 
