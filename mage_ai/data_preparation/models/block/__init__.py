@@ -1162,15 +1162,25 @@ class Block:
             # Initialize module
             if self.language == BlockLanguage.PYTHON:
                 try:
+                    block_uuid = self.uuid
+                    block_file_path = self.file_path
+                    if self.replicated_block:
+                        block_uuid = self.replicated_block
+                        block_file_path = Block(
+                            self.replicated_block,
+                            self.replicated_block,
+                            self.type,
+                            language=self.language,
+                        ).file_path
                     spec = importlib.util.spec_from_file_location(
-                        self.uuid, self.file_path,
+                        block_uuid, block_file_path,
                     )
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                     block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
                 except Exception:
-                    print('Error initializing block module.')
+                    print('Falling back to default block execution...')
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
