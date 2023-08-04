@@ -1,6 +1,6 @@
 import logging
 import os
-from urllib.parse import parse_qs, quote_plus, urlparse
+from urllib.parse import parse_qs, urlparse
 
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -46,13 +46,6 @@ elif not db_connection_url:
             # For new projects, create mage-ai.db in variables dir
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
         db_kwargs['connect_args']['check_same_thread'] = False
-
-url_parsed = urlparse(db_connection_url)
-if url_parsed.password:
-    db_connection_url = db_connection_url.replace(
-        url_parsed.password,
-        quote_plus(url_parsed.password),
-    )
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50

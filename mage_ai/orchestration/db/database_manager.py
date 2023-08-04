@@ -22,8 +22,7 @@ class DatabaseManager:
             'script_location',
             os.path.join(cur_dirpath, 'migrations'),
         )
-        escaped_db_connection_url = db_connection_url.replace('%', '%%')
-        alembic_cfg.set_main_option('sqlalchemy.url', escaped_db_connection_url)
+        alembic_cfg.set_main_option('sqlalchemy.url', db_connection_url)
         if log_level is not None:
             alembic_cfg.set_section_option('logger_alembic', 'level', log_level)
         command.upgrade(alembic_cfg, 'head')

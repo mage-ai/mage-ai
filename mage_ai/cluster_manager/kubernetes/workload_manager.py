@@ -145,13 +145,6 @@ class WorkloadManager:
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
-
         ingress_name = kwargs.get('ingress_name')
 
         env_vars = self.__populate_env_vars(
@@ -166,7 +159,7 @@ class WorkloadManager:
         containers = [
             {
                 'name': f'{name}-container',
-                'image': 'mageai/mageai-manage-instance-test:latest',
+                'image': 'mageai/mageai:latest',
                 'ports': [
                     {
                         'containerPort': 6789,
