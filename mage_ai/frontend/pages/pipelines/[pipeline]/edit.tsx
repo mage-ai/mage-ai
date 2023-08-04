@@ -1282,6 +1282,7 @@ function PipelineDetailPage({
         content: blockContent,
         name,
         priority: idx,
+        require_unique_name: true,
         ...block,
       },
     }).then((response: {

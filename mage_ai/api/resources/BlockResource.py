@@ -36,6 +36,15 @@ class BlockResource(GenericResource):
         language = payload.get('language')
         name = payload.get('name')
         block_name = name or payload.get('uuid')
+        require_unique_name = payload.get('require_unique_name')
+
+        cache = await BlockCache.initialize_cache()
+        if require_unique_name:
+            block_uuid = clean_name(block_name)
+            shared_pipelines = cache.get_pipelines(dict(type=block_type, uuid=block_uuid))
+            if shared_pipelines:
+                raise Exception(f'The block name "{block_name}" already exists. \
+                                Choose a different one.')
 
         payload_config = payload.get('config') or {}
 
@@ -129,7 +138,6 @@ class BlockResource(GenericResource):
 
             block.update_content(content)
 
-        cache = await BlockCache.initialize_cache()
         cache.add_pipeline(block, pipeline)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()

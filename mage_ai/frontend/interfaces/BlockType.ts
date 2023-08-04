@@ -202,6 +202,7 @@ export interface BlockRequestPayloadType {
   name?: string;
   priority?: number;
   replicated_block?: string;
+  require_unique_name?: boolean;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
 }
