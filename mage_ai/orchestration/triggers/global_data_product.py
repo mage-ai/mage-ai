@@ -131,18 +131,28 @@ def trigger_and_check_status(
                 timeout=10,
             ):
                 pipeline_schedule = __fetch_or_create_pipeline_schedule(global_data_product)
-                pipeline_run_created = create_and_start_pipeline_run(
-                    global_data_product.pipeline,
-                    pipeline_schedule,
-                    dict(variables=variables),
-                    should_schedule=True,
-                )
-                if pipeline_run_created:
-                    if verbose:
+                try:
+                    pipeline_run_created = create_and_start_pipeline_run(
+                        global_data_product.pipeline,
+                        pipeline_schedule,
+                        dict(variables=variables),
+                        should_schedule=True,
+                    )
+                    if pipeline_run_created:
+                        if verbose:
+                            print(
+                                f'Created pipeline run {pipeline_run_created.id} for '
+                                f'global data product {global_data_product.uuid}.'
+                            )
+                except AssertionError as err:
+                    if 'can only test a child process' in str(err):
                         print(
-                            f'Created pipeline run {pipeline_run_created.id} for '
-                            f'global data product {global_data_product.uuid}.'
+                            '[WARNING] triggers.global_data_product.trigger_and_check_status '
+                            f'({global_data_product.uuid}): '
+                            f'{err}'
                         )
+                    else:
+                        raise err
 
                 lock.release_lock(__lock_key_for_creating_pipeline_run(global_data_product))
 
