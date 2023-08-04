@@ -278,12 +278,14 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
-        self.replicated_block_object = Block(
-            self.replicated_block,
-            self.replicated_block,
-            self.type,
-            language=self.language,
-        )
+        self.replicated_block_object = None
+        if replicated_block:
+            self.replicated_block_object = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            )
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -321,12 +323,7 @@ class Block:
 
     async def content_async(self) -> str:
         if self.replicated_block:
-            self._content = await Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content_async()
+            self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
             self._content = await self.file.content_async()
