@@ -21,21 +21,19 @@ logger = Logger().new_server_logger(__name__)
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
 
-    database_manager.run_migrations()
-
-    # sentry_dsn = SENTRY_DSN
-    # if sentry_dsn:
-    #     sentry_sdk.init(
-    #         sentry_dsn,
-    #         traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-    #     )
-    # (enable_new_relic, application) = initialize_new_relic()
-    # try:
-    #     with newrelic.agent.BackgroundTask(application, name="db-migration", group='Task') \
-    #          if enable_new_relic else nullcontext():
-    #         database_manager.run_migrations()
-    # except Exception:
-    #     traceback.print_exc()
+    sentry_dsn = SENTRY_DSN
+    if sentry_dsn:
+        sentry_sdk.init(
+            sentry_dsn,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        )
+    (enable_new_relic, application) = initialize_new_relic()
+    try:
+        with newrelic.agent.BackgroundTask(application, name="db-migration", group='Task') \
+             if enable_new_relic else nullcontext():
+            database_manager.run_migrations()
+    except Exception:
+        traceback.print_exc()
     try:
         LoopTimeTrigger().start()
     except Exception as e:
