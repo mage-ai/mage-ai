@@ -10,35 +10,40 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 class MongoDB(BaseIO):
     def __init__(
         self,
-        database: str,
-        host: str,
-        password: str,
-        user: str,
+        connection_string: str = None,
+        host: str = None,
+        port: int = 27017,
+        user: str = None,
+        password: str = None,
+        database: str = None,
         collection: str = None,
-        port: int = 3306,
         verbose: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(verbose=verbose)
-        self.client = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+        if connection_string:
+            self.client = MongoClient(connection_string)
+        else:
+            self.client = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
         self.database = self.client[database]
         self.collection = collection
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'MongoDB':
         return cls(
-            database=config[ConfigKey.MONGODB_DATABASE],
+            connection_string=config[ConfigKey.MONGODB_CONNECTION_STRING],
             host=config[ConfigKey.MONGODB_HOST],
-            password=config[ConfigKey.MONGODB_PASSWORD],
-            user=config[ConfigKey.MONGODB_USER],
-            collection=config[ConfigKey.MONGODB_COLLECTION],
             port=config[ConfigKey.MONGODB_PORT],
+            user=config[ConfigKey.MONGODB_USER],
+            password=config[ConfigKey.MONGODB_PASSWORD],
+            database=config[ConfigKey.MONGODB_DATABASE],
+            collection=config[ConfigKey.MONGODB_COLLECTION],
         )
 
     def load(
         self,
         collection: str = None,
-        query: Dict = dict(),
+        query: Dict = None,
         **kwargs,
     ) -> DataFrame:
         """
@@ -52,6 +57,9 @@ class MongoDB(BaseIO):
         Returns:
             DataFrame: Data frame object loaded from the MongoDB collection.
         """
+        if query is None:
+            query = dict()
+
         collection = collection or self.collection
         if collection is None:
             raise Exception(
