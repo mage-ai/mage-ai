@@ -132,10 +132,14 @@ class GlobalDataProduct:
             else:
                 return d
 
-    def is_outdated_after(self, now: datetime = None) -> bool:
+    def is_outdated_after(self, now: datetime = None, return_values: bool = False) -> bool:
+        values = {}
         outdated_starting_at = self.outdated_starting_at or {}
         if len(outdated_starting_at) == 0:
-            return True
+            if return_values:
+                return values
+            else:
+                return True
 
         validations = []
 
@@ -155,7 +159,14 @@ class GlobalDataProduct:
                 value2 = extract_value_from_datetime(
                     now or datetime.utcnow().replace(tzinfo=timezone.utc),
                 )
+                values[key] = dict(
+                    current=value2,
+                    value=value,
+                )
                 validations.append(value2 >= value)
+
+        if return_values:
+            return values
 
         return all(validations)
 

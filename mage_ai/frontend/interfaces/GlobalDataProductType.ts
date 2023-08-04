@@ -32,5 +32,5 @@ export default interface GlobalDataProductType {
       partitions?: number;
     };
   };
-  uuid: string;
+  uuid?: string;
 }

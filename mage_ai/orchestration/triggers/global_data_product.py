@@ -89,9 +89,12 @@ def trigger_and_check_status(
                         )
                     elif not is_outdated_after:
                         arr = []
-                        if global_data_product.outdated_starting_at:
-                            for k, v in (global_data_product.outdated_starting_at or {}).items():
-                                arr.append(f'{k.replace("_", " ")}: {v}')
+                        for k, d in global_data_product.is_outdated_after(
+                            return_values=True,
+                        ).items():
+                            current = d.get('current')
+                            value = d.get('value')
+                            arr.append(f'{k.replace("_", " ")}: {value} (currently {current})')
 
                         print(
                             f'Global data product {global_data_product.uuid} is not yet outdated. '
@@ -117,7 +120,7 @@ def trigger_and_check_status(
                         f'global data product {global_data_product.uuid}: '
                         'overlaps with a previous pipeline run.'
                     )
-        elif pipeline_runs_count == 0:
+        elif pipeline_runs_count == 0 and tries == 0:
             if lock.try_acquire_lock(
                 __lock_key_for_creating_pipeline_run(global_data_product),
                 timeout=10,

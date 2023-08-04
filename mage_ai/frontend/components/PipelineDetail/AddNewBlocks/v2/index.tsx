@@ -421,6 +421,7 @@ function AddNewBlocksV2({
       ),
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
       onClick: () => showGlobalDataProducts({
+        // @ts-ignore
         addNewBlock,
       }),
       uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
