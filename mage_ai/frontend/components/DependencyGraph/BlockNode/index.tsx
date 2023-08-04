@@ -13,10 +13,10 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import {
   CircleWithArrowUp,
-  CubeHollowFrame,
   CubeWithArrowDown,
   DBT as DBTIcon,
   FrameBoxSelection,
+  HexagonAll,
   Sensor,
   Union,
 } from '@oracle/icons';
@@ -44,7 +44,7 @@ const ICON_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
   [BlockTypeEnum.DATA_LOADER]: CubeWithArrowDown,
   [BlockTypeEnum.DBT]: DBTIcon,
-  [BlockTypeEnum.GLOBAL_DATA_PRODUCT]: CubeHollowFrame,
+  [BlockTypeEnum.GLOBAL_DATA_PRODUCT]: HexagonAll,
   [BlockTypeEnum.SENSOR]: Sensor,
   [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
 };

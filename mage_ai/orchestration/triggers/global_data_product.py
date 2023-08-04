@@ -138,7 +138,6 @@ def trigger_and_check_status(
                     should_schedule=True,
                 )
                 if pipeline_run_created:
-                    already_created_pipeline_run = True
                     if verbose:
                         print(
                             f'Created pipeline run {pipeline_run_created.id} for '

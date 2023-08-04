@@ -35,11 +35,11 @@ import {
   BlockCubePolygon,
   BlockGeneric,
   CircleWithArrowUp,
-  CubeHollowFrame,
   CubeWithArrowDown,
   DBT as DBTIcon,
   File as FileIcon,
   FrameBoxSelection,
+  HexagonAll,
   Sensor,
   TemplateShapes,
 } from '@oracle/icons';
@@ -415,7 +415,7 @@ function AddNewBlocksV2({
     },
     {
       beforeIcon: (
-        <CubeHollowFrame
+        <HexagonAll
           size={ICON_SIZE}
         />
       ),
