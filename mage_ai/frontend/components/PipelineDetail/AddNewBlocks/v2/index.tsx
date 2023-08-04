@@ -413,19 +413,19 @@ function AddNewBlocksV2({
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
       uuid: BlockTypeEnum.DBT,
     },
-    {
-      beforeIcon: (
-        <HexagonAll
-          size={ICON_SIZE}
-        />
-      ),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
-      onClick: () => showGlobalDataProducts({
-        // @ts-ignore
-        addNewBlock,
-      }),
-      uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-    },
+    // {
+    //   beforeIcon: (
+    //     <HexagonAll
+    //       size={ICON_SIZE}
+    //     />
+    //   ),
+    //   label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
+    //   onClick: () => showGlobalDataProducts({
+    //     // @ts-ignore
+    //     addNewBlock,
+    //   }),
+    //   uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+    // },
     {
       isGroupingTitle: true,
       label: () => 'Custom templates',

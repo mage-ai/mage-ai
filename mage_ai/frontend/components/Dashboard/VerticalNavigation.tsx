@@ -67,14 +67,14 @@ const DEFAULT_NAV_ITEMS = [
           href: '/pipeline-runs',
         },
       },
-      {
-        Icon: HexagonAll,
-        id: 'global-data-products',
-        label: () => 'Global data products',
-        linkProps: {
-          href: '/global-data-products',
-        },
-      },
+      // {
+      //   Icon: HexagonAll,
+      //   id: 'global-data-products',
+      //   label: () => 'Global data products',
+      //   linkProps: {
+      //     href: '/global-data-products',
+      //   },
+      // },
     ],
   },
   {
