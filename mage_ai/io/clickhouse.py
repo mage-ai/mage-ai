@@ -8,6 +8,7 @@ from mage_ai.shared.utils import (
 from pandas import DataFrame, Series
 from typing import Dict, List, Union
 import clickhouse_connect
+import copy
 
 
 class ClickHouse(BaseSQLDatabase):
@@ -27,6 +28,15 @@ class ClickHouse(BaseSQLDatabase):
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
         self.database = kwargs.get('database', 'default')
+
+        if self.database != 'default':
+            kwargs2 = copy.deepcopy(kwargs)
+            kwargs2['database'] = 'default'
+            temp_client = clickhouse_connect.get_client(**kwargs2)
+            self.printer.print_msg(f'Creating database if not exists: {self.database}')
+            temp_client.command(f'CREATE DATABASE IF NOT EXISTS {self.database}')
+            temp_client.close()
+
         with self.printer.print_msg('Connecting to ClickHouse'):
             self.client = clickhouse_connect.get_client(**kwargs)
 
@@ -213,19 +223,9 @@ class ClickHouse(BaseSQLDatabase):
             df = DataFrame(df)
 
         def __process():
-
-            db_existing = self.client.query_df(f"""
-EXISTS DATABASE {database}
-""")
-            db_exists = not db_existing.empty and db_existing.iloc[0, 0] == 1
-            if not db_exists:
-                self.printer.print_msg(f'Creating a new database: {database}')
-                self.client.command(f'CREATE DATABASE {database}')
-
             table_existing = self.client.query_df(f"""
 EXISTS TABLE {database}.{table_name}
 """)
-
             table_exists = not table_existing.empty and table_existing.iloc[0, 0] == 1
             should_create_table = not table_exists
 
