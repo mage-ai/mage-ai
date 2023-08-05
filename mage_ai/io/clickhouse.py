@@ -236,7 +236,9 @@ EXISTS TABLE {database}.{table_name}
                 self.client.command(f'USE {database}')
 
                 if should_create_table:
-                    self.client.command(f"""
+                    with self.printer.print_msg(
+                           f'Creating a new table: {database}.{table_name}'):
+                        self.client.command(f"""
 CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory EMPTY AS
 {query_string}
 """)
@@ -254,8 +256,9 @@ INSERT INTO {database}.{table_name}
                             table_name=table_name,
                             database=database,
                         )
-                        self.printer.print_msg(f'Creating a new table: {create_table_stmt}')
-                    self.client.command(create_table_stmt)
+                    with self.printer.print_msg(
+                           f'Creating a new table: {create_table_stmt}'):
+                        self.client.command(create_table_stmt)
 
                 self.client.insert_df(f'{database}.{table_name}', df)
 
