@@ -237,11 +237,11 @@ EXISTS TABLE {database}.{table_name}
 
                 if should_create_table:
                     self.client.command(f"""
-CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory AS
+CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory EMPTY AS
 {query_string}
 """)
-                else:
-                    self.client.command(f"""
+
+                self.client.command(f"""
 INSERT INTO {database}.{table_name}
 {query_string}
 """)
