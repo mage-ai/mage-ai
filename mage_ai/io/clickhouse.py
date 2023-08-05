@@ -219,6 +219,7 @@ EXISTS DATABASE {database}
 """)
             db_exists = not db_existing.empty and db_existing.iloc[0, 0] == 1
             if not db_exists:
+                self.printer.print_msg(f'Creating a new database: {database}')
                 self.client.command(f'CREATE DATABASE {database}')
 
             table_existing = self.client.query_df(f"""
