@@ -33,9 +33,10 @@ class ClickHouse(BaseSQLDatabase):
             kwargs2 = copy.deepcopy(kwargs)
             kwargs2['database'] = 'default'
             temp_client = clickhouse_connect.get_client(**kwargs2)
-            self.printer.print_msg(f'Creating database if not exists: {self.database}')
-            temp_client.command(f'CREATE DATABASE IF NOT EXISTS {self.database}')
-            temp_client.close()
+            with self.printer.print_msg(
+                    f'Creating database if not exists: {self.database}'):
+                temp_client.command(f'CREATE DATABASE IF NOT EXISTS {self.database}')
+                temp_client.close()
 
         with self.printer.print_msg('Connecting to ClickHouse'):
             self.client = clickhouse_connect.get_client(**kwargs)
