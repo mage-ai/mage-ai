@@ -214,11 +214,18 @@ class ClickHouse(BaseSQLDatabase):
 
         def __process():
 
-            df_existing = self.client.query_df(f"""
+            db_existing = self.client.query_df(f"""
+EXISTS DATABASE {database}
+""")
+            db_exists = not db_existing.empty and db_existing.iloc[0, 0] == 1
+            if not db_exists:
+                self.client.command(f'CREATE DATABASE {database}')
+
+            table_existing = self.client.query_df(f"""
 EXISTS TABLE {database}.{table_name}
 """)
 
-            table_exists = not df_existing.empty and df_existing.iloc[0, 0] == 1
+            table_exists = not table_existing.empty and table_existing.iloc[0, 0] == 1
             should_create_table = not table_exists
 
             if table_exists:
