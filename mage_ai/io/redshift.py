@@ -33,27 +33,26 @@ class Redshift(BaseSQL):
         """
         Opens a connection to the Redshift cluster.
         """
-        # with self.printer.print_msg('Connecting to Redshift cluster'):
-        #     connect_options = {}
-        #     for key in [
-        #         'access_key_id',
-        #         'cluster_identifier',
-        #         'database',
-        #         'db_user',
-        #         'host',
-        #         'iam',
-        #         'password',
-        #         'port',
-        #         'profile',
-        #         'region',
-        #         'secret_access_key',
-        #         'user',
-        #     ]:
-        #         if self.settings.get(key):
-        #             connect_options[key] = self.settings[key]
-        #     warnings.filterwarnings('ignore', category=DeprecationWarning)
-        #     self._ctx = connect(**connect_options)
-        pass
+        with self.printer.print_msg('Connecting to Redshift cluster'):
+            connect_options = {}
+            for key in [
+                'access_key_id',
+                'cluster_identifier',
+                'database',
+                'db_user',
+                'host',
+                'iam',
+                'password',
+                'port',
+                'profile',
+                'region',
+                'secret_access_key',
+                'user',
+            ]:
+                if self.settings.get(key):
+                    connect_options[key] = self.settings[key]
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            self._ctx = connect(**connect_options)
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
@@ -179,8 +178,7 @@ class Redshift(BaseSQL):
             df = clean_df_for_export(df, self.clean, dtypes)
 
         def __process():
-            # table_exists = self.table_exists(schema_name, table_name)
-            table_exists = True
+            table_exists = self.table_exists(schema_name, table_name)
 
             columns_with_type = []
             if not query_string:
@@ -197,50 +195,49 @@ class Redshift(BaseSQL):
                     ),
                 ) for col in columns]
 
-            # with self.conn.cursor() as cur:
-            if schema_name and create_schema:
-                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+            with self.conn.cursor() as cur:
+                if schema_name and create_schema:
+                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
 
-            should_create_table = not table_exists
+                should_create_table = not table_exists
 
-            # if table_exists:
-            #     if ExportWritePolicy.FAIL == if_exists:
-            #         raise ValueError(
-            #             f'Table \'{full_table_name}\' already exists in database.',
-            #         )
-            #     elif ExportWritePolicy.REPLACE == if_exists:
-            #         if drop_table_on_replace:
-            #             cmd = f'DROP TABLE {full_table_name}'
-            #             if cascade_on_drop:
-            #                 cmd = f'{cmd} CASCADE'
-            #             cur.execute(cmd)
-            #             should_create_table = True
-            #         else:
-            #             cur.execute(f'DELETE FROM {full_table_name}')
+                if table_exists:
+                    if ExportWritePolicy.FAIL == if_exists:
+                        raise ValueError(
+                            f'Table \'{full_table_name}\' already exists in database.',
+                        )
+                    elif ExportWritePolicy.REPLACE == if_exists:
+                        if drop_table_on_replace:
+                            cmd = f'DROP TABLE {full_table_name}'
+                            if cascade_on_drop:
+                                cmd = f'{cmd} CASCADE'
+                            cur.execute(cmd)
+                            should_create_table = True
+                        else:
+                            cur.execute(f'DELETE FROM {full_table_name}')
 
-            if query_string:
-                query = f'CREATE TABLE {full_table_name} AS\n{query_string}'
+                if query_string:
+                    query = f'CREATE TABLE {full_table_name} AS\n{query_string}'
 
-                if ExportWritePolicy.APPEND == if_exists and table_exists:
-                    query = f'INSERT INTO {full_table_name}\n{query_string}'
+                    if ExportWritePolicy.APPEND == if_exists and table_exists:
+                        query = f'INSERT INTO {full_table_name}\n{query_string}'
 
-                cur.execute(query)
-            else:
-                if should_create_table:
-                    col_with_types = ', '.join(
-                        [f'{col} {col_type}' for col, col_type in columns_with_type],
-                    )
-                    query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
+                    cur.execute(query)
+                else:
+                    if should_create_table:
+                        col_with_types = ', '.join(
+                            [f'{col} {col_type}' for col, col_type in columns_with_type],
+                        )
+                        query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
+                        cur.execute(query)
+
+                    columns = ', '.join([t[0] for t in columns_with_type])
+                    values = [f"""({', '.join([format_value(x) for x in v])})""" for v in df.values]
+                    values = ', '.join(values)
+                    query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
                     cur.execute(query)
 
-                columns = ', '.join([t[0] for t in columns_with_type])
-                values = [f"""({', '.join([format_value(x) for x in v])})""" for v in df.values]
-                values = ', '.join(values)
-                query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
-                print('redshift query:', query)
-                # cur.execute(query)
-
-                # self.conn.commit()
+                self.conn.commit()
 
         try:
             if verbose:
