@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def format_value(value):
-    if value is None or pd.isnull(value):
+    if type(value) is not list and (value is None or pd.isnull(value)):
         return 'NULL'
 
     if type(value) is bool:
