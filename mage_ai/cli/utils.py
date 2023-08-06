@@ -60,7 +60,8 @@ def generate_models_sql(catalog_data: dict, schema_name: str) -> list[tuple[str,
         catalog_data (dict): Mage's integration pipeline catalog data.
 
     Returns:
-        sql_statements (list[tuple[str, str]]): list of tuples containing the stream name and correspondent SQL statement.
+        sql_statements (list[tuple[str, str]]): list of tuples containing the stream name
+        and correspondent SQL statement.
     """
     sql_statements = []
 
@@ -87,7 +88,8 @@ def generate_dbt_models(target_dir: str, sql_statements: list[tuple[str, str]]):
 
     Args:
         target_dir (str): the dbt models target directory.
-        sql_statements (list[tuple[str, str]]): a list of tuples containing the stream name and correspondent SQL statement.
+        sql_statements (list[tuple[str, str]]): a list of tuples containing the stream name and
+        its correspondent SQL statement.
     """
     # Generate separate SQL files for each stream
     for stream_name, sql in sql_statements:

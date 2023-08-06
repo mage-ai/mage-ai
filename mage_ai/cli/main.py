@@ -325,7 +325,8 @@ def create_dbt_models_from_integration_pipeline(
     ),
 ):
     """
-    Create dbt models from a Mage integration pipeline catalog and update the dbt's sources.yaml file.
+    Create dbt models from a Mage integration pipeline catalog and update the
+    dbt's sources.yaml file.
     """
     from mage_ai.cli.utils import (
         generate_models_sql,
