@@ -321,7 +321,7 @@ def create_dbt_models_from_integration_pipeline(
         ..., help="path to the target dbt project models directory"
     ),
     schema_name: str = typer.Argument(
-        ..., help="schema name to use for the dbt models"
+        ..., help="the integration's pipeline destination db schema name"
     ),
 ):
     """
