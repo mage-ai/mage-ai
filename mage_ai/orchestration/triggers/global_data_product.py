@@ -130,7 +130,7 @@ def trigger_and_check_status(
                 __lock_key_for_creating_pipeline_run(global_data_product),
                 timeout=10,
             ):
-                pipeline_schedule = __fetch_or_create_pipeline_schedule(global_data_product)
+                pipeline_schedule = fetch_or_create_pipeline_schedule(global_data_product)
                 try:
                     pipeline_run_created = create_and_start_pipeline_run(
                         global_data_product.pipeline,
@@ -193,7 +193,7 @@ def __clean_up_pipeline_runs(
     return arr
 
 
-def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:
+def fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:
     pipeline_uuid = global_data_product.object_uuid
     schedule_name = TRIGGER_NAME_FOR_GLOBAL_DATA_PRODUCT
     schedule_type = ScheduleType.TIME

@@ -40,13 +40,14 @@ class GlobalDataProduct:
         return os.path.join(get_repo_path(), 'global_data_products.yaml')
 
     @classmethod
-    def load_all(self) -> List['GlobalDataProduct']:
+    def load_all(self, file_path: str = None) -> List['GlobalDataProduct']:
+        file_path_to_use = file_path or self.file_path()
         arr = []
 
-        if not os.path.exists(self.file_path()):
+        if not os.path.exists(file_path_to_use):
             return []
 
-        with open(self.file_path()) as fp:
+        with open(file_path_to_use) as fp:
             content = fp.read()
             if content:
                 yaml_config = yaml.safe_load(content) or {}
@@ -59,8 +60,8 @@ class GlobalDataProduct:
         return arr
 
     @classmethod
-    def get(self, uuid: str):
-        return find(lambda x: x.uuid == uuid, self.load_all())
+    def get(self, uuid: str, file_path: str = None):
+        return find(lambda x: x.uuid == uuid, self.load_all(file_path=file_path))
 
     @property
     def pipeline(self) -> Pipeline:
@@ -256,7 +257,7 @@ class GlobalDataProduct:
     def delete(self) -> None:
         self.save(delete=True)
 
-    def save(self, delete: bool = False) -> None:
+    def save(self, delete: bool = False, file_path: str = None) -> None:
         mapping = index_by(lambda x: x.uuid, self.load_all())
 
         if delete:
@@ -275,7 +276,7 @@ class GlobalDataProduct:
                     mapping_new[uuid][k] = v
 
         content = yaml.safe_dump(mapping_new)
-        safe_write(self.file_path(), content)
+        safe_write(file_path or self.file_path(), content)
 
     def update(self, payload: Dict) -> None:
         for key in [
