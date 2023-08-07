@@ -129,7 +129,7 @@ class GlobalDataProduct:
             if in_seconds:
                 now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
-                return ((now + d) - now).timestamp()
+                return ((now + d) - now).total_seconds()
             else:
                 return d
 
@@ -146,7 +146,7 @@ class GlobalDataProduct:
 
         for key, extract_value_from_datetime in [
             ('day_of_month', lambda x: x.day),
-            ('day_of_week', lambda x: (x.weekday + 1) % 7),
+            ('day_of_week', lambda x: (x.weekday() + 1) % 7),
             ('day_of_year', lambda x: x.timetuple().tm_yday),
             ('hour_of_day', lambda x: x.hour),
             ('minute_of_hour', lambda x: x.minute),
