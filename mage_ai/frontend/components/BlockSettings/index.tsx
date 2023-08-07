@@ -92,6 +92,7 @@ function BlockSettings({
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
 
   const {
+    color: blockColor,
     configuration,
     name: blockName,
     type: blockType,
@@ -337,7 +338,7 @@ function BlockSettings({
                       Name:&nbsp;
                     </Text>
                     <Text>
-                      {blockAttributes?.name || ''}
+                      {blockName || ''}
                     </Text>
                   </Flex>
                   <Button
@@ -357,7 +358,7 @@ function BlockSettings({
                           Color:&nbsp;
                         </Text>
                         <Text>
-                          {capitalize(blockAttributes?.color || '')}
+                          {capitalize(blockColor || '')}
                         </Text>
                       </Flex>
                       <Button
@@ -366,8 +367,8 @@ function BlockSettings({
                         outline={false}
                       >
                         <Circle
-                          color={blockAttributes?.color
-                            ? BLOCK_COLOR_HEX_CODE_MAPPING[blockAttributes?.color]
+                          color={blockColor
+                            ? BLOCK_COLOR_HEX_CODE_MAPPING[blockColor]
                             : null
                           }
                           size={ICON_SIZE_SMALL}
