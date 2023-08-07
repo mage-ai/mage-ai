@@ -662,8 +662,8 @@ function PipelineDetailPage({
     pipeline?: PipelineType | {
       blocks?: BlockType[];
       extensions?: PipelineExtensionsType;
-      name: string;
-      type: string;
+      name?: string;
+      type?: string;
     };
   }, opts?: {
     contentOnly?: boolean;
@@ -690,7 +690,8 @@ function PipelineDetailPage({
     const callbacksByUUID = {};
     const conditionalsByUUID = {};
 
-    blocks.forEach((block: BlockType) => {
+    const blocksFinal = pipelineOverride?.blocks || blocks;
+    blocksFinal.forEach((block: BlockType) => {
       const {
         extension_uuid: extensionUUID,
         type,
@@ -1351,34 +1352,59 @@ function PipelineDetailPage({
   // }, []);
 
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
+    allowDuplicateBlockName = true,
     block,
     idx,
+    isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
-  }:{
-    block: BlockRequestPayloadType,
-    idx: number,
-    name: string,
-    onCreateCallback?: (block: BlockType) => void,
+  }: {
+    allowDuplicateBlockName?: boolean;
+    block: BlockRequestPayloadType;
+    idx?: number;
+    isUpdatingBlock?: boolean;
+    name: string;
+    onCreateCallback?: (block: BlockType) => void;
   }) => (
     <ErrorProvider>
       <ConfigureBlock
+        allowDuplicateBlockName={allowDuplicateBlockName}
         block={block}
         defaultName={name}
+        isUpdatingBlock={isUpdatingBlock}
         onClose={hideAddBlockModal}
         onSave={(opts: {
           color?: BlockColorEnum;
           language?: BlockLanguageEnum;
           name?: string;
-        } = {}) => addNewBlockAtIndex(
-          {
-            ...block,
-            ...ignoreKeys(opts, ['name']),
-          },
-          idx,
-          onCreateCallback,
-          opts?.name,
-        ).then(() => hideAddBlockModal())}
+        } = {}) => {
+          if (isUpdatingBlock) {
+            savePipelineContent({
+              block: {
+                color: opts?.color || null,
+                name: opts?.name,
+                uuid: block.uuid,
+              },
+              pipeline: {
+                blocks: pipeline?.blocks || [],
+              },
+            }).then(() => {
+              setSelectedBlock(null);
+              hideAddBlockModal();
+            });
+          } else {
+            addNewBlockAtIndex(
+              {
+                ...block,
+                ...ignoreKeys(opts, ['name']),
+              },
+              idx,
+              onCreateCallback,
+              opts?.name,
+            ).then(() => hideAddBlockModal());
+          }
+        }
+        }
         pipeline={pipeline}
       />
     </ErrorProvider>
@@ -2057,6 +2083,16 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+        allowDuplicateBlockName,
+      ) => new Promise(() => showAddBlockModal({
+        allowDuplicateBlockName,
+        block,
+        isUpdatingBlock: true,
+        name,
+      }))}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
