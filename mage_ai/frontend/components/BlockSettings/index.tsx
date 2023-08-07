@@ -45,8 +45,9 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { indexBy } from '@utils/array';
+import { TableContainerStyle } from '@components/IntegrationPipeline/index.style';
 import { YELLOW } from '@oracle/styles/colors/main';
+import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -199,54 +200,56 @@ function BlockSettings({
   );
 
   const pipelinesTable = useMemo(() => blockPipelinesCount >= 1 && (
-    <Table
-      columnFlex={[null, 1]}
-      columns={[
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Description',
-        },
-      ]}
-      rows={blockPipelines.map(({
-        pipeline: {
-          description,
-          name: pipelineName,
-          uuid: pipelineUUID,
-        },
-      }) => {
-        let nameEl;
+    <TableContainerStyle>
+      <Table
+        columnFlex={[null, 1]}
+        columns={[
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Description',
+          },
+        ]}
+        rows={blockPipelines.map(({
+          pipeline: {
+            description,
+            name: pipelineName,
+            uuid: pipelineUUID,
+          },
+        }) => {
+          let nameEl;
 
-        if (pipeline?.uuid === pipelineUUID) {
-          nameEl = (
-            <Text key="name" monospace muted>
-              {pipelineName || pipelineUUID}
-            </Text>
-          );
-        } else {
-          nameEl = (
-            <Link
-              href={`/pipelines/${pipelineUUID}/edit`}
-              key="name"
-              monospace
-              openNewWindow
-              sameColorAsText
-            >
-              {pipelineName || pipelineUUID}
-            </Link>
-          );
-        }
+          if (pipeline?.uuid === pipelineUUID) {
+            nameEl = (
+              <Text key="name" monospace muted>
+                {pipelineName || pipelineUUID} (current)
+              </Text>
+            );
+          } else {
+            nameEl = (
+              <Link
+                href={`/pipelines/${pipelineUUID}/edit`}
+                key="name"
+                monospace
+                openNewWindow
+                sameColorAsText
+              >
+                {pipelineName || pipelineUUID}
+              </Link>
+            );
+          }
 
-        return [
-          nameEl,
-          <Text default key="description" monospace>
-            {description || '-'}
-          </Text>,
-        ];
-      })}
-      uuid="git-branch-blockPipelines"
-    />
+          return [
+            nameEl,
+            <Text default key="description" monospace>
+              {description || '-'}
+            </Text>,
+          ];
+        })}
+        uuid="git-branch-blockPipelines"
+      />
+    </TableContainerStyle>
   ), [
     blockPipelines,
     blockPipelinesCount,
