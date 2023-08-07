@@ -1,14 +1,16 @@
-from dataclasses import dataclass
-from kafka import KafkaConsumer
-from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
-from mage_ai.streaming.sources.base import BaseSource
-from mage_ai.streaming.sources.shared import SerializationMethod, SerDeConfig
-from enum import Enum
-from typing import Callable, Dict
 import importlib
 import json
 import time
+from dataclasses import dataclass
+from enum import Enum
+from typing import Callable, Dict
+
+from kafka import KafkaConsumer
+
+from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
+from mage_ai.streaming.sources.base import BaseSource
+from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
 class SecurityProtocol(str, Enum):
@@ -39,6 +41,7 @@ class KafkaConfig(BaseConfig):
     topic: str
     api_version: str = '0.10.2'
     batch_size: int = DEFAULT_BATCH_SIZE
+    timeout_ms: int = DEFAULT_TIMEOUT_MS
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
@@ -138,16 +141,21 @@ class KafkaSource(BaseSource):
             batch_size = self.config.batch_size
         else:
             batch_size = DEFAULT_BATCH_SIZE
+        if self.config.timeout_ms > 0:
+            timeout_ms = self.config.timeout_ms
+        else:
+            timeout_ms = DEFAULT_TIMEOUT_MS
+
         while True:
             # Response format is {TopicPartiton('topic1', 1): [msg1, msg2]}
             msg_pack = self.consumer.poll(
                 max_records=batch_size,
-                timeout_ms=500,
+                timeout_ms=timeout_ms,
             )
 
             message_values = []
             msg_printed = False
-            for tp, messages in msg_pack.items():
+            for _tp, messages in msg_pack.items():
                 for message in messages:
                     if not msg_printed:
                         self.__print_message(message)
