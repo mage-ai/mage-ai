@@ -1,8 +1,10 @@
-from alembic.config import Config
+import os
+
 from alembic import command
+from alembic.config import Config
+
 from mage_ai.orchestration.db import db_connection_url
 from mage_ai.shared.logger import LoggingLevel
-import os
 
 
 class DatabaseManager:
