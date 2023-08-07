@@ -278,6 +278,14 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
+        self.replicated_block_object = None
+        if replicated_block:
+            self.replicated_block_object = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            )
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -294,12 +302,7 @@ class Block:
     @property
     def content(self) -> str:
         if self.replicated_block:
-            self._content = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content
+            self._content = self.replicated_block_object.content
 
         if self._content is None:
             self._content = self.file.content()
@@ -320,12 +323,7 @@ class Block:
 
     async def content_async(self) -> str:
         if self.replicated_block:
-            self._content = await Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content_async()
+            self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
             self._content = await self.file.content_async()
@@ -1162,15 +1160,20 @@ class Block:
             # Initialize module
             if self.language == BlockLanguage.PYTHON:
                 try:
+                    block_uuid = self.uuid
+                    block_file_path = self.file_path
+                    if self.replicated_block:
+                        block_uuid = self.replicated_block
+                        block_file_path = self.replicated_block_object.file_path
                     spec = importlib.util.spec_from_file_location(
-                        self.uuid, self.file_path,
+                        block_uuid, block_file_path,
                     )
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                     block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
                 except Exception:
-                    print('Error initializing block module.')
+                    print('Falling back to default block execution...')
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
