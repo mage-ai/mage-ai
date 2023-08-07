@@ -44,7 +44,7 @@ class BlockResource(GenericResource):
             shared_pipelines = cache.get_pipelines(dict(type=block_type, uuid=block_uuid))
             if shared_pipelines:
                 raise Exception(f'The block name "{block_name}" already exists. \
-                                Choose a different one.')
+                                Please use a different one.')
 
         payload_config = payload.get('config') or {}
 
