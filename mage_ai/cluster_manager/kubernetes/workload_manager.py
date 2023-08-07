@@ -309,12 +309,21 @@ class WorkloadManager:
 
         k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
 
-        if ingress_name:
-            self.update_ingress_paths(ingress_name, service_name, name)
+        try:
+            if ingress_name:
+                self.add_service_to_ingress_paths(ingress_name, service_name, name)
+        except Exception:
+            # TODO: aggregate errors and show them to the user
+            pass
 
         return k8s_service
 
-    def update_ingress_paths(self, ingress_name: str, service_name: str, workspace_name: str):
+    def add_service_to_ingress_paths(
+        self,
+        ingress_name: str,
+        service_name: str,
+        workspace_name: str,
+    ) -> None:
         ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
         rule = ingress.spec.rules[0]
         paths = rule.http.paths
