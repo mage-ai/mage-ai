@@ -53,5 +53,12 @@ def generate_pipeline_with_description(pipeline_description: str):
                                             pipeline_description)))
 
 
+@app.command()
+def generate_comment_for_block(code_file: str):
+    with open(code_file) as block_content:
+        print(asyncio.run(LLMPipelineWizard().async_generate_comment_for_block(
+            block_content.read())))
+
+
 if __name__ == '__main__':
     app()
