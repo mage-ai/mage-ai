@@ -647,6 +647,7 @@ function PipelineDetailPage({
           callback: () => {
             setPipelineContentTouched(false);
             fetchPipeline();
+            fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -1352,23 +1353,22 @@ function PipelineDetailPage({
   // }, []);
 
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
-    allowDuplicateBlockName = true,
     block,
     idx,
     isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
+    preventDuplicateBlockName,
   }: {
-    allowDuplicateBlockName?: boolean;
     block: BlockRequestPayloadType;
     idx?: number;
     isUpdatingBlock?: boolean;
     name: string;
     onCreateCallback?: (block: BlockType) => void;
+    preventDuplicateBlockName?: boolean;
   }) => (
     <ErrorProvider>
       <ConfigureBlock
-        allowDuplicateBlockName={allowDuplicateBlockName}
         block={block}
         defaultName={name}
         isUpdatingBlock={isUpdatingBlock}
@@ -1406,6 +1406,7 @@ function PipelineDetailPage({
         }
         }
         pipeline={pipeline}
+        preventDuplicateBlockName={preventDuplicateBlockName}
       />
     </ErrorProvider>
   ), {
@@ -2086,12 +2087,12 @@ function PipelineDetailPage({
       showUpdateBlockModal={(
         block,
         name = randomNameGenerator(),
-        allowDuplicateBlockName,
+        preventDuplicateBlockName,
       ) => new Promise(() => showAddBlockModal({
-        allowDuplicateBlockName,
         block,
         isUpdatingBlock: true,
         name,
+        preventDuplicateBlockName,
       }))}
       statistics={statistics}
       textareaFocused={textareaFocused}
@@ -2242,6 +2243,14 @@ function PipelineDetailPage({
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
       showGlobalDataProducts={showGlobalDataProducts}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+      ) => new Promise(() => showAddBlockModal({
+        block,
+        isUpdatingBlock: true,
+        name,
+      }))}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />

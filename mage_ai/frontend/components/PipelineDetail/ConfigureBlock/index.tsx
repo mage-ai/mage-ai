@@ -48,7 +48,6 @@ import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
 type ConfigureBlockProps = {
-  allowDuplicateBlockName?: boolean;
   block: BlockType | BlockRequestPayloadType;
   defaultName: string;
   isUpdatingBlock?: boolean;
@@ -59,16 +58,17 @@ type ConfigureBlockProps = {
     name: string;
   }) => void;
   pipeline: PipelineType;
+  preventDuplicateBlockName?: boolean;
 };
 
 function ConfigureBlock({
-  allowDuplicateBlockName = true,
   block,
   defaultName,
   isUpdatingBlock,
   onClose,
   onSave,
   pipeline,
+  preventDuplicateBlockName,
 }: ConfigureBlockProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConfigureBlock',

@@ -70,7 +70,7 @@ type BlockSettingsProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-    allowDuplicateBlockName?: boolean,
+    preventDuplicateBlockName?: boolean,
   ) => void;
 };
 
@@ -285,7 +285,7 @@ function BlockSettings({
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing p={PADDING_UNITS}>
           {blockPipelinesCount > 1 &&
-            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <BannerStyle>
                 <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS} >
                   <Flex>
@@ -649,10 +649,13 @@ function BlockSettings({
           <>
             <Spacing p={PADDING_UNITS}>
               <Headline>
-                Pipelines
+                Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>
-                Here are all the pipelines that are using this block.
+                A shared block is available to and reused by multiple pipelines. It
+                enables you to write code once and have it easily accessible anywhere
+                in the workspace. As a result, any code changes will affect all
+                pipelines sharing the block.
               </Text>
             </Spacing>
 

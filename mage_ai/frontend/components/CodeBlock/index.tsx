@@ -51,7 +51,6 @@ import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
-import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -216,6 +215,10 @@ type CodeBlockProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -275,6 +278,7 @@ function CodeBlock({
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
+  showUpdateBlockModal,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -287,6 +291,7 @@ function CodeBlock({
     error: blockError,
     has_callback: hasCallback,
     language: blockLanguage,
+    name: blockName,
     pipelines,
     replicated_block: replicatedBlockUUID,
     type: blockType,
@@ -343,8 +348,6 @@ function CodeBlock({
 
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState<boolean>(isMarkdown);
-  const [isEditingBlockName, setIsEditingBlockName] = useState<boolean>(false);
-  const [newBlockUuid, setNewBlockUuid] = useState(blockUUID);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
@@ -676,7 +679,6 @@ function CodeBlock({
         response,
         {
           callback: (resp) => {
-            setIsEditingBlockName(false);
             fetchPipeline();
             fetchFileTree();
             setContent(content);
@@ -706,27 +708,12 @@ function CodeBlock({
 
   registerOnKeyDown(
     uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
+    (event, keyMapping) => {
       if (disableShortcuts && !allowCodeBlockShortcuts) {
         return;
       }
 
-      if (isEditingBlockName
-        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
-        && String(keyHistory[1]) !== String(KEY_CODE_META)
-      ) {
-        if (blockUUID === newBlockUuid) {
-          event.target.blur();
-        } else {
-          // @ts-ignore
-          updateBlock({
-            block: {
-              ...block,
-              name: newBlockUuid,
-            },
-          });
-        }
-      } else if (selected && !hideRunButton) {
+      if (selected && !hideRunButton) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
@@ -746,8 +733,6 @@ function CodeBlock({
       addNewBlock,
       block,
       hideRunButton,
-      isEditingBlockName,
-      newBlockUuid,
       runBlockAndTrack,
       selected,
       updateBlock,
@@ -1284,62 +1269,22 @@ function CodeBlock({
                       )}
 
                       {(!isDBT || BlockLanguageEnum.YAML === blockLanguage) && (
-                        <LabelWithValueClicker
-                          bold={false}
-                          inputValue={newBlockUuid}
+                        <Link
+                          default
                           monospace
-                          muted
-                          notRequired
-                          onBlur={() => setTimeout(() => {
-                            setAnyInputFocused(false);
-                            setIsEditingBlockName(false);
-                          }, 300)}
-                          onChange={(e) => {
-                            setNewBlockUuid(e.target.value);
-                            e.preventDefault();
-                          }}
-                          onClick={() => {
-                            setAnyInputFocused(true);
-                            setIsEditingBlockName(true);
-                          }}
-                          onFocus={() => {
-                            setAnyInputFocused(true);
-                            setIsEditingBlockName(true);
-                          }}
-                          stacked
-                          value={!isEditingBlockName && blockUUID}
-                        />
-                      )}
-
-                      {isEditingBlockName && !isDBT && (
-                        <>
-                          <Spacing ml={1} />
-                          <Link
-                            noWrapping
-                            onClick={() => savePipelineContent({
-                              block: {
-                                name: newBlockUuid,
-                                uuid: blockUUID,
-                              },
-                            }).then(() => {
-                              setIsEditingBlockName(false);
-                              fetchPipeline();
-                              fetchFileTree();
-                            })}
-                            preventDefault
-                            sameColorAsText
-                            small
-                          >
-                            Update name
-                          </Link>
-                        </>
+                          noWrapping
+                          onClick={() => showUpdateBlockModal(block, blockName)}
+                          preventDefault
+                          sameColorAsText
+                        >
+                          {blockUUID}
+                        </Link>
                       )}
                     </FlexContainer>
 
                     <Spacing mr={2} />
 
                     {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
-                      && !isEditingBlockName
                       && mainContainerWidth > 800) && (
                       <Tooltip
                         appearBefore

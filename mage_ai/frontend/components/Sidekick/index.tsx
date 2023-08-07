@@ -119,7 +119,7 @@ export type SidekickProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-    allowDuplicateBlockName?: boolean,
+    preventDuplicateBlockName?: boolean,
   ) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 

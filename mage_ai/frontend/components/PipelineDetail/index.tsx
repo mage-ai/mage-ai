@@ -162,6 +162,10 @@ type PipelineDetailProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -215,6 +219,7 @@ function PipelineDetail({
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
+  showUpdateBlockModal,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -618,6 +623,7 @@ function PipelineDetail({
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
             showGlobalDataProducts={showGlobalDataProducts}
+            showUpdateBlockModal={showUpdateBlockModal}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -677,6 +683,7 @@ function PipelineDetail({
     showBrowseTemplates,
     showConfigureProjectModal,
     showGlobalDataProducts,
+    showUpdateBlockModal,
     textareaFocused,
     updateBlock,
     widgets,
