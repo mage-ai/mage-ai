@@ -26,10 +26,15 @@ type RowStyleProps = {
   last?: boolean;
   noBorder?: boolean;
   noHorizontalPadding?: boolean;
+  sameColorBorders?: boolean;
   secondary?: boolean;
 };
 
-export const TableStyle = styled.div<{ width: number }>`
+export const TableStyle = styled.div<{
+  noBackground?: boolean;
+  noBoxShadow?: boolean;
+  width?: number;
+}>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
@@ -42,6 +47,14 @@ export const TableStyle = styled.div<{ width: number }>`
     background-color: ${(props.theme || dark).background.page};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBorder};
     box-shadow: ${(props.theme || dark).shadow.frame};
+  `}
+
+  ${props => props.noBackground && `
+    background-color: transparent;
+  `}
+
+  ${props => props.noBoxShadow && `
+    box-shadow: none;
   `}
 `;
 
@@ -84,6 +97,10 @@ export const RowStyle = styled.div<RowStyleProps>`
 
   ${props => `
     border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+  `}
+
+  ${props => props.sameColorBorders && `
+    border-bottom-color: ${(props.theme || dark).interactive.defaultBorder};
   `}
 
   ${props => props.noHorizontalPadding && `
