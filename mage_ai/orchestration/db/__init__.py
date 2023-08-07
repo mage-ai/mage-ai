@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
@@ -47,21 +48,28 @@ elif not db_connection_url:
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
         db_kwargs['connect_args']['check_same_thread'] = False
 
-url_parsed = urlparse(db_connection_url)
-if url_parsed.password:
-    db_connection_url = db_connection_url.replace(
-        url_parsed.password,
-        quote_plus(url_parsed.password),
-    )
-
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
-engine = create_engine(
-    db_connection_url,
-    **db_kwargs,
-)
+try:
+    engine = create_engine(
+        db_connection_url,
+        **db_kwargs,
+    )
+    engine.connect()
+except SQLAlchemyError:
+    url_parsed = urlparse(db_connection_url)
+    if url_parsed.password:
+        db_connection_url = db_connection_url.replace(
+            url_parsed.password,
+            quote_plus(url_parsed.password),
+        )
+    engine = create_engine(
+        db_connection_url,
+        **db_kwargs,
+    )
+
 session_factory = sessionmaker(bind=engine)
 
 
