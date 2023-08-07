@@ -146,9 +146,11 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
+  // The bookmarkValues dependency is not included below in the dep array
+  // because it would cause an infinite rendering loop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bookmarkProperties?.length,
-    bookmarkValues,
     bookmarkValuesInit,
     streamUUID,
   ]);
