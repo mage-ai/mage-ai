@@ -26,6 +26,7 @@ def trigger_and_check_status(
     poll_interval: float = DEFAULT_POLL_INTERVAL,
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
+    should_schedule: bool = True,
 ):
     pipeline_run_created = None
     tries = 0
@@ -136,7 +137,7 @@ def trigger_and_check_status(
                         global_data_product.pipeline,
                         pipeline_schedule,
                         dict(variables=variables),
-                        should_schedule=True,
+                        should_schedule=should_schedule,
                     )
                     if pipeline_run_created:
                         if verbose:

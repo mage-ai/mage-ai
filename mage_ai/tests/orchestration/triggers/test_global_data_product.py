@@ -92,6 +92,8 @@ class TriggerGlobalDataProductTest(DBTestCase):
             trigger_and_check_status(
                 self.global_data_product,
                 poll_interval=1,
+                poll_timeout=2,
+                should_schedule=False,
             )
         except Exception as err:
             error = True
@@ -131,6 +133,8 @@ class TriggerGlobalDataProductTest(DBTestCase):
             trigger_and_check_status(
                 self.global_data_product,
                 poll_interval=1,
+                poll_timeout=2,
+                should_schedule=False,
             )
         except Exception:
             error = True
@@ -169,6 +173,8 @@ class TriggerGlobalDataProductTest(DBTestCase):
         trigger_and_check_status(
             self.global_data_product,
             poll_interval=1,
+            poll_timeout=2,
+            should_schedule=False,
         )
 
         self.assertEqual(
@@ -184,6 +190,8 @@ class TriggerGlobalDataProductTest(DBTestCase):
         trigger_and_check_status(
             self.global_data_product,
             poll_interval=1,
+            poll_timeout=2,
+            should_schedule=False,
         )
 
         self.assertEqual(
@@ -236,6 +244,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
                 error_on_failure=False,
                 poll_interval=1,
                 poll_timeout=2,
+                should_schedule=False,
             )
         except Exception:
             pass
@@ -275,6 +284,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
                 error_on_failure=False,
                 poll_interval=1,
                 poll_timeout=2,
+                should_schedule=False,
             )
         except Exception:
             pass
