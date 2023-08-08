@@ -28,12 +28,16 @@ function TriggerDetailPage({
   });
   const globalVariables = dataGlobalVariables?.variables;
 
+  const detailQuery: {
+    _format?: string;
+  } = {};
+  if (isEdit) {
+    detailQuery._format = 'with_runtime_average';
+  }
   const {
     data: pipelineScheduleData,
     mutate: fetchPipelineSchedule,
-  } = api.pipeline_schedules.detail(pipelineScheduleId, {
-    _format: isEdit ? 'with_runtime_average' : null,
-  });
+  } = api.pipeline_schedules.detail(pipelineScheduleId, detailQuery);
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {

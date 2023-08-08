@@ -26,17 +26,24 @@ class PipelineSchedulePresenter(BasePresenter):
         data = self.model.to_dict()
 
         if constants.LIST == display_format:
-            return self.model.to_dict(include_attributes=[
+            data = self.model.to_dict(include_attributes=[
                 'event_matchers',
                 'last_pipeline_run_status',
                 'pipeline_runs_count',
             ])
+            data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
+
+            return data
         elif display_format in [constants.DETAIL, constants.UPDATE]:
-            return self.model.to_dict(include_attributes=[
+            data = self.model.to_dict(include_attributes=[
                 'event_matchers',
             ])
+            data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
+
+            return data
         elif 'with_runtime_average' == display_format:
             data['runtime_average'] = self.model.runtime_average()
+            data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
 
         return data
 

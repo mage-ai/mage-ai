@@ -1,14 +1,16 @@
+import importlib
 import uuid
 
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
+from mage_ai.orchestration.db.models.tags import Tag, TagAssociation, TagAssociationWithTag
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
@@ -16,6 +18,10 @@ from mage_ai.shared.hash import merge_dict
 class PipelineScheduleResource(DatabaseResource):
     datetime_keys = ['start_time']
     model_class = PipelineSchedule
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tag_associations_updated = None
 
     @classmethod
     @safe_db_query
@@ -108,6 +114,128 @@ class PipelineScheduleResource(DatabaseResource):
                 ps = [p for p in PipelineSchedule.query.filter(PipelineSchedule.id.in_(new_ids))]
                 em.update(pipeline_schedules=ps)
 
+        tag_names = payload.pop('tags', None)
+        if tag_names is not None:
+            # 1. Fetch all tag associations
+            # 2. Delete any tag associations that don’t have a tag in tag_names
+            tag_associations_to_keep = []
+            tag_associations_to_delete = []
+            for ta in self.tag_associations:
+                if ta.name in tag_names:
+                    tag_associations_to_keep.append(ta)
+                else:
+                    tag_associations_to_delete.append(ta)
+
+            if len(tag_associations_to_delete) >= 1:
+                delete_query = TagAssociation.__table__.delete().where(
+                    TagAssociation.id.in_(
+                        [ta.id for ta in tag_associations_to_delete],
+                    ),
+                )
+                db_connection.session.execute(delete_query)
+
+            # 3. Fetch all tags in tag_names that aren’t in tag associations
+            existing_tags = Tag.query.filter(
+                Tag.name.in_(tag_names),
+                Tag.name.not_in([ta.name for ta in tag_associations_to_keep]),
+            ).all()
+            existing_tag_pks = []
+            existing_tag_names = []
+            for tag in existing_tags:
+                existing_tag_pks.append(tag.id)
+                existing_tag_names.append(tag.name)
+
+            # 4. Create new tags
+            tag_names_to_keep = [ta.name for ta in tag_associations_to_keep]
+            tag_names_to_create = \
+                [tag_name for tag_name in tag_names if tag_name not in (
+                    existing_tag_names + tag_names_to_keep
+                )]
+
+            new_tags = [Tag(name=tag_name) for tag_name in tag_names_to_create]
+            new_tag_pks = db_connection.session.bulk_save_objects(
+                new_tags,
+                return_defaults=True,
+            )
+
+            # 5. Create tag associations
+            tag_names_to_use = existing_tag_names.copy()
+            tag_ids_to_use = existing_tag_pks.copy()
+            for tag in new_tags:
+                tag_names_to_use.append(tag.name)
+                tag_ids_to_use.append(tag.id)
+
+            new_tag_associations = [TagAssociation(
+                tag_id=tag_id,
+                taggable_id=self.model.id,
+                taggable_type=self.model.__class__.__name__,
+            ) for tag_id in tag_ids_to_use]
+            db_connection.session.bulk_save_objects(
+                new_tag_associations,
+                return_defaults=True,
+            )
+
+            tag_associations_updated = []
+            for tag_name, new_tag_association in zip(tag_names_to_use, new_tag_associations):
+                taw = TagAssociationWithTag(
+                    id=new_tag_association.id,
+                    name=tag_name,
+                    tag_id=new_tag_association.tag_id,
+                    taggable_id=new_tag_association.taggable_id,
+                    taggable_type=new_tag_association.taggable_type,
+                )
+                tag_associations_updated.append(taw)
+
+            self.tag_associations_updated = tag_associations_updated + tag_associations_to_keep
+
         super().update(payload)
 
         return self
+
+    def get_tag_associations(self):
+        if self.tag_associations_updated is None:
+            return self.tag_associations
+        else:
+            return self.tag_associations_updated
+
+
+def __load_tag_associations(resource):
+    pipeline_schedule_ids = [r.id for r in resource.result_set()]
+    result = (
+        TagAssociation.
+        select(
+            TagAssociation.id,
+            TagAssociation.tag_id,
+            TagAssociation.taggable_id,
+            TagAssociation.taggable_type,
+            Tag.name,
+        ).
+        join(
+            Tag,
+            Tag.id == TagAssociation.tag_id,
+        ).
+        filter(
+            TagAssociation.taggable_id == resource.model.id,
+            TagAssociation.taggable_type == resource.model.__class__.__name__,
+        ).
+        all()
+    )
+    TagResource = getattr(
+        importlib.import_module('mage_ai.api.resources.TagResource'),
+        'TagResource',
+    )
+
+    return TagResource.build_result_set(result, resource.current_user)
+
+
+def __select_tag_associations(resource, arr):
+    def _func(res):
+        return resource.id == res.taggable_id
+    return list(filter(_func, arr))
+
+
+PipelineScheduleResource.register_collective_loader(
+    'tag_associations',
+    load=__load_tag_associations,
+    select=__select_tag_associations,
+)

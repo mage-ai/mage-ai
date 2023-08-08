@@ -39,3 +39,19 @@ class TagAssociation(BaseModel):
         ),
         Index(None, 'taggable_id', 'taggable_type'),
     )
+
+
+class TagAssociationWithTag:
+    def __init__(
+        self,
+        id: int = None,
+        name: str = None,
+        tag_id: int = None,
+        taggable_id: int = None,
+        taggable_type: str = None,
+    ):
+        self.id = id
+        self.name = name
+        self.tag_id = tag_id
+        self.taggable_id = taggable_id
+        self.taggable_type = taggable_type

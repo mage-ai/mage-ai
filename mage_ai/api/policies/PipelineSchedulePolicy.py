@@ -39,6 +39,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -48,6 +49,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'runtime_average',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -58,6 +60,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
     'event_matchers',
     'last_pipeline_run_status',
     'pipeline_runs_count',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -89,6 +92,7 @@ PipelineSchedulePolicy.allow_write([
     'sla',
     'start_time',
     'status',
+    'tags',
     'variables',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
