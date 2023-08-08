@@ -59,7 +59,13 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { convertSeconds, convertToSeconds, getTimeInUTC, TIME_UNIT_TO_SECONDS } from '../utils';
+import {
+  convertSeconds,
+  convertToSeconds,
+  getTimeInUTC,
+  getTriggerApiEndpoint,
+  TIME_UNIT_TO_SECONDS,
+} from '../utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
@@ -264,7 +270,7 @@ function Edit({
       if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
         const custom = pipelineSchedule?.schedule_interval &&
-          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum)
+          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum);
 
         if (custom) {
           setCustomInterval(pipelineSchedule?.schedule_interval);
@@ -1117,26 +1123,8 @@ function Edit({
     updateEventMatcher,
   ]);
 
-  const windowIsDefined = typeof window !== 'undefined';
-
   const apiMemo = useMemo(() => {
-    let url = '';
-    if (windowIsDefined) {
-      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
-
-      if (pipelineSchedule?.token) {
-        url = `${url}/${pipelineSchedule.token}`;
-      }
-    }
-
-    let port;
-    if (windowIsDefined) {
-      port = window.location.port;
-
-      if (port) {
-        url = url.replace(port, '6789');
-      }
-    }
+    const url = getTriggerApiEndpoint(pipelineSchedule);
 
     return (
       <>
@@ -1212,7 +1200,6 @@ function Edit({
 
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             <CopyToClipboard
-              withCopyIcon
               copiedText={`{
   "pipeline_run": {
     "variables": {
@@ -1222,6 +1209,7 @@ function Edit({
   }
 }
 `}
+              withCopyIcon
             >
               <CodeBlock
                 language="json"
@@ -1271,7 +1259,6 @@ function Edit({
   }, [
     name,
     pipelineSchedule,
-    windowIsDefined,
   ]);
 
   const saveButtonDisabled = !scheduleType || (
@@ -1547,8 +1534,8 @@ function Edit({
 
             <Button
               linkProps={{
-                href: '/pipelines/[pipeline]/triggers/[...slug]',
                 as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+                href: '/pipelines/[pipeline]/triggers/[...slug]',
               }}
               noHoverUnderline
               outline

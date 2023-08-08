@@ -3,6 +3,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -59,7 +60,7 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { convertSeconds } from '../utils';
+import { convertSeconds, getTriggerApiEndpoint } from '../utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
@@ -349,6 +350,30 @@ function TriggerDetail({
       ]);
     }
 
+    if (ScheduleTypeEnum.API === scheduleType) {
+      const url = getTriggerApiEndpoint(pipelineSchedule);
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_api_endpoint_label"
+        >
+          <CalendarDate {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            API endpoint
+          </Text>
+        </FlexContainer>,
+        <CopyToClipboard
+          copiedText={url}
+          key="trigger_api_endpoint"
+        >
+          <Text monospace small>
+            {url}
+          </Text>
+        </CopyToClipboard>,
+      ]);
+    }
+
     if (settings?.skip_if_previous_running) {
       rows.push([
         <FlexContainer
@@ -408,6 +433,7 @@ function TriggerDetail({
     );
   }, [
     isActive,
+    pipelineSchedule,
     scheduleInterval,
     scheduleType,
     settings,
