@@ -111,7 +111,7 @@ function GlobalDataProducts({
           </Text>,
           <NextLink
             as={linkProps?.as}
-            href={linkProps?.href}
+            href={linkProps?.href || ''}
             key="objectUUID"
             passHref
           >
