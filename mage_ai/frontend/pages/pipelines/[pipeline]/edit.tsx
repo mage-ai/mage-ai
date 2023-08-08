@@ -58,13 +58,14 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Close } from '@oracle/icons';
 import {
+  BLOCK_EXISTS_ERROR,
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
@@ -107,7 +108,7 @@ import {
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
-import { getBlockFromFilePath } from '@components/FileBrowser/utils';
+import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
@@ -1330,10 +1331,31 @@ function PipelineDetailPage({
               return blocksFinal;
             }));
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            const exception = response?.error?.exception;
+            if (exception && exception.startsWith(BLOCK_EXISTS_ERROR)) {
+              const filePath = getRelativePathFromBlock({
+                ...block,
+                name,
+              });
+              setErrors(() => ({
+                errors,
+                links: [{
+                  label: 'View existing block file contents and optionally add to pipeline (if applicable).',
+                  onClick: () => {
+                    openFile(filePath);
+                    setErrors(null);
+                  },
+                }],
+                response,
+              }));
+            } else {
+              setErrors({
+                errors,
+                response,
+              });
+            }
+          },
         },
       );
     });
@@ -1342,6 +1364,7 @@ function PipelineDetailPage({
     fetchFileTree,
     fetchPipeline,
     isIntegration,
+    openFile,
     setBlocks,
     setErrors,
     pipeline,
@@ -2648,7 +2671,10 @@ function PipelineDetailPage({
                   cb: (block: BlockType) => void,
                 ) => {
                   addNewBlockAtIndex(
-                    b,
+                    {
+                      ...b,
+                      require_unique_name: false,
+                    },
                     blocks.length,
                     cb,
                     b.name,

@@ -237,3 +237,17 @@ export function getBlockFromFilePath(filePath: string, blocks: BlockType[]) {
 
   return blocks.find(({ uuid }: BlockType) => uuid === blockUUID);
 }
+
+export function getRelativePathFromBlock(block: BlockType) {
+  // Block name, language, and type are required.
+  const { language, name, type } = block || {};
+  if (name && language && type) {
+    const blockDirectory = type === BlockTypeEnum.CUSTOM
+      ? type
+      : `${type}s`;
+    const fileExtension = FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language];
+    const uuid = cleanName(name);
+
+    return `${blockDirectory}/${uuid}.${fileExtension}`;
+  }
+}

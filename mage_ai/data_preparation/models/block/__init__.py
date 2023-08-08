@@ -70,6 +70,7 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
 PYTHON_COMMAND = 'python3'
+BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]'
 
 
 async def run_blocks(
@@ -497,6 +498,7 @@ class Block:
         pipeline=None,
         priority: int = None,
         replicated_block: str = None,
+        require_unique_name: bool = False,
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
@@ -527,12 +529,19 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
-                if pipeline is not None and pipeline.has_block(
+                if (pipeline is not None and pipeline.has_block(
                     uuid,
                     block_type=block_type,
                     extension_uuid=extension_uuid,
-                ):
-                    raise Exception(f'Block {uuid} already exists. Please use a different name.')
+                )) or require_unique_name:
+                    """
+                    The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
+                    a user is trying to create a new block with an existing block name, and
+                    link them to the existing block file so the user can choose to add the
+                    existing block to their pipeline.
+                    """
+                    raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
+                                    Please use a different name.')
             elif BlockType.GLOBAL_DATA_PRODUCT != block_type:
                 # Only create a file on the filesystem if the block type isn’t a global data product
                 # because global data products reference a data product which already has its
