@@ -3,14 +3,14 @@ import os
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 from freezegun import freeze_time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.global_data_product import fetch_or_create_pipeline_schedule
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.base_test import DBTestCase
