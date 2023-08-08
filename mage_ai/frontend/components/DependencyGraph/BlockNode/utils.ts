@@ -46,6 +46,13 @@ export function blockTagsText(block: BlockType): string {
     return tags?.map(({ title }) => title).join(', ') || '';
   }
 
+  if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === block?.type) {
+    const gdp = block?.configuration?.global_data_product;
+    if (gdp?.uuid) {
+      return gdp?.uuid;
+    }
+  }
+
   return ABBREV_BLOCK_LANGUAGE_MAPPING[block?.language] || '';
 }
 

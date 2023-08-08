@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Debugging issues in Mage."
+description: "Debugging common issues in Mage and other frequently asked questions."
 ---
 
 ## Pipeline edit page freezes browser
@@ -14,10 +14,7 @@ Then type the following command press enter to run it:
 rm -rf mage_data/[project_name]/pipelines/[pipeline_name]/.variables
 ```
 
-> Note
->
-> Change `[project_name]` to your Mage project name and change `[pipeline_name]` to the name of
-> the pipeline that is freezing the browser.
+<Info>Change `[project_name]` to your Mage project name and change `[pipeline_name]` to the name of the pipeline that is freezing the browser.</Info>
 
 The above command will remove the data output files for each block in your pipeline.
 
@@ -63,3 +60,22 @@ for head in headers:
 ```
 This is especially helpful in databases like Snowflake, which don't have an `iferror()` function to check for missing columns.
 
+
+---
+
+## `InvalidToken` error when accessing data in S3
+
+Accessing data located in S3, you may see an error like this:
+
+```text
+An error occurred (InvalidToken) when calling the GetObject operation: 
+The provided token is malformed or otherwise invalid.
+```
+
+This [Stack Overflow](https://stackoverflow.com/questions/54837248/an-error-occurred-invalidtoken-when-calling-the-listbuckets-operation-the-pr) article details the issue. Removing the `AWS_SESSION_TOKEN` line from the `io_config.yaml` should resolve the problem.
+
+## Mage doesn't load properly when running locally
+
+When attempting to connect to Mage with a port _other_ than `6789`, the browser may not render the page correctly with `localhost:port`.
+
+Instead, use `127.0.0.1:port` to connect to Mage.

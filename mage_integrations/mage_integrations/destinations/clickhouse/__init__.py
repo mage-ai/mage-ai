@@ -1,6 +1,9 @@
 import argparse
 import sys
 
+from clickhouse_sqlalchemy import make_session
+from sqlalchemy import create_engine
+
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.clickhouse.target_clickhouse.target import (
     TargetClickhouse,
@@ -8,10 +11,15 @@ from mage_integrations.destinations.clickhouse.target_clickhouse.target import (
 
 
 class Clickhouse(Destination):
-    def process(self, input_buffer) -> None:
+    def _process(self, input_buffer) -> None:
         self.config['state_path'] = self.state_file_path
         TargetClickhouse(config=self.config, logger=self.logger).listen_override(
             file_input=open(self.input_file_path, 'r'))
+
+    def test_connection(self) -> None:
+        engine = create_engine(self.config['sqlalchemy_url'])
+        session = make_session(engine)
+        session.connection()
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import React, {
   useCallback,
   useContext,
@@ -46,6 +47,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
@@ -157,6 +159,7 @@ type CodeBlockProps = {
   extraContent?: any;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  globalDataProducts?: GlobalDataProductType[];
   hideExtraCommandButtons?: boolean;
   hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
@@ -208,6 +211,9 @@ type CodeBlockProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -232,6 +238,7 @@ function CodeBlock({
   extraContent,
   fetchFileTree,
   fetchPipeline,
+  globalDataProducts,
   height,
   hideExtraCommandButtons,
   hideExtraConfiguration,
@@ -265,6 +272,7 @@ function CodeBlock({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -287,6 +295,10 @@ function CodeBlock({
   const blockPipelinesLength = useMemo(() => Object.values(pipelines || {})?.length || 1, [
     pipelines,
   ]);
+  const globalDataProduct =
+    useMemo(() => blockConfiguration?.global_data_product, [blockConfiguration]);
+  const globalDataProductsByUUID =
+    useMemo(() => indexBy(globalDataProducts || [], ({ uuid }) => uuid), [globalDataProducts]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
@@ -812,82 +824,135 @@ function CodeBlock({
       replicatedBlockUUID,
     ]);
 
-  const codeEditorEl = useMemo(() => !replicatedBlockUUID && (
-    <>
-      <CodeEditor
-        autoHeight
-        autocompleteProviders={autocompleteProviders}
-        block={block}
-        height={height}
-        language={blockLanguage}
-        onChange={(val: string) => {
-          setContent(val);
-          onChange?.(val);
-        }}
-        onDidChangeCursorPosition={onDidChangeCursorPosition}
-        placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
-          ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
-          : 'Start typing here...'
-        }
-        selected={selected}
-        setSelected={setSelected}
-        setTextareaFocused={setTextareaFocused}
-        shortcuts={hideRunButton
-          ? []
-          : [
-            (monaco, editor) => executeCode(monaco, () => {
-              if (!hideRunButton) {
-                runBlockAndTrack({
-                  /*
-                  * This block doesn't get updated when the upstream dependencies change,
-                  * so we need to update the shortcuts in the CodeEditor component.
-                  */
-                  block,
-                  code: editor.getValue(),
-                });
-              }
-            }),
-          ]
-        }
-        textareaFocused={textareaFocused}
-        value={content}
-        width="100%"
-      />
-      {hasCallback && (
-        <>
-          <Divider />
-          <Spacing mt={1}>
-            <CodeHelperStyle normalPadding>
-              <Text small>
-                Callback block: define @on_success or @on_failure callbacks for this block.
-              </Text>
-              <Text monospace muted small>
-                kwargs<Text inline monospace muted small> → </Text>
-                global variables
-              </Text>
-            </CodeHelperStyle>
-            <CodeEditor
-              autoHeight
-              autocompleteProviders={autocompleteProviders}
-              language="python"
-              onChange={(val: string) => {
-                setCallbackContent(val);
-                onCallbackChange?.(val);
-              }}
-              onDidChangeCursorPosition={onDidChangeCursorPosition}
-              placeholder="Start typing here..."
-              selected={selected}
-              setSelected={setSelected}
-              setTextareaFocused={setTextareaFocused}
-              textareaFocused={textareaFocused}
-              value={callbackContent}
-              width="100%"
-            />
+  const codeEditorEl = useMemo(() => {
+    if (replicatedBlockUUID) {
+      return null;
+    }
+
+    if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType) {
+      const gdp = globalDataProductsByUUID?.[globalDataProduct?.uuid];
+
+      return (
+        <CodeHelperStyle>
+          <Spacing mb={PADDING_UNITS} mt={1}>
+            <Text monospace muted small>
+              UUID
+            </Text>
+            <Text monospace>
+              {gdp?.uuid}
+            </Text>
           </Spacing>
-        </>
-      )}
-    </>
-  ), [
+
+          <Spacing mb={PADDING_UNITS}>
+            <Text monospace muted small>
+              {capitalize(gdp?.object_type || '')}
+            </Text>
+            <NextLink
+              as={`/pipelines/${gdp?.object_uuid}/edit`}
+              href={'/pipelines/[pipeline]/edit'}
+              passHref
+            >
+              <Link
+                monospace
+                openNewWindow
+              >
+                {gdp?.object_uuid}
+              </Link>
+            </NextLink>
+          </Spacing>
+
+          <Spacing mb={1}>
+            <Text monospace muted small>
+              Override global data product settings
+            </Text>
+            <Link
+              monospace
+              onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+            >
+              Customize block settings
+            </Link>
+          </Spacing>
+        </CodeHelperStyle>
+      );
+    }
+
+    return (
+      <>
+        <CodeEditor
+          autoHeight
+          autocompleteProviders={autocompleteProviders}
+          block={block}
+          height={height}
+          language={blockLanguage}
+          onChange={(val: string) => {
+            setContent(val);
+            onChange?.(val);
+          }}
+          onDidChangeCursorPosition={onDidChangeCursorPosition}
+          placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
+            ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
+            : 'Start typing here...'
+          }
+          selected={selected}
+          setSelected={setSelected}
+          setTextareaFocused={setTextareaFocused}
+          shortcuts={hideRunButton
+            ? []
+            : [
+              (monaco, editor) => executeCode(monaco, () => {
+                if (!hideRunButton) {
+                  runBlockAndTrack({
+                    /*
+                    * This block doesn't get updated when the upstream dependencies change,
+                    * so we need to update the shortcuts in the CodeEditor component.
+                    */
+                    block,
+                    code: editor.getValue(),
+                  });
+                }
+              }),
+            ]
+          }
+          textareaFocused={textareaFocused}
+          value={content}
+          width="100%"
+        />
+        {hasCallback && (
+          <>
+            <Divider />
+            <Spacing mt={1}>
+              <CodeHelperStyle normalPadding>
+                <Text small>
+                  Callback block: define @on_success or @on_failure callbacks for this block.
+                </Text>
+                <Text monospace muted small>
+                  kwargs<Text inline monospace muted small> → </Text>
+                  global variables
+                </Text>
+              </CodeHelperStyle>
+              <CodeEditor
+                autoHeight
+                autocompleteProviders={autocompleteProviders}
+                language="python"
+                onChange={(val: string) => {
+                  setCallbackContent(val);
+                  onCallbackChange?.(val);
+                }}
+                onDidChangeCursorPosition={onDidChangeCursorPosition}
+                placeholder="Start typing here..."
+                selected={selected}
+                setSelected={setSelected}
+                setTextareaFocused={setTextareaFocused}
+                textareaFocused={textareaFocused}
+                value={callbackContent}
+                width="100%"
+              />
+            </Spacing>
+          </>
+        )}
+      </>
+    );
+  }, [
     autocompleteProviders,
     block,
     blockLanguage,
@@ -895,12 +960,15 @@ function CodeBlock({
     callbackContent,
     content,
     dbtProjectName,
+    globalDataProduct,
+    globalDataProductsByUUID,
     hasCallback,
     height,
     hideRunButton,
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
+    openSidekickView,
     replicatedBlockUUID,
     runBlockAndTrack,
     selected,
@@ -1134,7 +1202,10 @@ function CodeBlock({
               <Flex alignItems="center" flex={1}>
                 <FlexContainer alignItems="center">
                   <Badge monospace>
-                    {ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]}
+                    {BlockTypeEnum.GLOBAL_DATA_PRODUCT === block?.type
+                      ? 'GDP'
+                      : ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]
+                    }
                   </Badge>
 
                   <Spacing mr={1} />
@@ -2325,6 +2396,7 @@ function CodeBlock({
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
                   showBrowseTemplates={showBrowseTemplates}
                   showConfigureProjectModal={showConfigureProjectModal}
+                  showGlobalDataProducts={showGlobalDataProducts}
                 />
               </Spacing>
             )}

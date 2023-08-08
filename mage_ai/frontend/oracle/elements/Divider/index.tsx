@@ -4,7 +4,6 @@ import { MarginProps, PaddingProps } from 'styled-system';
 
 import Spacing from '../Spacing';
 import dark from '../../styles/themes/dark';
-import { ThemeType } from '../../styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type DividerProps = {
@@ -54,16 +53,15 @@ const DividerStyle = styled.div<DividerProps>`
   `}
 `;
 
-const Divider = ({ short, ...props }: DividerProps) => (
+const Divider = ({
+  short = false,
+  ...props
+}: DividerProps) => (
   <DividerContainerStyle short={short}>
     <Spacing {...props}>
       <DividerStyle {...props} />
     </Spacing>
   </DividerContainerStyle>
 );
-
-Divider.defaultProps = {
-  short: false,
-};
 
 export default Divider;

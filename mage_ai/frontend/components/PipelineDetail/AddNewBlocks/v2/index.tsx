@@ -39,6 +39,7 @@ import {
   DBT as DBTIcon,
   File as FileIcon,
   FrameBoxSelection,
+  HexagonAll,
   Sensor,
   TemplateShapes,
 } from '@oracle/icons';
@@ -105,6 +106,9 @@ type AddNewBlocksV2Props = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
 };
 
 function AddNewBlocksV2({
@@ -121,6 +125,7 @@ function AddNewBlocksV2({
   setFocused: setFocusedProp,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
 }: AddNewBlocksV2Props) {
   const buttonRefTemplates = useRef(null);
   const buttonRefCustom = useRef(null);
@@ -408,6 +413,19 @@ function AddNewBlocksV2({
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
       uuid: BlockTypeEnum.DBT,
     },
+    // {
+    //   beforeIcon: (
+    //     <HexagonAll
+    //       size={ICON_SIZE}
+    //     />
+    //   ),
+    //   label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
+    //   onClick: () => showGlobalDataProducts({
+    //     // @ts-ignore
+    //     addNewBlock,
+    //   }),
+    //   uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+    // },
     {
       isGroupingTitle: true,
       label: () => 'Custom templates',
@@ -439,6 +457,7 @@ function AddNewBlocksV2({
     itemsSensors,
     itemsTransformer,
     showBrowseTemplates,
+    showGlobalDataProducts,
   ]);
 
   const itemsCustom = useMemo(() => [

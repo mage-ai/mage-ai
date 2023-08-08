@@ -1,16 +1,17 @@
-from botocore.config import Config
-from botocore.exceptions import ClientError
-from datetime import datetime
-from mage_ai.services.aws.emr import emr_basics
-from mage_ai.services.aws.emr.config import EmrConfig
-import boto3
 import json
 import logging
 import random
-import time
-import os
 import sys
+import time
+from datetime import datetime
 
+import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError
+
+from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws.emr import emr_basics
+from mage_ai.services.aws.emr.config import EmrConfig
 
 MAX_STEPS_IN_CLUSTER = 255 - 55
 MAX_RUNNING_OR_PENDING_STEPS = 15
@@ -42,7 +43,7 @@ def create_a_new_cluster(
     log_uri=None,
     tags=dict(),
 ):
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
     if type(emr_config) is dict:
@@ -114,14 +115,14 @@ def create_a_new_cluster(
 
 
 def describe_cluster(cluster_id):
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
     return emr_basics.describe_cluster(cluster_id, emr_client)
 
 
 def list_clusters():
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
 
@@ -140,11 +141,13 @@ def submit_spark_job(
     cluster_name,
     steps,
     bootstrap_script_path=None,
-    emr_config=dict(),
+    emr_config=None,
     idle_timeout=0,
     log_uri=None,
 ):
-    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    if emr_config is None:
+        emr_config = dict()
+    region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
 

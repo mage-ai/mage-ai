@@ -165,7 +165,7 @@ export const getMoreActionsItems = (
         },
       ]);
 
-      if (!isDBT) {
+      if (!isDBT && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType) {
         items.push({
           label: () => 'Execute block and run tests',
           onClick: () => runBlock({ block, runTests: true }),
@@ -248,7 +248,11 @@ export const getMoreActionsItems = (
         }
       }
 
-      if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
+      if (!isDBT
+        && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType
+        && savePipelineContent
+        && (dynamic || otherDynamicBlocks.length === 0)
+      ) {
         items.push({
           label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
           onClick: () => savePipelineContent({

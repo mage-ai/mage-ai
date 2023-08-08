@@ -159,6 +159,7 @@ export type ThemeType = {
     grey500: string;
     purple: string;
     white: string;
+    whiteTransparent: string;
   };
   neutral: {
     n100: string;

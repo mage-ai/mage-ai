@@ -20,6 +20,7 @@ import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
@@ -92,6 +93,7 @@ export type SidekickProps = {
   insights: InsightType[][];
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
@@ -135,6 +137,7 @@ function Sidekick({
   fetchPipeline,
   fetchSecrets,
   fetchVariables,
+  globalDataProducts,
   globalVariables,
   insights,
   interruptKernel,
@@ -443,12 +446,14 @@ function Sidekick({
       block={selectedBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
+      globalDataProducts={globalDataProducts}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
     />
   ), [
     fetchFileTree,
     fetchPipeline,
+    globalDataProducts,
     pipeline,
     selectedBlock,
     setSelectedBlock,

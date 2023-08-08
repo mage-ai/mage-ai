@@ -164,8 +164,10 @@ docker-compose.override.yml
 # front-end
 node_modules
 .npmrc
+mage_ai/server/frontend_dist_base_path
 
 # Scratch files
 scratch*
-sandbox
 
+# Playwright test automation
+playwright-report/

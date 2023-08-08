@@ -17,9 +17,12 @@ import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
 import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { ThemeContext } from 'styled-components';
+import { capitalize, removeUnderscore } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';
+
+const ALL_BLOCKS_KEY = 'all_blocks';
 
 type BlockRuntimeMonitorProps = {
   pipeline: PipelineType;
@@ -78,22 +81,49 @@ function BlockRuntimeMonitor({
   const dateRange = useMemo(() => getDateRange(), []);
 
   const blockRuntimeData = useMemo(() => {
+    let allBlockRuntimeData;
+    let runtimeDataByBlockUUID;
+
     if (monitorStats) {
-      return Object.entries(monitorStats).reduce(
+      allBlockRuntimeData = { [ALL_BLOCKS_KEY]: [] };
+      runtimeDataByBlockUUID = {};
+
+      Object.entries(monitorStats).forEach(
         // @ts-ignore
-        (obj, [blockUuid, { data: runtimeStats }]) => ({
-            ...obj,
-            [blockUuid]: dateRange.map(date => ({
+        ([blockUuid, { data: runtimeStats }]) => {
+          runtimeDataByBlockUUID[blockUuid] = [];
+          dateRange.forEach((date, idx) => {
+            runtimeDataByBlockUUID[blockUuid].push({
               x: date,
               y: date in runtimeStats ? [runtimeStats[date]] : null,
-            }))
-          }),
-        {},
+            });
+
+            if (!allBlockRuntimeData.all_blocks[idx]) {
+              allBlockRuntimeData.all_blocks[idx] = { x: date, y: null };
+            }
+            if (date in runtimeStats) {
+              if (!allBlockRuntimeData.all_blocks[idx].y) {
+                allBlockRuntimeData.all_blocks[idx].y = [];
+              }
+              allBlockRuntimeData.all_blocks[idx].y.push({
+                blockUUID: blockUuid,
+                runtime: runtimeStats[date],
+              });
+            }
+          });
+        },
       );
     }
+
+    return {
+      ...allBlockRuntimeData,
+      ...runtimeDataByBlockUUID,
+    };
   }, [
+    dateRange,
     monitorStats,
   ]);
+
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
@@ -104,9 +134,7 @@ function BlockRuntimeMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
@@ -146,7 +174,7 @@ function BlockRuntimeMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRuntimeData &&
+        {blockRuntimeData?.[ALL_BLOCKS_KEY]?.length > 0 &&
           Object.entries(blockRuntimeData).map(([blockUuid, data], idx) => (
             <Spacing
               key={`${blockUuid}_${idx}`}
@@ -164,7 +192,10 @@ function BlockRuntimeMonitor({
                   />
                 </Spacing>
                 <Headline level={4}>
-                  {blockUuid}
+                  {blockUuid === ALL_BLOCKS_KEY
+                    ? removeUnderscore(capitalize(blockUuid))
+                    : blockUuid
+                  }
                 </Headline>
               </FlexContainer>
               <div
@@ -178,18 +209,25 @@ function BlockRuntimeMonitor({
                   // @ts-ignore
                   data={data}
                   getX={data => moment(data.x).valueOf()}
+                  getY={blockUuid === ALL_BLOCKS_KEY
+                    ? (data, idx) => data?.y?.[idx]?.runtime
+                    : null
+                  }
+                  getYScaleValues={blockUuid === ALL_BLOCKS_KEY
+                    ? y => y?.map(yItem => yItem?.runtime) || []
+                    : null}
                   gridProps={{
                     stroke: 'black',
                     strokeDasharray: null,
                     strokeOpacity: 0.2,
                   }}
-                  height={200}
+                  height={blockUuid === ALL_BLOCKS_KEY ? 800 : 200}
                   hideGridX
                   margin={{
-                    top: 10,
                     bottom: 30,
                     left: 35,
                     right: -1,
+                    top: 10,
                   }}
                   noCurve
                   renderXTooltipContent={data => (
@@ -197,8 +235,18 @@ function BlockRuntimeMonitor({
                       {moment(data.x).format('MMM DD')}
                     </Text>
                   )}
-                  renderYTooltipContent={data => {
-                    const yValue = data?.y?.[0];
+                  renderYTooltipContent={(data, idx) => {
+                    const yValue = data?.y?.[idx];
+                    if (blockUuid === ALL_BLOCKS_KEY) {
+                      const individualBlockUUID = yValue?.blockUUID;
+                      const yRuntime = yValue?.runtime;
+                      return yRuntime !== undefined && (
+                        <Text center inverted small>
+                          {individualBlockUUID || ''}: {yRuntime.toFixed ? yRuntime.toFixed(3) : yRuntime}s
+                        </Text>
+                      );
+                    }
+
                     return yValue !== undefined && (
                       <Text center inverted small>
                         {yValue.toFixed ? yValue.toFixed(3) : yValue}s
@@ -208,11 +256,12 @@ function BlockRuntimeMonitor({
                   thickStroke
                   xLabelFormat={val => moment(val).format('MMM DD')}
                   xLabelRotate={false}
+                  yLabelFormat={val => val % 1 === 0 ? val : val.toFixed(1)}
                 />
               </div>
             </Spacing>
-          )
-        )}
+          ))
+        }
       </Spacing>
     </Monitor>
   );

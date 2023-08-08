@@ -35,6 +35,7 @@ export const RUN_STATUS_TO_LABEL = {
 export interface PipelineRunReqQueryParamsType {
   _limit?: number;
   _offset?: number;
+  global_data_product_uuid?: string;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
 }

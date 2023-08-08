@@ -1,10 +1,10 @@
 import logging
 import os
+from urllib.parse import parse_qs, urlparse
 
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from urllib.parse import parse_qs, urlparse
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import (

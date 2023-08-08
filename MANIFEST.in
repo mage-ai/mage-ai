@@ -1,5 +1,6 @@
 include requirements.txt
 recursive-include mage_ai/server/frontend_dist *
+recursive-include mage_ai/server/frontend_dist_base_path_template *
 recursive-include mage_ai/sample_datasets *
 recursive-include mage_ai/data_preparation/templates *
 recursive-include mage_ai/data_preparation/models/block/r/templates *

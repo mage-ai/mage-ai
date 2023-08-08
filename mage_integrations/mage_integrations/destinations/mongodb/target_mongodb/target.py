@@ -1,6 +1,7 @@
 """MongoDB target class."""
 
 import json
+import logging
 import sys
 import typing as t
 from collections import Counter, defaultdict
@@ -10,6 +11,8 @@ from singer_sdk.io_base import SingerMessageType
 from target_mongodb.sinks import MongoDbSink
 
 from mage_integrations.destinations.target import Target
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TargetMongoDb(Target):
@@ -23,9 +26,9 @@ class TargetMongoDb(Target):
     default_sink_class = MongoDbSink
 
     def __init__(self, *, config=None, parse_env_config: bool = False,
-                 validate_config: bool = True, logger) -> None:
+                 validate_config: bool = True, logger=None) -> None:
 
-        self.loggers = logger
+        self._logger = logger if logger is not None else LOGGER
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
@@ -38,7 +41,7 @@ class TargetMongoDb(Target):
             Plugin logger.
         """
 
-        logger = self.loggers
+        logger = self._logger
 
         return logger
 

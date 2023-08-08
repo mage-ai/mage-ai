@@ -1,65 +1,54 @@
-from datetime import datetime, timedelta
-from time import sleep
+from datetime import datetime
 from typing import Dict, Optional
 
 from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
-from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
-from mage_ai.data_preparation.sync.git_sync import get_sync_config
-from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
     TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE,
 )
-from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
+from mage_ai.orchestration.triggers.utils import (
+    check_pipeline_run_status,
+    create_and_start_pipeline_run,
+)
 
 
-def create_and_start_pipeline_run(
-    pipeline: Pipeline,
-    pipeline_schedule: PipelineSchedule,
-    payload: Dict = None,
+def trigger_pipeline(
+    pipeline_uuid: str,
+    variables: Dict = None,
+    check_status: bool = False,
+    error_on_failure: bool = False,
+    poll_interval: float = DEFAULT_POLL_INTERVAL,
+    poll_timeout: Optional[float] = None,
+    verbose: bool = True,
 ) -> PipelineRun:
-    if payload is None:
-        payload = {}
-    configured_payload, is_integration = configure_pipeline_run_payload(
+    if variables is None:
+        variables = {}
+    pipeline = Pipeline.get(pipeline_uuid)
+
+    pipeline_schedule = __fetch_or_create_pipeline_schedule(pipeline)
+
+    pipeline_run = create_and_start_pipeline_run(
+        pipeline,
         pipeline_schedule,
-        pipeline.type,
-        payload,
+        dict(variables=variables),
     )
 
-    # TODO: make sure git syncs are not run concurrently if there are
-    # are a lot of API requests.
-    sync_config = get_sync_config()
-    git_sync_result = None
-    if sync_config and sync_config.sync_on_pipeline_run:
-        git_sync_result = run_git_sync(sync_config=sync_config)
-
-    pipeline_run = PipelineRun.create(**configured_payload)
-
-    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-    pipeline_scheduler = PipelineScheduler(pipeline_run)
-
-    if is_integration:
-        initialize_state_and_runs(
+    if check_status:
+        pipeline_run = check_pipeline_run_status(
             pipeline_run,
-            pipeline_scheduler.logger,
-            pipeline_run.get_variables(),
+            error_on_failure=error_on_failure,
+            poll_interval=poll_interval,
+            poll_timeout=poll_timeout,
+            verbose=verbose,
         )
-
-    log_git_sync(
-        git_sync_result,
-        pipeline_scheduler.logger,
-        pipeline_scheduler.build_tags(),
-    )
-    pipeline_scheduler.start(should_schedule=False)
 
     return pipeline_run
 
 
-def fetch_or_create_pipeline_schedule(pipeline: Pipeline) -> PipelineSchedule:
+def __fetch_or_create_pipeline_schedule(pipeline: Pipeline) -> PipelineSchedule:
     pipeline_uuid = pipeline.uuid
     schedule_name = TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE
     schedule_type = ScheduleType.API
@@ -84,79 +73,3 @@ def fetch_or_create_pipeline_schedule(pipeline: Pipeline) -> PipelineSchedule:
         pipeline_schedule = resource.model
 
     return pipeline_schedule
-
-
-def check_pipeline_run_status(
-    pipeline_run: PipelineRun,
-    error_on_failure: bool = False,
-    poll_interval: float = DEFAULT_POLL_INTERVAL,
-    poll_timeout: Optional[float] = None,
-    verbose: bool = True,
-) -> PipelineRun:
-    pipeline_uuid = pipeline_run.pipeline_uuid
-
-    poll_start = datetime.now()
-    while True:
-        db_connection.session.refresh(pipeline_run)
-        status = pipeline_run.status.value
-        message = f'Pipeline run {pipeline_run.id} for pipeline {pipeline_uuid}: {status}.'
-
-        if PipelineRun.PipelineRunStatus.FAILED.value == status:
-            if error_on_failure:
-                raise Exception(message)
-
-        if verbose:
-            print(message)
-
-        if status in [
-            PipelineRun.PipelineRunStatus.CANCELLED.value,
-            PipelineRun.PipelineRunStatus.COMPLETED.value,
-        ]:
-            break
-
-        if (
-            poll_timeout
-            and datetime.now()
-            > poll_start + timedelta(seconds=poll_timeout)
-        ):
-            raise Exception(
-                f'Pipeline run {pipeline_run.id} for pipeline {pipeline_uuid}: time out after '
-                f'{datetime.now() - poll_start}. Last status was {status}.'
-            )
-
-        sleep(poll_interval)
-
-    return pipeline_run
-
-
-def trigger_pipeline(
-    pipeline_uuid: str,
-    variables: Dict = None,
-    check_status: bool = False,
-    error_on_failure: bool = False,
-    poll_interval: float = DEFAULT_POLL_INTERVAL,
-    poll_timeout: Optional[float] = None,
-    verbose: bool = True,
-) -> PipelineRun:
-    if variables is None:
-        variables = {}
-    pipeline = Pipeline.get(pipeline_uuid)
-
-    pipeline_schedule = fetch_or_create_pipeline_schedule(pipeline)
-
-    pipeline_run = create_and_start_pipeline_run(
-        pipeline,
-        pipeline_schedule,
-        dict(variables=variables),
-    )
-
-    if check_status:
-        pipeline_run = check_pipeline_run_status(
-            pipeline_run,
-            error_on_failure=error_on_failure,
-            poll_interval=poll_interval,
-            poll_timeout=poll_timeout,
-            verbose=verbose,
-        )
-
-    return pipeline_run

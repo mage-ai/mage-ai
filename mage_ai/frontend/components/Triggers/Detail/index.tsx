@@ -116,6 +116,9 @@ function TriggerDetail({
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
   }
+  if (pipelineSchedule?.global_data_product_uuid) {
+    pipelineRunsRequestQuery.global_data_product_uuid = pipelineSchedule?.global_data_product_uuid;
+  }
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,

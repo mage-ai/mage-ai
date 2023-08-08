@@ -291,7 +291,7 @@ function FlyoutMenu({
                         disabled={disabled}
                         noWrapping
                       >
-                        {labelToRender}
+                        <div role="menuitem">{labelToRender}</div>
                       </Text>
                     )}
                   </Flex>

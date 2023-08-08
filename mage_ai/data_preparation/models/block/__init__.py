@@ -278,6 +278,14 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
+        self.replicated_block_object = None
+        if replicated_block:
+            self.replicated_block_object = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            )
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -294,12 +302,7 @@ class Block:
     @property
     def content(self) -> str:
         if self.replicated_block:
-            self._content = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content
+            self._content = self.replicated_block_object.content
 
         if self._content is None:
             self._content = self.file.content()
@@ -320,12 +323,7 @@ class Block:
 
     async def content_async(self) -> str:
         if self.replicated_block:
-            self._content = await Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content_async()
+            self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
             self._content = await self.file.content_async()
@@ -489,19 +487,19 @@ class Block:
     @classmethod
     def create(
         self,
-        name,
-        block_type,
-        repo_path,
-        color=None,
-        configuration=None,
+        name: str,
+        block_type: str,
+        repo_path: str,
+        color: str = None,
+        configuration: Dict = None,
         extension_uuid: str = None,
-        language=None,
+        language: str = None,
         pipeline=None,
-        priority=None,
+        priority: int = None,
         replicated_block: str = None,
-        upstream_block_uuids=None,
-        config=None,
-        widget=False,
+        upstream_block_uuids: List[str] = None,
+        config: Dict = None,
+        widget: bool = False,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -535,7 +533,10 @@ class Block:
                     extension_uuid=extension_uuid,
                 ):
                     raise Exception(f'Block {uuid} already exists. Please use a different name.')
-            else:
+            elif BlockType.GLOBAL_DATA_PRODUCT != block_type:
+                # Only create a file on the filesystem if the block type isn’t a global data product
+                # because global data products reference a data product which already has its
+                # own files.
                 load_template(
                     block_type,
                     config,
@@ -1159,15 +1160,20 @@ class Block:
             # Initialize module
             if self.language == BlockLanguage.PYTHON:
                 try:
+                    block_uuid = self.uuid
+                    block_file_path = self.file_path
+                    if self.replicated_block:
+                        block_uuid = self.replicated_block
+                        block_file_path = self.replicated_block_object.file_path
                     spec = importlib.util.spec_from_file_location(
-                        self.uuid, self.file_path,
+                        block_uuid, block_file_path,
                     )
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                     block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
                 except Exception:
-                    print('Error initializing block module.')
+                    print('Falling back to default block execution...')
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
@@ -1550,7 +1556,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = self.outputs
 
-            if check_if_file_exists and not self.replicated_block:
+            if check_if_file_exists and not \
+                    self.replicated_block and \
+                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1587,7 +1596,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if include_outputs:
             data['outputs'] = await self.outputs_async()
 
-            if check_if_file_exists and not self.replicated_block:
+            if check_if_file_exists and not \
+                    self.replicated_block and \
+                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
@@ -1637,6 +1649,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.conditional_block_uuids
         ):
             self.__update_conditional_blocks(data['conditional_blocks'])
+
+        if 'configuration' in data and data['configuration'] != self.configuration:
+            self.configuration = data['configuration']
+            self.__update_pipeline_block()
 
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']

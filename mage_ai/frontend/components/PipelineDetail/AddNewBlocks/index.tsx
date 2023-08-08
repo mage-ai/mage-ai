@@ -69,6 +69,9 @@ type AddNewBlocksProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -103,6 +106,7 @@ function AddNewBlocks({
   setFocusedAddNewBlockSearch,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -350,6 +354,7 @@ function AddNewBlocks({
         setFocused={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
         showConfigureProjectModal={showConfigureProjectModal}
+        showGlobalDataProducts={showGlobalDataProducts}
       />
     );
   }

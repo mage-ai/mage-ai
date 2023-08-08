@@ -225,6 +225,7 @@ export default {
     grey500: GREY500,
     purple: PURPLE,
     white: WHITE,
+    whiteTransparent: 'rgba(255, 255, 255, 0.6)',
   },
   neutral: {
     n100: '#E7E8EA',

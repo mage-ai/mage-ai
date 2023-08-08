@@ -70,9 +70,10 @@ function SignForm({
                   ),
                 );
                 url = `${query.redirect_url}?${qs}`;
+                window.location.href = url;
+              } else {
+                router.push(url);
               }
-
-              router.push(url);
             });
           },
           onErrorCallback: ({ error }) => {
@@ -238,7 +239,7 @@ function SignForm({
           px={PADDING_HORIZONTAL_UNITS}
           py={PADDING_HORIZONTAL_UNITS + 8}
         >
-          <BackgroundImageStyle src="/images/sessions/abstract.png">
+          <BackgroundImageStyle src={`${router.basePath}/images/sessions/abstract.png`}>
             Sign in abstract image
           </BackgroundImageStyle>
         </Spacing>
