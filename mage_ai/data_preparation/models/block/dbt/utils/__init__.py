@@ -94,6 +94,7 @@ def parse_attributes(block) -> Dict:
     config = model_config(block.content)
     if config.get('alias'):
         table_name = config['alias']
+    database = config.get('database', None)
 
     full_path = os.path.join(get_repo_path(), 'dbt', file_path)
 
@@ -131,6 +132,7 @@ def parse_attributes(block) -> Dict:
     snapshot = first_folder_name and first_folder_name in snapshot_paths
 
     return dict(
+        database=database,
         dbt_project=dbt_project,
         dbt_project_full_path=dbt_project_full_path,
         file_extension=file_extension,
@@ -456,7 +458,11 @@ def get_profile(block, profile_target: str = None) -> Dict:
     return load_profile(profile_name, profiles_full_path, profile_target)
 
 
-def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
+def config_file_loader_and_configuration(
+    block,
+    profile_target: str,
+    **kwargs,
+) -> Dict:
     profile = get_profile(block, profile_target)
 
     if not profile:
@@ -492,7 +498,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         )
     elif DataSource.BIGQUERY == profile_type:
         keyfile = profile.get('keyfile')
-        database = profile.get('project')
+        database = kwargs.get('database') or profile.get('project')
         schema = profile.get('dataset')
 
         config_file_loader = ConfigFileLoader(config=dict(
@@ -927,10 +933,12 @@ def execute_query(
     profile_target: str,
     query_string: str,
     limit: int = None,
+    database: str = None,
 ) -> DataFrame:
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
+        database=database,
     )
 
     data_provider = configuration['data_provider']
@@ -1304,12 +1312,15 @@ def fetch_model_data(
     # If the model SQL file contains a config with schema, change the schema to use that.
     # https://docs.getdbt.com/reference/resource-configs/schema
     config = model_config(block.content)
+    config_database = config.get('database')
     config_schema = config.get('schema')
+
+    # settings from the dbt_project.yml
+    model_configurations = get_model_configurations_from_dbt_project_settings(block)
+
     if config_schema:
         schema = f'{schema}_{config_schema}'
     else:
-        # settings from the dbt_project.yml
-        model_configurations = get_model_configurations_from_dbt_project_settings(block)
         model_configuration_schema = None
         if model_configurations:
             model_configuration_schema = (model_configurations.get('schema') or
@@ -1318,9 +1329,22 @@ def fetch_model_data(
         if model_configuration_schema:
             schema = f"{schema}_{model_configuration_schema}"
 
+    database = None
+    if config_database:
+        database = config_database
+    elif model_configurations:
+        database = (model_configurations.get('database') or
+                    model_configurations.get('+database'))
+
     query_string = f'SELECT * FROM {schema}.{table_name}'
 
-    return execute_query(block, profile_target, query_string, limit)
+    return execute_query(
+        block,
+        profile_target,
+        query_string,
+        limit,
+        database=database,
+    )
 
 
 def upstream_blocks_from_sources(block: Block) -> List[Block]:
