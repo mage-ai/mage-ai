@@ -116,6 +116,11 @@ export type SidekickProps = {
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
@@ -169,6 +174,7 @@ function Sidekick({
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showUpdateBlockModal,
   statistics,
   textareaFocused,
   treeRef,
@@ -449,6 +455,7 @@ function Sidekick({
       globalDataProducts={globalDataProducts}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
+      showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
     fetchFileTree,
@@ -457,6 +464,7 @@ function Sidekick({
     pipeline,
     selectedBlock,
     setSelectedBlock,
+    showUpdateBlockModal,
   ]);
 
   return (

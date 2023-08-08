@@ -398,6 +398,11 @@ class PipelineRun(BaseModel):
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
     backfill = relationship('Backfill', back_populates='pipeline_runs')
 
+    def __init__(self, **kwargs):
+        self.global_data_product_uuid = kwargs.get('global_data_product_uuid', None)
+        kwargs.pop('global_data_product_uuid', None)
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
                f' execution_date={self.execution_date})'

@@ -14,6 +14,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import CodeBlock from '@components/CodeBlock';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LLMType, { LLMUseCaseEnum } from '@interfaces/LLMType';
@@ -24,8 +25,10 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+
 import {
   AISparkle,
+  AlertTriangle,
   Locked,
 } from '@oracle/icons';
 import {
@@ -34,6 +37,7 @@ import {
   HeaderStyle,
   RowStyle,
 } from './index.style';
+import { ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import {
   PADDING_UNITS,
@@ -46,6 +50,7 @@ import { useError } from '@context/Error';
 type ConfigureBlockProps = {
   block: BlockType | BlockRequestPayloadType;
   defaultName: string;
+  isUpdatingBlock?: boolean;
   onClose: () => void;
   onSave: (opts: {
     color?: BlockColorEnum;
@@ -53,18 +58,24 @@ type ConfigureBlockProps = {
     name: string;
   }) => void;
   pipeline: PipelineType;
+  preventDuplicateBlockName?: boolean;
 };
 
 function ConfigureBlock({
   block,
   defaultName,
+  isUpdatingBlock,
   onClose,
   onSave,
   pipeline,
+  preventDuplicateBlockName,
 }: ConfigureBlockProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConfigureBlock',
   });
+
+  // @ts-ignore
+  const sharedPipelinesCount = Object.keys(block?.pipelines || {}).length;
 
   const refTextInput = useRef(null);
   const [blockAttributes, setBlockAttributes] = useState<{
@@ -74,6 +85,7 @@ function ConfigureBlock({
     name?: string;
     type?: BlockTypeEnum;
   }>({
+    color: block?.color || null,
     language: block?.language,
     name: defaultName,
     type: block?.type,
@@ -259,6 +271,21 @@ function ConfigureBlock({
         </RowStyle>
       )}
 
+      {sharedPipelinesCount > 1 && (
+        <RowStyle>
+          <Flex flex="1">
+            <AlertTriangle size={ICON_SIZE_LARGE} warning />
+          </Flex>
+
+          <Flex flex="6">
+            <Text bold warning>
+              Renaming this block will affect {sharedPipelinesCount} pipelines.
+              The renamed block may need to be re-added to the shared pipeline(s).
+            </Text>
+          </Flex>
+        </RowStyle>
+      )}
+
       <RowStyle>
         <Text default>
           Name
@@ -314,7 +341,7 @@ function ConfigureBlock({
                 customTemplate ? customTemplate?.language : blockAttributes?.language;
               const selected = language === v;
 
-              if (!isCustomBlock && !selected) {
+              if ((!isCustomBlock || isUpdatingBlock) && !selected) {
                 return acc;
               }
 
@@ -326,6 +353,7 @@ function ConfigureBlock({
                     default={!isCustomBlock && !selected}
                     disabled={!isCustomBlock && !selected}
                     noBackground
+                    notClickable={(!isCustomBlock || isUpdatingBlock) && selected}
                     onClick={customTemplate
                       ? null
                       // @ts-ignore
@@ -464,7 +492,7 @@ function ConfigureBlock({
             tabIndex={0}
             uuid="ConfigureBlock/SaveAndAddBlock"
           >
-            Save and add block
+            Save and {isUpdatingBlock ? 'update' : 'add'} block
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>

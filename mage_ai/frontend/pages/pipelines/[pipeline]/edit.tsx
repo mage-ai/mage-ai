@@ -58,13 +58,14 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Close } from '@oracle/icons';
 import {
+  BLOCK_EXISTS_ERROR,
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
@@ -107,7 +108,7 @@ import {
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
-import { getBlockFromFilePath } from '@components/FileBrowser/utils';
+import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
@@ -647,6 +648,7 @@ function PipelineDetailPage({
           callback: () => {
             setPipelineContentTouched(false);
             fetchPipeline();
+            fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -662,8 +664,8 @@ function PipelineDetailPage({
     pipeline?: PipelineType | {
       blocks?: BlockType[];
       extensions?: PipelineExtensionsType;
-      name: string;
-      type: string;
+      name?: string;
+      type?: string;
     };
   }, opts?: {
     contentOnly?: boolean;
@@ -690,7 +692,8 @@ function PipelineDetailPage({
     const callbacksByUUID = {};
     const conditionalsByUUID = {};
 
-    blocks.forEach((block: BlockType) => {
+    const blocksFinal = pipelineOverride?.blocks || blocks;
+    blocksFinal.forEach((block: BlockType) => {
       const {
         extension_uuid: extensionUUID,
         type,
@@ -1282,6 +1285,7 @@ function PipelineDetailPage({
         content: blockContent,
         name,
         priority: idx,
+        require_unique_name: true,
         ...block,
       },
     }).then((response: {
@@ -1327,10 +1331,31 @@ function PipelineDetailPage({
               return blocksFinal;
             }));
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            const exception = response?.error?.exception;
+            if (exception && exception.startsWith(BLOCK_EXISTS_ERROR)) {
+              const filePath = getRelativePathFromBlock({
+                ...block,
+                name,
+              });
+              setErrors(() => ({
+                errors,
+                links: [{
+                  label: 'View existing block file contents and optionally add to pipeline (if applicable).',
+                  onClick: () => {
+                    openFile(filePath);
+                    setErrors(null);
+                  },
+                }],
+                response,
+              }));
+            } else {
+              setErrors({
+                errors,
+                response,
+              });
+            }
+          },
         },
       );
     });
@@ -1339,6 +1364,7 @@ function PipelineDetailPage({
     fetchFileTree,
     fetchPipeline,
     isIntegration,
+    openFile,
     setBlocks,
     setErrors,
     pipeline,
@@ -1352,33 +1378,58 @@ function PipelineDetailPage({
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
     idx,
+    isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
-  }:{
-    block: BlockRequestPayloadType,
-    idx: number,
-    name: string,
-    onCreateCallback?: (block: BlockType) => void,
+    preventDuplicateBlockName,
+  }: {
+    block: BlockRequestPayloadType;
+    idx?: number;
+    isUpdatingBlock?: boolean;
+    name: string;
+    onCreateCallback?: (block: BlockType) => void;
+    preventDuplicateBlockName?: boolean;
   }) => (
     <ErrorProvider>
       <ConfigureBlock
         block={block}
         defaultName={name}
+        isUpdatingBlock={isUpdatingBlock}
         onClose={hideAddBlockModal}
         onSave={(opts: {
           color?: BlockColorEnum;
           language?: BlockLanguageEnum;
           name?: string;
-        } = {}) => addNewBlockAtIndex(
-          {
-            ...block,
-            ...ignoreKeys(opts, ['name']),
-          },
-          idx,
-          onCreateCallback,
-          opts?.name,
-        ).then(() => hideAddBlockModal())}
+        } = {}) => {
+          if (isUpdatingBlock) {
+            savePipelineContent({
+              block: {
+                color: opts?.color || null,
+                name: opts?.name,
+                uuid: block.uuid,
+              },
+              pipeline: {
+                blocks: pipeline?.blocks || [],
+              },
+            }).then(() => {
+              setSelectedBlock(null);
+              hideAddBlockModal();
+            });
+          } else {
+            addNewBlockAtIndex(
+              {
+                ...block,
+                ...ignoreKeys(opts, ['name']),
+              },
+              idx,
+              onCreateCallback,
+              opts?.name,
+            ).then(() => hideAddBlockModal());
+          }
+        }
+        }
         pipeline={pipeline}
+        preventDuplicateBlockName={preventDuplicateBlockName}
       />
     </ErrorProvider>
   ), {
@@ -2056,6 +2107,16 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+        preventDuplicateBlockName,
+      ) => new Promise(() => showAddBlockModal({
+        block,
+        isUpdatingBlock: true,
+        name,
+        preventDuplicateBlockName,
+      }))}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -2205,6 +2266,14 @@ function PipelineDetailPage({
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
       showGlobalDataProducts={showGlobalDataProducts}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+      ) => new Promise(() => showAddBlockModal({
+        block,
+        isUpdatingBlock: true,
+        name,
+      }))}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2602,7 +2671,10 @@ function PipelineDetailPage({
                   cb: (block: BlockType) => void,
                 ) => {
                   addNewBlockAtIndex(
-                    b,
+                    {
+                      ...b,
+                      require_unique_name: false,
+                    },
                     blocks.length,
                     cb,
                     b.name,

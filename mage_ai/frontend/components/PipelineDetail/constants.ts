@@ -1,4 +1,5 @@
 export const PAGE_NAME_EDIT = 'edit';
+export const BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]';
 
 export const EDIT_BEFORE_TAB_ALL_FILES = {
   uuid: 'All files',

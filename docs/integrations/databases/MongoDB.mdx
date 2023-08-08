@@ -15,12 +15,14 @@ title: "MongoDB"
 ```yaml
 version: 0.1.1
 default:
-  MONGODB_DATABASE: database
+  # Specify either the connection string or the (host, password, user, port) to connect to MongoDB.
+  MONGODB_CONNECTION_STRING: "mongodb://{username}:{password}@{host}:{port}/"
   MONGODB_HOST: host
-  MONGODB_PASSWORD: password
   MONGODB_PORT: 27017
-  MONGODB_COLLECTION: collection
   MONGODB_USER: user
+  MONGODB_PASSWORD: password
+  MONGODB_DATABASE: database
+  MONGODB_COLLECTION: collection
 ```
 
 <br />

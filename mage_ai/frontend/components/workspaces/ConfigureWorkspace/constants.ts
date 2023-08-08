@@ -23,6 +23,11 @@ export const K8S_TEXT_FIELDS = [
     uuid: 'service_account_name',
   },
   {
+    label: 'Ingress name',
+    labelDescription: 'If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.',
+    uuid: 'ingress_name',
+  },
+  {
     label: 'Storage class name',
     labelDescription: 'Volume claim parameters',
     uuid: 'storage_class_name',

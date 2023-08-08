@@ -81,9 +81,11 @@ class RepoConfig:
             # from the config_dict. Otherwise, we will set the variables_dir with
             # `get_variables_dir`.
             if config_dict and config_dict.get('variables_dir'):
-                self.variables_dir = os.path.abspath(
-                    os.path.join(self.repo_path, config_dict.get('variables_dir'))
-                )
+                self.variables_dir = config_dict.get('variables_dir')
+                if not self.variables_dir.startswith('s3'):
+                    self.variables_dir = os.path.abspath(
+                        os.path.join(self.repo_path, self.variables_dir)
+                    )
             else:
                 self.variables_dir = get_variables_dir(
                     repo_path=self.repo_path,
@@ -259,20 +261,22 @@ def get_variables_dir(
     variables_dir = None
     if os.getenv(MAGE_DATA_DIR_ENV_VAR):
         variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
-    elif repo_config is not None:
-        variables_dir = repo_config.get('variables_dir')
     else:
-        from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-        if os.path.exists(get_metadata_path()):
-            with open(get_metadata_path(), 'r', encoding='utf-8') as f:
-                config_file = Template(f.read()).render(
-                    **get_template_vars_no_db()
-                )
-                repo_config = yaml.full_load(config_file) or {}
-                if repo_config.get('variables_dir'):
-                    variables_dir = os.path.expanduser(repo_config.get('variables_dir'))
-    if variables_dir is None:
-        variables_dir = DEFAULT_MAGE_DATA_DIR
+        if repo_config is not None:
+            variables_dir = repo_config.get('variables_dir')
+        else:
+            from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+            if os.path.exists(get_metadata_path()):
+                with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+                    config_file = Template(f.read()).render(
+                        **get_template_vars_no_db()
+                    )
+                    repo_config = yaml.full_load(config_file) or {}
+                    if repo_config.get('variables_dir'):
+                        variables_dir = repo_config.get('variables_dir')
+        if variables_dir is None:
+            variables_dir = DEFAULT_MAGE_DATA_DIR
+        variables_dir = os.path.expanduser(variables_dir)
 
     if not variables_dir.startswith('s3'):
         if os.path.isabs(variables_dir) and variables_dir != repo_path:

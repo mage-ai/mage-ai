@@ -70,6 +70,7 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
 PYTHON_COMMAND = 'python3'
+BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]'
 
 
 async def run_blocks(
@@ -278,6 +279,14 @@ class Block:
 
         # Replicate block
         self.replicated_block = replicated_block
+        self.replicated_block_object = None
+        if replicated_block:
+            self.replicated_block_object = Block(
+                self.replicated_block,
+                self.replicated_block,
+                self.type,
+                language=self.language,
+            )
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -294,12 +303,7 @@ class Block:
     @property
     def content(self) -> str:
         if self.replicated_block:
-            self._content = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content
+            self._content = self.replicated_block_object.content
 
         if self._content is None:
             self._content = self.file.content()
@@ -320,12 +324,7 @@ class Block:
 
     async def content_async(self) -> str:
         if self.replicated_block:
-            self._content = await Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            ).content_async()
+            self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
             self._content = await self.file.content_async()
@@ -499,6 +498,7 @@ class Block:
         pipeline=None,
         priority: int = None,
         replicated_block: str = None,
+        require_unique_name: bool = False,
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
@@ -529,12 +529,19 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
-                if pipeline is not None and pipeline.has_block(
+                if (pipeline is not None and pipeline.has_block(
                     uuid,
                     block_type=block_type,
                     extension_uuid=extension_uuid,
-                ):
-                    raise Exception(f'Block {uuid} already exists. Please use a different name.')
+                )) or require_unique_name:
+                    """
+                    The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
+                    a user is trying to create a new block with an existing block name, and
+                    link them to the existing block file so the user can choose to add the
+                    existing block to their pipeline.
+                    """
+                    raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
+                                    Please use a different name.')
             elif BlockType.GLOBAL_DATA_PRODUCT != block_type:
                 # Only create a file on the filesystem if the block type isn’t a global data product
                 # because global data products reference a data product which already has its
@@ -1162,15 +1169,20 @@ class Block:
             # Initialize module
             if self.language == BlockLanguage.PYTHON:
                 try:
+                    block_uuid = self.uuid
+                    block_file_path = self.file_path
+                    if self.replicated_block:
+                        block_uuid = self.replicated_block
+                        block_file_path = self.replicated_block_object.file_path
                     spec = importlib.util.spec_from_file_location(
-                        self.uuid, self.file_path,
+                        block_uuid, block_file_path,
                     )
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                     block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
                 except Exception:
-                    print('Error initializing block module.')
+                    print('Falling back to default block execution...')
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])

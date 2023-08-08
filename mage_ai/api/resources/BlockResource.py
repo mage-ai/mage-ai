@@ -36,6 +36,7 @@ class BlockResource(GenericResource):
         language = payload.get('language')
         name = payload.get('name')
         block_name = name or payload.get('uuid')
+        require_unique_name = payload.get('require_unique_name')
 
         payload_config = payload.get('config') or {}
 
@@ -120,6 +121,7 @@ class BlockResource(GenericResource):
                 block_name,
                 block_type,
                 get_repo_path(),
+                require_unique_name=require_unique_name,
                 **block_attributes,
             )
 
