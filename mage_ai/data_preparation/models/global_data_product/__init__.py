@@ -177,6 +177,9 @@ class GlobalDataProduct:
         if execution_date and outdated_at_delta:
             execution_date += outdated_at_delta
 
+        if not execution_date.tzinfo:
+            execution_date = execution_date.replace(tzinfo=timezone.utc)
+
         return execution_date
 
     def is_outdated(self, pipeline_run: 'PipelineRun' = None) -> List[bool]:
@@ -238,7 +241,23 @@ class GlobalDataProduct:
         if limit is not None:
             pipeline_runs = pipeline_runs.limit(limit)
 
-        return pipeline_runs.all()
+        return [PipelineRun(
+            backfill_id=row.backfill_id,
+            completed_at=row.completed_at,
+            created_at=row.created_at,
+            event_variables=row.event_variables,
+            execution_date=row.execution_date,
+            executor_type=row.executor_type,
+            global_data_product_uuid=row.global_data_product_uuid,
+            id=row.id,
+            metrics=row.metrics,
+            passed_sla=row.passed_sla,
+            pipeline_schedule_id=row.pipeline_schedule_id,
+            pipeline_uuid=row.pipeline_uuid,
+            status=row.status,
+            updated_at=row.updated_at,
+            variables=row.variables,
+        ) for row in pipeline_runs.all()]
 
     def to_dict(self, include_uuid: bool = False) -> Dict:
         data = dict(
