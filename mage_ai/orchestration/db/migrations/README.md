@@ -32,7 +32,15 @@ import mage_ai.orchestration.db.models.tags  # noqa: E402, F401
 
 ## Run migration
 
-`alembic upgrade head`
+```
+alembic upgrade head
+```
+
+## Rollback migration
+
+```
+alembic downgrade -1
+```
 
 ## Clean up
 
