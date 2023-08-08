@@ -233,7 +233,10 @@ function FileBrowser({
           );
 
           addNewBlock?.(
-            blockReqPayload,
+            {
+              ...blockReqPayload,
+              require_unique_name: false,
+            },
             block => {
               if (isIntegrationPipeline && dataExporterBlock) {
                 // @ts-ignore

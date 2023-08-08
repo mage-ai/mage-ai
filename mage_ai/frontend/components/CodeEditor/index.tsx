@@ -148,7 +148,14 @@ function CodeEditor({
     }
 
     editor.onDidFocusEditorWidget(() => {
-      setSelected?.(true);
+      /*
+       * Added onClick handler for selecting block in CodeContainerStyle component.
+       * Disabled the setSelected call below because if a user updates the block name
+       * or color from the Block Settings in the Sidekick, clicking on the code editor
+       * specifically uses an outdated block as the "selectedBlock" due to scoping issues
+       * when mounting the code editor here.
+       */
+      // setSelected?.(true);
       setTextareaFocused?.(true);
     });
 

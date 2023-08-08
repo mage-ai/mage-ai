@@ -13,6 +13,7 @@ import Paginate from '@components/shared/Paginate';
 import PipeIconGradient from '@oracle/icons/custom/PipeIconGradient';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
+  PIPELINE_RUN_STATUSES,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
@@ -391,7 +392,7 @@ function PipelineRuns({
                 <option key="all_statuses" value="all">
                   All statuses
                 </option>
-                {Object.values(RunStatusEnum).map(status => (
+                {PIPELINE_RUN_STATUSES.map(status => (
                   <option key={status} value={status}>
                     {RUN_STATUS_TO_LABEL[status]}
                   </option>

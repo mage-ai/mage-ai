@@ -23,6 +23,16 @@ type FlexContainerProps = {
   width?: number;
 } & FlexboxProps;
 
+export const JUSTIFY_CENTER_PROPS = {
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+export const JUSTIFY_SPACE_BETWEEN_PROPS = {
+  alignItems: 'center',
+  justifyContent: 'space-between',
+};
+
 const SHARED_FLEX_DIRECTION_STYLE = css`
   flex-direction: column;
 `;
