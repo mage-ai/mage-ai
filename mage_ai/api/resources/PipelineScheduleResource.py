@@ -32,7 +32,35 @@ class PipelineScheduleResource(DatabaseResource):
         if global_data_product_uuid:
             global_data_product_uuid = global_data_product_uuid[0]
 
+        tag_names = query_arg.get('tag[]', [])
+        if tag_names:
+            if isinstance(tag_names, str):
+                tag_names = tag_names.split(',')
+
         query = PipelineSchedule.repo_query
+
+        if len(tag_names) >= 1:
+            tag_associations = (
+                TagAssociation.
+                select(
+                    Tag.name,
+                    TagAssociation.taggable_id,
+                    TagAssociation.taggable_type,
+                ).
+                join(
+                    Tag,
+                    Tag.id == TagAssociation.tag_id,
+                ).
+                filter(
+                    Tag.name.in_(tag_names),
+                    TagAssociation.taggable_type == self.model_class.__name__,
+                ).
+                all()
+            )
+            query = query.filter(
+                PipelineSchedule.id.in_([ta.taggable_id for ta in tag_associations]),
+            )
+
         if global_data_product_uuid or pipeline:
             query = (
                 query.
