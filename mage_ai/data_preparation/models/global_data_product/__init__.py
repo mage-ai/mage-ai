@@ -153,7 +153,7 @@ class GlobalDataProduct:
             ('month_of_year', lambda x: x.month),
             ('second_of_minute', lambda x: x.second),
             ('week_of_month', lambda x: week_of_month(x)),
-            ('week_of_year', lambda x: x.isocalendar().week),
+            ('week_of_year', lambda x: x.isocalendar()[1]),
         ]:
             value = outdated_starting_at.get(key, None)
             if value is not None:
