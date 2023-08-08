@@ -29,8 +29,8 @@ function StreamingPipeline({
         <clipPath id="clip0_11802_82850">
           <rect
             fill={fill}
-            height={size}
-            width={size}
+            height="20"
+            width="20"
           />
         </clipPath>
       </defs>
