@@ -17,7 +17,11 @@
   },
   "feedback": {
     "suggestEdit": true,
-    "raiseIssue": true
+    "raiseIssue": true,
+    "thumbsRating": true
+  },
+  "search": {
+    "prompt": "✨ Find something magical..."
   },
   "metadata": {
     "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
@@ -58,40 +62,221 @@
       "name": "Roadmap",
       "icon": "map",
       "url": "https://docs.mage.ai/about/roadmap"
+    },
+    {
+      "name": "Troubleshooting",
+      "icon": "question",
+      "url": "https://docs.mage.ai/development/troubleshooting"
     }
   ],
   "navigation": [
     {
       "group": "Introduction",
       "pages": [
-        "introduction/overview",
-        "getting-started/setup",
-        "community/contributing"
-      ]
-    },
-    {
-      "group": "Design",
-      "pages": [
-        "design/core-design-principles",
         {
-          "group": "Abstractions",
+          "group": "Overview",
           "pages": [
-            "design/core-abstractions",
-            "design/data-pipeline-management",
+            "introduction/overview",
             {
-              "group": "Blocks",
+              "group": "Design",
               "pages": [
-                "design/blocks",
-                "design/blocks/data-loader",
-                "design/blocks/transformer",
-                "design/blocks/data-exporter",
-                "design/blocks/scratchpad",
-                "design/blocks/sensor",
-                "design/blocks/extension",
-                "design/blocks/dynamic-blocks",
-                "design/blocks/replicate-blocks"
+                "design/core-design-principles",
+                {
+                  "group": "Abstractions",
+                  "pages": [
+                    "design/core-abstractions",
+                    "design/data-pipeline-management",
+                    {
+                      "group": "Blocks",
+                      "pages": [
+                        "design/blocks",
+                        "design/blocks/data-loader",
+                        "design/blocks/transformer",
+                        "design/blocks/data-exporter",
+                        "design/blocks/scratchpad",
+                        "design/blocks/sensor",
+                        "design/blocks/extension",
+                        "design/blocks/dynamic-blocks",
+                        "design/blocks/replicate-blocks"
+                      ]
+                    }
+                  ]
+                }
               ]
             }
+          ]
+        },
+        {
+          "group": "Setup",
+          "pages": [
+            "getting-started/setup",
+            "development/project/setup",
+            {
+              "group": "Variables",
+              "pages": [
+                "development/environment-variables",
+                "production/configuring-production-settings/runtime-variable",
+                {
+                  "group": "Secrets",
+                  "pages": [
+                    "development/secrets/secrets",
+                    "development/secrets/GCP"
+                  ]
+                }
+              ]
+            },
+            {
+              "group": "Dependencies",
+              "pages": [
+                "development/dependencies/requirements",
+                "development/dependencies/custom-files"
+              ]
+            },
+            "development/text-editor"
+          ]
+        },
+        {
+          "group": "Development",
+          "pages": [
+            {
+              "group": "Pipelines",
+              "pages": [
+                {
+                  "group": "Blocks",
+                  "pages": [
+                    {
+                      "group": "Data loader",
+                      "pages": [
+                        "design/data-loading",
+                        "development/blocks/data_loaders/templates"
+                      ]
+                    },
+                    {
+                      "group": "Transformer",
+                      "pages": [
+                        "development/blocks/transformers/templates"
+                      ]
+                    },
+                    {
+                      "group": "Data exporter",
+                      "pages": [
+                        "development/blocks/data_exporters/templates"
+                      ]
+                    },
+                    {
+                      "group": "Sensors",
+                      "pages": [
+                        "development/blocks/sensors/templates"
+                      ]
+                    },
+                    {
+                      "group": "Callbacks",
+                      "pages": [
+                        "development/blocks/callbacks/overview",
+                        "development/blocks/callbacks/templates"
+                      ]
+                    },
+                    {
+                      "group": "Conditionals",
+                      "pages": [
+                        "development/blocks/conditionals/overview",
+                        "development/blocks/conditionals/templates"
+                      ]
+                    },
+                    {
+                      "group": "SQL",
+                      "pages": [
+                        "development/blocks/sql/trino"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "group": "Streaming",
+                  "pages": [
+                    "streaming/overview",
+                    {
+                      "group": "Sources",
+                      "pages": [
+                        "streaming/sources/amazon-sqs",
+                        "streaming/sources/azure-event-hub",
+                        "streaming/sources/google-cloud-pubsub",
+                        "streaming/sources/kafka",
+                        "streaming/sources/kinesis"
+                      ]
+                    },
+                    {
+                      "group": "Destinations",
+                      "pages": [
+                        "streaming/destinations/amazon-s3",
+                        "streaming/destinations/dummy",
+                        "streaming/destinations/kafka",
+                        "streaming/destinations/kinesis",
+                        "streaming/destinations/mongodb",
+                        "streaming/destinations/opensearch",
+                        "streaming/destinations/redshift"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "group": "Testing",
+                  "pages": [
+                    "development/data-validation",
+                    "development/testing/great-expectations",
+                    "development/testing/unit-tests"
+                  ]
+                },
+                {
+                  "group": "Versioning",
+                  "pages": [
+                    "developing-in-the-cloud/setting-up-git",
+                    "development/versioning/file-versions"
+                  ]
+                }
+              ]
+            },
+            {
+              "group": "Team management",
+              "pages": [
+                "developing-in-the-cloud/cloud-dev-environments/overview",
+                {
+                  "group": "Environments",
+                  "pages": [
+                    "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+                    "developing-in-the-cloud/cloud-dev-environments/cloud-run",
+                    "developing-in-the-cloud/cloud-dev-environments/kubernetes"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Contributing",
+          "icon": "swords",
+          "pages": [
+            "community/contributing",
+            {
+              "group": "Backend",
+              "pages": [
+                "contributing/backend/overview"
+              ]
+            },
+            {
+              "group": "Frontend",
+              "pages": [
+                "contributing/frontend/overview",
+                "contributing/charts/how-to-add"
+              ]
+            },
+            {
+              "group": "Streaming",
+              "pages": [
+                "streaming/contributing"
+              ]
+            },
+            "contributing/statistics/overview"
           ]
         }
       ]
@@ -183,139 +368,6 @@
         "guides/blocks/custom-blocks",
         "guides/blocks/markdown-blocks",
         "guides/blocks/r-blocks"
-      ]
-    },
-    {
-      "group": "Development",
-      "pages": [
-        {
-          "group": "Project setup",
-          "pages": [
-            "development/project/setup",
-            "development/environment-variables",
-            "development/text-editor"
-          ]
-        },
-        {
-          "group": "Blocks",
-          "pages": [
-            {
-              "group": "Data loader",
-              "pages": [
-                "design/data-loading",
-                "development/blocks/data_loaders/templates"
-              ]
-            },
-            {
-              "group": "Transformer",
-              "pages": [
-                "development/blocks/transformers/templates"
-              ]
-            },
-            {
-              "group": "Data exporter",
-              "pages": [
-                "development/blocks/data_exporters/templates"
-              ]
-            },
-            {
-              "group": "Sensors",
-              "pages": [
-                "development/blocks/sensors/templates"
-              ]
-            },
-            {
-              "group": "Callbacks",
-              "pages": [
-                "development/blocks/callbacks/overview",
-                "development/blocks/callbacks/templates"
-              ]
-            },
-            {
-              "group": "Conditionals",
-              "pages": [
-                "development/blocks/conditionals/overview",
-                "development/blocks/conditionals/templates"
-              ]
-            },
-            {
-              "group": "SQL",
-              "pages": [
-                "development/blocks/sql/trino"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Dependencies",
-          "pages": [
-            "development/dependencies/requirements",
-            "development/dependencies/custom-files"
-          ]
-        },
-        {
-          "group": "Streaming pipelines",
-          "pages": [
-            "streaming/overview",
-            "streaming/streaming-pipeline-rabbitmq",
-            {
-              "group": "Sources",
-              "pages": [
-                "streaming/sources/amazon-sqs",
-                "streaming/sources/azure-event-hub",
-                "streaming/sources/google-cloud-pubsub",
-                "streaming/sources/kafka",
-                "streaming/sources/kinesis"
-              ]
-            },
-            {
-              "group": "Destinations",
-              "pages": [
-                "streaming/destinations/amazon-s3",
-                "streaming/destinations/dummy",
-                "streaming/destinations/kafka",
-                "streaming/destinations/kinesis",
-                "streaming/destinations/mongodb",
-                "streaming/destinations/opensearch",
-                "streaming/destinations/redshift"
-              ]
-            },
-            "streaming/contributing"
-          ]
-        },
-        "production/configuring-production-settings/runtime-variable",
-        {
-          "group": "Testing",
-          "pages": [
-            "development/data-validation",
-            "development/testing/great-expectations",
-            "development/testing/unit-tests"
-          ]
-        },
-        {
-          "group": "Secrets",
-          "pages": [
-            "development/secrets/secrets",
-            "development/secrets/GCP"
-          ]
-        },
-        {
-          "group": "Versioning",
-          "pages": [
-            "developing-in-the-cloud/setting-up-git",
-            "development/versioning/file-versions"
-          ]
-        },
-        {
-          "group": "Team management",
-          "pages": [
-            "developing-in-the-cloud/cloud-dev-environments/overview",
-            "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
-            "developing-in-the-cloud/cloud-dev-environments/cloud-run",
-            "developing-in-the-cloud/cloud-dev-environments/kubernetes"
-          ]
-        },
-        "development/troubleshooting"
       ]
     },
     {
@@ -528,25 +580,6 @@
             "integrations/hightouch"
           ]
         }
-      ]
-    },
-    {
-      "group": "Contributing",
-      "pages": [
-        {
-          "group": "Backend",
-          "pages": [
-            "contributing/backend/overview"
-          ]
-        },
-        {
-          "group": "Frontend",
-          "pages": [
-            "contributing/frontend/overview",
-            "contributing/charts/how-to-add"
-          ]
-        },
-        "contributing/statistics/overview"
       ]
     },
     {
