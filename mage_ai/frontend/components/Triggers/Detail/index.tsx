@@ -42,6 +42,7 @@ import {
   MusicNotes,
   Pause,
   PlayButtonFilled,
+  PlugAPI,
   Schedule,
   Sun,
   Switch,
@@ -357,7 +358,7 @@ function TriggerDetail({
           alignItems="center"
           key="trigger_api_endpoint_label"
         >
-          <CalendarDate {...iconProps} />
+          <PlugAPI {...iconProps} />
           <Spacing mr={1} />
           <Text default>
             API endpoint
