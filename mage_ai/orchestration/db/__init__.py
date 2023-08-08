@@ -59,6 +59,7 @@ try:
     )
     engine.connect()
 except SQLAlchemyError:
+    engine.dispose()
     url_parsed = urlparse(db_connection_url)
     if url_parsed.password:
         db_connection_url = db_connection_url.replace(
