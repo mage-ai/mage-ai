@@ -153,7 +153,7 @@ class PipelineScheduleResource(DatabaseResource):
                 )]
 
             new_tags = [Tag(name=tag_name) for tag_name in tag_names_to_create]
-            new_tag_pks = db_connection.session.bulk_save_objects(
+            db_connection.session.bulk_save_objects(
                 new_tags,
                 return_defaults=True,
             )
@@ -215,7 +215,7 @@ def __load_tag_associations(resource):
             Tag.id == TagAssociation.tag_id,
         ).
         filter(
-            TagAssociation.taggable_id == resource.model.id,
+            TagAssociation.taggable_id.in_(pipeline_schedule_ids),
             TagAssociation.taggable_type == resource.model.__class__.__name__,
         ).
         all()
