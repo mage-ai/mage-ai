@@ -330,7 +330,7 @@ class GlobalDataProductTest(DBTestCase):
         )
         self.assertEqual(
             self.global_data_product.next_run_at(pipeline_run1),
-            pipeline_run1.execution_date + d,
+            (pipeline_run1.execution_date + d).replace(tzinfo=timezone.utc),
         )
 
     @freeze_time('2023-10-11 12:13:14')
