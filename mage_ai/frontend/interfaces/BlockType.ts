@@ -84,6 +84,16 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
+export const DRAGGABLE_BLOCK_TYPES = [
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const YAML_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
