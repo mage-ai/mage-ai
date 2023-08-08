@@ -411,7 +411,7 @@ function PipelineLogsPage({
           <Spacing mr={1} />
 
           <Flex>
-            <Text>
+            <Text noWrapping>
               Auto-scroll to new logs
             </Text>
             <Spacing mr={1} />

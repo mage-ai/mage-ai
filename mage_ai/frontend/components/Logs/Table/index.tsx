@@ -12,6 +12,7 @@ import LogType from '@interfaces/LogType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import usePrevious from '@utils/usePrevious';
 
 import { ChevronRight } from '@oracle/icons';
 import { FilterQueryType } from '@components/Logs/Filter';
@@ -59,13 +60,15 @@ function LogsTable({
     [pipeline.type],
   );
 
+  const logsPrev = usePrevious(logs);
   useEffect(() => {
-    if (autoScrollLogs) {
+    if (autoScrollLogs && (logsPrev || []).length !== (logs || []).length) {
       tableInnerRef?.current?.scrollIntoView(false);
     }
   }, [
     autoScrollLogs,
     logs,
+    logsPrev,
     tableInnerRef,
   ]);
 
