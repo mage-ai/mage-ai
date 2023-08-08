@@ -159,6 +159,13 @@ function LogDetail({
               valueTitle = JSON.stringify(JSON.parse(v), null, 2);
               valueToDisplay = <pre>{valueTitle}</pre>;
             }
+            if (typeof valueToDisplay === 'object') {
+              valueToDisplay = JSON.stringify(valueToDisplay, null, 2);
+              valueToDisplay = <pre>{valueToDisplay}</pre>;
+            }
+            if (typeof valueTitle === 'object') {
+              valueTitle = JSON.stringify(valueTitle);
+            }
 
             return [
               <Text
