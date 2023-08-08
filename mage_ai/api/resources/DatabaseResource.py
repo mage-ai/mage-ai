@@ -130,6 +130,29 @@ class DatabaseResource(BaseResource):
     def delete(self, **kwargs):
         return self.model.delete()
 
+    async def process_update(self, payload, **kwargs):
+        self.on_update_callback = None
+        self.on_update_failure_callback = None
+
+        try:
+            res = self.update(payload, **kwargs)
+            if res and inspect.isawaitable(res):
+                res = await res
+
+            db_connection.session.commit()
+
+            if self.on_update_callback:
+                self.on_update_callback(resource=res)
+
+            return res
+        except Exception as err:
+            db_connection.session.rollback()
+
+            if self.on_update_failure_callback:
+                self.on_update_failure_callback(resource=res)
+
+            raise err
+
     @safe_db_query
     def update(self, payload, **kwargs):
         for k, v in payload.items():

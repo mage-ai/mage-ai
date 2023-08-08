@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.dirname(
 import mage_ai.orchestration.db.models.oauth  # noqa: E402, F401
 import mage_ai.orchestration.db.models.schedules  # noqa: E402, F401
 import mage_ai.orchestration.db.models.secrets  # noqa: E402, F401
+import mage_ai.orchestration.db.models.tags  # noqa: E402, F401
 from mage_ai.orchestration.db.models.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
