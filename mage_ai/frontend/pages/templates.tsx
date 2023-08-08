@@ -4,7 +4,7 @@ import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
-import CustomTemplateType, { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
+import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { queryFromUrl } from '@utils/url';
 
 function Templates() {

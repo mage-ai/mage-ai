@@ -37,6 +37,7 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
+import { GlobalDataProductObjectTypeEnum } from '@interfaces/GlobalDataProductType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
@@ -900,6 +901,15 @@ function PipelineListPage() {
                     uuid: 'create_custom_template',
                   },
                   {
+                    label: () => 'Create global data product',
+                    onClick: () => {
+                      router.push(
+                        `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
+                      );
+                    },
+                    uuid: 'create_global_data_product',
+                  },
+                  {
                     label: () => 'Delete',
                     onClick: () => {
                       if (typeof window !== 'undefined'
@@ -914,6 +924,7 @@ function PipelineListPage() {
                   },
                 ];
               }}
+              rightClickMenuWidth={UNIT * 25}
               rowGroupHeaders={rowGroupHeaders}
               rows={pipelines.map((pipeline, idx) => {
                 const {

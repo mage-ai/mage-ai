@@ -56,6 +56,7 @@ type TableProps = {
   onRightClickRow?: (index: number, event?: any) => void;
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
+  rightClickMenuWidth?: number;
   rowGroupHeaders?: string[];
   rowVerticalPadding?: number;
   rows: any[][];
@@ -85,6 +86,7 @@ function Table({
   onRightClickRow,
   renderRightClickMenu,
   renderRightClickMenuItems,
+  rightClickMenuWidth = MENU_WIDTH,
   rowGroupHeaders,
   rowVerticalPadding,
   rows,
@@ -144,8 +146,8 @@ function Table({
       y = 0,
     } = coordinates || {};
     let xFinal = x;
-    if (x + MENU_WIDTH >= xContainer + width) {
-      xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
+    if (x + rightClickMenuWidth >= xContainer + width) {
+      xFinal = (xContainer + width) - (rightClickMenuWidth + UNIT);
     }
     if (xFinal < 0) {
       xFinal = 0;
@@ -167,7 +169,7 @@ function Table({
             open
             parentRef={undefined}
             uuid="FileBrowser/ContextMenu"
-            width={MENU_WIDTH}
+            width={rightClickMenuWidth}
           />
         )}
       </div>
