@@ -1,22 +1,17 @@
 import os
 
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from freezegun import freeze_time
-from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.triggers.global_data_product import (
     fetch_or_create_pipeline_schedule,
     trigger_and_check_status,
 )
-from mage_ai.orchestration.triggers.utils import create_and_start_pipeline_run
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.base_test import DBTestCase
 
 
@@ -120,7 +115,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
     @freeze_time('2023-10-11 12:13:14')
     def test_trigger_and_check_status_cancelled(self):
         pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
-        pipeline_run = PipelineRun.create(
+        PipelineRun.create(
             execution_date=datetime.utcnow() + timedelta(seconds=1),
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=self.global_data_product.pipeline.uuid,
@@ -151,13 +146,13 @@ class TriggerGlobalDataProductTest(DBTestCase):
     @freeze_time('2023-10-11 12:13:14')
     def test_trigger_and_check_status_not_outdated(self):
         pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
-        pipeline_run1 = PipelineRun.create(
+        PipelineRun.create(
             execution_date=datetime.utcnow().replace(tzinfo=timezone.utc) - timedelta(seconds=2),
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=self.global_data_product.pipeline.uuid,
             status=PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        pipeline_run2 = PipelineRun.create(
+        PipelineRun.create(
             execution_date=datetime.utcnow().replace(tzinfo=timezone.utc) - timedelta(seconds=1),
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=self.global_data_product.pipeline.uuid,
@@ -260,7 +255,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
     def test_trigger_and_check_status_should_create_new_pipeline_run(self):
         now = datetime.utcnow().replace(tzinfo=timezone.utc)
         pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
-        pipeline_run1 = PipelineRun.create(
+        PipelineRun.create(
             execution_date=now - timedelta(seconds=2),
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=self.global_data_product.pipeline.uuid,
