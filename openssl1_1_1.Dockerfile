@@ -13,6 +13,19 @@ RUN apt-get -y install unixodbc-dev
 # Install NFS dependencies, and pymssql dependencies
 RUN apt-get -y install nfs-common freetds-dev freetds-bin
 
+### Install openssl 1.1.1 instead of the default openssl 3.0.9
+# (Install compiling library Make)
+RUN apt-get -y install make 
+
+# (single command that will download latest binaries, extract them, cd into the directory, compile configuration and then install the files)  
+RUN wget https://www.openssl.org/source/openssl-1.1.1g.tar.gz
+RUN tar -zxf openssl-1.1.1g.tar.gz
+RUN cd openssl-1.1.1g && ./config && make && make install
+
+# (This will create a sym link to the new binaries)
+RUN ln -sf /usr/local/bin/openssl /usr/bin/openssl
+RUN ldconfig
+
 # Install Mage
 RUN ${PIP} install --upgrade pip
 RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
