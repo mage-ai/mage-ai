@@ -7,8 +7,7 @@ from mage_ai.orchestration.triggers.global_data_product import trigger_and_check
 
 class GlobalDataProductBlock(Block):
     def get_global_data_product(self) -> GlobalDataProduct:
-        override_configuration = self.global_data_product_override_configuration
-
+        override_configuration = (self.configuration or {}).get('global_data_product', {})
         global_data_product = GlobalDataProduct.get(override_configuration.get('uuid'))
 
         for key in [
@@ -21,10 +20,6 @@ class GlobalDataProductBlock(Block):
                 setattr(global_data_product, key, value)
 
         return global_data_product
-
-    @property
-    def global_data_product_override_configuration(self) -> str:
-        return (self.configuration or {}).get('global_data_product', {})
 
     def _execute_block(
         self,
