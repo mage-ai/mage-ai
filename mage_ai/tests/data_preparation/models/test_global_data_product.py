@@ -68,6 +68,7 @@ class GlobalDataProductTest(DBTestCase):
         self.global_data_product.save(file_path=self.file_path)
 
     def tearDown(self):
+        super().tearDown()
         os.remove(self.file_path)
 
     def test_file_path(self):
