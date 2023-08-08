@@ -81,9 +81,11 @@ class RepoConfig:
             # from the config_dict. Otherwise, we will set the variables_dir with
             # `get_variables_dir`.
             if config_dict and config_dict.get('variables_dir'):
-                self.variables_dir = os.path.abspath(
-                    os.path.join(self.repo_path, config_dict.get('variables_dir'))
-                )
+                self.variables_dir = config_dict.get('variables_dir')
+                if not self.variables_dir.startswith('s3'):
+                    self.variables_dir = os.path.abspath(
+                        os.path.join(self.repo_path, self.variables_dir)
+                    )
             else:
                 self.variables_dir = get_variables_dir(
                     repo_path=self.repo_path,
