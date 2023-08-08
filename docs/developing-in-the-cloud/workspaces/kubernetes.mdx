@@ -4,7 +4,7 @@ sidebarTitle: "Kubernetes"
 description: "Creating workspaces in Kubernetes"
 ---
 
-### Setup
+## Setup
 
 We recommend using Helm to set up your Kubernetes cluster. You can find our Mage Helm
 documentation [here](/production/deploying-to-cloud/using-helm). You will need to create
@@ -34,7 +34,7 @@ env:
     value: "1"
 ```
 
-### Permissions
+## Permissions
 
 Once your cluster and initial deployment is created, you will also need to give your
 Kubernetes service account some permissions in order to create the necessary resources.
@@ -57,6 +57,7 @@ rules:
       - persistentvolumeclaims
       - services
       - statefulsets
+      - ingress
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 EOF
 ```
@@ -70,7 +71,7 @@ kubectl create clusterrolebinding manage-role-binding \
   --serviceaccount=default:default
 ```
 
-### Usage
+## Usage
 
 Once you start Mage and log in, you should land on the workspaces dashboard (/manage).
 
@@ -97,7 +98,30 @@ Here are the fields you can currently customize through the Mage UI for Kubernet
 | --- | --- |
 | Workspace name | Name of workspace. This name will be used to create all resources for the workspace. |
 | Service account name | Kubernetes service account to use to create the resources. Defaults to current pod's service account name. |
+| Ingress name | Name of ingress to add the new workspace to. See more information about the ingress set up below. |
 | Storage class name | Name of storage class to provision storage from for the stateful set. Defaults to current pvc's storage class name. |
 | Storage request size | Amount of storage to provision for the persistent volume claim (in GB). Defaults to current pvc's storage request. |
 | Access mode | Access mode for persistent volume claim. [More info in Kubernetes docs.](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) Defaults to current pvc's access mode. |
 | Configure container | Customize the configuration for the pod container. [Configuration options](https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md) |
+
+## Ingress
+
+When an ingress is provided, the `MAGE_BASE_PATH` environment variable will be set automatically 
+to the name of the workspace. Thus, the workspace will be accessible at the `/<workspace-name>` path.
+
+Providing an ingress name will add the workspace to the ingress rules like this:
+
+```
+spec:
+  rules:
+    - host: "your host"
+      http:
+        paths:
+          ...
+          - path: /<workspace-name>
+            path_type: Prefix
+            backend:
+              service:
+                name: <service-name>
+                port: 6789
+```

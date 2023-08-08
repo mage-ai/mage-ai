@@ -55,9 +55,21 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
   mage init [project_name]
 ```
 
-### Using PostgreSQL as database
+### Connect to an external database
 
-Mage uses SQLite as the default database engine. To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
+<Note>
+
+Prior to Mage version 0.9.12, you may run into issues using database connection urls with special characters
+in the password such as "%" or "@" symbols. Please upgrade to a Mage version >= 0.9.12 to resolve these issues.
+
+</Note>
+
+Mage uses SQLite as the default database engine, but SQLite is not recommended for production use cases.
+The following databases are other alternatives that you can use with Mage.
+
+#### PostgreSQL
+
+To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
 
 1. Create Docker network
 
@@ -93,7 +105,7 @@ To use a specific schema in the PostgreSQL database, the connection string could
       /app/run_app.sh mage start [project_name]
    ```
 
-### Using MSSQL as database
+#### MSSQL
 
 MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
 
@@ -258,6 +270,18 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 ```
 
 See [here](/development/environment-variables) for a list of environment variables you can configure.
+
+### Setting prefix for Mage url
+
+In some cases, you may need to add a prefix to the Mage url. You can configure the Mage server to start
+at a prefix to the url by setting the `MAGE_BASE_PATH` environment variable.
+
+Make sure to set the base path without the leading slash. For example, if you want to start Mage at
+`http://localhost:6789/base/url/path`, you would configure your environment
+variable like this:
+
+| --- | --- |
+| `MAGE_BASE_PATH` | "base/url/path" |
 
 ---
 
