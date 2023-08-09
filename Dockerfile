@@ -15,11 +15,6 @@ RUN apt-get -y install nfs-common freetds-dev freetds-bin
 
 # Install Mage
 RUN ${PIP} install --upgrade pip
-
-# pymssql temporary fix
-RUN echo "Cython==0.29.36" >> /tmp/mssql-constraints.txt
-RUN PIP_CONSTRAINT=/tmp/mssql-constraints.txt ${PIP} install pymssql==2.2.7
-
 RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"

@@ -20,7 +20,7 @@ psycopg2-binary==2.9.3
 pyarrow==10.0.1
 pymongo==4.3.3
 pymongo_schema==0.4.1
-pymssql
+pymssql==2.2.8
 python-dateutil==2.8.2
 python-magic==0.4.27
 redshift-connector==2.0.909

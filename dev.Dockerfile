@@ -25,10 +25,6 @@ RUN apt-get -y install curl freetds-dev freetds-bin
 COPY requirements.txt requirements.txt
 RUN ${PIP} install --upgrade pip
 
-# pymssql temporary fix
-RUN echo "Cython==0.29.36" >> /tmp/mssql-constraints.txt
-RUN PIP_CONSTRAINT=/tmp/mssql-constraints.txt ${PIP} install pymssql==2.2.7
-
 COPY mage_integrations mage_integrations
 RUN ${PIP} install mage_integrations/
 RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
