@@ -166,7 +166,7 @@ class RepoConfig:
     def save(self, **kwargs) -> None:
         if os.path.exists(self.metadata_path):
             with open(self.metadata_path) as f:
-                data = yml.load(f)
+                data = yml.load(f) or {}
         else:
             data = {}
 
