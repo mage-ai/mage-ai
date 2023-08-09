@@ -27,6 +27,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
@@ -104,6 +105,7 @@ function TriggerDetail({
     sla,
     start_time: startTime,
     status,
+    tags,
     variables: scheduleVariablesInit = {},
   } = pipelineSchedule || {};
 
@@ -450,14 +452,12 @@ function TriggerDetail({
             default
             key={`settings_variable_label_${uuid}`}
             monospace
-            small
           >
             {uuid}
           </Text>,
           <Text
             key={`settings_variable_${uuid}`}
             monospace
-            small
           >
             {value}
           </Text>,
@@ -658,6 +658,24 @@ function TriggerDetail({
               <Divider light mt={1} short />
 
               {dbtSettingsTable}
+            </Spacing>
+          )}
+
+          {tags?.length >= 1 && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  Tags
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                <TagsContainer
+                  tags={tags?.map(tag => ({ uuid: tag }))}
+                />
+              </Spacing>
             </Spacing>
           )}
 
