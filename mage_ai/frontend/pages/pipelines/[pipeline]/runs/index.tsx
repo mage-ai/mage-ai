@@ -22,6 +22,7 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -321,20 +322,27 @@ function PipelineRuns({
           <FlexContainer alignItems="center">
             {(hasRunningPipeline && isPipelineRunsTab) &&
               <Spacing pl={2}>
-                <Button
-                  danger
-                  loading={isLoadingUpdatePipeline}
-                  onClick={() => {
-                    updatePipeline({
-                      pipeline: {
-                        status: RunStatusEnum.CANCELLED,
-                      },
-                    });
-                  }}
-                  outline
+                <Tooltip
+                  label={'Cancel all pipeline runs in progress (i.e. runs with "Ready" or "Running" \
+                    status). This includes runs on other pages as well, not just the current page.'
+                  }
+                  size={null}
                 >
-                  Cancel running pipeline runs
-                </Button>
+                  <Button
+                    danger
+                    loading={isLoadingUpdatePipeline}
+                    onClick={() => {
+                      updatePipeline({
+                        pipeline: {
+                          status: RunStatusEnum.CANCELLED,
+                        },
+                      });
+                    }}
+                    outline
+                  >
+                    Cancel all running pipeline runs
+                  </Button>
+                </Tooltip>
               </Spacing>
             }
 
