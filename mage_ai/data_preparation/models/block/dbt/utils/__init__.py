@@ -579,11 +579,11 @@ def config_file_loader_and_configuration(
             SNOWFLAKE_ROLE=profile.get('role'),
         )
 
-        if 'password' in profile:
+        if profile.get('password', None):
             config['SNOWFLAKE_PASSWORD'] = profile['password']
-        if 'private_key_passphrase' in profile:
+        if profile.get('private_key_passphrase', None):
             config['SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'] = profile['private_key_passphrase']
-        if 'private_key_path' in profile:
+        if profile.get('private_key_path', None):
             config['SNOWFLAKE_PRIVATE_KEY_PATH'] = profile['private_key_path']
 
         config_file_loader = ConfigFileLoader(config=config)
