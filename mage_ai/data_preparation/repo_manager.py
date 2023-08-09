@@ -293,7 +293,7 @@ def get_variables_dir(
     return variables_dir
 
 
-def initialize_project_uuid():
+def set_project_uuid_from_metadata():
     global project_uuid
     try:
         with open(get_metadata_path(), 'r', encoding='utf-8') as f:
@@ -303,16 +303,16 @@ def initialize_project_uuid():
         pass
 
 
-project_uuid = None
-initialize_project_uuid()
-
-
-def update_project_uuid():
+def init_project_uuid():
     global project_uuid
     if not project_uuid:
         puuid = uuid.uuid4().hex
         get_repo_config().save(project_uuid=puuid)
         project_uuid = puuid
+
+
+project_uuid = None
+set_project_uuid_from_metadata()
 
 
 def get_project_uuid() -> str:

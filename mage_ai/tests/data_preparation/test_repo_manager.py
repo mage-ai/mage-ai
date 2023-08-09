@@ -8,7 +8,7 @@ import yaml
 from mage_ai.data_preparation.repo_manager import (
     RepoConfig,
     get_project_uuid,
-    initialize_project_uuid,
+    set_project_uuid_from_metadata,
 )
 from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.tests.base_test import DBTestCase
@@ -77,7 +77,7 @@ class RepoManagerTest(DBTestCase):
         test_dir = os.path.expanduser(f'~/{dir_name}')
         shutil.rmtree(test_dir)
 
-    def test_initialize_project_uuid(self):
+    def test_set_project_uuid_from_metadata(self):
         test_metadata_file = os.path.join(self.repo_path, 'test_repo_manager.yaml')
         with open(test_metadata_file, 'w', encoding='utf-8') as f:
             yaml.dump(dict(project_uuid='123456789'), f)
@@ -86,6 +86,6 @@ class RepoManagerTest(DBTestCase):
             'mage_ai.data_preparation.repo_manager.get_metadata_path',
             return_value=test_metadata_file
         ):
-            initialize_project_uuid()
+            set_project_uuid_from_metadata()
             self.assertEqual(get_project_uuid(), '123456789')
         os.remove(test_metadata_file)
