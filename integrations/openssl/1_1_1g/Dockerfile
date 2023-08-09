@@ -1,8 +1,6 @@
+# Install openssl 1.1.1 instead of the default openssl 3.0.9
 FROM mageai/mageai:latest
-LABEL description="Deploy Mage on ECS"
-USER root
 
-### Install openssl 1.1.1 instead of the default openssl 3.0.9
 # (Install compiling library Make)
 RUN apt-get -y install make 
 
