@@ -10,7 +10,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Sensor as SensorIcon } from '@oracle/icons';
+import { Add, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -622,6 +622,36 @@ function AddNewBlocks({
                   uuid="AddNewBlocks/Scratchpad"
                 >
                   Scratchpad
+                </KeyboardShortcutButton>
+              </Tooltip>
+            </ButtonWrapper>
+          )}
+
+          {!hideScratchpad && (
+            <ButtonWrapper>
+              <Tooltip
+                block
+                label="Add a global data product block"
+                maxWidth={MAX_TOOLTIP_WIDTH}
+                size={null}
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact}>
+                      <HexagonAll size={iconSize} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    showGlobalDataProducts({
+                      // @ts-ignore
+                      addNewBlock,
+                    });
+                  }}
+                  uuid="AddNewBlocks/GlobalDataProducts"
+                >
+                  Global data product
                 </KeyboardShortcutButton>
               </Tooltip>
             </ButtonWrapper>
