@@ -52,7 +52,9 @@ class ServerTests(TestCase):
         self.assertIsNone(handler)
 
     @patch('mage_ai.server.server.BASE_PATH', 'random-test-string-1hasdfh')
-    def test_replace_base_path(self):
+    @patch('mage_ai.server.server.get_variables_dir')
+    def test_replace_base_path(self, mock_variables_dir):
+        mock_variables_dir.return_value = os.path.dirname(server_module.__file__)
         with patch(
             'mage_ai.server.server.BASE_PATH_EXPORTS_FOLDER',
             'base_path_test',
@@ -66,7 +68,9 @@ class ServerTests(TestCase):
         shutil.rmtree(test_dir)
 
     @patch('mage_ai.server.server.BASE_PATH', 'test_prefix')
-    def test_replace_base_path_directory_exists(self):
+    @patch('mage_ai.server.server.get_variables_dir')
+    def test_replace_base_path_directory_exists(self, mock_variables_dir):
+        mock_variables_dir.return_value = os.path.dirname(server_module.__file__)
         test_dir = os.path.join(os.path.dirname(server_module.__file__), 'base_path_test')
         os.makedirs(test_dir)
         with patch(
