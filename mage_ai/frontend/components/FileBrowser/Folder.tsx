@@ -337,7 +337,7 @@ function Folder({
             setSelectedFile(file);
           }}
           onMouseDown={(e) => {
-            const block = file ? getBlockFromFile(file) : null;
+            const block = file ? getBlockFromFile(file, null, true) : null;
 
             if (!containerRef?.current?.contains(e.target)
               || !block

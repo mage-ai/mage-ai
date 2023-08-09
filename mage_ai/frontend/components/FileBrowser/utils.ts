@@ -3,6 +3,7 @@ import * as osPath from 'path';
 import BlockType, {
   BlockTypeEnum,
   BLOCK_TYPES,
+  DRAGGABLE_BLOCK_TYPES,
   YAML_BLOCK_TYPES,
   R_BLOCK_TYPES,
   SQL_BLOCK_TYPES,
@@ -10,12 +11,13 @@ import BlockType, {
 import FileType, {
   CODE_BLOCK_FILE_EXTENSIONS,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   FOLDER_NAME_PIPELINES,
   FileExtensionEnum,
   METADATA_FILENAME,
 } from '@interfaces/FileType';
+import { cleanName, singularize } from '@utils/string';
 import { prependArray, removeAtIndex } from '@utils/array';
-import { singularize } from '@utils/string';
 
 export function getFullPath(
   file: FileType,
@@ -52,6 +54,7 @@ export function getFullPathWithoutRootFolder(
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
+  draggableBlockTypesOnly: boolean = false,
 ) {
   // parts example:
   // ['default_repo', 'data_loaders', 'team', 'foo.py']
@@ -107,7 +110,9 @@ export function getBlockFromFile(
     `\\.${FileExtensionEnum.YML}`,
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
-  if (BLOCK_TYPES.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
+
+  const blockTypesToInclude = draggableBlockTypesOnly ? DRAGGABLE_BLOCK_TYPES : BLOCK_TYPES;
+  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
     const idx = fileName.lastIndexOf('.');
     const extension = fileName.slice(idx + 1);
 
@@ -231,4 +236,18 @@ export function getBlockFromFilePath(filePath: string, blocks: BlockType[]) {
   const blockUUID = parts.slice(1, parts.length).join('');
 
   return blocks.find(({ uuid }: BlockType) => uuid === blockUUID);
+}
+
+export function getRelativePathFromBlock(block: BlockType) {
+  // Block name, language, and type are required.
+  const { language, name, type } = block || {};
+  if (name && language && type) {
+    const blockDirectory = type === BlockTypeEnum.CUSTOM
+      ? type
+      : `${type}s`;
+    const fileExtension = FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language];
+    const uuid = cleanName(name);
+
+    return `${blockDirectory}/${uuid}.${fileExtension}`;
+  }
 }

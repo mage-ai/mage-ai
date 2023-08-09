@@ -1,5 +1,8 @@
 import moment from 'moment';
+
 import BlockRunType from '@interfaces/BlockRunType';
+import PipelineScheduleType from '@interfaces/PipelineScheduleType';
+import { DEFAULT_PORT } from '@api/utils/url';
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
@@ -96,4 +99,28 @@ export function convertSeconds(seconds: number) {
 
 export function convertToSeconds(time: number, unit: TimeUnitEnum) {
   return time * TIME_UNIT_TO_SECONDS[unit];
+}
+
+export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
+  let url = '';
+  let port: string;
+
+  const windowIsDefined = typeof window !== 'undefined';
+  if (windowIsDefined) {
+    url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+
+    if (pipelineSchedule?.token) {
+      url = `${url}/${pipelineSchedule.token}`;
+    }
+  }
+
+  if (windowIsDefined) {
+    port = window.location.port;
+
+    if (port) {
+      url = url.replace(port, DEFAULT_PORT);
+    }
+  }
+
+  return url;
 }

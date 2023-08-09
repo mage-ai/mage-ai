@@ -885,6 +885,10 @@ class Pipeline:
                     if block_data.get('has_callback') is not None:
                         block.update(extract(block_data, ['has_callback']))
 
+                    color = block_data.get('color')
+                    if color is not None and color != block.color:
+                        block.update(extract(block_data, ['color']))
+
                     configuration = block_data.get('configuration')
                     if configuration:
                         if configuration.get('dynamic') and not is_dynamic_block(block):

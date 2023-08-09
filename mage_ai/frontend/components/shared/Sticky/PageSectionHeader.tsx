@@ -9,7 +9,7 @@ const PageSectionHeader = styled.div<{
   position: sticky;
   top: 0;
   width: 100%;
-  z-index: 2;
+  z-index: 3;
 
   ${props => `
     background-color: ${props.backgroundColor || (props.theme.background || dark.background).page};

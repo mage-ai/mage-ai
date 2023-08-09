@@ -45,6 +45,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
+from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
@@ -119,6 +120,28 @@ class PipelineSchedule(BaseModel):
         if len(self.pipeline_runs) == 0:
             return None
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+
+    @property
+    def tag_associations(self):
+        return (
+            TagAssociation.
+            select(
+                TagAssociation.id,
+                TagAssociation.tag_id,
+                TagAssociation.taggable_id,
+                TagAssociation.taggable_type,
+                Tag.name,
+            ).
+            join(
+                Tag,
+                Tag.id == TagAssociation.tag_id,
+            ).
+            filter(
+                TagAssociation.taggable_id == self.id,
+                TagAssociation.taggable_type == self.__class__.__name__,
+            ).
+            all()
+        )
 
     @classmethod
     @safe_db_query
@@ -397,6 +420,11 @@ class PipelineRun(BaseModel):
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
     backfill = relationship('Backfill', back_populates='pipeline_runs')
+
+    def __init__(self, **kwargs):
+        self.global_data_product_uuid = kwargs.get('global_data_product_uuid', None)
+        kwargs.pop('global_data_product_uuid', None)
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\

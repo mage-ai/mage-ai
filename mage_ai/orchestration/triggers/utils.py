@@ -70,16 +70,18 @@ def create_and_start_pipeline_run(
     pipeline_run = PipelineRun.create(**configured_payload)
 
     # Do not start the pipeline run immediately due to concurrency control
-    # from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-    # pipeline_scheduler = PipelineScheduler(pipeline_run)
+    if should_schedule:
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 
-    # if is_integration:
-    #     initialize_state_and_runs(
-    #         pipeline_run,
-    #         pipeline_scheduler.logger,
-    #         pipeline_run.get_variables(),
-    #     )
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
 
-    # pipeline_scheduler.start(should_schedule=should_schedule)
+        # if is_integration:
+        #     initialize_state_and_runs(
+        #         pipeline_run,
+        #         pipeline_scheduler.logger,
+        #         pipeline_run.get_variables(),
+        #     )
+
+        pipeline_scheduler.start(should_schedule=should_schedule)
 
     return pipeline_run

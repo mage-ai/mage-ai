@@ -1,5 +1,14 @@
+import StreamingPipeline from '@oracle/icons/custom/StreamingPipeline';
+import {
+  BatchPipeline,
+  DataIntegrationPipeline,
+  TemplateShapes,
+} from '@oracle/icons';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { randomNameGenerator } from '@utils/string';
+
+const ICON_SIZE = UNIT * 1.5;
 
 export const getNewPipelineButtonMenuItems = (
   createPipeline: (
@@ -11,6 +20,7 @@ export const getNewPipelineButtonMenuItems = (
 ) => {
   const arr = [
     {
+      beforeIcon: <BatchPipeline />,
       label: () => 'Standard (batch)',
       onClick: () => createPipeline({
         pipeline: {
@@ -20,6 +30,7 @@ export const getNewPipelineButtonMenuItems = (
       uuid: 'Pipelines/NewPipelineMenu/standard',
     },
     {
+      beforeIcon: <DataIntegrationPipeline />,
       label: () => 'Data integration',
       onClick: () => createPipeline({
         pipeline: {
@@ -30,6 +41,7 @@ export const getNewPipelineButtonMenuItems = (
       uuid: 'Pipelines/NewPipelineMenu/integration',
     },
     {
+      beforeIcon: <StreamingPipeline size={ICON_SIZE} />,
       label: () => 'Streaming',
       onClick: () => createPipeline({
         pipeline: {
@@ -43,6 +55,7 @@ export const getNewPipelineButtonMenuItems = (
 
   if (opts?.showBrowseTemplates) {
     arr.push({
+      beforeIcon: <TemplateShapes />,
       label: () => 'From a template',
       onClick: () => opts?.showBrowseTemplates?.(),
       uuid: 'Pipelines/NewPipelineMenu/custom_template',

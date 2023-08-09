@@ -26,6 +26,7 @@ def trigger_and_check_status(
     poll_interval: float = DEFAULT_POLL_INTERVAL,
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
+    should_schedule: bool = True,
 ):
     pipeline_run_created = None
     tries = 0
@@ -47,7 +48,7 @@ def trigger_and_check_status(
                 raise Exception(message)
 
             if verbose:
-                print(verbose)
+                print(message)
 
             if PipelineRun.PipelineRunStatus.CANCELLED == status:
                 break
@@ -130,13 +131,13 @@ def trigger_and_check_status(
                 __lock_key_for_creating_pipeline_run(global_data_product),
                 timeout=10,
             ):
-                pipeline_schedule = __fetch_or_create_pipeline_schedule(global_data_product)
+                pipeline_schedule = fetch_or_create_pipeline_schedule(global_data_product)
                 try:
                     pipeline_run_created = create_and_start_pipeline_run(
                         global_data_product.pipeline,
                         pipeline_schedule,
                         dict(variables=variables),
-                        should_schedule=True,
+                        should_schedule=should_schedule,
                     )
                     if pipeline_run_created:
                         if verbose:
@@ -163,37 +164,7 @@ def trigger_and_check_status(
             break
 
 
-def __clean_up_pipeline_runs(
-    global_data_product: GlobalDataProduct,
-    pipeline_runs: List[PipelineRun],
-) -> List[PipelineRun]:
-    arr = []
-
-    outdated_at_delta = global_data_product.get_outdated_at_delta(in_seconds=True)
-
-    pipeline_runs_count = len(pipeline_runs)
-    prs = sorted(pipeline_runs, key=lambda x: x.execution_date, reverse=True)
-    for idx, pipeline_run in enumerate(prs):
-        if idx == pipeline_runs_count - 1:
-            continue
-
-        previous_pipeline_run = prs[idx + 1]
-
-        # If the time between the recent run and the previous run is less than
-        # the time it takes for the global data product to be outdated, then
-        # delete the recent run.
-        seconds_between_runs = (
-            pipeline_run.execution_date - previous_pipeline_run.execution_date,
-        ).timestamp()
-
-        if seconds_between_runs < outdated_at_delta:
-            arr.append(pipeline_run)
-            pipeline_run.delete()
-
-    return arr
-
-
-def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:
+def fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:
     pipeline_uuid = global_data_product.object_uuid
     schedule_name = TRIGGER_NAME_FOR_GLOBAL_DATA_PRODUCT
     schedule_type = ScheduleType.TIME
@@ -244,6 +215,37 @@ def __fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) 
         tries += 1
 
     return pipeline_schedule
+
+
+def __clean_up_pipeline_runs(
+    global_data_product: GlobalDataProduct,
+    pipeline_runs: List[PipelineRun],
+) -> List[PipelineRun]:
+    arr = []
+
+    outdated_at_delta = global_data_product.get_outdated_at_delta(in_seconds=True)
+
+    pipeline_runs_count = len(pipeline_runs)
+    prs = sorted(pipeline_runs, key=lambda x: x.execution_date, reverse=True)
+    for idx, pipeline_run in enumerate(prs):
+        if idx == pipeline_runs_count - 1:
+            continue
+
+        previous_pipeline_run = prs[idx + 1]
+
+        # If the time between the recent run and the previous run is less than
+        # the time it takes for the global data product to be outdated, then
+        # delete the recent run.
+        seconds_between_runs = (
+            pipeline_run.execution_date - previous_pipeline_run.execution_date
+        ).total_seconds()
+
+        if seconds_between_runs < outdated_at_delta:
+            arr.append(pipeline_run)
+
+    PipelineRun.query.filter(PipelineRun.id.in_([pr.id for pr in arr])).delete()
+
+    return arr
 
 
 def __lock_key_for_creating_pipeline_run(global_data_product: GlobalDataProduct) -> str:

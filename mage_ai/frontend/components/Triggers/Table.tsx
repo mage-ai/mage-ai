@@ -17,6 +17,7 @@ import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
@@ -124,7 +125,7 @@ function TriggersTable({
   const columns = [];
 
   if (!disableActions) {
-    columnFlex.push(...[null, null, 1]);
+    columnFlex.push(...[null, null, null]);
     columns.push(...[
       {
         label: () => '',
@@ -139,7 +140,7 @@ function TriggersTable({
     ]);
   }
 
-  columnFlex.push(...[disableActions ? 1 : null]);
+  columnFlex.push(...[1]);
   columns.push(...[
     {
       uuid: 'Name',
@@ -147,10 +148,13 @@ function TriggersTable({
   ]);
 
   if (!disableActions) {
-    columnFlex.push(...[null]);
+    columnFlex.push(...[null, 2]);
     columns.push(...[
       {
         uuid: 'Frequency',
+      },
+      {
+        uuid: 'Tags',
       },
     ]);
   }
@@ -218,6 +222,7 @@ function TriggersTable({
                 name,
                 schedule_interval: scheduleInterval,
                 status,
+                tags,
               } = pipelineSchedule;
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
               deleteButtonRefs.current[id] = createRef();
@@ -342,6 +347,11 @@ function TriggersTable({
                   <Text default key={`trigger_frequency_${idx}`} monospace>
                     {scheduleInterval}
                   </Text>,
+                  <div key={`pipeline_tags_${idx}`}>
+                    <TagsContainer
+                      tags={tags?.map(tag => ({ uuid: tag }))}
+                    />
+                  </div>,
                 ]);
               }
 

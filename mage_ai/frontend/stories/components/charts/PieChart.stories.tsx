@@ -12,7 +12,7 @@ export default {
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
-  <ThemeBlock>
+  <ThemeBlock sideBySide>
     {/*@ts-ignore*/}
     <PieChart {...props} />
   </ThemeBlock>

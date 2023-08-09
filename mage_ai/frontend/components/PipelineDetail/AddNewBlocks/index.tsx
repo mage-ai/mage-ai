@@ -250,6 +250,16 @@ function AddNewBlocks({
           label: () => 'Python',
           uuid: 'transformers/python',
         },
+        ...getdataSourceMenuItems(
+          addNewBlock,
+          BlockTypeEnum.TRANSFORMER,
+          pipelineType,
+          {
+            blockTemplatesByBlockType,
+            onlyCustomTemplate: true,
+            showBrowseTemplates,
+          },
+        ),
       ];
     }
 

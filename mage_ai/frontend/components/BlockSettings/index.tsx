@@ -2,14 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BlockColorEnum,
+  BLOCK_COLOR_HEX_CODE_MAPPING,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
-import FlexContainer from '@oracle/components/FlexContainer';
+import Circle from '@oracle/elements/Circle';
+import Flex from '@oracle/components/Flex';
+import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
 import GlobalDataProductType, {
   GlobalDataProductObjectTypeEnum,
 } from '@interfaces/GlobalDataProductType';
@@ -18,6 +20,7 @@ import Link from '@oracle/elements/Link';
 import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
 import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
 import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
+import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
 import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
 import Spacing from '@oracle/elements/Spacing';
@@ -25,19 +28,38 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
+import { BannerStyle } from './index.style';
+import { DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
+  ICON_SIZE_SMALL,
+  ICON_SIZE_LARGE,
+} from '@oracle/styles/units/icons';
+import {
   PADDING_UNITS,
+  UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
+import { TableContainerStyle } from '@components/IntegrationPipeline/index.style';
+import { YELLOW } from '@oracle/styles/colors/main';
 import { indexBy } from '@utils/array';
+import { capitalize } from '@utils/string';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
+
+const SHARED_BUTTON_PROPS = {
+  borderLess: true,
+  iconOnly: true,
+  noBackground: true,
+  outline: true,
+  padding: '4px',
+};
 
 type BlockSettingsProps = {
   block: BlockType;
@@ -46,6 +68,11 @@ type BlockSettingsProps = {
   globalDataProducts?: GlobalDataProductType[];
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => void;
 };
 
 function BlockSettings({
@@ -55,6 +82,7 @@ function BlockSettings({
   globalDataProducts,
   pipeline,
   setSelectedBlock,
+  showUpdateBlockModal,
 }: BlockSettingsProps) {
   const refExecutorTypeSelect = useRef(null);
   const refExecutorTypeTextInput = useRef(null);
@@ -64,7 +92,9 @@ function BlockSettings({
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
 
   const {
+    color: blockColor,
     configuration,
+    name: blockName,
     type: blockType,
     uuid: blockUUID,
   } = block;
@@ -143,6 +173,7 @@ function BlockSettings({
     ? Object.values(blockDetails?.pipelines)
     : []
   , [blockDetails]);
+  const blockPipelinesCount = blockPipelines?.length || 1;
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
@@ -169,57 +200,60 @@ function BlockSettings({
     },
   );
 
-  const pipelinesTable = useMemo(() => blockPipelines?.length >= 1 && (
-    <Table
-      columnFlex={[null, 1]}
-      columns={[
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Description',
-        },
-      ]}
-      rows={blockPipelines.map(({
-        pipeline: {
-          description,
-          name: pipelineName,
-          uuid: pipelineUUID,
-        },
-      }) => {
-        let nameEl;
+  const pipelinesTable = useMemo(() => blockPipelinesCount >= 1 && (
+    <TableContainerStyle>
+      <Table
+        columnFlex={[null, 1]}
+        columns={[
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Description',
+          },
+        ]}
+        rows={blockPipelines.map(({
+          pipeline: {
+            description,
+            name: pipelineName,
+            uuid: pipelineUUID,
+          },
+        }) => {
+          let nameEl;
 
-        if (pipeline?.uuid === pipelineUUID) {
-          nameEl = (
-            <Text key="name" monospace muted>
-              {pipelineName || pipelineUUID}
-            </Text>
-          );
-        } else {
-          nameEl = (
-            <Link
-              href={`/pipelines/${pipelineUUID}/edit`}
-              key="name"
-              monospace
-              openNewWindow
-              sameColorAsText
-            >
-              {pipelineName || pipelineUUID}
-            </Link>
-          );
-        }
+          if (pipeline?.uuid === pipelineUUID) {
+            nameEl = (
+              <Text key="name" monospace muted>
+                {pipelineName || pipelineUUID} (current)
+              </Text>
+            );
+          } else {
+            nameEl = (
+              <Link
+                href={`/pipelines/${pipelineUUID}/edit`}
+                key="name"
+                monospace
+                openNewWindow
+                sameColorAsText
+              >
+                {pipelineName || pipelineUUID}
+              </Link>
+            );
+          }
 
-        return [
-          nameEl,
-          <Text default key="description" monospace>
-            {description || '-'}
-          </Text>,
-        ];
-      })}
-      uuid="git-branch-blockPipelines"
-    />
+          return [
+            nameEl,
+            <Text default key="description" monospace>
+              {description || '-'}
+            </Text>,
+          ];
+        })}
+        uuid="git-branch-blockPipelines"
+      />
+    </TableContainerStyle>
   ), [
     blockPipelines,
+    blockPipelinesCount,
     pipeline,
   ]);
 
@@ -253,40 +287,99 @@ function BlockSettings({
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Spacing py={PADDING_UNITS}>
-          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <TextInput
-              label="Name"
-              // @ts-ignore
-              onChange={e => setBlockAttributes(prev => ({
-                ...prev,
-                name: e.target.value,
-              }))}
-              primary
-              setContentOnMount
-              value={blockAttributes?.name || ''}
-            />
-
-            {BlockTypeEnum.CUSTOM === block?.type && (
-              <Spacing mt={PADDING_UNITS}>
-                <Select
-                  label="Color"
-                  // @ts-ignore
-                  onChange={e => setBlockAttributes(prev => ({
-                    ...prev,
-                    color: e.target.value,
-                  }))}
-                  primary
-                  value={blockAttributes?.color || ''}
-                >
-                  {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
-                    <option key={color} value={color}>
-                      {capitalize(color)}
-                    </option>
-                  ))}
-                </Select>
-              </Spacing>
-            )}
+        <Spacing p={PADDING_UNITS}>
+          {blockPipelinesCount > 1 &&
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <BannerStyle>
+                <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS} >
+                  <Flex>
+                    <DiamondShared fill={YELLOW} size={ICON_SIZE_LARGE} />
+                    <Spacing pr={2} />
+                    <Text
+                      bold
+                      large
+                      lineHeight={UNIT * 3}
+                      warning
+                    >
+                      Shared by {blockPipelinesCount} pipelines
+                    </Text>
+                  </Flex>
+                  {/* <Tooltip
+                    appearBefore
+                    block
+                    label="Duplicates block and removes any attachment to other pipelines"
+                    maxWidth={UNIT * 30}
+                    size={null}
+                  >
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
+                      iconOnly={false}
+                      // onClick={() => {}}
+                      padding={null}
+                    >
+                      Detach
+                    </Button>
+                  </Tooltip> */}
+                </FlexContainer>
+              </BannerStyle>
+            </Spacing>
+          }
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <RowDataTable
+              noBackground
+              noBoxShadow
+              sameColorBorders
+            >
+              <RowStyle noBorder>
+                <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
+                  <Flex>
+                    <Text bold>
+                      Name:&nbsp;
+                    </Text>
+                    <Text>
+                      {blockName || ''}
+                    </Text>
+                  </Flex>
+                  <Button
+                    {...SHARED_BUTTON_PROPS}
+                    onClick={() => showUpdateBlockModal(block, blockName)}
+                  >
+                    <Edit size={ICON_SIZE_SMALL} />
+                  </Button>
+                </FlexContainer>
+              </RowStyle>
+              {BlockTypeEnum.CUSTOM === block?.type
+                ? (
+                  <RowStyle noBorder>
+                    <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
+                      <Flex>
+                        <Text bold>
+                          Color:&nbsp;
+                        </Text>
+                        <Text>
+                          {capitalize(blockColor || '')}
+                        </Text>
+                      </Flex>
+                      <Button
+                        {...SHARED_BUTTON_PROPS}
+                        onClick={() => showUpdateBlockModal(block, blockName)}
+                        outline={false}
+                      >
+                        <Circle
+                          color={blockColor
+                            ? BLOCK_COLOR_HEX_CODE_MAPPING[blockColor]
+                            : null
+                          }
+                          size={ICON_SIZE_SMALL}
+                          square
+                        />
+                      </Button>
+                    </FlexContainer>
+                  </RowStyle>
+                ) : null
+              }
+            </RowDataTable>
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
@@ -535,10 +628,8 @@ function BlockSettings({
               // @ts-ignore
               onClick={() => updateBlock({
                 block: {
-                  color: blockAttributes?.color,
                   configuration: blockAttributes?.configuration,
                   executor_type: blockAttributes?.executor_type,
-                  name: blockAttributes?.name,
                   retry_config: blockRetryConfig,
                 },
               })}
@@ -562,10 +653,13 @@ function BlockSettings({
           <>
             <Spacing p={PADDING_UNITS}>
               <Headline>
-                Pipelines
+                Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>
-                Here are all the pipelines that are using this block.
+                A shared block is available to and reused by multiple pipelines. It
+                enables you to write code once and have it easily accessible anywhere
+                in the workspace. As a result, any code changes will affect all
+                pipelines sharing the block.
               </Text>
             </Spacing>
 

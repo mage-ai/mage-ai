@@ -1,6 +1,7 @@
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -14,6 +15,7 @@ import KernelOutputType, {
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
+import { getColorsForBlockType } from './index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 
@@ -456,3 +458,15 @@ export function hasErrorOrOutput(messagesWithType: KernelOutputType[]): {
     hasOutput,
   };
 }
+
+export const getBlockColorHexCodeMapping = () => (
+  Object.values(BlockColorEnum).reduce((acc, color) => ({
+    ...acc,
+    [color]: getColorsForBlockType(
+      BlockTypeEnum.CUSTOM,
+      {
+        blockColor: color,
+      },
+    ).accent,
+  }), {})
+);
