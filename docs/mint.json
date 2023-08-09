@@ -228,24 +228,17 @@
                   ]
                 },
                 {
+                  "group": "Monitoring",
+                  "pages": [
+                    "production/observability/monitoring",
+                    "production/observability/logging"
+                  ]
+                },
+                {
                   "group": "Versioning",
                   "pages": [
                     "developing-in-the-cloud/setting-up-git",
                     "development/versioning/file-versions"
-                  ]
-                }
-              ]
-            },
-            {
-              "group": "Team management",
-              "pages": [
-                "developing-in-the-cloud/cloud-dev-environments/overview",
-                {
-                  "group": "Environments",
-                  "pages": [
-                    "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
-                    "developing-in-the-cloud/cloud-dev-environments/cloud-run",
-                    "developing-in-the-cloud/cloud-dev-environments/kubernetes"
                   ]
                 }
               ]
@@ -408,7 +401,7 @@
       ]
     },
     {
-      "group": "Cloud",
+      "group": "Deployment",
       "pages": [
         {
           "group": "Authentication",
@@ -442,7 +435,7 @@
           ]
         },
         {
-          "group": "Deployment",
+          "group": "Cloud",
           "pages": [
             "production/deploying-to-cloud/architecture",
             "production/deploying-to-cloud/using-terraform",
@@ -489,34 +482,24 @@
           ]
         },
         {
+          "group": "Team management",
+          "pages": [
+            "developing-in-the-cloud/cloud-dev-environments/overview",
+            {
+              "group": "Environments",
+              "pages": [
+                "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+                "developing-in-the-cloud/cloud-dev-environments/cloud-run",
+                "developing-in-the-cloud/cloud-dev-environments/kubernetes"
+              ]
+            }
+          ]
+        },
+        {
           "group": "Version control",
           "pages": [
             "production/data-sync/git",
             "production/data-sync/github"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Observability",
-      "pages": [
-        "production/observability/logging",
-        {
-          "group": "Monitoring",
-          "pages": [
-            "production/observability/monitoring",
-            "production/observability/datadog",
-            "production/observability/sentry",
-            "production/observability/newrelic"
-          ]
-        },
-        {
-          "group": "Alerting",
-          "pages": [
-            "production/observability/alerting-slack",
-            "production/observability/alerting-teams",
-            "production/observability/alerting-opsgenie",
-            "production/observability/alerting-email"
           ]
         }
       ]
@@ -554,7 +537,7 @@
           ]
         },
         {
-          "group": "Integration",
+          "group": "Data integration",
           "pages": [
             "integrations/airbyte",
             "integrations/stitch"
@@ -570,8 +553,25 @@
         {
           "group": "Observability",
           "pages": [
-            "integrations/great-expectations",
-            "integrations/metaplane"
+            {
+              "group": "Monitoring",
+              "pages": [
+                "production/observability/datadog",
+                "integrations/great-expectations",
+                "integrations/metaplane",
+                "production/observability/newrelic",
+                "production/observability/sentry"
+              ]
+            },
+            {
+              "group": "Alerting",
+              "pages": [
+                "production/observability/alerting-email",
+                "production/observability/alerting-opsgenie",
+                "production/observability/alerting-slack",
+                "production/observability/alerting-teams"
+              ]
+            }
           ]
         },
         {
