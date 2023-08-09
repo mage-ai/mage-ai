@@ -16,12 +16,14 @@ import PipelineRunType, {
   PIPELINE_RUN_STATUSES,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
+  RUNNING_STATUSES,
 } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, {
@@ -195,6 +197,10 @@ function PipelineRuns({
     Object.values(selectedRuns || {})
       .filter((val) => val !== null)
   ), [selectedRuns]);
+  const selectedRunningRunsArr = useMemo(() => (
+    Object.values(selectedRuns || {})
+      .filter((run) => run !== null && RUNNING_STATUSES.includes(run?.status))
+  ), [selectedRuns]);
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
@@ -318,7 +324,7 @@ function PipelineRuns({
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}`}
     >
       <PageSectionHeader>
-        <Spacing py={1}>
+        <Spacing pr={1} py={1}>
           <FlexContainer alignItems="center">
             {(hasRunningPipeline && isPipelineRunsTab) &&
               <Spacing pl={2}>
@@ -340,28 +346,11 @@ function PipelineRuns({
                     }}
                     outline
                   >
-                    Cancel all running pipeline runs
+                    <Text bold noWrapping>
+                      Cancel all running pipeline runs
+                    </Text>
                   </Button>
                 </Tooltip>
-              </Spacing>
-            }
-
-            {selectedRunsArr.length > 0 &&
-              <Spacing pl={2}>
-                <Button
-                  loading={isLoadingUpdatePipeline}
-                  onClick={() => {
-                    updatePipeline({
-                      pipeline: {
-                        pipeline_runs: selectedRunsArr,
-                        status: PipelineStatusEnum.RETRY,
-                      },
-                    });
-                  }}
-                  primary
-                >
-                  Retry selected runs ({selectedRunsArr.length})
-                </Button>
               </Spacing>
             }
 
@@ -406,6 +395,60 @@ function PipelineRuns({
                   </option>
                 ))}
               </Select>
+            }
+          </FlexContainer>
+
+          {selectedRunsArr.length > 0 && <Spacing mb={1} />}
+
+          <FlexContainer alignItems="center">
+            {selectedRunningRunsArr.length > 0 &&
+              <Spacing pl={2}>
+                <Tooltip
+                  label={'Cancel the selected pipeline runs in progress (i.e. runs \
+                    with "Ready" or "Running" status) on the current page.'
+                  }
+                  size={null}
+                >
+                  <Button
+                    danger
+                    loading={isLoadingUpdatePipeline}
+                    onClick={() => {
+                      updatePipeline({
+                        pipeline: {
+                          pipeline_runs: selectedRunningRunsArr,
+                          status: RunStatusEnum.CANCELLED,
+                        },
+                      });
+                    }}
+                    outline
+                  >
+                    <Text bold noWrapping>
+                      Cancel selected running pipeline runs
+                    </Text>
+                  </Button>
+                </Tooltip>
+              </Spacing>
+            }
+
+            {selectedRunsArr.length > 0 &&
+              <Spacing pl={2}>
+                <Button
+                  loading={isLoadingUpdatePipeline}
+                  onClick={() => {
+                    updatePipeline({
+                      pipeline: {
+                        pipeline_runs: selectedRunsArr,
+                        status: PipelineStatusEnum.RETRY,
+                      },
+                    });
+                  }}
+                  primary
+                >
+                  <Text bold noWrapping>
+                    Retry selected runs ({selectedRunsArr.length})
+                  </Text>
+                </Button>
+              </Spacing>
             }
           </FlexContainer>
         </Spacing>

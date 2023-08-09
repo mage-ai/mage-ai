@@ -312,16 +312,27 @@ class PipelineResource(BaseResource):
                 schedule.update(status=status)
 
         @safe_db_query
-        def cancel_pipeline_runs(status, pipeline_uuid):
-            pipeline_runs = (
-                PipelineRun.
-                query.
-                filter(PipelineRun.pipeline_uuid == pipeline_uuid).
-                filter(PipelineRun.status.in_([
-                    PipelineRun.PipelineRunStatus.INITIAL,
-                    PipelineRun.PipelineRunStatus.RUNNING,
-                ]))
-            )
+        def cancel_pipeline_runs(
+            pipeline_uuid=None,
+            pipeline_runs=[],
+        ):
+            if pipeline_runs:
+                pipeline_run_ids = [run.get('id') for run in pipeline_runs]
+                pipeline_runs = (
+                    PipelineRun.
+                    query.
+                    filter(PipelineRun.id.in_(pipeline_run_ids))
+                )
+            else:
+                pipeline_runs = (
+                    PipelineRun.
+                    query.
+                    filter(PipelineRun.pipeline_uuid == pipeline_uuid).
+                    filter(PipelineRun.status.in_([
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]))
+                )
             for pipeline_run in pipeline_runs:
                 PipelineScheduler(pipeline_run).stop()
 
@@ -340,7 +351,11 @@ class PipelineResource(BaseResource):
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    cancel_pipeline_runs(status, pipeline_uuid)
+                    pipeline_runs = payload.get('pipeline_runs')
+                    if pipeline_runs is None:
+                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
+                    else:
+                        cancel_pipeline_runs(pipeline_runs=pipeline_runs)
                 elif status == 'retry' and payload.get('pipeline_runs'):
                     retry_pipeline_runs(payload.get('pipeline_runs'))
 
