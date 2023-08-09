@@ -5,6 +5,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import Backfill
 from mage_ai.shared.hash import extract, merge_dict
 from sqlalchemy import desc
+import pytz
 
 ALLOWED_PAYLOAD_KEYS = [
     'block_uuid',
@@ -51,7 +52,7 @@ class BackfillResource(DatabaseResource):
             if Backfill.Status.INITIAL == payload['status']:
                 pipeline_runs += start_backfill(self.model)
                 return super().update(dict(
-                    started_at=datetime.now(),
+                    started_at=datetime.now(tz=pytz.UTC),
                     status=payload['status'],
                 ))
             elif Backfill.Status.CANCELLED == payload['status']:

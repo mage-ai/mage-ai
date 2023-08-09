@@ -556,7 +556,7 @@ class PipelineRun(BaseModel):
     @safe_db_query
     def complete(self):
         self.update(
-            completed_at=datetime.now(),
+            completed_at=datetime.now(tz=pytz.UTC),
             status=self.PipelineRunStatus.COMPLETED,
         )
 

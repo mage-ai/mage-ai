@@ -213,7 +213,7 @@ class PipelineScheduler:
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
                                 for pr in backfill.pipeline_runs]):
                             backfill.update(
-                                completed_at=datetime.now(),
+                                completed_at=datetime.now(tz=pytz.UTC),
                                 status=Backfill.Status.COMPLETED,
                             )
                             schedule.update(
@@ -247,7 +247,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(),
+                completed_at=datetime.now(tz=pytz.UTC),
             )
 
         update_status()
@@ -281,7 +281,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(),
+                completed_at=datetime.now(tz=pytz.UTC),
             )
 
         update_status()
