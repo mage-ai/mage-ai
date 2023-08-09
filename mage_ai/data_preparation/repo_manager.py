@@ -293,13 +293,18 @@ def get_variables_dir(
     return variables_dir
 
 
+def initialize_project_uuid():
+    global project_uuid
+    try:
+        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+            config = yml.load(f) or {}
+            project_uuid = config.get('project_uuid')
+    except Exception:
+        pass
+
+
 project_uuid = None
-try:
-    with open(get_metadata_path(), 'r', encoding='utf-8') as f:
-        config = yml.load(f) or {}
-        project_uuid = config.get('project_uuid')
-except Exception:
-    pass
+initialize_project_uuid()
 
 
 def update_project_uuid():
