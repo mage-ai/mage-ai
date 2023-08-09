@@ -76,7 +76,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
-from mage_ai.settings.repo import set_repo_path
+from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
 from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -119,14 +119,24 @@ class ApiSchedulerHandler(BaseHandler):
 
 def replace_base_path(base_path: str) -> str:
     """
-    This function will create and go through the BASE_PATH_EXPORTS_FOLDER and replace all the
+    This function will create the BASE_PATH_EXPORTS_FOLDER and replace all the
     occurrences of CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_ with the base_path parameter.
 
     Args:
         base_path (str): The base path to replace the placeholder with.
+
+    Returns:
+        str: The path of the frontend static export folder with the replaced base paths.
     """
     src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
-    dst = os.path.join(get_variables_dir(), BASE_PATH_EXPORTS_FOLDER)
+
+    directory = get_variables_dir()
+    # get_variables_dir can return an s3 path. In that case, use the DEFAULT_MAGE_DATA_DIR
+    # directory.
+    if directory.startswith('s3'):
+        directory = os.path.join(os.path.expanduser(DEFAULT_MAGE_DATA_DIR), get_repo_name())
+        os.makedirs(directory, exist_ok=True)
+    dst = os.path.join(directory, BASE_PATH_EXPORTS_FOLDER)
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
