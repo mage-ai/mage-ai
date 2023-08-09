@@ -286,7 +286,10 @@ def get_variables_dir(
             variables_dir = os.path.abspath(
                 os.path.join(repo_path, variables_dir),
             )
-        os.makedirs(variables_dir, exist_ok=True)
+        try:
+            os.makedirs(variables_dir, exist_ok=True)
+        except Exception:
+            traceback.print_exc()
     return variables_dir
 
 
