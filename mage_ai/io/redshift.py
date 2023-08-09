@@ -1,20 +1,19 @@
-from mage_ai.io.base import ExportWritePolicy, QUERY_ROW_LIMIT
+import json
+import warnings
+from typing import Union
+
+from pandas import DataFrame
+from redshift_connector import connect
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import (
-    clean_df_for_export,
-    infer_dtypes,
-)
+from mage_ai.io.export_utils import clean_df_for_export, infer_dtypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.io.utils import format_value
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_redshift_type,
 )
-from pandas import DataFrame
-from redshift_connector import connect
-from typing import Union
-import json
-import warnings
 
 
 class Redshift(BaseSQL):
