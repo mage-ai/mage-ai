@@ -81,3 +81,17 @@ class ServerTests(TestCase):
 
         self.assertTrue(len(os.listdir(test_dir)) > 0)
         shutil.rmtree(test_dir)
+
+    @patch('mage_ai.server.server.BASE_PATH', 'test_prefix')
+    @patch('mage_ai.server.server.get_variables_dir')
+    def test_replace_base_path_s3_directory(self, mock_variables_dir):
+        mock_variables_dir.return_value = 's3://test-bucket/test-prefix'
+        test_dir = os.path.join(self.repo_path, 'base_path_test')
+        with patch(
+            'mage_ai.server.server.DEFAULT_MAGE_DATA_DIR',
+            test_dir,
+        ):
+            replace_base_path(base_path='test_prefix')
+
+        self.assertTrue(len(os.listdir(os.path.join(test_dir, 'test'))) > 0)
+        shutil.rmtree(test_dir)
