@@ -246,7 +246,7 @@ class PipelineSchedule(BaseModel):
 
     @safe_db_query
     def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
-        now = datetime.now()
+        now = datetime.now(tz=pytz.UTC)
 
         if self.status != ScheduleStatus.ACTIVE:
             return False
