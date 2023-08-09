@@ -36,6 +36,8 @@ import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/Pipelin
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
+import TagType from '@interfaces/TagType';
+import TagsAutocompleteInputField from '@components/Tags/TagsAutocompleteInputField';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
@@ -67,7 +69,7 @@ import {
   TIME_UNIT_TO_SECONDS,
 } from '../utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
-import { indexBy, range, removeAtIndex } from '@utils/array';
+import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
@@ -148,6 +150,7 @@ function Edit({
     settings: settingsInit = {},
     sla,
     start_time: startTime,
+    tags,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
 
@@ -334,6 +337,7 @@ function Edit({
       ...selectKeys(schedule, [
         'name',
         'schedule_type',
+        'tags',
       ]),
       event_matchers: [],
       schedule_interval: null,
@@ -1494,6 +1498,13 @@ function Edit({
     settings,
   ]);
 
+  const { data: dataTags } = api.tags.list();
+  const unselectedTags =
+    useMemo(() => (dataTags?.tags || []).filter(({ uuid }) => !tags?.includes(uuid)), [
+      dataTags,
+      tags,
+    ]);
+
   return (
     <>
       <PipelineDetailPage
@@ -1623,12 +1634,41 @@ function Edit({
           </FlexContainer>
         </Spacing>
 
-        <Spacing mt={5}>
+        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
           {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
           {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
           {ScheduleTypeEnum.API === scheduleType && apiMemo}
         </Spacing>
 
+        <Spacing mt={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={2}>
+            <Headline>
+              Tags
+            </Headline>
+
+            <Text muted>
+              Add or remove tags from this trigger.
+            </Text>
+          </Spacing>
+
+          <TagsAutocompleteInputField
+            removeTag={(tag: TagType) => {
+              setSchedule(prev => ({
+                ...prev,
+                tags: tags?.filter(uuid => uuid !== tag.uuid),
+              }));
+            }}
+            selectTag={(tag: TagType) => {
+              setSchedule(prev => ({
+                ...prev,
+                tags: pushUnique(tag.uuid, tags, uuid => uuid === tag.uuid),
+              }));
+            }}
+            selectedTags={tags?.map(tag => ({ uuid: tag }))}
+            tags={unselectedTags}
+            uuid={`TagsAutocompleteInputField-trigger-${pipelineScheduleID}`}
+          />
+        </Spacing>
       </PipelineDetailPage>
     </>
   );
