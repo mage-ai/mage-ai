@@ -295,7 +295,7 @@ def get_variables_dir(
 
 project_uuid = None
 try:
-    with get_metadata_path() as f:
+    with open(get_metadata_path(), 'w', encoding='utf-8') as f:
         config = yml.load(f) or {}
         project_uuid = config.get('project_uuid')
 except Exception:
