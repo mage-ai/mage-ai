@@ -77,12 +77,12 @@ mage_ai.clean(df, pipeline_uuid='pipeline name')
 
 ## More resources
 
-Here is a [🗺️ step-by-step](docs/guides/quick-start.md) guide on how to use the tool.
+Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 
-1. [Jupyter notebook example](docs/guides/assets/quick-start.ipynb)
+1. [Jupyter notebook example](docs/tutorials/assets/quick-start.ipynb)
 1. [Google Colaboratory (Colab) example](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 
-Check out the [📚 tutorials](docs/guides/README.md) to quickly become a master of magic.
+Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
 
 # 🔮 Features
 
