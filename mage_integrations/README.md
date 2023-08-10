@@ -19,9 +19,7 @@ Create a files:
 TEST_CATALOG.json
 TEST_CONFIG_S.json
 TEST_STATE.json
-
 TEST_CONFIG_D.json
-TEST_STATE
 ```
 
 Run
