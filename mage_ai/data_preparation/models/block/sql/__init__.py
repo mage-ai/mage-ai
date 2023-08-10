@@ -46,6 +46,44 @@ def execute_sql_code(
     config_file_loader: Any = None,
     configuration: Dict = None,
 ) -> List[Any]:
+    """
+    Execute SQL code within the given block's data context.
+
+    Args:
+        block (Block): The block containing the SQL execution context.
+        query (str): The SQL query to execute.
+        dynamic_block_index (int, optional): Index of the dynamic block, if applicable.
+        dynamic_upstream_block_uuids (List[str], optional): List of upstream block UUIDs for
+            dynamic execution.
+        execution_partition (str, optional): The partition for execution.
+        from_notebook (bool, optional): Indicates if execution is from a notebook.
+        global_vars (Dict, optional): Global variables to be used in the execution.
+        config_file_loader (Any, optional): Configuration file loader for data sources.
+        configuration (Dict, optional): Configuration settings for the block. If not provided, the
+            configuration from the block's context will be used. The configuration dictionary may
+            contain the following parameters:
+
+            - `use_raw_sql` (bool): If True, execute the query as raw SQL. Default is False.
+            - `data_provider` (str): The data provider for the execution, e.g., 'bigquery',
+                'clickhouse', etc.
+            - `data_provider_database` (str): The database name for the data provider.
+            - `data_provider_schema` (str): The schema name for the data provider.
+            - `export_write_policy` (str): The write policy for exporting data. Default is
+                ExportWritePolicy.APPEND.
+            - `limit` (int): The maximum number of rows to return in notebook.
+                Default is QUERY_ROW_LIMIT.
+            - `limit_in_pipeline_run` (int): Limit rows when running the block in the pipeline run.
+                Default is QUERY_ROW_LIMIT.
+            - Other provider-specific parameters may also be present.
+    Returns:
+        List[Any]: A list containing the query execution results.
+
+    Note:
+        This method executes the provided SQL query within the context of the given block.
+        It supports various data sources such as BigQuery, ClickHouse, Druid, MSSQL, MySQL,
+        PostgreSQL, Redshift, Snowflake, and Trino, applying relevant configurations and
+        returning the query execution results.
+    """
     configuration = configuration if configuration else block.configuration
     use_raw_sql = configuration.get('use_raw_sql')
 
