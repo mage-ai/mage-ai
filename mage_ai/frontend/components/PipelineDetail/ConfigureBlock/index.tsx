@@ -271,7 +271,7 @@ function ConfigureBlock({
         </RowStyle>
       )}
 
-      {sharedPipelinesCount > 1 && (
+      {BlockTypeEnum.GLOBAL_DATA_PRODUCT !== block?.type && sharedPipelinesCount > 1 && (
         <RowStyle>
           <Flex flex="1">
             <AlertTriangle size={ICON_SIZE_LARGE} warning />
