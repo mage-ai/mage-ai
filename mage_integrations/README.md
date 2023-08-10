@@ -3,7 +3,7 @@
 1. Run Mage in a Docker container using `./scripts/dev.sh`.
 1. Open another terminal and run:
     ```bash
-    docker exec -it mage-ai_server_1 bash
+    docker exec -it mage-ai-server-1 bash
     ```
 1. Uninstall the `mage-integrations` package using `pip`:
     ```bash
@@ -29,7 +29,7 @@ Run
 ### Discover streams
 
 ```bash
-python3 mage_integrations/sources/freshdesk/__init__.py \
+python3 mage_integrations/sources/github/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
   --discover_streams
@@ -38,16 +38,16 @@ python3 mage_integrations/sources/freshdesk/__init__.py \
 ### Get schema
 
 ```bash
-python3 mage_integrations/sources/freshdesk/__init__.py \
+python3 mage_integrations/sources/github/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["tickets"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["commits"]' > mage_integrations/TEST_CATALOG.json
 ```
 
 ## Save source records to file
 
 ```bash
-python3 mage_integrations/sources/freshdesk/__init__.py \
+python3 mage_integrations/sources/github/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
