@@ -36,6 +36,7 @@ def filter_results(result: Dict) -> bool:
 
     if block_type in [
         BlockType.CALLBACK,
+        BlockType.CHART,
         BlockType.CONDITIONAL,
         BlockType.EXTENSION,
     ]:

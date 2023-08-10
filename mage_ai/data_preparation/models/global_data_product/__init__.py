@@ -133,6 +133,8 @@ class GlobalDataProduct:
             else:
                 return d
 
+        return None
+
     def is_outdated_after(self, now: datetime = None, return_values: bool = False) -> bool:
         values = {}
         outdated_starting_at = self.outdated_starting_at or {}
@@ -174,6 +176,10 @@ class GlobalDataProduct:
     def next_run_at(self, pipeline_run: 'PipelineRun') -> datetime:
         execution_date = pipeline_run.execution_date
         outdated_at_delta = self.get_outdated_at_delta()
+
+        if not outdated_at_delta:
+            return None
+
         if execution_date and outdated_at_delta:
             execution_date += outdated_at_delta
 
@@ -189,6 +195,8 @@ class GlobalDataProduct:
         now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
         execution_date = self.next_run_at(pipeline_run)
+        if not execution_date:
+            return [False, False]
 
         outdated = execution_date and now >= execution_date
 

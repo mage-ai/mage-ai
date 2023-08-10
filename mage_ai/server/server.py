@@ -91,7 +91,7 @@ logger = Logger().new_server_logger(__name__)
 
 
 class MainPageHandler(tornado.web.RequestHandler):
-    def get(self, *args):
+    def get(self, *args, **kwargs):
         self.render('index.html')
 
 
@@ -247,7 +247,9 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
         (r'/files', MainPageHandler),
         (r'/global-data-products', MainPageHandler),
+        (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
         (r'/templates', MainPageHandler),
+        (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
 
