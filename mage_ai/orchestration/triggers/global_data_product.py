@@ -105,8 +105,10 @@ def trigger_and_check_status(
                                 arr.append(f'{k.replace("_", " ")}: {value} (currently {current})')
 
                             print(
-                                f'Global data product {global_data_product.uuid} is not yet outdated. '
-                                f'It’ll be outdated after a specific moment in time - {", ".join(arr)}'
+                                f'Global data product {global_data_product.uuid} '
+                                'is not yet outdated. '
+                                'It’ll be outdated after a specific moment in time - '
+                                f'{", ".join(arr)}'
                             )
                     else:
                         print(
