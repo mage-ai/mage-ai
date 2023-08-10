@@ -63,7 +63,7 @@ def sync_stream(config, state, stream, sftp_client, logger=LOGGER):
 
 def sync_file(sftp_file_spec, stream, table_spec, config, sftp_client,
               logger=LOGGER):
-    logger.info('Syncing file "{sftp_file_spec["filepath"]}".')
+    logger.info(f'Syncing file "{sftp_file_spec["filepath"]}".')
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
         decryption_configs['key'] = AWS_SSM.get_decryption_key(
@@ -76,7 +76,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config, sftp_client,
 
     # Add file_name to opts and flag infer_compression to support gzipped files
     opts = {'key_properties': table_spec.get('key_properties',
-            ['_sdc_source_file', '_sdc_source_lineno']),
+            ['_sdc_source_file', '_sdc_source_lineno', '_sdc_source_last_modified']),
             'delimiter': table_spec.get('delimiter', ','),
             'file_name': sftp_file_spec['filepath'],
             'encoding': table_spec.get('encoding', 'utf-8'),
@@ -97,10 +97,12 @@ def sync_file(sftp_file_spec, stream, table_spec, config, sftp_client,
                     '_sdc_source_file': sftp_file_spec["filepath"],
 
                     # index zero, +1 for header row
-                    '_sdc_source_lineno': records_synced + 2
+                    '_sdc_source_lineno': records_synced + 2,
+
+                    '_sdc_source_last_modified': sftp_file_spec["last_modified"].isoformat()
                 }
                 rec = {**row, **custom_columns}
-
+                logger.info(custom_columns)
                 to_write = transformer.transform(rec,
                                                  stream.schema.to_dict(),
                                                  metadata.to_map(

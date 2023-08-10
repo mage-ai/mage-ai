@@ -5,7 +5,7 @@ import re
 from tap_sftp.singer_encodings import compression
 
 SDC_EXTRA_COLUMN = "_sdc_extra"
-SDC_META_COLUMNS = ['_sdc_source_file', '_sdc_source_lineno']
+SDC_META_COLUMNS = ['_sdc_source_file', '_sdc_source_lineno', '_sdc_source_last_modified']
 
 
 def get_row_iterators(iterable, options={}, infer_compression=False):
