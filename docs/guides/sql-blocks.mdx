@@ -56,6 +56,29 @@ There are 4 - 5 fields that must be configured for each SQL block:
 | Replace | Delete the existing data.        |
 | Fail    | Raise an error during execution. |
 
+
+#### YAML configuration
+
+You can also modify block configuration in pipeline's `metadata.yaml` file. Each block has a `configuration` field.
+
+
+Example configuration
+```yaml
+  configuration:
+    data_provider: sqlserver
+    data_provider_profile: default
+    data_provider_schema: ''
+    export_write_policy: append
+    limit: 1000
+    limit_in_pipeline_run: 1
+    use_raw_sql: false
+```
+
+In addition to the fields mentioned in the table above. Here are some extra fields that can be included in the configuration:
+| Field                 | Required                 | Description                                                                     |
+| --------------------- | ------------------------ | --------------------------------------------------------------------------------|
+| limit                 | No                       | The maximum number of rows to return in notebook.                               |
+| limit_in_pipeline_run | No                       | The maximum number of rows to return when running the block in the pipeline run.|
 ---
 
 <img
