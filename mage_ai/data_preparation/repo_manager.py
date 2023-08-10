@@ -166,7 +166,7 @@ class RepoConfig:
     def save(self, **kwargs) -> None:
         if os.path.exists(self.metadata_path):
             with open(self.metadata_path) as f:
-                data = yml.load(f)
+                data = yml.load(f) or {}
         else:
             data = {}
 
@@ -293,21 +293,28 @@ def get_variables_dir(
     return variables_dir
 
 
-project_uuid = None
-try:
-    with get_metadata_path() as f:
-        config = yml.load(f) or {}
-        project_uuid = config.get('project_uuid')
-except Exception:
-    pass
+def set_project_uuid_from_metadata():
+    global project_uuid
+    if os.path.exists(get_metadata_path()):
+        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+            config = yml.load(f) or {}
+            project_uuid = config.get('project_uuid')
 
 
-def update_project_uuid():
+def init_project_uuid():
     global project_uuid
     if not project_uuid:
-        puuid = uuid.uuid4().hex
-        get_repo_config().save(project_uuid=puuid)
-        project_uuid = puuid
+        repo_config = get_repo_config()
+        if repo_config.project_uuid:
+            project_uuid = repo_config.project_uuid
+        else:
+            puuid = uuid.uuid4().hex
+            repo_config.save(project_uuid=puuid)
+            project_uuid = puuid
+
+
+project_uuid = None
+set_project_uuid_from_metadata()
 
 
 def get_project_uuid() -> str:

@@ -23,8 +23,8 @@ from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     get_variables_dir,
+    init_project_uuid,
     init_repo,
-    update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
@@ -438,7 +438,7 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    update_project_uuid()
+    init_project_uuid()
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
