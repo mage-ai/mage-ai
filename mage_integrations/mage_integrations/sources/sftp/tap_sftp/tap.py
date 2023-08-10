@@ -52,7 +52,7 @@ def do_sync(config, catalog, state, logger=LOGGER):
                      replication_method=replication_method)
 
         logger.info(f"{stream_name}: Starting sync")
-        counter_value = sync_stream(config, state, stream, sftp_client)
+        counter_value = sync_stream(config, state, stream, sftp_client, logger=logger)
         logger.info(f"{stream_name}: Completed sync ({counter_value} rows)")
 
     headers = [['table_name',
