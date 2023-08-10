@@ -68,10 +68,12 @@ def execute_sql_code(
     should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
     limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
+    # Limit rows when running the block in the pipeline run
+    limit_in_pipeline_run = int(configuration.get('limit_in_pipeline_run') or QUERY_ROW_LIMIT)
     if from_notebook:
         limit = min(limit, QUERY_ROW_LIMIT)
     else:
-        limit = QUERY_ROW_LIMIT
+        limit = min(limit_in_pipeline_run, QUERY_ROW_LIMIT)
 
     create_upstream_block_tables_kwargs = dict(
         configuration=configuration,
@@ -280,7 +282,9 @@ def execute_sql_code(
                 if should_query:
                     return [
                         loader.load(
-                            f'SELECT * FROM {table_name}',
+                            # Add the limit directly in the SELECT statement
+                            # since io.mssql doesn't support enforcing limit
+                            f'SELECT TOP {limit} * FROM {table_name}',
                             limit=limit,
                             verbose=False,
                         ),
