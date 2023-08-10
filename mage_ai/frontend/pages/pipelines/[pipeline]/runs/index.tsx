@@ -423,7 +423,7 @@ function PipelineRuns({
                     outline
                   >
                     <Text bold noWrapping>
-                      Cancel selected running pipeline runs
+                      Cancel selected running pipeline runs ({selectedRunningRunsArr.length})
                     </Text>
                   </Button>
                 </Tooltip>
