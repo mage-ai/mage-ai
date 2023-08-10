@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict, List
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -313,8 +314,8 @@ class PipelineResource(BaseResource):
 
         @safe_db_query
         def cancel_pipeline_runs(
-            pipeline_uuid=None,
-            pipeline_runs=[],
+            pipeline_uuid: str = None,
+            pipeline_runs: List[Dict] = None,
         ):
             if pipeline_runs:
                 pipeline_run_ids = [run.get('id') for run in pipeline_runs]
@@ -345,19 +346,19 @@ class PipelineResource(BaseResource):
 
         def _update_callback(resource):
             if status:
+                pipeline_runs = payload.get('pipeline_runs')
                 if status in [
                     ScheduleStatus.ACTIVE.value,
                     ScheduleStatus.INACTIVE.value,
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    pipeline_runs = payload.get('pipeline_runs')
                     if pipeline_runs is None:
                         cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
                     else:
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
-                elif status == 'retry' and payload.get('pipeline_runs'):
-                    retry_pipeline_runs(payload.get('pipeline_runs'))
+                elif status == 'retry' and pipeline_runs:
+                    retry_pipeline_runs(pipeline_runs)
 
         self.on_update_callback = _update_callback
 
