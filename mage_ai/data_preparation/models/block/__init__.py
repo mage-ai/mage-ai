@@ -1166,6 +1166,7 @@ class Block:
         from_notebook: bool = False,
         global_vars: Dict = None,
     ) -> Dict:
+        import mage_ai.data_preparation.decorators
         block_function_updated = block_function
         if from_notebook:
             # Initialize module
@@ -1177,9 +1178,18 @@ class Block:
                         block_uuid = self.replicated_block
                         block_file_path = self.replicated_block_object.file_path
                     spec = importlib.util.spec_from_file_location(
-                        block_uuid, block_file_path,
+                        block_uuid,
+                        block_file_path,
                     )
                     module = importlib.util.module_from_spec(spec)
+                    # Set the decorators in the module in case they are not defined in the block
+                    # code
+                    setattr(
+                        module,
+                        self.type,
+                        getattr(mage_ai.data_preparation.decorators, self.type)
+                    )
+                    module.test = mage_ai.data_preparation.decorators.test
                     spec.loader.exec_module(module)
                     block_function_updated = getattr(module, block_function.__name__)
                     self.module = module
