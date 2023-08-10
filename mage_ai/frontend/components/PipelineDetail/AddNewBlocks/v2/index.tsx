@@ -915,6 +915,7 @@ function AddNewBlocksV2({
                   } else {
                     addNewBlock({
                       block_action_object: blockActionObject,
+                      require_unique_name: false,
                     });
                     setInputValue(null);
                     setSearchResult(null);

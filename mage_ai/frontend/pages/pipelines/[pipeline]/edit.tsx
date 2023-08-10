@@ -1333,11 +1333,11 @@ function PipelineDetailPage({
           },
           onErrorCallback: (response, errors) => {
             const exception = response?.error?.exception;
-            if (exception && exception.startsWith(BLOCK_EXISTS_ERROR)) {
-              const filePath = getRelativePathFromBlock({
-                ...block,
-                name,
-              });
+            const filePath = getRelativePathFromBlock({
+              ...block,
+              name,
+            });
+            if (exception && filePath && exception.startsWith(BLOCK_EXISTS_ERROR)) {
               setErrors(() => ({
                 errors,
                 links: [{
