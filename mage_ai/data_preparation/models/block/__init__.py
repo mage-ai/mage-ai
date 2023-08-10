@@ -17,6 +17,7 @@ import pandas as pd
 import simplejson
 from jinja2 import Template
 
+import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -1110,6 +1111,8 @@ class Block:
     ) -> List:
         if logging_tags is None:
             logging_tags = dict()
+        if input_vars is None:
+            input_vars = list()
 
         decorated_functions = []
         test_functions = []
@@ -1166,7 +1169,6 @@ class Block:
         from_notebook: bool = False,
         global_vars: Dict = None,
     ) -> Dict:
-        import mage_ai.data_preparation.decorators
         block_function_updated = block_function
         if from_notebook:
             # Initialize module
@@ -1187,7 +1189,7 @@ class Block:
                     setattr(
                         module,
                         self.type,
-                        getattr(mage_ai.data_preparation.decorators, self.type)
+                        getattr(mage_ai.data_preparation.decorators, self.type),
                     )
                     module.test = mage_ai.data_preparation.decorators.test
                     spec.loader.exec_module(module)
