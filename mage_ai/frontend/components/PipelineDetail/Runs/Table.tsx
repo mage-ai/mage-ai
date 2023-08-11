@@ -276,16 +276,13 @@ function PipelineRunsTable({
     },
   );
 
-  const columnFlex = [null, 1, 2];
+  const columnFlex = [null, 1];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
     },
     {
-      uuid: 'Pipeline UUID',
-    },
-    {
-      uuid: 'Date',
+      uuid: 'Pipeline',
     },
   ];
 
@@ -296,13 +293,16 @@ function PipelineRunsTable({
     });
   }
 
-  columnFlex.push(...[1, null, null]);
+  columnFlex.push(...[1, 1, null, null]);
   columns.push(...[
     {
-      uuid: 'Block runs',
+      uuid: 'Execution date',
     },
     {
-      uuid: 'Completed',
+      uuid: 'Completed at',
+    },
+    {
+      uuid: 'Block runs',
     },
     {
       uuid: 'Logs',
@@ -403,9 +403,6 @@ function PipelineRunsTable({
                   <Text default key="row_pipeline_uuid" monospace muted>
                     {pipelineUUID}
                   </Text>,
-                  <Text default key="row_date_retry" monospace muted>
-                    -
-                  </Text>,
                 ];
 
                 if (!hideTriggerColumn) {
@@ -417,6 +414,12 @@ function PipelineRunsTable({
                 }
 
                 arr.push(...[
+                  <Text default key="row_date_retry" monospace muted>
+                    -
+                  </Text>,
+                  <Text key="row_completed" monospace muted>
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -424,12 +427,9 @@ function PipelineRunsTable({
                     passHref
                   >
                     <Link bold muted>
-                      {`See block runs (${blockRunsCount})`}
+                      {blockRunsCount}
                     </Link>
                   </NextLink>,
-                  <Text key="row_completed" monospace muted>
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
-                  </Text>,
                   <Button
                     default
                     iconOnly
@@ -460,10 +460,7 @@ function PipelineRunsTable({
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
                   </Text>,
-                  <Text default key="row_date" monospace>
-                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
-                  </Text>,
-                ]
+                ];
 
                 if (!hideTriggerColumn) {
                   arr.push(
@@ -473,7 +470,7 @@ function PipelineRunsTable({
                       key="row_trigger"
                       passHref
                     >
-                      <Link bold sameColorAsText>
+                      <Link bold sky>
                         {pipelineScheduleName}
                       </Link>
                     </NextLink>,
@@ -481,6 +478,12 @@ function PipelineRunsTable({
                 }
 
                 arr.push(...[
+                  <Text default key="row_date" monospace>
+                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
+                  </Text>,
+                  <Text default key="row_completed" monospace>
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -490,14 +493,11 @@ function PipelineRunsTable({
                     <Link
                       bold
                       disabled={disabled}
-                      sameColorAsText
+                      sky
                     >
-                      {disabled ? '' : `See block runs (${blockRunsCount})`}
+                      {disabled ? '' : `${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                  <Text default key="row_completed" monospace>
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
-                  </Text>,
                   <Button
                     default
                     disabled={disabled}
