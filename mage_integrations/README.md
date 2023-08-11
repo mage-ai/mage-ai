@@ -225,6 +225,8 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
 
 ### Perform a sample query
 
+### Perform a sample query
+
 Use this template to perform a sample query of your data:
 
 ```bash
