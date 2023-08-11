@@ -75,7 +75,8 @@ class AmazonS3Sink(BaseSink):
 
         curr_time = datetime.now(timezone.utc)
 
-        filename = curr_time.strftime('%Y%m%d-%H%M%S')
+        # Use a higher precision to avoid conflicts
+        filename = curr_time.strftime('%Y%m%d-%H%M%S-%f')
         filename = f'{filename}.{self.config.file_type}'
 
         object_key = self.config.prefix
