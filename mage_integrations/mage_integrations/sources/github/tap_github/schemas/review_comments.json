@@ -1,0 +1,178 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "_sdc_repository": {
+      "type": ["string"]
+    },
+    "id": {
+      "type": ["null", "integer"]
+    },
+    "user": {
+      "$ref": "shared/user.json#/"
+    },
+    "body": {
+      "type": ["null", "string"]
+    },
+    "node_id": {
+      "type": ["null", "string"]
+    },
+    "_links": {
+      "type": ["null", "object"],
+      "properties": {
+        "self": {
+          "type": ["null", "object"],
+          "properties": {
+            "href": {
+              "type": ["null", "string"]
+            }
+          }
+        },
+        "html": {
+          "type": ["null", "object"],
+          "properties": {
+            "href": {
+              "type": ["null", "string"]
+            }
+          }
+        },
+        "pull_request": {
+          "type": ["null", "object"],
+          "properties": {
+            "href": {
+              "type": ["null", "string"]
+            }
+          }
+        }
+      }
+    },
+    "url": {
+      "type": ["null", "string"]
+    },
+    "original_start_line": {
+      "type": ["null", "integer"]
+    },
+    "start_side": {
+      "type": ["null", "string"]
+    },
+    "body_text": {
+      "type": ["null", "string"]
+    },
+    "original_line": {
+      "type": ["null", "integer"]
+    },
+    "reactions": {
+      "$ref": "shared/reactions.json#/"
+    },
+    "start_line": {
+      "type": ["null", "integer"]
+    },
+    "body_html": {
+      "type": ["null", "string"]
+    },
+    "line": {
+      "type": ["null", "integer"]
+    },
+    "side": {
+      "type": ["null", "string"]
+    },
+    "pull_request_review_id": {
+      "type": ["null", "integer"]
+    },
+    "diff_hunk": {
+      "type": ["null", "string"]
+    },
+    "path": {
+      "type": ["null", "string"]
+    },
+    "position": {
+      "type": ["null", "integer"]
+    },
+    "original_position": {
+      "type": ["null", "integer"]
+    },
+    "commit_id": {
+      "type": ["null", "string"]
+    },
+    "original_commit_id": {
+      "type": ["null", "string"]
+    },
+    "in_reply_to_id": {
+      "type": ["null", "integer"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "html_url": {
+      "type": ["null", "string"]
+    },
+    "pull_request_url": {
+      "type": ["null", "string"]
+    },
+    "assignee": {
+      "type": ["null", "string"]
+    },
+    "assignees": {
+      "type": ["null", "string"]
+    },
+    "author_association": {
+      "type": ["null", "string"]
+    },
+    "base": {
+      "type": ["null", "string"]
+    },
+    "comments_url": {
+      "type": ["null", "string"]
+    },
+    "commits_url": {
+      "type": ["null", "string"]
+    },
+    "diff_url": {
+      "type": ["null", "string"]
+    },
+    "head": {
+      "type": ["null", "string"]
+    },
+    "issue_url": {
+      "type": ["null", "string"]
+    },
+    "labels": {
+      "type": ["null", "string"]
+    },
+    "locked": {
+      "type": ["null", "string"]
+    },
+    "merge_commit_sha": {
+      "type": ["null", "string"]
+    },
+    "milestone": {
+      "type": ["null", "string"]
+    },
+    "patch_url": {
+      "type": ["null", "string"]
+    },
+    "requested_reviewers": {
+      "type": ["null", "string"]
+    },
+    "requested_teams": {
+      "type": ["null", "string"]
+    },
+    "review_comment_url": {
+      "type": ["null", "string"]
+    },
+    "review_comments_url": {
+      "type": ["null", "string"]
+    },
+    "statuses_url": {
+      "type": ["null", "string"]
+    },
+    "pr_id": {
+      "type": ["null", "string"]
+    }
+  }
+}
