@@ -265,7 +265,14 @@ class GitBranchResource(GenericResource):
         untracked_files: List[str],
         limit: int = None
     ) -> Dict:
-        arr = modified_files + staged_files + untracked_files
+        arr = []
+
+        if modified_files and isinstance(modified_files, list):
+            arr += modified_files
+        if staged_files and isinstance(staged_files, list):
+            arr += staged_files
+        if untracked_files and isinstance(untracked_files, list):
+            arr += untracked_files
 
         if limit:
             arr = arr[:limit]
