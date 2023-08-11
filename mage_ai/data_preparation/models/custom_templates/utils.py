@@ -56,18 +56,24 @@ def group_and_hydrate_files(
     file_dicts: List[Dict],
     custom_template_class,
 ) -> List:
-    groups = group_by(
-        lambda x: os.path.join(
-            *x.get('parent_names', []) if x else '',
-        ),
-        file_dicts,
-    )
+    def _func(x):
+        arr = ['']
 
-    arr = []
+        if x:
+            parent_names = x.get('parent_names', []) or []
+            if parent_names and len(parent_names) >= 1:
+                arr = [str(parent_name) for parent_name in parent_names]
+
+        return os.path.join(*arr)
+
+
+    groups = group_by(_func, file_dicts)
+
+    custom_templates = []
 
     for template_uuid, _ in groups.items():
         custom_template = custom_template_class.load(template_uuid=template_uuid)
         if custom_template:
-            arr.append(custom_template)
+            custom_templates.append(custom_template)
 
-    return arr
+    return custom_templates
