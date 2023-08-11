@@ -20,7 +20,7 @@ import api from '@api';
 
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
-import { Save, TodoList } from '@oracle/icons';
+import { Save, Logs } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
@@ -232,7 +232,7 @@ function BlockRunsTable({
               `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
             )}
           >
-            <TodoList default size={2 * UNIT} />
+            <Logs default size={2 * UNIT} />
           </Button>,
         ];
 
