@@ -134,19 +134,19 @@ function Folder({
     ? isFileDisabled(filePathToUse, children)
     : (
       disabledProp
-        || name === '__init__.py'
-        || !!name?.match(/^\./)
-        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+        // || name === '__init__.py'
+        // || !!name?.match(/^\./)
+        // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
   const disabled = isFileDisabled
     ? isFileDisabled(filePathToUse, children)
     : (
       disabledProp
-        || name === '__init__.py'
-        // Don’t disable hidden folders
-        || (!!name?.match(/^\./) && !children)
-        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+        // || name === '__init__.py'
+        // // Don’t disable hidden folders
+        // || (!!name?.match(/^\./) && !children)
+        // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
   const uuid = `${level}/${name}`;
