@@ -11,7 +11,7 @@ from mage_ai.tests.base_test import DBTestCase
 
 
 class CustomTemplatesUtilsTest(DBTestCase):
-    def test_file_path(self):
+    def test_group_and_hydrate_files(self):
         file_dicts = [
             None,
             dict(parent_names=None),
