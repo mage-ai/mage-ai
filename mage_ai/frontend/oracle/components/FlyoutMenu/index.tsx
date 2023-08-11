@@ -217,7 +217,10 @@ function FlyoutMenu({
 
           if (isGroupingTitle) {
             return (
-              <TitleContainerStyle key={uuid}>
+              <TitleContainerStyle
+                key={uuid}
+                roundedStyle={roundedStyle}
+              >
                 {typeof labelToRender === 'string' && (
                   <Text bold muted noWrapping>
                     {labelToRender}
@@ -242,9 +245,9 @@ function FlyoutMenu({
                   e.preventDefault();
                 }
 
-                if (openConfirmationDialogue) {
-                  setConfirmationDialogueOpen(true);
-                  setConfirmationAction(() => onClick);
+                if (openConfirmationDialogue && !disabled) {
+                  setConfirmationDialogueOpen?.(true);
+                  setConfirmationAction?.(() => onClick);
                   onClickCallback?.();
                 } else if (onClick && !disabled) {
                   onClick?.();
