@@ -21,7 +21,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
+import { Check, ChevronRight, Logs, PlayButtonFilled, Subitem } from '@oracle/icons';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -427,7 +427,7 @@ function PipelineRunsTable({
                     passHref
                   >
                     <Link bold muted>
-                      {blockRunsCount}
+                      {`${blockRunsCount}`}
                     </Link>
                   </NextLink>,
                   <Button
@@ -439,7 +439,7 @@ function PipelineRunsTable({
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <TodoList default size={2 * UNIT} />
+                    <Logs default size={2 * UNIT} />
                   </Button>,
                 ]);
               } else {
@@ -508,7 +508,7 @@ function PipelineRunsTable({
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <TodoList default size={2 * UNIT} />
+                    <Logs default size={2 * UNIT} />
                   </Button>,
                 ]);
               }
