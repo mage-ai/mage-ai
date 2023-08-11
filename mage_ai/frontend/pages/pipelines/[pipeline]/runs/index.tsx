@@ -422,6 +422,7 @@ function PipelineRuns({
                   afterIcon={<ArrowDown />}
                   onClick={(() => setShowActionsMenu(prev => !prev))}
                   outline
+                  padding="6px 12px"
                 >
                   Actions
                 </Button>
