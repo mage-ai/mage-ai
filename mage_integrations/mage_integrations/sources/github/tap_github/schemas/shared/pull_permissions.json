@@ -1,0 +1,20 @@
+{
+    "type": ["null", "object"],
+    "properties": {
+    "pull": {
+        "type": ["null", "boolean"]
+    },
+    "triage": {
+        "type": ["null", "boolean"]
+    },
+    "push": {
+        "type": ["null", "boolean"]
+    },
+    "maintain": {
+        "type": ["null", "boolean"]
+    },
+    "admin": {
+        "type": ["null", "boolean"]
+    }
+    }
+}
