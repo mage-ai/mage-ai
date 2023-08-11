@@ -345,12 +345,15 @@ WHERE table_schema = '{schema}'
             for col, val in bookmarks.items():
                 if col not in bookmark_properties or val is None:
                     continue
+                comparison_operator = '>='
+                if col in unique_constraints:
+                    comparison_operator = '>'
                 where_statements.append(
                     self._build_comparison_statement(
                         col,
                         val,
                         stream.schema.to_dict()['properties'],
-                        operator='>='
+                        operator=comparison_operator,
                     )
                 )
 
