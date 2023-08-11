@@ -56,7 +56,12 @@ def group_and_hydrate_files(
     file_dicts: List[Dict],
     custom_template_class,
 ) -> List:
-    groups = group_by(lambda x: os.path.join(*x.get('parent_names', [])), file_dicts)
+    groups = group_by(
+        lambda x: os.path.join(
+            *x.get('parent_names', []) if x else '',
+        ),
+        file_dicts,
+    )
 
     arr = []
 
