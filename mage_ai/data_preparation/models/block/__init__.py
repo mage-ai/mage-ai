@@ -515,9 +515,14 @@ class Block:
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
 
-        # Don’t create a file if block is replicated from another block
+        # Don’t create a file if block is replicated from another block.
+
+        # Only create a file on the filesystem if the block type isn’t a global data product
+        # because global data products reference a data product which already has its
+        # own files.
         if not replicated_block and \
-                (BlockType.DBT != block_type or BlockLanguage.YAML == language):
+                (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
+                BlockType.GLOBAL_DATA_PRODUCT != block_type:
 
             block_directory = self.file_directory_name(block_type)
             block_dir_path = os.path.join(repo_path, block_directory)
@@ -542,10 +547,7 @@ class Block:
                     """
                     raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
                                     Please use a different name.')
-            elif BlockType.GLOBAL_DATA_PRODUCT != block_type:
-                # Only create a file on the filesystem if the block type isn’t a global data product
-                # because global data products reference a data product which already has its
-                # own files.
+            else:
                 load_template(
                     block_type,
                     config,
@@ -2270,7 +2272,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     f'Block {new_uuid} already exists in pipeline. Please use a different name.'
                 )
 
-        if not self.replicated_block:
+        if not self.replicated_block and BlockType.GLOBAL_DATA_PRODUCT != self.type:
             if os.path.exists(new_file_path):
                 raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 

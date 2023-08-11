@@ -38,6 +38,7 @@ SOURCES = sorted([
     dict(name='Pipedrive'),
     dict(name='Postmark'),
     dict(name='Salesforce'),
+    dict(name='Sftp'),
     dict(name='Stripe'),
     dict(name='Twitter Ads'),
     dict(name='Zendesk'),
