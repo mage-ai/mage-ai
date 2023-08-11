@@ -31,6 +31,11 @@ import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 
+const SHARED_DATE_FONT_PROPS = {
+  monospace: true,
+  small: true,
+};
+
 function RetryButton({
   cancelingRunId,
   disabled,
@@ -417,7 +422,11 @@ function PipelineRunsTable({
                   <Text default key="row_date_retry" monospace muted>
                     -
                   </Text>,
-                  <Text key="row_completed" monospace muted>
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    key="row_completed"
+                    muted
+                  >
                     {(completedAt && getTimeInUTCString(completedAt)) || '-'}
                   </Text>,
                   <NextLink
@@ -478,10 +487,18 @@ function PipelineRunsTable({
                 }
 
                 arr.push(...[
-                  <Text default key="row_date" monospace>
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_date"
+                  >
                     {(executionDate && getTimeInUTCString(executionDate)) || '-'}
                   </Text>,
-                  <Text default key="row_completed" monospace>
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_completed"
+                  >
                     {(completedAt && getTimeInUTCString(completedAt)) || '-'}
                   </Text>,
                   <NextLink
