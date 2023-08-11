@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Dict
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 
 # import traceback
 
@@ -22,6 +23,7 @@ class K8sExecutorConfig(BaseConfig):
     resource_limits: Dict = None
     resource_requests: Dict = None
     service_account_name: str = DEFAULT_SERVICE_ACCOUNT_NAME
+    namespace: str = DEFAULT_NAMESPACE
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):

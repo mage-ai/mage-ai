@@ -4,6 +4,7 @@ from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
 from mage_ai.shared.hash import merge_dict
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 
 
 class K8sBlockExecutor(BlockExecutor):
@@ -26,10 +27,17 @@ class K8sBlockExecutor(BlockExecutor):
             job_name_prefix = 'data-prep'
         else:
             job_name_prefix = self.executor_config.job_name_prefix
+
+        if self.executor_config.namespace:
+            namespace = self.executor_config.namespace
+        else:
+            namespace = DEFAULT_NAMESPACE
+            
         job_manager = K8sJobManager(
             job_name=f'mage-{job_name_prefix}-block-{block_run_id}',
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
+            namespace=namespace,
         )
         cmd = self._run_commands(
             block_run_id=block_run_id,
