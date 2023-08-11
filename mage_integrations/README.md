@@ -190,7 +190,7 @@ python3 mage_integrations/sources/[SOURCE_INTEGRATION]/__init__.py \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/[TARGET_INTEGRATION]/__init__.py \
   --config mage_integrations/TEST_CONFIG_D.json \
-  --state mage_integrations/STATE \
+  --state mage_integrations/TEST_STATE.json \
   --debug
 ```
 
@@ -202,6 +202,6 @@ python3 mage_integrations/sources/github/__init__.py \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/postgres/__init__.py \
   --config mage_integrations/TEST_CONFIG_D.json \
-  --state mage_integrations/STATE \
+  --state mage_integrations/TEST_STATE.json \
   --debug
 ```
