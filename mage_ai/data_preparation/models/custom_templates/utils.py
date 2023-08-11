@@ -66,7 +66,6 @@ def group_and_hydrate_files(
 
         return os.path.join(*arr)
 
-
     groups = group_by(_func, file_dicts)
 
     custom_templates = []

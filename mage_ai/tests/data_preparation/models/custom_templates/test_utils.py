@@ -1,4 +1,3 @@
-import os
 from unittest.mock import patch
 
 
@@ -20,7 +19,6 @@ class CustomTemplatesUtilsTest(DBTestCase):
             dict(parent_names=['mage']),
             dict(parent_names=['mage', 'fire']),
         ]
-
 
         def load(template_uuid: str):
             return CustomBlockTemplate(template_uuid=template_uuid)
