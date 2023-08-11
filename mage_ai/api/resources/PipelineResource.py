@@ -317,15 +317,15 @@ class PipelineResource(BaseResource):
             pipeline_uuid: str = None,
             pipeline_runs: List[Dict] = None,
         ):
-            if pipeline_runs:
+            if pipeline_runs is not None:
                 pipeline_run_ids = [run.get('id') for run in pipeline_runs]
-                pipeline_runs = (
+                pipeline_runs_to_cancel = (
                     PipelineRun.
                     query.
                     filter(PipelineRun.id.in_(pipeline_run_ids))
                 )
             else:
-                pipeline_runs = (
+                pipeline_runs_to_cancel = (
                     PipelineRun.
                     query.
                     filter(PipelineRun.pipeline_uuid == pipeline_uuid).
@@ -334,7 +334,7 @@ class PipelineResource(BaseResource):
                         PipelineRun.PipelineRunStatus.RUNNING,
                     ]))
                 )
-            for pipeline_run in pipeline_runs:
+            for pipeline_run in pipeline_runs_to_cancel:
                 PipelineScheduler(pipeline_run).stop()
 
         def retry_pipeline_runs(pipeline_runs):
