@@ -49,6 +49,7 @@ export type LinkProps = {
   secondary?: boolean;
   selected?: boolean;
   small?: boolean;
+  sky?: boolean;
   tabIndex?: number;
   target?: string;
   textOverflow?: string;
@@ -123,6 +124,10 @@ export const SHARED_LINK_STYLES = css<any>`
     &:hover {
       color: ${(props.theme.interactive || dark.interactive).linkSecondary};
     }
+  `}
+
+  ${props => props.sky && `
+    color: ${(props.theme.interactive || dark.interactive).linkTextLight};
   `}
 
   ${props => props.warning && `
