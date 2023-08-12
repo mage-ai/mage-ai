@@ -174,6 +174,7 @@ function BlockRunsTable({
           >
             <Link
               bold
+              fitContentWidth
               verticalAlignContent
             >
               <Circle
