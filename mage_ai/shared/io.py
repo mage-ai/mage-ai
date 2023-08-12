@@ -1,8 +1,24 @@
-from typing import Callable
-import aiofiles
 import os
 import shutil
 import traceback
+from typing import Callable
+
+import aiofiles
+
+
+def chmod(path, mode, append=True):
+    # recursively runs chmod against the path and either adds or sets the permission(mode)
+    try:
+        current_mode = os.stat(path).st_mode
+    except Exception as e:
+        raise e
+    if append:
+        mode = current_mode | mode
+    os.chmod(path, mode)
+    for dirpath, _dirnames, filenames in os.walk(path):
+        os.chmod(dirpath, mode)
+        for filename in filenames:
+            os.chmod(os.path.join(dirpath, filename), mode)
 
 
 def safe_write(filepath: str, content: str, write_func: Callable = None):
