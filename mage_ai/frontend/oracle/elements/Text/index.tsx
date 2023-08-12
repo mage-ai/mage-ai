@@ -63,6 +63,7 @@ export type TextProps = {
   raw?: boolean;
   rightAligned?: boolean;
   secondary?: boolean;
+  sky?: boolean;
   small?: boolean;
   success?: boolean;
   textOverflow?: boolean;
@@ -222,6 +223,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.disabled && `
     color: ${(props.theme.content || dark.content).disabled};
+  `}
+
+  ${props => props.sky && `
+    color: ${(props.theme || dark).interactive.linkTextLight};
   `}
 
   ${props => props.black && `

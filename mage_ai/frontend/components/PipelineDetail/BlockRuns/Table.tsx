@@ -20,7 +20,7 @@ import api from '@api';
 
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
-import { Save, TodoList } from '@oracle/icons';
+import { Save, Logs } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
@@ -88,22 +88,22 @@ function BlockRunsTable({
     },
   );
 
-  const columnFlex = [null, 1, 3, 2, null, null, null];
+  const columnFlex = [1, 2, 2, 1, 1, null, null];
   const columns = [
     {
-      uuid: 'Date',
-    },
-    {
       uuid: 'Status',
-    },
-    {
-      uuid: 'Trigger',
     },
     {
       uuid: 'Block',
     },
     {
-      uuid: 'Completed',
+      uuid: 'Trigger',
+    },
+    {
+      uuid: 'Created at',
+    },
+    {
+      uuid: 'Completed at',
     },
     {
       uuid: 'Logs',
@@ -156,13 +156,6 @@ function BlockRunsTable({
 
         const rows = [
           <Text
-            default
-            key={`${id}_created_at`}
-            monospace
-          >
-            {createdAt}
-          </Text>,
-          <Text
             danger={RunStatus.FAILED === status}
             default={RunStatus.CANCELLED === status}
             info={RunStatus.INITIAL === status}
@@ -174,16 +167,6 @@ function BlockRunsTable({
             {status}
           </Text>,
           <NextLink
-            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-            href={'/pipelines/[pipeline]/triggers/[...slug]'}
-            key={`${id}_trigger`}
-            passHref
-          >
-            <Link bold sameColorAsText>
-              {pipelineScheduleName}
-            </Link>
-          </NextLink>,
-          <NextLink
             as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
             href={'/pipelines/[pipeline]/edit'}
             key={`${id}_block_uuid`}
@@ -191,7 +174,7 @@ function BlockRunsTable({
           >
             <Link
               bold
-              sameColorAsText
+              fitContentWidth
               verticalAlignContent
             >
               <Circle
@@ -203,7 +186,7 @@ function BlockRunsTable({
                 square
               />
               <Spacing mr={1} />
-              <Text monospace>
+              <Text monospace sky>
                 {blockUUID}{streamID && ': '}{streamID && (
                   <Text default inline monospace>
                     {streamID}
@@ -216,12 +199,31 @@ function BlockRunsTable({
               </Text>
             </Link>
           </NextLink>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+            href={'/pipelines/[pipeline]/triggers/[...slug]'}
+            key={`${id}_trigger`}
+            passHref
+          >
+            <Link bold sky>
+              {pipelineScheduleName}
+            </Link>
+          </NextLink>,
+          <Text
+            default
+            key={`${id}_created_at`}
+            monospace
+            small
+          >
+            {createdAt}
+          </Text>,
           <Text
             default
             key={`${id}_completed_at`}
             monospace
+            small
           >
-            {completedAt || '-'}
+            {completedAt?.slice(0, 19) || '-'}
           </Text>,
           <Button
             default
@@ -232,7 +234,7 @@ function BlockRunsTable({
               `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
             )}
           >
-            <TodoList default size={2 * UNIT} />
+            <Logs default size={2 * UNIT} />
           </Button>,
         ];
 
