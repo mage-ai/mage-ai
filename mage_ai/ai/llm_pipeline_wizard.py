@@ -2,8 +2,8 @@ import ast
 import asyncio
 import json
 import os
-from typing import Dict
 import re
+from typing import Dict
 
 import openai
 from langchain.chains import LLMChain
