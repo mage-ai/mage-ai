@@ -50,6 +50,7 @@ setuptools.setup(
             'azure-keyvault-secrets==4.6.0',
             'azure-keyvault-certificates==4.6.0',
             'azure-mgmt-containerinstance==10.1.0',
+            'azure-mgmt-hdinsight==9.0.0',
             'azure-storage-blob==12.14.1',
         ],
         'bigquery': [
@@ -61,6 +62,7 @@ setuptools.setup(
         ],
         'dbt': [
             'dbt-bigquery==1.4.3',
+            'dbt-clickhouse==1.4.0',
             'dbt-core==1.4.6',
             'dbt-postgres==1.4.6',
             'dbt-redshift==1.4.0',
@@ -68,7 +70,6 @@ setuptools.setup(
             'dbt-spark==1.4.0',
             'dbt-sqlserver==1.3.1',
             'dbt-trino==1.4.0',
-            'dbt-clickhouse==1.4.0',
         ],
         'google-cloud-storage': ['google-cloud-storage==2.5.0'],
         'hdf5': ['tables==3.7.0'],

@@ -79,19 +79,21 @@ azure-identity==1.11.0
 azure-keyvault-secrets==4.6.0
 azure-keyvault-certificates==4.6.0
 azure-mgmt-containerinstance==10.1.0
+azure-mgmt-hdinsight==9.0.0
 azure-storage-blob==12.14.1
 
 # Streaming
 confluent-avro
 kafka-python==2.0.2
 opensearch-py==2.0.0
-requests_aws4auth==1.1.2
 pika==1.3.1
 pymongo==4.3.3
 elasticsearch==8.9.0
+requests_aws4auth==1.1.2
 
 # DBT
 dbt-bigquery==1.4.3
+dbt-clickhouse==1.4.0
 dbt-core==1.4.6
 dbt-postgres==1.4.6
 dbt-redshift==1.4.0
@@ -99,4 +101,3 @@ dbt-snowflake==1.4.0
 dbt-spark==1.4.0
 dbt-sqlserver==1.3.1
 dbt-trino==1.4.0
-dbt-clickhouse==1.4.0
