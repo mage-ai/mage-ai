@@ -6,8 +6,7 @@ def get_list_of_file_names(list_of_jars):
     if list_of_jars is None:
         return None
 
-    file_names = [os.path.basename(jar) for jar in list_of_jars]
-    return file_names.sort()
+    return [os.path.basename(jar) for jar in list_of_jars]
 
 
 def contains_same_jars(list_of_jars_1, list_of_jars_2):
@@ -22,6 +21,7 @@ def contains_same_jars(list_of_jars_1, list_of_jars_2):
 
     file_names_1 = get_list_of_file_names(list_of_jars_1)
     file_names_2 = get_list_of_file_names(list_of_jars_2)
+
     for file_name in file_names_1:
         if file_name not in file_names_2:
             return False
