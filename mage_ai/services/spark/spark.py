@@ -2,6 +2,33 @@ from mage_ai.services.spark.config import SparkConfig
 import os
 
 
+def get_list_of_file_names(list_of_jars):
+    if list_of_jars is None:
+        return None
+
+    file_names = [os.path.basename(jar) for jar in list_of_jars]
+    return file_names.sort()
+
+
+def contains_same_jars(list_of_jars_1, list_of_jars_2):
+    if list_of_jars_1 is None and list_of_jars_2 is None:
+        return True
+
+    if list_of_jars_1 is None or list_of_jars_2 is None:
+        return False
+
+    if len(list_of_jars_1) != len(list_of_jars_2):
+        return False
+
+    file_names_1 = get_list_of_file_names(list_of_jars_1)
+    file_names_2 = get_list_of_file_names(list_of_jars_2)
+    for file_name in file_names_1:
+        if file_name not in file_names_2:
+            return False
+
+    return True
+
+
 def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
     if spark_session is None:
         return False
@@ -24,8 +51,8 @@ def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
                 if spark_session.conf.get(f'spark.executorEnv.{key}') != value:
                     print(f'Different spark.executorEnv.{key} found!')
                     return False
-        if (spark_config.spark_jars and spark_config.spark_jars
-                != spark_session.conf.get('spark.jars')):
+        if (spark_config.spark_jars and not contains_same_jars(
+                spark_config.spark_jars, spark_session.conf.get('spark.jars'))):
             print('Different spark.jars found!')
             return False
         if spark_config.others:
