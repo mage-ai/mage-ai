@@ -2,7 +2,6 @@ import os
 
 from azure.mgmt.hdinsight import HDInsightManagementClient
 from azure.common.credentials import ServicePrincipalCredentials
-from azure.mgmt.hdinsight.models import *
 
 from mage_ai.server.logger import Logger
 from mage_ai.services.azure.constants import (
@@ -26,9 +25,9 @@ def get_hdinsight_client(hdinsight_config: HDInsightConfig):
     subscription_id = os.getenv(ENV_VAR_SUBSCRIPTION_ID)
 
     credentials = ServicePrincipalCredentials(
-        client_id = client_id,
-        secret = client_secret,
-        tenant = tenant_id
+        client_id=client_id,
+        secret=client_secret,
+        tenant=tenant_id,
     )
 
     hdinsight_client = HDInsightManagementClient(credentials, subscription_id)
