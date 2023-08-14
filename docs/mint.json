@@ -56,7 +56,7 @@
       "url": "contributing"
     },
     {
-      "name": "Help",
+      "name": "Live Support",
       "url": "https://www.mage.ai/chat"
     }
   ],
@@ -85,142 +85,156 @@
         {
           "group": "Setup",
           "pages": [
-            "getting-started/setup",
-            "development/project/setup",
-            "getting-started/kernels",
-            {
-              "group": "Variables",
-              "pages": [
-                "development/environment-variables",
-                "getting-started/runtime-variable",
-                "getting-started/secrets"
-              ]
-            },
-            {
-              "group": "Dependencies",
-              "pages": [
-                "development/dependencies/requirements",
-                "development/dependencies/custom-files"
-              ]
-            },
-            {
-              "group": "Versioning",
-              "pages": [
-                "getting-started/setting-up-git",
-                "getting-started/file-versions"
-              ]
-            },
-            "development/text-editor"
+            "getting-started/setup"
           ]
         },
         {
           "group": "Development",
           "pages": [
+            "development/project/setup",
             {
-              "group": "Pipelines",
+              "group": "Blocks",
               "pages": [
                 {
-                  "group": "Blocks",
+                  "group": "Data loader",
                   "pages": [
-                    {
-                      "group": "Data loader",
-                      "pages": [
-                        "design/data-loading",
-                        "development/blocks/data_loaders/templates"
-                      ]
-                    },
-                    {
-                      "group": "Transformer",
-                      "pages": [
-                        "development/blocks/transformers/templates"
-                      ]
-                    },
-                    {
-                      "group": "Data exporter",
-                      "pages": [
-                        "development/blocks/data_exporters/templates"
-                      ]
-                    },
-                    {
-                      "group": "Sensors",
-                      "pages": [
-                        "development/blocks/sensors/templates"
-                      ]
-                    },
-                    {
-                      "group": "Callbacks",
-                      "pages": [
-                        "development/blocks/callbacks/overview",
-                        "development/blocks/callbacks/templates"
-                      ]
-                    },
-                    {
-                      "group": "Conditionals",
-                      "pages": [
-                        "development/blocks/conditionals/overview",
-                        "development/blocks/conditionals/templates"
-                      ]
-                    },
-                    {
-                      "group": "SQL",
-                      "pages": [
-                        "development/blocks/sql/trino"
-                      ]
-                    }
+                    "design/data-loading",
+                    "development/blocks/data_loaders/templates"
                   ]
                 },
                 {
-                  "group": "Streaming",
+                  "group": "Transformer",
                   "pages": [
-                    "streaming/overview",
-                    {
-                      "group": "Sources",
-                      "pages": [
-                        "streaming/sources/amazon-sqs",
-                        "streaming/sources/azure-event-hub",
-                        "streaming/sources/google-cloud-pubsub",
-                        "streaming/sources/kafka",
-                        "streaming/sources/kinesis"
-                      ]
-                    },
-                    {
-                      "group": "Destinations",
-                      "pages": [
-                        "streaming/destinations/amazon-s3",
-                        "streaming/destinations/dummy",
-                        "streaming/destinations/kafka",
-                        "streaming/destinations/kinesis",
-                        "streaming/destinations/mongodb",
-                        "streaming/destinations/opensearch",
-                        "streaming/destinations/redshift"
-                      ]
-                    }
+                    "development/blocks/transformers/templates"
                   ]
                 },
                 {
-                  "group": "Testing",
+                  "group": "Data exporter",
                   "pages": [
-                    "development/data-validation",
-                    "development/testing/great-expectations",
-                    "development/testing/unit-tests"
+                    "development/blocks/data_exporters/templates"
                   ]
                 },
                 {
-                  "group": "Monitoring",
+                  "group": "Sensors",
                   "pages": [
-                    "development/observability/monitoring",
-                    "development/observability/logging"
+                    "development/blocks/sensors/templates"
+                  ]
+                },
+                {
+                  "group": "Callbacks",
+                  "pages": [
+                    "development/blocks/callbacks/overview",
+                    "development/blocks/callbacks/templates"
+                  ]
+                },
+                {
+                  "group": "Conditionals",
+                  "pages": [
+                    "development/blocks/conditionals/overview",
+                    "development/blocks/conditionals/templates"
+                  ]
+                },
+                {
+                  "group": "SQL",
+                  "pages": [
+                    "development/blocks/sql/trino"
                   ]
                 }
               ]
-            }
+            },
+            {
+              "group": "Streaming",
+              "pages": [
+                "streaming/overview",
+                {
+                  "group": "Sources",
+                  "pages": [
+                    "streaming/sources/amazon-sqs",
+                    "streaming/sources/azure-event-hub",
+                    "streaming/sources/google-cloud-pubsub",
+                    "streaming/sources/kafka",
+                    "streaming/sources/kinesis"
+                  ]
+                },
+                {
+                  "group": "Destinations",
+                  "pages": [
+                    "streaming/destinations/amazon-s3",
+                    "streaming/destinations/dummy",
+                    "streaming/destinations/kafka",
+                    "streaming/destinations/kinesis",
+                    "streaming/destinations/mongodb",
+                    "streaming/destinations/opensearch",
+                    "streaming/destinations/redshift"
+                  ]
+                }
+              ]
+            },
+            {
+              "group": "Testing",
+              "pages": [
+                "development/data-validation",
+                "development/testing/great-expectations",
+                "development/testing/unit-tests"
+              ]
+            },
+            {
+              "group": "Monitoring",
+              "pages": [
+                "development/observability/monitoring",
+                "development/observability/logging"
+              ]
+            },
+            "development/text-editor"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        {
+          "group": "Storage",
+          "pages": [
+            "integrations/databases/BigQuery",
+            "integrations/databases/ClickHouse",
+            "integrations/databases/Druid",
+            "integrations/databases/MicrosoftSQLServer",
+            "integrations/databases/MongoDB",
+            "integrations/databases/MySQL",
+            "integrations/databases/PostgreSQL",
+            "integrations/databases/Redshift",
+            "integrations/databases/S3",
+            "integrations/databases/Snowflake"
+          ]
+        },
+        "getting-started/kernels",
+        {
+          "group": "Variables",
+          "pages": [
+            "development/environment-variables",
+            "getting-started/runtime-variable",
+            "getting-started/secrets"
+          ]
+        },
+        {
+          "group": "Dependencies",
+          "pages": [
+            "development/dependencies/requirements",
+            "development/dependencies/custom-files"
+          ]
+        },
+        {
+          "group": "Versioning",
+          "pages": [
+            "getting-started/setting-up-git",
+            "getting-started/file-versions"
           ]
         }
       ]
     },
     {
       "group": "Get Started",
-      "icon": "swords",
       "pages": [
         "contributing/overview",
         "contributing/statistics/overview"
@@ -520,21 +534,6 @@
           "pages": [
             "integrations/spark-pyspark",
             "integrations/databricks"
-          ]
-        },
-        {
-          "group": "Storage",
-          "pages": [
-            "integrations/databases/BigQuery",
-            "integrations/databases/ClickHouse",
-            "integrations/databases/Druid",
-            "integrations/databases/MicrosoftSQLServer",
-            "integrations/databases/MongoDB",
-            "integrations/databases/MySQL",
-            "integrations/databases/PostgreSQL",
-            "integrations/databases/Redshift",
-            "integrations/databases/S3",
-            "integrations/databases/Snowflake"
           ]
         },
         {
