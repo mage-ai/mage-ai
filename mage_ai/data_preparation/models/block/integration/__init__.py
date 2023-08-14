@@ -122,7 +122,7 @@ class IntegrationBlock(Block):
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
-                    f.write(filter_out_config_values(line.decode(), config)),
+                    f.write(line.decode()),
                     print_log_from_line(
                         line,
                         config=config,
