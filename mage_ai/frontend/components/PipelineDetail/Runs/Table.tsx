@@ -383,6 +383,8 @@ function PipelineRunsTable({
                 status,
               } = pipelineRun;
               const disabled = !id && !status;
+              const blockRunCountTooltipMessage =
+                `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
 
               const isRetry =
                 index > 0
@@ -436,12 +438,12 @@ function PipelineRunsTable({
                     key="row_block_runs"
                     passHref
                   >
-                    <Link 
-                      bold 
-                      muted 
-                      title={`${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`}
+                    <Link
+                      bold
+                      muted
+                      title={blockRunCountTooltipMessage}
                     >
-                      {`${completedBlockRunsCount}/${blockRunsCount}`}
+                      {`${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
                   <Button
@@ -516,9 +518,9 @@ function PipelineRunsTable({
                       bold
                       disabled={disabled}
                       sky
-                      title={`${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`}
+                      title={blockRunCountTooltipMessage}
                     >
-                      {disabled ? '' :`${completedBlockRunsCount}/${blockRunsCount}`}
+                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
                   <Button
