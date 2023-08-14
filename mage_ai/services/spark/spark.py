@@ -4,6 +4,9 @@ import os
 
 
 def get_file_names(jars: List) -> List:
+    '''
+    Extract file names from a list of jar files.
+    '''
     if jars is None:
         return None
 
@@ -11,6 +14,10 @@ def get_file_names(jars: List) -> List:
 
 
 def contains_same_jars(jars_1: List, jars_2: List) -> bool:
+    '''
+    Check if two lists of jar files contain the same jars.
+    The order of the jars in the list does not matter.
+    '''
     if jars_1 is None and jars_2 is None:
         return True
 
@@ -20,13 +27,16 @@ def contains_same_jars(jars_1: List, jars_2: List) -> bool:
     if len(jars_1) != len(jars_2):
         return False
 
-    file_names_1 = get_list_of_file_names(jars_1)
-    file_names_2 = get_list_of_file_names(jars_2)
+    file_names_1 = get_file_names(jars_1)
+    file_names_2 = get_file_names(jars_2)
 
     return set(file_names_1) == set(file_names_2)
 
 
 def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
+    '''
+    Check if the spark session has the same configuration as the spark config.
+    '''
     if spark_session is None:
         return False
 
@@ -61,6 +71,18 @@ def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
 
 
 def get_spark_session(spark_config: SparkConfig):
+    '''
+    Get a Spark session.
+    If the given spark_config is None, then create a Spark session with the
+    default configuration.
+    If the given spark_config is not None, then check if the active Spark
+    session has the same configuration as the given spark_config.
+    If the active Spark session has the same configuration as the given
+    spark_config, then reuse the active Spark session.
+    If the active Spark session does not have the same configuration as the
+    given spark_config, then create a new Spark session with the given
+    spark_config.
+    '''
     from pyspark.conf import SparkConf
     from pyspark.sql import SparkSession
 
