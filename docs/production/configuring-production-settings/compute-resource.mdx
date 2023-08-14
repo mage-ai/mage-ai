@@ -140,6 +140,16 @@ ecs_config:
   wait_timeout: 1200
 ```
 
+Required IAM permissions for using ECS executor:
+```
+[
+  "ecs:DescribeTasks",
+  "ecs:ListTasks",
+  "ecs:RunTask"
+]
+```
+
+
 ### GCP Cloud Run executor
 
 If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to execute blocks.
