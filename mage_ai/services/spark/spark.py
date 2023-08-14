@@ -1,32 +1,29 @@
 from mage_ai.services.spark.config import SparkConfig
+from typing import List
 import os
 
 
-def get_list_of_file_names(list_of_jars):
-    if list_of_jars is None:
+def get_file_names(jars: List) -> List:
+    if jars is None:
         return None
 
-    return [os.path.basename(jar) for jar in list_of_jars]
+    return [os.path.basename(jar) for jar in jars]
 
 
-def contains_same_jars(list_of_jars_1, list_of_jars_2):
-    if list_of_jars_1 is None and list_of_jars_2 is None:
+def contains_same_jars(jars_1: List, jars_2: List) -> bool:
+    if jars_1 is None and jars_2 is None:
         return True
 
-    if list_of_jars_1 is None or list_of_jars_2 is None:
+    if jars_1 is None or jars_2 is None:
         return False
 
-    if len(list_of_jars_1) != len(list_of_jars_2):
+    if len(jars_1) != len(jars_2):
         return False
 
-    file_names_1 = get_list_of_file_names(list_of_jars_1)
-    file_names_2 = get_list_of_file_names(list_of_jars_2)
+    file_names_1 = get_list_of_file_names(jars_1)
+    file_names_2 = get_list_of_file_names(jars_2)
 
-    for file_name in file_names_1:
-        if file_name not in file_names_2:
-            return False
-
-    return True
+    return set(file_names_1) == set(file_names_2)
 
 
 def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
