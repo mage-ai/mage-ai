@@ -24,34 +24,29 @@ class SparkTests(TestCase):
         )
 
     def test_contains_same_jars(self):
-        self.assertEqual(
+        self.assertTrue(
             contains_same_jars(
                 ['/home/spark-jars/aws-java-sdk-core-1.11.1026.jar'],
-                ['aws-java-sdk-core-1.11.1026.jar']),
-            True
+                ['aws-java-sdk-core-1.11.1026.jar'])
         )
-        self.assertEqual(
+        self.assertTrue(
             contains_same_jars(
                 ['spark://************:2222/jars/aws-java-sdk-core-1.11.1026.jar'],
-                ['aws-java-sdk-core-1.11.1026.jar']),
-            True
+                ['aws-java-sdk-core-1.11.1026.jar'])
         )
-        self.assertEqual(
+        self.assertTrue(
             contains_same_jars(
                 ['/home/spark-jars/aws-java-sdk-core-1.11.1026.jar'],
-                ['spark://************:2222/jars/aws-java-sdk-core-1.11.1026.jar']),
-            True
+                ['spark://************:2222/jars/aws-java-sdk-core-1.11.1026.jar'])
         )
-        self.assertEqual(
+        self.assertTrue(
             contains_same_jars(
                 ['/home/spark-jars/test1.jar', '/home/spark-jars/test2.jar'],
                 ['spark://************:2222/jars/test2.jar',
-                 'spark://************:2222/jars/test1.jar']),
-            True
+                 'spark://************:2222/jars/test1.jar'])
         )
-        self.assertEqual(
+        self.assertTrue(
             contains_same_jars(
                 ['/home/spark-jars/test1.jar', '/home/spark-jars/test2.jar'],
-                ['spark://************:2222/jars/test1.jar']),
-            False
+                ['spark://************:2222/jars/test1.jar'])
         )
