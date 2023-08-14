@@ -373,6 +373,7 @@ function PipelineRunsTable({
             rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
                 block_runs_count: blockRunsCount,
+                completed_block_runs_count: completedBlockRunsCount,
                 completed_at: completedAt,
                 execution_date: executionDate,
                 id,
@@ -435,8 +436,12 @@ function PipelineRunsTable({
                     key="row_block_runs"
                     passHref
                   >
-                    <Link bold muted>
-                      {`${blockRunsCount}`}
+                    <Link 
+                      bold 
+                      muted 
+                      title={`${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`}
+                    >
+                      {`${completedBlockRunsCount}/${blockRunsCount}`}
                     </Link>
                   </NextLink>,
                   <Button
@@ -511,8 +516,9 @@ function PipelineRunsTable({
                       bold
                       disabled={disabled}
                       sky
+                      title={`${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`}
                     >
-                      {disabled ? '' : `${blockRunsCount}`}
+                      {disabled ? '' :`${completedBlockRunsCount}/${blockRunsCount}`}
                     </Link>
                   </NextLink>,
                   <Button
