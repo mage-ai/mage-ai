@@ -49,7 +49,7 @@ def generate_block_with_description(block_description: str):
 
 @app.command()
 def generate_pipeline_with_description(pipeline_description: str):
-    print(asyncio.run(LLMPipelineWizard().async_generate_pipeline_with_description(
+    print(asyncio.run(LLMPipelineWizard().async_generate_pipeline_from_description(
                                             pipeline_description)))
 
 
