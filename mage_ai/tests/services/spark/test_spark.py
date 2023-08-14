@@ -45,7 +45,7 @@ class SparkTests(TestCase):
                 ['spark://************:2222/jars/test2.jar',
                  'spark://************:2222/jars/test1.jar'])
         )
-        self.assertTrue(
+        self.assertFalse(
             contains_same_jars(
                 ['/home/spark-jars/test1.jar', '/home/spark-jars/test2.jar'],
                 ['spark://************:2222/jars/test1.jar'])
