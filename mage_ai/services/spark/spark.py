@@ -4,9 +4,15 @@ import os
 
 
 def get_file_names(jars: List) -> List:
-    '''
-    Extract file names from a list of jar files.
-    '''
+    """
+    Extracts file names from a list of jar files.
+
+    Args:
+        jars (List): A list of jar files.
+
+    Returns:
+        List: A list of file names.
+    """
     if jars is None:
         return None
 
@@ -14,10 +20,17 @@ def get_file_names(jars: List) -> List:
 
 
 def contains_same_jars(jars_1: List, jars_2: List) -> bool:
-    '''
-    Check if two lists of jar files contain the same jars.
+    """
+    Checks if two lists of jar files contain the same jars.
     The order of the jars in the list does not matter.
-    '''
+
+    Args:
+        jars_1 (List): A list of jar files.
+        jars_2 (List): A list of jar files.
+
+    Returns:
+        bool: True if the lists contain the same jars, False otherwise.
+    """
     if jars_1 is None and jars_2 is None:
         return True
 
@@ -34,9 +47,17 @@ def contains_same_jars(jars_1: List, jars_2: List) -> bool:
 
 
 def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
-    '''
-    Check if the spark session has the same configuration as the spark config.
-    '''
+    """
+    Checks if the spark session has the same configuration as the spark config.
+
+    Args:
+        spark_session (SparkSession): The spark session.
+        spark_config (SparkConfig): The spark config.
+
+    Returns:
+        bool: True if the spark session has the same configuration as the
+        spark config, False otherwise.
+    """
     if spark_session is None:
         return False
 
@@ -71,8 +92,8 @@ def has_same_spark_config(spark_session, spark_config: SparkConfig) -> bool:
 
 
 def get_spark_session(spark_config: SparkConfig):
-    '''
-    Get a Spark session.
+    """
+    Gets a Spark session.
     If the given spark_config is None, then create a Spark session with the
     default configuration.
     If the given spark_config is not None, then check if the active Spark
@@ -82,7 +103,13 @@ def get_spark_session(spark_config: SparkConfig):
     If the active Spark session does not have the same configuration as the
     given spark_config, then create a new Spark session with the given
     spark_config.
-    '''
+
+    Args:
+        spark_config (SparkConfig): The Spark configuration.
+
+    Returns:
+        SparkSession: The Spark session.
+    """
     from pyspark.conf import SparkConf
     from pyspark.sql import SparkSession
 
