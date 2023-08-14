@@ -17,6 +17,8 @@ class SparkTests(TestCase):
             ['test1.jar', 'test2.jar']
         )
         self.assertEqual(
-            get_file_names(['spark://************:2222/jars/test1.jar', 'spark://************:2222/jars/test2.jar']),
+            get_file_names([
+                'spark://************:2222/jars/test1.jar',
+                'spark://************:2222/jars/test2.jar']),
             ['test1.jar', 'test2.jar']
         )
