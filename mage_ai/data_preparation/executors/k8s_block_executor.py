@@ -32,7 +32,6 @@ class K8sBlockExecutor(BlockExecutor):
             namespace = self.executor_config.namespace
         else:
             namespace = DEFAULT_NAMESPACE
-            
         job_manager = K8sJobManager(
             job_name=f'mage-{job_name_prefix}-block-{block_run_id}',
             logger=self.logger,
