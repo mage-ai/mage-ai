@@ -40,15 +40,23 @@
   },
   "tabs": [
     {
-      "name": "API",
-      "url": "api-reference"
-    },
-    {
       "name": "Guides",
       "url": "guides"
     },
     {
-      "name": "Live Support",
+      "name": "API",
+      "url": "api-reference"
+    },
+    {
+      "name": "Deploy",
+      "url": "production"
+    },
+    {
+      "name": "Contribute",
+      "url": "contributing"
+    },
+    {
+      "name": "Help",
       "url": "https://www.mage.ai/chat"
     }
   ],
@@ -73,56 +81,19 @@
     {
       "group": "Introduction",
       "pages": [
-        {
-          "group": "Overview",
-          "pages": [
-            "introduction/overview",
-            {
-              "group": "Design",
-              "pages": [
-                "design/core-design-principles",
-                {
-                  "group": "Abstractions",
-                  "pages": [
-                    "design/core-abstractions",
-                    "design/data-pipeline-management",
-                    {
-                      "group": "Blocks",
-                      "pages": [
-                        "design/blocks",
-                        "design/blocks/data-loader",
-                        "design/blocks/transformer",
-                        "design/blocks/data-exporter",
-                        "design/blocks/scratchpad",
-                        "design/blocks/sensor",
-                        "design/blocks/extension",
-                        "design/blocks/dynamic-blocks",
-                        "design/blocks/replicate-blocks"
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
+        "introduction/overview",
         {
           "group": "Setup",
           "pages": [
             "getting-started/setup",
             "development/project/setup",
+            "getting-started/kernels",
             {
               "group": "Variables",
               "pages": [
                 "development/environment-variables",
-                "production/configuring-production-settings/runtime-variable",
-                {
-                  "group": "Secrets",
-                  "pages": [
-                    "development/secrets/secrets",
-                    "development/secrets/GCP"
-                  ]
-                }
+                "getting-started/runtime-variable",
+                "getting-started/secrets"
               ]
             },
             {
@@ -130,6 +101,13 @@
               "pages": [
                 "development/dependencies/requirements",
                 "development/dependencies/custom-files"
+              ]
+            },
+            {
+              "group": "Versioning",
+              "pages": [
+                "getting-started/setting-up-git",
+                "getting-started/file-versions"
               ]
             },
             "development/text-editor"
@@ -230,70 +208,131 @@
                 {
                   "group": "Monitoring",
                   "pages": [
-                    "production/observability/monitoring",
-                    "production/observability/logging"
-                  ]
-                },
-                {
-                  "group": "Versioning",
-                  "pages": [
-                    "developing-in-the-cloud/setting-up-git",
-                    "development/versioning/file-versions"
+                    "development/observability/monitoring",
+                    "development/observability/logging"
                   ]
                 }
               ]
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "group": "Get Started",
+      "icon": "swords",
+      "pages": [
+        "contributing/overview",
+        "contributing/statistics/overview"
+      ]
+    },
+    {
+      "group": "Backend",
+      "pages": [
+        "contributing/backend/overview",
         {
-          "group": "Contributing",
-          "icon": "swords",
+          "group": "Streaming",
           "pages": [
-            "community/contributing",
-            {
-              "group": "Backend",
-              "pages": [
-                "contributing/backend/overview"
-              ]
-            },
-            {
-              "group": "Frontend",
-              "pages": [
-                "contributing/frontend/overview",
-                "contributing/charts/how-to-add"
-              ]
-            },
-            {
-              "group": "Streaming",
-              "pages": [
-                "streaming/contributing"
-              ]
-            },
-            "contributing/statistics/overview"
+            "contributing/backend/streaming/sources-and-destinations"
           ]
         }
       ]
     },
     {
-      "group": "Data integration",
+      "group": "Frontend",
       "pages": [
-        "data-integrations/overview",
-        "data-integrations/configuration",
+        "contributing/frontend/overview",
+        "contributing/charts/how-to-add"
+      ]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
+        "design/core-abstractions",
+        "design/core-design-principles",
         {
-          "group": "Sources",
+          "group": "Abstractions",
           "pages": [
-            "data-integrations/sources/overview",
-            "data-integrations/sources/add-new-source",
-            "data-integrations/sources/adapt-existing-source",
-            "data-integrations/sources/postgresql"
+            {
+              "group": "Blocks",
+              "pages": [
+                "design/blocks",
+                {
+                  "group": "Types",
+                  "pages": [
+                    "design/blocks/data-loader",
+                    "design/blocks/transformer",
+                    "design/blocks/data-exporter",
+                    "design/blocks/scratchpad",
+                    "design/blocks/sensor",
+                    "design/blocks/extension"
+                  ]
+                },
+                "design/blocks/dynamic-blocks",
+                "design/blocks/replicate-blocks"
+              ]
+            },
+            "design/data-pipeline-management"
           ]
         },
         {
-          "group": "Destinations",
+          "group": "Data integration",
           "pages": [
-            "data-integrations/destinations/overview",
-            "data-integrations/destinations/add-new-destination",
-            "data-integrations/destinations/adapt-existing-destination"
+            "data-integrations/overview",
+            "data-integrations/configuration",
+            {
+              "group": "Sources",
+              "pages": [
+                "data-integrations/sources/overview",
+                "data-integrations/sources/add-new-source",
+                "data-integrations/sources/adapt-existing-source",
+                "data-integrations/sources/postgresql"
+              ]
+            },
+            {
+              "group": "Destinations",
+              "pages": [
+                "data-integrations/destinations/overview",
+                "data-integrations/destinations/add-new-destination",
+                "data-integrations/destinations/adapt-existing-destination"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Orchestration",
+          "pages": [
+            {
+              "group": "Schedules and triggers",
+              "pages": [
+                "orchestration/triggers/triggering-pipelines",
+                "orchestration/triggers/schedule-pipelines",
+                {
+                  "group": "Event triggers",
+                  "pages": [
+                    "orchestration/triggers/events/overview",
+                    "orchestration/triggers/events/aws"
+                  ]
+                },
+                "orchestration/triggers/trigger-pipeline-api",
+                "orchestration/triggers/trigger-pipeline",
+                "orchestration/triggers/configure-triggers-in-code"
+              ]
+            },
+            {
+              "group": "Backfills",
+              "pages": [
+                "orchestration/backfills/overview",
+                "orchestration/backfills/guides"
+              ]
+            },
+            {
+              "group": "Pipeline runs",
+              "pages": [
+                "orchestration/pipeline-runs/retrying-block-runs",
+                "orchestration/pipeline-runs/saving-block-output-as-csv"
+              ]
+            }
           ]
         }
       ]
@@ -334,7 +373,8 @@
       "pages": [
         "guides/load-api-data",
         "guides/data-integration-pipeline",
-        "guides/setup-dbt"
+        "guides/setup-dbt",
+        "guides/integrate-mage-airflow"
       ]
     },
     {
@@ -364,43 +404,6 @@
       ]
     },
     {
-      "group": "Orchestration",
-      "pages": [
-        {
-          "group": "Schedules and triggers",
-          "pages": [
-            "orchestration/triggers/triggering-pipelines",
-            "orchestration/triggers/schedule-pipelines",
-            {
-              "group": "Event triggers",
-              "pages": [
-                "orchestration/triggers/events/overview",
-                "orchestration/triggers/events/aws"
-              ]
-            },
-            "orchestration/triggers/trigger-pipeline-api",
-            "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/configure-triggers-in-code"
-          ]
-        },
-        {
-          "group": "Backfills",
-          "pages": [
-            "orchestration/backfills/overview",
-            "orchestration/backfills/guides"
-          ]
-        },
-        {
-          "group": "Pipeline runs",
-          "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs",
-            "orchestration/pipeline-runs/saving-block-output-as-csv"
-          ]
-        },
-        "guides/integrate-mage-airflow"
-      ]
-    },
-    {
       "group": "Deployment",
       "pages": [
         {
@@ -414,9 +417,7 @@
           "group": "Configuration",
           "pages": [
             "production/configuring-production-settings/overview",
-            "production/configuring-production-settings/secrets",
-            "production/configuring-production-settings/compute-resource",
-            "getting-started/kernels"
+            "production/configuring-production-settings/compute-resource"
           ]
         },
         {
@@ -478,19 +479,26 @@
                   ]
                 }
               ]
+            },
+            {
+              "group": "Secrets",
+              "pages": [
+                "production/deploying-to-cloud/secrets/GCP",
+                "production/deploying-to-cloud/secrets/AWS"
+              ]
             }
           ]
         },
         {
           "group": "Team management",
           "pages": [
-            "developing-in-the-cloud/cloud-dev-environments/overview",
+            "production/developing-in-the-cloud/cloud-dev-environments/overview",
             {
               "group": "Environments",
               "pages": [
-                "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
-                "developing-in-the-cloud/cloud-dev-environments/cloud-run",
-                "developing-in-the-cloud/cloud-dev-environments/kubernetes"
+                "production/developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+                "production/developing-in-the-cloud/cloud-dev-environments/cloud-run",
+                "production/developing-in-the-cloud/cloud-dev-environments/kubernetes"
               ]
             }
           ]
@@ -556,20 +564,20 @@
             {
               "group": "Monitoring",
               "pages": [
-                "production/observability/datadog",
-                "integrations/great-expectations",
-                "integrations/metaplane",
-                "production/observability/newrelic",
-                "production/observability/sentry"
+                "integrations/observability/datadog",
+                "integrations/observability/great-expectations",
+                "integrations/observability/metaplane",
+                "integrations/observability/newrelic",
+                "integrations/observability/sentry"
               ]
             },
             {
               "group": "Alerting",
               "pages": [
-                "production/observability/alerting-email",
-                "production/observability/alerting-opsgenie",
-                "production/observability/alerting-slack",
-                "production/observability/alerting-teams"
+                "integrations/observability/alerting-email",
+                "integrations/observability/alerting-opsgenie",
+                "integrations/observability/alerting-slack",
+                "integrations/observability/alerting-teams"
               ]
             }
           ]
