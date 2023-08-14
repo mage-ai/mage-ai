@@ -430,6 +430,9 @@ class Variable:
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
+            df_col = df_output[c]
+            if type(df_col) is pd.DataFrame:
+                raise Exception(f'Please do not use duplicate column name: "{c}"')
             c_dtype = df_output[c].dtype
             if not is_object_dtype(c_dtype):
                 column_types[c] = str(c_dtype)
