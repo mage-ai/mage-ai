@@ -1,7 +1,12 @@
-from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
-from mage_ai.orchestration.db import safe_db_query
 from sqlalchemy.orm import aliased
+
+from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 
 
 class BlockRunResource(DatabaseResource):
@@ -24,16 +29,17 @@ class BlockRunResource(DatabaseResource):
                 pipeline_schedule_name,
             ) = tup
 
-            block_run = BlockRun()
-            block_run.block_uuid = block_uuid
-            block_run.completed_at = completed_at
-            block_run.created_at = created_at
-            block_run.id = id
-            block_run.pipeline_run_id = pipeline_run_id
-            block_run.status = status
-            block_run.updated_at = updated_at
-            block_run.pipeline_schedule_id = pipeline_schedule_id
-            block_run.pipeline_schedule_name = pipeline_schedule_name
+            block_run = dict(
+                block_uuid=block_uuid,
+                completed_at=completed_at,
+                created_at=created_at,
+                id=id,
+                pipeline_run_id=pipeline_run_id,
+                status=status,
+                updated_at=updated_at,
+                pipeline_schedule_id=pipeline_schedule_id,
+                pipeline_schedule_name=pipeline_schedule_name,
+            )
 
             block_runs.append(block_run)
 
