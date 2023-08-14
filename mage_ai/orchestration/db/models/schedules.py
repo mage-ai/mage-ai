@@ -435,6 +435,10 @@ class PipelineRun(BaseModel):
         return len(self.block_runs)
 
     @property
+    def completed_block_runs_count(self) -> int:
+        return len(self.completed_block_runs)
+
+    @property
     def execution_partition(self) -> str:
         if self.variables and self.variables.get('execution_partition'):
             return self.variables.get('execution_partition')
