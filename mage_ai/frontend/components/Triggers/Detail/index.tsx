@@ -13,8 +13,9 @@ import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineRunType, {
-  PipelineRunReqQueryParamsType,
+  PIPELINE_RUN_STATUSES,
   RUN_STATUS_TO_LABEL,
+  PipelineRunReqQueryParamsType,
  } from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
@@ -857,7 +858,7 @@ function TriggerDetail({
             <option key="all_statuses" value="all">
               All statuses
             </option>
-            {Object.values(RunStatusEnum).map(status => (
+            {PIPELINE_RUN_STATUSES.map(status => (
               <option key={status} value={status}>
                 {RUN_STATUS_TO_LABEL[status]}
               </option>

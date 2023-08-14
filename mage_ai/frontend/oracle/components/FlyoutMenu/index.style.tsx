@@ -49,12 +49,20 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
   `}
 `;
 
-export const TitleContainerStyle = styled.div`
+export const TitleContainerStyle = styled.div<{
+  roundedStyle?: boolean;
+}>`
   padding: ${UNIT}px;
   padding-bottom: 0;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).popup};
+    background-color: ${(props.theme || dark).background.popup};
+  `}
+
+  ${props => props.roundedStyle && `
+    background-color: ${(props.theme || dark).interactive.defaultBackground};
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
+    padding-bottom: ${UNIT}px;
   `}
 `;
 

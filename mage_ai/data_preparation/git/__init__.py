@@ -434,6 +434,24 @@ class Git:
                 for url in remote.urls:
                     if url.lower().startswith('https'):
                         repository_names.append('/'.join(url.split('/')[-2:]).replace('.git', ''))
+
+                        # Remove the token from the URL
+                        # e.g. https://[user]:[token]@[netloc]
+                        parts = url.split('@')
+
+                        parts_arr = []
+                        if len(parts) >= 2:
+                            # https://[user]:[token]
+                            parts2 = parts[0].split(':')
+                            # ['https', '', 'user', 'token']
+                            parts2[len(parts2) - 1] = '[token]'
+                            parts_arr.append(':'.join(parts2))
+                            parts_arr += parts[1:]
+                        else:
+                            parts_arr += parts
+
+                        url = '@'.join(parts_arr)
+
                     urls.append(url)
             except GitCommandError as err:
                 print('WARNING (mage_ai.data_preparation.git.remotes):')

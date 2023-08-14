@@ -186,7 +186,7 @@ class PipelineScheduler:
                 if self.pipeline_run.any_blocks_failed():
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.FAILED,
-                        completed_at=datetime.now(),
+                        completed_at=datetime.now(tz=pytz.UTC),
                     )
                     self.notification_sender.send_pipeline_run_failure_message(
                         pipeline=self.pipeline,
@@ -213,7 +213,7 @@ class PipelineScheduler:
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
                                 for pr in backfill.pipeline_runs]):
                             backfill.update(
-                                completed_at=datetime.now(),
+                                completed_at=datetime.now(tz=pytz.UTC),
                                 status=Backfill.Status.COMPLETED,
                             )
                             schedule.update(
@@ -247,7 +247,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(),
+                completed_at=datetime.now(tz=pytz.UTC),
             )
 
         update_status()
@@ -281,7 +281,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(),
+                completed_at=datetime.now(tz=pytz.UTC),
             )
 
         update_status()
@@ -924,7 +924,7 @@ def run_integration_stream(
                 return
 
             block_run.update(
-                started_at=datetime.now(),
+                started_at=datetime.now(tz=pytz.UTC),
                 status=BlockRun.BlockRunStatus.RUNNING,
             )
             pipeline_scheduler.logger.info(
@@ -1015,7 +1015,7 @@ def run_block(
         return {}
 
     block_run.update(
-        started_at=datetime.now(),
+        started_at=datetime.now(tz=pytz.UTC),
         status=BlockRun.BlockRunStatus.RUNNING,
     )
 
@@ -1464,7 +1464,7 @@ def schedule_with_event(event: Dict = None):
 
         for p in matched_pipeline_schedules:
             payload = dict(
-                execution_date=datetime.now(),
+                execution_date=datetime.now(tz=pytz.UTC),
                 pipeline_schedule_id=p.id,
                 pipeline_uuid=p.pipeline_uuid,
                 variables=merge_dict(p.variables or dict(), dict(event=event)),

@@ -22,8 +22,9 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
+    get_variables_dir,
+    init_project_uuid,
     init_repo,
-    update_project_uuid,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
@@ -52,6 +53,7 @@ from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
+from mage_ai.server.logger import Logger
 from mage_ai.server.scheduler_manager import (
     SCHEDULER_AUTO_RESTART_INTERVAL,
     check_scheduler_status,
@@ -74,7 +76,7 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
-from mage_ai.settings.repo import set_repo_path
+from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
 from mage_ai.shared.constants import InstanceType
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -85,9 +87,11 @@ BASE_PATH_EXPORTS_FOLDER = 'frontend_dist_base_path'
 BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
 BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
+logger = Logger().new_server_logger(__name__)
+
 
 class MainPageHandler(tornado.web.RequestHandler):
-    def get(self, *args):
+    def get(self, *args, **kwargs):
         self.render('index.html')
 
 
@@ -113,16 +117,26 @@ class ApiSchedulerHandler(BaseHandler):
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
 
 
-def replace_base_path(base_path: str) -> None:
+def replace_base_path(base_path: str) -> str:
     """
-    This function will create and go through the BASE_PATH_EXPORTS_FOLDER and replace all the
+    This function will create the BASE_PATH_EXPORTS_FOLDER and replace all the
     occurrences of CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_ with the base_path parameter.
 
     Args:
         base_path (str): The base path to replace the placeholder with.
+
+    Returns:
+        str: The path of the frontend static export folder with the replaced base paths.
     """
     src = os.path.join(os.path.dirname(__file__), BASE_PATH_TEMPLATE_EXPORTS_FOLDER)
-    dst = os.path.join(os.path.dirname(__file__), BASE_PATH_EXPORTS_FOLDER)
+
+    directory = get_variables_dir()
+    # get_variables_dir can return an s3 path. In that case, use the DEFAULT_MAGE_DATA_DIR
+    # directory.
+    if directory.startswith('s3'):
+        directory = os.path.join(os.path.expanduser(DEFAULT_MAGE_DATA_DIR), get_repo_name())
+        os.makedirs(directory, exist_ok=True)
+    dst = os.path.join(directory, BASE_PATH_EXPORTS_FOLDER)
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
@@ -138,9 +152,10 @@ def replace_base_path(base_path: str) -> None:
                 # replace favicon
                 with open(filepath, 'w', encoding='utf-8') as f:
                     f.write(s)
+    return dst
 
 
-def make_app(update_routes: bool = False):
+def make_app(template_dir: str = None, update_routes: bool = False):
     shell_command = SHELL_COMMAND
     if shell_command is None:
         shell_command = 'bash'
@@ -151,7 +166,8 @@ def make_app(update_routes: bool = False):
         term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
 
-    template_dir = BASE_PATH_EXPORTS_FOLDER if update_routes else EXPORTS_FOLDER
+    if template_dir is None:
+        template_dir = os.path.join(os.path.dirname(__file__), EXPORTS_FOLDER)
     routes = [
         (r'/', MainPageHandler),
         (r'/files', MainPageHandler),
@@ -171,22 +187,22 @@ def make_app(update_routes: bool = False):
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/_next/static')},
+            {'path': os.path.join(template_dir, '_next/static')},
         ),
         (
             r'/fonts/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/fonts')},
+            {'path': os.path.join(template_dir, 'fonts')},
         ),
         (
             r'/images/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), f'{template_dir}/images')},
+            {'path': os.path.join(template_dir, 'images')},
         ),
         (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), template_dir)},
+            {'path': template_dir},
         ),
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
@@ -231,7 +247,9 @@ def make_app(update_routes: bool = False):
         (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
         (r'/files', MainPageHandler),
         (r'/global-data-products', MainPageHandler),
+        (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
         (r'/templates', MainPageHandler),
+        (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
 
@@ -249,7 +267,7 @@ def make_app(update_routes: bool = False):
     return tornado.web.Application(
         updated_routes,
         autoreload=True,
-        template_path=os.path.join(os.path.dirname(__file__), template_dir),
+        template_path=template_dir,
     )
 
 
@@ -262,15 +280,22 @@ async def main(
 
     # Update base path if environment variable is set
     update_routes = False
-
+    template_dir = None
     if BASE_PATH:
         try:
-            replace_base_path(BASE_PATH)
+            template_dir = replace_base_path(BASE_PATH)
             update_routes = True
         except Exception:
-            print('Failed to replace base path, using default routes.')
+            logger.warning(
+                'Server failed to replace base path with error:\n%s',
+                traceback.format_exc(),
+            )
+            logger.warning('Continuing with default routes...')
 
-    app = make_app(update_routes=update_routes)
+    app = make_app(
+        update_routes=update_routes,
+        template_dir=template_dir,
+    )
 
     port = int(port)
     max_port = port + 100
@@ -290,7 +315,7 @@ async def main(
     if update_routes:
         url = f'{url}/{BASE_PATH}'
     webbrowser.open_new_tab(url)
-    print(f'Mage is running at {url} and serving project {project}')
+    logger.info(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
 
@@ -302,18 +327,18 @@ async def main(
             try:
                 sync = GitSync(sync_config)
                 sync.sync_data()
-                print(
+                logger.info(
                     f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
                     f', branch: {sync_config.branch}'
                 )
             except Exception as err:
-                print(
+                logger.info(
                     f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
                     f', branch: {sync_config.branch} with error: {str(err)}'
                 )
 
     if REQUIRE_USER_AUTHENTICATION:
-        print('User authentication is enabled.')
+        logger.info('User authentication is enabled.')
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
         sleep(5)
@@ -327,7 +352,7 @@ async def main(
         default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
         owner_users = default_owner_role.users if default_owner_role else []
         if not legacy_owner_user and len(owner_users) == 0:
-            print('User with owner permission doesn’t exist, creating owner user.')
+            logger.info('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
                     roles_new=[default_owner_role],
@@ -352,7 +377,8 @@ async def main(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
         ).first()
         if not oauth_client:
-            print('OAuth2 application doesn’t exist for frontend, creating OAuth2 application.')
+            logger.info(
+                'OAuth2 application doesn’t exist for frontend, creating OAuth2 application.')
             oauth_client = Oauth2Application.create(
                 client_id=OAUTH2_APPLICATION_CLIENT_ID,
                 client_type=Oauth2Application.ClientType.PUBLIC,
@@ -360,13 +386,13 @@ async def main(
                 user_id=owner_user.id,
             )
 
-    print('Initializing block cache.')
+    logger.info('Initializing block cache.')
     await BlockCache.initialize_cache(replace=True)
 
-    print('Initializing tag cache.')
+    logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)
 
-    print('Initializing block action object cache.')
+    logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
     # Check scheduler status periodically
@@ -414,7 +440,7 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    update_project_uuid()
+    init_project_uuid()
 
     asyncio.run(UsageStatisticLogger().project_impression())
 

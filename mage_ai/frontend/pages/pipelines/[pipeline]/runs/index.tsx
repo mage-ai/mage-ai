@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -6,8 +6,10 @@ import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradien
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import Paginate from '@components/shared/Paginate';
 import PipeIconGradient from '@oracle/icons/custom/PipeIconGradient';
@@ -16,8 +18,10 @@ import PipelineRunType, {
   PIPELINE_RUN_STATUSES,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
+  RUNNING_STATUSES,
 } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import PopupMenu from '@oracle/components/PopupMenu';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -29,15 +33,21 @@ import buildTableSidekick, {
 import usePrevious from '@utils/usePrevious';
 
 import {
+  AlertTriangle,
+  ArrowDown,
   BlocksSeparated,
   PipeIcon,
+  Refresh,
+
 } from '@oracle/icons';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -72,16 +82,22 @@ function PipelineRuns({
   pipeline: pipelineProp,
 }: PipelineRunsProp) {
   const router = useRouter();
+  const refActionsMenu = useRef(null);
+
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
+  const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
+  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
+  const [confirmationAction, setConfirmationAction] = useState(null);
   const [query, setQuery] = useState<{
     offset?: number;
     pipeline_run_id?: number;
     pipeline_uuid?: string;
     status?: RunStatusEnum;
   }>(null);
+
   const isPipelineRunsTab = useMemo(
     () => TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid,
     [selectedTab?.uuid],
@@ -194,6 +210,12 @@ function PipelineRuns({
     Object.values(selectedRuns || {})
       .filter((val) => val !== null)
   ), [selectedRuns]);
+  const selectedRunsCount = selectedRunsArr.length;
+  const selectedRunningRunsArr = useMemo(() => (
+    Object.values(selectedRuns || {})
+      .filter((run) => run !== null && RUNNING_STATUSES.includes(run?.status))
+  ), [selectedRuns]);
+  const selectedRunningRunsCount = selectedRunningRunsArr.length;
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
@@ -225,6 +247,58 @@ function PipelineRuns({
     selectedTabPrev,
   ]);
 
+  const pipelineRunActionItems: FlyoutMenuItemType[] = useMemo(() => ([
+    {
+      isGroupingTitle: true,
+      label: () => `${selectedRunsCount} selected`,
+      uuid: 'runs_selected_count',
+    },
+    {
+      beforeIcon: <Refresh muted={selectedRunsCount === 0} />,
+      disabled: selectedRunsCount === 0,
+      label: () => `Retry selected (${selectedRunsCount})`,
+      onClick: () => updatePipeline({
+        pipeline: {
+          pipeline_runs: selectedRunsArr,
+          status: PipelineStatusEnum.RETRY,
+        },
+      }),
+      uuid: 'retry_selected',
+    },
+    {
+      beforeIcon: <AlertTriangle muted={selectedRunningRunsCount === 0} />,
+      disabled: selectedRunningRunsCount === 0,
+      label: () => `Cancel selected running (${selectedRunningRunsCount})`,
+      onClick: () => updatePipeline({
+        pipeline: {
+          pipeline_runs: selectedRunningRunsArr,
+          status: RunStatusEnum.CANCELLED,
+        },
+      }),
+      uuid: 'cancel_selected_running',
+    },
+    {
+      beforeIcon: <AlertTriangle muted={!(hasRunningPipeline && isPipelineRunsTab)} />,
+      disabled: !(hasRunningPipeline && isPipelineRunsTab),
+      label: () => 'Cancel all running',
+      onClick: () => updatePipeline({
+        pipeline: {
+          status: RunStatusEnum.CANCELLED,
+        },
+      }),
+      openConfirmationDialogue: true,
+      uuid: 'cancel_all_running',
+    },
+  ]), [
+    hasRunningPipeline,
+    isPipelineRunsTab,
+    selectedRunningRunsArr,
+    selectedRunningRunsCount,
+    selectedRunsArr,
+    selectedRunsCount,
+    updatePipeline,
+  ]);
+
   const paginationEl = useMemo(() => (
     <Spacing p={2}>
       <Paginate
@@ -251,6 +325,7 @@ function PipelineRuns({
     router,
     totalRuns,
   ]);
+
   const tablePipelineRuns = useMemo(() => (
     <>
       <PipelineRunsTable
@@ -317,46 +392,8 @@ function PipelineRuns({
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}`}
     >
       <PageSectionHeader>
-        <Spacing py={1}>
+        <Spacing pr={1} py={1}>
           <FlexContainer alignItems="center">
-            {(hasRunningPipeline && isPipelineRunsTab) &&
-              <Spacing pl={2}>
-                <Button
-                  danger
-                  loading={isLoadingUpdatePipeline}
-                  onClick={() => {
-                    updatePipeline({
-                      pipeline: {
-                        status: RunStatusEnum.CANCELLED,
-                      },
-                    });
-                  }}
-                  outline
-                >
-                  Cancel running pipeline runs
-                </Button>
-              </Spacing>
-            }
-
-            {selectedRunsArr.length > 0 &&
-              <Spacing pl={2}>
-                <Button
-                  loading={isLoadingUpdatePipeline}
-                  onClick={() => {
-                    updatePipeline({
-                      pipeline: {
-                        pipeline_runs: selectedRunsArr,
-                        status: PipelineStatusEnum.RETRY,
-                      },
-                    });
-                  }}
-                  primary
-                >
-                  Retry selected runs ({selectedRunsArr.length})
-                </Button>
-              </Spacing>
-            }
-
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setQuery(null);
@@ -365,6 +402,49 @@ function PipelineRuns({
               selectedTabUUID={selectedTab?.uuid}
               tabs={TABS}
             />
+
+            <VerticalDividerStyle right={1} />
+
+            <Spacing px={2}>
+              <FlyoutMenuWrapper
+                items={pipelineRunActionItems}
+                onClickCallback={() => setShowActionsMenu(false)}
+                onClickOutside={() => setShowActionsMenu(false)}
+                open={showActionsMenu}
+                parentRef={refActionsMenu}
+                roundedStyle
+                setConfirmationAction={setConfirmationAction}
+                setConfirmationDialogueOpen={setConfirmationDialogueOpen}
+                topOffset={4}
+                uuid="PipelineRuns/ActionsMenu"
+              >
+                <Button
+                  afterIcon={<ArrowDown />}
+                  onClick={(() => setShowActionsMenu(prev => !prev))}
+                  outline
+                  padding="6px 12px"
+                >
+                  Actions
+                </Button>
+              </FlyoutMenuWrapper>
+
+              <ClickOutside
+                onClickOutside={() => setConfirmationDialogueOpen(false)}
+                open={confirmationDialogueOpen}
+              >
+                <PopupMenu
+                  danger
+                  onCancel={() => setConfirmationDialogueOpen(false)}
+                  onClick={() => {
+                    confirmationAction?.();
+                    setConfirmationDialogueOpen(false);
+                  }}
+                  subtitle="This includes runs on other pages as well, not just the current page."
+                  title="Are you sure you want to cancel all pipeline runs in progress?"
+                  width={UNIT * 40}
+                />
+              </ClickOutside>
+            </Spacing>
 
             {isPipelineRunsTab &&
               <Select

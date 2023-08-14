@@ -372,6 +372,7 @@ function KernelStatus({
             onClickCallback={() => setShowSelectKernel(false)}
             open={showSelectKernel}
             parentRef={refSelectKernel}
+            rightOffset={0}
             uuid="KernelStatus/select_kernel"
             width={UNIT * 25}
           />

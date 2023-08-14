@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def format_value(value):
-    if value is None or pd.isnull(value):
+    if type(value) is not list and (value is None or pd.isnull(value)):
         return 'NULL'
 
     if type(value) is bool:
@@ -16,6 +16,8 @@ def format_value(value):
 
     if type(value) is str:
         value = escape_quotes(value)
+    else:
+        value = escape_quotes(str(value))
 
     return f"'{value}'"
 

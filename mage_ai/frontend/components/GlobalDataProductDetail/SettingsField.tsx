@@ -76,7 +76,7 @@ function OutdatedStartingAtField({
 
           const setSelected = (value: boolean) => {
             setObjectAttributes(prev => {
-              const settingsPrev = prev?.settings;
+              const settingsPrev = prev?.settings || {};
 
               if (value) {
                 settingsPrev[uuid] = {};
