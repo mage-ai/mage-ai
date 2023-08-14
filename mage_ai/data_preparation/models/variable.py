@@ -433,11 +433,11 @@ class Variable:
             df_col = df_output[c]
             if type(df_col) is pd.DataFrame:
                 raise Exception(f'Please do not use duplicate column name: "{c}"')
-            c_dtype = df_output[c].dtype
+            c_dtype = df_col.dtype
             if not is_object_dtype(c_dtype):
                 column_types[c] = str(c_dtype)
             else:
-                series_non_null = df_output[c].dropna()
+                series_non_null = df_col.dropna()
                 if len(series_non_null) > 0:
                     coltype = type(series_non_null.iloc[0])
                     if is_object_dtype(series_non_null.dtype):
