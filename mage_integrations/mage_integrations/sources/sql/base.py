@@ -346,7 +346,7 @@ WHERE table_schema = '{schema}'
                 if col not in bookmark_properties or val is None:
                     continue
                 comparison_operator = '>='
-                if col in unique_constraints:
+                if unique_constraints is not None and col in unique_constraints:
                     comparison_operator = '>'
                 where_statements.append(
                     self._build_comparison_statement(
