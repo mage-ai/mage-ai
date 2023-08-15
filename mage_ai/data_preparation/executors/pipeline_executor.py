@@ -51,7 +51,6 @@ class PipelineExecutor:
             asyncio.run(self.__run_blocks(
                 pipeline_run,
                 allow_blocks_to_fail=allow_blocks_to_fail,
-
             ))
 
         self.logger_manager.output_logs_to_destination()
@@ -66,7 +65,7 @@ class PipelineExecutor:
             global_vars = dict()
 
         def create_block_task(block_run: BlockRun) -> asyncio.Task:
-            async def execute_and_run_tests() -> None:
+            async def execute_block() -> None:
                 executor_kwargs = dict(
                     pipeline=self.pipeline,
                     block_uuid=block_run.block_uuid,
@@ -78,7 +77,7 @@ class PipelineExecutor:
                     pipeline_run_id=pipeline_run.id,
                 )
 
-            return asyncio.create_task(execute_and_run_tests())
+            return asyncio.create_task(execute_block())
 
         while not pipeline_run.all_blocks_completed(allow_blocks_to_fail):
             executable_block_runs = pipeline_run.executable_block_runs(

@@ -658,6 +658,9 @@ class PipelineScheduler:
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.build_tags(),
         )
+        if PipelineType.STREAMING != self.pipeline.type:
+            # Reset crashed block runs to INITIAL status
+            self.__fetch_crashed_block_runs()
         job_manager.add_job(
             JobType.PIPELINE_RUN,
             self.pipeline_run.id,
