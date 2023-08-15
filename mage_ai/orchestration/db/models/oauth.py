@@ -164,30 +164,43 @@ class Role(BaseModel):
     ):
         if entity is None:
             entity = Entity.GLOBAL
-        Permission.create_default_permissions(entity=entity, entity_id=entity_id)
-        mapping = {
-            self.DefaultRole.OWNER: Permission.Access.OWNER,
-            self.DefaultRole.ADMIN: Permission.Access.ADMIN,
-            self.DefaultRole.EDITOR: Permission.Access.EDITOR,
-            self.DefaultRole.VIEWER: Permission.Access.VIEWER,
-        }
-        for name, access in mapping.items():
-            role_name = name
-            if prefix is not None:
-                role_name = f'{prefix}_{name}'
-            role = self.query.filter(self.name == role_name).first()
-            if not role:
-                self.create(
-                    name=role_name,
-                    permissions=[
-                        Permission.query.filter(
-                            Permission.entity == entity,
-                            Permission.entity_id == entity_id,
-                            Permission.access == access,
-                        ).first()
-                    ],
-                    commit=False,
-                )
+        permissions = Permission.create_default_permissions(entity=entity, entity_id=entity_id)
+        if permissions:
+            mapping = {
+                self.DefaultRole.OWNER: Permission.Access.OWNER,
+                self.DefaultRole.ADMIN: Permission.Access.ADMIN,
+                self.DefaultRole.EDITOR: Permission.Access.EDITOR,
+                self.DefaultRole.VIEWER: Permission.Access.VIEWER,
+            }
+            for name, access in mapping.items():
+                role_name = name
+                if prefix is not None:
+                    role_name = f'{prefix}_{name}'
+                role = self.query.filter(self.name == role_name).first()
+                if not role:
+                    self.create(
+                        name=role_name,
+                        permissions=[
+                            Permission.query.filter(
+                                Permission.entity == entity,
+                                Permission.entity_id == entity_id,
+                                Permission.access == access,
+                            ).first()
+                        ],
+                        commit=False,
+                    )
+                else:
+                    role.update(
+                        permissions=role.permissions + [
+                            Permission.query.filter(
+                                Permission.entity == entity,
+                                Permission.entity_id == entity_id,
+                                Permission.access == access,
+                            ).first()
+                        ],
+                        commit=False,
+                    )
+
         db_connection.session.commit()
 
     @classmethod

@@ -22,6 +22,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
+    get_project_uuid,
     get_variables_dir,
     init_project_uuid,
     init_repo,
@@ -29,6 +30,7 @@ from mage_ai.data_preparation.repo_manager import (
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
@@ -275,6 +277,7 @@ async def main(
     host: Union[str, None] = None,
     port: Union[str, None] = None,
     project: Union[str, None] = None,
+    project_type: ProjectType = ProjectType.STANDALONE,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
@@ -344,7 +347,14 @@ async def main(
         sleep(5)
 
         # Create new roles on existing users. This should only need to be run once.
-        Role.create_default_roles()
+        if project_type == ProjectType.SUB:
+            Role.create_default_roles(
+                entity=Entity.PROJECT,
+                entity_id=get_project_uuid(),
+                prefix=get_repo_name(),
+            )
+        else:
+            Role.create_default_roles()
 
         # Fetch legacy owner user to check if we need to batch update the users with new roles.
         legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
@@ -481,6 +491,7 @@ def start_server(
                     host=host,
                     port=port,
                     project=project,
+                    project_type=project_type,
                 )
             )
 
