@@ -35,6 +35,7 @@ class FileFormat(str, Enum):
     JSON = 'json'
     PARQUET = 'parquet'
     HDF5 = 'hdf5'
+    XML = 'xml'
 
 
 class ExportWritePolicy(str, Enum):
@@ -137,6 +138,8 @@ class BaseFile(BaseIO):
             return pd.read_parquet
         elif format == FileFormat.HDF5:
             return pd.read_hdf
+        elif format == FileFormat.XML:
+            return pd.read_xml
         else:
             raise ValueError(f'Invalid format \'{format}\' specified.')
 
@@ -226,6 +229,8 @@ class BaseFile(BaseIO):
             return df.to_json
         elif format == FileFormat.HDF5:
             return df.to_hdf
+        elif format == FileFormat.XML:
+            return df.to_xml
         return df.to_parquet
 
     def __del__(self):
