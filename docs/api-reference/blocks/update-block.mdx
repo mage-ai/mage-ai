@@ -4,6 +4,13 @@ api: "PUT /api/pipelines/:pipeline_uuid/blocks/:block_uuid"
 ---
 `PUT /api/pipelines/:pipeline_uuid/blocks/:block_uuid`
 
+<ParamField query="name" type="string" required>
+  Human readable block name. This is used to generate the UUID, e.g. `restless dust`. Names will be slugified to a safe-uuid.
+</ParamField>
+<ParamField query="type" type="string" required>
+  Type of block:
+  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
+</ParamField>
 <ParamField query="bookmark_values" type="[string]">
   Data integration bookmark values as a list of strings.
 </ParamField>
@@ -62,9 +69,7 @@ api: "PUT /api/pipelines/:pipeline_uuid/blocks/:block_uuid"
   The block language:
   `python`, `sql`, `r`, `yaml`, `markdown`
 </ParamField>
-<ParamField query="name" type="string" required>
-  Human readable block name. This is used to generate the UUID, e.g. `restless dust`. Names will be slugified to a safe-uuid.
-</ParamField>
+
 <ParamField query="pipelines" type="[string]">
   Array of strings containing the pipeline uuids for which the block is a member.
 </ParamField>
@@ -73,10 +78,6 @@ api: "PUT /api/pipelines/:pipeline_uuid/blocks/:block_uuid"
 </ParamField>
 <ParamField query="tap_stream_id" type="string">
   The block tap stream ID for data integration pipelines.
-</ParamField>
-<ParamField query="type" type="string" required>
-  Type of block:
-  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
 </ParamField>
 <ParamField query="upstream_blocks" type="[string]">
   An array of strings representing the uuids of upstream blocks (the blocks on which the new block depends). For example, `["a", "b"]` will create a block that depends on blocks `a` and `b`.

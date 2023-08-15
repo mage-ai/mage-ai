@@ -6,6 +6,13 @@ api: "POST /api/pipelines/:pipeline_uuid/blocks"
 
 Create a new block in one or more pipelines.
 
+<ParamField query="name" type="string" required>
+  Human readable block name. This is used to generate the UUID, e.g. `restless dust`. Names will be slugified to a safe-uuid.
+</ParamField>
+<ParamField query="type" type="string" required>
+  Type of block:
+  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
+</ParamField>
 <ParamField query="color" type="string">
   Block color displayed by the frontend.
 </ParamField>
@@ -50,18 +57,12 @@ Create a new block in one or more pipelines.
   The block language:
   `python`, `sql`, `r`, `yaml`, `markdown`
 </ParamField>
-<ParamField query="name" type="string" required>
-  Human readable block name. This is used to generate the UUID, e.g. `restless dust`. Names will be slugified to a safe-uuid.
-</ParamField>
+
 <ParamField query="pipelines" type="[string]">
   Array of strings containing the pipeline uuids for which the block is a member.
 </ParamField>
 <ParamField query="priority" type="integer">
   The 0-indexed position of the block in the pipeline, e.g. 0 is the first block location.
-</ParamField>
-<ParamField query="type" type="string" required>
-  Type of block:
-  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
 </ParamField>
 <ParamField query="upstream_blocks" type="[string]">
   An array of strings representing the uuids of upstream blocks (the blocks on which the new block depends). For example, `["a", "b"]` will create a block that depends on blocks `a` and `b`.

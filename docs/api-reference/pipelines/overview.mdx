@@ -107,7 +107,9 @@ block dependencies."
 </ResponseField>
 
 <ResponseField name="type" type="string" required>
+  The type of the pipeline:
   `databricks`, `integration`, `pyspark`, `python`, `streaming`
+  Note that `python` is a standard (batch) pipeline with a python backend, while `pyspark` is a batch pipeline with a spark backend.
 </ResponseField>
 
 <ResponseField name="uuid" type="string" required>

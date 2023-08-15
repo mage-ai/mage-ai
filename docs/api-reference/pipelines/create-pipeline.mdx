@@ -4,6 +4,28 @@ api: "POST /api/pipelines"
 ---
 `POST /api/pipelines`
 
+<ParamField query="name" type="string" required>
+  Human readable name of the pipeline.
+</ParamField>
+
+<ResponseField name="type" type="string" required>
+  The type of the pipeline:
+  `databricks`, `integration`, `pyspark`, `python`, `streaming`
+  Note that `python` is a standard (batch) pipeline with a python backend, while `pyspark` is a batch pipeline with a spark backend.
+</ResponseField>
+
+<ParamField query="clone_pipeline_uuid" type="string">
+  If supplied, the uuid of a pipeline to clone.
+</ParamField>
+
+<ResponseField name="blocks" type="array of objects">
+  Array of block objects. See the [blocks](/api-reference/blocks/overview) section for more details.
+</ResponseField>
+
+<ParamField query="extensions" type="array of objects">
+  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
+</ParamField>
+
 <ParamField query="callbacks" type="array of objects">
   Array of [callback](/development/blocks/callbacks) block objects.  Same shape as `blocks`.
 </ParamField>
@@ -12,53 +34,21 @@ api: "POST /api/pipelines"
   Array of [conditional](/development/blocks/conditionals/) block objects.  Same shape as `blocks`.
 </ParamField>
 
-<ParamField query="name" type="string" required>
-  Human readable name of block.
-</ParamField>
+<RequestExample>
 
-<ParamField query="type" type="string" required>
-  Type of block:
-  `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
-</ParamField>
-
-<ParamField query="clone_pipeline_uuid" type="string">
-  If supplied, the uuid of a pipeline to clone.
-</ParamField>
-
-<ParamField query="extensions" type="array of objects">
-  Array of [extension](/design/blocks/extension) block objects. Same shape as `blocks`.
-</ParamField>
-
-<CodeGroup>
-  ```curl cURL
+```bash Request
   curl --request POST 
   -H 'Content-Type: application/json' 
   -H 'Cookie: oauth_token=some_really_long_string'
   -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
   -d '{"pipeline": {"name": "arwen-starlight", "type": "python"}}' 
   --url http://localhost:6789/api/pipelines
-  ```
-  ```python Python
-  import requests
+```
 
-  headers = {
-    "Content-Type": "application/json",
-    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
-    "Cookie": "oauth_token=some_really_long_string"
-  }
+</RequestExample>
+<ResponseExample>
 
-  json_data = {
-    'pipeline': {
-      "name": "arwen-starlight",
-      "type": 'python'
-      }
-  }
-  
-  r = requests.post('http://localhost:6789/api/pipelines', headers=headers, json=json_data)
-  ```
-</CodeGroup>
-
-```json
+```json Response
 {
   "pipeline": {
     "data_integration": null,
@@ -79,3 +69,5 @@ api: "POST /api/pipelines"
   }
 }
 ```
+
+</ResponseExample>
