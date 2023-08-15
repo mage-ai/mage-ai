@@ -83,7 +83,7 @@ class ExecutorFactory:
             )
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
-            return PipelineExecutor(pipeline)
+            return PipelineExecutor(pipeline, execution_partition=execution_partition)
 
     @classmethod
     def get_block_executor(
