@@ -20,11 +20,11 @@ class K8sResourceConfig(BaseConfig):
 class K8sExecutorConfig(BaseConfig):
     container_config: Dict = None
     job_name_prefix: str = None
+    namespace: str = DEFAULT_NAMESPACE
     resource_limits: Dict = None
     resource_requests: Dict = None
     service_account_name: str = DEFAULT_SERVICE_ACCOUNT_NAME
-    namespace: str = DEFAULT_NAMESPACE
-
+    
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
         executor_config = super().load(config_path=config_path, config=config)
