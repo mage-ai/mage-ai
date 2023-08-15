@@ -2,7 +2,7 @@
 title: "Read pipelines"
 api: "GET /api/pipelines"
 ---
-To retrieve all pipelines:
+To retrieve all pipelines: 
 
 `GET /api/pipelines`
 
@@ -25,8 +25,7 @@ To retrieve all pipelines:
   "Cookie": "oauth_token=some_really_long_string"
   }
   
-  r = requests.get('<http://localhost:6789/api/pipelines>', headers=headers)
-
+  r = requests.get('http://localhost:6789/api/pipelines', headers=headers)
   ```
 </CodeGroup>
 
@@ -78,8 +77,7 @@ To fetch a single pipeline:
   "Cookie": "oauth_token=some_really_long_string"
   }
   
-  r = requests.get('<http://localhost:6789/api/pipelines/arwen_starlight>', headers=headers)
-
+  r = requests.get('http://localhost:6789/api/pipelines/arwen_starlight', headers=headers)
   ```
 </CodeGroup>
 
