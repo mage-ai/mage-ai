@@ -44,9 +44,13 @@ description: "The Blocks API is used to create, update, and delete blocks object
     The block UUIDs that depend on this block.
   </ResponseField>
   <ResponseField name="executor_config" type="object">
+    Used when configuring a Kubernetes executor. See the [Kubernetes config](/production/configuring-production-settings/compute-resource#2-set-executor-type-and-customize-the-compute-resource-of-the-mage-executor) page for more details
   </ResponseField>
   <ResponseField name="executor_type" type="string">
+    The type of executor to use for the block:
     `ecs`, `gcp_cloud_run`, `azure_container_instance`, `k8s`, `local_python`, `pyspark`
+
+    See the [Kubernetes config](/production/configuring-production-settings/compute-resource#2-set-executor-type-and-customize-the-compute-resource-of-the-mage-executor) page for more details.
   </ResponseField>
   <ResponseField name="has_callback" type="boolean">
   </ResponseField>
