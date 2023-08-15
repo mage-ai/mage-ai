@@ -1,0 +1,116 @@
+---
+title: "Adapt an existing source"
+sidebarTitle: "Adapt existing source"
+description: "Mage builds data integrations from Singer taps, so if there's a source you want to use that isn't supported yet, you can adapt it yourself!"
+---
+
+## Getting started
+
+Mage sources live in the `/mage_integrations/mage_integrations` folder. To add a new source, you'll need to create a new folder in this directory.
+
+The folder name should be the name of the tap, and the folder should contain a `tap.py` file. For existing sources, that starts with pulling in the GitHub repo for the tap. For example, for the [GitHub tap](https://github.com/MeltanoLabs/tap-github), we would:
+
+```bash
+cd mage_integrations/mage_integrations
+git clone https://github.com/MeltanoLabs/tap-github.git sources/github
+```
+
+## Configuring the source
+
+We now have a folder with our tap and a bunch of miscellaneous files. Our first step is to clear out everything we _don't_ need. We can delete all files/folders other than `tap_your_source` and `tests`, but hold onto anything that looks like a `config.json` file or a sample config.
+
+Next, we need to create a configuration file and an init file:
+
+```bash
+mkdir sources/github/templates \
+&& touch sources/github/templates/config.json \
+&& touch sources/github/__init__.py
+```
+
+We can now populate our `config.json` file with the sample from the tap. In the GitHub example, this is `config.sample.json`. It looks like this:
+
+```json
+{
+    "access_token": "abcdefghijklmnopqrstuvwxyz1234567890ABCD",
+    "repository": "singer-io/target-stitch",
+    "start_date": "2021-01-01T00:00:00Z",
+    "request_timeout": 300,
+    "base_url": "https://api.github.com"
+}
+```
+
+These are the parameters we'll need to configure our tap.
+
+Now, we need to override some methods in the class to make it work with Mage. This is where things get fun! Copy and paste the following template into `your_tap/__init__.py`:
+
+```python
+from typing import List
+
+from singer import catalog as catalog_singer
+
+from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.catalog import Catalog
+from mage_integrations.utils.dictionary import ignore_keys
+
+
+class YourSource(Source):
+    def discover(self, streams: List[str] = None) -> Catalog:
+        pass
+
+    def sync(self, catalog: Catalog) -> None:
+        pass
+
+
+if __name__ == "__main__":
+    main(YourSource, schemas_folder="tap_your_tap/schemas")
+```
+
+Replace YourSource with the name of your source, e.g. `Github` for Github, and `tap_your_tap` with the name of your tap, e.g. `tap_github`.
+
+Our goal is to overwrite the `discover` and `sync` methods to make them work with Mage. Discover is likely in `tap_your_tap/discover.py` and sync is likely in `tap_your_tap/sync.py`. It requires a bit of nuance, but our job is to look through the existing Singer tap, understand how the `sync` and `discover` methods were implemented, then pull them into the Mage `__init__.py`. This is necessarily different for every tap, since each project is entirely independent.
+
+Don't forget to use absolute imports for these files. For GitHub, our completed file looks like [this](TODO). [HubSpot](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/hubspot) is another good example of a completed tap.
+
+## Add in logging
+
+To add verbose logging to Mage, add a logger argument each tap file, `tap_github/sync.py`, `tap_github/discover.py`:
+
+```python
+def discover(client, logger=None):
+    """
+    Run the discovery mode, prepare the catalog file and return catalog.
+    """
+    mage_logger = logger or LOGGER
+```
+
+Then replace usage of `LOGGER` with `mage_logger`.
+
+```python
+
+for stream_name, schema_dict in schemas.items():
+        try:
+            schema = Schema.from_dict(schema_dict)
+            mdata = field_metadata[stream_name]
+        except Exception as err:
+            mage_logger.error(err)
+            mage_logger.error('stream_name: %s', stream_name)
+            mage_logger.error('type schema_dict: %s', type(schema_dict))
+            raise err
+```
+
+This will enable Mage to better log Singer taps! 🥳
+
+## Test your source
+
+There are a few ways to test a source— the first is following the directions [here](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/README.md#testing-sync-locally). This is a lightweight method that doesn't require a development instance. 
+
+Otherwise, use the [set up section](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md) to build a dev environment. The extended directions for configuring a [development environment](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md) might be of use. Once complete, you can navigate to `localhost:3000` to configure and run your tap.
+
+## Populate README.md
+
+Finally, populate a README file in the source folder. This should include:
+
+* The name/logo of the tap.
+* A configuration section.
+* The method for accessing/creating an API key to use with the folder.
+* See [HubSpot](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/hubspot) or [GitHub](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/github) for examples.
