@@ -24,7 +24,7 @@ class K8sExecutorConfig(BaseConfig):
     resource_limits: Dict = None
     resource_requests: Dict = None
     service_account_name: str = DEFAULT_SERVICE_ACCOUNT_NAME
-    
+
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
         executor_config = super().load(config_path=config_path, config=config)
