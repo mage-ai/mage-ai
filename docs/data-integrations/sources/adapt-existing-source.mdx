@@ -67,7 +67,7 @@ We can now populate our `config.json` file with the sample from the tap. In the 
 }
 ```
 
-After cleanup, our tree looks like
+These are the parameters we'll need to configure our tap. After cleanup, our tree looks like:
 
 ```
 .
@@ -88,8 +88,6 @@ After cleanup, our tree looks like
 └── templates
     └── config.json
 ```
-
-These are the parameters we'll need to configure our tap.
 
 Now, we need to override some methods in the class to make it work with Mage. This is where things get fun! Copy and paste the following template into `your_tap/__init__.py`:
 
@@ -117,11 +115,11 @@ if __name__ == "__main__":
 
 Replace YourSource with the name of your source, e.g. `Github` for Github, and `tap_your_tap` with the name of your tap, e.g. `tap_github`.
 
-Our goal is to overwrite the `discover` and `sync` methods to make them work with Mage. Discover is likely in `tap_your_tap/discover.py` and sync is likely in `tap_your_tap/sync.py`. It requires a bit of nuance, but our job is to look through the existing Singer tap, understand how the `sync` and `discover` methods were implemented, then pull them into the Mage `__init__.py`. This is necessarily different for every tap, since each project is entirely independent.
+Our goal is to overwrite the `discover` and `sync` methods to make them work with Mage. Discover is likely in `tap_your_tap/discover.py` and sync is likely in `tap_your_tap/sync.py`. It requires a bit of nuance, but our job is to look through the existing Singer tap, understand how the `sync` and `discover` methods were implemented, then execute them in Mage `__init__.py` under the corresponding method. This is necessarily different for every tap, since each project is entirely independent.
 
 Don't forget to use absolute imports for these files. For GitHub, our completed file looks like [this](TODO). [HubSpot](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/hubspot) is another good example of a completed tap.
 
-## Add in logging
+## Add-in logging
 
 To add verbose logging to Mage, add a logger argument each tap file, `tap_github/sync.py`, `tap_github/discover.py`:
 
@@ -142,6 +140,7 @@ for stream_name, schema_dict in schemas.items():
             schema = Schema.from_dict(schema_dict)
             mdata = field_metadata[stream_name]
         except Exception as err:
+            # These were LOGGER previously
             mage_logger.error(err)
             mage_logger.error('stream_name: %s', stream_name)
             mage_logger.error('type schema_dict: %s', type(schema_dict))
