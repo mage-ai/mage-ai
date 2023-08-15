@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -28,9 +29,11 @@ import {
   unixTimestampFromDate,
   utcDateFromDateAndTime,
 } from '@utils/date';
+import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 
 enum RangeQueryEnum {
@@ -42,6 +45,7 @@ type LogToolbarProps = {
   allPastLogsLoaded: boolean;
   loadNewerLogInterval: () => void;
   loadPastLogInterval: () => void;
+  saveScrollPosition?: boolean;
   selectedRange: LogRangeEnum;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
@@ -62,6 +66,7 @@ function LogToolbar({
   allPastLogsLoaded,
   loadNewerLogInterval,
   loadPastLogInterval,
+  saveScrollPosition,
   selectedRange,
   setSelectedRange,
 }: LogToolbarProps) {
@@ -74,6 +79,8 @@ function LogToolbar({
     minute: padTime(String(new Date().getUTCMinutes())),
   });
 
+  const router = useRouter();
+  const { pipeline: pipelineUUID }: any = router.query;
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
   useEffect(() => {
@@ -114,10 +121,18 @@ function LogToolbar({
         });
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     q,
     qPrev,
   ]);
+
+  const saveLogScrollPosition = useCallback(() => {
+    if (saveScrollPosition) {
+      const localStorageKey = getLogScrollPositionLocalStorageKey(pipelineUUID);
+      set(localStorageKey, 0);
+    }
+  }, [pipelineUUID, saveScrollPosition]);
 
   return (
     <Spacing py={1}>
@@ -125,7 +140,10 @@ function LogToolbar({
         <KeyboardShortcutButton
           {...SHARED_BUTTON_PROPS}
           disabled={allPastLogsLoaded}
-          onClick={loadPastLogInterval}
+          onClick={() => {
+            saveLogScrollPosition();
+            loadPastLogInterval();
+          }}
           uuid="logs/load_older_logs"
         >
           {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
@@ -136,7 +154,10 @@ function LogToolbar({
         <KeyboardShortcutButton
           {...SHARED_BUTTON_PROPS}
           disabled={q?._offset <= 0}
-          onClick={loadNewerLogInterval}
+          onClick={() => {
+            saveLogScrollPosition();
+            loadNewerLogInterval();
+          }}
           uuid="logs/load_newer_logs"
         >
           Load newer logs
@@ -150,6 +171,7 @@ function LogToolbar({
           onChange={e => {
             e.preventDefault();
             const range = e.target.value;
+            saveLogScrollPosition();
             setSelectedRange(range);
             if (SPECIFIC_LOG_RANGES.includes(range)) {
               const startTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[range]);
@@ -236,6 +258,7 @@ function LogToolbar({
             <Button
               borderRadius={UNIT / 2}
               onClick={() => {
+                saveLogScrollPosition();
                 const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);
                 const end = isoDateFormatFromDateParts(endDate, endTime.hour, endTime.minute);
                 goToWithQuery({
