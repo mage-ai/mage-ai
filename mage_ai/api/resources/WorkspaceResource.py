@@ -211,7 +211,7 @@ class WorkspaceResource(GenericResource):
             if workspace_file and os.path.exists(workspace_file):
                 os.remove(workspace_file)
             error.update(message=str(e))
-            raise
+            raise ApiError(error)
 
         if project_type == ProjectType.MAIN and \
                 project_uuid is not None and \

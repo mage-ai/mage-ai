@@ -54,14 +54,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        # try:
-        #     config.load_incluster_config()
-        #     return True
-        # except Exception:
-        #     pass
+        try:
+            config.load_incluster_config()
+            return True
+        except Exception:
+            pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/test_main_project/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -144,12 +144,6 @@ class WorkloadManager:
         )
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
-
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
-            access_mode=storage_access_mode,
-        )
 
         ingress_name = kwargs.get('ingress_name')
 
