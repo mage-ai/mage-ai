@@ -6,7 +6,9 @@ block dependencies."
 
 ## Pipeline object
 
-```json
+<ResponseExample>
+
+```json Response
 {
   "blocks": [
     {
@@ -52,79 +54,10 @@ block dependencies."
 }
 ```
 
+</ResponseExample>
+
 <ResponseField name="blocks" type="array of objects">
-  Array of block objects.
-
-  <Expandable title="properties">
-  <ResponseField name="all_upstream_blocks_executed" type="boolean">
-    Whether or not all upstream blocks have been successfully executed.
-  </ResponseField>
-  <ResponseField name="color" type="string">
-    The color of the block in the notebook UI.
-  </ResponseField>
-  <ResponseField name="configuration" type="object">
-    Miscellaneous configuration settings for the block.
-
-    <Expandable title="properties">
-    <ResponseField name="data_provider" type="string">
-      Database or data warehouse for the SQL block to connect to.
-    </ResponseField>
-    <ResponseField name="data_provider_database" type="string">
-      Database name to use when saving the output of the SQL block.
-    </ResponseField>
-    <ResponseField name="data_provider_profile" type="string">
-      Profile target for the dbt block.
-    </ResponseField>
-    <ResponseField name="data_provider_schema" type="string">
-      Schema name to use when saving the output of the SQL block.
-    </ResponseField>
-    <ResponseField name="data_provider_table" type="string">
-      Table name to use when saving the output of the SQL block.
-    </ResponseField>
-    <ResponseField name="export_write_policy" type="string">
-      Whether to `replace` the existing table of the SQL block output, `append`, or
-      raise an error and `fail`.
-    </ResponseField>
-    <ResponseField name="use_raw_sql" type="string">
-      Toggle writing raw SQL in the block. Read more [here](/guides/sql-blocks#using-raw-sql).
-    </ResponseField>
-    </Expandable>
-  </ResponseField>
-  <ResponseField name="content" type="string">
-    Block file contents.
-  </ResponseField>
-  <ResponseField name="downstream_blocks" type="array of strings">
-    The block UUIDs that depend on this block.
-  </ResponseField>
-  <ResponseField name="executor_config" type="object">
-  </ResponseField>
-  <ResponseField name="executor_type" type="string">
-    `ecs`, `gcp_cloud_run`, `azure_container_instance`, `k8s`, `local_python`, `pyspark`
-  </ResponseField>
-  <ResponseField name="has_callback" type="boolean">
-  </ResponseField>
-  <ResponseField name="language" type="string">
-    `python`, `r`, `sql`, `yaml`
-  </ResponseField>
-  <ResponseField name="metadata" type="object">
-  </ResponseField>
-  <ResponseField name="name" type="string" required>
-    Human readable name of block.
-  </ResponseField>
-  <ResponseField name="status" type="string">
-    Status of block: `executed`, `failed`, `not_executed`, `updated`
-  </ResponseField>
-  <ResponseField name="type" type="string" required>
-    Type of block:
-    `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
-  </ResponseField>
-  <ResponseField name="upstream_blocks" type="string">
-    The block UUIDs that this block depends on.
-  </ResponseField>
-  <ResponseField name="uuid" type="string" required>
-    Unique identifier for the block.
-  </ResponseField>
-  </Expandable>
+  Array of block objects. See the [blocks](/api-reference/blocks/overview) section for more details.
 </ResponseField>
 
 <ResponseField name="description" type="string">
@@ -194,59 +127,3 @@ block dependencies."
 <ResponseField name="widgets" type="array of objects">
   Array of widget block objects. Same shape as `blocks`.
 </ResponseField>
-
-## Read all pipelines
-
-`GET /api/pipelines`
-
-<ParamField query="include_schedules" type="integer">
-  If `1`, each pipeline object in the response will include the triggers associated to it.
-</ParamField>
-
-<CodeGroup>
-  ```curl cURL
-  curl --request GET \
-  --url 'http://localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
-  --header 'OAUTH-TOKEN=some_really_long_string'
-  ```
-  ```python Python
-  import requests
-  headers = {
-    "Content-Type": "application/json",
-    "X-API-KEY": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
-    "Cookie": "oauth_token=some_really_long_string"
-  }
-  
-  r = requests.get('http://localhost:6789/api/pipelines', headers=headers)
-  ```
-</CodeGroup>
-
-```json
-{
-  "pipelines": [
-  {
-    "blocks": [],
-    "data_integration": null,
-    "description": null,
-    "name": "example_pipeline",
-    "schedules": [],
-    "type": "python",
-    "updated_at": null,
-    "uuid": "example_pipeline",
-    "widgets": []
-  },
-  {
-    "blocks": [],
-    "data_integration": null,
-    "description": null,
-    "name": "etl_pipeline",
-    "schedules": [],
-    "type": "python",
-    "updated_at": null,
-    "uuid": "etl_pipeline",
-    "widgets": []
-  }
-  ],
-  "metadata": {}
-}
-```
