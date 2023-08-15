@@ -18,6 +18,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
+import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
@@ -97,6 +98,7 @@ export type SidekickProps = {
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
+  onUpdateFileSuccess?: (fileContent: FileType) => void;
   pipeline: PipelineType;
   pipelineMessages: KernelOutputType[];
   runningBlocks: BlockType[];
@@ -154,6 +156,7 @@ function Sidekick({
   onChangeChartBlock,
   onChangeCodeBlock,
   onSelectBlockFile,
+  onUpdateFileSuccess,
   pipeline,
   pipelineMessages,
   runBlock,
@@ -251,6 +254,7 @@ function Sidekick({
 
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
+      onActionCallback={onUpdateFileSuccess}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       setErrors={setErrors}
@@ -258,6 +262,7 @@ function Sidekick({
     />
   ), [
     afterWidth,
+    onUpdateFileSuccess,
     selectedBlock,
     selectedFilePath,
     setErrors,
