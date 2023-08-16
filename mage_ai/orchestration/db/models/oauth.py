@@ -21,6 +21,7 @@ from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
 
 
 class User(BaseModel):
@@ -198,16 +199,12 @@ class Role(BaseModel):
                     commit=False,
                 )
             elif permissions:
-                role.update(
-                    permissions=role.permissions + [
-                        Permission.query.filter(
-                            Permission.entity == entity,
-                            Permission.entity_id == entity_id,
-                            Permission.access == access,
-                        ).first()
-                    ],
-                    commit=False,
-                )
+                permission = find(lambda p, a=access: p.access == a.value, permissions)
+                if permission:
+                    role.update(
+                        permissions=role.permissions + [permission],
+                        commit=False,
+                    )
 
         db_connection.session.commit()
 
