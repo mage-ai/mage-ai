@@ -228,6 +228,8 @@ class BlockExecutor:
                     delay=retry_config.delay,
                     max_delay=retry_config.max_delay,
                     exponential_backoff=retry_config.exponential_backoff,
+                    logger=self.logger,
+                    logging_tags=tags,
                 )
                 def __execute_with_retry():
                     return self._execute(
@@ -251,12 +253,12 @@ class BlockExecutor:
 
                 result = __execute_with_retry()
             except Exception as error:
-                self.logger.exception(
-                    f'Failed to execute block {self.block.uuid}',
-                    **merge_dict(tags, dict(
-                        error=error,
-                    )),
-                )
+                # self.logger.exception(
+                #     f'Failed to execute block {self.block.uuid}',
+                #     **merge_dict(tags, dict(
+                #         error=error,
+                #     )),
+                # )
                 if on_failure is not None:
                     on_failure(
                         self.block_uuid,
