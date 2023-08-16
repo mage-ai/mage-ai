@@ -110,6 +110,7 @@ export default interface PipelineRunType {
   backfill_id?: number;
   block_runs?: BlockRunType[];
   block_runs_count?: number;
+  completed_block_runs_count?: number;
   completed_at?: string;
   created_at?: string;
   event_variables?: Obj;

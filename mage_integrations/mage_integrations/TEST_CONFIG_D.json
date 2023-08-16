@@ -1,0 +1,9 @@
+{
+  "database": "postgres",
+  "host": "host.docker.internal",
+  "password": "postgres",
+  "port": 5432,
+  "schema": "postgres",
+  "table": "postgres",
+  "username": "postgres"
+}

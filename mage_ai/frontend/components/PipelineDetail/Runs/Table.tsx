@@ -21,7 +21,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
+import { Check, ChevronRight, Logs, PlayButtonFilled, Subitem } from '@oracle/icons';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -30,6 +30,11 @@ import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
+
+const SHARED_DATE_FONT_PROPS = {
+  monospace: true,
+  small: true,
+};
 
 function RetryButton({
   cancelingRunId,
@@ -276,16 +281,13 @@ function PipelineRunsTable({
     },
   );
 
-  const columnFlex = [null, 1, 2];
+  const columnFlex = [null, 1];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
     },
     {
-      uuid: 'Pipeline UUID',
-    },
-    {
-      uuid: 'Date',
+      uuid: 'Pipeline',
     },
   ];
 
@@ -296,13 +298,16 @@ function PipelineRunsTable({
     });
   }
 
-  columnFlex.push(...[1, null, null]);
+  columnFlex.push(...[1, 1, null, null]);
   columns.push(...[
     {
-      uuid: 'Block runs',
+      uuid: 'Execution date',
     },
     {
-      uuid: 'Completed',
+      uuid: 'Completed at',
+    },
+    {
+      uuid: 'Block runs',
     },
     {
       uuid: 'Logs',
@@ -368,6 +373,7 @@ function PipelineRunsTable({
             rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
                 block_runs_count: blockRunsCount,
+                completed_block_runs_count: completedBlockRunsCount,
                 completed_at: completedAt,
                 execution_date: executionDate,
                 id,
@@ -377,6 +383,8 @@ function PipelineRunsTable({
                 status,
               } = pipelineRun;
               const disabled = !id && !status;
+              const blockRunCountTooltipMessage =
+                `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
 
               const isRetry =
                 index > 0
@@ -403,9 +411,6 @@ function PipelineRunsTable({
                   <Text default key="row_pipeline_uuid" monospace muted>
                     {pipelineUUID}
                   </Text>,
-                  <Text default key="row_date_retry" monospace muted>
-                    -
-                  </Text>,
                 ];
 
                 if (!hideTriggerColumn) {
@@ -417,19 +422,30 @@ function PipelineRunsTable({
                 }
 
                 arr.push(...[
+                  <Text default key="row_date_retry" monospace muted>
+                    -
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    key="row_completed"
+                    muted
+                  >
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
                     key="row_block_runs"
                     passHref
                   >
-                    <Link bold muted>
-                      {`See block runs (${blockRunsCount})`}
+                    <Link
+                      bold
+                      muted
+                      title={blockRunCountTooltipMessage}
+                    >
+                      {`${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                  <Text key="row_completed" monospace muted>
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
-                  </Text>,
                   <Button
                     default
                     iconOnly
@@ -439,7 +455,7 @@ function PipelineRunsTable({
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <TodoList default size={2 * UNIT} />
+                    <Logs default size={2 * UNIT} />
                   </Button>,
                 ]);
               } else {
@@ -460,10 +476,7 @@ function PipelineRunsTable({
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
                   </Text>,
-                  <Text default key="row_date" monospace>
-                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
-                  </Text>,
-                ]
+                ];
 
                 if (!hideTriggerColumn) {
                   arr.push(
@@ -473,7 +486,7 @@ function PipelineRunsTable({
                       key="row_trigger"
                       passHref
                     >
-                      <Link bold sameColorAsText>
+                      <Link bold sky>
                         {pipelineScheduleName}
                       </Link>
                     </NextLink>,
@@ -481,6 +494,20 @@ function PipelineRunsTable({
                 }
 
                 arr.push(...[
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_date"
+                  >
+                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_completed"
+                  >
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -490,14 +517,12 @@ function PipelineRunsTable({
                     <Link
                       bold
                       disabled={disabled}
-                      sameColorAsText
+                      sky
+                      title={blockRunCountTooltipMessage}
                     >
-                      {disabled ? '' : `See block runs (${blockRunsCount})`}
+                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                  <Text default key="row_completed" monospace>
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
-                  </Text>,
                   <Button
                     default
                     disabled={disabled}
@@ -508,7 +533,7 @@ function PipelineRunsTable({
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <TodoList default size={2 * UNIT} />
+                    <Logs default size={2 * UNIT} />
                   </Button>,
                 ]);
               }

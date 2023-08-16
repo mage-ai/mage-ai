@@ -60,12 +60,15 @@ class PipelineRunResource(DatabaseResource):
                 else:
                     order_by.append((parts[0], 'asc'))
 
+        repo_pipeline_schedule_ids = [s.id for s in PipelineSchedule.repo_query]
+
         results = (
-            PipelineRun.
-            query.
-            options(selectinload(PipelineRun.block_runs)).
-            options(selectinload(PipelineRun.pipeline_schedule)).
-            join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
+            PipelineRun
+            .query
+            .filter(PipelineRun.pipeline_schedule_id.in_(repo_pipeline_schedule_ids))
+            .options(selectinload(PipelineRun.block_runs))
+            .options(selectinload(PipelineRun.pipeline_schedule))
+            .join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
         )
 
         if global_data_product_uuid is not None:

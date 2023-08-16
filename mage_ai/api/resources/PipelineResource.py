@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict, List
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -312,17 +313,28 @@ class PipelineResource(BaseResource):
                 schedule.update(status=status)
 
         @safe_db_query
-        def cancel_pipeline_runs(status, pipeline_uuid):
-            pipeline_runs = (
-                PipelineRun.
-                query.
-                filter(PipelineRun.pipeline_uuid == pipeline_uuid).
-                filter(PipelineRun.status.in_([
-                    PipelineRun.PipelineRunStatus.INITIAL,
-                    PipelineRun.PipelineRunStatus.RUNNING,
-                ]))
-            )
-            for pipeline_run in pipeline_runs:
+        def cancel_pipeline_runs(
+            pipeline_uuid: str = None,
+            pipeline_runs: List[Dict] = None,
+        ):
+            if pipeline_runs is not None:
+                pipeline_run_ids = [run.get('id') for run in pipeline_runs]
+                pipeline_runs_to_cancel = (
+                    PipelineRun.
+                    query.
+                    filter(PipelineRun.id.in_(pipeline_run_ids))
+                )
+            else:
+                pipeline_runs_to_cancel = (
+                    PipelineRun.
+                    query.
+                    filter(PipelineRun.pipeline_uuid == pipeline_uuid).
+                    filter(PipelineRun.status.in_([
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]))
+                )
+            for pipeline_run in pipeline_runs_to_cancel:
                 PipelineScheduler(pipeline_run).stop()
 
         def retry_pipeline_runs(pipeline_runs):
@@ -334,15 +346,19 @@ class PipelineResource(BaseResource):
 
         def _update_callback(resource):
             if status:
+                pipeline_runs = payload.get('pipeline_runs')
                 if status in [
                     ScheduleStatus.ACTIVE.value,
                     ScheduleStatus.INACTIVE.value,
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    cancel_pipeline_runs(status, pipeline_uuid)
-                elif status == 'retry' and payload.get('pipeline_runs'):
-                    retry_pipeline_runs(payload.get('pipeline_runs'))
+                    if pipeline_runs is None:
+                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
+                    else:
+                        cancel_pipeline_runs(pipeline_runs=pipeline_runs)
+                elif status == 'retry' and pipeline_runs:
+                    retry_pipeline_runs(pipeline_runs)
 
         self.on_update_callback = _update_callback
 

@@ -16,7 +16,7 @@ import {
 import {
   ArrowLeft,
   Check,
-  TodoList,
+  Logs,
 } from '@oracle/icons';
 import { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -430,7 +430,7 @@ function SyncRowDetail({
                 pauseEvent(e);
               }}
             >
-              <TodoList default size={2 * UNIT} />
+              <Logs default size={2 * UNIT} />
             </Button>,
           ];
         })}

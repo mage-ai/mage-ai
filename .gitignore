@@ -171,4 +171,3 @@ scratch*
 
 # Playwright test automation
 playwright-report/
-*TEST_*
