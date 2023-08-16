@@ -6,7 +6,6 @@ import typing as t
 from collections import Counter, defaultdict
 
 from singer_sdk import typing as th
-from singer_sdk.exceptions import ConfigValidationError
 from singer_sdk.io_base import SingerMessageType
 from target_salesforce.sinks import SalesforceSink
 
@@ -62,12 +61,6 @@ class TargetSalesforce(Target):
                          or 'test' (sandbox), or Salesforce My domain."
         ),
         th.Property(
-            "is_sandbox",
-            th.BooleanType,
-            description="DEPRECATED: Use domain. is_sandbox-False = 'login',\
-            is_sandbox-True = 'test'",
-        ),
-        th.Property(
             "action",
             th.StringType,
             default="update",
@@ -91,11 +84,6 @@ class TargetSalesforce(Target):
 
         super().__init__(config=config, parse_env_config=parse_env_config,
                          validate_config=validate_config)
-
-        logger.info(f'is_sandbox:{self.config.get("is_sandbox")}')
-        if self.config.get("is_sandbox") is not None:
-            raise ConfigValidationError("is_sandbox has been deprecated, use domain.\
-                                         is_sandbox-False = 'login', is_sandbox-True = 'test'")
 
     @property
     def logger(self):
