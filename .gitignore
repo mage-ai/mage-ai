@@ -171,3 +171,5 @@ scratch*
 
 # Playwright test automation
 playwright-report/
+**TEST_**.json
+package-lock.json

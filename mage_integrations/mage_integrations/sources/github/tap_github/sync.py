@@ -3,6 +3,7 @@ import collections
 import singer
 from singer import bookmarks
 from tap_github.streams import STREAMS
+from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
 STREAM_TO_SYNC_FOR_ORGS = ["teams", "team_members", "team_memberships"]
@@ -173,13 +174,26 @@ def write_schemas(stream_id, catalog, selected_streams):
     Write the schemas for each stream.
     """
     stream_obj = STREAMS[stream_id]()
-
+        
     if stream_id in selected_streams:
         # Get catalog object for particular stream.
         stream = [
             cat for cat in catalog["streams"] if cat["tap_stream_id"] == stream_id
         ][0]
-        singer.write_schema(stream_id, stream["schema"], stream["key_properties"])
+
+        write_schema(
+            stream_name=stream['tap_stream_id'],
+            schema=stream["schema"],
+            key_properties=stream.get('key_properties', ['id']),
+            bookmark_properties=stream.get('bookmark_properties'),
+            disable_column_type_check=stream.get('disable_column_type_check'),
+            partition_keys=stream.get('partition_keys'),
+            replication_method=stream.get('replication_method'),
+            stream_alias=stream.get('stream_alias'),
+            unique_conflict_method=stream.get('unique_conflict_method'),
+            unique_constraints=stream.get('unique_constraints')
+            )
+        # write_schema(stream_id, stream["schema"], stream["key_properties"])
 
     for child in stream_obj.children:
         write_schemas(child, catalog, selected_streams)

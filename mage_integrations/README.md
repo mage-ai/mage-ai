@@ -98,3 +98,17 @@ python3 mage_integrations/sources/freshdesk/__init__.py \
   --state mage_integrations/STATE \
   --debug
 ```
+
+python3 mage_integrations/sources/github/__init__.py \
+  --config mage_integrations/TEST_CONFIG_S.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG_D.json \
+  --state mage_integrations/STATE \
+  --debug
+
+python3 mage_integrations/destinations/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG_D.json \
+  --state mage_integrations/STATE.json \
+  --input_file_path mage_integrations/TEST_OUTPUT \
+  --debug
