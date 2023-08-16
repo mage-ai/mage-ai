@@ -68,10 +68,11 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
-    BASE_PATH,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
+    REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
+    ROUTES_BASE_PATH,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
@@ -257,9 +258,10 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = []
         for route in routes:
             if route[0] == r'/':
-                updated_routes.append((f'/{BASE_PATH}', *route[1:]))
+                updated_routes.append((f'/{ROUTES_BASE_PATH}', *route[1:]))
             else:
-                updated_routes.append((route[0].replace('/', f'/{BASE_PATH}/', 1), *route[1:]))
+                updated_routes.append(
+                    (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
     else:
         updated_routes = routes
 
@@ -281,10 +283,12 @@ async def main(
     # Update base path if environment variable is set
     update_routes = False
     template_dir = None
-    if BASE_PATH:
+    if REQUESTS_BASE_PATH or ROUTES_BASE_PATH:
         try:
-            template_dir = replace_base_path(BASE_PATH)
-            update_routes = True
+            if REQUESTS_BASE_PATH:
+                template_dir = replace_base_path(REQUESTS_BASE_PATH)
+            if ROUTES_BASE_PATH:
+                update_routes = True
         except Exception:
             logger.warning(
                 'Server failed to replace base path with error:\n%s',
@@ -293,8 +297,8 @@ async def main(
             logger.warning('Continuing with default routes...')
 
     app = make_app(
-        update_routes=update_routes,
         template_dir=template_dir,
+        update_routes=update_routes,
     )
 
     port = int(port)
@@ -313,7 +317,7 @@ async def main(
 
     url = f'http://{host or "localhost"}:{port}'
     if update_routes:
-        url = f'{url}/{BASE_PATH}'
+        url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
