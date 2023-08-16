@@ -150,9 +150,12 @@ function Folder({
     );
 
   const uuid = `${level}/${name}`;
-  const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
+  const collapsedInit = (Array.isArray(children) && children?.length > 0)
+    // Top level of project folders is initially uncollapsed, but the nested folders are collapsed.
+    ? get(uuid, level > 1)
+    : false;
   const [collapsed, setCollapsed] = useState<boolean>(typeof uncollapsed === 'undefined'
-    ? get(uuid, false)
+    ? collapsedInit
     : !uncollapsed,
   );
 
