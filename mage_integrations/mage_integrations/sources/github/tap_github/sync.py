@@ -3,6 +3,7 @@ import collections
 import singer
 from singer import bookmarks
 from tap_github.streams import STREAMS
+
 from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
@@ -174,7 +175,7 @@ def write_schemas(stream_id, catalog, selected_streams):
     Write the schemas for each stream.
     """
     stream_obj = STREAMS[stream_id]()
-        
+
     if stream_id in selected_streams:
         # Get catalog object for particular stream.
         stream = [
