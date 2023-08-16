@@ -253,12 +253,12 @@ class BlockExecutor:
 
                 result = __execute_with_retry()
             except Exception as error:
-                # self.logger.exception(
-                #     f'Failed to execute block {self.block.uuid}',
-                #     **merge_dict(tags, dict(
-                #         error=error,
-                #     )),
-                # )
+                self.logger.exception(
+                    f'Failed to execute block {self.block.uuid}',
+                    **merge_dict(tags, dict(
+                        error=error,
+                    )),
+                )
                 if on_failure is not None:
                     on_failure(
                         self.block_uuid,
