@@ -544,6 +544,16 @@
       ]
     },
     {
+      "group": "Blocks",
+      "pages": [
+        "api-reference/blocks/overview",
+        "api-reference/blocks/read-block",
+        "api-reference/blocks/create-block",
+        "api-reference/blocks/update-block",
+        "api-reference/blocks/delete-block"
+      ]
+    },
+    {
       "group": "Logs",
       "pages": [
         "api-reference/logs/overview",
