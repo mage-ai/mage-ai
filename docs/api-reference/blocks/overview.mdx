@@ -65,10 +65,10 @@ description: "The Blocks API is used to create, update, and delete blocks object
   <ResponseField name="status" type="string">
     Status of block: `executed`, `failed`, `not_executed`, `updated`
   </ResponseField>
-  <ResponseField name="type" type="string" required>
+  <ParamField query="type" type="string" required>
     Type of block:
-    `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
-  </ResponseField>
+    `callback`, `chart`, `conditional`, `custom`, `data_exporter`, `data_loader`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`, `sensor`, `transformer`
+  </ParamField>
   <ResponseField name="upstream_blocks" type="string">
     The block UUIDs that this block depends on.
   </ResponseField>
