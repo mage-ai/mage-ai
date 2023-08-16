@@ -329,6 +329,11 @@ function LogsTable({
         }}
         itemSize={UNIT * 3.75}
         onScroll={({ scrollOffset, scrollDirection }) => {
+          /*
+           * Check for "forward" scrollDirection and "0" scrollOffset value, or else
+           * the saved scroll position will be overwritten to 0 when the page refreshes
+           * or upon initially navigating to the logs page.
+           */
           if (saveScrollPosition && !(scrollDirection === 'forward' && scrollOffset === 0)) {
             set(scrollPositionLocalStorageKey, scrollOffset);
           }

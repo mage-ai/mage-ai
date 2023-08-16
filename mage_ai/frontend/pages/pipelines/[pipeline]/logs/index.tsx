@@ -120,12 +120,14 @@ function PipelineLogsPage({
   }, [blocks, isIntegrationPipeline]);
 
   const q = queryFromUrl();
+  // Currently only supporting saving the log scroll position for trigger logs without filters
   const saveScrollPosition = useMemo(() => (
     q?.hasOwnProperty(FilterQueryParamEnum.PIPELINE_SCHEDULE_ID)
       && !q?.hasOwnProperty(FilterQueryParamEnum.LEVEL)
       && !q?.hasOwnProperty(FilterQueryParamEnum.BLOCK_TYPE)
       && !q?.hasOwnProperty(FilterQueryParamEnum.BLOCK_UUID)
   ), [q]);
+
   const onlyLoadPastDayLogs = !q?.start_timestamp
     && !(q?.hasOwnProperty(PIPELINE_RUN_ID_PARAM) || q?.hasOwnProperty(BLOCK_RUN_ID_PARAM));
   const dayAgoTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]);
