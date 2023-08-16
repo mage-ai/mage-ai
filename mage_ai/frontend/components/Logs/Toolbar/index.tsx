@@ -127,7 +127,7 @@ function LogToolbar({
     qPrev,
   ]);
 
-  const saveLogScrollPosition = useCallback(() => {
+  const resetLogScrollPosition = useCallback(() => {
     if (saveScrollPosition) {
       const localStorageKey = getLogScrollPositionLocalStorageKey(pipelineUUID);
       set(localStorageKey, 0);
@@ -141,7 +141,7 @@ function LogToolbar({
           {...SHARED_BUTTON_PROPS}
           disabled={allPastLogsLoaded}
           onClick={() => {
-            saveLogScrollPosition();
+            resetLogScrollPosition();
             loadPastLogInterval();
           }}
           uuid="logs/load_older_logs"
@@ -155,7 +155,7 @@ function LogToolbar({
           {...SHARED_BUTTON_PROPS}
           disabled={q?._offset <= 0}
           onClick={() => {
-            saveLogScrollPosition();
+            resetLogScrollPosition();
             loadNewerLogInterval();
           }}
           uuid="logs/load_newer_logs"
@@ -171,7 +171,7 @@ function LogToolbar({
           onChange={e => {
             e.preventDefault();
             const range = e.target.value;
-            saveLogScrollPosition();
+            resetLogScrollPosition();
             setSelectedRange(range);
             if (SPECIFIC_LOG_RANGES.includes(range)) {
               const startTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[range]);
@@ -258,7 +258,7 @@ function LogToolbar({
             <Button
               borderRadius={UNIT / 2}
               onClick={() => {
-                saveLogScrollPosition();
+                resetLogScrollPosition();
                 const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);
                 const end = isoDateFormatFromDateParts(endDate, endTime.hour, endTime.minute);
                 goToWithQuery({
