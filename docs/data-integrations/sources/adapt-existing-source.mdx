@@ -107,6 +107,10 @@ class YourSource(Source):
 
     def sync(self, catalog: Catalog) -> None:
         pass
+    
+    def test_connection(self) -> None:
+        client = YourSource(YOUR_CONFIG)
+        client.close()
 
 
 if __name__ == "__main__":
@@ -115,9 +119,17 @@ if __name__ == "__main__":
 
 Replace YourSource with the name of your source, e.g. `Github` for Github, and `tap_your_tap` with the name of your tap, e.g. `tap_github`.
 
+### Overwrite tap methods
+
 Our goal is to overwrite the `discover` and `sync` methods to make them work with Mage. Discover is likely in `tap_your_tap/discover.py` and sync is likely in `tap_your_tap/sync.py`. It requires a bit of nuance, but our job is to look through the existing Singer tap, understand how the `sync` and `discover` methods were implemented, then execute them in Mage `__init__.py` under the corresponding method. This is necessarily different for every tap, since each project is entirely independent.
 
 Don't forget to use absolute imports for these files. For GitHub, our completed file looks like [this](TODO). [HubSpot](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/hubspot) is another good example of a completed tap.
+
+### Add test connection method
+
+We need a `test_connection` method to enable testing the tap in the Mage UI. This is a simple method that instantiates the tap and closes it. Just replace `YourSource` with the source class, e.g. `Github` and provide the configuration arguments to the tap. Here's a [good example](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/sftp/__init__.py#L28-L35) from the sFTP tap.
+
+```python
 
 ## Add-in logging
 
