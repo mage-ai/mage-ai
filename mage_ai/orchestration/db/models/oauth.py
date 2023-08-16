@@ -161,7 +161,16 @@ class Role(BaseModel):
         entity: Entity = None,
         entity_id: str = None,
         prefix: str = None,
-    ):
+    ) -> None:
+        """
+        Create default roles with associated permissions for a given entity and entity_id.
+
+        Args:
+            entity (Entity): The entity for which roles and permissions are being created
+                (default: Entity.GLOBAL).
+            entity_id (str): The unique identifier for the entity.
+            prefix (str): A prefix to prepend to the default role names (optional).
+        """
         if entity is None:
             entity = Entity.GLOBAL
         permissions = Permission.create_default_permissions(entity=entity, entity_id=entity_id)
@@ -291,15 +300,28 @@ class Permission(BaseModel):
         entity: Entity = None,
         entity_id: str = None,
     ) -> List['Permission']:
+        """
+        Create default permissions for the given entity and entitiy_id. The permissions
+        will only be created if they do not exist already.
+
+        Args:
+            entity (Entity): The entity for which permissions are being created.
+            entity_id (str): The unique identifier for the entity.
+
+        Returns:
+            List[Permission]: The list of permissions created. The list will be empty if
+                the permissions already exist.
+        """
         if entity is None:
             entity = Entity.GLOBAL
         permissions = self.query.filter(
             self.entity == entity,
             self.entity_id == entity_id,
         ).all()
+        new_permissions = []
         if len(permissions) == 0:
             for access in [a.value for a in Permission.Access]:
-                permissions.append(
+                new_permissions.append(
                     self.create(
                         entity=entity,
                         entity_id=entity_id,
@@ -308,7 +330,7 @@ class Permission(BaseModel):
                     )
                 )
             db_connection.session.commit()
-        return permissions
+        return new_permissions
 
 
 class Oauth2Application(BaseModel):
