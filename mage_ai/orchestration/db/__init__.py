@@ -27,13 +27,14 @@ db_kwargs = dict(
 
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
+from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
+
 elif not db_connection_url:
-    # connect to K8s CloudSQL sidecar
-    if os.getenv(DB_USER):
-        db_user = os.getenv(DB_USER)
-        db_pass = os.getenv(DB_PASS)
-        db_name = os.getenv(DB_NAME)
-        db_connection_url = f'postgresql+psycopg2://{db_user}:{db_pass}@127.0.0.1:5432/{db_name}'
+    # Get credentials from AWS Secrets Manager
+    secret_name = os.getenv('DB_SECRET_NAME')  # this new environment variable should point to the secret's name in AWS Secrets Manager
+    secrets = get_secret(secret_name)
+    db_connection_url = f"postgresql+psycopg2://{secrets['username']}:{secrets['password']}@127.0.0.1:5432/{secrets['dbname']}"
+
     else:
         if is_test():
             db_connection_url = f'sqlite:///{TEST_DB}'
