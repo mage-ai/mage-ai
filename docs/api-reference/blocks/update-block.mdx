@@ -18,7 +18,7 @@ api: "PUT /api/pipelines/:pipeline_uuid/blocks/:block_uuid"
   Array of [callback](/development/blocks/callbacks) block objects. Same shape as `blocks`.
 </ParamField>
 <ParamField query="color" type="string">
-  Block color displayed by the frontend.
+  Block color displayed by the frontend for `custom` blocks. All other block types have predefined colors.
 </ParamField>
 <ResponseField name="configuration" type="object">
     Miscellaneous configuration settings for the block.
