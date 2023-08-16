@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import typing as t
 from collections import Counter, defaultdict
 
 from singer_sdk import typing as th
 from singer_sdk.io_base import SingerMessageType
-from mage_integrations.destinations.clickhouse.target_clickhouse.sinks import ClickhouseSink
 
+from mage_integrations.destinations.clickhouse.target_clickhouse.sinks import (
+    ClickhouseSink,
+)
 from mage_integrations.destinations.target import SQLTarget
-
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +27,11 @@ class TargetClickhouse(SQLTarget):
             "sqlalchemy_url",
             th.StringType,
             description="SQLAlchemy connection string",
+        ),
+        th.Property(
+            "table_name",
+            th.StringType,
+            description="The name of the table to write to. Defaults to stream name.",
         ),
     ).to_dict()
 
