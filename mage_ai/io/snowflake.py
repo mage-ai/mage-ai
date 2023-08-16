@@ -206,7 +206,7 @@ class Snowflake(BaseSQLConnection):
 
                 return DataFrame(results, columns=columns)
 
-    def export(
+        def export(
         self,
         df: DataFrame,
         table_name: str,
@@ -215,8 +215,10 @@ class Snowflake(BaseSQLConnection):
         if_exists: str = 'append',
         query_string: Union[str, None] = None,
         verbose: bool = True,
+        table_type: str = 'normal',  # new parameter
         **kwargs,
     ) -> None:
+
         """
         Exports a Pandas data frame to a Snowflake warehouse based on the table name.
         If table doesn't exist, the table is automatically created.
@@ -272,20 +274,25 @@ class Snowflake(BaseSQLConnection):
                         cur.execute(f'DROP TABLE "{schema}"."{table_name}"', timeout=self.timeout)
                         should_create_table = True
 
-                if query_string:
+                                if query_string:
                     cur.execute(f'USE DATABASE {database}', timeout=self.timeout)
                     cur.execute(f'USE SCHEMA {schema}', timeout=self.timeout)
 
+                    if table_type == 'temporary':
+                        create_table_query = f"CREATE TEMPORARY TABLE IF NOT EXISTS \"{database}\".\"{schema}\".\"{table_name}\" AS\n{query_string}"
+                    elif table_type == 'transient':
+                        create_table_query = f"CREATE TRANSIENT TABLE IF NOT EXISTS \"{database}\".\"{schema}\".\"{table_name}\" AS\n{query_string}"
+                    else:
+                        create_table_query = f"CREATE TABLE IF NOT EXISTS \"{database}\".\"{schema}\".\"{table_name}\" AS\n{query_string}"
+                         
                     if should_create_table:
-                        cur.execute(f"""
-CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
-{query_string}
-""", timeout=self.timeout)
+                        cur.execute(create_table_query, timeout=self.timeout)
                     else:
                         cur.execute(f"""
 INSERT INTO "{database}"."{schema}"."{table_name}"
 {query_string}
 """, timeout=self.timeout)
+
 
                 else:
                     write_pandas(
