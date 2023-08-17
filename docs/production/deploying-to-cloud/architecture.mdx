@@ -41,8 +41,10 @@ Check out this [doc](/production/configuring-production-settings/compute-resourc
 
 ## Scale web server and schedulers
 
-By default, Mage runs the web server and scheduler in the same container. If you want to separate the web server and scheduler, you can override
-the container command with the commands below:
+By default, Mage runs the web server and scheduler in the same container. Mage supports horizontally scaling by separating the web server and scheduler,
+and run multiple replicas of web servers and schedulers.
+
+To separate the web server and scheduler, you can override the container command with the commands below:
 * Run scheduler only
     ```bash
     /app/run_app.sh mage start project_name --instance-type scheduler
