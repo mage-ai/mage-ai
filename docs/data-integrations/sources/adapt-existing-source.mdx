@@ -140,7 +140,30 @@ def test_connection(self) -> None:
         client.close()
 ```
 
-## Add logging
+### Overwrite `write_schema` method
+
+Finally, we need to overwrite the `write_schema` method in the `tap_your_tap/sync.py` file. Add the following import:
+
+`from mage_integrations.sources.messages import write_schema`
+
+Now, switch out the default function (likely `singer.write_schema`) for the mage function using the default arguments. Here's an example:
+
+```python
+  write_schema(
+        stream_name=catalog['tap_stream_id'],
+        schema=schema,
+        key_properties=catalog.get('key_properties', ['id']),
+        bookmark_properties=catalog.get('bookmark_properties'),
+        disable_column_type_check=catalog.get('disable_column_type_check'),
+        partition_keys=catalog.get('partition_keys'),
+        replication_method=catalog.get('replication_method'),
+        stream_alias=catalog.get('stream_alias'),
+        unique_conflict_method=catalog.get('unique_conflict_method'),
+        unique_constraints=catalog.get('unique_constraints'),
+    )
+```
+
+### Add logging
 
 To add verbose logging to Mage, add a logger argument each tap file, `tap_github/sync.py`, `tap_github/discover.py`:
 
@@ -178,38 +201,12 @@ This will make your new source visible in the Mage UI.
 
 ## Test your source
 
-Sources should be tested both in the console and via the UI.
-
-### Test in the terminal
-
-Follow the directions [here](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/README.md#testing-sync-locally) to configure a lightweight test of your sources taps via a bash terminal in the Mage docker instance. This entails:
+Sources should be tested both in the console and via the UI. Follow the directions [here](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/README.md#testing-sync-locally) to configure a lightweight test of your sources taps via a bash terminal and the Mage UI in the dev docker instance. This entails:
 
 - Setting up a sample source and connection locally.
 - Running the tap directly, via Python.
 - Writing to an intermediate file to inspect the output.
 - Performing an end-to-end sync.
-
-### Test in the Mage UI
-
-Once you've tested your tap in the terminal, it's time to test it in Mage. Open up Mage (`localhost:3000` in dev) and create a new data integration pipeline
-
-<div align="center">
-<img src="/media/adapt-existing-source/new-pipeline.png" width="50%"/>
-</div>
-
-Select your source from the list
-
-<div align="center">
-<img src="/media/adapt-existing-source/select-source.png" width="50%"/>
-</div>
-
-Now, perform the following in the Mage UI to verify a working source:
-
-- Test the connection
-- View and select streams
-- Sync one stream to a destination
-  - If you're adding a tap in a PR, be sure to add logs of the source and show data in the destination table to the PR description.
-- If incremental sync is supported, please also test it: check if the state is updated and fetched correctly.
 
 ## Populate `README.md`
 
