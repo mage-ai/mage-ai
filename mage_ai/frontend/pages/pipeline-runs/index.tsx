@@ -29,6 +29,7 @@ function RunListPage() {
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
+    disable_retries_grouping: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;

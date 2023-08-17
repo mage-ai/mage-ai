@@ -149,6 +149,13 @@ class PipelineRunResource(DatabaseResource):
         disable_retries_grouping = query_arg.get('disable_retries_grouping', [False])
         if disable_retries_grouping:
             disable_retries_grouping = disable_retries_grouping[0]
+        """
+        The if block below groups pipeline runs that have the same execution_date with
+        its retries so that all of a run's retries may be returned in the same payload.
+        In order to disable this functionality, we add the "disable_retried_grouping"
+        query arg and set it to True (e.g. in order to make the number of pipeline runs
+        returned consistent across pages).
+        """
         if meta.get(META_KEY_LIMIT, None) is not None and \
             total_results.count() >= 1 and \
             not disable_retries_grouping and \
