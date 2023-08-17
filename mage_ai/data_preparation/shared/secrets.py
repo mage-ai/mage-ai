@@ -158,19 +158,19 @@ def get_secret_value(
     secret = None
     if key:
         # For backwards compatibility, check if there is a secret with the name and no uuid
-        if entity == Entity.GLOBAL:
+        if key_uuid:
+            secret = Secret.query.filter(
+                Secret.name == name,
+                Secret.key_uuid == key_uuid,
+            ).one_or_none()
+
+        if entity == Entity.GLOBAL and not secret:
             if repo_name is None:
                 repo_name = get_repo_path()
             secret = Secret.query.filter(
                 Secret.name == name,
                 Secret.repo_name == repo_name,
                 Secret.key_uuid.is_(None),
-            ).one_or_none()
-
-        if key_uuid and not secret:
-            secret = Secret.query.filter(
-                Secret.name == name,
-                Secret.key_uuid == key_uuid,
             ).one_or_none()
 
         if secret:
@@ -191,24 +191,23 @@ def delete_secret(
 ) -> None:
     from mage_ai.orchestration.db.models.secrets import Secret
     secret = None
-    if entity == Entity.GLOBAL:
+    _, key_uuid = _get_encryption_key(
+        entity,
+        project_uuid=project_uuid,
+        pipeline_uuid=pipeline_uuid,
+    )
+    if key_uuid:
+        secret = Secret.query.filter(
+            Secret.name == name,
+            Secret.key_uuid == key_uuid,
+        ).one_or_none()
+
+    if entity == Entity.GLOBAL and not secret:
         secret = Secret.query.filter(
             Secret.name == name,
             Secret.repo_name == get_repo_path(),
             Secret.key_uuid.is_(None),
         ).one_or_none()
-
-    if not secret:
-        _, key_uuid = _get_encryption_key(
-            entity,
-            project_uuid=project_uuid,
-            pipeline_uuid=pipeline_uuid,
-        )
-        if key_uuid:
-            secret = Secret.query.filter(
-                Secret.name == name,
-                Secret.key_uuid == key_uuid,
-            ).one_or_none()
 
     if secret:
         secret.delete()
