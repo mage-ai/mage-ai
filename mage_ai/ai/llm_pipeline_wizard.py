@@ -56,22 +56,22 @@ The content within the triple backticks is a code description.
 Your task is to answer the following two questions.
 
 1. Is there any filter logic mentioned in the description to remove rows or columns of the data?
-If yes, write the filter logic in Python language. Return your response as one field
-in JSON format with the key "action_code".
+If yes, write ONLY the filter logic in Python language WITHOUT pandas dataframe.
+Return your response as one field in JSON format with the key "action_code".
 
-2. Does the description mention any columns or rows to perform the action on?
-If yes, list the columns or rows in an array and return it as a field in JSON response
+2. Does the description mention any columns or rows to aggregrate on or group by?
+If yes, list ONLY those columns in an array and return it as a field in JSON response
 with the key "arguments".
 
-<code description>: ```{block_content}```
+<code description>: ```{code_description}```
 
 Provide your response in JSON format.
 """
 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL = """
 The content within the triple backticks is a code description.
-Based on the code descriptio, implement it in SQL language.
+Implement it in SQL language.
 
-<code description>: ```{block_content}```
+<code description>: ```{code_description}```
 
 Return your response in JSON format with the key "sql_code".
 """
@@ -225,15 +225,18 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
-    async def async_llm_inferene_with_block_content_variable(self, block_description: str, template: str) -> Dict:
+    async def async_llm_inferene_with_code_description_variable(
+            self,
+            code_description: str,
+            template: str) -> Dict:
         prompt_template = PromptTemplate(
             input_variables=[
-                'block_content',
+                'code_description',
             ],
             template=template,
         )
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        customized_logic_json = await chain.arun(block_content=block_description)
+        customized_logic_json = await chain.arun(code_description=code_description)
         print("customized_logic_json:")
         print(customized_logic_json)
         return json.loads(customized_logic_json)
@@ -242,10 +245,10 @@ class LLMPipelineWizard:
             self,
             block_code: str,
             block_language: str,
-            block_description: str) -> str:
+            code_description: str) -> str:
         if block_language == BlockLanguage.PYTHON:
-            customized_logic = await self.async_llm_inferene_with_block_content_variable(
-                block_description,
+            customized_logic = await self.async_llm_inferene_with_code_description_variable(
+                code_description,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
             if "action_code" in customized_logic.keys():
@@ -257,8 +260,8 @@ class LLMPipelineWizard:
                     'arguments=[]',
                     f'arguments={customized_logic.get("arguments")}')
         elif block_language == BlockLanguage.SQL:
-            customized_logic = await self.async_llm_inferene_with_block_content_variable(
-                block_description,
+            customized_logic = await self.async_llm_inferene_with_code_description_variable(
+                code_description,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
             )
             if "sql_code" in customized_logic.keys():
