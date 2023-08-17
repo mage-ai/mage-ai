@@ -1,5 +1,5 @@
 ---
-title: "Read all schedules"
+title: "Read pipeline schedules"
 api: "GET /api/pipelines/:pipeline_uuid/pipeline_schedules"
 ---
 
@@ -7,6 +7,14 @@ api: "GET /api/pipelines/:pipeline_uuid/pipeline_schedules"
 
 <ParamField path="pipeline_uuid" type="string" required>
   Pipeline UUID that the pipeline schedules should all belong to.
+</ParamField>
+
+<ParamField query="tag[]" type="string">
+  Fetch pipeline schedules that have the specified tag.
+
+  If you include 2 or more `tag[]` query parameters,
+  then the pipeline schedules will be fetched if it has at
+  least 1 of the tags specified.
 </ParamField>
 
 <CodeGroup>
@@ -32,6 +40,7 @@ curl --request GET \
       "status": "inactive",
       "variables": null,
       "sla": null,
+      "tags": ["core data"],
       "token": "f176321c4eac425782236acd0eb9886d",
       "settings": {},
       "event_matchers": [],
@@ -52,6 +61,7 @@ curl --request GET \
         "env": "dev2"
       },
       "sla": 950400,
+      "tags": [],
       "token": "1dca215c01564d48bf0d3db7d5450a20",
       "settings": {
         "skip_if_previous_running": true,

@@ -24,6 +24,7 @@ description: "Triggers for a pipeline."
   "sla": 950400,
   "start_time": "2023-03-01 22:04:00+00:00",
   "status": "inactive",
+  "tags": ["core data"],
   "token": "1dca215c01564d48bf0d3db7d5450a20",
   "updated_at": "2023-03-01 22:04:29.761238+00:00",
   "variables": {
@@ -107,6 +108,10 @@ description: "Triggers for a pipeline."
 
 <ResponseField name="status" type="string" required>
   `active`, `inactive`
+</ResponseField>
+
+<ResponseField name="tags" type="array">
+  An array of tag names.
 </ResponseField>
 
 <ResponseField name="token" type="string">
