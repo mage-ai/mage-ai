@@ -30,6 +30,7 @@ import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
+import { queryFromUrl } from '@utils/url';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -70,6 +71,13 @@ function RetryButton({
   const isCancelingPipeline = isLoadingCancelPipeline
     && pipelineRunId === cancelingRunId
     && RunStatus.RUNNING === status;
+
+  const q = queryFromUrl();
+  const isNotFirstPage = useMemo(() => {
+    const page = q?.page ? +q.page : 0;
+
+    return page > 0;
+  }, [q?.page]);
 
   const [createPipelineRun]: any = useMutation(
     (ScheduleTypeEnum.API === pipelineScheduleType && pipelineScheduleToken)
@@ -207,8 +215,11 @@ function RetryButton({
               </Text>
               <Spacing mb={1} />
               <Text>
-                Retry the run with changes you have made to the pipeline.<br />
-                Note that the retried run may appear on a previous page.
+                Retry the run with changes you have made to the pipeline.
+                {isNotFirstPage ?
+                  <><br />Note that the retried run may appear on a previous page.</>
+                  : null
+                }
               </Text>
               <Spacing mb={1} />
               <Button
