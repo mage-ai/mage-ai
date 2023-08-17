@@ -5,6 +5,7 @@ import { parse } from 'yaml';
 import {
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -315,6 +316,19 @@ function DependencyGraph({
   ]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      /*
+       * On Chrome browsers, the dep graph would not center automatically when
+       * navigating to the Pipeline Editor page even though the "fit" prop was
+       * added to the Canvas component. This centers it if it is not already.
+       */
+      if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
+        canvasRef?.current?.fitCanvas?.();
+      }
+    }, 1000);
+  }, [canvasRef]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(
@@ -834,7 +848,11 @@ function DependencyGraph({
                     setShowPorts(true);
                   }
                 }}
-                onLeave={() => setShowPorts(false)}
+                onLeave={() => {
+                  if (!activePort) {
+                    setShowPorts(false);
+                  }
+                }}
                 port={(showPorts && (
                   activePort === null || isActivePort(activePort, node)))
                   ?
