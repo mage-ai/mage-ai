@@ -5,6 +5,7 @@ import { parse } from 'yaml';
 import {
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -315,6 +316,14 @@ function DependencyGraph({
   ]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
+        canvasRef?.current?.fitCanvas?.();
+      }
+    }, 1000);
+  }, [canvasRef]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(
