@@ -155,7 +155,37 @@
           "pages": [
             "guides/batch-pipeline",
             "guides/data-integration-pipeline",
-            "guides/streaming-pipeline"
+            {
+              "group": "Streaming pipelines",
+              "pages": [
+                "guides/streaming/overview",
+                {
+                  "group": "Sources",
+                  "pages": [
+                    "guides/streaming/sources/amazon-sqs",
+                    "guides/streaming/sources/azure-event-hub",
+                    "guides/streaming/sources/google-cloud-pubsub",
+                    "guides/streaming/sources/kafka",
+                    "guides/streaming/sources/kinesis"
+                  ]
+                },
+                {
+                  "group": "Destinations",
+                  "pages": [
+                    "guides/streaming/destinations/amazon-s3",
+                    "guides/streaming/destinations/dummy",
+                    "guides/streaming/destinations/kafka",
+                    "guides/streaming/destinations/kinesis",
+                    "guides/streaming/destinations/mongodb",
+                    "guides/streaming/destinations/opensearch",
+                    "guides/streaming/destinations/redshift"
+                  ]
+                },
+                "guides/streaming-pipeline",
+                "guides/streaming/streaming-pipeline-rabbitmq",
+                "guides/streaming/contributing"
+              ]
+            }
           ]
         },
         {
@@ -218,41 +248,12 @@
             "guides/blocks/markdown-blocks"
           ]
         },
+        "custom-templates/overview",
         {
           "group": "Dependencies",
           "pages": [
             "development/dependencies/requirements",
             "development/dependencies/custom-files"
-          ]
-        },
-        {
-          "group": "Streaming pipelines",
-          "pages": [
-            "guides/streaming/overview",
-            "guides/streaming/streaming-pipeline-rabbitmq",
-            {
-              "group": "Sources",
-              "pages": [
-                "guides/streaming/sources/amazon-sqs",
-                "guides/streaming/sources/azure-event-hub",
-                "guides/streaming/sources/google-cloud-pubsub",
-                "guides/streaming/sources/kafka",
-                "guides/streaming/sources/kinesis"
-              ]
-            },
-            {
-              "group": "Destinations",
-              "pages": [
-                "guides/streaming/destinations/amazon-s3",
-                "guides/streaming/destinations/dummy",
-                "guides/streaming/destinations/kafka",
-                "guides/streaming/destinations/kinesis",
-                "guides/streaming/destinations/mongodb",
-                "guides/streaming/destinations/opensearch",
-                "guides/streaming/destinations/redshift"
-              ]
-            },
-            "guides/streaming/contributing"
           ]
         },
         "production/configuring-production-settings/runtime-variable",
