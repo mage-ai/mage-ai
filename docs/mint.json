@@ -325,6 +325,13 @@
             "orchestration/pipeline-runs/retrying-block-runs",
             "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
+        },
+        {
+          "group": "Global data products",
+          "pages": [
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
+          ]
         }
       ]
     },
