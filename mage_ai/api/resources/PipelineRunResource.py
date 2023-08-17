@@ -152,7 +152,7 @@ class PipelineRunResource(DatabaseResource):
         """
         The if block below groups pipeline runs that have the same execution_date with
         its retries so that all of a run's retries may be returned in the same payload.
-        In order to disable this functionality, we add the "disable_retried_grouping"
+        In order to disable this functionality, we add the "disable_retries_grouping"
         query arg and set it to True (e.g. in order to make the number of pipeline runs
         returned consistent across pages).
         """
