@@ -50,6 +50,31 @@ A data pipeline reads data from source, transform the data and export data into 
 The content delimited by triple backticks contains explains of all components in one data pipeline.
 Write a detailed summarization of the data pipeline based on the content provided.
 ```{block_content}```"""
+PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON = """
+The content within the triple backticks is a code description.
+
+Your task is to answer the following two questions.
+
+1. Is there any filter logic mentioned in the description to remove rows or columns of the data?
+If yes, write the filter logic in Python language. Return your response as one field
+in JSON format with the key "action_code".
+
+2. Does the description mention any columns or rows to perform the action on?
+If yes, list the columns or rows in an array and return it as a field in JSON response
+with the key "arguments".
+
+<code description>: ```{block_content}```
+
+Provide your response in JSON format.
+"""
+PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL = """
+The content within the triple backticks is a code description.
+Based on the code descriptio, implement it in SQL language.
+
+<code description>: ```{block_content}```
+
+Return your response in JSON format with the key "sql_code".
+"""
 PROMPT_TO_SPLIT_BLOCKS = """
 A BLOCK does one action either reading data from one data source, transforming the data from
 one format to another or exporting data into a data source.
@@ -200,6 +225,46 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
+    async def async_llm_inferene_with_block_content_variable(self, block_description: str, template: str) -> Dict:
+        prompt_template = PromptTemplate(
+            input_variables=[
+                'block_content',
+            ],
+            template=template,
+        )
+        chain = LLMChain(llm=self.llm, prompt=prompt_template)
+        customized_logic_json = await chain.arun(block_content=block_description)
+        print("customized_logic_json:")
+        print(customized_logic_json)
+        return json.loads(customized_logic_json)
+
+    async def async_create_customized_code_in_block(
+            self,
+            block_code: str,
+            block_language: str,
+            block_description: str) -> str:
+        if block_language == BlockLanguage.PYTHON:
+            customized_logic = await self.async_llm_inferene_with_block_content_variable(
+                block_description,
+                PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
+            )
+            if "action_code" in customized_logic.keys():
+                block_code = block_code.replace(
+                    'action_code=\'\'',
+                    f'action_code=\'{customized_logic.get("action_code")}\'')
+            if "arguments" in customized_logic.keys():
+                block_code = block_code.replace(
+                    'arguments=[]',
+                    f'arguments={customized_logic.get("arguments")}')
+        elif block_language == BlockLanguage.SQL:
+            customized_logic = await self.async_llm_inferene_with_block_content_variable(
+                block_description,
+                PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
+            )
+            if "sql_code" in customized_logic.keys():
+                block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
+        return block_code
+
     async def async_generate_block_with_description(
             self,
             block_description: str,
@@ -216,15 +281,20 @@ class LLMPipelineWizard:
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
-            return dict(
-                block_type=block_type,
-                configuration=config,
-                content=fetch_template_source(
+            block_code_template = fetch_template_source(
                     block_type=block_type,
                     config=config,
                     language=block_language,
                     pipeline_type=pipeline_type,
-                ),
+                )
+            block_code = await self.async_create_customized_code_in_block(
+                block_code_template,
+                block_language,
+                block_description)
+            return dict(
+                block_type=block_type,
+                configuration=config,
+                content=block_code,
                 language=block_language,
                 upstream_blocks=upstream_blocks,
             )
