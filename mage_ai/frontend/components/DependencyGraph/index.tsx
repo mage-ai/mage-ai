@@ -834,7 +834,11 @@ function DependencyGraph({
                     setShowPorts(true);
                   }
                 }}
-                onLeave={() => setShowPorts(false)}
+                onLeave={() => {
+                  if (!activePort) {
+                    setShowPorts(false);
+                  }
+                }}
                 port={(showPorts && (
                   activePort === null || isActivePort(activePort, node)))
                   ?
