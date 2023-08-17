@@ -11,7 +11,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
-import Paginate from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipeIconGradient from '@oracle/icons/custom/PipeIconGradient';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
@@ -68,9 +68,6 @@ const TABS = [
   TAB_PIPELINE_RUNS,
   TAB_BLOCK_RUNS,
 ];
-
-const LIMIT = 30;
-const MAX_PAGES = 9;
 
 type PipelineRunsProp = {
   pipeline: {
@@ -154,8 +151,8 @@ function PipelineRuns({
   ]);
 
   const runsRequestQuery: PipelineRunReqQueryParamsType = {
-    _limit: LIMIT,
-    _offset: page * LIMIT,
+    _limit: ROW_LIMIT,
+    _offset: page * ROW_LIMIT,
     pipeline_uuid: pipelineUUID,
   };
   let blockRunsRequestQuery = ignoreKeys(
@@ -315,7 +312,7 @@ function PipelineRuns({
           );
         }}
         page={Number(page)}
-        totalPages={Math.ceil(totalRuns / LIMIT)}
+        totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
       />
     </Spacing>
   ), [

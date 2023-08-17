@@ -3,6 +3,7 @@ import React from 'react';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
+import { DARK_CONTENT_DEFAULT } from '@oracle/styles/colors/content';
 import { PaginateArrowLeft, PaginateArrowRight } from '@oracle/icons';
 import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -14,7 +15,8 @@ type PaginateProps = {
   totalPages: number;
 };
 
-export const ROW_LIMIT = 22;
+export const ROW_LIMIT = 30;
+export const MAX_PAGES = 9;
 
 function Paginate({
   page,
@@ -53,25 +55,25 @@ function Paginate({
             disabled={page === 0}
             onClick={() => onUpdate(page - 1)}
           >
-            <PaginateArrowLeft size={1.5 * UNIT} stroke='#AEAEAE' />
+            <PaginateArrowLeft size={1.5 * UNIT} stroke={DARK_CONTENT_DEFAULT} />
           </Button>
           {!pageArray.includes(0) && (
             <>
-              <Spacing ml={1} key={0}>
+              <Spacing key={0} ml={1}>
                 <Button
-                  onClick={() => onUpdate(0)}
                   borderLess
                   noBackground
+                  onClick={() => onUpdate(0)}
                 >
                   {1}
                 </Button>
               </Spacing>
               {!pageArray.includes(1) && (
-                <Spacing ml={1} key={0}>
+                <Spacing key={0} ml={1}>
                   <Button
-                    notClickable
                     noBackground
                     noPadding
+                    notClickable
                   >
                     ...
                   </Button>
@@ -80,17 +82,17 @@ function Paginate({
             </>
           )}
           {pageArray.map((p) => (
-            <Spacing ml={1} key={p}>
+            <Spacing key={p} ml={1}>
               <Button
+                backgroundColor={p === page && PURPLE}
+                borderLess
+                noBackground
+                notClickable={p === page}
                 onClick={() => {
                   if (p !== page) {
                     onUpdate(p);
                   }
                 }}
-                notClickable={p === page}
-                backgroundColor={p === page && PURPLE}
-                borderLess
-                noBackground
               >
                 {p + 1}
               </Button>
@@ -99,21 +101,21 @@ function Paginate({
           {!pageArray.includes(totalPages - 1) && (
             <>
               {!pageArray.includes(totalPages - 2) && (
-                <Spacing ml={1} key={0}>
+                <Spacing key={0} ml={1}>
                   <Button
-                    notClickable
                     noBackground
                     noPadding
+                    notClickable
                   >
                     ...
                   </Button>
                 </Spacing>
               )}
-              <Spacing ml={1} key={totalPages - 1}>
+              <Spacing key={totalPages - 1} ml={1}>
                 <Button
-                  onClick={() => onUpdate(totalPages - 1)}
                   borderLess
                   noBackground
+                  onClick={() => onUpdate(totalPages - 1)}
                 >
                   {totalPages}
                 </Button>
@@ -125,12 +127,12 @@ function Paginate({
             disabled={page === totalPages - 1}
             onClick={() => onUpdate(page + 1)}
           >
-            <PaginateArrowRight size={1.5 * UNIT} stroke='#AEAEAE' />
+            <PaginateArrowRight size={1.5 * UNIT} stroke={DARK_CONTENT_DEFAULT} />
           </Button>
         </FlexContainer>
       )}
     </>
-  )
+  );
 }
 
 export default Paginate;
