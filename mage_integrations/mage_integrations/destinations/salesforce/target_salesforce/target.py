@@ -7,8 +7,10 @@ from collections import Counter, defaultdict
 
 from singer_sdk import typing as th
 from singer_sdk.io_base import SingerMessageType
-from target_salesforce.sinks import SalesforceSink
 
+from mage_integrations.destinations.salesforce.target_salesforce.sinks import (
+    SalesforceSink,
+)
 from mage_integrations.destinations.target import Target
 
 LOGGER = logging.getLogger(__name__)
