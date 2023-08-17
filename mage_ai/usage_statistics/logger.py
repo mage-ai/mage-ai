@@ -41,9 +41,9 @@ class UsageStatisticLogger():
             features['openai'] = 0
 
         return await self.__send_message(
-            EventObjectType.PROJECT,
-            EventActionType.IMPRESSION,
             dict(
+                object=EventObjectType.PROJECT,
+                action=EventActionType.IMPRESSION,
                 features=features,
             ),
         )
@@ -54,8 +54,9 @@ class UsageStatisticLogger():
             return False
 
         return await self.__send_message(
-            EventObjectType.PIPELINE_RUN,
-            EventActionType.IMPRESSION, dict(
+            dict(
+                object=EventObjectType.PIPELINE_RUN,
+                action=EventActionType.IMPRESSION,
                 pipeline_runs=count_func(),
             ),
         )
@@ -64,28 +65,46 @@ class UsageStatisticLogger():
         if not self.help_improve_mage:
             return False
 
-        return await self.__send_message(EventObjectType.PIPELINE, EventActionType.IMPRESSION, dict(
-            pipelines=count_func(),
-        ))
+        return await self.__send_message(
+            dict(
+                object=EventObjectType.PIPELINE,
+                action=EventActionType.IMPRESSION,
+                pipelines=count_func(),
+            ),
+        )
 
     @safe_db_query
     async def users_impression(self) -> bool:
         if not self.help_improve_mage:
             return False
 
-        return await self.__send_message(EventObjectType.USER, EventActionType.IMPRESSION, dict(
-            users=User.query.count(),
-        ))
+        return await self.__send_message(
+            dict(
+                object=EventObjectType.USER,
+                action=EventActionType.IMPRESSION,
+                users=User.query.count(),
+            ),
+        )
+    
+    async def pipeline_run_started(self) -> bool:
+        if not self.help_improve_mage:
+            return False
+    
+        return await self.__send_message(
+            EventObjectType.PIPELINE_RUN,
+            EventActionType.STARTED)
 
-    async def __send_message(self, object_name: str, action_name: str, data: Dict = None) -> bool:
+
+    async def __send_message(
+        self,
+        data: Dict,
+        event_name: str = 'usage_statistic.create',
+    ) -> bool:
         if data is None:
             data = {}
 
         data_to_send = merge_dict(
-            merge_dict(self.__shared_metadata(), dict(
-                action=action_name,
-                object=object_name,
-            )),
+            self.__shared_metadata(),
             data,
         )
 
@@ -95,6 +114,7 @@ class UsageStatisticLogger():
                     API_ENDPOINT,
                     json=dict(
                         api_key='KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY',
+                        event_name=event_name,
                         usage_statistics=data_to_send,
                     ),
                     timeout=3,
