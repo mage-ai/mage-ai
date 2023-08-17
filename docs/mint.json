@@ -273,8 +273,9 @@
           ]
         },
         {
-          "group": "Versioning",
+          "group": "Version control",
           "pages": [
+            "production/data-sync/github",
             "developing-in-the-cloud/setting-up-git",
             "development/versioning/file-versions"
           ]
@@ -405,13 +406,7 @@
             "production/configuring-production-settings/compute-resource"
           ]
         },
-        {
-          "group": "Version control",
-          "pages": [
-            "production/data-sync/git",
-            "production/data-sync/github"
-          ]
-        }
+        "production/data-sync/git"
       ]
     },
     {
