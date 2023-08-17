@@ -115,7 +115,7 @@ function PipelineRuns({
     pipelineUUID,
   ]);
 
-  const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -307,6 +307,7 @@ function PipelineRuns({
             ...q,
             page: newPage >= 0 ? newPage : 0,
           };
+          setSelectedRun(null);
           router.push(
             '/pipelines/[pipeline]/runs',
             `/pipelines/${pipelineUUID}/runs?${queryString(updatedQuery)}`,
