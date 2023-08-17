@@ -146,8 +146,12 @@ class PipelineRunResource(DatabaseResource):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
 
+        disable_retries_grouping = query_arg.get('disable_retries_grouping', [False])
+        if disable_retries_grouping:
+            disable_retries_grouping = disable_retries_grouping[0]
         if meta.get(META_KEY_LIMIT, None) is not None and \
             total_results.count() >= 1 and \
+            not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):
 
             first_result = results[0]

@@ -171,6 +171,7 @@ function PipelineRuns({
 
   let pipelineRunsRequestQuery = {
     ...runsRequestQuery,
+    disable_retries_grouping: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
