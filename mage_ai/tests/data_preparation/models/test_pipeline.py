@@ -42,6 +42,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_2',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -183,6 +184,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_3',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -267,6 +269,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_4',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -373,6 +376,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_5',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -609,6 +613,7 @@ class PipelineTest(DBTestCase):
                     notification_config={},
                     tags=[],
                     retry_config={},
+                    run_pipeline_in_one_process=False,
                     spark_config={},
                     type='integration',
                     updated_at=None,
