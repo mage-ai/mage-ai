@@ -319,6 +319,11 @@ function DependencyGraph({
 
   useEffect(() => {
     setTimeout(() => {
+      /*
+       * On Chrome browsers, the dep graph would not center automatically when
+       * navigating to the Pipeline Editor page even though the "fit" prop was
+       * added to the Canvas component. This centers it if it is not already.
+       */
       if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
         canvasRef?.current?.fitCanvas?.();
       }
