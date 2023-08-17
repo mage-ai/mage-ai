@@ -6,7 +6,6 @@ from singer.schema import Schema
 from mage_integrations.sources.base import Source as BaseSource
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
-    COLUMN_FORMAT_DATETIME,
     COLUMN_FORMAT_UUID,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
@@ -73,6 +72,8 @@ class Source(BaseSource):
                 column_properties = None
                 column_types = []
 
+                valid_replication_keys.append(column_name)
+
                 if column_key is not None and ('PRI' in column_key or 'UNIQUE' == column_key):
                     unique_constraints.append(column_name)
 
@@ -87,13 +88,6 @@ class Source(BaseSource):
                         'numeric' in column_type or 'decimal' in column_type or \
                         'real' in column_type or 'number' in column_type:
                     column_types.append(COLUMN_TYPE_NUMBER)
-                elif 'datetime' in column_type or 'timestamp' in column_type or \
-                        'date' in column_type:
-                    column_format = COLUMN_FORMAT_DATETIME
-                    column_types.append(COLUMN_TYPE_STRING)
-                    # TODO (tommy dang): remove this so we allow any columns to be
-                    # used as a bookmark
-                    valid_replication_keys.append(column_name)
                 elif 'json' in column_type or 'variant' in column_type:
                     column_properties = {}
                     column_types.append(COLUMN_TYPE_OBJECT)
