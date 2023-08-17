@@ -207,7 +207,8 @@ function RetryButton({
               </Text>
               <Spacing mb={1} />
               <Text>
-                Retry the run with changes you have made to the pipeline.
+                Retry the run with changes you have made to the pipeline.<br />
+                Note that the retried run may appear on a previous page.
               </Text>
               <Spacing mb={1} />
               <Button
