@@ -6,6 +6,7 @@ from typing import List, Tuple
 from cryptography.fernet import Fernet, InvalidToken
 
 from mage_ai.orchestration.constants import Entity
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_data_dir, get_repo_path
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
@@ -29,6 +30,9 @@ def get_secrets_dir(
         str: /path/to/secrets/directory
     """
     secrets_dir = os.path.abspath(os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR))
+    # Use expanduser path if the secrets dir hasn't been created yet
+    if not os.path.exists(secrets_dir):
+        secrets_dir = os.path.expanduser(secrets_dir)
 
     if entity == Entity.GLOBAL:
         return secrets_dir
@@ -77,6 +81,7 @@ def delete_secrets_dir(
         shutil.rmtree(secrets_dir)
 
 
+@safe_db_query
 def create_secret(
     name: str,
     value: str,
@@ -142,6 +147,7 @@ def get_valid_secrets_for_repo() -> List:
     return valid_secrets
 
 
+@safe_db_query
 def get_secret_value(
     name: str,
     entity: Entity = Entity.GLOBAL,
@@ -157,20 +163,10 @@ def get_secret_value(
     )
     secret = None
     if key:
-        # For backwards compatibility, check if there is a secret with the name and no uuid
         if key_uuid:
             secret = Secret.query.filter(
                 Secret.name == name,
                 Secret.key_uuid == key_uuid,
-            ).one_or_none()
-
-        if entity == Entity.GLOBAL and not secret:
-            if repo_name is None:
-                repo_name = get_repo_path()
-            secret = Secret.query.filter(
-                Secret.name == name,
-                Secret.repo_name == repo_name,
-                Secret.key_uuid.is_(None),
             ).one_or_none()
 
         if secret:
@@ -178,11 +174,29 @@ def get_secret_value(
                 fernet = Fernet(key)
                 return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
             except InvalidToken:
-                print(f'WARNING: Could not find secret value for secret {name}.')
-        else:
-            print(f'WARNING: Could not find secret value for secret {name}.')
+                pass
+
+        # For backwards compatibility, check if there is a secret with the name and no uuid
+        if entity == Entity.GLOBAL:
+            if repo_name is None:
+                repo_name = get_repo_path()
+            secret_legacy = Secret.query.filter(
+                Secret.name == name,
+                Secret.repo_name == repo_name,
+                Secret.key_uuid.is_(None),
+            ).one_or_none()
+
+            if secret_legacy:
+                try:
+                    fernet = Fernet(key)
+                    return fernet.decrypt(secret_legacy.value.encode('utf-8')).decode('utf-8')
+                except InvalidToken:
+                    pass
+
+        print(f'WARNING: Could not find secret value for secret {name}.')
 
 
+@safe_db_query
 def delete_secret(
     name: str,
     entity: Entity = Entity.GLOBAL,
