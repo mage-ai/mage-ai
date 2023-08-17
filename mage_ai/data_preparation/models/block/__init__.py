@@ -2007,7 +2007,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None) -> Dict:
-        global_vars = global_vars or dict()
+        if global_vars is None:
+            global_vars = dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
                 is_spark_env()):
             if not global_vars.get('spark'):
@@ -2018,6 +2019,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             global_vars['env'] = get_env()
         if 'configuration' not in global_vars:
             global_vars['configuration'] = self.configuration
+        if 'context' not in global_vars:
+            global_vars['context'] = dict()
         return global_vars
 
     def __get_spark_session(self):
