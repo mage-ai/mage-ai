@@ -7,8 +7,15 @@ def parse_runtime_variables(variables_str: str) -> Dict[str, Any]:
     """
     Returns a dictionary of variable to parsed values.
 
+    Args:
+        variables_str (str): The variables json string
+
+    Returns:
+        Dict[str, Any]: The parsed variables dictionary
     """
     vars_parsed = dict()
+    if not variables_str:
+        return vars_parsed
 
     try:
         vars_parsed = json.loads(variables_str)
