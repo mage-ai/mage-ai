@@ -409,6 +409,7 @@ class PipelineRun(BaseModel):
     pipeline_uuid = Column(String(255), index=True)
     execution_date = Column(DateTime(timezone=True), index=True)
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL, index=True)
+    started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
     passed_sla = Column(Boolean, default=False)

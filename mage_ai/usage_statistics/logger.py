@@ -1,12 +1,16 @@
 import json
 import platform
+from datetime import datetime
 from typing import Callable, Dict
 
 import aiohttp
+import pytz
 
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
@@ -85,15 +89,45 @@ class UsageStatisticLogger():
                 users=User.query.count(),
             ),
         )
-    
-    async def pipeline_run_started(self) -> bool:
+
+    @safe_db_query
+    async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
         if not self.help_improve_mage:
             return False
-    
-        return await self.__send_message(
-            EventObjectType.PIPELINE_RUN,
-            EventActionType.STARTED)
 
+        pipeline = pipeline_run.pipeline
+
+        if pipeline.type == PipelineType.INTEGRATION:
+            pipeline_type = 'integration'
+        elif pipeline.type == PipelineType.STREAMING:
+            pipeline_type = 'streaming'
+        else:
+            pipeline_type = 'batch'
+
+        started_at = pipeline_run.started_at \
+            if pipeline_run.started_at else pipeline_run.execution_date
+        completed_at = pipeline_run.completed_at \
+            if pipeline_run.completed_at else datetime.now(tz=pytz.UTC)
+        run_time_seconds = completed_at.timestamp() - started_at.timestamp()
+
+        block_configs = pipeline.all_block_configs
+
+        data = dict(
+            num_pipeline_blocks=len(block_configs),
+            pipeline_run_uuid=pipeline_run.id,
+            pipeline_status=pipeline_run.status,
+            pipeline_type=pipeline_type,
+            pipeline_uuid=pipeline.uuid,
+            run_time_seconds=run_time_seconds,
+            trigger_method=pipeline_run.pipeline_schedule.schedule_type,
+            unique_block_types=set([b.get('type') for b in block_configs]),
+            unique_languages=set([b.get('language') for b in block_configs]),
+        )
+
+        return await self.__send_message(
+            data,
+            event_name='pipeline_run_ended',
+        )
 
     async def __send_message(
         self,

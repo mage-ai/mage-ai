@@ -138,6 +138,13 @@ class Pipeline:
     def version_name(self):
         return f'v{self.version}'
 
+    @property
+    def all_block_configs(self) -> List[Dict]:
+        return self.block_configs + \
+            self.conditional_configs + \
+            self.callback_configs + \
+            self.widget_configs
+
     @classmethod
     def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
         """
@@ -508,7 +515,7 @@ class Pipeline:
         callbacks = [build_shared_args_kwargs(c) for c in self.callback_configs]
         conditionals = [build_shared_args_kwargs(c) for c in self.conditional_configs]
         widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
-        all_blocks = blocks + callbacks + widgets
+        all_blocks = blocks + callbacks + conditionals + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
             self.block_configs,
