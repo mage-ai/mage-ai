@@ -1,22 +1,19 @@
-from typing import Any, Dict, List, Union
 import json
+import traceback
+from typing import Any, Dict, Union
 
 
-def parse_runtime_variables(variables: List[str]) -> Dict[str, Any]:
+def parse_runtime_variables(variables_str: str) -> Dict[str, Any]:
     """
     Returns a dictionary of variable to parsed values.
+
     """
     vars_parsed = dict()
 
-    if variables is None:
-        return vars_parsed
-    for i in range(0, len(variables), 2):
-        key = variables[i]
-        try:
-            value = variables[i + 1]
-        except IndexError:
-            value = None
-        vars_parsed[key] = get_value(value)
+    try:
+        vars_parsed = json.loads(variables_str)
+    except Exception:
+        traceback.print_exc()
     return vars_parsed
 
 
