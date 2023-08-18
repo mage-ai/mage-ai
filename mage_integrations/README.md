@@ -154,9 +154,9 @@ Check `TEST_OUTPUT` to see real-time results!
 Now, let's test writing our output to a destination. Populate the destination config file with a sample configuration in a similar manner to the source config, then run:
 
 ```bash
-python3 mage_integrations/destinations/[INTEGRATION]/__init__.py \
+python3 mage_integrations/destinations/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG_D.json \
-  --state mage_integrations/STATE \
+  --state mage_integrations/TEST_STATE.json \
   --input_file_path mage_integrations/TEST_OUTPUT \
   --debug
 ```
