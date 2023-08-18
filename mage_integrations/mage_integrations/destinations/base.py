@@ -1,4 +1,17 @@
+import ast
+import inspect
+import io
+import json
+import os
+import sys
+import traceback
+from os.path import isfile
+from typing import Dict, List
+
+import singer
+import yaml
 from jsonschema.validators import Draft4Validator
+
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
@@ -31,17 +44,6 @@ from mage_integrations.utils.logger.constants import (
     TYPE_SCHEMA,
     TYPE_STATE,
 )
-from os.path import isfile
-from typing import Dict, List
-import ast
-import inspect
-import io
-import json
-import os
-import singer
-import sys
-import traceback
-import yaml
 
 LOGGER = singer.get_logger()
 MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
