@@ -92,10 +92,10 @@ Once the package is installed, you can run your pipeline through the command
 line.
 
 ```bash
-mage run <project_path> <pipeline_uuid> --runtime-vars [name value]...
+mage run <project_path> <pipeline_uuid> --runtime-vars '{"name": "value"}'...
 
 # example with 2 runtime variables "name" and "ds":
-mage run default_repo default_pipeline --runtime-vars name default ds 2022-08-18
+mage run default_repo default_pipeline --runtime-vars '{"name": "default", "ds": "2022-08-18"}'
 ```
 
 ### Run from Python script
