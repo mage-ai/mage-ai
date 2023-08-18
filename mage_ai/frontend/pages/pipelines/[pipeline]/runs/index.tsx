@@ -215,7 +215,7 @@ function PipelineRuns({
   ), [selectedRuns]);
   const selectedRunningRunsCount = selectedRunningRunsArr.length;
 
-  const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
+  const [updatePipeline]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
     {
       onSuccess: (response: any) => onSuccess(

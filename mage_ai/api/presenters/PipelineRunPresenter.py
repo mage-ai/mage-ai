@@ -21,7 +21,10 @@ class PipelineRunPresenter(BasePresenter):
     ]
 
     async def present(self, **kwargs):
-        if constants.LIST == kwargs['format']:
+        display_format = kwargs.get('format')
+        data_to_display = self.model
+
+        if constants.LIST == display_format:
             query = kwargs.get('query', {})
 
             additional_attributes = [
@@ -43,10 +46,10 @@ class PipelineRunPresenter(BasePresenter):
             if include_pipeline_type or pipeline_type is not None:
                 additional_attributes.append('pipeline_type')
 
-            return self.model.to_dict(include_attributes=additional_attributes)
-        elif constants.DETAIL == kwargs['format']:
-            block_runs = self.model.block_runs
-            data = self.model.to_dict()
+            return data_to_display.to_dict(include_attributes=additional_attributes)
+        elif constants.DETAIL == display_format:
+            block_runs = data_to_display.block_runs
+            data = data_to_display.to_dict()
             pipeline_schedule = self.resource.pipeline_schedule
 
             arr = []
@@ -57,9 +60,18 @@ class PipelineRunPresenter(BasePresenter):
                 arr.append(block_run)
             arr.sort(key=lambda b: b.get('created_at'))
             data['block_runs'] = arr
-            return data
 
-        return self.model.to_dict()
+            return data
+        elif 'with_basic_details' == display_format:
+            data = data_to_display.to_dict()
+
+            return dict(
+                execution_date=data.get('execution_date'),
+                id=data.get('id'),
+                status=data.get('status'),
+            )
+
+        return data_to_display.to_dict()
 
 
 PipelineRunPresenter.register_format(
@@ -78,5 +90,14 @@ PipelineRunPresenter.register_format(
     constants.DETAIL,
     PipelineRunPresenter.default_attributes + [
         'block_runs',
+    ],
+)
+
+PipelineRunPresenter.register_format(
+    'with_basic_details',
+    [
+        'execution_date',
+        'id',
+        'status',
     ],
 )
