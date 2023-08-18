@@ -27,7 +27,7 @@ class ServerTests(TestCase):
 
         self.assertIsNotNone(app)
 
-    @patch('mage_ai.server.server.BASE_PATH', 'test_prefix')
+    @patch('mage_ai.server.server.ROUTES_BASE_PATH', 'test_prefix')
     def test_make_app_with_update_routes(self):
         app = make_app(update_routes=True)
         request = tornado.httputil.HTTPServerRequest(
@@ -51,7 +51,7 @@ class ServerTests(TestCase):
         handler = app.default_router.find_handler(request)
         self.assertIsNone(handler)
 
-    @patch('mage_ai.server.server.BASE_PATH', 'random-test-string-1hasdfh')
+    @patch('mage_ai.server.server.REQUESTS_BASE_PATH', 'random-test-string-1hasdfh')
     @patch('mage_ai.server.server.get_variables_dir')
     def test_replace_base_path(self, mock_variables_dir):
         mock_variables_dir.return_value = os.path.dirname(server_module.__file__)
@@ -67,7 +67,7 @@ class ServerTests(TestCase):
             self.assertNotEqual(f.read().find('random-test-string-1hasdfh'), 0)
         shutil.rmtree(test_dir)
 
-    @patch('mage_ai.server.server.BASE_PATH', 'test_prefix')
+    @patch('mage_ai.server.server.REQUESTS_BASE_PATH', 'test_prefix')
     @patch('mage_ai.server.server.get_variables_dir')
     def test_replace_base_path_directory_exists(self, mock_variables_dir):
         mock_variables_dir.return_value = os.path.dirname(server_module.__file__)
@@ -82,7 +82,7 @@ class ServerTests(TestCase):
         self.assertTrue(len(os.listdir(test_dir)) > 0)
         shutil.rmtree(test_dir)
 
-    @patch('mage_ai.server.server.BASE_PATH', 'test_prefix')
+    @patch('mage_ai.server.server.REQUESTS_BASE_PATH', 'test_prefix')
     @patch('mage_ai.server.server.get_variables_dir')
     def test_replace_base_path_s3_directory(self, mock_variables_dir):
         mock_variables_dir.return_value = 's3://test-bucket/test-prefix'
