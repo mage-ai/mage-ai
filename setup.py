@@ -59,9 +59,6 @@ setuptools.setup(
         'clickhouse': [
             'clickhouse-connect==0.5.20',
         ],
-        'oracle': [
-            'oracledb==1.3.1',
-        ],
         'dbt': [
             'dbt-bigquery==1.4.3',
             'dbt-core==1.4.6',
@@ -77,6 +74,9 @@ setuptools.setup(
         'hdf5': ['tables==3.7.0'],
         'mysql': [
             'mysql-connector-python==8.0.31',
+        ],
+        'oracle': [
+            'oracledb==1.3.1',
         ],
         'postgres': [
             'psycopg2==2.9.3',
