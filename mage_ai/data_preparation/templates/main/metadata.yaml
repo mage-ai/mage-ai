@@ -19,6 +19,15 @@ emr_config:
   # You can create a key pair in page https://console.aws.amazon.com/ec2#KeyPairs and download the key file.
   # ec2_key_name: '[ec2_key_pair_name]'
 
+hdinsight_config:
+  # You can customize the HDInsight cluster with the following parameters
+  cluster_version: '3.6'
+  kind: 'Spark'
+  username: 'admin'
+  password: 'password'
+  headnode_vm_size: 'Large'
+  workernode_vm_size: 'Large'
+
 notification_config:
   alert_on:
     - trigger_failure
