@@ -39,7 +39,7 @@ def retry(
                             '%d of %d' % (func, attempt, max_attempts)
                         )
                     else:
-                        logger.exception(
+                        logger.warning(
                             f'Exception thrown when attempting to run {func}, attempt '
                             f'{attempt} of {max_attempts}',
                             error=e,

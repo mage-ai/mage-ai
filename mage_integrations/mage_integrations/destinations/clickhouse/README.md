@@ -11,3 +11,4 @@ You must enter the following credentials when configuring this destination:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `sqlalchemy_url` | SQLAlchemy URL for clickhouse | `clickhouse://default:@localhost/default` |
+| `table_name` | Destination table name (Optional). Defaults to stream name| `abc123` |

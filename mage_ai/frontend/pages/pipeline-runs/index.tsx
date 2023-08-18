@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
@@ -29,6 +29,7 @@ function RunListPage() {
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
+    disable_retries_grouping: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
@@ -98,7 +99,7 @@ function RunListPage() {
       />
       <Spacing p={2}>
         <Paginate
-          maxPages={9}
+          maxPages={MAX_PAGES}
           onUpdate={(p) => {
             const newPage = Number(p);
             const updatedQuery = {
