@@ -73,7 +73,7 @@ function PipelineBlockRuns({
   const { data: dataPipelineRun } = api.pipeline_runs.detail(
     pipelineRunProp.id,
     {
-      exclude_block_runs: true,
+      _format: 'with_basic_details',
     },
     {
       refreshInterval: 3000,
