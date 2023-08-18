@@ -252,10 +252,9 @@ function BlockRunsTable({
                 forceVisible={downloadingOutput}
                 label={downloadingOutput
                   ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                  : 'Save block run output as CSV file'
+                  : 'Save block run output as CSV file (not supported for dynamic blocks)'
                 }
                 size={null}
-                widthFitContent
               >
                 <Button
                   default
