@@ -21,13 +21,12 @@
 Run
 
 ```bash 
-touch ./mage_integrations/TEST_CATALOG.json \
-      ./mage_integrations/TEST_CONFIG_S.json \
-      ./mage_integrations/TEST_CONFIG_D.json \
-      ./mage_integrations/TEST_STATE.json \
-      ./mage_integrations/TEST_OUTPUT \
-&& echo "{}" >> ./mage_integrations/TEST_STATE.json
-
+touch ./mage_integrations/TEST_CATALOG.json &&
+touch ./mage_integrations/TEST_CONFIG_S.json &&
+touch ./mage_integrations/TEST_CONFIG_D.json &&
+touch ./mage_integrations/TEST_STATE.json &&
+touch ./mage_integrations/TEST_OUTPUT &&
+echo "{}" >> ./mage_integrations/TEST_STATE.json
 ```
 
 To create the following files:
@@ -73,7 +72,7 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
 
 Now, you should see a list of streams that you can sync from the source. Grab a few of interest!
 
-The output from Github looks like:
+The output from GitHub looks like this:
 
 ```json
 [
@@ -134,7 +133,7 @@ For each stream in `TEST_CATALOG.json`, find the nested `metadata` key and add a
 
 ## Test stream execution and save to output file
 
-Run the following command to execute the stream and save the output to a file:
+Finally! It's time to test our stream execution. Run the following command to execute the stream and save the output to a file:
 
 ```bash
 python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
@@ -145,40 +144,19 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
 
 Check `TEST_OUTPUT` to see real-time results!
 
-### Count records
+## Test writing your output to a database
+
+Now, let's test writing our output to a destination. Populate the destination config file with a sample configuration in a similar manner to the source config, then run:
 
 ```bash
-python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
-  --config mage_integrations/TEST_CONFIG_S.json \
-  --catalog mage_integrations/TEST_CATALOG.json \
-  --state mage_integrations/TEST_STATE.json \
-  --count_records \
-  --selected_streams '["your_stream"]'
-```
-
-### Perform a sample query
-
-```bash
-python3 mage_integrations/sources/freshdesk/__init__.py \
-  --config mage_integrations/TEST_CONFIG_S.json \
-  --catalog mage_integrations/TEST_CATALOG.json \
-  --query_json '{"_end_date": null, "_execution_date": "2022-11-17T21:05:53.341319", "_execution_partition": "444/20221117T210443", "_start_date": null, "_limit": 1000, "_offset": 0}' \
-  --state mage_integrations/TEST_STATE.json
-```
-
-### Test writing your output to a database
-
-Populate the destination config file with a sample configuration in a similar manner to the source config, then run:
-
-```bash
-python3 mage_integrations/destinations/[INTEGRATION]/__init__.py \
+python3 mage_integrations/destinations/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG_D.json \
-  --state mage_integrations/STATE \
+  --state mage_integrations/TEST_STATE.json \
   --input_file_path mage_integrations/TEST_OUTPUT \
   --debug
 ```
 
-To write `TEST_OUTPUT` to your destination.
+To write `TEST_OUTPUT` to your destination. Note: you will need a sample data source to write to.
 
 ## Source to destination end-to-end
 
@@ -204,4 +182,55 @@ python3 mage_integrations/sources/github/__init__.py \
   --config mage_integrations/TEST_CONFIG_D.json \
   --state mage_integrations/TEST_STATE.json \
   --debug
+```
+
+## Test in the Mage UI
+
+Once you've tested your tap in the terminal, it's time to test it in Mage. 
+
+First, return to your terminal and run `pip install -U mage_integrations/` in your `mage_integrations` directory. That will build our _new_ `mage-integrations` package and make the changes you made available to the UI.
+
+Open up Mage (`localhost:3000` in dev) and create a new data integration pipeline:
+
+<div align="center">
+<img src="docs/media/adapt-existing-source/new-pipeline.png" width="50%"/>
+</div>
+
+Select your source from the list:
+
+<div align="center">
+<img src="docs/media/adapt-existing-source/select-source.png" width="50%"/>
+</div>
+
+Now, perform the following in the Mage UI to verify a working source:
+
+- Test the connection
+- View and select streams
+- Sync one stream to a destination
+  - If you're adding a tap in a PR, be sure to add logs of the source and show data in the destination table to the PR description.
+- If incremental sync is supported, please also test it: check if the state is updated and fetched correctly.
+
+## Count records
+
+You can count the number of records in your stream with the following command:
+
+```bash
+python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
+  --config mage_integrations/TEST_CONFIG_S.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json \
+  --count_records \
+  --selected_streams '["your_stream"]'
+```
+
+### Perform a sample query
+
+Use this template to perform a sample query of your data:
+
+```bash
+python3 mage_integrations/sources/freshdesk/__init__.py \
+  --config mage_integrations/TEST_CONFIG_S.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --query_json '{"_end_date": null, "_execution_date": "2022-11-17T21:05:53.341319", "_execution_partition": "444/20221117T210443", "_start_date": null, "_limit": 1000, "_offset": 0}' \
+  --state mage_integrations/TEST_STATE.json
 ```
