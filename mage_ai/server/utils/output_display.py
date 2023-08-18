@@ -301,7 +301,9 @@ def execute_custom_code():
     \'\'\'
 
     global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
-    global_vars['context'] = context
+    if pipeline.run_pipeline_in_one_process:
+        # Use shared context for blocks
+        global_vars['context'] = context
 
     try:
         global_vars[\'spark\'] = spark
