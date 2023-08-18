@@ -6,6 +6,7 @@ import shutil
 from typing import Callable, Dict, List
 
 import aiofiles
+import pytz
 import yaml
 from jinja2 import Template
 
@@ -55,7 +56,7 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.concurrency_config = dict()
-        self.created_at = datetime.datetime.utcnow()
+        self.created_at = None
         self.data_integration = None
         self.description = None
         self.executor_config = dict()
@@ -68,7 +69,7 @@ class Pipeline:
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.utcnow()
+        self.updated_at = datetime.datetime.now(tz=pytz.UTC)
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -155,7 +156,7 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
-                created_at=str(datetime.datetime.utcnow()),
+                created_at=str(datetime.datetime.now(tz=pytz.UTC)),
                 name=name,
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),
