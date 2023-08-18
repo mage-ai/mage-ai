@@ -1,20 +1,23 @@
+import json
+from typing import Dict, Generator, List, Tuple
+
 from mage_integrations.connections.trino import Trino as TrinoConnection
-from mage_integrations.destinations.constants import (
-    UNIQUE_CONFLICT_METHOD_UPDATE,
-)
+from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
     clean_column_name,
+)
+from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
-from mage_integrations.destinations.trino.utils import convert_column_type, convert_json_or_string
+from mage_integrations.destinations.trino.utils import (
+    convert_column_type,
+    convert_json_or_string,
+)
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Dict, Generator, List, Tuple
-import json
-
 
 # https://trino.io/docs/current/develop/supporting-merge.html
 MERGEABLE_CONNECTORS = [
@@ -54,6 +57,7 @@ class TrinoConnector(Destination):
     ) -> List[str]:
         return [
             build_create_table_command(
+                column_identifier='"',
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
@@ -224,8 +228,10 @@ DESCRIBE {schema_name}.{table_name}
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[List[Tuple]]:
+        if tags is None:
+            tags = {}
         results = []
 
         if self.debug:
@@ -273,7 +279,7 @@ DESCRIBE {schema_name}.{table_name}
         self,
         record_data: List[Dict],
         stream: str,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> List[str]:
         return []
 
