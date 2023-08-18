@@ -3,7 +3,7 @@ import asyncio
 import json
 import os
 import re
-from typing import Dict
+from typing import Dict, List
 
 import openai
 from langchain.chains import LLMChain
@@ -203,7 +203,7 @@ class LLMPipelineWizard:
     async def async_generate_block_with_description(
             self,
             block_description: str,
-            upstream_blocks: [str]) -> dict:
+            upstream_blocks: List[str] = None) -> dict:
         messages = [{"role": "user", "content": block_description}]
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
