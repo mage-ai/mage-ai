@@ -37,6 +37,11 @@ class Github(Source):
         _sync(
             client, self.config, self.state or {}, catalog.to_dict(), logger=self.logger
         )
+    
+    def test_connection(self) -> None:
+        client = GithubClient(self.config)
+        client.verify_access_for_repo()
+        
 
 
 if __name__ == "__main__":
