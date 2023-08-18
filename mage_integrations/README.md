@@ -142,6 +142,11 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
   --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
 ```
 
+python3 mage_integrations/sources/github/__init__.py \
+  --config mage_integrations/TEST_CONFIG_S.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
+
 Check `TEST_OUTPUT` to see real-time results!
 
 ## Test writing your output to a database
