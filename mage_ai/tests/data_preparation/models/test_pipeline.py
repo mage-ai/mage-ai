@@ -609,6 +609,7 @@ class PipelineTest(DBTestCase):
                 config_json,
                 dict(
                     concurrency_config=dict(),
+                    created_at='2023-08-01 08:08:24',
                     data_integration=None,
                     description=None,
                     executor_config={},
