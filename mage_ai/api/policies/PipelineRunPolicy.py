@@ -92,6 +92,7 @@ PipelineRunPolicy.allow_query([
     'backfill_id',
     'disable_retries_grouping',
     'end_timestamp',
+    'exclude_block_runs',
     'global_data_product_uuid',
     'include_pipeline_type',
     'order_by[]',

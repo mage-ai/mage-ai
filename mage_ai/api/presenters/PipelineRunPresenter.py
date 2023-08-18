@@ -21,9 +21,8 @@ class PipelineRunPresenter(BasePresenter):
     ]
 
     async def present(self, **kwargs):
+        query = kwargs.get('query', {})
         if constants.LIST == kwargs['format']:
-            query = kwargs.get('query', {})
-
             additional_attributes = [
                 'block_runs',
                 'block_runs_count',
@@ -45,18 +44,24 @@ class PipelineRunPresenter(BasePresenter):
 
             return self.model.to_dict(include_attributes=additional_attributes)
         elif constants.DETAIL == kwargs['format']:
-            block_runs = self.model.block_runs
             data = self.model.to_dict()
-            pipeline_schedule = self.resource.pipeline_schedule
 
-            arr = []
-            for r in block_runs:
-                block_run = r.to_dict()
-                block_run['pipeline_schedule_id'] = pipeline_schedule.id
-                block_run['pipeline_schedule_name'] = pipeline_schedule.name
-                arr.append(block_run)
-            arr.sort(key=lambda b: b.get('created_at'))
-            data['block_runs'] = arr
+            exclude_block_runs = query.get('exclude_block_runs', [False])
+            if exclude_block_runs:
+                exclude_block_runs = exclude_block_runs[0]
+
+            if not exclude_block_runs:
+                block_runs = self.model.block_runs
+                pipeline_schedule = self.resource.pipeline_schedule
+                arr = []
+                for r in block_runs:
+                    block_run = r.to_dict()
+                    block_run['pipeline_schedule_id'] = pipeline_schedule.id
+                    block_run['pipeline_schedule_name'] = pipeline_schedule.name
+                    arr.append(block_run)
+                arr.sort(key=lambda b: b.get('created_at'))
+                data['block_runs'] = arr
+
             return data
 
         return self.model.to_dict()
