@@ -139,8 +139,9 @@ def get_valid_secrets_for_repo() -> List:
     if secrets.count() > 0:
         for secret in secrets:
             try:
-                fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
-                valid_secrets.append(secret)
+                if secret:
+                    fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+                    valid_secrets.append(secret)
             except InvalidToken:
                 pass
 
