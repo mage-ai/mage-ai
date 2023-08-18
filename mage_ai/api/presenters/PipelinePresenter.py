@@ -7,6 +7,7 @@ class PipelinePresenter(BasePresenter):
     default_attributes = [
         'blocks',
         'concurrency_config',
+        'created_at',
         'data_integration',
         'description',
         'executor_config',
