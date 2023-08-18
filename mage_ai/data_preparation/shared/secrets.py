@@ -164,6 +164,7 @@ def get_secret_value(
     )
     secret = None
     if key:
+        fernet = Fernet(key)
         if key_uuid:
             secret = Secret.query.filter(
                 Secret.name == name,
@@ -172,7 +173,6 @@ def get_secret_value(
 
         if secret:
             try:
-                fernet = Fernet(key)
                 return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
             except InvalidToken:
                 pass
@@ -189,12 +189,11 @@ def get_secret_value(
 
             if secret_legacy:
                 try:
-                    fernet = Fernet(key)
                     return fernet.decrypt(secret_legacy.value.encode('utf-8')).decode('utf-8')
                 except InvalidToken:
                     pass
 
-        print(f'WARNING: Could not find secret value for secret {name}.')
+    print(f'WARNING: Could not find secret value for secret {name}.')
 
 
 @safe_db_query
