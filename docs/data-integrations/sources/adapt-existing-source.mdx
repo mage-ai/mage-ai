@@ -94,12 +94,8 @@ Now, we need to override some methods in the class to make it work with Mage. Th
 ```python
 from typing import List
 
-from singer import catalog as catalog_singer
-
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
-from mage_integrations.utils.dictionary import ignore_keys
-
 
 class YourSource(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
@@ -111,7 +107,6 @@ class YourSource(Source):
     def test_connection(self) -> None:
         client = YourSource(YOUR_CONFIG)
         client.close()
-
 
 if __name__ == "__main__":
     main(YourSource, schemas_folder="tap_your_tap/schemas")
