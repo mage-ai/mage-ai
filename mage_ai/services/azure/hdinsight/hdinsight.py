@@ -32,3 +32,30 @@ def get_hdinsight_client(hdinsight_config: HDInsightConfig):
 
     hdinsight_client = HDInsightManagementClient(credentials, subscription_id)
     return hdinsight_client
+
+
+def describe_cluster(cluster_id: str, hdinsight_config: HDInsightConfig):
+    if type(hdinsight_config) is dict:
+        hdinsight_config = HDInsightConfig.load(config=hdinsight_config)
+
+    hdinsight_client = get_hdinsight_client(hdinsight_config=hdinsight_config)
+
+    cluster = hdinsight_client.clusters.get(
+        resource_group_name=hdinsight_config.resource_group_name,
+        cluster_name=cluster_id,
+    )
+
+    return cluster
+
+
+def list_clusters(hdinsight_config: HDInsightConfig):
+    if type(hdinsight_config) is dict:
+        hdinsight_config = HDInsightConfig.load(config=hdinsight_config)
+
+    hdinsight_client = get_hdinsight_client(hdinsight_config=hdinsight_config)
+
+    clusters = hdinsight_client.clusters.list_by_resource_group(
+        resource_group_name=hdinsight_config.resource_group_name,
+    )
+
+    return clusters
