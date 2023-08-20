@@ -75,6 +75,9 @@ setuptools.setup(
         'mysql': [
             'mysql-connector-python==8.0.31',
         ],
+        'oracle': [
+            'oracledb==1.3.1',
+        ],
         'postgres': [
             'psycopg2==2.9.3',
             'psycopg2-binary==2.9.3',
@@ -140,6 +143,7 @@ setuptools.setup(
             'ldap3==2.9.1',
             'openai>=0.27.8',
             'opensearch-py==2.0.0',
+            'oracledb==1.3.1',
             'pika==1.3.1',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
