@@ -6,6 +6,7 @@ import re
 from typing import Dict, List
 
 import openai
+from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -21,6 +22,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.template import fetch_template_source
+from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.io.base import DataSource
 from mage_ai.server.logger import Logger
 
@@ -50,13 +52,16 @@ A data pipeline reads data from source, transform the data and export data into 
 The content delimited by triple backticks contains explains of all components in one data pipeline.
 Write a detailed summarization of the data pipeline based on the content provided.
 ```{block_content}```"""
+
+# Prompt to ask LLM to generate code based on the code description.
+# Respond in JSON format.
 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON = """
 The content within the triple backticks is a code description.
 
 Your task is to answer the following two questions.
 
 1. Is there any filter logic mentioned in the description to remove rows or columns of the data?
-If yes, write ONLY the filter logic in Python language WITHOUT pandas dataframe.
+If yes, write ONLY the filter logic as a if condition without "if" at beginning.
 Return your response as one field in JSON format with the key "action_code".
 
 2. Does the description mention any columns or rows to aggregrate on or group by?
@@ -67,6 +72,9 @@ with the key "arguments".
 
 Provide your response in JSON format.
 """
+
+# Prompt to ask LLM to generate SQL code based on the code description.
+# Respond in JSON format.
 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL = """
 The content within the triple backticks is a code description.
 Implement it in SQL language.
@@ -74,6 +82,17 @@ Implement it in SQL language.
 <code description>: ```{code_description}```
 
 Return your response in JSON format with the key "sql_code".
+"""
+
+# Prompt to ask LLM to generate code when base template is used.
+# Respond in JSON format.
+PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE = """
+The content within the triple backticks is a code description.
+Implement it in {code_language} language.
+
+<code description>: ```{code_description}```
+
+Provide your response in JSON format with the key "code".
 """
 PROMPT_TO_SPLIT_BLOCKS = """
 A BLOCK does one action either reading data from one data source, transforming the data from
@@ -225,7 +244,7 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
-    async def async_llm_inferene_with_code_description_variable(
+    async def __async_llm_inferene_with_code_description_variable(
             self,
             code_description: str,
             template: str) -> Dict:
@@ -237,8 +256,24 @@ class LLMPipelineWizard:
         )
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
         customized_logic_json = await chain.arun(code_description=code_description)
-        print("customized_logic_json:")
-        print(customized_logic_json)
+        return json.loads(customized_logic_json)
+
+    async def __async_llm_generate_customized_code_with_base_template(
+            self,
+            code_description: str,
+            code_language: str,
+            template: str) -> Dict:
+        prompt_template = PromptTemplate(
+            input_variables=[
+                'code_description',
+                'code_language',
+            ],
+            template=template,
+        )
+        chain = LLMChain(llm=self.llm, prompt=prompt_template)
+        customized_logic_json = await chain.arun(
+            code_description=code_description,
+            code_language=code_language)
         return json.loads(customized_logic_json)
 
     async def async_create_customized_code_in_block(
@@ -246,8 +281,12 @@ class LLMPipelineWizard:
             block_code: str,
             block_language: str,
             code_description: str) -> str:
+        """
+        Based on the code description to generate code.
+        It supports both python or SQL languages.
+        """
         if block_language == BlockLanguage.PYTHON:
-            customized_logic = await self.async_llm_inferene_with_code_description_variable(
+            customized_logic = await self.__async_llm_inferene_with_code_description_variable(
                 code_description,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
@@ -260,7 +299,7 @@ class LLMPipelineWizard:
                     'arguments=[]',
                     f'arguments={customized_logic.get("arguments")}')
         elif block_language == BlockLanguage.SQL:
-            customized_logic = await self.async_llm_inferene_with_code_description_variable(
+            customized_logic = await self.__async_llm_inferene_with_code_description_variable(
                 code_description,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
             )
@@ -284,16 +323,50 @@ class LLMPipelineWizard:
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
-            block_code_template = fetch_template_source(
-                    block_type=block_type,
-                    config=config,
-                    language=block_language,
-                    pipeline_type=pipeline_type,
-                )
-            block_code = await self.async_create_customized_code_in_block(
-                block_code_template,
-                block_language,
-                block_description)
+            if 'data_source' not in config.keys() and \
+                    ('action_type' not in config.keys() or 'axis' not in config.keys()):
+                # Fill customized code for default template.
+                # Logic to check default template should be same
+                # as __fetch_transformer_templates function,
+                customized_logic = await \
+                    self.__async_llm_generate_customized_code_with_base_template(
+                        block_description,
+                        block_language,
+                        PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                    )
+                if 'code' in customized_logic.keys():
+                    config["existing_code"] = customized_logic.get("code")
+                block_code = fetch_template_source(
+                        block_type=block_type,
+                        config=config,
+                        language=block_language,
+                        pipeline_type=pipeline_type,
+                    )
+            else:
+                try:
+                    block_code_template = fetch_template_source(
+                            block_type=block_type,
+                            config=config,
+                            language=block_language,
+                            pipeline_type=pipeline_type,
+                        )
+                    block_code = await self.async_create_customized_code_in_block(
+                        block_code_template,
+                        block_language,
+                        block_description)
+                except TemplateNotFound:
+                    # Use default template if template not found and
+                    # ask LLM to fully generate the customized code.
+                    customized_logic = await \
+                        self.__async_llm_generate_customized_code_with_base_template(
+                            block_description,
+                            block_language,
+                            PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                        )
+                    block_code = template_env.get_template('transformers/default.jinja').render(
+                            code=customized_logic.get("code"),
+                        ) + '\n'
+
             return dict(
                 block_type=block_type,
                 configuration=config,
