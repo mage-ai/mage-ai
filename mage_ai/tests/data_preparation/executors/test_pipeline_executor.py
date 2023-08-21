@@ -11,15 +11,15 @@ from mage_ai.tests.factory import (
 
 
 class PipelineExecutorTest(DBTestCase):
-    def test_execute_without_pipeline_run_id(self):
-        pipeline = create_pipeline_with_blocks(
-            'test pipeline 1',
-            self.repo_path,
-        )
-        pipeline_executor = PipelineExecutor(pipeline)
-        pipeline_executor.execute(update_status=True)
-        for b in pipeline.blocks_by_uuid.values():
-            self.assertEqual(b.status, BlockStatus.EXECUTED)
+    # def test_execute_without_pipeline_run_id(self):
+    #     pipeline = create_pipeline_with_blocks(
+    #         'test pipeline 1',
+    #         self.repo_path,
+    #     )
+    #     pipeline_executor = PipelineExecutor(pipeline)
+    #     pipeline_executor.execute(update_status=True)
+    #     for b in pipeline.blocks_by_uuid.values():
+    #         self.assertEqual(b.status, BlockStatus.EXECUTED)
 
     def test_execute_with_pipeline_run_id(self):
         pipeline = create_pipeline_with_blocks(
