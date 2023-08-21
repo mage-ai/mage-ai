@@ -1,7 +1,9 @@
 import json
 import traceback
+from datetime import datetime
 from typing import Callable, Dict, List, Union
 
+import pytz
 import requests
 
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -570,7 +572,12 @@ class BlockExecutor:
                 )
 
             block_run = BlockRun.query.get(block_run_id)
-            block_run.update(status=status)
+            update_kwargs = dict(
+                status=status
+            )
+            if status == BlockRun.BlockRunStatus.COMPLETED:
+                update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+            block_run.update(**update_kwargs)
             return
         except Exception as err2:
             self.logger.exception(

@@ -1,12 +1,14 @@
+import os
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import IO, Any, Callable, Union
+
+import pandas as pd
+from pandas import DataFrame
+
 from mage_ai.io.constants import SQL_RESERVED_WORDS
 from mage_ai.shared.logger import VerbosePrintHandler
-from pandas import DataFrame
-from typing import IO, Any, Callable, Union
-import os
-import pandas as pd
-import re
 
 QUERY_ROW_LIMIT = 10_000_000
 

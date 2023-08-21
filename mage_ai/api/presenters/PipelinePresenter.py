@@ -16,6 +16,7 @@ class PipelinePresenter(BasePresenter):
         'name',
         'notification_config',
         'retry_config',
+        'run_pipeline_in_one_process',
         'spark_config',
         'tags',
         'type',
