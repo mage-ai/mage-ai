@@ -1,6 +1,7 @@
-from mage_integrations.sources.mysql import MySQL
-from unittest.mock import MagicMock, patch
 import unittest
+from unittest.mock import MagicMock, patch
+
+from mage_integrations.sources.mysql import MySQL
 
 
 def build_sample_mysql_rows():
@@ -66,7 +67,7 @@ class MySQLSourceTests(unittest.TestCase):
                                         'metadata': {
                                             'table-key-properties': ['id'],
                                             'forced-replication-method': 'FULL_TABLE',
-                                            'valid-replication-keys': ['id', 'date_joined'],
+                                            'valid-replication-keys': ['id'],
                                             'inclusion': 'available',
                                             'schema-name': 'demo_users',
                                         },
@@ -97,7 +98,7 @@ class MySQLSourceTests(unittest.TestCase):
                                     },
                                     {
                                         'breadcrumb': ('properties', 'date_joined'),
-                                        'metadata': {'inclusion': 'automatic'},
+                                        'metadata': {'inclusion': 'available'},
                                     },
                                     {
                                         'breadcrumb': ('properties', 'power_level'),
