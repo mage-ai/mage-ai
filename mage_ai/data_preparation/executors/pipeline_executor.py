@@ -34,6 +34,19 @@ class PipelineExecutor:
         update_status: bool = False,
         **kwargs,
     ) -> None:
+        """
+        Executes the pipeline, handling block runs and logging.
+
+        Args:
+            allow_blocks_to_fail (bool): Whether to allow blocks to fail during execution.
+            analyze_outputs (bool): Whether to analyze block outputs during execution.
+            global_vars (Dict): Global variables accessible to block executions.
+            pipeline_run_id (int): Identifier of the pipeline run.
+            run_sensors (bool): Whether to run sensors during execution.
+            run_tests (bool): Whether to run tests during execution.
+            update_status (bool): Whether to update the execution status.
+            **kwargs: Additional keyword arguments.
+        """
         if pipeline_run_id is None:
             # Execute the pipeline without block runs
             asyncio.run(self.pipeline.execute(
@@ -61,6 +74,14 @@ class PipelineExecutor:
         allow_blocks_to_fail: bool = False,
         global_vars: Dict = None
     ):
+        """
+        Runs blocks asynchronously within a pipeline run.
+
+        Args:
+            pipeline_run (PipelineRun): The current pipeline run.
+            allow_blocks_to_fail (bool): Whether to allow blocks to fail during execution.
+            global_vars (Dict): Global variables accessible to block executions.
+        """
         if global_vars is None:
             global_vars = dict()
 
