@@ -669,5 +669,210 @@
 		"playground": {
 			"mode": "hide"
 		}
+	},
+	"redirects": [{
+		"source": "/guides/streaming/contributing",
+		"destination": "/contributing/backend/streaming/sources-and-destinations"
+	},
+	{
+		"source": "/community/contributing",
+		"destination": "/contributing/overview"
+	},
+	{
+		"source": "/guides/data-validation",
+		"destination": "/development/data-validation"
+	},
+	{
+		"source": "/production/observability/logging",
+		"destination": "/development/observability/logging"
+	},
+	{
+		"source": "/production/observability/monitoring",
+		"destination": "/development/observability/monitoring"
+	},
+	{
+		"source": "/development/versioning/file-versions",
+		"destination": "/getting-started/file-versions"
+	},
+	{
+		"source": "/production/configuring-production-settings/runtime-variable",
+		"destination": "/getting-started/runtime-variable"
+	},
+	{
+		"source": "/development/secrets/secrets",
+		"destination": "/getting-started/secrets"
+	},
+	{
+		"source": "/developing-in-the-cloud/setting-up-git",
+		"destination": "/getting-started/setting-up-git"
+	},
+	{
+		"source": "/guides/r-blocks",
+		"destination": "/guides/blocks/r-blocks"
+	},
+	{
+		"source": "/guides/sql-blocks",
+		"destination": "/guides/blocks/sql-blocks"
+	},
+	{
+		"source": "/guides/transformer-blocks",
+		"destination": "/guides/blocks/transformer-blocks"
+	},
+	{
+		"source": "/tutorials/examples",
+		"destination": "/guides/examples"
+	},
+	{
+		"source": "/tutorials/load-api-data",
+		"destination": "/guides/load-api-data"
+	},
+	{
+		"source": "/tutorials/train-model",
+		"destination": "/guides/train-model"
+	},
+	{
+		"source": "/tutorials/train/complete-project",
+		"destination": "/guides/train/complete-project"
+	},
+	{
+		"source": "/production/observability/alerting-email",
+		"destination": "/integrations/observability/alerting-email"
+	},
+	{
+		"source": "/production/observability/alerting-opsgenie",
+		"destination": "/integrations/observability/alerting-opsgenie"
+	},
+	{
+		"source": "/production/observability/alerting-slack",
+		"destination": "/integrations/observability/alerting-slack"
+	},
+	{
+		"source": "/production/observability/alerting-teams",
+		"destination": "/integrations/observability/alerting-teams"
+	},
+	{
+		"source": "/production/observability/datadog",
+		"destination": "/integrations/observability/datadog"
+	},
+	{
+		"source": "/integrations/great-expectations",
+		"destination": "/integrations/observability/great-expectations"
+	},
+	{
+		"source": "/integrations/metaplane",
+		"destination": "/integrations/observability/metaplane"
+	},
+	{
+		"source": "/production/observability/newrelic",
+		"destination": "/integrations/observability/newrelic"
+	},
+	{
+		"source": "/production/observability/sentry",
+		"destination": "/integrations/observability/sentry"
+	},
+	{
+		"source": "/guides/triggers/configure-triggers-in-code",
+		"destination": "/orchestration/triggers/configure-triggers-in-code"
+	},
+	{
+		"source": "/guides/triggers/events/aws",
+		"destination": "/orchestration/triggers/events/aws"
+	},
+	{
+		"source": "/guides/triggers/events/overview",
+		"destination": "/orchestration/triggers/events/overview"
+	},
+	{
+		"source": "/guides/schedule-pipelines",
+		"destination": "/orchestration/triggers/schedule-pipelines"
+	},
+	{
+		"source": "/guides/trigger-pipeline-api",
+		"destination": "/orchestration/triggers/trigger-pipeline-api"
+	},
+	{
+		"source": "/production/configuring-production-settings/secrets",
+		"destination": "/production/deploying-to-cloud/secrets/AWS"
+	},
+	{
+		"source": "/development/secrets/GCP",
+		"destination": "/production/deploying-to-cloud/secrets/GCP"
+	},
+	{
+		"source": "/developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+		"destination": "/production/developing-in-the-cloud/cloud-dev-environments/aws-ecs"
+	},
+	{
+		"source": "/developing-in-the-cloud/cloud-dev-environments/cloud-run",
+		"destination": "/production/developing-in-the-cloud/cloud-dev-environments/cloud-run"
+	},
+	{
+		"source": "/developing-in-the-cloud/cloud-dev-environments/kubernetes",
+		"destination": "/production/developing-in-the-cloud/cloud-dev-environments/kubernetes"
+	},
+	{
+		"source": "/developing-in-the-cloud/cloud-dev-environments/overview",
+		"destination": "/production/developing-in-the-cloud/cloud-dev-environments/overview"
+	},
+	{
+		"source": "/developing-in-the-cloud/workspaces/kubernetes",
+		"destination": "/production/developing-in-the-cloud/workspaces/kubernetes"
+	},
+	{
+		"source": "/developing-in-the-cloud/workspaces/overview",
+		"destination": "/production/developing-in-the-cloud/workspaces/overview"
+	},
+	{
+		"source": "/guides/streaming/destinations/amazon-s3",
+		"destination": "/streaming/destinations/amazon-s3"
+	},
+	{
+		"source": "/guides/streaming/destinations/azure_data_lake",
+		"destination": "/streaming/destinations/azure_data_lake"
+	},
+	{
+		"source": "/guides/streaming/destinations/dummy",
+		"destination": "/streaming/destinations/dummy"
+	},
+	{
+		"source": "/guides/streaming/destinations/kafka",
+		"destination": "/streaming/destinations/kafka"
+	},
+	{
+		"source": "/guides/streaming/destinations/kinesis",
+		"destination": "/streaming/destinations/kinesis"
+	},
+	{
+		"source": "/guides/streaming/destinations/mongodb",
+		"destination": "/streaming/destinations/mongodb"
+	},
+	{
+		"source": "/guides/streaming/destinations/opensearch",
+		"destination": "/streaming/destinations/opensearch"
+	},
+	{
+		"source": "/guides/streaming/destinations/redshift",
+		"destination": "/streaming/destinations/redshift"
+	},
+	{
+		"source": "/guides/streaming/overview",
+		"destination": "/streaming/overview"
+	},
+	{
+		"source": "/guides/streaming/sources/amazon-sqs",
+		"destination": "/streaming/sources/amazon-sqs"
+	},
+	{
+		"source": "/guides/streaming/sources/azure-event-hub",
+		"destination": "/streaming/sources/azure-event-hub"
+	},
+	{
+		"source": "/guides/streaming/sources/google-cloud-pubsub",
+		"destination": "/streaming/sources/google-cloud-pubsub"
+	},
+	{
+		"source": "/guides/streaming/sources/kafka",
+		"destination": "/streaming/sources/kafka"
 	}
-}
+]
+	}
