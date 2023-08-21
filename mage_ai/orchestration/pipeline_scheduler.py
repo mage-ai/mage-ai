@@ -305,17 +305,23 @@ class PipelineScheduler:
                 status=BlockRun.BlockRunStatus.FAILED,
             )
 
-        update_status()
+        error = kwargs.get('error', {})
+        if error:
+            metrics['error'] = dict(
+                error=str(error.get('error')),
+                errors=error.get('errors'),
+                message=error.get('message')
+            )
 
-        if 'error' in kwargs:
-            metrics['error'] = kwargs['error']
+        update_status()
 
         tags = self.build_tags(
             block_run_id=block_run.id,
             block_uuid=block_run.block_uuid,
+            error=error.get('error')
         )
 
-        self.logger.info(
+        self.logger.exception(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) failed.',
             **tags,
         )
@@ -866,11 +872,11 @@ def run_integration_stream(
         data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}'
 
         data_loader_block_run = find(
-            lambda b: b.block_uuid == data_loader_uuid,
+            lambda b, u=data_loader_uuid: b.block_uuid == u,
             all_block_runs,
         )
         data_exporter_block_run = find(
-            lambda b: b.block_uuid == data_exporter_uuid,
+            lambda b, u=data_exporter_uuid: b.block_uuid == u,
             block_runs_for_stream,
         )
         if not data_loader_block_run or not data_exporter_block_run:

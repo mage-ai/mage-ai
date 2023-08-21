@@ -501,9 +501,12 @@ def config_file_loader_and_configuration(
         database = kwargs.get('database') or profile.get('project')
         schema = profile.get('dataset')
 
-        config_file_loader = ConfigFileLoader(config=dict(
+        config_file_loader_kwargs = dict(
             GOOGLE_SERVICE_ACC_KEY_FILEPATH=keyfile,
-        ))
+        )
+        if profile.get('location'):
+            config_file_loader_kwargs['GOOGLE_LOCATION'] = profile.get('location')
+        config_file_loader = ConfigFileLoader(config=config_file_loader_kwargs)
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,

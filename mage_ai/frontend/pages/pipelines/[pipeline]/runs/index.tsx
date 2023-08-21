@@ -11,7 +11,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
-import Paginate from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipeIconGradient from '@oracle/icons/custom/PipeIconGradient';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
@@ -69,9 +69,6 @@ const TABS = [
   TAB_BLOCK_RUNS,
 ];
 
-const LIMIT = 30;
-const MAX_PAGES = 9;
-
 type PipelineRunsProp = {
   pipeline: {
     uuid: string;
@@ -118,7 +115,7 @@ function PipelineRuns({
     pipelineUUID,
   ]);
 
-  const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -154,8 +151,8 @@ function PipelineRuns({
   ]);
 
   const runsRequestQuery: PipelineRunReqQueryParamsType = {
-    _limit: LIMIT,
-    _offset: page * LIMIT,
+    _limit: ROW_LIMIT,
+    _offset: page * ROW_LIMIT,
     pipeline_uuid: pipelineUUID,
   };
   let blockRunsRequestQuery = ignoreKeys(
@@ -174,6 +171,7 @@ function PipelineRuns({
 
   let pipelineRunsRequestQuery = {
     ...runsRequestQuery,
+    disable_retries_grouping: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
@@ -217,7 +215,7 @@ function PipelineRuns({
   ), [selectedRuns]);
   const selectedRunningRunsCount = selectedRunningRunsArr.length;
 
-  const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
+  const [updatePipeline]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
     {
       onSuccess: (response: any) => onSuccess(
@@ -309,13 +307,14 @@ function PipelineRuns({
             ...q,
             page: newPage >= 0 ? newPage : 0,
           };
+          setSelectedRun(null);
           router.push(
             '/pipelines/[pipeline]/runs',
             `/pipelines/${pipelineUUID}/runs?${queryString(updatedQuery)}`,
           );
         }}
         page={Number(page)}
-        totalPages={Math.ceil(totalRuns / LIMIT)}
+        totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
       />
     </Spacing>
   ), [

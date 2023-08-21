@@ -803,7 +803,7 @@ function PipelineListPage() {
             maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
           >
             <Table
-              columnFlex={[null, null, null, 2, null, null, 1, null, null, null]}
+              columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
               columns={[
                 {
                   label: () => '',
@@ -823,6 +823,9 @@ function PipelineListPage() {
                 },
                 {
                   uuid: 'Updated at',
+                },
+                {
+                  uuid: 'Created at',
                 },
                 {
                   uuid: 'Tags',
@@ -929,6 +932,7 @@ function PipelineListPage() {
               rows={pipelines.map((pipeline, idx) => {
                 const {
                   blocks,
+                  created_at: createdAt,
                   description,
                   schedules,
                   tags,
@@ -1020,6 +1024,14 @@ function PipelineListPage() {
                     title={updatedAt}
                   >
                     {updatedAt ? updatedAt.slice(0, -3) : <>&#8212;</>}
+                  </Text>,
+                  <Text
+                    key={`pipeline_created_at_${idx}`}
+                    monospace
+                    small
+                    title={createdAt}
+                  >
+                    {createdAt ? createdAt.slice(0, 16) : <>&#8212;</>}
                   </Text>,
                   tagsEl,
                   <Text
