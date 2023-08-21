@@ -253,8 +253,7 @@ class PipelineSchedule(BaseModel):
 
         if not self.landing_time_enabled() and \
                 self.start_time is not None and \
-                compare(now, self.start_time) == -1:
-
+                compare(now, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
             return False
 
         try:
