@@ -924,6 +924,7 @@ class Pipeline:
                             block.upstream_blocks,
                             [],
                             force_update=True,
+                            variables=self.variables,
                         )
 
                     if widget:
@@ -1019,7 +1020,7 @@ class Pipeline:
 
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
-        block.update_upstream_blocks(upstream_blocks)
+        block.update_upstream_blocks(upstream_blocks, variables=self.variables)
         block.pipeline = self
         if priority is None or priority >= len(mapping.keys()):
             mapping[block.uuid] = block
@@ -1208,7 +1209,10 @@ class Pipeline:
                         ]
 
                 # All blocks will depend on non-widget type blocks
-                block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
+                block.update_upstream_blocks(
+                    self.get_blocks(upstream_block_uuids, widget=False),
+                    variables=self.variables,
+                )
         elif callback_block_uuids is not None:
             callback_blocks = []
             for callback_block_uuid in callback_block_uuids:

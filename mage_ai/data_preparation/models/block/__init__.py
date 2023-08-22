@@ -1699,7 +1699,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update_conditional_blocks(self, conditional_blocks: List[Any]) -> None:
         self.conditional_blocks = conditional_blocks
 
-    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+    def update_upstream_blocks(self, upstream_blocks: List[Any], **kwargs) -> None:
         self.upstream_blocks = upstream_blocks
 
     def update_content(self, content, widget=False) -> 'Block':

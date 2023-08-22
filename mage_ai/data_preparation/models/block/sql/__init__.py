@@ -119,6 +119,7 @@ def execute_sql_code(
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         execution_partition=execution_partition,
         query=query,
+        variables=global_vars,
     )
 
     interpolate_input_data_kwargs = dict(

@@ -22,6 +22,7 @@ def create_upstream_block_tables(
     query: str = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    variables: Dict = None,
 ):
     create_upstream_block_tables_orig(
         loader,
@@ -41,6 +42,7 @@ def create_upstream_block_tables(
         schema_name=loader.default_schema(),
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        variables=variables,
     )
 
 
