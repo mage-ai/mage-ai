@@ -321,8 +321,7 @@
 			"group": "Get Started",
 			"pages": [
 				"contributing/overview",
-				"contributing/statistics/overview",
-				"contributing/code-of-conduct"
+				"contributing/statistics/overview"
 			]
 		},
 		{
@@ -651,6 +650,10 @@
 				"api-reference/sessions/overview",
 				"api-reference/sessions/create-session"
 			]
+		},
+		{
+			"group": "About",
+			"pages": [ "about/code-of-conduct", "about/statistics" ]
 		}
 	],
 	"backgroundImage": "/background.png",
@@ -882,6 +885,14 @@
 		{
 			"source": "/guides/streaming/streaming-pipeline-rabbitmq",
 			"destination": "/guides/streaming-pipeline-rabbitmq"
+		},
+		{
+			"source": "/contributing/code-of-conduct",
+			"destination": "/about/code-of-conduct"
+		},
+		{
+			"source": "/contributing/statistics/overview",
+			"destination": "/about/usage-statistics"
 		}
 	]
 }
