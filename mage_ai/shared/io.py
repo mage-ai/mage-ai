@@ -1,13 +1,20 @@
 import os
 import shutil
 import traceback
-from typing import Callable
+from typing import Callable, Union
 
 import aiofiles
 
 
-def chmod(path, mode, append=True):
-    # recursively runs chmod against the path and either adds or sets the permission(mode)
+def chmod(path: Union[str, os.PathLike], mode: int, append: bool = True) -> None:
+    """Recursively runs chmod against the path and either adds or sets the permission
+
+    Args:
+        path (Union[str, os.PathLike]): Path to recursively run chmod on
+        mode (int): Permissions in octal e.g. 0o0700 for rwx for owner
+        append (bool, optional):
+            Whether to extend the permissions by appending or set them. Defaults to True.
+    """
     try:
         current_mode = os.stat(path).st_mode
     except Exception as e:
