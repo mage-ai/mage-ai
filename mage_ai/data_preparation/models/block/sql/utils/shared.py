@@ -299,6 +299,7 @@ def create_upstream_block_tables(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     database: str = None,
+    variables: Dict = None,
 ):
     if cache_keys is None:
         cache_keys = []
@@ -364,7 +365,7 @@ def create_upstream_block_tables(
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 if not no_schema:
-                    attributes_dict = parse_attributes(block)
+                    attributes_dict = parse_attributes(block, variables=variables)
                     schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
