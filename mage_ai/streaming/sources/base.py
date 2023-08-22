@@ -23,7 +23,13 @@ class BaseSource(ABC):
         self.checkpoint = self.read_checkpoint()
         self.init_client()
 
-    def init_client():
+    def init_client(self):
+        pass
+
+    def destroy(self):
+        """
+        Close connections and destroy threads
+        """
         pass
 
     @abstractmethod

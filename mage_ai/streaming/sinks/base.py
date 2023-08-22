@@ -37,6 +37,12 @@ class BaseSink(ABC):
         with open(self.buffer_path, 'w'):
             pass
 
+    def destroy(self):
+        """
+        Close connections and destroy threads
+        """
+        pass
+
     def has_buffer_timed_out(self, buffer_timeout_seconds):
         if self.buffer_start_time is None:
             return False

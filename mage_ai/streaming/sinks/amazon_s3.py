@@ -36,6 +36,12 @@ class AmazonS3Sink(BaseSink):
         if self.buffer:
             self.upload_data_to_s3()
 
+    def destroy(self):
+        try:
+            self.timer.cancel()
+        except Exception:
+            traceback.print_exc()
+
     def write(self, data: Dict):
         self._print(f'Ingest data {data}, time={time.time()}')
         self.write_buffer([data])
