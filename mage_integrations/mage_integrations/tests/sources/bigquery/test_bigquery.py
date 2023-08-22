@@ -1,7 +1,9 @@
-from google.cloud.bigquery import Row
-from mage_integrations.sources.bigquery import BigQuery
-from unittest.mock import MagicMock, patch
 import unittest
+from unittest.mock import MagicMock, patch
+
+from google.cloud.bigquery import Row
+
+from mage_integrations.sources.bigquery import BigQuery
 
 
 def build_sample_bigquery_rows():
@@ -153,7 +155,7 @@ class BigQuerySourceTests(unittest.TestCase):
                                         'metadata': {
                                             'table-key-properties': [],
                                             'forced-replication-method': 'FULL_TABLE',
-                                            'valid-replication-keys': ['date_joined'],
+                                            'valid-replication-keys': [],
                                             'inclusion': 'available',
                                             'schema-name': 'demo_users',
                                         },
@@ -184,7 +186,7 @@ class BigQuerySourceTests(unittest.TestCase):
                                     },
                                     {
                                         'breadcrumb': ('properties', 'date_joined'),
-                                        'metadata': {'inclusion': 'automatic'},
+                                        'metadata': {'inclusion': 'available'},
                                     },
                                 ],
                                 'auto_add_new_fields': False,

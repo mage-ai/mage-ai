@@ -66,6 +66,7 @@ class Pipeline:
         self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
+        self.run_pipeline_in_one_process = False
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
@@ -481,6 +482,7 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
+        self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', False)
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
@@ -603,6 +605,7 @@ class Pipeline:
             name=self.name,
             notification_config=self.notification_config,
             retry_config=self.retry_config,
+            run_pipeline_in_one_process=self.run_pipeline_in_one_process,
             tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,

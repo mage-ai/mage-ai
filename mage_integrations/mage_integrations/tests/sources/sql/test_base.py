@@ -1,8 +1,9 @@
+import unittest
+from unittest.mock import MagicMock, patch
+
 from mage_integrations.sources.catalog import CatalogEntry
 from mage_integrations.sources.sql.base import Source
 from mage_integrations.tests.sources.test_base import build_sample_streams_catalog
-from unittest.mock import MagicMock, patch
-import unittest
 
 
 def build_sample_postgres_rows():
@@ -70,7 +71,7 @@ class BaseSQLSourceTests(unittest.TestCase):
                                             'metadata': {
                                                 'table-key-properties': [],
                                                 'forced-replication-method': 'FULL_TABLE',
-                                                'valid-replication-keys': ['createddate'],
+                                                'valid-replication-keys': [],
                                                 'inclusion': 'available',
                                                 'schema-name': 'demo_actions',
                                             },
@@ -85,7 +86,7 @@ class BaseSQLSourceTests(unittest.TestCase):
                                         },
                                         {
                                             'breadcrumb': ('properties', 'createddate'),
-                                            'metadata': {'inclusion': 'automatic'},
+                                            'metadata': {'inclusion': 'available'},
                                         },
                                         {
                                             'breadcrumb': ('properties', 'type'),

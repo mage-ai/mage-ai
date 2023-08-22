@@ -36,6 +36,12 @@ class AmazonS3Sink(BaseSink):
         if self.buffer:
             self.upload_data_to_s3()
 
+    def destroy(self):
+        try:
+            self.timer.cancel()
+        except Exception:
+            traceback.print_exc()
+
     def write(self, data: Dict):
         self._print(f'Ingest data {data}, time={time.time()}')
         self.write_buffer([data])
@@ -48,11 +54,6 @@ class AmazonS3Sink(BaseSink):
 
         if self.config.buffer_size_mb and \
                 sys.getsizeof(self.buffer) >= self.config.buffer_size_mb * 1_000_000:
-            self.upload_data_to_s3()
-            return
-
-        if self.config.buffer_timeout_seconds and \
-                self.has_buffer_timed_out(self.config.buffer_timeout_seconds):
             self.upload_data_to_s3()
             return
 

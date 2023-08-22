@@ -321,7 +321,8 @@
 			"group": "Get Started",
 			"pages": [
 				"contributing/overview",
-				"contributing/statistics/overview"
+				"contributing/statistics/overview",
+				"contributing/code-of-conduct"
 			]
 		},
 		{

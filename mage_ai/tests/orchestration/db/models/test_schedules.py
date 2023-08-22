@@ -11,7 +11,11 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
@@ -597,6 +601,27 @@ class PipelineRunTests(DBTestCase):
         pipeline_run = create_pipeline_run(pipeline_uuid='test_pipeline')
         block_count = len(self.__class__.pipeline.get_executable_blocks())
         self.assertEqual(pipeline_run.block_runs_count, block_count)
+
+    def test_executable_block_runs(self):
+        pipeline_run = create_pipeline_run(pipeline_uuid='test_pipeline')
+        block_runs1 = pipeline_run.executable_block_runs()
+        self.assertEqual(len(block_runs1), 1)
+        self.assertEqual(block_runs1[0].block_uuid, 'block1')
+
+        block_runs1[0].update(status=BlockRun.BlockRunStatus.COMPLETED)
+        block_runs2 = pipeline_run.executable_block_runs()
+        self.assertEqual(len(block_runs2), 2)
+        self.assertEqual(set([b.block_uuid for b in block_runs2]), set(['block2', 'block3']))
+
+        block_runs2[0].update(status=BlockRun.BlockRunStatus.COMPLETED)
+        block_runs3 = pipeline_run.executable_block_runs()
+        self.assertEqual(len(block_runs3), 1)
+        self.assertEqual(block_runs3[0].block_uuid, block_runs2[1].block_uuid)
+
+        block_runs2[1].update(status=BlockRun.BlockRunStatus.COMPLETED)
+        block_runs4 = pipeline_run.executable_block_runs()
+        self.assertEqual(len(block_runs4), 1)
+        self.assertEqual(block_runs4[0].block_uuid, 'block4')
 
     def test_execution_partition(self):
         execution_date = datetime.now()
