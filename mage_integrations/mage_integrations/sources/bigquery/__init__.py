@@ -43,6 +43,12 @@ FROM {dataset}.INFORMATION_SCHEMA.COLUMNS
     def update_column_names(self, columns: List[str]) -> List[str]:
         return [f'`{column}`' for column in columns]
 
+    def wrap_column_in_quotes(self, column: str) -> str:
+        if "`" not in column:
+            return f'`{column}`'
+
+        return column
+
 
 if __name__ == '__main__':
     main(BigQuery)
