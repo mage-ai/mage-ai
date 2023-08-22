@@ -6,3 +6,8 @@ export enum SortDirectionEnum {
   ASC = 'ascending',
   DESC = 'descending',
 }
+
+export enum SortQueryEnum {
+  SORT_COL_IDX = 'sort_column_index',
+  SORT_DIRECTION = 'sort_direction',
+}

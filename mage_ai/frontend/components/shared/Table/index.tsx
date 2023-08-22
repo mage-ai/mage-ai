@@ -18,8 +18,13 @@ import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 
 import {
+  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX,
+  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION,
+} from '@storage/pipelines';
+import {
   MENU_WIDTH,
   SortDirectionEnum,
+  SortQueryEnum,
 } from './constants';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
@@ -30,6 +35,8 @@ import {
   TableStyle,
 } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { goToWithQuery } from '@utils/routing';
+import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
@@ -37,6 +44,11 @@ export type ColumnType = {
   label?: () => any | string;
   tooltipMessage?: string
   uuid: string;
+};
+
+export type SortedColumnType = {
+  columnIndex: number;
+  sortDirection: SortDirectionEnum;
 };
 
 type TableProps = {
@@ -73,6 +85,7 @@ type TableProps = {
   rowsGroupedByIndex?: string[][];
   setRowsSorted?: (rows: React.ReactElement[][]) => void;
   sortableColumnIndexes?: number[];
+  sortedColumn?: SortedColumnType;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
@@ -107,6 +120,7 @@ function Table({
   rowsGroupedByIndex,
   setRowsSorted,
   sortableColumnIndexes,
+  sortedColumn: sortedColumnInit = null,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -118,10 +132,9 @@ function Table({
   }>(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(null);
   const [hoveredColumnIdx, setHoveredColumnIdx] = useState<number>(null);
-  const [sortedColumn, setSortedColumn] = useState<{
-    columnIndex: number;
-    sortDirection: SortDirectionEnum;
-  }>(null);
+  const [sortedColumn, setSortedColumn] = useState<SortedColumnType>(sortedColumnInit);
+  const sortedColumnIndex = useMemo(() => sortedColumn?.columnIndex, [sortedColumn]);
+  const sortedColumnDirection = useMemo(() => sortedColumn?.sortDirection, [sortedColumn]);
 
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), [
     columnFlex,
@@ -210,7 +223,7 @@ function Table({
       sortByKey(
         rows,
         (row) => {
-          const sortColumn = row?.[sortedColumn?.columnIndex || defaultSortColumnIndex];
+          const sortColumn = row?.[sortedColumnIndex || defaultSortColumnIndex];
           let sortValue = sortColumn?.props?.children;
           const maxDepth = 10;
           let currentDepth = 0;
@@ -227,11 +240,11 @@ function Table({
           return sortValue;
         },
         {
-          ascending: sortedColumn?.sortDirection !== SortDirectionEnum.DESC,
+          ascending: sortedColumnDirection !== SortDirectionEnum.DESC,
         },
       )
     : rows
-  ), [defaultSortColumnIndex, rows, sortedColumn]);
+  ), [defaultSortColumnIndex, rows, sortedColumn, sortedColumnIndex, sortedColumnDirection]);
 
   const sortedRowIds = useMemo(
     () => (rowsSorted || []).map(row => getUniqueRowIdentifier?.(row)),
@@ -241,13 +254,30 @@ function Table({
   const sortedRowIdsPrev = usePrevious(sortedRowIds);
   useEffect(() => {
     if (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)) {
+      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
+    ) {
       setRowsSorted?.(rowsSorted);
+      if (sortedColumn) {
+        const sortColIdx = sortedColumnIndex || defaultSortColumnIndex;
+        const sortDirection = sortedColumnDirection || SortDirectionEnum.ASC;
+        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
+        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);
+
+       goToWithQuery({
+         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
+         [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+       }, {
+         pushHistory: true,
+       });
+      }
     }
   }, [
+    defaultSortColumnIndex,
     rowsSorted,
     setRowsSorted,
     sortedColumn,
+    sortedColumnIndex,
+    sortedColumnDirection,
     sortedColumnPrev,
     sortedRowIds,
     sortedRowIdsPrev,
@@ -389,7 +419,7 @@ function Table({
           <>
             <Text
               bold
-              cyan={sortedColumn?.columnIndex === idx}
+              cyan={sortedColumnIndex === idx}
               leftAligned
               monospace
               muted
@@ -453,13 +483,15 @@ function Table({
                         return updatedSortedColumnState;
                       });
                     }}
+                    preventDefault
                   >
                     <FlexContainer alignItems="center">
                       {headerTextEl}
                       <SortIconContainerStyle
-                        active={idx === hoveredColumnIdx || idx === sortedColumn?.columnIndex}
+                        active={idx === hoveredColumnIdx || idx === sortedColumnIndex}
                       >
-                        {sortedColumn?.sortDirection === SortDirectionEnum.DESC
+                        {(SortDirectionEnum.DESC === sortedColumnDirection
+                          && idx === sortedColumnIndex)
                           ? <SortDescending fill={dark.accent.cyan} />
                           : <SortAscending fill={dark.accent.cyan} />
                         }
@@ -480,7 +512,8 @@ function Table({
     hoveredColumnIdx,
     noBorder,
     sortableColumnIndexes,
-    sortedColumn,
+    sortedColumnDirection,
+    sortedColumnIndex,
     stickyHeader,
     uuid,
   ]);
