@@ -14,15 +14,23 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import dark from '@oracle/styles/themes/dark';
+import usePrevious from '@utils/usePrevious';
+
 import {
+  MENU_WIDTH,
+  SortDirectionEnum,
+} from './constants';
+import { SortAscending, SortDescending } from '@oracle/icons';
+import {
+  SortIconContainerStyle,
   TableDataStyle,
   TableHeadStyle,
   TableRowStyle,
   TableStyle,
 } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-const MENU_WIDTH: number = UNIT * 20;
+import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
@@ -47,6 +55,8 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  defaultSortColumnIndex?: number;
+  getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
   highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
@@ -61,6 +71,8 @@ type TableProps = {
   rowVerticalPadding?: number;
   rows: any[][];
   rowsGroupedByIndex?: string[][];
+  setRowsSorted?: (rows: React.ReactElement[][]) => void;
+  sortableColumnIndexes?: number[];
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
@@ -77,6 +89,8 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  defaultSortColumnIndex,
+  getUniqueRowIdentifier,
   highlightRowOnHover,
   isSelectedRow,
   noBorder,
@@ -91,6 +105,8 @@ function Table({
   rowVerticalPadding,
   rows,
   rowsGroupedByIndex,
+  setRowsSorted,
+  sortableColumnIndexes,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -101,6 +117,11 @@ function Table({
     y: number;
   }>(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(null);
+  const [hoveredColumnIdx, setHoveredColumnIdx] = useState<number>(null);
+  const [sortedColumn, setSortedColumn] = useState<{
+    columnIndex: number;
+    sortDirection: SortDirectionEnum;
+  }>(null);
 
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), [
     columnFlex,
@@ -181,9 +202,58 @@ function Table({
     ref,
     renderRightClickMenu,
     renderRightClickMenuItems,
+    rightClickMenuWidth,
   ]);
 
-  const rowEls = useMemo(() => rows?.map((cells, rowIndex) => {
+  const rowsSorted = useMemo(() => ((sortedColumn || defaultSortColumnIndex)
+    ?
+      sortByKey(
+        rows,
+        (row) => {
+          const sortColumn = row?.[sortedColumn?.columnIndex || defaultSortColumnIndex];
+          let sortValue = sortColumn?.props?.children;
+          const maxDepth = 10;
+          let currentDepth = 0;
+          while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
+            && currentDepth < maxDepth
+          ) {
+            sortValue = sortValue?.props?.children;
+            currentDepth += 1;
+            if (typeof sortValue === 'undefined') {
+              sortValue = '';
+            }
+          }
+
+          return sortValue;
+        },
+        {
+          ascending: sortedColumn?.sortDirection !== SortDirectionEnum.DESC,
+        },
+      )
+    : rows
+  ), [defaultSortColumnIndex, rows, sortedColumn]);
+
+  const sortedRowIds = useMemo(
+    () => (rowsSorted || []).map(row => getUniqueRowIdentifier?.(row)),
+    [getUniqueRowIdentifier, rowsSorted],
+  );
+  const sortedColumnPrev = usePrevious(sortedColumn);
+  const sortedRowIdsPrev = usePrevious(sortedRowIds);
+  useEffect(() => {
+    if (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
+      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)) {
+      setRowsSorted?.(rowsSorted);
+    }
+  }, [
+    rowsSorted,
+    setRowsSorted,
+    sortedColumn,
+    sortedColumnPrev,
+    sortedRowIds,
+    sortedRowIdsPrev,
+  ]);
+
+  const rowEls = useMemo(() => rowsSorted?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
     const rowProps = buildRowProps?.(rowIndex) || {
       renderCell: null,
@@ -286,6 +356,7 @@ function Table({
     }
 
     return rowEl;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [
     alignTop,
     buildLinkProps,
@@ -302,8 +373,9 @@ function Table({
     onDoubleClickRow,
     onRightClickRow,
     rowVerticalPadding,
-    rows,
+    rowsSorted,
     setFocusedRowIndex,
+    sortedColumn,   // Included in dep array so table rows re-render when sorting column changes
     stickyFirstColumn,
     uuid,
     wrapColumns,
@@ -311,20 +383,17 @@ function Table({
 
   const headerRowEl = useMemo(() => (
     <TableRowStyle noHover>
-      {columns?.map((col, idx) => (
-        <TableHeadStyle
-          columnBorders={columnBorders}
-          compact={compact}
-          key={`${uuid}-col-${col.uuid}-${idx}`}
-          last={idx === columns.length - 1}
-          noBorder={noBorder}
-          sticky={stickyHeader}
-        >
-          <FlexContainer
-            alignItems="center"
-            justifyContent={col.center ? 'center': 'flex-start'}
-          >
-            <Text bold leftAligned monospace muted>
+      {columns?.map((col, idx) => {
+        const isSortable = sortableColumnIndexes?.includes(idx);
+        const headerTextEl = (
+          <>
+            <Text
+              bold
+              cyan={sortedColumn?.columnIndex === idx}
+              leftAligned
+              monospace
+              muted
+            >
               {col.label ? col.label() : col.uuid}
             </Text>
             {col.tooltipMessage && (
@@ -341,11 +410,80 @@ function Table({
                 />
               </Spacing>
             )}
-          </FlexContainer>
-        </TableHeadStyle>
-      ))}
+          </>
+        );
+
+        return (
+          <TableHeadStyle
+            columnBorders={columnBorders}
+            compact={compact}
+            key={`${uuid}-col-${col.uuid}-${idx}`}
+            last={idx === columns.length - 1}
+            noBorder={noBorder}
+            onMouseEnter={isSortable ? () => setHoveredColumnIdx(idx) : null}
+            onMouseLeave={isSortable ? () => setHoveredColumnIdx(null) : null}
+            sticky={stickyHeader}
+          >
+            <FlexContainer
+              alignItems="center"
+              justifyContent={col.center ? 'center': 'flex-start'}
+            >
+              {isSortable
+                ? (
+                  <Link
+                    fullHeight
+                    fullWidth
+                    noHoverUnderline
+                    noOutline
+                    onClick={() => {
+                      setSortedColumn(prevState => {
+                        const { columnIndex, sortDirection } = prevState || {};
+                        let updatedSortedColumnState = {
+                          columnIndex: idx,
+                          sortDirection: SortDirectionEnum.ASC,
+                        };
+                        if (prevState && columnIndex === idx) {
+                          if (sortDirection === SortDirectionEnum.ASC) {
+                            updatedSortedColumnState.sortDirection = SortDirectionEnum.DESC;
+                          } else if (sortDirection === SortDirectionEnum.DESC) {
+                            updatedSortedColumnState = null;
+                          }
+                        }
+
+                        return updatedSortedColumnState;
+                      });
+                    }}
+                  >
+                    <FlexContainer alignItems="center">
+                      {headerTextEl}
+                      <SortIconContainerStyle
+                        active={idx === hoveredColumnIdx || idx === sortedColumn?.columnIndex}
+                      >
+                        {sortedColumn?.sortDirection === SortDirectionEnum.DESC
+                          ? <SortDescending fill={dark.accent.cyan} />
+                          : <SortAscending fill={dark.accent.cyan} />
+                        }
+                      </SortIconContainerStyle>
+                    </FlexContainer>
+                  </Link>
+                ) : headerTextEl
+              }
+            </FlexContainer>
+          </TableHeadStyle>
+        );
+      })}
     </TableRowStyle>
-  ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
+  ), [
+    columnBorders,
+    columns,
+    compact,
+    hoveredColumnIdx,
+    noBorder,
+    sortableColumnIndexes,
+    sortedColumn,
+    stickyHeader,
+    uuid,
+  ]);
 
   const tableEl = useMemo(() => {
     if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {
