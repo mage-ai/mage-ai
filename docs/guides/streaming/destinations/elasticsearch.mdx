@@ -1,0 +1,24 @@
+---
+title: "Elasticsearch"
+---
+
+## Basic config
+
+```yaml
+connector_type: elasticsearch
+host: https://localhost
+index_name: elastic_index
+# # Whether to verify SSL certificates to authenticate.
+# verify_certs: true
+# ca_cert: str
+```
+
+## Authentication
+
+```yaml
+verify_certs: true
+api_key: api_key_for_elastic_search
+ca_cert: str
+```
+
+- **verify_certs**: Whether to verify SSL certificates to authenticate.
