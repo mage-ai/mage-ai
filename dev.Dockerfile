@@ -1,6 +1,29 @@
+ARG PIP=pip3
+ARG VIRTUAL_ENV=/opt/venv
+
+FROM python:3.10 as builder
+ARG PIP
+ARG VIRTUAL_ENV
+RUN python3 -m venv ${VIRTUAL_ENV}
+ENV PATH=${VIRTUAL_ENV}/bin:$PATH
+
+# Python Packages
+RUN ${PIP} install --no-cache-dir sparkmagic
+# Mage Integration
+COPY requirements.txt requirements.txt
+RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
+RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
+COPY mage_integrations mage_integrations
+RUN ${PIP} install mage_integrations/
+# Mage Dependencies
+RUN ${PIP} install --no-cache-dir -r requirements.txt
+
+
 FROM python:3.10
 LABEL description="Mage data management platform"
-ARG PIP=pip3
+ARG PIP
+ARG VIRTUAL_ENV
 USER root
 
 # Packages
@@ -35,22 +58,14 @@ RUN \
 RUN npm install --global yarn && yarn global add next
 
 # Python Packages
+COPY --link --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 RUN \
-  ${PIP} install --no-cache-dir sparkmagic && \
   mkdir ~/.sparkmagic && \
   wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json && \
   mv example_config.json ~/.sparkmagic/config.json && \
   sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json && \
   jupyter-kernelspec install --user $(${PIP} show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
-# Mage Integration
-COPY requirements.txt requirements.txt
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
-COPY mage_integrations mage_integrations
-RUN ${PIP} install mage_integrations/
-# Mage Dependencies
-RUN ${PIP} install --no-cache-dir -r requirements.txt
 
 # Mage Frontend
 COPY ./mage_ai /home/src/mage_ai
