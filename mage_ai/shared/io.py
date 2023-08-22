@@ -17,15 +17,16 @@ def chmod(path: Union[str, os.PathLike], mode: int, append: bool = True) -> None
     """
     try:
         current_mode = os.stat(path).st_mode
-    except Exception as e:
-        raise e
-    if append:
-        mode = current_mode | mode
-    os.chmod(path, mode)
-    for dirpath, _dirnames, filenames in os.walk(path):
-        os.chmod(dirpath, mode)
-        for filename in filenames:
-            os.chmod(os.path.join(dirpath, filename), mode)
+        if append:
+            mode = current_mode | mode
+
+        os.chmod(path, mode)
+        for dirpath, _dirnames, filenames in os.walk(path):
+            os.chmod(dirpath, mode)
+            for filename in filenames:
+                os.chmod(os.path.join(dirpath, filename), mode)
+    except Exception:
+        traceback.print_exc()
 
 
 def safe_write(filepath: str, content: str, write_func: Callable = None):
