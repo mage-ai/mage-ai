@@ -1,7 +1,7 @@
 ## Set up
 
 1. Pull the `mage-ai` repository and `cd` into it.
-2. Run Mage in a development Docker container using `./scripts/dev.sh [PROJECT NAME]`. This starts Mage and allows us to make changes in real-time. See [this page](https://docs.mage.ai/community/contributing) for more details.
+2. Run Mage in a development Docker container using `./scripts/dev.sh [PROJECT NAME]`. This starts Mage and allows us to make changes in realtime. See [this page](https://docs.mage.ai/community/contributing) for more details.
 3. Open another terminal and run:
     ```bash
     docker exec -it mage-ai-server-1 bash
@@ -72,7 +72,7 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
 
 Now, you should see a list of streams that you can sync from the source. Grab a few of interest!
 
-The output from Github looks like:
+The output from GitHub looks like this:
 
 ```json
 [
@@ -142,11 +142,6 @@ python3 mage_integrations/sources/[INTEGRATION]/__init__.py \
   --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
 ```
 
-python3 mage_integrations/sources/github/__init__.py \
-  --config mage_integrations/TEST_CONFIG_S.json \
-  --catalog mage_integrations/TEST_CATALOG.json \
-  --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
-
 Check `TEST_OUTPUT` to see real-time results!
 
 ## Test writing your output to a database
@@ -215,7 +210,6 @@ Now, perform the following in the Mage UI to verify a working source:
   - If you're adding a tap in a PR, be sure to add logs of the source and show data in the destination table to the PR description.
 - If incremental sync is supported, please also test it: check if the state is updated and fetched correctly.
 
-
 ## Count records
 
 You can count the number of records in your stream with the following command:
@@ -239,4 +233,4 @@ python3 mage_integrations/sources/freshdesk/__init__.py \
   --catalog mage_integrations/TEST_CATALOG.json \
   --query_json '{"_end_date": null, "_execution_date": "2022-11-17T21:05:53.341319", "_execution_partition": "444/20221117T210443", "_start_date": null, "_limit": 1000, "_offset": 0}' \
   --state mage_integrations/TEST_STATE.json
-``````
+```

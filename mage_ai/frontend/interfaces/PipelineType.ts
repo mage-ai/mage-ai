@@ -82,6 +82,7 @@ export default interface PipelineType {
   blocks?: BlockType[];
   callbacks?: BlockType[];
   conditionals?: BlockType[];
+  created_at?: string;
   data_integration?: {
     catalog: CatalogType;
   };

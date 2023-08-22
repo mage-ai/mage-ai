@@ -7,6 +7,7 @@ class PipelinePresenter(BasePresenter):
     default_attributes = [
         'blocks',
         'concurrency_config',
+        'created_at',
         'data_integration',
         'description',
         'executor_config',
@@ -15,6 +16,7 @@ class PipelinePresenter(BasePresenter):
         'name',
         'notification_config',
         'retry_config',
+        'run_pipeline_in_one_process',
         'spark_config',
         'tags',
         'type',

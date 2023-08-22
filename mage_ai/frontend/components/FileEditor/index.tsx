@@ -55,6 +55,7 @@ type FileEditorProps = {
   filePath: string;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
+  onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
   pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
@@ -77,6 +78,7 @@ function FileEditor({
   filePath,
   hideHeaderButtons,
   onContentChange,
+  onUpdateFileSuccess,
   openSidekickView,
   pipeline,
   saveFile: saveFileProp,
@@ -135,11 +137,17 @@ function FileEditor({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({
+            file_content: fc,
+          }) => {
             setApiReloads(prev => ({
               ...prev,
               [`FileVersions/${file?.path}`]: Number(new Date()),
             }));
+
+            if (onUpdateFileSuccess) {
+              onUpdateFileSuccess?.(fc);
+            }
           },
           onErrorCallback: (response, errors) => setErrors?.({
             errors,

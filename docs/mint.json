@@ -155,7 +155,37 @@
           "pages": [
             "guides/batch-pipeline",
             "guides/data-integration-pipeline",
-            "guides/streaming-pipeline"
+            {
+              "group": "Streaming pipelines",
+              "pages": [
+                "guides/streaming/overview",
+                {
+                  "group": "Sources",
+                  "pages": [
+                    "guides/streaming/sources/amazon-sqs",
+                    "guides/streaming/sources/azure-event-hub",
+                    "guides/streaming/sources/google-cloud-pubsub",
+                    "guides/streaming/sources/kafka",
+                    "guides/streaming/sources/kinesis"
+                  ]
+                },
+                {
+                  "group": "Destinations",
+                  "pages": [
+                    "guides/streaming/destinations/amazon-s3",
+                    "guides/streaming/destinations/dummy",
+                    "guides/streaming/destinations/kafka",
+                    "guides/streaming/destinations/kinesis",
+                    "guides/streaming/destinations/mongodb",
+                    "guides/streaming/destinations/opensearch",
+                    "guides/streaming/destinations/redshift"
+                  ]
+                },
+                "guides/streaming-pipeline",
+                "guides/streaming/streaming-pipeline-rabbitmq",
+                "guides/streaming/contributing"
+              ]
+            }
           ]
         },
         {
@@ -218,41 +248,12 @@
             "guides/blocks/markdown-blocks"
           ]
         },
+        "custom-templates/overview",
         {
           "group": "Dependencies",
           "pages": [
             "development/dependencies/requirements",
             "development/dependencies/custom-files"
-          ]
-        },
-        {
-          "group": "Streaming pipelines",
-          "pages": [
-            "guides/streaming/overview",
-            "guides/streaming/streaming-pipeline-rabbitmq",
-            {
-              "group": "Sources",
-              "pages": [
-                "guides/streaming/sources/amazon-sqs",
-                "guides/streaming/sources/azure-event-hub",
-                "guides/streaming/sources/google-cloud-pubsub",
-                "guides/streaming/sources/kafka",
-                "guides/streaming/sources/kinesis"
-              ]
-            },
-            {
-              "group": "Destinations",
-              "pages": [
-                "guides/streaming/destinations/amazon-s3",
-                "guides/streaming/destinations/dummy",
-                "guides/streaming/destinations/kafka",
-                "guides/streaming/destinations/kinesis",
-                "guides/streaming/destinations/mongodb",
-                "guides/streaming/destinations/opensearch",
-                "guides/streaming/destinations/redshift"
-              ]
-            },
-            "guides/streaming/contributing"
           ]
         },
         "production/configuring-production-settings/runtime-variable",
@@ -272,8 +273,9 @@
           ]
         },
         {
-          "group": "Versioning",
+          "group": "Version control",
           "pages": [
+            "production/data-sync/github",
             "developing-in-the-cloud/setting-up-git",
             "development/versioning/file-versions"
           ]
@@ -325,7 +327,8 @@
             "orchestration/pipeline-runs/retrying-block-runs",
             "orchestration/pipeline-runs/saving-block-output-as-csv"
           ]
-        }
+        },
+        "orchestration/global-data-products/overview"
       ]
     },
     {
@@ -403,13 +406,7 @@
             "production/configuring-production-settings/compute-resource"
           ]
         },
-        {
-          "group": "Version control",
-          "pages": [
-            "production/data-sync/git",
-            "production/data-sync/github"
-          ]
-        }
+        "production/data-sync/git"
       ]
     },
     {
@@ -521,7 +518,8 @@
             "contributing/frontend/overview"
           ]
         },
-        "contributing/statistics/overview"
+        "contributing/statistics/overview",
+        "contributing/code-of-conduct"
       ]
     },
     {
@@ -541,6 +539,16 @@
         "api-reference/backfills/create-backfills",
         "api-reference/backfills/update-backfill",
         "api-reference/backfills/delete-backfill"
+      ]
+    },
+    {
+      "group": "Blocks",
+      "pages": [
+        "api-reference/blocks/overview",
+        "api-reference/blocks/read-block",
+        "api-reference/blocks/create-block",
+        "api-reference/blocks/update-block",
+        "api-reference/blocks/delete-block"
       ]
     },
     {
@@ -569,9 +577,7 @@
       "group": "Pipeline schedules",
       "pages": [
         "api-reference/pipeline-schedules/overview",
-        "api-reference/pipeline-schedules/read-pipeline-schedule",
-        "api-reference/pipeline-schedules/create-pipeline-schedule",
-        "api-reference/pipeline-schedules/delete-pipeline-schedule"
+        "api-reference/pipeline-schedules/read-pipeline-schedules"
       ]
     },
     {

@@ -134,25 +134,28 @@ function Folder({
     ? isFileDisabled(filePathToUse, children)
     : (
       disabledProp
-        || name === '__init__.py'
-        || !!name?.match(/^\./)
-        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+        // || name === '__init__.py'
+        // || !!name?.match(/^\./)
+        // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
   const disabled = isFileDisabled
     ? isFileDisabled(filePathToUse, children)
     : (
       disabledProp
-        || name === '__init__.py'
-        // Don’t disable hidden folders
-        || (!!name?.match(/^\./) && !children)
-        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+        // || name === '__init__.py'
+        // // Don’t disable hidden folders
+        // || (!!name?.match(/^\./) && !children)
+        // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
   const uuid = `${level}/${name}`;
-  const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
+  const collapsedInit = (Array.isArray(children) && children?.length > 0)
+    // Top level of project folders is initially uncollapsed, but the nested folders are collapsed.
+    ? get(uuid, level > 1)
+    : false;
   const [collapsed, setCollapsed] = useState<boolean>(typeof uncollapsed === 'undefined'
-    ? get(uuid, false)
+    ? collapsedInit
     : !uncollapsed,
   );
 

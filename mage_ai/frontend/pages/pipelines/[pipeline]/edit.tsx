@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -30,6 +31,10 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
+import FileType, {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import GlobalDataProducts from '@components/GlobalDataProducts';
@@ -67,10 +72,6 @@ import {
 } from '@components/PipelineDetail/constants';
 import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
-import {
-  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
-  SpecialFileEnum,
-} from '@interfaces/FileType';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   // LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
@@ -363,6 +364,10 @@ function PipelineDetailPage({
   const callbackByBlockUUID = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
+
+  const [blocksThatNeedToRefresh, setBlocksThatNeedToRefresh] = useState<{
+    [uuid: string]: number;
+  }>({});
 
   const setCallbackByBlockUUID = useCallback((type: string, uuid: string, value: string) => {
     const d = callbackByBlockUUID.current || {};
@@ -693,6 +698,7 @@ function PipelineDetailPage({
     const conditionalsByUUID = {};
 
     const blocksFinal = pipelineOverride?.blocks || blocks;
+
     blocksFinal.forEach((block: BlockType) => {
       const {
         extension_uuid: extensionUUID,
@@ -930,25 +936,72 @@ function PipelineDetailPage({
       filePaths.push(filePathEncoded);
     }
 
+    // const block = getBlockFromFilePath(filePath, blocks);
+
+    // if (block) {
+    //   setSelectedBlock(block);
+    //   if (blockRefs?.current) {
+    //     const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+    //     blockRef?.current?.scrollIntoView();
+    //   }
+    // } else {
+    //   goToWithQuery({
+    //     file_path: filePathEncoded,
+    //     'file_paths[]': filePaths,
+    //   });
+    // }
+
+    goToWithQuery({
+      file_path: filePathEncoded,
+      'file_paths[]': filePaths,
+    });
+  }, [
+    // blockRefs,
+    // blocks,
+    savePipelineContent,
+  ]);
+
+  const onUpdateFileSuccess = useCallback((fileContent: FileType) => {
+    const {
+      content,
+      path: filePath,
+    } = fileContent || {};
 
     const block = getBlockFromFilePath(filePath, blocks);
 
     if (block) {
-      setSelectedBlock(block);
-      if (blockRefs?.current) {
-        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
-        blockRef?.current?.scrollIntoView();
-      }
-    } else {
-      goToWithQuery({
-        file_path: filePathEncoded,
-        'file_paths[]': filePaths,
+      const {
+        type: blockType,
+        uuid: blockUUID,
+      } = block;
+      onChangeCodeBlock(blockType, blockUUID, content);
+
+      setBlocks((prev) => {
+        const blockIndex =
+          prev?.findIndex(({ type, uuid }) => type === blockType && uuid === blockUUID);
+
+        if (blockIndex >= 0) {
+          prev[blockIndex].content = content;
+        }
+
+        return prev;
       });
+
+      setBlocksThatNeedToRefresh(prev => ({
+        ...prev,
+        [blockType]: {
+          // @ts-ignore
+          ...prev?.[blockType],
+          [blockUUID]: Number(new Date()),
+        },
+      }));
+
+      fetchPipeline();
     }
   }, [
-    blockRefs,
     blocks,
-    savePipelineContent,
+    fetchPipeline,
+    onChangeCodeBlock,
   ]);
 
   const {
@@ -2085,6 +2138,7 @@ function PipelineDetailPage({
       onChangeChartBlock={onChangeChartBlock}
       onChangeCodeBlock={onChangeCodeBlock}
       onSelectBlockFile={onSelectBlockFile}
+      onUpdateFileSuccess={onUpdateFileSuccess}
       pipeline={pipeline}
       pipelineMessages={pipelineMessages}
       runBlock={runBlock}
@@ -2154,6 +2208,7 @@ function PipelineDetailPage({
     onChangeChartBlock,
     onChangeCodeBlock,
     onSelectBlockFile,
+    onUpdateFileSuccess,
     pipeline,
     pipelineMessages,
     runBlock,
@@ -2224,6 +2279,7 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
+      blocksThatNeedToRefresh={blocksThatNeedToRefresh}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       disableShortcuts={disableShortcuts}
@@ -2287,6 +2343,7 @@ function PipelineDetailPage({
     blockRefs,
     blocks,
     blocksInNotebook,
+    blocksThatNeedToRefresh,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -2684,6 +2741,7 @@ function PipelineDetailPage({
                 fetchPipeline={fetchPipeline}
                 fetchVariables={fetchVariables}
                 filePath={filePath}
+                onUpdateFileSuccess={onUpdateFileSuccess}
                 openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 selectedFilePath={selectedFilePath}

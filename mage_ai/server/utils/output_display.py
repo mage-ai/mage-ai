@@ -277,6 +277,9 @@ import pandas as pd
 db_connection.start_session()
 {spark_session_init}
 
+if 'context' not in globals():
+    context = dict()
+
 def execute_custom_code():
     block_uuid=\'{block_uuid}\'
     run_incomplete_upstream={str(run_incomplete_upstream)}
@@ -298,6 +301,9 @@ def execute_custom_code():
     \'\'\'
 
     global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
+    if pipeline.run_pipeline_in_one_process:
+        # Use shared context for blocks
+        global_vars['context'] = context
 
     try:
         global_vars[\'spark\'] = spark

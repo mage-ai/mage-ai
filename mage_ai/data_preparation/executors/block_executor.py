@@ -1,7 +1,9 @@
 import json
 import traceback
+from datetime import datetime
 from typing import Callable, Dict, List, Union
 
+import pytz
 import requests
 
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -252,20 +254,18 @@ class BlockExecutor:
                     )
 
                 result = __execute_with_retry()
-            except Exception as e:
+            except Exception as error:
                 self.logger.exception(
                     f'Failed to execute block {self.block.uuid}',
                     **merge_dict(tags, dict(
-                        block_type=self.block.type,
-                        block_uuid=self.block.uuid,
-                        error=e
+                        error=error,
                     )),
                 )
                 if on_failure is not None:
                     on_failure(
                         self.block_uuid,
                         error=dict(
-                            error=str(e),
+                            error=error,
                             errors=traceback.format_stack(),
                             message=traceback.format_exc(),
                         ),
@@ -285,7 +285,7 @@ class BlockExecutor:
                     logging_tags=tags,
                     pipeline_run=pipeline_run,
                 )
-                raise e
+                raise error
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
@@ -537,7 +537,7 @@ class BlockExecutor:
         tags: Dict = None,
     ):
         """
-        Update the status of block run by edither updating the BlockRun db object or making
+        Update the status of block run by either updating the BlockRun db object or making
         API call
 
         Args:
@@ -572,7 +572,12 @@ class BlockExecutor:
                 )
 
             block_run = BlockRun.query.get(block_run_id)
-            block_run.update(status=status)
+            update_kwargs = dict(
+                status=status
+            )
+            if status == BlockRun.BlockRunStatus.COMPLETED:
+                update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+            block_run.update(**update_kwargs)
             return
         except Exception as err2:
             self.logger.exception(

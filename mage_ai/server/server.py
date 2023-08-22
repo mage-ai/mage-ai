@@ -22,6 +22,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
+    get_project_uuid,
     get_variables_dir,
     init_project_uuid,
     init_repo,
@@ -29,6 +30,7 @@ from mage_ai.data_preparation.repo_manager import (
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
@@ -68,10 +70,11 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
-    BASE_PATH,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
+    REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
+    ROUTES_BASE_PATH,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
@@ -257,9 +260,10 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = []
         for route in routes:
             if route[0] == r'/':
-                updated_routes.append((f'/{BASE_PATH}', *route[1:]))
+                updated_routes.append((f'/{ROUTES_BASE_PATH}', *route[1:]))
             else:
-                updated_routes.append((route[0].replace('/', f'/{BASE_PATH}/', 1), *route[1:]))
+                updated_routes.append(
+                    (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
     else:
         updated_routes = routes
 
@@ -275,16 +279,19 @@ async def main(
     host: Union[str, None] = None,
     port: Union[str, None] = None,
     project: Union[str, None] = None,
+    project_type: ProjectType = ProjectType.STANDALONE,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     # Update base path if environment variable is set
     update_routes = False
     template_dir = None
-    if BASE_PATH:
+    if REQUESTS_BASE_PATH or ROUTES_BASE_PATH:
         try:
-            template_dir = replace_base_path(BASE_PATH)
-            update_routes = True
+            if REQUESTS_BASE_PATH:
+                template_dir = replace_base_path(REQUESTS_BASE_PATH)
+            if ROUTES_BASE_PATH:
+                update_routes = True
         except Exception:
             logger.warning(
                 'Server failed to replace base path with error:\n%s',
@@ -293,8 +300,8 @@ async def main(
             logger.warning('Continuing with default routes...')
 
     app = make_app(
-        update_routes=update_routes,
         template_dir=template_dir,
+        update_routes=update_routes,
     )
 
     port = int(port)
@@ -313,7 +320,7 @@ async def main(
 
     url = f'http://{host or "localhost"}:{port}'
     if update_routes:
-        url = f'{url}/{BASE_PATH}'
+        url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
@@ -344,7 +351,14 @@ async def main(
         sleep(5)
 
         # Create new roles on existing users. This should only need to be run once.
-        Role.create_default_roles()
+        if project_type == ProjectType.SUB:
+            Role.create_default_roles(
+                entity=Entity.PROJECT,
+                entity_id=get_project_uuid(),
+                prefix=get_repo_name(),
+            )
+        else:
+            Role.create_default_roles()
 
         # Fetch legacy owner user to check if we need to batch update the users with new roles.
         legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
@@ -481,6 +495,7 @@ def start_server(
                     host=host,
                     port=port,
                     project=project,
+                    project_type=project_type,
                 )
             )
 

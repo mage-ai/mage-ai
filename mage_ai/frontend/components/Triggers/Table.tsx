@@ -26,7 +26,7 @@ import {
   Edit,
   Pause,
   PlayButtonFilled,
-  TodoList,
+  Logs,
   Trash,
 } from '@oracle/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
@@ -378,7 +378,7 @@ function TriggersTable({
                     `/pipelines/${finalPipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
                   )}
                 >
-                  <TodoList default size={2 * UNIT} />
+                  <Logs default size={2 * UNIT} />
                 </Button>,
               ]);
 

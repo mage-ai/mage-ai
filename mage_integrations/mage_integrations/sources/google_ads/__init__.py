@@ -1,13 +1,16 @@
+from typing import Dict, List
+
+from singer import catalog as catalog_singer
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
-from mage_integrations.sources.google_ads.tap_google_ads.discover import \
-    create_resource_schema
-from mage_integrations.sources.google_ads.tap_google_ads.discover import \
-    do_discover
+from mage_integrations.sources.google_ads.tap_google_ads.client import create_sdk_client
+from mage_integrations.sources.google_ads.tap_google_ads.discover import (
+    create_resource_schema,
+    do_discover,
+)
 from mage_integrations.sources.google_ads.tap_google_ads.sync import do_sync
 from mage_integrations.utils.dictionary import ignore_keys
-from singer import catalog as catalog_singer
-from typing import Dict, List
 
 
 class GoogleAds(Source):
@@ -36,6 +39,9 @@ class GoogleAds(Source):
         resource_schema = create_resource_schema(self.config)
         catalog = do_discover(resource_schema)
         do_sync(self.config, catalog, resource_schema, self.state)
+
+    def test_connection(self) -> None:
+        client = create_sdk_client(self.config)
 
 
 if __name__ == '__main__':

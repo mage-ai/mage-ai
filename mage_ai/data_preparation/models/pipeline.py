@@ -6,6 +6,7 @@ import shutil
 from typing import Callable, Dict, List
 
 import aiofiles
+import pytz
 import yaml
 from jinja2 import Template
 
@@ -55,6 +56,7 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.concurrency_config = dict()
+        self.created_at = None
         self.data_integration = None
         self.description = None
         self.executor_config = dict()
@@ -64,10 +66,11 @@ class Pipeline:
         self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
+        self.run_pipeline_in_one_process = False
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.datetime.now(tz=pytz.UTC)
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -154,6 +157,7 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
+                created_at=str(datetime.datetime.now(tz=pytz.UTC)),
                 name=name,
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),
@@ -466,6 +470,7 @@ class Pipeline:
             self._executor_count = int(config.get('executor_count'))
         except Exception:
             pass
+        self.created_at = config.get('created_at')
         self.updated_at = config.get('updated_at')
         self.type = config.get('type') or self.type
 
@@ -477,6 +482,7 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
+        self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', False)
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
@@ -590,6 +596,7 @@ class Pipeline:
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
             concurrency_config=self.concurrency_config,
+            created_at=self.created_at,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
             executor_config=self.executor_config,
@@ -598,6 +605,7 @@ class Pipeline:
             name=self.name,
             notification_config=self.notification_config,
             retry_config=self.retry_config,
+            run_pipeline_in_one_process=self.run_pipeline_in_one_process,
             tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
