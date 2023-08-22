@@ -21,7 +21,8 @@ class HDInsightConfig(BaseConfig):
     resource_group_name: str = ''
 
     # The name for the cluster you are creating. The name must be unique, 59 characters or less,
-    # and can contain letters, numbers, and hyphens (but the first and last character must be a letter or number).
+    # and can contain letters, numbers, and hyphens (but the first and last character must be
+    # a letter or number).
     # Required by all the samples.
     cluster_name: str = 'mage-data-prep'
 
