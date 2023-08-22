@@ -120,8 +120,8 @@ class UsageStatisticLogger():
             pipeline_uuid=pipeline.uuid,
             run_time_seconds=run_time_seconds,
             trigger_method=pipeline_run.pipeline_schedule.schedule_type,
-            unique_block_types=set([b.get('type') for b in block_configs]),
-            unique_languages=set([b.get('language') for b in block_configs]),
+            unique_block_types=list(set([b.get('type') for b in block_configs])),
+            unique_languages=list(set([b.get('language') for b in block_configs])),
         )
 
         return await self.__send_message(

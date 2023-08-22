@@ -52,7 +52,6 @@ from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
-from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 pipeline_schedule_event_matcher_association_table = Table(
     'pipeline_schedule_event_matcher_association',
@@ -565,6 +564,7 @@ class PipelineRun(BaseModel):
             status=self.PipelineRunStatus.COMPLETED,
         )
 
+        from mage_ai.usage_statistics.logger import UsageStatisticLogger
         asyncio.run(UsageStatisticLogger().pipeline_runs_impression(
             lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
         ))
