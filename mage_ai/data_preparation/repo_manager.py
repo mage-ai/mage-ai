@@ -312,7 +312,7 @@ def init_project_uuid(overwrite_uuid: str = None) -> None:
     """
     global project_uuid
     repo_config = get_repo_config()
-    if overwrite_uuid is not None:
+    if overwrite_uuid:
         if repo_config.project_uuid != overwrite_uuid:
             repo_config.save(project_uuid=overwrite_uuid)
         project_uuid = overwrite_uuid
