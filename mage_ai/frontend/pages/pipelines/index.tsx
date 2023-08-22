@@ -719,7 +719,7 @@ function PipelineListPage() {
   } = useMemo(() => {
     const mapping = {};
 
-    pipelines?.forEach((pipeline, idx: number) => {
+    pipelinesSorted?.forEach((pipeline, idx: number) => {
       let value = pipeline[groupByQuery];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
@@ -791,7 +791,7 @@ function PipelineListPage() {
     };
   }, [
     groupByQuery,
-    pipelines,
+    pipelinesSorted,
   ]);
 
   return (
