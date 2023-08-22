@@ -454,7 +454,7 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    init_project_uuid()
+    init_project_uuid(overwrite_uuid=project_uuid)
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
