@@ -1,6 +1,6 @@
 # Github
 
-![Google](https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png)
+![GitHub](https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png)
 
 <br />
 
@@ -50,4 +50,10 @@ This tap:
   - Team Members
   - Team Memberships
 - Outputs the schema for each resource
-- Incrementally pulls data based on the input state
+
+
+Note: at this time, incremental sync is not supported for any endpoint. In order to support, we'll need to modify the `./tap_github/streams.py` `IncrementalStream` class to support incremental sync. This appears to be due to a malformed bookmark value
+
+```json
+{ "type": "STATE", "value": { "currently_syncing_repo": "mage-ai/mage-ai", "currently_syncing": "commits", "bookmarks": { "mage-ai/mage-ai": { "commits": { "since": "2023-08-22T19:26:01Z" } } } } }
+``
