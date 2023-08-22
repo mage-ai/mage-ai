@@ -57,11 +57,6 @@ class AmazonS3Sink(BaseSink):
             self.upload_data_to_s3()
             return
 
-        if self.config.buffer_timeout_seconds and \
-                self.has_buffer_timed_out(self.config.buffer_timeout_seconds):
-            self.upload_data_to_s3()
-            return
-
     def upload_data_to_s3(self):
         self.__reset_timer()
         if not self.buffer:

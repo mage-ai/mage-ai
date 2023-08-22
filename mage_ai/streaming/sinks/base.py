@@ -17,7 +17,11 @@ class BaseSink(ABC):
         self.buffer_path = kwargs.get('buffer_path')
         self.buffer = self.read_buffer() or []
         self.buffer_start_time = None
-        self.init_client()
+        try:
+            self.init_client()
+        except Exception:
+            self.destroy()
+            raise
 
     def init_client(self):
         pass
