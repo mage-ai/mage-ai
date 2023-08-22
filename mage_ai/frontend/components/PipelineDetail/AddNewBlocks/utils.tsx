@@ -37,6 +37,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
+        DataSourceTypeEnum.SALESFORCE,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,

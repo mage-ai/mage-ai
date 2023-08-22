@@ -176,9 +176,12 @@ class StreamingPipelineExecutor(PipelineExecutor):
         if source.consume_method == SourceConsumeMethod.BATCH_READ:
             source.batch_read(handler=handle_batch_events)
         elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
-            loop = asyncio.get_event_loop()
-            if loop is not None:
-                loop.run_until_complete(source.read_async(handler=handle_event_async))
+            try:
+                notloop = asyncio.get_event_loop()
+            except Exception:
+                notloop = None
+            if notloop is not None:
+                notloop.run_until_complete(source.read_async(handler=handle_event_async))
             else:
                 asyncio.run(source.read_async(handler=handle_event_async))
 

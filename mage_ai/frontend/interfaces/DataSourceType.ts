@@ -22,6 +22,7 @@ export enum DataSourceTypeEnum {
   POSTGRES = 'postgres',
   RABBITMQ = 'rabbitmq',
   REDSHIFT = 'redshift',
+  SALESFORCE = 'salesforce',
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
 }

@@ -1,0 +1,34 @@
+---
+title: "Salesforce"
+---
+
+## config
+
+```yaml
+connector_type: 'salesforce'
+consumer_key: key
+consumer_secret: secret
+username: username
+password: password+token
+channels:
+    - '/event/AccountEvent__e'
+    - channel...
+```
+
+### Password config
+To allow basic auth, you will need to pass your security token along with your password
+on the following format: "passowrdsecuritytoken" (no spaces or symbols)
+
+## Response
+
+Response is formatted using named tuples, on the following format:
+```python
+(Payload,(topic,data))
+```
+
+To access either topic or message in TRANSFORMER block, use the following:
+```python
+for message in messages:
+    message.topic
+    message.data
+```

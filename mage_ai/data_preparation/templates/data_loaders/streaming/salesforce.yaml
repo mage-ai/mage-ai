@@ -1,0 +1,8 @@
+connector_type: 'salesforce'
+consumer_key: key
+consumer_secret: secret
+username: username
+password: password+token
+channels:
+    - '/event/AccountEvent__e'
+    - channel...
