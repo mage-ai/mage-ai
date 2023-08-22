@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MutateFunction, useMutation } from 'react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
@@ -55,9 +55,9 @@ import {
 } from '@storage/pipelines';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
+import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
-import { sortByKey } from '@utils/array';
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 
@@ -75,6 +75,7 @@ function PipelineListPage() {
   const refTable = useRef(null);
 
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
+  const [pipelineRowsSorted, setPipelineRowsSorted] = useState<React.ReactElement[][]>(null);
   const [searchText, setSearchText] = useState<string>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
@@ -104,6 +105,23 @@ function PipelineListPage() {
 
     return pipelinesFinal;
   }, [data?.pipelines, searchText]);
+  const uuidToPipelineMapping = useMemo(() => indexBy(
+    pipelines,
+    ({ uuid }) => uuid,
+  ), [pipelines]);
+  const getUniqueRowIdentifier = useCallback(
+    row => row?.[2]?.props?.children?.props?.children,
+    [],
+  );
+  const pipelinesSorted = useMemo(() => (pipelineRowsSorted?.length > 0
+    ? (
+      pipelineRowsSorted?.map(row => {
+        // Get pipeline UUID from the third column of the table.
+        const pipelineUUIDFromRow = getUniqueRowIdentifier(row);
+        return uuidToPipelineMapping?.[pipelineUUIDFromRow];
+      })
+    ) : pipelines
+  ), [getUniqueRowIdentifier, pipelineRowsSorted, pipelines, uuidToPipelineMapping]);
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
@@ -842,21 +860,23 @@ function PipelineListPage() {
                   uuid: 'Actions',
                 },
               ]}
-              isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
+              defaultSortColumnIndex={2}
+              getUniqueRowIdentifier={getUniqueRowIdentifier}
+              isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-                const pipeline = pipelines[rowIndex];
+                const pipeline = pipelinesSorted[rowIndex];
 
                 return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
               })}
               onDoubleClickRow={(rowIndex: number) => {
                 router.push(
                     '/pipelines/[pipeline]/edit',
-                    `/pipelines/${pipelines[rowIndex].uuid}/edit`,
+                    `/pipelines/${pipelinesSorted[rowIndex].uuid}/edit`,
                 );
               }}
               ref={refTable}
               renderRightClickMenuItems={(rowIndex: number) => {
-                const selectedPipeline = pipelines[rowIndex];
+                const selectedPipeline = pipelinesSorted[rowIndex];
 
                 return [
                   {
@@ -1081,6 +1101,8 @@ function PipelineListPage() {
                 ];
               })}
               rowsGroupedByIndex={rowsGroupedByIndex}
+              setRowsSorted={setPipelineRowsSorted}
+              sortableColumnIndexes={[1, 2, 3, 4, 5, 6, 8, 9]}
               stickyHeader
             />
           </TableContainerStyle>
