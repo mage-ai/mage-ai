@@ -253,23 +253,27 @@ function Table({
   const sortedColumnPrev = usePrevious(sortedColumn);
   const sortedRowIdsPrev = usePrevious(sortedRowIds);
   useEffect(() => {
+    /*
+     * The rows can change order without a change in sorting (e.g. due to a
+     * column value being updated). As a result, we need to check the row
+     * order and update the rowsSorted state in order to perform actions on
+     * the correct row.
+     */
     if (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
       || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
     ) {
       setRowsSorted?.(rowsSorted);
-      if (sortedColumn) {
-        const sortColIdx = sortedColumnIndex || defaultSortColumnIndex;
-        const sortDirection = sortedColumnDirection || SortDirectionEnum.ASC;
-        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
-        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);
+      const sortColIdx = sortedColumnIndex || null;
+      const sortDirection = sortedColumnDirection || null;
+      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
+      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);
 
-       goToWithQuery({
-         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
-         [SortQueryEnum.SORT_DIRECTION]: sortDirection,
-       }, {
-         pushHistory: true,
-       });
-      }
+      goToWithQuery({
+        [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
+        [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+      }, {
+        pushHistory: true,
+      });
     }
   }, [
     defaultSortColumnIndex,
