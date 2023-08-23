@@ -587,6 +587,54 @@ class PipelineScheduleTests(DBTestCase):
             cron_itr.get_prev(datetime),
         )
 
+    @freeze_time('2023-08-19 20:10:15')
+    def test_next_execution_date(self):
+        now = datetime.now(timezone.utc)
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline2',
+            schedule_interval='@once',
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 19, 14, 15).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(PipelineSchedule.create(**shared_attrs).current_execution_date(), now)
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.HOURLY,
+            ))).next_execution_date(),
+            datetime(2023, 8, 19, 21, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.DAILY,
+            ))).next_execution_date(),
+            datetime(2023, 8, 20, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.WEEKLY,
+            ))).next_execution_date(),
+            datetime(2023, 8, 21, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=ScheduleInterval.MONTHLY,
+            ))).next_execution_date(),
+            datetime(2023, 9, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
+        )
+
+        cron_itr = croniter('30 9 * 8 *', now)
+        self.assertEqual(
+            PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval='30 9 * 8 *',
+            ))).next_execution_date(),
+            cron_itr.get_next(datetime),
+        )
+
 
 class PipelineRunTests(DBTestCase):
     @classmethod
