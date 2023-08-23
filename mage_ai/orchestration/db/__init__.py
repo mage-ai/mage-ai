@@ -28,12 +28,30 @@ db_kwargs = dict(
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
 elif not db_connection_url:
-    # connect to K8s CloudSQL sidecar
-    if os.getenv(DB_USER):
+    import boto3
+
+elif not db_connection_url:
+    if not os.getenv(DB_USER) and os.getenv('DB_SECRET_NAME'):
+        try:
+            # Connect to AWS Secrets manager
+            session = boto3.session.Session()
+            secrets_manager = session.client(service_name='secretsmanager')
+
+            # Fetch secrets
+            response = secrets_manager.get_secret_value(SecretId=os.getenv('DB_SECRET_NAME'))
+            secrets = json.loads(response['SecretString'])
+            
+            # Set connection URL
+            db_connection_url = f"postgresql+psycopg2://{secrets['username']}:{secrets['password']}@127.0.0.1:5432/{secrets['dbname']}"
+        except Exception as e:
+            print("Unable to fetch secrets from AWS Secrets Manager", e)
+    
+    if not db_connection_url and os.getenv(DB_USER):
         db_user = os.getenv(DB_USER)
         db_pass = os.getenv(DB_PASS)
         db_name = os.getenv(DB_NAME)
         db_connection_url = f'postgresql+psycopg2://{db_user}:{db_pass}@127.0.0.1:5432/{db_name}'
+
     else:
         if is_test():
             db_connection_url = f'sqlite:///{TEST_DB}'
