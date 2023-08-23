@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import cronstrue from 'cronstrue';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
@@ -266,6 +267,13 @@ function Edit({
     () => scheduleInterval &&
       !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
     [scheduleInterval],
+  );
+  const readableCronExpression = useMemo(() => (
+    isCustomInterval
+      ? cronstrue.toString(customInterval, { throwExceptionOnParseError: false })
+      : ''
+    ),
+    [customInterval, isCustomInterval],
   );
 
   useEffect(
@@ -866,22 +874,22 @@ function Edit({
             />
 
             <Spacing mt={1} p={1}>
-              <Text muted small>
-                If you want this pipeline to trigger every 1 minute,
-                the CRON syntax is <Text inline monospace small>
-                  */1 * * * *
-                </Text>.
+              <Text monospace xsmall>
+                [minute] [hour] [day(month)] [month] [day(week)]
               </Text>
 
-              <Text muted small>
-                For more CRON syntax examples, check out this <Link
-                  href="https://crontab.guru/"
-                  openNewWindow
-                  small
-                >
-                  resource
-                </Link>.
-              </Text>
+              {!customInterval
+                ? null
+                : (
+                  <Text
+                    danger={readableCronExpression.includes('error')}
+                    muted
+                    small
+                  >
+                    &#34;{readableCronExpression}&#34;
+                  </Text>
+                )
+              }
             </Spacing>
           </div>,
         ],
@@ -913,6 +921,7 @@ function Edit({
     landingTimeEnabled,
     landingTimeInputs,
     name,
+    readableCronExpression,
     runtimeAverage,
     scheduleInterval,
     showCalendar,
