@@ -302,6 +302,7 @@ def clear_state_on_replication_change(stream, state):
 def sync_stream(client, stream, state, logger=None):
     if logger is None:
         logger = LOGGER
+
     tap_stream_id = stream['tap_stream_id']
 
     common.COUNTS[tap_stream_id] = 0
@@ -393,11 +394,12 @@ def sync_stream(client, stream, state, logger=None):
 def do_sync(client, catalog, state, logger=None):
     if logger is None:
         logger = LOGGER
+
     all_streams = catalog['streams']
     streams_to_sync = get_streams_to_sync(all_streams, state)
 
     for stream in streams_to_sync:
-        sync_stream(client, stream, state)
+        sync_stream(client, stream, state, logger=logger)
 
     logger.info(common.get_sync_summary(catalog))
 
