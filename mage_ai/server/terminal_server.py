@@ -2,6 +2,7 @@ import json
 import re
 
 import terminado
+import tornado.web
 from tornado import gen
 
 from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
@@ -45,6 +46,14 @@ class MageUniqueTermManager(terminado.UniqueTermManager):
 
 
 class TerminalWebsocketServer(terminado.TermSocket):
+    # def __init__(
+    #     self,
+    #     *args,
+    #     **kwargs,
+    # ):
+    #     super(terminado.TermSocket, self).__init__(*args, **kwargs)
+    #     self.user = None
+
     @property
     def term_command(self):
         return next(iter(self.term_manager.shell_command))
@@ -60,6 +69,34 @@ class TerminalWebsocketServer(terminado.TermSocket):
             updated_text = xterm_escape.sub('', text)
         self.send_json_message(["stdout", updated_text])
 
+    # def prepare(self):
+    #     test = self.request.headers['Sec-Websocket-Protocol'].split(',')
+    #     api_key = test[0].strip()
+    #     token = test[1].strip()
+    #     print(f'api key: {api_key}, token: {token}')
+    #     if REQUIRE_USER_AUTHENTICATION:
+    #         valid = False
+    #         if api_key and token:
+    #             oauth_client = Oauth2Application.query.filter(
+    #                 Oauth2Application.client_id == api_key,
+    #             ).first()
+    #             if oauth_client:
+    #                 oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
+    #                 if valid and oauth_token and oauth_token.user:
+    #                     valid = has_at_least_editor_role(
+    #                         oauth_token.user,
+    #                         Entity.PROJECT,
+    #                         get_project_uuid(),
+    #                     )
+    #         if valid:
+    #             self.user = oauth_token.user
+    #             print('INITIALIZED TERMINAL')
+    #         else:
+    #             raise tornado.web.HTTPError(
+    #                 status_code=403,
+    #                 log_message='Unauthorized access to the terminal.',
+    #             )
+
     def open(self, url_component=None):
         """Websocket connection opened.
 
@@ -69,28 +106,37 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # Jupyter has a mixin to ping websockets and keep connections through
         # proxies alive. Call super() to allow that to set up:
         super(terminado.TermSocket, self).open(url_component)
-        api_key = self.get_argument('api_key', None, True)
-        token = self.get_argument('token', None, True)
 
         cwd = self.get_argument('cwd', None, True)
         term_name = self.get_argument('term_name', None, True)
 
-        user = None
-        if REQUIRE_USER_AUTHENTICATION and api_key and token:
-            oauth_client = Oauth2Application.query.filter(
-                Oauth2Application.client_id == api_key,
-            ).first()
-            if oauth_client:
-                oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                valid = valid and \
-                    oauth_token and \
-                    oauth_token.user
-                if valid:
-                    user = oauth_token.user
+        # user = None
+        # if REQUIRE_USER_AUTHENTICATION and api_key and token:
+        #     valid = False
+        #     if api_key and token:
+        #         oauth_client = Oauth2Application.query.filter(
+        #             Oauth2Application.client_id == api_key,
+        #         ).first()
+        #         if oauth_client:
+        #             oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
+        #             if valid and oauth_token and oauth_token.user:
+        #                 valid = has_at_least_editor_role(
+        #                     oauth_token.user,
+        #                     Entity.PROJECT,
+        #                     get_project_uuid(),
+        #                 )
+        #     if valid:
+        #         user = oauth_token.user
+        #     else:
+        #         raise terminado.management.UnauthorizedAccess(
+        #             'Unauthorized access to the terminal.',
+        #         )
+        #         self._logger.info('TermSocket.open failed: Unauthorized access to the terminal.')
+        #         return
 
         self.term_name = term_name if term_name else 'tty'
-        if user:
-            self.term_name = f'{self.term_name}_{user.id}'
+        if self.user:
+            self.term_name = f'{self.term_name}_{self.user.id}'
 
         self._logger.info("TermSocket.open: %s", self.term_name)
 

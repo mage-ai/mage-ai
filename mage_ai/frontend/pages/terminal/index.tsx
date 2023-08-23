@@ -22,7 +22,7 @@ function TerminalPage() {
     sendMessage,
   } = useWebSocket(getWebSocket('terminal'), {
     shouldReconnect: () => true,
-    queryParams: sharedWebsocketData,
+    protocols: [OAUTH2_APPLICATION_CLIENT_ID, token.decodedToken.token],
   });
 
   return (
