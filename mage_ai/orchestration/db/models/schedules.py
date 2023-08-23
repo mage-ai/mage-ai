@@ -52,7 +52,6 @@ from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
-from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 pipeline_schedule_event_matcher_association_table = Table(
     'pipeline_schedule_event_matcher_association',
@@ -408,6 +407,7 @@ class PipelineRun(BaseModel):
     pipeline_uuid = Column(String(255), index=True)
     execution_date = Column(DateTime(timezone=True), index=True)
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL, index=True)
+    started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
     passed_sla = Column(Boolean, default=False)
@@ -636,6 +636,7 @@ class PipelineRun(BaseModel):
             status=self.PipelineRunStatus.COMPLETED,
         )
 
+        from mage_ai.usage_statistics.logger import UsageStatisticLogger
         asyncio.run(UsageStatisticLogger().pipeline_runs_impression(
             lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
         ))
