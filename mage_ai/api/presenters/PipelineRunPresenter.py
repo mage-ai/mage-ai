@@ -15,6 +15,7 @@ class PipelineRunPresenter(BasePresenter):
         'passed_sla',
         'pipeline_schedule_id',
         'pipeline_uuid',
+        'started_at',
         'status',
         'updated_at',
         'variables',
