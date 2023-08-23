@@ -389,8 +389,10 @@ class Destination():
                         stream = row['currently_syncing']
                     else:
                         stream = list(bookmarks.keys())[0]
-                else:
+                elif row_value.keys():
                     stream = list(row_value.keys())[0]
+                else:
+                    continue
 
             schema = self.schemas.get(stream)
 
