@@ -157,7 +157,9 @@ def produce_collection_schema(collection):
     }
 
 
-def do_discover(client, config, databases=[], return_streams: bool = False):
+def do_discover(client, config, databases=None, return_streams: bool = False):
+    if databases is None:
+        databases = []
     streams = []
 
     for db_name in databases or get_databases(client, config):
@@ -376,16 +378,19 @@ def build_client(config):
     verify_mode = config.get('verify_mode', 'true') == 'true'
     use_ssl = config.get('ssl') == 'true'
 
-    connection_params = {"host": config['host'],
-                         "port": int(config['port']),
-                         "username": config.get('user', None),
-                         "password": config.get('password', None),
-                         # "authSource": config['database'],
-                         "ssl": use_ssl,
-                         "replicaset": config.get('replica_set', None),
-                         "readPreference": 'secondaryPreferred',
-                         "authSource": config.get('authSource', None),
-                         "authMechanism": config.get('authMechanism', None)}
+    connection_params = {
+        'host': config['host'],
+        'port': int(config['port']),
+        'username': config.get('user', None),
+        'password': config.get('password', None),
+        'ssl': use_ssl,
+        'replicaset': config.get('replica_set', None),
+        'readPreference': 'secondaryPreferred',
+    }
+    if config.get('authSource'):
+        config['authSource'] = config.get('authSource')
+    if config.get('authMechanism'):
+        config['authMechanism'] = config.get('authMechanism')
 
     # NB: "ssl_cert_reqs" must ONLY be supplied if `SSL` is true.
     if not verify_mode and use_ssl:
