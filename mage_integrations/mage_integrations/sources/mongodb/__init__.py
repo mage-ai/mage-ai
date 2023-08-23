@@ -7,14 +7,13 @@ from singer import catalog
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
-from mage_integrations.sources.constants import (
+from mage_integrations.sources.constants import (  # REPLICATION_METHOD_LOG_BASED,
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
-    REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.mongodb.tap_mongodb import build_client, do_sync
 from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import (
@@ -103,37 +102,37 @@ class MongoDB(Source):
 
         do_sync(client, catalog_dict, self.state or {})
 
-    def count_records(
-        self,
-        stream,
-        bookmarks: Dict = None,
-        query: Dict = None,
-        **kwargs,
-    ) -> int:
-        if query is None:
-            query = {}
-        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
-            # Not support count records for LOG_BASED replication
-            return 1
+    # def count_records(
+    #     self,
+    #     stream,
+    #     bookmarks: Dict = None,
+    #     query: Dict = None,
+    #     **kwargs,
+    # ) -> int:
+    #     if query is None:
+    #         query = {}
+    #     if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+    #         # Not support count records for LOG_BASED replication
+    #         return 1
 
-        client = build_client(self.config)
-        db = client[self.config['database']]
-        collection = db[stream.tap_stream_id]
+    #     client = build_client(self.config)
+    #     db = client[self.config['database']]
+    #     collection = db[stream.tap_stream_id]
 
-        state = {}
-        if query:
-            state = query
-        elif bookmarks:
-            state = dict(bookmarks={
-                stream.tap_stream_id: bookmarks,
-            })
+    #     state = {}
+    #     if query:
+    #         state = query
+    #     elif bookmarks:
+    #         state = dict(bookmarks={
+    #             stream.tap_stream_id: bookmarks,
+    #         })
 
-        find_filter = build_find_filter(
-            stream.to_dict(),
-            state,
-        )
+    #     find_filter = build_find_filter(
+    #         stream.to_dict(),
+    #         state,
+    #     )
 
-        return collection.count_documents(find_filter)
+    #     return collection.count_documents(find_filter)
 
     def load_data(
         self,
