@@ -39,6 +39,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'next_pipeline_run_date',
     'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -48,6 +49,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'next_pipeline_run_date',
     'runtime_average',
     'tags',
 ], scopes=[

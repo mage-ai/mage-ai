@@ -39,6 +39,7 @@ class PipelineSchedulePresenter(BasePresenter):
                 'event_matchers',
             ])
             data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
+            data['next_pipeline_run_date'] = self.model.next_execution_date()
 
             return data
         elif 'with_runtime_average' == display_format:
