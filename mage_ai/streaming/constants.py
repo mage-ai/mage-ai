@@ -21,3 +21,4 @@ class SinkType(str, Enum):
     KINESIS = 'kinesis'
     MONGODB = 'mongodb'
     OPENSEARCH = 'opensearch'
+    ELASTICSEARCH = 'elasticsearch'
