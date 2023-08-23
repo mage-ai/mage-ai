@@ -22,3 +22,10 @@ You must enter the following credentials when configuring this source:
 1. Click on the Account Access Management section
 1. Click on Property access management
 1. Add the email address of the service account belonging to the credentials in the file at `path_to_credentials_json_file`
+
+## Schema
+Google Analytics schema contains two types of columns: [dimensions](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#custom_dimensions) and [metrics](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#custom_dimensions).
+
+Limitations
+* Maximum number of dimension columns allowed: 9 dimensions (https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/Dimension)
+* Maximum number of metric columns allowed: 10 metrics (https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/Metric)
