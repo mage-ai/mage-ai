@@ -388,9 +388,9 @@ def build_client(config):
         'readPreference': 'secondaryPreferred',
     }
     if config.get('authSource'):
-        config['authSource'] = config.get('authSource')
+        connection_params['authSource'] = config.get('authSource')
     if config.get('authMechanism'):
-        config['authMechanism'] = config.get('authMechanism')
+        connection_params['authMechanism'] = config.get('authMechanism')
 
     # NB: "ssl_cert_reqs" must ONLY be supplied if `SSL` is true.
     if not verify_mode and use_ssl:
