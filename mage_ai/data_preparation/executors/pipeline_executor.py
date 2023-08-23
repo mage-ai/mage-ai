@@ -64,6 +64,7 @@ class PipelineExecutor:
             asyncio.run(self.__run_blocks(
                 pipeline_run,
                 allow_blocks_to_fail=allow_blocks_to_fail,
+                global_vars=global_vars,
             ))
 
         self.logger_manager.output_logs_to_destination()
