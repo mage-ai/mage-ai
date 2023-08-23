@@ -4,7 +4,7 @@ from mage_ai.streaming.sinks.elasticsearch import ElasticSearchSink
 from mage_ai.tests.base_test import TestCase
 
 
-class OpensearchTests(TestCase):
+class ElasticSearchTests(TestCase):
     def test_init(self):
         with patch.object(ElasticSearchSink, 'init_client') as mock_init_client:
             ElasticSearchSink(dict(
