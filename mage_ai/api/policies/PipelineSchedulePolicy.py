@@ -61,6 +61,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'last_pipeline_run_status',
+    'next_pipeline_run_date',
     'pipeline_runs_count',
     'tags',
 ], scopes=[

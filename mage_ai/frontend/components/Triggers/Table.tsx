@@ -32,6 +32,7 @@ import {
 import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
+import { dateFormatLong } from '@utils/date';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -159,10 +160,15 @@ function TriggersTable({
     ]);
   }
 
-  columnFlex.push(...[null, null, null]);
+  columnFlex.push(...[null, 1, 1, null]);
   columns.push(...[
     {
       uuid: 'Runs',
+    },
+    {
+      tooltipMessage: 'This is the execution date of the next pipeline run \
+        (after the initial run if the trigger has no runs yet).',
+      uuid: 'Next run date',
     },
     {
       uuid: 'Latest status',
@@ -216,6 +222,7 @@ function TriggersTable({
               const {
                 id,
                 created_at: createdAt,
+                next_pipeline_run_date: nextRunDate,
                 pipeline_runs_count: pipelineRunsCount,
                 pipeline_uuid: triggerPipelineUUID,
                 last_pipeline_run_status: lastPipelineRunStatus,
@@ -358,6 +365,21 @@ function TriggersTable({
               rows.push(...[
                 <Text default key={`trigger_run_count_${idx}`} monospace>
                   {pipelineRunsCount}
+                </Text>,
+                <Text
+                  default
+                  key={`trigger_next_run_date_${idx}`}
+                  monospace
+                  small
+                >
+                  {nextRunDate
+                    ?
+                      dateFormatLong(
+                        nextRunDate,
+                        { includeSeconds: true, utcFormat: true },
+                      )
+                    : <>&#8212;</>
+                  }
                 </Text>,
                 <Text
                   danger={RunStatus.FAILED === lastPipelineRunStatus}
