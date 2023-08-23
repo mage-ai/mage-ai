@@ -275,6 +275,10 @@ function Edit({
     ),
     [customInterval, isCustomInterval],
   );
+  const cronExpressionInvalid = useMemo(
+    () => readableCronExpression?.toLowerCase().includes('error'),
+    [readableCronExpression],
+  );
 
   useEffect(
     () => {
@@ -882,11 +886,14 @@ function Edit({
                 ? null
                 : (
                   <Text
-                    danger={readableCronExpression.includes('error')}
+                    danger={cronExpressionInvalid}
                     muted
                     small
                   >
-                    &#34;{readableCronExpression}&#34;
+                    {cronExpressionInvalid
+                      ? 'Invalid cron expression. Please check the cron syntax.'
+                      : <>&#34;{readableCronExpression}&#34;</>
+                    }
                   </Text>
                 )
               }
@@ -913,6 +920,7 @@ function Edit({
       </>
     );
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
     isCustomInterval,
