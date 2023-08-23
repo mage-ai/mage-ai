@@ -1,5 +1,5 @@
 connector_type: elasticsearch
-host: https://localhost
+host: http://localhost
 index_name: elastic_index
 api_key: api_key_for_elastic_search
 # # Whether to verify SSL certificates to authenticate.
