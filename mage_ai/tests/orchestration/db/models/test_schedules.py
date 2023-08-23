@@ -597,7 +597,7 @@ class PipelineScheduleTests(DBTestCase):
             start_time=datetime(2023, 8, 19, 19, 14, 15).replace(tzinfo=timezone.utc),
         )
 
-        self.assertEqual(PipelineSchedule.create(**shared_attrs).current_execution_date(), now)
+        self.assertEqual(PipelineSchedule.create(**shared_attrs).next_execution_date(), None)
 
         self.assertEqual(
             PipelineSchedule.create(**merge_dict(shared_attrs, dict(
