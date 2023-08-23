@@ -1,3 +1,4 @@
+import hashlib
 import json
 import platform
 from datetime import datetime
@@ -16,6 +17,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
     EventActionType,
+    EventNameType,
     EventObjectType,
 )
 
@@ -92,6 +94,15 @@ class UsageStatisticLogger():
 
     @safe_db_query
     async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
+        """
+        Write "pipeline_run_ended" event to Amplitude for the given PipelineRun.
+
+        Args:
+            pipeline_run (PipelineRun): pipeline run to use to populate the event
+
+        Returns:
+            bool: True if event was successfully uploaded
+        """
         if not self.help_improve_mage:
             return False
 
@@ -112,12 +123,13 @@ class UsageStatisticLogger():
 
         block_configs = pipeline.all_block_configs
 
+        encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
         data = dict(
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
             pipeline_status=pipeline_run.status,
             pipeline_type=pipeline_type,
-            pipeline_uuid=pipeline.uuid,
+            pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
             run_time_seconds=run_time_seconds,
             trigger_method=pipeline_run.pipeline_schedule.schedule_type,
             unique_block_types=list(set([b.get('type') for b in block_configs])),
@@ -126,13 +138,13 @@ class UsageStatisticLogger():
 
         return await self.__send_message(
             data,
-            event_name='pipeline_run_ended',
+            event_name=EventNameType.PIPELINE_RUN_ENDED,
         )
 
     async def __send_message(
         self,
         data: Dict,
-        event_name: str = 'usage_statistic.create',
+        event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
     ) -> bool:
         if data is None:
             data = {}
