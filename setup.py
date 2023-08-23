@@ -52,6 +52,7 @@ setuptools.setup(
             'azure-mgmt-containerinstance==10.1.0',
             'azure-mgmt-hdinsight==9.0.0',
             'azure-storage-blob==12.14.1',
+            'msrestazure==0.6.4',
         ],
         'bigquery': [
             'google-cloud-bigquery~=3.0',
