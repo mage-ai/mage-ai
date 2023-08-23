@@ -825,6 +825,7 @@ class Pipeline:
             'data_integration',
             'executor_type',
             'retry_config',
+            'run_pipeline_in_one_process',
         ]:
             if key in data:
                 setattr(self, key, data.get(key))
