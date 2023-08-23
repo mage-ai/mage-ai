@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 import time
+
 import pymongo
 import singer
+from bson import timestamp
 from singer import metadata, utils
 
-from bson import timestamp
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 LOGGER = singer.get_logger()
 
 SDC_DELETED_AT = "_sdc_deleted_at"
 MAX_UPDATE_BUFFER_LENGTH = 500
+
 
 def get_latest_ts(client):
     row = client.local.oplog.rs.find_one(sort=[('$natural', pymongo.DESCENDING)])
@@ -46,6 +48,7 @@ def update_bookmarks(state, tap_stream_id, ts):
 
     return state
 
+
 def write_schema(schema, row, stream):
     schema_build_start_time = time.time()
     if common.row_to_schema(schema, row):
@@ -63,14 +66,13 @@ def transform_projection(projection):
     }
     new_projection = {}
 
-
     # If no projection was provided, return base_projection with 'o' whitelisted
     if projection is None:
         new_projection = base_projection
         new_projection['o'] = 1
         return new_projection
 
-    temp_projection = {k:v for k, v in projection.items() if k != '_id'}
+    temp_projection = {k: v for k, v in projection.items() if k != '_id'}
     is_whitelist = sum([v for k, v in temp_projection.items()]) > 0
 
     # If only '_id' is included in projection
@@ -103,9 +105,12 @@ def flush_buffer(client, update_buffer, stream_projection, db_name, collection_n
 
 
 # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-def sync_collection(client, stream, state, stream_projection, max_oplog_ts=None):
+def sync_collection(client, stream, state, stream_projection, logger=None, max_oplog_ts=None):
+    if logger is None:
+        logger = LOGGER
+
     tap_stream_id = stream['tap_stream_id']
-    LOGGER.info('Starting oplog sync for %s', tap_stream_id)
+    logger.info(f'Starting oplog sync for {tap_stream_id}')
 
     md_map = metadata.to_map(stream['metadata'])
     database_name = metadata.get(md_map, (), 'database-name')
@@ -129,15 +134,15 @@ def sync_collection(client, stream, state, stream_projection, max_oplog_ts=None)
 
     oplog_query = {
         'ts': {'$gte': oplog_ts},
-        'ns': {'$eq' : '{}.{}'.format(database_name, collection_name)}
+        'ns': {'$eq': '{}.{}'.format(database_name, collection_name)}
     }
 
     projection = transform_projection(stream_projection)
 
     oplog_replay = stream_projection is None
 
-    LOGGER.info('Querying %s with:\n\tFind Parameters: %s\n\tProjection: %s\n\toplog_replay: %s',
-                tap_stream_id, oplog_query, projection, oplog_replay)
+    logger.info(f'Querying {tap_stream_id} with:\n\tFind Parameters: '
+                f'{oplog_query}\n\tProjection: {projection}\n\toplog_replay: {oplog_replay}')
 
     update_buffer = set()
     schema = {"type": "object", "properties": {}}
@@ -249,10 +254,10 @@ def sync_collection(client, stream, state, stream_projection, max_oplog_ts=None)
             singer.write_message(record_message)
             rows_saved += 1
 
-
     # Compare the current bookmark with the max_oplog_ts and write the max
-    bookmarked_ts = timestamp.Timestamp(state.get('bookmarks', {}).get(tap_stream_id, {}).get('oplog_ts_time'),
-                                        state.get('bookmarks', {}).get(tap_stream_id, {}).get('oplog_ts_inc'))
+    bookmarked_ts = timestamp.Timestamp(
+        state.get('bookmarks', {}).get(tap_stream_id, {}).get('oplog_ts_time'),
+        state.get('bookmarks', {}).get(tap_stream_id, {}).get('oplog_ts_inc'))
 
     actual_max_ts = max(bookmarked_ts, max_oplog_ts)
 
@@ -262,5 +267,5 @@ def sync_collection(client, stream, state, stream_projection, max_oplog_ts=None)
     singer.write_message(singer.StateMessage(value=state))
 
     common.COUNTS[tap_stream_id] += rows_saved
-    common.TIMES[tap_stream_id] += time.time()-start_time
-    LOGGER.info('Synced %s records for %s', rows_saved, tap_stream_id)
+    common.TIMES[tap_stream_id] += time.time() - start_time
+    logger.info('Synced %s records for %s', rows_saved, tap_stream_id)

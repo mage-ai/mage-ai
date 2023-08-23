@@ -1,5 +1,12 @@
 from datetime import datetime
+from typing import Dict, Generator, List
+
+from pymongo_schema.extract import extract_pymongo_client_schema
+from singer import catalog
+
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -9,18 +16,12 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_STRING,
     REPLICATION_METHOD_LOG_BASED,
 )
-from mage_integrations.sources.catalog import Catalog
-from mage_integrations.sources.mongodb.tap_mongodb import (
-    build_client,
-    do_sync,
+from mage_integrations.sources.mongodb.tap_mongodb import build_client, do_sync
+from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import (
+    build_find_filter,
 )
-from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import build_find_filter
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import index_by
-from pymongo_schema.extract import extract_pymongo_client_schema
-from singer import catalog
-from typing import Dict, Generator, List
-import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 
 class MongoDB(Source):
@@ -81,11 +82,10 @@ class MongoDB(Source):
                 schema,
             ))
 
-
         return Catalog(catalog_entries)
 
     def sync(self, catalog: Catalog) -> None:
-        client = build_client(self.config)
+        client = build_client(self.config, logger=self.logger)
 
         database = self.config['database']
         catalog_dict = catalog.to_dict()
@@ -97,20 +97,21 @@ class MongoDB(Source):
             idx = find_index(lambda x: len(x['breadcrumb']) == 0, stream['metadata'])
 
             stream['metadata'][idx]['metadata']['database-name'] = database
-            stream['metadata'][idx]['metadata']['replication-key'] = self._get_bookmark_properties_for_stream(
-                streams_by_id[tap_stream_id],
-            )
+            stream['metadata'][idx]['metadata']['replication-key'] = \
+                self._get_bookmark_properties_for_stream(streams_by_id[tap_stream_id])
             stream['metadata'][idx]['metadata']['replication-method'] = stream['replication_method']
 
-        do_sync(client, catalog_dict, self.state or {})
+        do_sync(client, catalog_dict, self.state or {}, logger=self.logger)
 
     def count_records(
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> int:
+        if query is None:
+            query = {}
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
             # Not support count records for LOG_BASED replication
             return 1
@@ -138,12 +139,14 @@ class MongoDB(Source):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        client = build_client(self.config)
+        if query is None:
+            query = {}
+        client = build_client(self.config, logger=self.logger)
         db = client[self.config['database']]
         collection = db[stream.tap_stream_id]
 
@@ -176,7 +179,7 @@ class MongoDB(Source):
         yield arr
 
     def test_connection(self):
-        client = build_client(self.config)
+        client = build_client(self.config, logger=self.logger)
         client.server_info()
 
 
