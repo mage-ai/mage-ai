@@ -1,0 +1,70 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "_sdc_repository": {
+      "type": ["string"]
+    },
+    "id": {
+      "type": ["null", "integer"]
+    },
+    "_links": {
+      "type": ["null", "object"],
+      "properties": {
+        "html": {
+          "type": ["null", "object"],
+          "properties": {
+            "href": {
+              "type": ["null", "string"]
+            }
+          }
+        },
+        "pull_request": {
+          "type": ["null", "object"],
+          "properties": {
+            "href": {
+              "type": ["null", "string"]
+            }
+          }
+        }
+      }
+    },
+    "body_html": {
+      "type": ["null", "string"]
+    },
+    "body_text": {
+      "type": ["null", "string"]
+    },
+    "node_id": {
+      "type": ["null", "string"]
+    },
+    "author_association": {
+      "type": ["null", "string"]
+    },
+    "user": {
+      "$ref": "shared/user.json#/"
+    },
+    "body": {
+      "type": ["null", "string"]
+    },
+    "state": {
+      "type": ["null", "string"]
+    },
+    "commit_id": {
+      "type": ["null", "string"]
+    },
+    "html_url": {
+      "type": ["null", "string"]
+    },
+    "pull_request_url": {
+      "type": ["null", "string"]
+    },
+    "submitted_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "pr_id": {
+      "type": ["null", "string"]
+    }
+  }
+}

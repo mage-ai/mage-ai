@@ -120,7 +120,7 @@ function Table({
   rowsGroupedByIndex,
   setRowsSorted,
   sortableColumnIndexes,
-  sortedColumn: sortedColumnInit = null,
+  sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -247,7 +247,10 @@ function Table({
   ), [defaultSortColumnIndex, rows, sortedColumn, sortedColumnIndex, sortedColumnDirection]);
 
   const sortedRowIds = useMemo(
-    () => (rowsSorted || []).map(row => getUniqueRowIdentifier?.(row)),
+    () => (getUniqueRowIdentifier
+      ? rowsSorted?.map(row => getUniqueRowIdentifier?.(row))
+      : undefined
+    ),
     [getUniqueRowIdentifier, rowsSorted],
   );
   const sortedColumnPrev = usePrevious(sortedColumn);
@@ -259,8 +262,8 @@ function Table({
      * order and update the rowsSorted state in order to perform actions on
      * the correct row.
      */
-    if (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
+    if (sortableColumnIndexes && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
+      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
     ) {
       setRowsSorted?.(rowsSorted);
       const sortColIdx = sortedColumnIndex || null;
@@ -279,6 +282,7 @@ function Table({
     defaultSortColumnIndex,
     rowsSorted,
     setRowsSorted,
+    sortableColumnIndexes,
     sortedColumn,
     sortedColumnIndex,
     sortedColumnDirection,

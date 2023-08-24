@@ -402,81 +402,83 @@ function PipelineRuns({
               tabs={TABS}
             />
 
-            <VerticalDividerStyle right={1} />
-
-            <Spacing px={2}>
-              <FlyoutMenuWrapper
-                items={pipelineRunActionItems}
-                onClickCallback={() => setShowActionsMenu(false)}
-                onClickOutside={() => setShowActionsMenu(false)}
-                open={showActionsMenu}
-                parentRef={refActionsMenu}
-                roundedStyle
-                setConfirmationAction={setConfirmationAction}
-                setConfirmationDialogueOpen={setConfirmationDialogueOpen}
-                topOffset={4}
-                uuid="PipelineRuns/ActionsMenu"
-              >
-                <Button
-                  afterIcon={<ArrowDown />}
-                  onClick={(() => setShowActionsMenu(prev => !prev))}
-                  outline
-                  padding="6px 12px"
-                >
-                  Actions
-                </Button>
-              </FlyoutMenuWrapper>
-
-              <ClickOutside
-                onClickOutside={() => setConfirmationDialogueOpen(false)}
-                open={confirmationDialogueOpen}
-              >
-                <PopupMenu
-                  danger
-                  onCancel={() => setConfirmationDialogueOpen(false)}
-                  onClick={() => {
-                    confirmationAction?.();
-                    setConfirmationDialogueOpen(false);
-                  }}
-                  subtitle="This includes runs on other pages as well, not just the current page."
-                  title="Are you sure you want to cancel all pipeline runs in progress?"
-                  width={UNIT * 40}
-                />
-              </ClickOutside>
-            </Spacing>
-
             {isPipelineRunsTab &&
-              <Select
-                compact
-                defaultColor
-                onChange={e => {
-                  e.preventDefault();
-                  const updatedStatus = e.target.value;
-                  if (updatedStatus === 'all') {
-                    setQuery(null);
-                    goToWithQuery({ tab: TAB_PIPELINE_RUNS.uuid }, { replaceParams: true });
-                  } else {
-                    goToWithQuery(
-                      {
-                        page: 0,
-                        status: e.target.value,
-                      },
-                    );
-                  }
-                }}
-                paddingRight={UNIT * 4}
-                placeholder="Select run status"
-                value={query?.status}
-              >
-                <option key="all_statuses" value="all">
-                  All statuses
-                </option>
-                {PIPELINE_RUN_STATUSES.map(status => (
-                  <option key={status} value={status}>
-                    {RUN_STATUS_TO_LABEL[status]}
+              <>
+                <VerticalDividerStyle right={1} />
+
+                <Spacing px={2}>
+                  <FlyoutMenuWrapper
+                    items={pipelineRunActionItems}
+                    onClickCallback={() => setShowActionsMenu(false)}
+                    onClickOutside={() => setShowActionsMenu(false)}
+                    open={showActionsMenu}
+                    parentRef={refActionsMenu}
+                    roundedStyle
+                    setConfirmationAction={setConfirmationAction}
+                    setConfirmationDialogueOpen={setConfirmationDialogueOpen}
+                    topOffset={4}
+                    uuid="PipelineRuns/ActionsMenu"
+                  >
+                    <Button
+                      afterIcon={<ArrowDown />}
+                      onClick={(() => setShowActionsMenu(prev => !prev))}
+                      outline
+                      padding="6px 12px"
+                    >
+                      Actions
+                    </Button>
+                  </FlyoutMenuWrapper>
+
+                  <ClickOutside
+                    onClickOutside={() => setConfirmationDialogueOpen(false)}
+                    open={confirmationDialogueOpen}
+                  >
+                    <PopupMenu
+                      danger
+                      onCancel={() => setConfirmationDialogueOpen(false)}
+                      onClick={() => {
+                        confirmationAction?.();
+                        setConfirmationDialogueOpen(false);
+                      }}
+                      subtitle="This includes runs on other pages as well, not just the current page."
+                      title="Are you sure you want to cancel all pipeline runs in progress?"
+                      width={UNIT * 40}
+                    />
+                  </ClickOutside>
+                </Spacing>
+
+                <Select
+                  compact
+                  defaultColor
+                  onChange={e => {
+                    e.preventDefault();
+                    const updatedStatus = e.target.value;
+                    if (updatedStatus === 'all') {
+                      setQuery(null);
+                      goToWithQuery({ tab: TAB_PIPELINE_RUNS.uuid }, { replaceParams: true });
+                    } else {
+                      goToWithQuery(
+                        {
+                          page: 0,
+                          status: e.target.value,
+                        },
+                      );
+                    }
+                  }}
+                  paddingRight={UNIT * 4}
+                  placeholder="Select run status"
+                  value={query?.status}
+                >
+                  <option key="all_statuses" value="all">
+                    All statuses
                   </option>
-                ))}
-              </Select>
+                  {PIPELINE_RUN_STATUSES.map(status => (
+                    <option key={status} value={status}>
+                      {RUN_STATUS_TO_LABEL[status]}
+                    </option>
+                  ))}
+                </Select>
+              </>
             }
           </FlexContainer>
         </Spacing>

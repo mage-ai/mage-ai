@@ -43,7 +43,7 @@ export function dateFormatLong(
     dayAgo,
     includeSeconds,
     utcFormat,
-  } = opts;
+  } = opts || {};
   let momentObj = moment(text);
   let dateFormat = DATE_FORMAT_LONG_NO_SEC;
 

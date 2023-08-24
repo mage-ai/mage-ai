@@ -1,3 +1,4 @@
+import asyncio
 import os
 import traceback
 from datetime import datetime, timedelta
@@ -54,6 +55,7 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.shared.retry import retry
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 MEMORY_USAGE_MAXIMUM = 0.95
 
@@ -107,6 +109,7 @@ class PipelineScheduler:
             if self.pipeline_schedule else False
         )
 
+    @safe_db_query
     def start(self, should_schedule: bool = True) -> bool:
         """Start the pipeline run.
 
@@ -155,17 +158,22 @@ class PipelineScheduler:
             self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
             return False
 
-        self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        self.pipeline_run.update(
+            started_at=datetime.now(tz=pytz.UTC),
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
         if should_schedule:
             self.schedule()
         return True
 
+    @safe_db_query
     def stop(self) -> None:
         stop_pipeline_run(
             self.pipeline_run,
             self.pipeline,
         )
 
+    @safe_db_query
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         if not lock.try_acquire_lock(f'pipeline_run_{self.pipeline_run.id}', timeout=10):
             return
@@ -199,6 +207,8 @@ class PipelineScheduler:
                         pipeline_run=self.pipeline_run,
                     )
 
+                asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+
                 self.logger_manager.output_logs_to_destination()
 
                 schedule = PipelineSchedule.get(
@@ -229,6 +239,9 @@ class PipelineScheduler:
                     not self.allow_blocks_to_fail:
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
+
+                asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+
                 self.notification_sender.send_pipeline_run_failure_message(
                     pipeline=self.pipeline,
                     pipeline_run=self.pipeline_run,
@@ -242,6 +255,7 @@ class PipelineScheduler:
             else:
                 self.__schedule_blocks(block_runs)
 
+    @safe_db_query
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
@@ -268,6 +282,7 @@ class PipelineScheduler:
         else:
             self.schedule()
 
+    @safe_db_query
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
         block = self.pipeline.get_block(block_uuid)
         if block and is_dynamic_block(block):
@@ -296,6 +311,7 @@ class PipelineScheduler:
             ),
         )
 
+    @safe_db_query
     def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         metrics = block_run.metrics or {}
@@ -1123,6 +1139,8 @@ def stop_pipeline_run(
 
     # Update pipeline run status to cancelled
     pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+
+    asyncio.run(UsageStatisticLogger().pipeline_run_ended(pipeline_run))
 
     # Cancel all the block runs
     cancel_block_runs_and_jobs(pipeline_run, pipeline)

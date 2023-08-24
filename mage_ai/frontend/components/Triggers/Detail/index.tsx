@@ -57,13 +57,13 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
-import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import {
   addTriggerVariables,
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
 import { convertSeconds, getTriggerApiEndpoint } from '../utils';
+import { dateFormatLong } from '@utils/date';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
@@ -102,6 +102,7 @@ function TriggerDetail({
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
     name: pipelineScheduleName,
+    next_pipeline_run_date: nextRunDate,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
     settings,
@@ -313,24 +314,51 @@ function TriggerDetail({
     }
 
     if (scheduleInterval) {
-      rows.push([
-        <FlexContainer
-          alignItems="center"
-          key="trigger_frequency_label"
-        >
-          <Schedule {...iconProps} />
-          <Spacing mr={1} />
-          <Text default>
-            Frequency
-          </Text>
-        </FlexContainer>,
-        <Text
-          key="trigger_frequency"
-          monospace
-        >
-          {scheduleInterval.replace('@', '')}
-        </Text>,
-      ]);
+      rows.push(
+        [
+          <FlexContainer
+            alignItems="center"
+            key="trigger_frequency_label"
+          >
+            <Schedule {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Frequency
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="trigger_frequency"
+            monospace
+          >
+            {scheduleInterval.replace('@', '')}
+          </Text>,
+        ],
+        [
+          <FlexContainer
+            alignItems="center"
+            key="trigger_next_run_date_label"
+          >
+            <CalendarDate {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Next run date
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="trigger_next_run_date"
+            monospace
+          >
+            {nextRunDate
+              ?
+                dateFormatLong(
+                  nextRunDate,
+                  { includeSeconds: true, utcFormat: true },
+                )
+              : 'N/A'
+            }
+          </Text>,
+        ],
+      );
     }
 
     if (startTime) {
@@ -437,6 +465,7 @@ function TriggerDetail({
     );
   }, [
     isActive,
+    nextRunDate,
     pipelineSchedule,
     scheduleInterval,
     scheduleType,
