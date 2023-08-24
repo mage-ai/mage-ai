@@ -269,7 +269,7 @@ function Edit({
     [scheduleInterval],
   );
   const readableCronExpression = useMemo(() => (
-    isCustomInterval
+    (isCustomInterval && customInterval)
       ? cronstrue.toString(customInterval, { throwExceptionOnParseError: false })
       : ''
     ),
