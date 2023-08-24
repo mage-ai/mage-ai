@@ -251,14 +251,28 @@ class LLMPipelineWizard:
             self,
             code_description: str,
             template: str) -> Dict:
-        """
-        Response is in JSON format. Examples:
-            For PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON prompt, format of response is:
-            {
-                'action_code': 'grade == 5 or grade == 6',
-                'arguments': ['class']
-            }
-            For PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL prompt, format of response is:
+        """Calls LLM with prompt with template and code_description.
+
+        Fill the code_description variable into template, and run against LLM
+        to genenrate JSON format response.
+
+        Args:
+            code_description: description of the block code. It is used in the template prompt.
+            template: template prompt with variable used to call LLM.
+
+        Returns:
+            JSON formated response.
+            If template is PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON, response contains key 'action_code'
+            and 'arguments'. 'action_code' is the filter logic mentioned in code_description
+            applying to data. 'arguments' are columns to be aggregrated on.
+            Example:
+                For PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON prompt, format of response is:
+                {
+                    'action_code': 'grade == 5 or grade == 6',
+                    'arguments': ['class']
+                }
+            If template is PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL, response contains key 'sql_code'
+            , which is the SQL code based on the code_description.
             {
                 'sql_code': 'SELECT book_id, book_price FROM book_table WHERE book_price > 100'
             }
@@ -278,11 +292,21 @@ class LLMPipelineWizard:
             code_description: str,
             code_language: str,
             template: str) -> Dict:
-        """
-        Response is in JSON format. Examples:
-            {
-                'code': 'data.groupby('class_name').sort_values()'
-            }
+        """Calls LLM with prompt with template, code_description and language variables.
+
+        Fill the code_description and code_language variables into template, and run against LLM
+        to genenrate JSON format response.
+
+        Args:
+            code_description: description of the block code. It is used in the template prompt.
+            code_language: language of the block code. It is used in the template prompt.
+            template: template prompt with variable used to call LLM.
+
+        Returns:
+            Response is in JSON format with key 'code'. Example:
+                {
+                    'code': 'data.groupby('class_name').sort_values()'
+                }
         """
         prompt_template = PromptTemplate(
             input_variables=[
