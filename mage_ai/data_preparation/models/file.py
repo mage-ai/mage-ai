@@ -358,7 +358,9 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
-    if not Path(file_path).resolve().is_relative_to(get_repo_path()):
+    full_file_path = str(Path(file_path).resolve())
+    full_repo_path = str(Path(get_repo_path()).resolve())
+    if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
         raise FileNotInProjectError(
             f'File at path: {file_path} is not in the project directory.')
 
