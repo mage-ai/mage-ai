@@ -1,10 +1,14 @@
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import aiofiles
 
-from mage_ai.data_preparation.models.errors import FileExistsError
+from mage_ai.data_preparation.models.errors import (
+    FileExistsError,
+    FileNotInProjectError,
+)
 from mage_ai.settings.repo import get_repo_path
 
 FILE_VERSIONS_DIR = '.file_versions'
@@ -64,6 +68,7 @@ class File:
     ):
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
+        ensure_file_is_in_project(file.file_path)
 
         self.write(
             repo_path,
@@ -314,6 +319,8 @@ class File:
 
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
+        ensure_file_is_in_project(full_path)
+
         self.create_parent_directories(full_path)
         os.rename(self.file_path, full_path)
 
@@ -348,6 +355,12 @@ class File:
         if include_content:
             data['content'] = await self.content_async()
         return data
+
+
+def ensure_file_is_in_project(file_path: str) -> None:
+    if not Path(file_path).resolve().is_relative_to(get_repo_path()):
+        raise FileNotInProjectError(
+            f'File at path: {file_path} is not in the project directory.')
 
 
 def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:

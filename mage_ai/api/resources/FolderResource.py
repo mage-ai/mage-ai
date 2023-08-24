@@ -3,7 +3,9 @@ import shutil
 import urllib.parse
 from typing import Dict
 
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
 
@@ -15,23 +17,33 @@ def full_path(*args) -> str:
 class FolderResource(GenericResource):
     @classmethod
     @safe_db_query
-    def create(self, payload: Dict, user, **kwargs) -> 'FolderResource':
+    def create(cls, payload: Dict, user, **kwargs) -> 'FolderResource':
         path = full_path(payload.get('path'), payload.get('name'))
+        cls.check_folder_is_in_project(path)
         os.makedirs(path, exist_ok=True if payload.get('overwrite', False) else False)
-        return self(dict(path=path), user, **kwargs)
+        return cls(dict(path=path), user, **kwargs)
 
     @classmethod
-    def member(self, pk, user, **kwargs):
+    def member(cls, pk, user, **kwargs):
         path = full_path(urllib.parse.unquote(pk))
-        return self(dict(path=path), user, **kwargs)
+        return cls(dict(path=path), user, **kwargs)
 
-    @safe_db_query
     def delete(self, **kwargs):
+        self.check_folder_is_in_project(self.path)
         return shutil.rmtree(self.path)
 
-    @safe_db_query
     def update(self, payload, **kwargs):
         path = full_path(payload.get('path'), payload.get('name'))
+        self.check_folder_is_in_project(path)
         shutil.move(self.path, path)
         self.model = dict(path=path)
         return self
+
+    @classmethod
+    def check_folder_is_in_project(cls, path: str) -> None:
+        try:
+            ensure_file_is_in_project(path)
+        except FileNotFoundError:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(message=f'Folder at path: {path} is not in the project directory.')
+            raise ApiError(error)
