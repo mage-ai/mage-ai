@@ -77,7 +77,7 @@ def create_a_new_cluster(config: HDInsightConfig):
                     "restAuthCredential.username": config.cluster_login_user_name,
                     "restAuthCredential.password": config.password
                 }
-            }
+            },
         ),
         compute_profile=ComputeProfile(
             roles=[
@@ -102,7 +102,7 @@ def create_a_new_cluster(config: HDInsightConfig):
                             password=config.password
                         )
                     )
-                )
+                ),
             ]
         ),
         storage_profile=StorageProfile(
@@ -110,7 +110,7 @@ def create_a_new_cluster(config: HDInsightConfig):
                 name=config.storage_account_name + config.blob_endpoint_suffix,
                 key=config.storage_account_key,
                 container=config.container_name.lower(),
-                is_default=True
+                is_default=True,
             )]
         )
     )
@@ -118,38 +118,28 @@ def create_a_new_cluster(config: HDInsightConfig):
     create_params = ClusterCreateParametersExtended(
         location=config.location,
         tags={},
-        properties=params
+        properties=params,
     )
 
     client.clusters.begin_create(
         config.resource_group_name,
         config.cluster_name,
-        create_params
+        create_params,
     )
 
 
-def describe_cluster(cluster_id: str, config: HDInsightConfig):
-    if type(config) is dict:
-        config = HDInsightConfig.load(config=config)
+def get_cluster(config: HDInsightConfig):
+    client = get_hdinsight_client(config=config)
 
-    hdinsight_client = get_hdinsight_client(config=config)
-
-    cluster = hdinsight_client.clusters.get(
+    cluster = client.clusters.get(
         resource_group_name=config.resource_group_name,
-        cluster_name=cluster_id,
+        cluster_name=config.cluster_name,
     )
 
     return cluster
 
 
 def list_clusters(config: HDInsightConfig):
-    if type(config) is dict:
-        config = HDInsightConfig.load(config=config)
+    client = get_hdinsight_client(config=config)
 
-    hdinsight_client = get_hdinsight_client(config=config)
-
-    clusters = hdinsight_client.clusters.list_by_resource_group(
-        resource_group_name=config.resource_group_name,
-    )
-
-    return clusters
+    return list(client.clusters.list())
