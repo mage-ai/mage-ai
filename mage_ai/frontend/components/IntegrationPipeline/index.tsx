@@ -742,7 +742,7 @@ function IntegrationPipeline({
                     Configuration
                   </Headline>
 
-                  {dataLoaderBlockContent?.source && (
+                  {dataLoaderBlockContent?.source && integrationSourceDocs && (
                     <Spacing mb={2}>
                       <Accordion>
                         <AccordionPanel title={`Documentation: ${dataLoaderBlockContent.source}`}>
