@@ -46,13 +46,14 @@ class MageUniqueTermManager(terminado.UniqueTermManager):
 
 
 class TerminalWebsocketServer(terminado.TermSocket):
-    # def __init__(
-    #     self,
-    #     *args,
-    #     **kwargs,
-    # ):
-    #     super(terminado.TermSocket, self).__init__(*args, **kwargs)
-    #     self.user = None
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super(terminado.TermSocket, self).__init__(*args, **kwargs)
+        self.user = None
+        self.cwd = None
 
     @property
     def term_command(self):
@@ -69,34 +70,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
             updated_text = xterm_escape.sub('', text)
         self.send_json_message(["stdout", updated_text])
 
-    # def prepare(self):
-    #     test = self.request.headers['Sec-Websocket-Protocol'].split(',')
-    #     api_key = test[0].strip()
-    #     token = test[1].strip()
-    #     print(f'api key: {api_key}, token: {token}')
-    #     if REQUIRE_USER_AUTHENTICATION:
-    #         valid = False
-    #         if api_key and token:
-    #             oauth_client = Oauth2Application.query.filter(
-    #                 Oauth2Application.client_id == api_key,
-    #             ).first()
-    #             if oauth_client:
-    #                 oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-    #                 if valid and oauth_token and oauth_token.user:
-    #                     valid = has_at_least_editor_role(
-    #                         oauth_token.user,
-    #                         Entity.PROJECT,
-    #                         get_project_uuid(),
-    #                     )
-    #         if valid:
-    #             self.user = oauth_token.user
-    #             print('INITIALIZED TERMINAL')
-    #         else:
-    #             raise tornado.web.HTTPError(
-    #                 status_code=403,
-    #                 log_message='Unauthorized access to the terminal.',
-    #             )
-
     def open(self, url_component=None):
         """Websocket connection opened.
 
@@ -107,32 +80,8 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # proxies alive. Call super() to allow that to set up:
         super(terminado.TermSocket, self).open(url_component)
 
-        cwd = self.get_argument('cwd', None, True)
+        self.cwd = self.get_argument('cwd', None, True)
         term_name = self.get_argument('term_name', None, True)
-
-        # user = None
-        # if REQUIRE_USER_AUTHENTICATION and api_key and token:
-        #     valid = False
-        #     if api_key and token:
-        #         oauth_client = Oauth2Application.query.filter(
-        #             Oauth2Application.client_id == api_key,
-        #         ).first()
-        #         if oauth_client:
-        #             oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-        #             if valid and oauth_token and oauth_token.user:
-        #                 valid = has_at_least_editor_role(
-        #                     oauth_token.user,
-        #                     Entity.PROJECT,
-        #                     get_project_uuid(),
-        #                 )
-        #     if valid:
-        #         user = oauth_token.user
-        #     else:
-        #         raise terminado.management.UnauthorizedAccess(
-        #             'Unauthorized access to the terminal.',
-        #         )
-        #         self._logger.info('TermSocket.open failed: Unauthorized access to the terminal.')
-        #         return
 
         self.term_name = term_name if term_name else 'tty'
         if self.user:
@@ -140,12 +89,11 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         self._logger.info("TermSocket.open: %s", self.term_name)
 
-        self.terminal = self.term_manager.get_terminal(self.term_name, cwd=cwd)
-        self.terminal.clients.append(self)
-        self.__initiate_terminal(self.terminal)
-
     @gen.coroutine
     def on_message(self, raw_message):
+        if self.terminal is None:
+            self.__initialize_terminal()
+
         message = json.loads(raw_message)
 
         api_key = message.get('api_key')
@@ -177,12 +125,15 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         return terminado.TermSocket.on_message(self, json.dumps(command))
 
-    def __initiate_terminal(self, terminal):
+    def __initialize_terminal(self):
+        self.terminal = self.term_manager.get_terminal(self.term_name, cwd=self.cwd)
+        self.terminal.clients.append(self)
+
         self.send_json_message(["setup", {}])
         self._logger.info("TermSocket.open: Opened %s", self.term_name)
         # Now drain the preopen buffer, if reconnect.
         buffered = ""
-        preopen_buffer = terminal.read_buffer.copy()
+        preopen_buffer = self.terminal.read_buffer.copy()
         while True:
             if not preopen_buffer:
                 break
@@ -193,6 +144,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         # Turn enable-bracketed-paste off since it can mess up the output.
         if self.term_command == 'bash':
-            terminal.ptyproc.write(
+            self.terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
-        terminal.read_buffer.clear()
+        self.terminal.read_buffer.clear()
