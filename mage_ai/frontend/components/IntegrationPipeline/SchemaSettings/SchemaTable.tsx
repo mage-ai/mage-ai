@@ -536,6 +536,9 @@ function SchemaTable({
         uuid: 'Unique',
       },
       {
+        tooltipMessage: 'Used to keep track of sync progress and incrementally sync new \
+          records (e.g. a column indicating when a record was last updated)',
+        tooltipWidth: 305,
         uuid: 'Bookmark',
       },
       {
