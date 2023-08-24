@@ -34,10 +34,9 @@ hdinsight_config:
   # The name for the cluster you are creating. The name must be unique, 59 characters or less,
   # and can contain letters, numbers, and hyphens (but the first and last character must be
   # a letter or number).
-  # Required by all the samples.
   cluster_name: 'mage-data-prep'
   # Choose a region. i.e. "East US 2".
-  location: ''
+  location: 'West US'
   # Choose a cluster login username. The username must be at least two characters
   # in length and can only consist of digits, upper or lowercase letters,
   # and/or the following special characters: ! # $ % & ' ( ) - ^ _ ` { } ~
@@ -46,7 +45,7 @@ hdinsight_config:
   # in length and can only consist of digits, upper or lowercase letters,
   # and/or the following special characters: % & ' - ^ _ ` {} ~
   ssh_user_name: 'sshuser'
-  # Choose a cluster admin password. The password must be at least 10 characters in length
+  # Choose a cluster admin and ssh password. The password must be at least 10 characters in length
   # and must contain at least one digit, one uppercase and one lower case letter,
   # one non-alphanumeric character (except characters ' " ` \).
   password: ''
