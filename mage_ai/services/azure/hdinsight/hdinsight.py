@@ -131,12 +131,15 @@ def create_a_new_cluster(config: HDInsightConfig):
 def get_cluster(config: HDInsightConfig):
     client = get_hdinsight_client(config=config)
 
-    cluster = client.clusters.get(
+    return client.clusters.get(
         resource_group_name=config.resource_group_name,
         cluster_name=config.cluster_name,
     )
 
-    return cluster
+
+def get_cluster_status(config: HDInsightConfig):
+    cluster = get_cluster(config=config)
+    return cluster.properties.cluster_state
 
 
 def list_clusters(config: HDInsightConfig):
