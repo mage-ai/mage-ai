@@ -5,6 +5,7 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.errors import FileNotInProjectError
 from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
@@ -43,7 +44,7 @@ class FolderResource(GenericResource):
     def check_folder_is_in_project(cls, path: str) -> None:
         try:
             ensure_file_is_in_project(path)
-        except FileNotFoundError:
+        except FileNotInProjectError:
             error = ApiError.RESOURCE_INVALID.copy()
             error.update(message=f'Folder at path: {path} is not in the project directory.')
             raise ApiError(error)
