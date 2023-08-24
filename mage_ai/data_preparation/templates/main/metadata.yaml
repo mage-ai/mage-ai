@@ -59,7 +59,7 @@ hdinsight_config:
   # Blob storage account container name
   container_name: 'mage-storage-container'
   # HDInsight cluster version
-  cluster_version: '3.6'
+  cluster_version: '5.1'
   # The type of HDInsight cluster you want to create.
   kind: 'Spark'
   # The size of the VMs in the cluster for headnodes. See available VM sizes at
