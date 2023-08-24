@@ -17,6 +17,7 @@ class SinkType(str, Enum):
     AMAZON_S3 = 'amazon_s3'
     AZURE_DATA_LAKE = 'azure_data_lake'
     DUMMY = 'dummy'
+    INFLUXDB = 'influxdb'
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
     MONGODB = 'mongodb'
