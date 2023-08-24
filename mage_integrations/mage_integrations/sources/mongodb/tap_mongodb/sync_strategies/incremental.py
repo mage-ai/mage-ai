@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 import copy
 import time
+
 import pymongo
 import singer
 from singer import metadata, utils
+
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
-from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import build_find_filter, get_replication_key_name
+from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import (
+    build_find_filter,
+    get_replication_key_name,
+)
 
 LOGGER = singer.get_logger()
 
@@ -26,18 +31,22 @@ def update_bookmark(row, state, tap_stream_id, replication_key_name):
                                       'replication_key_type',
                                       replication_key_type)
 
+
 # pylint: disable=too-many-locals, too-many-statements
-def sync_collection(client, stream, state, projection):
+def sync_collection(client, stream, state, projection, logger=None):
+    if logger is None:
+        logger = LOGGER
+
     tap_stream_id = stream['tap_stream_id']
-    LOGGER.info('Starting incremental sync for %s', tap_stream_id)
+    logger.info(f'Starting incremental sync for {tap_stream_id}')
 
     stream_metadata = metadata.to_map(stream['metadata']).get(())
     collection = client[stream_metadata['database-name']][stream['stream']]
 
-    #before writing the table version to state, check if we had one to begin with
+    # before writing the table version to state, check if we had one to begin with
     first_run = singer.get_bookmark(state, stream['tap_stream_id'], 'version') is None
 
-    #pick a new table version if last run wasn't interrupted
+    # pick a new table version if last run wasn't interrupted
     if first_run:
         stream_version = int(time.time() * 1000)
     else:
@@ -52,7 +61,6 @@ def sync_collection(client, stream, state, projection):
         stream=common.calculate_destination_stream_name(stream),
         version=stream_version
     )
-
 
     # For the initial replication, emit an ACTIVATE_VERSION message
     # at the beginning so the records show up right away.
@@ -71,8 +79,7 @@ def sync_collection(client, stream, state, projection):
     query_message = 'Querying {} with:\n\tFind Parameters: {}'.format(tap_stream_id, find_filter)
     if projection:
         query_message += '\n\tProjection: {}'.format(projection)
-    LOGGER.info(query_message)
-
+    logger.info(query_message)
 
     # query collection
     schema = {"type": "object", "properties": {}}
@@ -93,7 +100,6 @@ def sync_collection(client, stream, state, projection):
                 common.SCHEMA_COUNT[tap_stream_id] += 1
             common.SCHEMA_TIMES[tap_stream_id] += time.time() - schema_build_start_time
 
-
             record_message = common.row_to_singer_record(stream,
                                                          row,
                                                          stream_version,
@@ -111,10 +117,9 @@ def sync_collection(client, stream, state, projection):
             if rows_saved % common.UPDATE_BOOKMARK_PERIOD == 0:
                 singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
-
         common.COUNTS[tap_stream_id] += rows_saved
-        common.TIMES[tap_stream_id] += time.time()-start_time
+        common.TIMES[tap_stream_id] += time.time() - start_time
 
     singer.write_message(activate_version_message)
 
-    LOGGER.info('Synced %s records for %s', rows_saved, tap_stream_id)
+    logger.info(f'Synced {rows_saved} records for {tap_stream_id}')

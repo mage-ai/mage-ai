@@ -58,7 +58,7 @@ START_CLUSTER_TYPE_DEFAULT = typer.Option(
 )
 START_PROJECT_UUID_DEFAULT = typer.Option(
     None,
-    help='set project uuid if it has not been set for the project already',
+    help='set project uuid for the repo that is being started',
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(

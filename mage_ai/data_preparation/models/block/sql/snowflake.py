@@ -20,6 +20,7 @@ def create_upstream_block_tables(
     query: str = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    variables: Dict = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -94,7 +95,7 @@ def create_upstream_block_tables(
                 table_name = table_name.upper()
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
-                attributes_dict = parse_attributes(block)
+                attributes_dict = parse_attributes(block, variables=variables)
                 schema_name = attributes_dict['source_name'].upper()
                 table_name = source_table_name_for_block(upstream_block).upper()
 

@@ -141,6 +141,13 @@ class Pipeline:
     def version_name(self):
         return f'v{self.version}'
 
+    @property
+    def all_block_configs(self) -> List[Dict]:
+        return self.block_configs + \
+            self.conditional_configs + \
+            self.callback_configs + \
+            self.widget_configs
+
     @classmethod
     def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
         """
@@ -514,7 +521,7 @@ class Pipeline:
         callbacks = [build_shared_args_kwargs(c) for c in self.callback_configs]
         conditionals = [build_shared_args_kwargs(c) for c in self.conditional_configs]
         widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
-        all_blocks = blocks + callbacks + widgets
+        all_blocks = blocks + callbacks + conditionals + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
             self.block_configs,
@@ -818,6 +825,7 @@ class Pipeline:
             'data_integration',
             'executor_type',
             'retry_config',
+            'run_pipeline_in_one_process',
         ]:
             if key in data:
                 setattr(self, key, data.get(key))
@@ -924,6 +932,7 @@ class Pipeline:
                             block.upstream_blocks,
                             [],
                             force_update=True,
+                            variables=self.variables,
                         )
 
                     if widget:
@@ -1019,7 +1028,7 @@ class Pipeline:
 
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
-        block.update_upstream_blocks(upstream_blocks)
+        block.update_upstream_blocks(upstream_blocks, variables=self.variables)
         block.pipeline = self
         if priority is None or priority >= len(mapping.keys()):
             mapping[block.uuid] = block
@@ -1208,7 +1217,10 @@ class Pipeline:
                         ]
 
                 # All blocks will depend on non-widget type blocks
-                block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
+                block.update_upstream_blocks(
+                    self.get_blocks(upstream_block_uuids, widget=False),
+                    variables=self.variables,
+                )
         elif callback_block_uuids is not None:
             callback_blocks = []
             for callback_block_uuid in callback_block_uuids:

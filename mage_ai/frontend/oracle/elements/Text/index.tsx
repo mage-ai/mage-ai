@@ -30,6 +30,7 @@ export type TextProps = {
   center?: boolean;
   children?: any;
   color?: string;
+  cyan?: boolean;
   cursor?: string;
   danger?: boolean;
   default?: boolean;
@@ -223,6 +224,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.disabled && `
     color: ${(props.theme.content || dark.content).disabled};
+  `}
+
+  ${props => props.cyan && `
+    color: ${(props.theme || dark).accent.cyan};
   `}
 
   ${props => props.sky && `

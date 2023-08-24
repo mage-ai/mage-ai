@@ -24,6 +24,7 @@ export enum DataSourceTypeEnum {
   REDSHIFT = 'redshift',
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
+  ELASTICSEARCH = 'elasticsearch',
 }
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
@@ -50,6 +51,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.REDSHIFT]: 'Amazon Redshift',
   [DataSourceTypeEnum.S3]: 'Amazon S3',
   [DataSourceTypeEnum.SNOWFLAKE]: 'Snowflake',
+  [DataSourceTypeEnum.ELASTICSEARCH]: 'ElasticSearch',
 };
 
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {

@@ -8,10 +8,16 @@ import yaml
 from mage_ai.data_preparation.repo_manager import (
     RepoConfig,
     get_project_uuid,
+    get_repo_config,
+    init_project_uuid,
     set_project_uuid_from_metadata,
 )
 from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.tests.base_test import DBTestCase
+
+
+def mock_uuid_value():
+    return uuid.UUID('12345678123456781234567812345678')
 
 
 class RepoManagerTest(DBTestCase):
@@ -89,3 +95,25 @@ class RepoManagerTest(DBTestCase):
             set_project_uuid_from_metadata()
             self.assertEqual(get_project_uuid(), '123456789')
         os.remove(test_metadata_file)
+
+    @patch('uuid.uuid4')
+    def test_init_project_uuid(self, mock_uuid):
+        mock_uuid.return_value = mock_uuid_value()
+
+        init_project_uuid()
+        self.assertEqual(get_project_uuid(), mock_uuid_value().hex)
+
+        os.remove(get_repo_config().metadata_path)
+
+    def test_init_project_uuid_with_overwrite(self):
+        metadata_path = get_repo_config().metadata_path
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            yaml.dump(dict(project_uuid='8888888888'), f)
+
+        set_project_uuid_from_metadata()
+        self.assertEqual(get_project_uuid(), '8888888888')
+
+        init_project_uuid(overwrite_uuid='000000')
+        self.assertEqual(get_project_uuid(), '000000')
+
+        os.remove(metadata_path)

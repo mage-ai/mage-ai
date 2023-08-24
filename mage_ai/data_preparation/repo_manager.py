@@ -293,7 +293,7 @@ def get_variables_dir(
     return variables_dir
 
 
-def set_project_uuid_from_metadata():
+def set_project_uuid_from_metadata() -> None:
     global project_uuid
     if os.path.exists(get_metadata_path()):
         with open(get_metadata_path(), 'r', encoding='utf-8') as f:
@@ -301,10 +301,24 @@ def set_project_uuid_from_metadata():
             project_uuid = config.get('project_uuid')
 
 
-def init_project_uuid():
+def init_project_uuid(overwrite_uuid: str = None) -> None:
+    """
+    Initialize the project_uuid constant. The project_uuid constant is used throughout
+    the server as an identifier for the project.
+
+    Args:
+        overwrite_uuid (str): If not null, the overwrite_uuid will overwrite the current
+            value of project_uuid.
+    """
     global project_uuid
+    repo_config = get_repo_config()
+    if overwrite_uuid:
+        if repo_config.project_uuid != overwrite_uuid:
+            repo_config.save(project_uuid=overwrite_uuid)
+        project_uuid = overwrite_uuid
+        return
+
     if not project_uuid:
-        repo_config = get_repo_config()
         if repo_config.project_uuid:
             project_uuid = repo_config.project_uuid
         else:
