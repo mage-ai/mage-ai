@@ -720,7 +720,7 @@ function SchemaTable({
                 label={(
                   <Text wordBreak>
                     If a new record has the same value as an existing record in
-                    the {pluralize('column', uniqueConstraints?.length)}
+                    the {pluralize('unique column', uniqueConstraints?.length)}
                     {uniqueConstraints?.length > 0 && <>&nbsp;</>}
                     {uniqueConstraints?.sort().map((col: string, idx: number) => (
                       <Text
