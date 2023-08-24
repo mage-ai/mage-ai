@@ -2,6 +2,21 @@ import os
 
 from azure.identity import DefaultAzureCredential, ClientSecretCredential
 from azure.mgmt.hdinsight import HDInsightManagementClient
+from azure.mgmt.hdinsight.models import (
+    ClusterCreateProperties,
+    ClusterCreateParametersExtended,
+    ClusterDefinition,
+    ComputeProfile,
+    HardwareProfile,
+    LinuxOperatingSystemProfile,
+    OsProfile,
+    OSType,
+    Role,
+    StorageAccount,
+    StorageProfile,
+    Tier,
+)
+
 
 from mage_ai.server.logger import Logger
 from mage_ai.services.azure.constants import (
@@ -46,6 +61,71 @@ def get_hdinsight_client(config: HDInsightConfig):
 
     hdinsight_client = HDInsightManagementClient(credential, subscription_id)
     return hdinsight_client
+
+
+def create_a_new_cluster(config: HDInsightConfig):
+    client = get_hdinsight_client(config)
+    params = ClusterCreateProperties(
+        cluster_version=config.cluster_version,
+        os_type=OSType.linux,
+        tier=Tier.standard,
+        cluster_definition=ClusterDefinition(
+            kind="spark",
+            configurations={
+                "gateway": {
+                    "restAuthCredential.isEnabled": "true",
+                    "restAuthCredential.username": config.cluster_login_user_name,
+                    "restAuthCredential.password": config.password
+                }
+            }
+        ),
+        compute_profile=ComputeProfile(
+            roles=[
+                Role(
+                    name="headnode",
+                    target_instance_count=config.headnode_instance_count,
+                    hardware_profile=HardwareProfile(vm_size="Large"),
+                    os_profile=OsProfile(
+                        linux_operating_system_profile=LinuxOperatingSystemProfile(
+                            username=config.ssh_user_name,
+                            password=config.password
+                        )
+                    )
+                ),
+                Role(
+                    name="workernode",
+                    target_instance_count=config.workernode_instance_count,
+                    hardware_profile=HardwareProfile(vm_size="Large"),
+                    os_profile=OsProfile(
+                        linux_operating_system_profile=LinuxOperatingSystemProfile(
+                            username=config.ssh_user_name,
+                            password=config.password
+                        )
+                    )
+                )
+            ]
+        ),
+        storage_profile=StorageProfile(
+            storageaccounts=[StorageAccount(
+                name=config.storage_account_name + config.blob_endpoint_suffix,
+                key=config.storage_account_key,
+                container=config.container_name.lower(),
+                is_default=True
+            )]
+        )
+    )
+
+    create_params = ClusterCreateParametersExtended(
+        location=config.location,
+        tags={},
+        properties=params
+    )
+
+    client.clusters.begin_create(
+        config.resource_group_name,
+        config.cluster_name,
+        create_params
+    )
 
 
 def describe_cluster(cluster_id: str, config: HDInsightConfig):
