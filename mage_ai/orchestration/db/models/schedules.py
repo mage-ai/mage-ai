@@ -243,6 +243,29 @@ class PipelineSchedule(BaseModel):
 
         return current_execution_date
 
+    def next_execution_date(self) -> datetime:
+        next_execution_date = None
+        current_execution_date = self.current_execution_date()
+
+        if current_execution_date is None:
+            return None
+
+        if self.schedule_interval == '@once':
+            pass
+        elif self.schedule_interval == '@daily':
+            next_execution_date = current_execution_date + timedelta(days=1)
+        elif self.schedule_interval == '@hourly':
+            next_execution_date = current_execution_date + timedelta(hours=1)
+        elif self.schedule_interval == '@weekly':
+            next_execution_date = current_execution_date + timedelta(weeks=1)
+        elif self.schedule_interval == '@monthly':
+            next_execution_date = (current_execution_date + timedelta(days=32)).replace(day=1)
+        else:
+            cron_itr = croniter(self.schedule_interval, current_execution_date)
+            next_execution_date = cron_itr.get_next(datetime)
+
+        return next_execution_date
+
     @safe_db_query
     def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
         now = datetime.now(tz=pytz.UTC)
