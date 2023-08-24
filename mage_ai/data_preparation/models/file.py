@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Tuple
 
 import aiofiles
@@ -10,6 +9,7 @@ from mage_ai.data_preparation.models.errors import (
     FileNotInProjectError,
 )
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.utils import get_absolute_path
 
 FILE_VERSIONS_DIR = '.file_versions'
 BLACKLISTED_DIRS = frozenset([
@@ -358,8 +358,8 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
-    full_file_path = str(Path(file_path).resolve())
-    full_repo_path = str(Path(get_repo_path()).resolve())
+    full_file_path = get_absolute_path(file_path)
+    full_repo_path = get_absolute_path(get_repo_path())
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
         raise FileNotInProjectError(
             f'File at path: {file_path} is not in the project directory.')
