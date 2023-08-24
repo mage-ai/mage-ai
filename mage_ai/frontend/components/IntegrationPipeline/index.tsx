@@ -12,6 +12,7 @@ import BlockType, {
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Markdown from '@oracle/components/Markdown';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
   CatalogType,
@@ -31,6 +32,8 @@ import Select from '@oracle/elements/Inputs/Select';
 import SelectStreams from './SelectStreams';
 import SourceConfig from './SourceConfig';
 import Spacing from '@oracle/elements/Spacing';
+import Accordion, { AccordionProps } from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -38,7 +41,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import { SectionStyle } from './index.style';
+import { DocsStyle, SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy } from '@utils/array';
@@ -97,6 +100,8 @@ function IntegrationPipeline({
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
   const [transformerVisible, setTransformerVisible] = useState(true);
+  const [integrationSourceDocs, setIntegrationSourceDocs] =
+    useState<String>('');
 
   const { data: dataIntegrationSources } = api.integration_sources.list({}, {
     revalidateOnFocus: false,
@@ -127,6 +132,13 @@ function IntegrationPipeline({
 
     return parse(dataLoaderBlock.content);
   }, [dataLoaderBlock]);
+
+  useEffect(() => {
+    if (dataLoaderBlockContent?.source) {
+      setIntegrationSourceDocs(integrationSourcesByUUID[dataLoaderBlockContent.source]?.docs);
+    }
+  }, [integrationSources, dataLoaderBlockContent]);
+
   const dataLoaderEditor = useMemo(() => (
     <SourceConfig
       api="integration_sources"
@@ -667,7 +679,7 @@ function IntegrationPipeline({
                       if (!sourceUUID) {
                         return;
                       }
-
+                      setIntegrationSourceDocs(integrationSourcesByUUID[sourceUUID]?.docs);
                       const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
                       if (config) {
                         Object.keys(config).forEach((key: string) => {
@@ -732,16 +744,15 @@ function IntegrationPipeline({
 
                   {dataLoaderBlockContent?.source && (
                     <Spacing mb={2}>
-                      <Text default>
-                        For more information on how to configure this source,
-                        read the <Link
-                          href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
-                          openNewWindow
-                          primary
-                        >
-                          {dataLoaderBlockContent.source} documentation
-                        </Link>
-                      </Text>
+                      <Accordion>
+                        <AccordionPanel title={`Documentation: ${dataLoaderBlockContent.source}`}>
+                          <DocsStyle>
+                            <Markdown>
+                              { integrationSourceDocs.replace(/\<br \/\>/g, '\n\n') }
+                            </Markdown>
+                          </DocsStyle>
+                        </AccordionPanel>
+                      </Accordion>
 
                       {buildVariablesTable('https://docs.mage.ai/guides/data-integration-pipeline#configure-source')}
                     </Spacing>

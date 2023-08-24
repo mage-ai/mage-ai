@@ -14,6 +14,16 @@ export const SectionStyle = styled.div`
   `}
 `;
 
+// targeting a nested Markdown element with inline images that can be large
+export const DocsStyle = styled.div`
+  > div {
+    overflow: initial;
+  }
+  > div img {
+    max-width: 80%;
+  }
+`;
+
 export const CodeEditorStyle = styled.div`
   padding-top: ${PADDING_UNITS * UNIT}px;
 
