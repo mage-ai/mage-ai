@@ -2,7 +2,6 @@ import json
 import re
 
 import terminado
-import tornado.web
 from tornado import gen
 
 from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
@@ -46,15 +45,6 @@ class MageUniqueTermManager(terminado.UniqueTermManager):
 
 
 class TerminalWebsocketServer(terminado.TermSocket):
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super(terminado.TermSocket, self).__init__(*args, **kwargs)
-        self.user = None
-        self.cwd = None
-
     @property
     def term_command(self):
         return next(iter(self.term_manager.shell_command))
@@ -80,20 +70,15 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # proxies alive. Call super() to allow that to set up:
         super(terminado.TermSocket, self).open(url_component)
 
-        self.cwd = self.get_argument('cwd', None, True)
+        cwd = self.get_argument('cwd', None, True)
         term_name = self.get_argument('term_name', None, True)
+        term_name = term_name if term_name else 'tty'
+        self._logger.info("TermSocket.open: %s", term_name)
 
-        self.term_name = term_name if term_name else 'tty'
-        if self.user:
-            self.term_name = f'{self.term_name}_{self.user.id}'
-
-        self._logger.info("TermSocket.open: %s", self.term_name)
+        self.__initialize_terminal(term_name, cwd=cwd)
 
     @gen.coroutine
     def on_message(self, raw_message):
-        if self.terminal is None:
-            self.__initialize_terminal()
-
         message = json.loads(raw_message)
 
         api_key = message.get('api_key')
@@ -125,12 +110,12 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         return terminado.TermSocket.on_message(self, json.dumps(command))
 
-    def __initialize_terminal(self):
-        self.terminal = self.term_manager.get_terminal(self.term_name, cwd=self.cwd)
+    def __initialize_terminal(self, term_name: str, cwd: str = None):
+        self.terminal = self.term_manager.get_terminal(term_name, cwd=cwd)
         self.terminal.clients.append(self)
 
         self.send_json_message(["setup", {}])
-        self._logger.info("TermSocket.open: Opened %s", self.term_name)
+        self._logger.info("TermSocket.open: Opened %s", term_name)
         # Now drain the preopen buffer, if reconnect.
         buffered = ""
         preopen_buffer = self.terminal.read_buffer.copy()

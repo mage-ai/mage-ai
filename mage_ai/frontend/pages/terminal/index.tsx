@@ -7,24 +7,19 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Terminal from '@components/Terminal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { getWebSocket } from '@api/utils/url';
+import { getUser } from '@utils/session';
 
 function TerminalPage() {
-  const token = useMemo(() => new AuthToken(), []);
-  const sharedWebsocketData = useMemo(() => ({
-    api_key: OAUTH2_APPLICATION_CLIENT_ID,
-    token: token.decodedToken.token,
-  }), [
-    token,
-  ]);
+  const user = getUser() || {};
 
   const {
     lastMessage,
     sendMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
     queryParams: {
-      api_key: OAUTH2_APPLICATION_CLIENT_ID,
+      term_name: user?.id,
     },
+    shouldReconnect: () => true,
   });
 
   return (
