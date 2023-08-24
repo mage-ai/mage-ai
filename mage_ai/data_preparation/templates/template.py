@@ -191,6 +191,20 @@ def __fetch_transformer_templates(
         )
 
 
+def is_default_transformer_template(
+    config: Mapping[str, str],
+) -> bool:
+    action_type = config.get('action_type')
+    axis = config.get('axis')
+    data_source = config.get('data_source')
+    if data_source is not None:
+        return False
+    elif action_type is not None and axis is not None:
+        return False
+    else:
+        return True
+
+
 def __fetch_transformer_data_warehouse_template(data_source: DataSource):
     template = template_env.get_template('transformers/data_warehouse_transformer.jinja')
     data_source_handler = MAP_DATASOURCE_TO_HANDLER.get(data_source)
@@ -219,6 +233,11 @@ def __fetch_transformer_action_template(action_type: ActionType, axis: Axis, exi
         )
     except FileNotFoundError:
         template = template_env.get_template('transformers/default.jinja')
+    return template.render(code=existing_code) + '\n'
+
+
+def fetch_transformer_default_template(existing_code: str):
+    template = template_env.get_template('transformers/default.jinja')
     return template.render(code=existing_code) + '\n'
 
 

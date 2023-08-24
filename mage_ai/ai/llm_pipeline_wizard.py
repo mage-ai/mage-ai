@@ -21,8 +21,11 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
-from mage_ai.data_preparation.templates.template import fetch_template_source
-from mage_ai.data_preparation.templates.utils import template_env
+from mage_ai.data_preparation.templates.template import (
+    fetch_template_source,
+    fetch_transformer_default_template,
+    is_default_transformer_template,
+)
 from mage_ai.io.base import DataSource
 from mage_ai.server.logger import Logger
 
@@ -248,6 +251,18 @@ class LLMPipelineWizard:
             self,
             code_description: str,
             template: str) -> Dict:
+        """
+        Response is in JSON format. Examples:
+            For PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON prompt, format of response is:
+            {
+                'action_code': 'grade == 5 or grade == 6',
+                'arguments': ['class']
+            }
+            For PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL prompt, format of response is:
+            {
+                'sql_code': 'SELECT book_id, book_price FROM book_table WHERE book_price > 100'
+            }
+        """
         prompt_template = PromptTemplate(
             input_variables=[
                 'code_description',
@@ -263,6 +278,12 @@ class LLMPipelineWizard:
             code_description: str,
             code_language: str,
             template: str) -> Dict:
+        """
+        Response is in JSON format. Examples:
+            {
+                'code': 'data.groupby('class_name').sort_values()'
+            }
+        """
         prompt_template = PromptTemplate(
             input_variables=[
                 'code_description',
@@ -290,11 +311,11 @@ class LLMPipelineWizard:
                 code_description,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
-            if "action_code" in customized_logic.keys():
+            if 'action_code' in customized_logic.keys():
                 block_code = block_code.replace(
                     'action_code=\'\'',
                     f'action_code=\'{customized_logic.get("action_code")}\'')
-            if "arguments" in customized_logic.keys():
+            if 'arguments' in customized_logic.keys():
                 block_code = block_code.replace(
                     'arguments=[]',
                     f'arguments={customized_logic.get("arguments")}')
@@ -323,11 +344,7 @@ class LLMPipelineWizard:
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
-            if 'data_source' not in config.keys() and \
-                    ('action_type' not in config.keys() or 'axis' not in config.keys()):
-                # Fill customized code for default template.
-                # Logic to check default template should be same
-                # as __fetch_transformer_templates function,
+            if is_default_transformer_template(config):
                 customized_logic = await \
                     self.__async_llm_generate_customized_code_with_base_template(
                         block_description,
@@ -363,9 +380,7 @@ class LLMPipelineWizard:
                             block_language,
                             PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
                         )
-                    block_code = template_env.get_template('transformers/default.jinja').render(
-                            code=customized_logic.get("code"),
-                        ) + '\n'
+                    block_code = fetch_transformer_default_template(customized_logic)
 
             return dict(
                 block_type=block_type,
