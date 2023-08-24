@@ -21,6 +21,9 @@ export const DocsStyle = styled.div`
   }
   > div img {
     max-width: 80%;
+    background: white;
+    padding: 1rem;
+    max-height: 20vh;
   }
 `;
 
