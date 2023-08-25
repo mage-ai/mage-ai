@@ -68,7 +68,6 @@ class File:
     ):
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
-        ensure_file_is_in_project(file.file_path)
 
         self.write(
             repo_path,
@@ -319,7 +318,6 @@ class File:
 
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
-        ensure_file_is_in_project(full_path)
 
         self.create_parent_directories(full_path)
         os.rename(self.file_path, full_path)
