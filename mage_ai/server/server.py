@@ -236,7 +236,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
 
         # API v1 routes
         (
-            r'/api/status',
+            r'/api/status(?:es)?',
             ApiListHandler,
             {'resource': 'status', 'bypass_oauth_check': True},
         ),
