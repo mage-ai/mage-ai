@@ -202,6 +202,7 @@
 							"pages": [
 								"streaming/destinations/amazon-s3",
 								"streaming/destinations/dummy",
+								"streaming/destinations/elasticsearch",
 								"streaming/destinations/kafka",
 								"streaming/destinations/kinesis",
 								"streaming/destinations/mongodb",
@@ -393,6 +394,7 @@
 					"group": "Pipelines",
 					"pages": [
 						"guides/streaming-pipeline",
+						"guides/streaming-pipeline-rabbitmq",
 						"guides/train-model"
 					]
 				},
@@ -868,6 +870,10 @@
 		{
 			"source": "/guides/streaming/destinations/amazon-s3",
 			"destination": "/streaming/destinations/amazon-s3"
+		},
+		{
+			"source": "/guides/streaming/destinations/elasticsearch",
+			"destination": "/streaming/destinations/elasticsearch"
 		},
 		{
 			"source": "/guides/streaming/destinations/azure_data_lake",
