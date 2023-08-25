@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
@@ -24,6 +24,7 @@ import { Save, Logs } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 
@@ -45,6 +46,7 @@ function BlockRunsTable({
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
+  const [blockRunRowsSorted, setBlockRunRowsSorted] = useState<React.ReactElement[][]>(null);
   const {
     uuid: pipelineUUID,
     type: pipelineType,
@@ -88,6 +90,44 @@ function BlockRunsTable({
     },
   );
 
+  const blockRunsByUUID = useMemo(() => indexBy(
+    blockRuns,
+    ({ block_uuid: blockUUID }) => blockUUID,
+  ), [blockRuns]);
+  const uniqueRowIdentifierColumnIndex = 1;
+  const getUniqueRowIdentifier = useCallback(
+    row => {
+      const elWithBlockUUID =
+        row?.[uniqueRowIdentifierColumnIndex]?.props?.children?.props?.children?.[2]?.props?.children;
+
+      if (isIntegration) {
+        return [
+          elWithBlockUUID?.[0],
+          elWithBlockUUID?.[2]?.props?.children,
+          elWithBlockUUID?.[4]?.props?.children,
+        ].join(':');
+      }
+
+      return elWithBlockUUID?.[0];
+    },
+    [isIntegration],
+  );
+  const blockRunsSorted = useMemo(() => (
+    (!isEmptyObject(blockRunsByUUID) && blockRunRowsSorted?.length > 0)
+      ? (
+        blockRunRowsSorted?.map(row => {
+          // Get block UUID from the second column of the table.
+          const blockUUIDFromRow = getUniqueRowIdentifier(row);
+          return blockRunsByUUID?.[blockUUIDFromRow];
+        })
+      ) : blockRuns
+  ), [
+    blockRunRowsSorted,
+    blockRuns,
+    blockRunsByUUID,
+    getUniqueRowIdentifier,
+  ]);
+
   const columnFlex = [1, 2, 2, 1, 1, null, null];
   const columns = [
     {
@@ -122,9 +162,10 @@ function BlockRunsTable({
     <Table
       columnFlex={columnFlex}
       columns={columns}
+      getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => blockRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
-      rows={blockRuns?.map((blockRun: BlockRunType) => {
+      rows={blockRunsSorted?.map((blockRun: BlockRunType) => {
         const {
           block_uuid: blockUUIDOrig,
           completed_at: completedAt,
@@ -187,11 +228,11 @@ function BlockRunsTable({
               />
               <Spacing mr={1} />
               <Text monospace sky>
-                {blockUUID}{streamID && ': '}{streamID && (
+                {blockUUID}{streamID && ':'}{streamID && (
                   <Text default inline monospace>
                     {streamID}
                   </Text>
-                )}{index >= 0 && ': '}{index >= 0 && (
+                )}{index >= 0 && ':'}{index >= 0 && (
                   <Text default inline monospace>
                     {index}
                   </Text>
@@ -279,6 +320,9 @@ function BlockRunsTable({
 
         return rows;
       })}
+      setRowsSorted={setBlockRunRowsSorted}
+      sortableColumnIndexes={[0, 1, 4]}
+      uniqueRowIdentifierColumnIndex={uniqueRowIdentifierColumnIndex}
       uuid="block-runs"
     />
   );
