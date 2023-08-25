@@ -38,7 +38,8 @@
 	"primaryTab": {
 		"name": "Docs"
 	},
-	"tabs": [{
+	"tabs": [
+		{
 			"name": "Guides",
 			"url": "guides"
 		},
@@ -59,7 +60,8 @@
 			"url": "https://www.mage.ai/chat"
 		}
 	],
-	"anchors": [{
+	"anchors": [
+		{
 			"name": "Releases",
 			"icon": "megaphone",
 			"url": "https://docs.mage.ai/about/releases"
@@ -75,7 +77,8 @@
 			"url": "https://docs.mage.ai/development/troubleshooting"
 		}
 	],
-	"navigation": [{
+	"navigation": [
+		{
 			"group": "Introduction",
 			"pages": [
 				"introduction/overview",
@@ -89,7 +92,8 @@
 				"design/core-design-principles",
 				{
 					"group": "Abstractions",
-					"pages": [{
+					"pages": [
+						{
 							"group": "Blocks",
 							"pages": [
 								"design/blocks",
@@ -221,9 +225,11 @@
 						"development/observability/monitoring",
 						"development/observability/logging"
 					]
-				}, {
+				},
+				{
 					"group": "Block resources",
-					"pages": [{
+					"pages": [
+						{
 							"group": "Data loader",
 							"pages": [
 								"design/data-loading",
@@ -378,12 +384,12 @@
 					]
 				},
 				"guides/community-examples"
-
 			]
 		},
 		{
 			"group": "Development",
-			"pages": [{
+			"pages": [
+				{
 					"group": "Pipelines",
 					"pages": [
 						"guides/streaming-pipeline",
@@ -410,7 +416,8 @@
 				"production/deploying-to-cloud/architecture",
 				{
 					"group": "Providers",
-					"pages": [{
+					"pages": [
+						{
 							"group": "AWS",
 							"pages": [
 								"production/deploying-to-cloud/aws/setup",
@@ -459,7 +466,8 @@
 		},
 		{
 			"group": "Production",
-			"pages": [{
+			"pages": [
+				{
 					"group": "Authentication",
 					"pages": [
 						"production/authentication/overview",
@@ -508,7 +516,8 @@
 		},
 		{
 			"group": "External tools",
-			"pages": [{
+			"pages": [
+				{
 					"group": "Computation",
 					"pages": [
 						"integrations/spark-pyspark",
@@ -538,7 +547,8 @@
 				},
 				{
 					"group": "Observability",
-					"pages": [{
+					"pages": [
+						{
 							"group": "Monitoring",
 							"pages": [
 								"integrations/observability/datadog",
@@ -649,7 +659,10 @@
 		},
 		{
 			"group": "About",
-			"pages": ["about/code-of-conduct", "about/statistics"]
+			"pages": [
+				"about/code-of-conduct",
+				"about/statistics"
+			]
 		}
 	],
 	"backgroundImage": "/background.png",
@@ -670,7 +683,8 @@
 			"mode": "hide"
 		}
 	},
-	"redirects": [{
+	"redirects": [
+		{
 			"source": "/contributing/code-of-conduct",
 			"destination": "/about/code-of-conduct"
 		},
