@@ -458,8 +458,9 @@
 				{
 					"group": "Secrets",
 					"pages": [
-						"production/deploying-to-cloud/secrets/GCP",
-						"production/deploying-to-cloud/secrets/AWS"
+						"production/deploying-to-cloud/secrets/AWS",
+						"production/deploying-to-cloud/secrets/Azure",
+						"production/deploying-to-cloud/secrets/GCP"
 					]
 				}
 			]
