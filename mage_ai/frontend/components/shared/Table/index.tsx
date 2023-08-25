@@ -43,6 +43,7 @@ export type ColumnType = {
   center?: boolean;
   fitTooltipContentWidth?: boolean;
   label?: () => any | string;
+  tooltipAppearAfter?: boolean;
   tooltipMessage?: string
   tooltipWidth?: number;
   uuid: string;
@@ -428,6 +429,7 @@ function Table({
           center,
           fitTooltipContentWidth,
           label,
+          tooltipAppearAfter,
           tooltipMessage,
           tooltipWidth,
           uuid: columnUUID,
@@ -447,7 +449,7 @@ function Table({
             {tooltipMessage && (
               <Spacing ml="4px">
                 <Tooltip
-                  appearBefore={idx > 1}
+                  appearBefore={!tooltipAppearAfter}
                   label={(
                     <Text leftAligned>
                       {tooltipMessage}
