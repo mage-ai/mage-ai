@@ -41,8 +41,11 @@ import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
+  fitTooltipContentWidth?: boolean;
   label?: () => any | string;
+  tooltipAppearAfter?: boolean;
   tooltipMessage?: string
+  tooltipWidth?: number;
   uuid: string;
 };
 
@@ -422,6 +425,15 @@ function Table({
   const headerRowEl = useMemo(() => (
     <TableRowStyle noHover>
       {columns?.map((col, idx) => {
+        const {
+          center,
+          fitTooltipContentWidth,
+          label,
+          tooltipAppearAfter,
+          tooltipMessage,
+          tooltipWidth,
+          uuid: columnUUID,
+        } = col || {};
         const isSortable = sortableColumnIndexes?.includes(idx);
         const headerTextEl = (
           <>
@@ -432,19 +444,21 @@ function Table({
               monospace
               muted
             >
-              {col.label ? col.label() : col.uuid}
+              {label ? label() : columnUUID}
             </Text>
-            {col.tooltipMessage && (
+            {tooltipMessage && (
               <Spacing ml="4px">
                 <Tooltip
-                  appearBefore
+                  appearBefore={!tooltipAppearAfter}
                   label={(
                     <Text leftAligned>
-                      {col.tooltipMessage}
+                      {tooltipMessage}
                     </Text>
                   )}
                   lightBackground
+                  maxWidth={tooltipWidth}
                   primary
+                  widthFitContent={fitTooltipContentWidth}
                 />
               </Spacing>
             )}
@@ -455,7 +469,7 @@ function Table({
           <TableHeadStyle
             columnBorders={columnBorders}
             compact={compact}
-            key={`${uuid}-col-${col.uuid}-${idx}`}
+            key={`${uuid}-col-${columnUUID}-${idx}`}
             last={idx === columns.length - 1}
             noBorder={noBorder}
             onMouseEnter={isSortable ? () => setHoveredColumnIdx(idx) : null}
@@ -464,7 +478,7 @@ function Table({
           >
             <FlexContainer
               alignItems="center"
-              justifyContent={col.center ? 'center': 'flex-start'}
+              justifyContent={center ? 'center': 'flex-start'}
             >
               {isSortable
                 ? (
