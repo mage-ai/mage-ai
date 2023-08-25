@@ -238,7 +238,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (
             r'/api/status(?:es)?',
             ApiListHandler,
-            {'resource': 'status', 'bypass_oauth_check': True},
+            {'resource': 'statuses', 'bypass_oauth_check': True},
         ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
