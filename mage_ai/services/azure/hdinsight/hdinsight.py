@@ -1,4 +1,5 @@
 import os
+import time
 
 from azure.identity import DefaultAzureCredential, ClientSecretCredential
 from azure.mgmt.hdinsight import HDInsightManagementClient
@@ -63,7 +64,10 @@ def get_hdinsight_client(config: HDInsightConfig):
     return hdinsight_client
 
 
-def create_a_new_cluster(config: HDInsightConfig):
+def create_a_new_cluster(
+        config: HDInsightConfig,
+        done_status='Running'
+):
     client = get_hdinsight_client(config)
     params = ClusterCreateProperties(
         cluster_version=config.cluster_version,
@@ -126,6 +130,16 @@ def create_a_new_cluster(config: HDInsightConfig):
         config.cluster_name,
         create_params,
     )
+
+    while get_cluster_status(config) != done_status:
+        logger.info('Creating cluster...')
+        time.sleep(30)
+
+    logger.info('Cluster created successfully')
+
+    cluster = get_cluster(config)
+
+    return cluster.id
 
 
 def get_cluster(config: HDInsightConfig):
