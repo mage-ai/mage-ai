@@ -533,6 +533,8 @@ function SchemaTable({
         uuid: 'Type',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to avoid adding duplicate records',
         uuid: 'Unique',
       },
       {

@@ -41,6 +41,7 @@ import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
+  fitTooltipContentWidth?: boolean;
   label?: () => any | string;
   tooltipMessage?: string
   tooltipWidth?: number;
@@ -425,6 +426,7 @@ function Table({
       {columns?.map((col, idx) => {
         const {
           center,
+          fitTooltipContentWidth,
           label,
           tooltipMessage,
           tooltipWidth,
@@ -445,7 +447,7 @@ function Table({
             {tooltipMessage && (
               <Spacing ml="4px">
                 <Tooltip
-                  appearBefore
+                  appearBefore={idx > 1}
                   label={(
                     <Text leftAligned>
                       {tooltipMessage}
@@ -454,6 +456,7 @@ function Table({
                   lightBackground
                   maxWidth={tooltipWidth}
                   primary
+                  widthFitContent={fitTooltipContentWidth}
                 />
               </Spacing>
             )}
