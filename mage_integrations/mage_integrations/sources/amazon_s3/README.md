@@ -1,6 +1,6 @@
 # Amazon S3
 
-![amazon_s3_logo](https://github.com/mage-ai/mage-ai/assets/78053898/a0ba0225-f5f3-4bcd-a283-9e14b7368e44)
+![aws_s3_logo](https://github.com/mage-ai/mage-ai/assets/78053898/a44c1c95-5aff-4fa4-8653-8939ccf12d09)
 
 <br />
 
