@@ -2,6 +2,8 @@ import { parse, stringify } from 'yaml';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import Button from '@oracle/elements/Button';
 import BlockType, {
@@ -12,7 +14,6 @@ import BlockType, {
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Markdown from '@oracle/components/Markdown';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
   CatalogType,
@@ -25,6 +26,7 @@ import IntegrationSourceType, {
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
 import Link from '@oracle/elements/Link';
+import Markdown from '@oracle/components/Markdown';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import SchemaSettings from './SchemaSettings';
@@ -32,8 +34,6 @@ import Select from '@oracle/elements/Inputs/Select';
 import SelectStreams from './SelectStreams';
 import SourceConfig from './SourceConfig';
 import Spacing from '@oracle/elements/Spacing';
-import Accordion, { AccordionProps } from '@oracle/components/Accordion';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -101,7 +101,7 @@ function IntegrationPipeline({
   const [sourceVisible, setSourceVisible] = useState(true);
   const [transformerVisible, setTransformerVisible] = useState(true);
   const [integrationSourceDocs, setIntegrationSourceDocs] =
-    useState<String>('');
+    useState<string>('');
 
   const { data: dataIntegrationSources } = api.integration_sources.list({}, {
     revalidateOnFocus: false,
@@ -137,7 +137,7 @@ function IntegrationPipeline({
     if (dataLoaderBlockContent?.source) {
       setIntegrationSourceDocs(integrationSourcesByUUID[dataLoaderBlockContent.source]?.docs);
     }
-  }, [integrationSources, dataLoaderBlockContent]);
+  }, [integrationSourcesByUUID, dataLoaderBlockContent]);
 
   const dataLoaderEditor = useMemo(() => (
     <SourceConfig
