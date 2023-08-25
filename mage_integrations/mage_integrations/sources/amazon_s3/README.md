@@ -1,6 +1,6 @@
 # Amazon S3
 
-![](https://help.grow.com/hc/article_attachments/1500016247722/amazons3.svg)
+![amazon_s3_logo](https://github.com/mage-ai/mage-ai/assets/78053898/a0ba0225-f5f3-4bcd-a283-9e14b7368e44)
 
 <br />
 
