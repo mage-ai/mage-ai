@@ -67,7 +67,7 @@ def load_data_from_mssql(*args, **kwargs):
     Specify your configuration settings in 'io_config.yaml'.
     Set the following in your io_config:
 
-    Docs: https://docs.mage.ai/integrations/databases/MicrosoftSQLServer
+    Docs: /integrations/databases/MicrosoftSQLServer
     """
     query = 'Your MSSQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -102,7 +102,7 @@ def export_data_to_mssql(df: DataFrame, **kwargs) -> None:
     Specify your configuration settings in 'io_config.yaml'.
     Set the following in your io_config:
 
-    Docs: https://docs.mage.ai/integrations/databases/MicrosoftSQLServer
+    Docs: /integrations/databases/MicrosoftSQLServer
     """
     schema_name = 'dbo'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to

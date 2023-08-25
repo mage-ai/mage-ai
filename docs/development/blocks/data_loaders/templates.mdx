@@ -52,7 +52,7 @@ def load_data_from_file(*args, **kwargs):
     For multiple directories, use the following:
         FileIO().load(file_directories=['dir_1', 'dir_2'])
 
-    Docs: https://docs.mage.ai/design/data-loading#fileio
+    Docs: /design/data-loading#fileio
     """
     filepath = 'path/to/your/file.csv'
 
@@ -117,7 +117,7 @@ def load_from_azure_blob_storage(*args, **kwargs):
     Template for loading data from a Azure Blob Storage.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#azureblobstorage
+    Docs: /design/data-loading#azureblobstorage
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -158,7 +158,7 @@ def load_data_from_big_query(*args, **kwargs):
     Template for loading data from a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#bigquery
+    Docs: /design/data-loading#bigquery
     """
     query = 'your_gbq_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -194,7 +194,7 @@ def load_from_google_cloud_storage(*args, **kwargs):
     Template for loading data from a Google Cloud Storage bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#googlecloudstorage
+    Docs: /design/data-loading#googlecloudstorage
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -235,7 +235,7 @@ def load_data_from_mysql(*args, **kwargs):
     Template for loading data from a MySQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#mysql
+    Docs: /design/data-loading#mysql
     """
     query = 'Your MySQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -272,7 +272,7 @@ def load_data_from_postgres(*args, **kwargs):
     Template for loading data from a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#postgresql
+    Docs: /design/data-loading#postgresql
     """
     query = 'your PostgreSQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -309,7 +309,7 @@ def load_data_from_redshift(*args, **kwargs):
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#redshift
+    Docs: /design/data-loading#redshift
     """
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -346,7 +346,7 @@ def load_from_s3_bucket(*args, **kwargs):
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#s3
+    Docs: /design/data-loading#s3
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -387,7 +387,7 @@ def load_data_from_snowflake(*args, **kwargs):
     Template for loading data from a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#example-loading-data-from-snowflake-warehouse
+    Docs: /design/data-loading#example-loading-data-from-snowflake-warehouse
     """
     query = 'your_snowflake_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -545,7 +545,7 @@ def trigger(*args, **kwargs):
     """
     Trigger another pipeline to run.
 
-    Documentation: https://docs.mage.ai/orchestration/triggers/trigger-pipeline
+    Documentation: /orchestration/triggers/trigger-pipeline
     """
 
     trigger_pipeline(

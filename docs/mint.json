@@ -79,111 +79,7 @@
 			"group": "Introduction",
 			"pages": [
 				"introduction/overview",
-				{
-					"group": "Setup",
-					"pages": [
-						"getting-started/setup"
-					]
-				},
-				{
-					"group": "Development",
-					"pages": [
-						"development/project/setup",
-						{
-							"group": "Blocks",
-							"pages": [ {
-									"group": "Data loader",
-									"pages": [
-										"design/data-loading",
-										"development/blocks/data_loaders/templates"
-									]
-								},
-								{
-									"group": "Transformer",
-									"pages": [
-										"development/blocks/transformers/templates"
-									]
-								},
-								{
-									"group": "Data exporter",
-									"pages": [
-										"development/blocks/data_exporters/templates"
-									]
-								},
-								{
-									"group": "Sensors",
-									"pages": [
-										"development/blocks/sensors/templates"
-									]
-								},
-								{
-									"group": "Callbacks",
-									"pages": [
-										"development/blocks/callbacks/overview",
-										"development/blocks/callbacks/templates"
-									]
-								},
-								{
-									"group": "Conditionals",
-									"pages": [
-										"development/blocks/conditionals/overview",
-										"development/blocks/conditionals/templates"
-									]
-								},
-								{
-									"group": "SQL",
-									"pages": [
-										"development/blocks/sql/trino"
-									]
-								}
-							]
-						},
-						{
-							"group": "Streaming",
-							"pages": [
-								"streaming/overview",
-								{
-									"group": "Sources",
-									"pages": [
-										"streaming/sources/amazon-sqs",
-										"streaming/sources/azure-event-hub",
-										"streaming/sources/google-cloud-pubsub",
-										"streaming/sources/kafka",
-										"streaming/sources/kinesis"
-									]
-								},
-								{
-									"group": "Destinations",
-									"pages": [
-										"streaming/destinations/amazon-s3",
-										"streaming/destinations/dummy",
-										"streaming/destinations/kafka",
-										"streaming/destinations/kinesis",
-										"streaming/destinations/mongodb",
-										"streaming/destinations/opensearch",
-										"streaming/destinations/redshift"
-									]
-								}
-							]
-						},
-						{
-							"group": "Testing",
-							"pages": [
-								"development/data-validation",
-								"development/testing/great-expectations",
-								"development/testing/unit-tests"
-							]
-						},
-						{
-							"group": "Monitoring",
-							"pages": [
-								"development/observability/monitoring",
-								"development/observability/logging"
-							]
-						},
-						"development/text-editor"
-					]
-				}
+				"getting-started/setup"
 			]
 		},
 		{
@@ -200,46 +96,27 @@
 								{
 									"group": "Types",
 									"pages": [
-										"design/blocks/data-loader",
-										"design/blocks/transformer",
+										"design/blocks/callbacks",
+										"design/blocks/conditionals",
 										"design/blocks/data-exporter",
+										"design/blocks/data-loader",
+										"design/blocks/extension",
 										"design/blocks/scratchpad",
 										"design/blocks/sensor",
-										"design/blocks/extension"
+										"design/blocks/transformer",
+										{
+											"group": "SQL",
+											"pages": [
+												"design/blocks/sql/trino"
+											]
+										}
 									]
 								},
-								"design/blocks/dynamic-blocks",
-								"design/blocks/replicate-blocks"
+								"design/blocks/dynamic-blocks"
 							]
 						},
-						"design/data-pipeline-management"
-					]
-				},
-				{
-					"group": "Data integration",
-					"pages": [
-						"data-integrations/overview",
-						"data-integrations/configuration",
+						"design/data-pipeline-management",
 						{
-							"group": "Sources",
-							"pages": [
-								"data-integrations/sources/overview",
-								"data-integrations/sources/add-new-source",
-								"data-integrations/sources/postgresql"
-							]
-						},
-						{
-							"group": "Destinations",
-							"pages": [
-								"data-integrations/destinations/overview",
-								"data-integrations/destinations/add-new-destination"
-							]
-						}
-					]
-				},
-				{
-					"group": "Orchestration",
-					"pages": [ {
 							"group": "Schedules and triggers",
 							"pages": [
 								"orchestration/triggers/trigger-pipeline",
@@ -271,27 +148,126 @@
 							]
 						}
 					]
+				},
+				{
+					"group": "Data integration",
+					"pages": [
+						"data-integrations/overview",
+						"data-integrations/configuration",
+						{
+							"group": "Sources",
+							"pages": [
+								"data-integrations/sources/overview",
+								"data-integrations/sources/add-new-source",
+								"data-integrations/sources/postgresql"
+							]
+						},
+						{
+							"group": "Destinations",
+							"pages": [
+								"data-integrations/destinations/overview",
+								"data-integrations/destinations/add-new-destination"
+							]
+						}
+					]
+				},
+				"orchestration/global-data-products/overview"
+			]
+		},
+		{
+			"group": "Development",
+			"pages": [
+				"development/project/setup",
+				"development/text-editor",
+				{
+					"group": "Streaming",
+					"pages": [
+						"streaming/overview",
+						{
+							"group": "Sources",
+							"pages": [
+								"streaming/sources/amazon-sqs",
+								"streaming/sources/azure-event-hub",
+								"streaming/sources/google-cloud-pubsub",
+								"streaming/sources/kafka",
+								"streaming/sources/kinesis"
+							]
+						},
+						{
+							"group": "Destinations",
+							"pages": [
+								"streaming/destinations/amazon-s3",
+								"streaming/destinations/dummy",
+								"streaming/destinations/kafka",
+								"streaming/destinations/kinesis",
+								"streaming/destinations/mongodb",
+								"streaming/destinations/opensearch",
+								"streaming/destinations/redshift"
+							]
+						}
+					]
+				},
+				{
+					"group": "Testing",
+					"pages": [
+						"development/data-validation",
+						"development/testing/great-expectations",
+						"development/testing/unit-tests"
+					]
+				},
+				{
+					"group": "Monitoring",
+					"pages": [
+						"development/observability/monitoring",
+						"development/observability/logging"
+					]
+				}, {
+					"group": "Block resources",
+					"pages": [ {
+							"group": "Data loader",
+							"pages": [
+								"design/data-loading",
+								"development/blocks/data_loaders/templates"
+							]
+						},
+						{
+							"group": "Transformer",
+							"pages": [
+								"development/blocks/transformers/templates"
+							]
+						},
+						{
+							"group": "Data exporter",
+							"pages": [
+								"development/blocks/data_exporters/templates"
+							]
+						},
+						{
+							"group": "Sensors",
+							"pages": [
+								"development/blocks/sensors/templates"
+							]
+						},
+						{
+							"group": "Callbacks",
+							"pages": [
+								"development/blocks/callbacks/templates"
+							]
+						},
+						{
+							"group": "Conditionals",
+							"pages": [
+								"development/blocks/conditionals/templates"
+							]
+						}
+					]
 				}
 			]
 		},
 		{
 			"group": "Configuration",
-			"pages": [ {
-					"group": "Storage",
-					"pages": [
-						"integrations/databases/BigQuery",
-						"integrations/databases/ClickHouse",
-						"integrations/databases/Druid",
-						"integrations/databases/MicrosoftSQLServer",
-						"integrations/databases/MongoDB",
-						"integrations/databases/MySQL",
-						"integrations/databases/PostgreSQL",
-						"integrations/databases/Redshift",
-						"integrations/databases/S3",
-						"integrations/databases/Snowflake"
-					]
-				},
-				"getting-started/kernels",
+			"pages": [
+				"custom-templates/overview",
 				{
 					"group": "Variables",
 					"pages": [
@@ -308,20 +284,34 @@
 					]
 				},
 				{
+					"group": "Storage",
+					"pages": [
+						"integrations/databases/BigQuery",
+						"integrations/databases/ClickHouse",
+						"integrations/databases/Druid",
+						"integrations/databases/MicrosoftSQLServer",
+						"integrations/databases/MongoDB",
+						"integrations/databases/MySQL",
+						"integrations/databases/PostgreSQL",
+						"integrations/databases/Redshift",
+						"integrations/databases/S3",
+						"integrations/databases/Snowflake"
+					]
+				},
+				"getting-started/kernels",
+				{
 					"group": "Versioning",
 					"pages": [
 						"getting-started/setting-up-git",
 						"getting-started/file-versions"
 					]
-				},
-				"custom-templates/overview"
+				}
 			]
 		},
 		{
 			"group": "Get Started",
 			"pages": [
-				"contributing/overview",
-				"contributing/statistics/overview"
+				"contributing/overview"
 			]
 		},
 		{
@@ -377,35 +367,42 @@
 		{
 			"group": "Get Started",
 			"pages": [
-				"guides/load-api-data",
-				"guides/data-integration-pipeline",
-				"guides/setup-dbt",
-				"guides/integrate-mage-airflow"
+				"guides/overview",
+				{
+					"group": "Quickstart",
+					"pages": [
+						"guides/load-api-data",
+						"guides/data-integration-pipeline",
+						"guides/setup-dbt",
+						"guides/integrate-mage-airflow"
+					]
+				},
+				"guides/community-examples"
+
 			]
 		},
 		{
-			"group": "Pipeline Development",
+			"group": "Development",
 			"pages": [
-				"guides/batch-pipeline",
-				"guides/streaming-pipeline",
 				{
-					"group": "ML pipelines",
+					"group": "Pipelines",
 					"pages": [
-						"guides/train-model",
-						"guides/train/complete-project"
+						"guides/streaming-pipeline",
+						"guides/train-model"
+					]
+				},
+				{
+					"group": "Blocks",
+					"pages": [
+						"guides/blocks/transformer-blocks",
+						"guides/blocks/sql-blocks",
+						"guides/blocks/dynamic-blocks",
+						"guides/blocks/custom-blocks",
+						"guides/blocks/markdown-blocks",
+						"guides/blocks/r-blocks",
+						"guides/blocks/replicate-blocks"
 					]
 				}
-			]
-		},
-		{
-			"group": "Blocks",
-			"pages": [
-				"guides/blocks/transformer-blocks",
-				"guides/blocks/sql-blocks",
-				"guides/blocks/dynamic-blocks",
-				"guides/blocks/custom-blocks",
-				"guides/blocks/markdown-blocks",
-				"guides/blocks/r-blocks"
 			]
 		},
 		{
@@ -462,7 +459,7 @@
 			]
 		},
 		{
-			"group": "Deployment",
+			"group": "Production",
 			"pages": [ {
 					"group": "Authentication",
 					"pages": [
@@ -511,7 +508,7 @@
 			]
 		},
 		{
-			"group": "Integrations",
+			"group": "External tools",
 			"pages": [ {
 					"group": "Computation",
 					"pages": [
@@ -675,6 +672,10 @@
 		}
 	},
 	"redirects": [ {
+			"source": "/design/blocks/replicate-blocks",
+			"destination": "/guides/blocks/replicate-blocks"
+		},
+		{
 			"source": "/guides/streaming/contributing",
 			"destination": "/contributing/backend/streaming/sources-and-destinations"
 		},

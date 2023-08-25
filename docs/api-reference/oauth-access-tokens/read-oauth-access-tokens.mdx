@@ -1,5 +1,6 @@
 ---
-title: "Read OAuth access tokens"
+title: "Read OAuth tokens"
+sidebarTitle: "Read OAuth tokens"
 api: "GET /api/oauth_access_tokens"
 ---
 ```GET /api/oauth_access_tokens```
@@ -24,15 +25,15 @@ api: "GET /api/oauth_access_tokens"
   Example: `1`
 </ParamField>
 
-<CodeGroup>
-```curl cURL
+<RequestExample>
+```bash Request
 curl --request GET \
   --url 'http://localhost:6789/api/pipelines/oauth_access_tokens/logs?_limit=20&_offset=0&show_all=1&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --header 'OAUTH-TOKEN=some_really_long_string' \
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "oauth_access_tokens": [
     {
@@ -77,3 +78,4 @@ curl --request GET \
   }
 }
 ```
+</ResponseExample>

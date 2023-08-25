@@ -37,29 +37,29 @@ to Github, unless you want them to.
 3. Navigate to the "Git settings" section of the Mage settings page.
 4. Set up your SSH key so that your machine can access Github, if you
 haven't already. Check out this sections 3 and 4 of this
-[guide](https://docs.mage.ai/getting-started/setting-up-git#3-set-up-ssh-key)
+[guide](/getting-started/setting-up-git#3-set-up-ssh-key)
 to set up your SSH key.
-5. Select SSH as the authentication type.
-5. Fill out the form:
+1. Select SSH as the authentication type.
+2. Fill out the form:
     1. `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
         ![Github url](/media/github-url.png)
     2. `Local directory path`: The directory in your machine that will be synced with the Github repository.
         If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can
         check what your current working directory is in a Scratchpad block.
-6. Fill out the remaining _optional, but recommended_ fields. Filling out these fields will allow Mage to
+3. Fill out the remaining _optional, but recommended_ fields. Filling out these fields will allow Mage to
    recreate your git and SSH settings if they are deleted (i.e. if your container restarts):
     1. `Username`: Your git username. If you push to your remote repo, this username will show up next to your
         commits.
     2. `Email`: Your git email. Used for the same purpose as your username.
     3. `SSH public key in base64`, `SSH public key in base64`: Enter your SSH public and private key encoded in base64.
         You can follow the instructions in the field description if you want to Mage to save your SSH keys.
-7. Fill out the _optional_ sync fields if you are using a [Git sync](/production/data-sync/git#git-sync)
+4. Fill out the _optional_ sync fields if you are using a [Git sync](/production/data-sync/git#git-sync)
    (this is a separate Git feature):
     1. `Branch name`: This field is only used when running a Git sync. Git syncs can be run either from this
         Git settings page, or before every trigger run.
     2. `Sync before each trigger run`: If this field is checked, then Mage will sync with Github before
         each trigger is run.
-8. Save your Git settings
+5. Save your Git settings
 
 ### HTTPS/Token authentication
 
