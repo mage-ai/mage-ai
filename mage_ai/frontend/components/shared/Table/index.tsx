@@ -91,6 +91,7 @@ type TableProps = {
   sortedColumn?: SortedColumnType;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
+  uniqueRowIdentifierColumnIndex?: number;
   uuid?: string;
   wrapColumns?: boolean;
 };
@@ -126,6 +127,7 @@ function Table({
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
+  uniqueRowIdentifierColumnIndex,
   uuid,
   wrapColumns,
 }: TableProps, ref) {
@@ -226,17 +228,25 @@ function Table({
       sortByKey(
         rows,
         (row) => {
-          const sortColumn = row?.[sortedColumnIndex || defaultSortColumnIndex];
+          const columnIndex = typeof sortedColumnIndex === 'number'
+            ? sortedColumnIndex
+            : defaultSortColumnIndex;
+          const sortColumn = row?.[columnIndex];
           let sortValue = sortColumn?.props?.children;
-          const maxDepth = 10;
-          let currentDepth = 0;
-          while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
-            && currentDepth < maxDepth
-          ) {
-            sortValue = sortValue?.props?.children;
-            currentDepth += 1;
-            if (typeof sortValue === 'undefined') {
-              sortValue = '';
+
+          if (columnIndex === uniqueRowIdentifierColumnIndex) {
+            sortValue = getUniqueRowIdentifier?.(row);
+          } else {
+            const maxDepth = 10;
+            let currentDepth = 0;
+            while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
+              && currentDepth < maxDepth
+            ) {
+              sortValue = sortValue?.props?.children;
+              currentDepth += 1;
+              if (typeof sortValue === 'undefined') {
+                sortValue = '';
+              }
             }
           }
 
@@ -247,7 +257,15 @@ function Table({
         },
       )
     : rows
-  ), [defaultSortColumnIndex, rows, sortedColumn, sortedColumnIndex, sortedColumnDirection]);
+  ), [
+    defaultSortColumnIndex,
+    getUniqueRowIdentifier,
+    rows,
+    sortedColumn,
+    sortedColumnDirection,
+    sortedColumnIndex,
+    uniqueRowIdentifierColumnIndex,
+  ]);
 
   const sortedRowIds = useMemo(
     () => (getUniqueRowIdentifier

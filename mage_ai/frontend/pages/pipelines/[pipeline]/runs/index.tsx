@@ -45,6 +45,7 @@ import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { SortQueryEnum } from '@components/shared/Table/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
@@ -157,7 +158,7 @@ function PipelineRuns({
   };
   let blockRunsRequestQuery = ignoreKeys(
     { ...query, ...runsRequestQuery },
-    [TAB_URL_PARAM, 'page'],
+    [TAB_URL_PARAM, 'page', SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION],
   );
   if (isPipelineRunsTab) {
     blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM]);
@@ -165,7 +166,6 @@ function PipelineRuns({
   const { data: dataBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
     {},
-    { pauseFetch: !query },
   );
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
