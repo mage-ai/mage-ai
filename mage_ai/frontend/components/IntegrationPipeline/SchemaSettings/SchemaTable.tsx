@@ -544,6 +544,8 @@ function SchemaTable({
         uuid: 'Bookmark',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to create primary key for destination table',
         uuid: 'Key prop',
       },
     ];
