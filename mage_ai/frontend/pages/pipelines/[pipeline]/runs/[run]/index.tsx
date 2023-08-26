@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import BlockRunsTable, {
+  DEFAULT_SORTABLE_BR_COL_INDEXES,
+} from '@components/PipelineDetail/BlockRuns/Table';
 import BlockRunType, { BlockRunReqQueryParamsType } from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
@@ -163,6 +165,7 @@ function PipelineBlockRuns({
       pipeline={pipeline}
       selectedRun={selectedRun}
       setErrors={setErrors}
+      sortableColumnIndexes={DEFAULT_SORTABLE_BR_COL_INDEXES}
     />
   ), [
     blockRuns,

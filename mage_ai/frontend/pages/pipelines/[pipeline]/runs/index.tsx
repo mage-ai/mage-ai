@@ -3,7 +3,9 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
-import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import BlockRunsTable, {
+  DEFAULT_SORTABLE_BR_COL_INDEXES,
+} from '@components/PipelineDetail/BlockRuns/Table';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -89,6 +91,8 @@ function PipelineRuns({
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
+  const [sortableBlockRunColIndexes, setSortableBlockRunColIndexes] =
+    useState<number[]>(DEFAULT_SORTABLE_BR_COL_INDEXES);
   const [query, setQuery] = useState<{
     offset?: number;
     pipeline_run_id?: number;
@@ -357,6 +361,7 @@ function PipelineRuns({
       <BlockRunsTable
         blockRuns={blockRuns}
         pipeline={pipeline}
+        sortableColumnIndexes={sortableBlockRunColIndexes}
       />
       {paginationEl}
     </>
@@ -364,6 +369,7 @@ function PipelineRuns({
     blockRuns,
     paginationEl,
     pipeline,
+    sortableBlockRunColIndexes,
   ]);
 
   return (
@@ -395,6 +401,11 @@ function PipelineRuns({
           <FlexContainer alignItems="center">
             <ButtonTabs
               onClickTab={({ uuid }) => {
+                if (uuid === TAB_PIPELINE_RUNS.uuid) {
+                  setSortableBlockRunColIndexes(null);
+                } else {
+                  setSortableBlockRunColIndexes(DEFAULT_SORTABLE_BR_COL_INDEXES);
+                }
                 setQuery(null);
                 goToWithQuery({ tab: uuid }, { replaceParams: true });
               }}

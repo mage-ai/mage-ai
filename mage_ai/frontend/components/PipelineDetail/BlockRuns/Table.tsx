@@ -30,12 +30,15 @@ import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 
+export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
+
 type BlockRunsTableProps = {
   blockRuns: BlockRunType[];
   onClickRow?: (rowIndex: number) => void;
   pipeline: PipelineType;
   selectedRun?: BlockRunType;
   setErrors?: (errors: ErrorsType) => void;
+  sortableColumnIndexes?: number[];
 };
 
 function BlockRunsTable({
@@ -44,6 +47,7 @@ function BlockRunsTable({
   pipeline,
   selectedRun,
   setErrors,
+  sortableColumnIndexes,
 }: BlockRunsTableProps) {
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
@@ -132,7 +136,7 @@ function BlockRunsTable({
           // Get block UUID from the second column of the table.
           const blockUUIDFromRow = getUniqueRowIdentifier(row);
           return blockRunsByUUID?.[blockUUIDFromRow];
-        })
+        }).filter(row => typeof row !== 'undefined')
       ) : blockRuns
   ), [
     blockRunRowsSorted,
@@ -334,7 +338,7 @@ function BlockRunsTable({
         return rows;
       })}
       setRowsSorted={setBlockRunRowsSorted}
-      sortableColumnIndexes={[0, 1, 4]}
+      sortableColumnIndexes={sortableColumnIndexes}
       sortedColumn={sortedColumnInit}
       uniqueRowIdentifierColumnIndex={uniqueRowIdentifierColumnIndex}
       uuid="block-runs"

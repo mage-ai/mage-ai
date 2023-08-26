@@ -285,7 +285,7 @@ function Table({
      */
     if (sortableColumnIndexes
       && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-        || (sortedRowIds?.length > 0 && sortedRowIdsPrev?.length > 0
+        || (sortedRowIdsPrev?.length > 0
           && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
       )
     ) {
