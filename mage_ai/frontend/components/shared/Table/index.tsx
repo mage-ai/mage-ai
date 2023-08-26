@@ -292,7 +292,9 @@ function Table({
       )
     ) {
       setRowsSorted?.(rowsSorted);
-      const sortColIdx = sortedColumnIndex || null;
+      const sortColIdx = typeof sortedColumnIndex === 'number'
+        ? sortedColumnIndex
+        : null;
       const sortDirection = sortedColumnDirection || null;
       set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
       set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);

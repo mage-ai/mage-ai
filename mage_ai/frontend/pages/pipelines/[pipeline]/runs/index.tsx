@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable, {
+  COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING,
   DEFAULT_SORTABLE_BR_COL_INDEXES,
 } from '@components/PipelineDetail/BlockRuns/Table';
 import Button from '@oracle/elements/Button';
@@ -47,7 +48,7 @@ import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
-import { SortQueryEnum } from '@components/shared/Table/constants';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
@@ -166,6 +167,13 @@ function PipelineRuns({
   );
   if (isPipelineRunsTab) {
     blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM]);
+  }
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  if (sortColumnIndexQuery) {
+    const blockRunSortColumn = COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING[sortColumnIndexQuery];
+    const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
+    blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
   }
   const { data: dataBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,

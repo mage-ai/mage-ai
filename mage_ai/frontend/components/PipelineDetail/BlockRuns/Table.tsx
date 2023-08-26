@@ -31,6 +31,11 @@ import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 
 export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
+export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
+  0: 'status',
+  1: 'block_uuid',
+  4: 'completed_at',
+};
 
 type BlockRunsTableProps = {
   blockRuns: BlockRunType[];
