@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
@@ -25,7 +25,6 @@ import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/const
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
-import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
@@ -57,7 +56,6 @@ function BlockRunsTable({
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
-  const [blockRunRowsSorted, setBlockRunRowsSorted] = useState<React.ReactElement[][]>(null);
   const {
     uuid: pipelineUUID,
     type: pipelineType,
@@ -112,47 +110,6 @@ function BlockRunsTable({
     },
   );
 
-  const blockRunsById = useMemo(() => indexBy(
-    blockRuns,
-    ({ id: blockRunId }) => blockRunId,
-  ), [blockRuns]);
-  const uuidColumnIndex = 1;
-  const getUniqueRowIdentifier = useCallback(
-    row => row?.[1]?.key?.split('_block_uuid')?.[0],
-    [],
-  );
-  const getUUID = useCallback(
-    row => {
-      const elWithBlockUUID =
-        row?.[uuidColumnIndex]?.props?.children?.props?.children?.[2]?.props?.children;
-
-      if (isIntegration) {
-        return [
-          elWithBlockUUID?.[0],
-          elWithBlockUUID?.[2]?.props?.children,
-          elWithBlockUUID?.[4]?.props?.children,
-        ].join(':');
-      }
-
-      return elWithBlockUUID?.[0];
-    },
-    [isIntegration],
-  );
-  const blockRunsSorted = useMemo(() => (
-    (!isEmptyObject(blockRunsById) && blockRunRowsSorted?.length > 0)
-      ? (
-        blockRunRowsSorted?.map(row => {
-          const blockIdFromRow = getUniqueRowIdentifier(row);
-          return blockRunsById?.[blockIdFromRow];
-        }).filter(row => typeof row !== 'undefined')
-      ) : blockRuns
-  ), [
-    blockRunRowsSorted,
-    blockRuns,
-    blockRunsById,
-    getUniqueRowIdentifier,
-  ]);
-
   const columnFlex = [1, 2, 2, 1, 1, null, null];
   const columns = [
     {
@@ -187,11 +144,9 @@ function BlockRunsTable({
     <Table
       columnFlex={columnFlex}
       columns={columns}
-      getUUID={getUUID}
-      getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => blockRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
-      rows={blockRunsSorted?.map((blockRun: BlockRunType) => {
+      rows={blockRuns?.map((blockRun: BlockRunType) => {
         const {
           block_uuid: blockUUIDOrig,
           completed_at: completedAt,
@@ -346,11 +301,9 @@ function BlockRunsTable({
 
         return rows;
       })}
-      setRowsSorted={setBlockRunRowsSorted}
       sortableColumnIndexes={sortableColumnIndexes}
       sortedColumn={sortedColumnInit}
       uuid="block-runs"
-      uuidColumnIndex={uuidColumnIndex}
     />
   );
 }

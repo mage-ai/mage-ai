@@ -986,6 +986,8 @@ function PipelineListPage() {
               defaultSortColumnIndex={2}
               getUniqueRowIdentifier={getUniqueRowIdentifier}
               isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
+              localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
+              localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
                 const pipeline = pipelinesSorted[rowIndex];
 

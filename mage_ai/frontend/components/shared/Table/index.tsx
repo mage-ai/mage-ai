@@ -18,10 +18,6 @@ import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 
 import {
-  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX,
-  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION,
-} from '@storage/pipelines';
-import {
   MENU_WIDTH,
   SortDirectionEnum,
   SortQueryEnum,
@@ -71,9 +67,11 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
-  getUUID?: (row: React.ReactElement[]) => string;
+  getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
   highlightRowOnHover?: boolean;
+  localStorageKeySortColIdx?: string;
+  localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   noHeader?: boolean;
@@ -108,10 +106,12 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
-  getUUID,
+  getUUIDFromRow,
   getUniqueRowIdentifier,
   highlightRowOnHover,
   isSelectedRow,
+  localStorageKeySortColIdx,
+  localStorageKeySortDirection,
   noBorder,
   noHeader,
   onClickRow,
@@ -225,7 +225,7 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((sortedColumn || defaultSortColumnIndex)
+  const rowsSorted = useMemo(() => ((setRowsSorted && (sortedColumn || defaultSortColumnIndex))
     ?
       sortByKey(
         rows,
@@ -236,8 +236,8 @@ function Table({
           const sortColumn = row?.[columnIndex];
           let sortValue = sortColumn?.props?.children;
 
-          if (getUUID && columnIndex === uuidColumnIndex) {
-            sortValue = getUUID?.(row);
+          if (getUUIDFromRow && columnIndex === uuidColumnIndex) {
+            sortValue = getUUIDFromRow?.(row);
           } else {
             const maxDepth = 10;
             let currentDepth = 0;
@@ -261,8 +261,9 @@ function Table({
     : rows
   ), [
     defaultSortColumnIndex,
-    getUUID,
+    getUUIDFromRow,
     rows,
+    setRowsSorted,
     sortedColumn,
     sortedColumnDirection,
     sortedColumnIndex,
@@ -296,8 +297,13 @@ function Table({
         ? sortedColumnIndex
         : null;
       const sortDirection = sortedColumnDirection || null;
-      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
-      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);
+
+      if (localStorageKeySortColIdx) {
+        set(localStorageKeySortColIdx, sortColIdx);
+      }
+      if (localStorageKeySortDirection) {
+        set(localStorageKeySortDirection, sortDirection);
+      }
 
       goToWithQuery({
         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
@@ -308,6 +314,8 @@ function Table({
     }
   }, [
     defaultSortColumnIndex,
+    localStorageKeySortColIdx,
+    localStorageKeySortDirection,
     rowsSorted,
     setRowsSorted,
     sortableColumnIndexes,

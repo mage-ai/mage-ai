@@ -92,8 +92,6 @@ function PipelineRuns({
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
-  const [sortableBlockRunColIndexes, setSortableBlockRunColIndexes] =
-    useState<number[]>(DEFAULT_SORTABLE_BR_COL_INDEXES);
   const [query, setQuery] = useState<{
     offset?: number;
     pipeline_run_id?: number;
@@ -369,7 +367,7 @@ function PipelineRuns({
       <BlockRunsTable
         blockRuns={blockRuns}
         pipeline={pipeline}
-        sortableColumnIndexes={sortableBlockRunColIndexes}
+        sortableColumnIndexes={DEFAULT_SORTABLE_BR_COL_INDEXES}
       />
       {paginationEl}
     </>
@@ -377,7 +375,6 @@ function PipelineRuns({
     blockRuns,
     paginationEl,
     pipeline,
-    sortableBlockRunColIndexes,
   ]);
 
   return (
@@ -409,11 +406,6 @@ function PipelineRuns({
           <FlexContainer alignItems="center">
             <ButtonTabs
               onClickTab={({ uuid }) => {
-                if (uuid === TAB_PIPELINE_RUNS.uuid) {
-                  setSortableBlockRunColIndexes(null);
-                } else {
-                  setSortableBlockRunColIndexes(DEFAULT_SORTABLE_BR_COL_INDEXES);
-                }
                 setQuery(null);
                 goToWithQuery({ tab: uuid }, { replaceParams: true });
               }}
