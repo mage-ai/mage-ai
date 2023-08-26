@@ -406,8 +406,10 @@ function PipelineRuns({
           <FlexContainer alignItems="center">
             <ButtonTabs
               onClickTab={({ uuid }) => {
-                setQuery(null);
-                goToWithQuery({ tab: uuid }, { replaceParams: true });
+                if (uuid !== selectedTab?.uuid) {
+                  setQuery(null);
+                  goToWithQuery({ tab: uuid }, { replaceParams: true });
+                }
               }}
               selectedTabUUID={selectedTab?.uuid}
               tabs={TABS}
