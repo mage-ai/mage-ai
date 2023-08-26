@@ -13,7 +13,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
+import Table, { SortedColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
@@ -21,12 +21,14 @@ import api from '@api';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
 import { Save, Logs } from '@oracle/icons';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
+import { queryFromUrl } from '@utils/url';
 
 type BlockRunsTableProps = {
   blockRuns: BlockRunType[];
@@ -56,6 +58,17 @@ function BlockRunsTable({
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipelineType, [pipelineType]);
   const isStandardPipeline = useMemo(() => PipelineTypeEnum.PYTHON === pipelineType, [pipelineType]);
+
+  const q = queryFromUrl();
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
+      ?
+        {
+          columnIndex: +sortColumnIndexQuery,
+          sortDirection: q?.[SortQueryEnum.SORT_DIRECTION] || SortDirectionEnum.ASC,
+        }
+      : null
+  ), [q, sortColumnIndexQuery]);
 
   const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
   const [
@@ -322,6 +335,7 @@ function BlockRunsTable({
       })}
       setRowsSorted={setBlockRunRowsSorted}
       sortableColumnIndexes={[0, 1, 4]}
+      sortedColumn={sortedColumnInit}
       uniqueRowIdentifierColumnIndex={uniqueRowIdentifierColumnIndex}
       uuid="block-runs"
     />

@@ -53,8 +53,7 @@ import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/c
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { SortDirectionEnum } from '@components/shared/Table/constants';
-import { SortQueryEnum } from '@components/shared/Table/constants';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
