@@ -25,6 +25,7 @@ class ClusterType(str, Enum):
     ECS = 'ecs'
     CLOUD_RUN = 'cloud_run'
     K8S = 'k8s'
+    HDINSIGHT = 'hdinsight'
 
 
 class ApiInstancesHandler(BaseHandler):
