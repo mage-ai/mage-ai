@@ -107,15 +107,19 @@ function BlockRunsTable({
     },
   );
 
-  const blockRunsByUUID = useMemo(() => indexBy(
+  const blockRunsById = useMemo(() => indexBy(
     blockRuns,
-    ({ block_uuid: blockUUID }) => blockUUID,
+    ({ id: blockRunId }) => blockRunId,
   ), [blockRuns]);
-  const uniqueRowIdentifierColumnIndex = 1;
+  const uuidColumnIndex = 1;
   const getUniqueRowIdentifier = useCallback(
+    row => row?.[1]?.key?.split('_block_uuid')?.[0],
+    [],
+  );
+  const getUUID = useCallback(
     row => {
       const elWithBlockUUID =
-        row?.[uniqueRowIdentifierColumnIndex]?.props?.children?.props?.children?.[2]?.props?.children;
+        row?.[uuidColumnIndex]?.props?.children?.props?.children?.[2]?.props?.children;
 
       if (isIntegration) {
         return [
@@ -130,18 +134,17 @@ function BlockRunsTable({
     [isIntegration],
   );
   const blockRunsSorted = useMemo(() => (
-    (!isEmptyObject(blockRunsByUUID) && blockRunRowsSorted?.length > 0)
+    (!isEmptyObject(blockRunsById) && blockRunRowsSorted?.length > 0)
       ? (
         blockRunRowsSorted?.map(row => {
-          // Get block UUID from the second column of the table.
-          const blockUUIDFromRow = getUniqueRowIdentifier(row);
-          return blockRunsByUUID?.[blockUUIDFromRow];
+          const blockIdFromRow = getUniqueRowIdentifier(row);
+          return blockRunsById?.[blockIdFromRow];
         }).filter(row => typeof row !== 'undefined')
       ) : blockRuns
   ), [
     blockRunRowsSorted,
     blockRuns,
-    blockRunsByUUID,
+    blockRunsById,
     getUniqueRowIdentifier,
   ]);
 
@@ -179,6 +182,7 @@ function BlockRunsTable({
     <Table
       columnFlex={columnFlex}
       columns={columns}
+      getUUID={getUUID}
       getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => blockRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
@@ -340,8 +344,8 @@ function BlockRunsTable({
       setRowsSorted={setBlockRunRowsSorted}
       sortableColumnIndexes={sortableColumnIndexes}
       sortedColumn={sortedColumnInit}
-      uniqueRowIdentifierColumnIndex={uniqueRowIdentifierColumnIndex}
       uuid="block-runs"
+      uuidColumnIndex={uuidColumnIndex}
     />
   );
 }

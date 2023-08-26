@@ -71,6 +71,7 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
+  getUUID?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
   highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
@@ -91,7 +92,7 @@ type TableProps = {
   sortedColumn?: SortedColumnType;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
-  uniqueRowIdentifierColumnIndex?: number;
+  uuidColumnIndex?: number;
   uuid?: string;
   wrapColumns?: boolean;
 };
@@ -107,6 +108,7 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
+  getUUID,
   getUniqueRowIdentifier,
   highlightRowOnHover,
   isSelectedRow,
@@ -127,7 +129,7 @@ function Table({
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
-  uniqueRowIdentifierColumnIndex,
+  uuidColumnIndex,
   uuid,
   wrapColumns,
 }: TableProps, ref) {
@@ -234,8 +236,8 @@ function Table({
           const sortColumn = row?.[columnIndex];
           let sortValue = sortColumn?.props?.children;
 
-          if (columnIndex === uniqueRowIdentifierColumnIndex) {
-            sortValue = getUniqueRowIdentifier?.(row);
+          if (getUUID && columnIndex === uuidColumnIndex) {
+            sortValue = getUUID?.(row);
           } else {
             const maxDepth = 10;
             let currentDepth = 0;
@@ -259,12 +261,12 @@ function Table({
     : rows
   ), [
     defaultSortColumnIndex,
-    getUniqueRowIdentifier,
+    getUUID,
     rows,
     sortedColumn,
     sortedColumnDirection,
     sortedColumnIndex,
-    uniqueRowIdentifierColumnIndex,
+    uuidColumnIndex,
   ]);
 
   const sortedRowIds = useMemo(
