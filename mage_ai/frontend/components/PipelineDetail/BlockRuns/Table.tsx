@@ -67,7 +67,7 @@ function BlockRunsTable({
           columnIndex: +sortColumnIndexQuery,
           sortDirection: q?.[SortQueryEnum.SORT_DIRECTION] || SortDirectionEnum.ASC,
         }
-      : null
+      : undefined
   ), [q, sortColumnIndexQuery]);
 
   const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);

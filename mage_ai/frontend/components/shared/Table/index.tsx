@@ -283,8 +283,11 @@ function Table({
      * order and update the rowsSorted state in order to perform actions on
      * the correct row.
      */
-    if (sortableColumnIndexes && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+    if (sortableColumnIndexes
+      && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
+        || (sortedRowIds?.length > 0 && sortedRowIdsPrev?.length > 0
+          && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+      )
     ) {
       setRowsSorted?.(rowsSorted);
       const sortColIdx = sortedColumnIndex || null;

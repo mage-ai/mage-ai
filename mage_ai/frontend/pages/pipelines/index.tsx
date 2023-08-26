@@ -141,7 +141,7 @@ function PipelineListPage() {
           columnIndex: +sortColumnIndexQuery,
           sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
         }
-      : null
+      : undefined
   ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
