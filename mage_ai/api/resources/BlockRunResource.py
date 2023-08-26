@@ -102,4 +102,21 @@ class BlockRunResource(DatabaseResource):
                 filter(c.pipeline_uuid == pipeline_uuid)
             )
 
-        return query.order_by(a.created_at.desc(), a.completed_at.desc())
+        order_by_arg = query_arg.get('order_by', [None])
+        if order_by_arg:
+            order_by_arg = order_by_arg[0]
+        if order_by_arg:
+            order_by_parts = order_by_arg.split(' ')
+            if len(order_by_parts) >= 2:
+                order_by = (order_by_parts[0], order_by_parts[1])
+            else:
+                order_by = (order_by_parts[0], 'asc')
+
+            col, asc_desc = order_by
+            asc_desc = asc_desc.lower()
+            br_col = getattr(a, col)
+            initial_results = query.order_by(getattr(br_col, asc_desc)())
+        else:
+            initial_results = query.order_by(a.created_at.desc(), a.completed_at.desc())
+
+        return initial_results
