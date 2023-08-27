@@ -188,3 +188,23 @@ def get_cluster_count(
         if cluster.properties.cluster_state != status:
             filtered_clusters.append(cluster)
     return len(filtered_clusters)
+
+
+def delete_cluster(
+        client: HDInsightManagementClient,
+        resource_group_name: str,
+        cluster_name: str,
+) -> None:
+    client.clusters.begin_delete(
+        resource_group_name=resource_group_name,
+        cluster_name=cluster_name,
+    )
+
+    while get_cluster_status(
+            client=client,
+            resource_group_name=resource_group_name,
+            cluster_name=cluster_name) != 'Deleting':
+        logger.info('Deleting cluster...')
+        time.sleep(30)
+
+    logger.info('Cluster deleted successfully')
