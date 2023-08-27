@@ -5,6 +5,7 @@ from typing import List
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.hdinsight import HDInsightManagementClient
 from azure.mgmt.hdinsight.models import (
+    Cluster,
     ClusterCreateParametersExtended,
     ClusterCreateProperties,
     ClusterDefinition,
@@ -19,7 +20,6 @@ from azure.mgmt.hdinsight.models import (
     Tier,
 )
 
-
 from mage_ai.server.logger import Logger
 from mage_ai.services.azure.constants import (
     ENV_VAR_CLIENT_ID,
@@ -32,7 +32,12 @@ from mage_ai.services.azure.hdinsight.config import HDInsightConfig
 logger = Logger().new_server_logger(__name__)
 
 
-def get_credential(config: HDInsightConfig):
+def get_hdinsight_client(
+        config: HDInsightConfig
+) -> HDInsightManagementClient:
+    if type(config) is dict:
+        config = HDInsightConfig.load(config=config)
+
     tenant_id = config.tenant_id if config.tenant_id \
         else os.getenv(ENV_VAR_TENANT_ID)
     client_id = config.client_id if config.client_id \
@@ -49,14 +54,6 @@ def get_credential(config: HDInsightConfig):
     else:
         credential = DefaultAzureCredential()
 
-    return credential
-
-
-def get_hdinsight_client(config: HDInsightConfig):
-    if type(config) is dict:
-        config = HDInsightConfig.load(config=config)
-
-    credential = get_credential(config)
     subscription_id = config.subscription_id if config.subscription_id \
         else os.getenv(ENV_VAR_SUBSCRIPTION_ID)
 
@@ -132,32 +129,62 @@ def create_a_new_cluster(
         create_params,
     )
 
-    while get_cluster_status(config) != done_status:
+    while get_cluster_status(
+            client=client,
+            resource_group_name=config.resource_group_name,
+            cluster_name=config.cluster_name) != done_status:
         logger.info('Creating cluster...')
         time.sleep(30)
 
     logger.info('Cluster created successfully')
 
-    cluster = get_cluster(config)
+    cluster = get_cluster(
+        client=client,
+        resource_group_name=config.resource_group_name,
+        cluster_name=config.cluster_name
+    )
 
     return cluster.id
 
 
-def get_cluster(config: HDInsightConfig):
-    client = get_hdinsight_client(config=config)
-
+def get_cluster(
+        client: HDInsightManagementClient,
+        resource_group_name: str,
+        cluster_name: str,
+) -> Cluster:
     return client.clusters.get(
-        resource_group_name=config.resource_group_name,
-        cluster_name=config.cluster_name,
+        resource_group_name=resource_group_name,
+        cluster_name=cluster_name,
     )
 
 
-def get_cluster_status(config: HDInsightConfig) -> str:
-    cluster = get_cluster(config=config)
+def get_cluster_status(
+        client: HDInsightManagementClient,
+        resource_group_name: str,
+        cluster_name: str,
+) -> str:
+    cluster = get_cluster(
+        client=client,
+        resource_group_name=resource_group_name,
+        cluster_name=cluster_name,
+    )
     return cluster.properties.cluster_state
 
 
-def list_clusters(config: HDInsightConfig) -> List:
-    client = get_hdinsight_client(config=config)
-
+def list_clusters(
+        client: HDInsightManagementClient
+) -> List:
     return list(client.clusters.list())
+
+
+def get_cluster_count(
+        client: HDInsightManagementClient,
+        status: str = 'Running',
+) -> int:
+    clusters = list(client.clusters.list())
+
+    filtered_clusters = []
+    for cluster in clusters:
+        if cluster.properties.cluster_state != status:
+            filtered_clusters.append(cluster)
+    return len(filtered_clusters)
