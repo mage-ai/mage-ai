@@ -119,7 +119,7 @@ def create_a_new_cluster(
 
     create_params = ClusterCreateParametersExtended(
         location=config.location,
-        tags={},
+        tags=tags,
         properties=params,
     )
 
@@ -185,7 +185,7 @@ def get_cluster_count(
 
     filtered_clusters = []
     for cluster in clusters:
-        if cluster.properties.cluster_state != status:
+        if cluster.properties.cluster_state == status:
             filtered_clusters.append(cluster)
     return len(filtered_clusters)
 
