@@ -1,11 +1,11 @@
 import os
 import time
 
-from azure.identity import DefaultAzureCredential, ClientSecretCredential
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.hdinsight import HDInsightManagementClient
 from azure.mgmt.hdinsight.models import (
-    ClusterCreateProperties,
     ClusterCreateParametersExtended,
+    ClusterCreateProperties,
     ClusterDefinition,
     ComputeProfile,
     HardwareProfile,
@@ -55,13 +55,12 @@ def get_hdinsight_client(config: HDInsightConfig):
     if type(config) is dict:
         config = HDInsightConfig.load(config=config)
 
+    credential = get_credential(config)
     subscription_id = config.subscription_id if config.subscription_id \
         else os.getenv(ENV_VAR_SUBSCRIPTION_ID)
 
-    credential = get_credential(config)
-
-    hdinsight_client = HDInsightManagementClient(credential, subscription_id)
-    return hdinsight_client
+    client = HDInsightManagementClient(credential, subscription_id)
+    return client
 
 
 def create_a_new_cluster(

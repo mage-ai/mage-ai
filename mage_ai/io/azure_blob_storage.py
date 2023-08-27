@@ -1,4 +1,4 @@
-from azure.identity import DefaultAzureCredential, ClientSecretCredential
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from io import BytesIO
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
