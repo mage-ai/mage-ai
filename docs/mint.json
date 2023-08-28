@@ -168,51 +168,6 @@
           ]
         },
         {
-          "group": "Configuration",
-          "icon": "gear",
-          "pages": [
-            "custom-templates/overview",
-            {
-              "group": "Variables",
-              "pages": [
-                "development/environment-variables",
-                "getting-started/runtime-variable",
-                "getting-started/secrets"
-              ]
-            },
-            {
-              "group": "Dependencies",
-              "pages": [
-                "development/dependencies/requirements",
-                "development/dependencies/custom-files"
-              ]
-            },
-            {
-              "group": "Storage",
-              "pages": [
-                "integrations/databases/BigQuery",
-                "integrations/databases/ClickHouse",
-                "integrations/databases/Druid",
-                "integrations/databases/MicrosoftSQLServer",
-                "integrations/databases/MongoDB",
-                "integrations/databases/MySQL",
-                "integrations/databases/PostgreSQL",
-                "integrations/databases/Redshift",
-                "integrations/databases/S3",
-                "integrations/databases/Snowflake"
-              ]
-            },
-            "getting-started/kernels",
-            {
-              "group": "Versioning",
-              "pages": [
-                "getting-started/setting-up-git",
-                "getting-started/file-versions"
-              ]
-            }
-          ]
-        },
-        {
           "group": "Data integration",
           "icon": "rotate",
           "pages": [
@@ -263,6 +218,115 @@
                 "dbt/docs",
                 "dbt/snapshots",
                 "dbt/running-dbt-tests"
+              ]
+            }
+          ]
+        },
+        "orchestration/global-data-products/overview",
+        "design/data-pipeline-management",
+        {
+          "group": "Pipeline runs",
+          "icon": "pipe-circle-check",
+          "pages": [
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
+          ]
+        },
+        {
+          "group": "Schedules and triggers",
+          "icon": "clock",
+          "pages": [
+            "orchestration/triggers/trigger-pipeline",
+            "orchestration/triggers/schedule-pipelines",
+            {
+              "group": "Event triggers",
+              "pages": [
+                "orchestration/triggers/events/overview",
+                "orchestration/triggers/events/aws"
+              ]
+            },
+            "orchestration/triggers/trigger-pipeline-api",
+            "orchestration/triggers/trigger-pipeline",
+            "orchestration/triggers/configure-triggers-in-code"
+          ]
+        },
+        {
+          "group": "Streaming",
+          "icon": "water",
+          "pages": [
+            "streaming/overview",
+            {
+              "group": "Sources",
+              "pages": [
+                "streaming/sources/amazon-sqs",
+                "streaming/sources/azure-event-hub",
+                "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/kafka",
+                "streaming/sources/kinesis"
+              ]
+            },
+            {
+              "group": "Destinations",
+              "pages": [
+                "streaming/destinations/amazon-s3",
+                "streaming/destinations/dummy",
+                "streaming/destinations/elasticsearch",
+                "streaming/destinations/kafka",
+                "streaming/destinations/kinesis",
+                "streaming/destinations/mongodb",
+                "streaming/destinations/opensearch",
+                "streaming/destinations/redshift"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Reference",
+      "icon": "gear",
+      "pages": [
+        {
+          "group": "Configuration",
+          "icon": "gear",
+          "pages": [
+            "custom-templates/overview",
+            {
+              "group": "Variables",
+              "pages": [
+                "development/environment-variables",
+                "getting-started/runtime-variable",
+                "getting-started/secrets"
+              ]
+            },
+            {
+              "group": "Dependencies",
+              "pages": [
+                "development/dependencies/requirements",
+                "development/dependencies/custom-files"
+              ]
+            },
+            {
+              "group": "Storage",
+              "pages": [
+                "integrations/databases/BigQuery",
+                "integrations/databases/ClickHouse",
+                "integrations/databases/Druid",
+                "integrations/databases/MicrosoftSQLServer",
+                "integrations/databases/MongoDB",
+                "integrations/databases/MySQL",
+                "integrations/databases/PostgreSQL",
+                "integrations/databases/Redshift",
+                "integrations/databases/S3",
+                "integrations/databases/Snowflake"
+              ]
+            },
+            "getting-started/kernels",
+            {
+              "group": "Versioning",
+              "pages": [
+                "getting-started/setting-up-git",
+                "getting-started/file-versions"
               ]
             }
           ]
@@ -339,70 +403,12 @@
             }
           ]
         },
-        "orchestration/global-data-products/overview",
         {
           "group": "Monitoring",
           "icon": "eye",
           "pages": [
             "development/observability/monitoring",
             "development/observability/logging"
-          ]
-        },
-        "design/data-pipeline-management",
-        {
-          "group": "Pipeline runs",
-          "icon": "pipe-circle-check",
-          "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs",
-            "orchestration/pipeline-runs/saving-block-output-as-csv"
-          ]
-        },
-        {
-          "group": "Schedules and triggers",
-          "icon": "clock",
-          "pages": [
-            "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/schedule-pipelines",
-            {
-              "group": "Event triggers",
-              "pages": [
-                "orchestration/triggers/events/overview",
-                "orchestration/triggers/events/aws"
-              ]
-            },
-            "orchestration/triggers/trigger-pipeline-api",
-            "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/configure-triggers-in-code"
-          ]
-        },
-        {
-          "group": "Streaming",
-          "icon": "water",
-          "pages": [
-            "streaming/overview",
-            {
-              "group": "Sources",
-              "pages": [
-                "streaming/sources/amazon-sqs",
-                "streaming/sources/azure-event-hub",
-                "streaming/sources/google-cloud-pubsub",
-                "streaming/sources/kafka",
-                "streaming/sources/kinesis"
-              ]
-            },
-            {
-              "group": "Destinations",
-              "pages": [
-                "streaming/destinations/amazon-s3",
-                "streaming/destinations/dummy",
-                "streaming/destinations/elasticsearch",
-                "streaming/destinations/kafka",
-                "streaming/destinations/kinesis",
-                "streaming/destinations/mongodb",
-                "streaming/destinations/opensearch",
-                "streaming/destinations/redshift"
-              ]
-            }
           ]
         },
         {
