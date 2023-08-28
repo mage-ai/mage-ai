@@ -22,6 +22,7 @@ import PipelineType, {
   PipelineTypeEnum,
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
+import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
@@ -51,7 +52,7 @@ import {
 } from '@storage/pipelines';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { SortDirectionEnum } from '@components/shared/Table/constants';
 import { SortQueryEnum } from '@components/shared/Table/constants';
@@ -402,6 +403,61 @@ function PipelineListPage() {
     uuid: 'browse_templates',
   });
 
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
+    cancelButtonText,
+    header,
+    onCancel,
+    onSaveSuccess,
+  }: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => (
+    <ErrorProvider>
+      <Preferences
+        cancelButtonText={cancelButtonText}
+        contained
+        header={(
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Panel>
+              <Text warning>
+                You need to add an OpenAI API key to your project before you can
+                generate blocks using AI.
+              </Text>
+
+              <Spacing mt={1}>
+                <Text warning>
+                  Read <Link
+                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                    openNewWindow
+                  >
+                    OpenAI’s documentation
+                  </Link> to get your API key.
+                </Text>
+              </Spacing>
+            </Panel>
+          </Spacing>
+        )}
+        onCancel={() => {
+          onCancel?.();
+          hideConfigureProjectModal();
+        }}
+        onSaveSuccess={(project: ProjectType) => {
+          fetchProjects();
+          hideConfigureProjectModal();
+          onSaveSuccess?.(project);
+        }}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    fetchProjects,
+  ], {
+    background: true,
+    uuid: 'configure_project',
+  });
+
   const [showAIModal, hideAIModal] = useModal(() => (
     <ErrorProvider>
       <AIControlPanel
@@ -417,19 +473,32 @@ function PipelineListPage() {
   ], {
     background: true,
     disableClickOutside: true,
+    disableCloseButton: true,
     uuid: 'AI_modal',
   });
 
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
-      showAIModal,
+      showAIModal: () => {
+        if (!project?.openai_api_key) {
+          showConfigureProjectModal({
+            onSaveSuccess: () => {
+              showAIModal();
+            },
+          });
+        } else {
+          showAIModal();
+        }
+      },
       showBrowseTemplates,
     },
   ), [
     createPipeline,
+    project,
     showAIModal,
     showBrowseTemplates,
+    showConfigureProjectModal,
   ]);
 
   const { data: dataTags } = api.tags.list();
