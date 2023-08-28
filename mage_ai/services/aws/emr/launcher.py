@@ -9,7 +9,7 @@ def create_cluster(
     done_status: str = 'WAITING',
     idle_timeout: int = 30 * 60,
     tags: Dict = dict(),
-) -> Dict:
+):
     print(f'Creating EMR cluster for project: {project_path}')
     repo_config = RepoConfig(project_path)
     # Upload bootstrap script
