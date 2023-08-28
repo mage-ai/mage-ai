@@ -119,6 +119,14 @@ function ControlPanel({
               rows={8}
               value={objectAttributes?.llm?.request?.pipeline_description || ''}
             />
+
+            {(isLoading || loading) && (
+              <Spacing mt={1}>
+                <Text warning>
+                  Pipeline is being generated using AI based on your description above...
+                </Text>
+              </Spacing>
+            )}
           </Spacing>
         </FlexContainer>
       </RowStyle>

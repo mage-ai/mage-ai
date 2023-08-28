@@ -35,7 +35,6 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
@@ -423,7 +422,7 @@ function PipelineListPage() {
             <Panel>
               <Text warning>
                 You need to add an OpenAI API key to your project before you can
-                generate blocks using AI.
+                generate pipelines using AI.
               </Text>
 
               <Spacing mt={1}>
