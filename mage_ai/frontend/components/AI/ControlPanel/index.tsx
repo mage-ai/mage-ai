@@ -22,9 +22,11 @@ import { randomNameGenerator } from '@utils/string';
 
 type ControlPanelProps = {
   createPipeline?: (payload: {
-    llm?: LLMType;
-    name: string;
-  }) => void;
+    pipeline: {
+      llm?: LLMType;
+      name: string;
+    };
+  }) => Promise<any>;
   isLoading?: boolean;
   onClose?: () => void;
 };
@@ -39,7 +41,7 @@ function ControlPanel({
   const [loading, setLoading] = useState<boolean>(false);
   const [objectAttributes, setObjectAttributes] = useState<{
     llm?: LLMType;
-    name?: string;
+    name: string;
   }>({
     name: randomNameGenerator(),
   });

@@ -235,7 +235,7 @@ class PipelineResource(BaseResource):
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
                             block = config['block']
-                            arr = [f'{pipeline.uuid}_block_{block_number}' for block_number in upstream_block_uuids]
+                            arr = [f'{pipeline.uuid}_block_{bn}' for bn in upstream_block_uuids]
                             block.update(dict(upstream_blocks=arr))
 
         return self(pipeline, user, **kwargs)
