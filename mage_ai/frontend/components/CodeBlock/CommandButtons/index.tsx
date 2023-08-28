@@ -312,6 +312,7 @@ function CommandButtons({
           if (shouldShowModal) {
             showModal(llm);
           } else {
+            // @ts-ignore
             createLLM({
               llm: {
                 request: {
