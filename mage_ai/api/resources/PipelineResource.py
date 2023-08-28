@@ -262,9 +262,7 @@ class PipelineResource(BaseResource):
                     parent_model=self.model,
                 )))
 
-            if LLMUseCase.GENERATE_COMMENT_FOR_BLOCK == llm_use_case:
-                pass
-            elif LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
+            if LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
                 block_doc = llm_response.get('block_doc')
                 if block_doc:
                     block_uuid = llm_request.get('block_uuid')
