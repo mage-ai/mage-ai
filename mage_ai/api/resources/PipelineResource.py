@@ -180,10 +180,10 @@ class PipelineResource(BaseResource):
             )
         elif llm_payload:
             llm_use_case = llm_payload.get('use_case')
-            llm_request = llm_payload.get('request')
+            # llm_request = llm_payload.get('request')
 
-            llm_resource = await LlmResource.create(llm_payload, user, **kwargs)
-            llm_response = llm_resource.model.get('response')
+            # llm_resource = await LlmResource.create(llm_payload, user, **kwargs)
+            # llm_response = llm_resource.model.get('response')
 
             if LLMUseCase.GENERATE_PIPELINE_WITH_DESCRIPTION == llm_use_case:
                 pass
