@@ -17,7 +17,6 @@ import Table, { SortedColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
 import { Save, Logs } from '@oracle/icons';

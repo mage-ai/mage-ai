@@ -43,7 +43,6 @@ import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import {
   AGGREGATE_FUNCTIONS,
   CHART_TYPES,

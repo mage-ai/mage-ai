@@ -34,7 +34,6 @@ import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineRun/shared/buildTableSidekick';
 import usePrevious from '@utils/usePrevious';
-
 import {
   AlertTriangle,
   ArrowDown,

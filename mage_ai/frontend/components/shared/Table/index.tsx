@@ -16,7 +16,6 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import {
   MENU_WIDTH,
   SortDirectionEnum,

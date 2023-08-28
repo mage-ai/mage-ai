@@ -31,7 +31,6 @@ import buildTableSidekick, {
   TAB_TREE,
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
-
 import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
