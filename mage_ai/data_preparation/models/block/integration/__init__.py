@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import pandas as pd
 
+from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
@@ -180,6 +181,19 @@ class IntegrationBlock(Block):
             records_transformed = 0
             df_sample = None
 
+            def __update_col_names(schema_dict: Dict, properties_key: str, new_columns: List[str]):
+                properties_cols = schema_updated.get(properties_key, [])
+                if properties_cols:
+                    updated_properties_cols = []
+                    for col in properties_cols:
+                        if col not in new_columns:
+                            clean_col = clean_column_name(col)
+                            if clean_col in new_columns:
+                                updated_properties_cols.append(clean_col)
+                        else:
+                            updated_properties_cols.append(col)
+                    schema_dict[properties_key] = updated_properties_cols
+
             with open(source_output_file_path, 'r') as f:
                 idx = 0
                 for line in f:
@@ -232,6 +246,18 @@ class IntegrationBlock(Block):
                                         if k in properties_original else v
                                         for k, v in properties_updated.items()
                                     }
+                                    # Update column names in unique_constraints and key_properties
+                                    new_columns = schema_updated['schema']['properties'].keys()
+                                    __update_col_names(
+                                        schema_updated,
+                                        'unique_constraints',
+                                        new_columns,
+                                    )
+                                    __update_col_names(
+                                        schema_updated,
+                                        'key_properties',
+                                        new_columns,
+                                    )
 
                                 if df.shape[0] == 0:
                                     continue
