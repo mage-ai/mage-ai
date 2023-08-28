@@ -76,11 +76,10 @@ class Client:
             blob_path,
         )
         if not blob_client.exists():
-            return None
-        with open(file=os.path.join(file_path, file_name), mode="wb") as sample_blob:
+            return
+        with open(file=os.path.join(file_path, file_name), mode="wb") as out_file:
             download_stream = blob_client.download_blob()
-            sample_blob.write(download_stream.readall())
-
+            out_file.write(download_stream.readall())
 
     def download_blob_to_stream(
         self,
@@ -98,7 +97,6 @@ class Client:
         print(f"Number of bytes: {num_bytes}")
         return stream
 
-
     def download_blob_to_string(
         self,
         container_name: str,
@@ -114,3 +112,24 @@ class Client:
         blob_text = downloader.readall()
         print(f"Blob contents: {blob_text}")
         return blob_text
+
+    def upload_file_to_blob(
+        self,
+        container_name: str,
+        blob_path: str,
+        file_path: str,
+        file_name: str,
+    ) -> None:
+        """
+        Uploads data from a local file to Azure Blob Storage
+
+        Returns:
+            None
+        """
+        blob_client = self.service_client.get_blob_client(
+            container_name,
+            blob_path,
+        )
+
+        with open(file=os.path.join(file_path, file_name), mode="rb") as data:
+            blob_client.upload_blob(data)
