@@ -392,6 +392,7 @@
       "pages": [
         {
           "group": "Pipelines",
+          "icon": "diagram-sankey",
           "pages": [
             "guides/streaming-pipeline",
             "guides/streaming-pipeline-rabbitmq",
@@ -400,6 +401,7 @@
         },
         {
           "group": "Blocks",
+          "icon": "cube",
           "pages": [
             "guides/blocks/transformer-blocks",
             "guides/blocks/sql-blocks",
@@ -409,7 +411,8 @@
             "guides/blocks/r-blocks",
             "guides/blocks/replicate-blocks"
           ]
-        }
+        },
+        "guides/ai/overview"
       ]
     },
     {
