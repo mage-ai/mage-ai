@@ -16,13 +16,14 @@ class FileContentResource(GenericResource):
     @safe_db_query
     def member(self, pk, user, **kwargs):
         file_path = urllib.parse.unquote(pk)
+        file = File.from_path(file_path, get_repo_path())
         try:
-            ensure_file_is_in_project(file_path)
+            ensure_file_is_in_project(file.file_path)
         except FileNotInProjectError:
             error = ApiError.RESOURCE_INVALID.copy()
-            error.update(message=f'File at path: {file_path} is not in the project directory.')
+            error.update(
+                message=f'File at path: {file.file_path} is not in the project directory.')
             raise ApiError(error)
-        file = File.from_path(file_path, get_repo_path())
         return self(file, user, **kwargs)
 
     async def update(self, payload, **kwargs):
