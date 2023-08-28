@@ -250,10 +250,10 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 # 👩‍🏫 Tutorials
 
-- [Load data from API, transform it, and export it to PostgreSQL](https://docs.mage.ai/tutorials/load-api-data)
+- [Load data from API, transform it, and export it to PostgreSQL](https://docs.mage.ai/guides/load-api-data)
 - [Integrate Mage into an existing Airflow project](https://docs.mage.ai/integrations/airflow)
-- [Train model on Titanic dataset](https://docs.mage.ai/tutorials/train-model)
-- [Set up DBT models and orchestrate DBT runs](https://docs.mage.ai/integrations/dbt-models)
+- [Train model on Titanic dataset](https://docs.mage.ai/guides/train-model)
+- [Set up dbt models and orchestrate dbt runs](https://docs.mage.ai/integrations/dbt-models)
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
@@ -267,7 +267,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 | 📓 | <b>[Notebook](https://docs.mage.ai/about/features#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
 | 🏗️ | <b>[Data integrations](https://docs.mage.ai/data-integrations/overview)</b> | Synchronize data from 3rd party sources to your internal destinations. |
 | 🚰 | <b>[Streaming pipelines](https://docs.mage.ai/guides/streaming-pipeline)</b> | Ingest and transform real-time data. |
-| ❎ | <b>[DBT](https://docs.mage.ai/dbt/overview)</b> | Build, run, and manage your DBT models with Mage. |
+| ❎ | <b>[dbt](https://docs.mage.ai/dbt/overview)</b> | Build, run, and manage your dbt models with Mage. |
 
 <b>A sample data pipeline defined across 3 files ➝</b>
 
@@ -298,7 +298,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 />
 
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
-learning from a <b>[hands-on tutorial](https://docs.mage.ai/tutorials/load-api-data)</b>.
+learning from a <b>[hands-on tutorial](https://docs.mage.ai/guides/load-api-data)</b>.
 
 [![Ask us questions on Slack](https://img.shields.io/badge/%20-Ask%20us%20questions%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
