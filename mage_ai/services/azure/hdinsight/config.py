@@ -53,7 +53,7 @@ class HDInsightConfig(BaseConfig):
     blob_endpoint_suffix: str = '.blob.core.windows.net'
 
     # Blob storage account container name
-    container_name: str = 'mage-storage-container'
+    container_name: str = ''
 
     # HDInsight cluster version
     cluster_version: str = '5.1'

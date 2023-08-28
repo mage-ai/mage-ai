@@ -8,11 +8,7 @@ from mage_ai.io.config import ConfigKey
 
 class Client:
     """
-    Handles data transfer between an Azure Blob Storage container and the Mage app. Supports
-    loading files of any of the following types:
-    - ".csv"
-    - ".json"
-    - ".parquet"
+    Handles data transfer between an Azure Blob Storage container and the Mage app.
     """
     AUTHENTICATION_KEYS = [
         ConfigKey.AZURE_CLIENT_ID,
@@ -86,6 +82,12 @@ class Client:
         container_name: str,
         blob_path: str,
     ) -> io.BytesIO:
+        """
+        Downloads data from Azure Blob Storage into a stream
+
+        Returns:
+            io.BytesIO: The downloaded data in a stream
+        """
         blob_client = self.service_client.get_blob_client(
             container_name,
             blob_path,

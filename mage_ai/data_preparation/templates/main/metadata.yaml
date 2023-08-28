@@ -56,7 +56,7 @@ hdinsight_config:
   # Blob Storage endpoint suffix.
   blob_endpoint_suffix: '.blob.core.windows.net'
   # Blob storage account container name
-  container_name: 'mage-storage-container'
+  container_name: ''
   # HDInsight cluster version
   cluster_version: '5.1'
   # The type of HDInsight cluster you want to create.
