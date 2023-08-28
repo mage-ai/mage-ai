@@ -365,7 +365,7 @@ class BlockExecutor:
         )
 
         if BlockType.DBT == self.block.type:
-            run_dbt_tests(
+            self.block.run_tests(
                 block=self.block,
                 global_vars=global_vars,
                 logger=self.logger,

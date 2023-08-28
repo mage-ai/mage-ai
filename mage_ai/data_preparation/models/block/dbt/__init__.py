@@ -120,6 +120,8 @@ class DBTBlock(Block):
         self,
         build_block_output_stdout=None,
         global_vars=None,
+        logger=None,
+        logging_tags: Dict = None,
         **kwargs,
     ):
         """
@@ -137,11 +139,14 @@ class DBTBlock(Block):
             if snapshot:
                 return
 
-        run_dbt_tests(
-            block=self,
-            build_block_output_stdout=build_block_output_stdout,
-            global_vars=global_vars,
-        )
+        if not self.__dbt_configuration().get('disable_tests', False):
+            run_dbt_tests(
+                block=self,
+                build_block_output_stdout=build_block_output_stdout,
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+            )
 
     def tags(self) -> List[str]:
         """
@@ -385,3 +390,7 @@ class DBTBlock(Block):
                 print(f'Error removing temporary profile at {temp_profile_full_path}: {err}')
 
         return outputs
+
+    def __dbt_configuration(self) -> Dict:
+        config = self.configuration or {}
+        return config.get('dbt') or {}
