@@ -176,7 +176,7 @@ function BlockSettings({
   const blockPipelinesCount = blockPipelines?.length || 1;
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -582,6 +582,31 @@ function BlockSettings({
               </Spacing>
             </Spacing>
           </Spacing>
+
+          {BlockTypeEnum.DBT === blockType && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline>
+                dbt settings
+              </Headline>
+
+              <Spacing mt={1}>
+                <Checkbox
+                  checked={!!blockAttributes?.configuration?.dbt?.disable_tests}
+                  label="Disable automatically running dbt tests"
+                  onClick={() => setBlockAttributes(prev => ({
+                    ...prev,
+                    configuration: {
+                      ...prev?.configuration,
+                      dbt: {
+                        ...prev?.configuration?.dbt,
+                        disable_tests: !prev?.configuration?.dbt?.disable_tests,
+                      },
+                    },
+                  }))}
+                />
+              </Spacing>
+            </Spacing>
+          )}
 
           {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS}>
