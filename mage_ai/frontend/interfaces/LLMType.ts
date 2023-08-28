@@ -12,6 +12,7 @@ export default interface LLMType {
   request?: {
     block_description?: string;
     block_uuid?: string;
+    pipeline_description?: string;
     pipeline_uuid?: string;
   };
   response?: {

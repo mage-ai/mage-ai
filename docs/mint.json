@@ -444,15 +444,6 @@
       "group": "Tutorials",
       "pages": [
         {
-          "group": "Pipelines",
-          "icon": "pipe-section",
-          "pages": [
-            "guides/streaming-pipeline",
-            "guides/streaming-pipeline-rabbitmq",
-            "guides/train-model"
-          ]
-        },
-        {
           "group": "Blocks",
           "icon": "block-brick",
           "pages": [
@@ -465,6 +456,16 @@
             "guides/blocks/replicate-blocks"
           ]
         },
+        {
+          "group": "Pipelines",
+          "icon": "pipe-section",
+          "pages": [
+            "guides/streaming-pipeline",
+            "guides/streaming-pipeline-rabbitmq",
+            "guides/train-model"
+          ]
+        },
+        "guides/ai/overview",
         "guides/community-examples"
       ]
     },
