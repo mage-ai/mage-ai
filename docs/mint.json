@@ -79,82 +79,142 @@
   ],
   "navigation": [
     {
-      "group": "Introduction",
+      "group": "Get Started",
       "pages": [
         "introduction/overview",
-        "getting-started/setup"
+        "getting-started/setup",
+        "design/core-design-principles",
+        "design/core-abstractions"
       ]
     },
     {
       "group": "Concepts",
       "pages": [
-        "design/core-abstractions",
-        "design/core-design-principles",
         {
-          "group": "Abstractions",
+          "group": "Backfills",
+          "icon": "database",
           "pages": [
+            "orchestration/backfills/overview",
+            "orchestration/backfills/guides"
+          ]
+        },
+        {
+          "group": "Blocks",
+          "icon": "block-brick",
+          "pages": [
+            "design/blocks",
             {
-              "group": "Blocks",
+              "group": "Types",
               "pages": [
-                "design/blocks",
+                "design/blocks/callbacks",
+                "design/blocks/conditionals",
+                "design/blocks/data-exporter",
+                "design/blocks/data-loader",
+                "design/blocks/extension",
+                "design/blocks/scratchpad",
+                "design/blocks/sensor",
+                "design/blocks/transformer",
                 {
-                  "group": "Types",
+                  "group": "SQL",
                   "pages": [
-                    "design/blocks/callbacks",
-                    "design/blocks/conditionals",
-                    "design/blocks/data-exporter",
-                    "design/blocks/data-loader",
-                    "design/blocks/extension",
-                    "design/blocks/scratchpad",
-                    "design/blocks/sensor",
-                    "design/blocks/transformer",
-                    {
-                      "group": "SQL",
-                      "pages": [
-                        "design/blocks/sql/trino"
-                      ]
-                    }
+                    "design/blocks/sql/trino"
+                  ]
+                }
+              ]
+            },
+            "design/blocks/dynamic-blocks",
+            {
+              "group": "Resources",
+              "pages": [
+                {
+                  "group": "Data loader",
+                  "pages": [
+                    "design/data-loading",
+                    "development/blocks/data_loaders/templates"
                   ]
                 },
-                "design/blocks/dynamic-blocks"
-              ]
-            },
-            "design/data-pipeline-management",
-            {
-              "group": "Schedules and triggers",
-              "pages": [
-                "orchestration/triggers/trigger-pipeline",
-                "orchestration/triggers/schedule-pipelines",
                 {
-                  "group": "Event triggers",
+                  "group": "Transformer",
                   "pages": [
-                    "orchestration/triggers/events/overview",
-                    "orchestration/triggers/events/aws"
+                    "development/blocks/transformers/templates"
                   ]
                 },
-                "orchestration/triggers/trigger-pipeline-api",
-                "orchestration/triggers/trigger-pipeline",
-                "orchestration/triggers/configure-triggers-in-code"
+                {
+                  "group": "Data exporter",
+                  "pages": [
+                    "development/blocks/data_exporters/templates"
+                  ]
+                },
+                {
+                  "group": "Sensors",
+                  "pages": [
+                    "development/blocks/sensors/templates"
+                  ]
+                },
+                {
+                  "group": "Callbacks",
+                  "pages": [
+                    "development/blocks/callbacks/templates"
+                  ]
+                },
+                {
+                  "group": "Conditionals",
+                  "pages": [
+                    "development/blocks/conditionals/templates"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Configuration",
+          "icon": "gear",
+          "pages": [
+            "custom-templates/overview",
+            {
+              "group": "Variables",
+              "pages": [
+                "development/environment-variables",
+                "getting-started/runtime-variable",
+                "getting-started/secrets"
               ]
             },
             {
-              "group": "Backfills",
+              "group": "Dependencies",
               "pages": [
-                "orchestration/backfills/overview",
-                "orchestration/backfills/guides"
+                "development/dependencies/requirements",
+                "development/dependencies/custom-files"
               ]
             },
             {
-              "group": "Pipeline runs",
+              "group": "Storage",
               "pages": [
-                "orchestration/pipeline-runs/retrying-block-runs",
-                "orchestration/pipeline-runs/saving-block-output-as-csv"
+                "integrations/databases/BigQuery",
+                "integrations/databases/ClickHouse",
+                "integrations/databases/Druid",
+                "integrations/databases/MicrosoftSQLServer",
+                "integrations/databases/MongoDB",
+                "integrations/databases/MySQL",
+                "integrations/databases/PostgreSQL",
+                "integrations/databases/Redshift",
+                "integrations/databases/S3",
+                "integrations/databases/Snowflake"
+              ]
+            },
+            "getting-started/kernels",
+            {
+              "group": "Versioning",
+              "pages": [
+                "getting-started/setting-up-git",
+                "getting-started/file-versions"
               ]
             }
           ]
         },
         {
           "group": "Data integration",
+          "icon": "rotate",
           "pages": [
             "data-integrations/overview",
             "data-integrations/configuration",
@@ -175,16 +235,149 @@
             }
           ]
         },
-        "orchestration/global-data-products/overview"
-      ]
-    },
-    {
-      "group": "Development",
-      "pages": [
-        "development/project/setup",
-        "development/text-editor",
+        {
+          "group": "dbt",
+          "icon": "arrow-progress",
+          "pages": [
+            "dbt/overview",
+            {
+              "group": "Configuration",
+              "pages": [
+                "dbt/sources",
+                "dbt/connection-profiles",
+                "dbt/run-dbt-spark"
+              ]
+            },
+            {
+              "group": "Models",
+              "pages": [
+                "dbt/add-existing-dbt",
+                "dbt/incremental-models",
+                "dbt/run-single-model",
+                "dbt/run-selected-model"
+              ]
+            },
+            {
+              "group": "Commands",
+              "pages": [
+                "dbt/docs",
+                "dbt/snapshots",
+                "dbt/running-dbt-tests"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Development",
+          "icon": "flask",
+          "pages": [
+            "development/project/setup",
+            "development/text-editor"
+          ]
+        },
+        {
+          "group": "External tools",
+          "icon": "puzzle",
+          "pages": [
+            {
+              "group": "Computation",
+              "pages": [
+                "integrations/spark-pyspark",
+                "integrations/databricks"
+              ]
+            },
+            {
+              "group": "Orchestration",
+              "pages": [
+                "integrations/airflow",
+                "integrations/prefect"
+              ]
+            },
+            {
+              "group": "Data integration",
+              "pages": [
+                "integrations/airbyte",
+                "integrations/stitch"
+              ]
+            },
+            {
+              "group": "Transformation",
+              "pages": [
+                "integrations/dbt-cloud",
+                "integrations/polars"
+              ]
+            },
+            {
+              "group": "Observability",
+              "pages": [
+                {
+                  "group": "Monitoring",
+                  "pages": [
+                    "integrations/observability/datadog",
+                    "integrations/observability/great-expectations",
+                    "integrations/observability/metaplane",
+                    "integrations/observability/newrelic",
+                    "integrations/observability/sentry"
+                  ]
+                },
+                {
+                  "group": "Alerting",
+                  "pages": [
+                    "integrations/observability/alerting-email",
+                    "integrations/observability/alerting-opsgenie",
+                    "integrations/observability/alerting-slack",
+                    "integrations/observability/alerting-teams"
+                  ]
+                }
+              ]
+            },
+            {
+              "group": "Reverse ETL",
+              "pages": [
+                "integrations/hightouch"
+              ]
+            }
+          ]
+        },
+        "orchestration/global-data-products/overview",
+        {
+          "group": "Monitoring",
+          "icon": "eye",
+          "pages": [
+            "development/observability/monitoring",
+            "development/observability/logging"
+          ]
+        },
+        "design/data-pipeline-management",
+        {
+          "group": "Pipeline runs",
+          "icon": "pipe-circle-check",
+          "pages": [
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv"
+          ]
+        },
+        {
+          "group": "Schedules and triggers",
+          "icon": "clock",
+          "pages": [
+            "orchestration/triggers/trigger-pipeline",
+            "orchestration/triggers/schedule-pipelines",
+            {
+              "group": "Event triggers",
+              "pages": [
+                "orchestration/triggers/events/overview",
+                "orchestration/triggers/events/aws"
+              ]
+            },
+            "orchestration/triggers/trigger-pipeline-api",
+            "orchestration/triggers/trigger-pipeline",
+            "orchestration/triggers/configure-triggers-in-code"
+          ]
+        },
         {
           "group": "Streaming",
+          "icon": "water",
           "pages": [
             "streaming/overview",
             {
@@ -214,161 +407,21 @@
         },
         {
           "group": "Testing",
+          "icon": "vial",
           "pages": [
             "development/data-validation",
             "development/testing/great-expectations",
             "development/testing/unit-tests"
           ]
-        },
-        {
-          "group": "Monitoring",
-          "pages": [
-            "development/observability/monitoring",
-            "development/observability/logging"
-          ]
-        },
-        {
-          "group": "Block resources",
-          "pages": [
-            {
-              "group": "Data loader",
-              "pages": [
-                "design/data-loading",
-                "development/blocks/data_loaders/templates"
-              ]
-            },
-            {
-              "group": "Transformer",
-              "pages": [
-                "development/blocks/transformers/templates"
-              ]
-            },
-            {
-              "group": "Data exporter",
-              "pages": [
-                "development/blocks/data_exporters/templates"
-              ]
-            },
-            {
-              "group": "Sensors",
-              "pages": [
-                "development/blocks/sensors/templates"
-              ]
-            },
-            {
-              "group": "Callbacks",
-              "pages": [
-                "development/blocks/callbacks/templates"
-              ]
-            },
-            {
-              "group": "Conditionals",
-              "pages": [
-                "development/blocks/conditionals/templates"
-              ]
-            }
-          ]
         }
       ]
     },
     {
-      "group": "Configuration",
+      "group": "About",
+      "icon": "info",
       "pages": [
-        "custom-templates/overview",
-        {
-          "group": "Variables",
-          "pages": [
-            "development/environment-variables",
-            "getting-started/runtime-variable",
-            "getting-started/secrets"
-          ]
-        },
-        {
-          "group": "Dependencies",
-          "pages": [
-            "development/dependencies/requirements",
-            "development/dependencies/custom-files"
-          ]
-        },
-        {
-          "group": "Storage",
-          "pages": [
-            "integrations/databases/BigQuery",
-            "integrations/databases/ClickHouse",
-            "integrations/databases/Druid",
-            "integrations/databases/MicrosoftSQLServer",
-            "integrations/databases/MongoDB",
-            "integrations/databases/MySQL",
-            "integrations/databases/PostgreSQL",
-            "integrations/databases/Redshift",
-            "integrations/databases/S3",
-            "integrations/databases/Snowflake"
-          ]
-        },
-        "getting-started/kernels",
-        {
-          "group": "Versioning",
-          "pages": [
-            "getting-started/setting-up-git",
-            "getting-started/file-versions"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Get Started",
-      "pages": [
-        "contributing/overview"
-      ]
-    },
-    {
-      "group": "Backend",
-      "pages": [
-        "contributing/backend/overview",
-        {
-          "group": "Streaming",
-          "pages": [
-            "contributing/backend/streaming/sources-and-destinations"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Frontend",
-      "pages": [
-        "contributing/frontend/overview",
-        "contributing/charts/how-to-add"
-      ]
-    },
-    {
-      "group": "dbt",
-      "pages": [
-        "dbt/overview",
-        {
-          "group": "Configuration",
-          "pages": [
-            "dbt/sources",
-            "dbt/connection-profiles",
-            "dbt/run-dbt-spark"
-          ]
-        },
-        {
-          "group": "Models",
-          "pages": [
-            "dbt/add-existing-dbt",
-            "dbt/incremental-models",
-            "dbt/run-single-model",
-            "dbt/run-selected-model"
-          ]
-        },
-        {
-          "group": "Commands",
-          "pages": [
-            "dbt/docs",
-            "dbt/snapshots",
-            "dbt/running-dbt-tests"
-          ]
-        }
+        "about/code-of-conduct",
+        "about/statistics"
       ]
     },
     {
@@ -377,21 +430,22 @@
         "guides/overview",
         {
           "group": "Quickstart",
+          "icon": "rocket",
           "pages": [
             "guides/load-api-data",
             "guides/data-integration-pipeline",
             "guides/setup-dbt",
             "guides/integrate-mage-airflow"
           ]
-        },
-        "guides/community-examples"
+        }
       ]
     },
     {
-      "group": "Development",
+      "group": "Tutorials",
       "pages": [
         {
           "group": "Pipelines",
+          "icon": "pipe-section",
           "pages": [
             "guides/streaming-pipeline",
             "guides/streaming-pipeline-rabbitmq",
@@ -400,6 +454,7 @@
         },
         {
           "group": "Blocks",
+          "icon": "block-brick",
           "pages": [
             "guides/blocks/transformer-blocks",
             "guides/blocks/sql-blocks",
@@ -409,15 +464,113 @@
             "guides/blocks/r-blocks",
             "guides/blocks/replicate-blocks"
           ]
+        },
+        "guides/community-examples"
+      ]
+    },
+    {
+      "group": "Get Started",
+      "icon": "robot",
+      "pages": [
+        "api-reference/overview",
+        {
+          "group": "Design",
+          "icon": "pencil",
+          "pages": [
+            "api-reference/resources",
+            "api-reference/policies",
+            "api-reference/presenters"
+          ]
         }
       ]
     },
     {
-      "group": "Cloud",
+      "group": "Endpoints",
+      "icon": "robot",
+      "pages": [
+        {
+          "group": "Backfills",
+          "icon": "database",
+          "pages": [
+            "api-reference/backfills/overview",
+            "api-reference/backfills/read-backfills",
+            "api-reference/backfills/create-backfills",
+            "api-reference/backfills/update-backfill",
+            "api-reference/backfills/delete-backfill"
+          ]
+        },
+        {
+          "group": "Blocks",
+          "icon": "block-brick",
+          "pages": [
+            "api-reference/blocks/overview",
+            "api-reference/blocks/read-block",
+            "api-reference/blocks/create-block",
+            "api-reference/blocks/update-block",
+            "api-reference/blocks/delete-block"
+          ]
+        },
+        {
+          "group": "Logs",
+          "icon": "scroll",
+          "pages": [
+            "api-reference/logs/overview",
+            "api-reference/logs/read-logs"
+          ]
+        },
+        {
+          "group": "OAuth access tokens",
+          "icon": "key",
+          "pages": [
+            "api-reference/oauth-access-tokens/overview",
+            "api-reference/oauth-access-tokens/read-oauth-access-tokens"
+          ]
+        },
+        {
+          "group": "Pipeline runs",
+          "icon": "pipe-valve",
+          "pages": [
+            "api-reference/pipeline-runs/overview",
+            "api-reference/pipeline-runs/read-pipeline-runs",
+            "api-reference/pipeline-runs/trigger-pipeline"
+          ]
+        },
+        {
+          "group": "Pipeline schedules",
+          "icon": "pipe-circle-check",
+          "pages": [
+            "api-reference/pipeline-schedules/overview",
+            "api-reference/pipeline-schedules/read-pipeline-schedules"
+          ]
+        },
+        {
+          "group": "Pipelines",
+          "icon": "pipe-collar",
+          "pages": [
+            "api-reference/pipelines/overview",
+            "api-reference/pipelines/read-pipeline",
+            "api-reference/pipelines/create-pipeline",
+            "api-reference/pipelines/update-pipeline",
+            "api-reference/pipelines/delete-pipeline"
+          ]
+        },
+        {
+          "group": "Sessions",
+          "icon": "window",
+          "pages": [
+            "api-reference/sessions/overview",
+            "api-reference/sessions/create-session"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Get Started",
       "pages": [
         "production/deploying-to-cloud/architecture",
         {
           "group": "Providers",
+          "icon": "clouds",
           "pages": [
             {
               "group": "AWS",
@@ -456,36 +609,51 @@
           ]
         },
         "production/deploying-to-cloud/using-terraform",
-        "production/deploying-to-cloud/using-helm",
-        {
-          "group": "Secrets",
-          "pages": [
-            "production/deploying-to-cloud/secrets/AWS",
-            "production/deploying-to-cloud/secrets/Azure",
-            "production/deploying-to-cloud/secrets/GCP"
-          ]
-        }
+        "production/deploying-to-cloud/using-helm"
       ]
     },
     {
-      "group": "Production",
+      "group": "Concepts",
       "pages": [
         {
           "group": "Authentication",
+          "icon": "passport",
           "pages": [
             "production/authentication/overview",
             "production/authentication/microsoft"
           ]
         },
         {
+          "group": "CI/CD",
+          "icon": "circle-check",
+          "pages": [
+            "production/ci-cd/overview",
+            "production/ci-cd/local-cloud/repository-setup",
+            "production/ci-cd/local-cloud/github-actions",
+            "production/ci-cd/local-cloud/gitlab-ci-cd",
+            "production/ci-cd/local-cloud/buildkite"
+          ]
+        },
+        {
           "group": "Configuration",
+          "icon": "gear",
           "pages": [
             "production/configuring-production-settings/overview",
             "production/configuring-production-settings/compute-resource"
           ]
         },
         {
+          "group": "Secrets",
+          "icon": "lock",
+          "pages": [
+            "production/deploying-to-cloud/secrets/AWS",
+            "production/deploying-to-cloud/secrets/Azure",
+            "production/deploying-to-cloud/secrets/GCP"
+          ]
+        },
+        {
           "group": "Team management",
+          "icon": "user-plus",
           "pages": [
             "production/developing-in-the-cloud/cloud-dev-environments/overview",
             {
@@ -500,6 +668,7 @@
         },
         {
           "group": "Version control",
+          "icon": "code-branch",
           "pages": [
             "production/data-sync/git",
             "production/data-sync/github"
@@ -508,163 +677,30 @@
       ]
     },
     {
-      "group": "CI/CD",
+      "group": "Get Started",
       "pages": [
-        "production/ci-cd/overview",
-        "production/ci-cd/local-cloud/repository-setup",
-        "production/ci-cd/local-cloud/github-actions",
-        "production/ci-cd/local-cloud/gitlab-ci-cd",
-        "production/ci-cd/local-cloud/buildkite"
-      ]
-    },
-    {
-      "group": "External tools",
-      "pages": [
+        "contributing/overview",
         {
-          "group": "Computation",
+          "group": "Backend",
+          "icon": "server",
           "pages": [
-            "integrations/spark-pyspark",
-            "integrations/databricks"
-          ]
-        },
-        {
-          "group": "Orchestration",
-          "pages": [
-            "integrations/airflow",
-            "integrations/prefect"
-          ]
-        },
-        {
-          "group": "Data integration",
-          "pages": [
-            "integrations/airbyte",
-            "integrations/stitch"
-          ]
-        },
-        {
-          "group": "Transformation",
-          "pages": [
-            "integrations/dbt-cloud",
-            "integrations/polars"
-          ]
-        },
-        {
-          "group": "Observability",
-          "pages": [
+            "contributing/backend/overview",
             {
-              "group": "Monitoring",
+              "group": "Streaming",
               "pages": [
-                "integrations/observability/datadog",
-                "integrations/observability/great-expectations",
-                "integrations/observability/metaplane",
-                "integrations/observability/newrelic",
-                "integrations/observability/sentry"
-              ]
-            },
-            {
-              "group": "Alerting",
-              "pages": [
-                "integrations/observability/alerting-email",
-                "integrations/observability/alerting-opsgenie",
-                "integrations/observability/alerting-slack",
-                "integrations/observability/alerting-teams"
+                "contributing/backend/streaming/sources-and-destinations"
               ]
             }
           ]
         },
         {
-          "group": "Reverse ETL",
+          "group": "Frontend",
+          "icon": "browser",
           "pages": [
-            "integrations/hightouch"
+            "contributing/frontend/overview",
+            "contributing/charts/how-to-add"
           ]
         }
-      ]
-    },
-    {
-      "group": "API",
-      "pages": [
-        "api-reference/overview",
-        {
-          "group": "Concepts",
-          "pages": [
-            "api-reference/resources",
-            "api-reference/policies",
-            "api-reference/presenters"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Backfills",
-      "pages": [
-        "api-reference/backfills/overview",
-        "api-reference/backfills/read-backfills",
-        "api-reference/backfills/create-backfills",
-        "api-reference/backfills/update-backfill",
-        "api-reference/backfills/delete-backfill"
-      ]
-    },
-    {
-      "group": "Blocks",
-      "pages": [
-        "api-reference/blocks/overview",
-        "api-reference/blocks/read-block",
-        "api-reference/blocks/create-block",
-        "api-reference/blocks/update-block",
-        "api-reference/blocks/delete-block"
-      ]
-    },
-    {
-      "group": "Logs",
-      "pages": [
-        "api-reference/logs/overview",
-        "api-reference/logs/read-logs"
-      ]
-    },
-    {
-      "group": "OAuth access tokens",
-      "pages": [
-        "api-reference/oauth-access-tokens/overview",
-        "api-reference/oauth-access-tokens/read-oauth-access-tokens"
-      ]
-    },
-    {
-      "group": "Pipeline runs",
-      "pages": [
-        "api-reference/pipeline-runs/overview",
-        "api-reference/pipeline-runs/read-pipeline-runs",
-        "api-reference/pipeline-runs/trigger-pipeline"
-      ]
-    },
-    {
-      "group": "Pipeline schedules",
-      "pages": [
-        "api-reference/pipeline-schedules/overview",
-        "api-reference/pipeline-schedules/read-pipeline-schedules"
-      ]
-    },
-    {
-      "group": "Pipelines",
-      "pages": [
-        "api-reference/pipelines/overview",
-        "api-reference/pipelines/read-pipeline",
-        "api-reference/pipelines/create-pipeline",
-        "api-reference/pipelines/update-pipeline",
-        "api-reference/pipelines/delete-pipeline"
-      ]
-    },
-    {
-      "group": "Sessions",
-      "pages": [
-        "api-reference/sessions/overview",
-        "api-reference/sessions/create-session"
-      ]
-    },
-    {
-      "group": "About",
-      "pages": [
-        "about/code-of-conduct",
-        "about/statistics"
       ]
     }
   ],
