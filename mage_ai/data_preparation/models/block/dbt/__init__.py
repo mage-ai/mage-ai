@@ -370,6 +370,8 @@ class DBTBlock(Block):
                         df = fetch_model_data(
                             self,
                             dbt_profile_target,
+                            project_full_path,
+                            profiles_dir,
                             limit=limit,
                             variables=variables,
                         )
