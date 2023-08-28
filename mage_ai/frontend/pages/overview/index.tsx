@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import moment from 'moment';
 
+import AIControlPanel from '@components/AI/ControlPanel';
 import AddButton from '@components/shared/AddButton';
 import BarStackChart from '@components/charts/BarStack';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
@@ -11,10 +12,14 @@ import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import MetricsSummary from '@components/PipelineRun/MetricsSummary';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
+import Panel from '@oracle/components/Panel';
 import PipelineRunType from '@interfaces/PipelineRunType';
+import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -22,7 +27,6 @@ import Widget from '@components/PipelineRun/Widget';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import { ALL_PIPELINE_RUNS_TYPE, PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BAR_STACK_COLORS,
@@ -47,6 +51,7 @@ import {
   TIME_PERIOD_TABS,
   TAB_TODAY,
 } from '@components/Dashboard/constants';
+import { UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
@@ -190,6 +195,9 @@ function OverviewPage() {
     `/pipelines/${pipelineUUID}/edit`,
   ));
 
+  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
     <ErrorProvider>
       <BrowseTemplates
@@ -215,15 +223,104 @@ function OverviewPage() {
     uuid: 'browse_templates',
   });
 
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
+    cancelButtonText,
+    header,
+    onCancel,
+    onSaveSuccess,
+  }: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => (
+    <ErrorProvider>
+      <Preferences
+        cancelButtonText={cancelButtonText}
+        contained
+        header={(
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Panel>
+              <Text warning>
+                You need to add an OpenAI API key to your project before you can
+                generate pipelines using AI.
+              </Text>
+
+              <Spacing mt={1}>
+                <Text warning>
+                  Read <Link
+                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                    openNewWindow
+                  >
+                    OpenAI’s documentation
+                  </Link> to get your API key.
+                </Text>
+              </Spacing>
+            </Panel>
+          </Spacing>
+        )}
+        onCancel={() => {
+          onCancel?.();
+          hideConfigureProjectModal();
+        }}
+        onSaveSuccess={(project: ProjectType) => {
+          fetchProjects();
+          hideConfigureProjectModal();
+          onSaveSuccess?.(project);
+        }}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    fetchProjects,
+  ], {
+    background: true,
+    uuid: 'configure_project',
+  });
+
+  const [showAIModal, hideAIModal] = useModal(() => (
+    <ErrorProvider>
+      <AIControlPanel
+        createPipeline={createPipeline}
+        isLoading={isLoadingCreatePipeline}
+        onClose={hideAIModal}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    createPipeline,
+    isLoadingCreatePipeline,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    disableCloseButton: true,
+    uuid: 'AI_modal',
+  });
+
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showAIModal: () => {
+        if (!project?.openai_api_key) {
+          showConfigureProjectModal({
+            onSaveSuccess: () => {
+              showAIModal();
+            },
+          });
+        } else {
+          showAIModal();
+        }
+      },
       showBrowseTemplates,
     },
   ), [
     createPipeline,
+    project,
+    showAIModal,
     showBrowseTemplates,
+    showConfigureProjectModal,
   ]);
+
   const addButtonEl = useMemo(() => (
     <AddButton
       addButtonMenuOpen={addButtonMenuOpen}

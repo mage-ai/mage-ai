@@ -271,7 +271,7 @@ function CommandButtons({
 
     return [
       {
-        label: () => 'Document block',
+        label: () => 'Document block (beta)',
         onClick: () => {
           llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_BLOCK;
 
@@ -289,7 +289,7 @@ function CommandButtons({
         uuid: 'Document block',
       },
       {
-        label: () => 'Document pipeline and all blocks',
+        label: () => 'Document pipeline and all blocks (beta)',
         onClick: () => {
           llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_PIPELINE;
 
@@ -307,7 +307,7 @@ function CommandButtons({
         uuid: 'Document pipeline and all blocks',
       },
       {
-        label: () => 'Add comments in code',
+        label: () => 'Add comments in code (beta)',
         onClick: () => {
           if (shouldShowModal) {
             showModal(llm);

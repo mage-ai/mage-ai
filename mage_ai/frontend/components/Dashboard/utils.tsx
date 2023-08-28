@@ -1,5 +1,6 @@
 import StreamingPipeline from '@oracle/icons/custom/StreamingPipeline';
 import {
+  AISparkle,
   BatchPipeline,
   DataIntegrationPipeline,
   TemplateShapes,
@@ -15,6 +16,7 @@ export const getNewPipelineButtonMenuItems = (
     reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
   ) => void,
   opts?: {
+    showAIModal?: () => void;
     showBrowseTemplates?: () => void;
   },
 ) => {
@@ -59,6 +61,15 @@ export const getNewPipelineButtonMenuItems = (
       label: () => 'From a template',
       onClick: () => opts?.showBrowseTemplates?.(),
       uuid: 'Pipelines/NewPipelineMenu/custom_template',
+    });
+  }
+
+  if (opts?.showAIModal) {
+    arr.push({
+      beforeIcon: <AISparkle />,
+      label: () => 'Using AI (beta)',
+      onClick: () => opts?.showAIModal?.(),
+      uuid: 'Pipelines/NewPipelineMenu/AI_modal',
     });
   }
 
