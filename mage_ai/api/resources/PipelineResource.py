@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 from typing import Dict, List
 
 from sqlalchemy import or_
@@ -162,7 +163,7 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
-    def create(self, payload, user, **kwargs):
+    async def create(self, payload, user, **kwargs):
         clone_pipeline_uuid = payload.get('clone_pipeline_uuid')
         template_uuid = payload.get('custom_template_uuid')
         name = payload.get('name')
@@ -172,24 +173,70 @@ class PipelineResource(BaseResource):
         if template_uuid:
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
             pipeline = custom_template.create_pipeline(name)
-        elif clone_pipeline_uuid is None:
+        elif clone_pipeline_uuid is not None:
+            source = Pipeline.get(clone_pipeline_uuid)
+            pipeline = Pipeline.duplicate(source, name)
+        else:
             pipeline = Pipeline.create(
                 name,
                 pipeline_type=pipeline_type,
                 repo_path=get_repo_path(),
             )
-        elif llm_payload:
-            llm_use_case = llm_payload.get('use_case')
-            # llm_request = llm_payload.get('request')
 
-            # llm_resource = await LlmResource.create(llm_payload, user, **kwargs)
-            # llm_response = llm_resource.model.get('response')
+            if llm_payload:
+                llm_use_case = llm_payload.get('use_case')
 
-            if LLMUseCase.GENERATE_PIPELINE_WITH_DESCRIPTION == llm_use_case:
-                pass
-        else:
-            source = Pipeline.get(clone_pipeline_uuid)
-            pipeline = Pipeline.duplicate(source, name)
+                if LLMUseCase.GENERATE_PIPELINE_WITH_DESCRIPTION == llm_use_case:
+                    llm_resource = await LlmResource.create(llm_payload, user, **kwargs)
+                    llm_response = llm_resource.model.get('response')
+
+                    blocks_mapping = {}
+
+                    for block_number, block_payload_orig in llm_response.items():
+                        block_payload = block_payload_orig.copy()
+
+                        configuration = block_payload.get('configuration')
+                        if configuration:
+                            for k, v in configuration.items():
+                                configuration[k] = v.value if isinstance(v, Enum) else v
+
+                            block_payload['configuration'] = configuration
+
+                        block_uuid = f'{pipeline.uuid}_block_{block_number}'
+                        block_resource = await BlockResource.create(merge_dict(
+                            dict(
+                                name=block_uuid,
+                                type=block_payload.get('block_type'),
+                            ),
+                            ignore_keys(block_payload, [
+                                'block_type',
+                                'upstream_blocks',
+                            ]),
+                        ), user, **merge_dict(kwargs, dict(
+                            parent_model=pipeline,
+                        )))
+
+                        upstream_block_uuids = block_payload.get('upstream_blocks')
+
+                        pipeline.add_block(
+                            block_resource.model,
+                            None,
+                            priority=len(upstream_block_uuids) if upstream_block_uuids else 0,
+                            widget=False,
+                        )
+
+                        blocks_mapping[block_number] = dict(
+                            block=block_resource.model,
+                            upstream_block_uuids=upstream_block_uuids,
+                        )
+
+                    for block_number, config in blocks_mapping.items():
+                        upstream_block_uuids = config['upstream_block_uuids']
+
+                        if upstream_block_uuids and len(upstream_block_uuids) >= 1:
+                            block = config['block']
+                            arr = [f'{pipeline.uuid}_block_{block_number}' for block_number in upstream_block_uuids]
+                            block.update(dict(upstream_blocks=arr))
 
         return self(pipeline, user, **kwargs)
 

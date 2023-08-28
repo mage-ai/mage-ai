@@ -83,6 +83,7 @@ PipelinePolicy.allow_write([
     'clone_pipeline_uuid',
     'custom_template_uuid',
     'extensions',
+    'llm',
     'name',
     'type',
 ], scopes=[

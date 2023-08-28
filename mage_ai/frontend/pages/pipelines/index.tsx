@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MutateFunction, useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
@@ -395,18 +396,39 @@ function PipelineListPage() {
     </ErrorProvider>
   ), {
   }, [
+    createPipeline,
   ], {
     background: true,
     uuid: 'browse_templates',
   });
 
+  const [showAIModal, hideAIModal] = useModal(() => (
+    <ErrorProvider>
+      <AIControlPanel
+        createPipeline={createPipeline}
+        isLoading={isLoadingCreate}
+        onClose={hideAIModal}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    createPipeline,
+    isLoadingCreate,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    uuid: 'AI_modal',
+  });
+
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showAIModal,
       showBrowseTemplates,
     },
   ), [
     createPipeline,
+    showAIModal,
     showBrowseTemplates,
   ]);
 
