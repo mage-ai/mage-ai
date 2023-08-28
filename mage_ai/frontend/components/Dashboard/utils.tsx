@@ -67,7 +67,7 @@ export const getNewPipelineButtonMenuItems = (
   if (opts?.showAIModal) {
     arr.push({
       beforeIcon: <AISparkle />,
-      label: () => 'Using AI',
+      label: () => 'Using AI (beta)',
       onClick: () => opts?.showAIModal?.(),
       uuid: 'Pipelines/NewPipelineMenu/AI_modal',
     });
