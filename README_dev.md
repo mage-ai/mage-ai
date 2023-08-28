@@ -2,6 +2,92 @@
 
 These are the instructions for setting up the development dependencies and conforming to the style guide for the Mage.ai repo.
 
+## Installation of Development Tools
+
+### macOS
+
+#### Install Anaconda
+
+Follow the instructions given in [Installing on macOS](https://docs.anaconda.com/free/anaconda/install/mac-os/) to install `anaconda` on Mac.
+
+To verify the installation, enter the following command in a terminal:
+```
+% conda list
+```
+If Anaconda is installed and working, this will display a list of installed packages and their versions.
+
+#### Install Poetry
+
+In a terminal, run the following command:
+```bash
+% curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Add `export PATH=$HOME/.local/bin:$PATH` to your shell configuration file.
+
+To check the Peotry installation, run
+```bash
+$ poetry --version
+```
+
+#### Install Pre-commit
+
+To manage and run git hooks, you need to have the `pre-commit` package manager installed, in multiple ways:
+
+Using pip:
+```
+% pip install pre-commit
+```
+
+Using homebrew:
+```
+% brew install pre-commit
+```
+
+Using conda (via conda-forge):
+```
+% conda install -c conda-forge pre-commit
+```
+
+### Windows
+
+#### Install Anaconda
+
+Go to [Anaconda Releases](https://repo.continuum.io/archive) to find the release you want, e.g., `Anaconda3-2023.03-1-Linux-x86_64.sh`.
+
+From a WSL terminal, run:
+```bash
+$ wget https://repo.continuum.io/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
+$ bash Anaconda3-2023.03-1-Linux-x86_64.sh
+```
+Close the terminal and reopen it to reload `.bash` configs. To test that it worked, run
+```bash
+$ which python
+```
+It should print a path that has an "anaconda" in it.
+
+#### Install Poetry
+In a WSL terminal, run
+```bash
+$ curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Add `%APPDATA%\Python\Scripts` to the Windows PATH system variable.
+
+To check the Peotry installation, run
+```bash
+$ poetry --version
+```
+
+#### Install Pip and Pre-commit in WSL
+
+To install `pip` and `pre-commit`, run the following commands in a WSL terminal
+```bash
+$ sudo apt-get update
+$ sudo apt install python3-pip
+$ sudo apt install pre-commit
+```
+
 ## Virtual Environment
 The Mage.ai uses at least Python 3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8.
 
