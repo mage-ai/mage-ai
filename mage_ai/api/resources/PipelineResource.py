@@ -167,6 +167,7 @@ class PipelineResource(BaseResource):
         template_uuid = payload.get('custom_template_uuid')
         name = payload.get('name')
         pipeline_type = payload.get('type')
+        llm_payload = payload.get('llm')
 
         if template_uuid:
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
@@ -177,6 +178,15 @@ class PipelineResource(BaseResource):
                 pipeline_type=pipeline_type,
                 repo_path=get_repo_path(),
             )
+        elif llm_payload:
+            llm_use_case = llm_payload.get('use_case')
+            # llm_request = llm_payload.get('request')
+
+            # llm_resource = await LlmResource.create(llm_payload, user, **kwargs)
+            # llm_response = llm_resource.model.get('response')
+
+            if LLMUseCase.GENERATE_PIPELINE_WITH_DESCRIPTION == llm_use_case:
+                pass
         else:
             source = Pipeline.get(clone_pipeline_uuid)
             pipeline = Pipeline.duplicate(source, name)
@@ -262,9 +272,7 @@ class PipelineResource(BaseResource):
                     parent_model=self.model,
                 )))
 
-            if LLMUseCase.GENERATE_COMMENT_FOR_BLOCK == llm_use_case:
-                pass
-            elif LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
+            if LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
                 block_doc = llm_response.get('block_doc')
                 if block_doc:
                     block_uuid = llm_request.get('block_uuid')
