@@ -12,6 +12,9 @@ from mage_ai.orchestration.constants import (
 )
 from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
 
+DEFAULT_POSTGRES_HOST = '127.0.0.1'
+DEFAULT_POSTGRES_PORT = '5432'
+
 
 def get_postgres_connection_url() -> Optional[str]:
     db_user = None
@@ -28,8 +31,8 @@ def get_postgres_connection_url() -> Optional[str]:
                 db_user = secrets.get('username')
                 db_pass = secrets.get('password')
                 db_name = secrets.get('dbname')
-                db_host = secrets.get('host', '127.0.0.1')
-                db_port = secrets.get('port', '5432')
+                db_host = secrets.get('host', DEFAULT_POSTGRES_HOST)
+                db_port = secrets.get('port', DEFAULT_POSTGRES_PORT)
 
         except Exception as e:
             print("Unable to fetch secrets from AWS Secrets Manager", e)
@@ -37,8 +40,8 @@ def get_postgres_connection_url() -> Optional[str]:
         db_user = os.getenv(PG_DB_USER)
         db_pass = os.getenv(PG_DB_PASS)
         db_name = os.getenv(PG_DB_NAME)
-        db_host = os.getenv(PG_DB_HOST, '127.0.0.1')
-        db_port = os.getenv(PG_DB_PORT, '5432')
+        db_host = os.getenv(PG_DB_HOST, DEFAULT_POSTGRES_HOST)
+        db_port = os.getenv(PG_DB_PORT, DEFAULT_POSTGRES_PORT)
 
-    if db_user:
+    if db_user and db_pass and db_name and db_host and db_port:
         return f'postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}'
