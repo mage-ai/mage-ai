@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BLOCK_COLOR_HEX_CODE_MAPPING,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
@@ -48,6 +47,7 @@ import { TableContainerStyle } from '@components/IntegrationPipeline/index.style
 import { YELLOW } from '@oracle/styles/colors/main';
 import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
@@ -59,6 +59,7 @@ const SHARED_BUTTON_PROPS = {
   outline: true,
   padding: '4px',
 };
+const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
   block: BlockType;
