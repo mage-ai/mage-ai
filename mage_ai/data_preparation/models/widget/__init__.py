@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+from typing import Dict, List
+
 from .charts import (
     MAX_BUCKETS,
     TimeInterval,
@@ -25,8 +29,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-import numpy as np
-import pandas as pd
+from mage_ai.shared.hash import merge_dict
 
 
 class Widget(Block):
@@ -78,17 +81,25 @@ class Widget(Block):
     def post_process_variables(
         self,
         variables,
-        code=None,
-        results={},
-        upstream_block_uuids=[],
+        code: str = None,
+        results: Dict = {},
+        upstream_block_uuids: List[str] = [],
+        x_values: List = None,
+        y_values: List = None,
     ):
         data = variables.copy()
         dfs = []
+
         for key in upstream_block_uuids:
             if key in results.keys():
                 dfs.append(results[key])
 
-        should_use_no_code = self.group_by_columns or self.metrics
+        should_use_no_code = x_values is None and y_values is None and \
+            (self.group_by_columns or self.metrics)
+
+        if x_values is not None and y_values is not None:
+            variables[VARIABLE_NAME_X] = x_values
+            variables[VARIABLE_NAME_Y] = y_values
 
         if ChartType.BAR_CHART == self.chart_type:
             if should_use_no_code:
@@ -198,3 +209,90 @@ class Widget(Block):
                 data[VARIABLE_NAME_Y] = values
 
         return data
+
+    def _execute_block(
+        self,
+        outputs_from_input_vars,
+        custom_code: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_vars: List = None,
+        upstream_block_uuids: List[str] = None,
+        **kwargs,
+    ) -> List:
+        decorated_functions_configuration = []
+        decorated_functions_data_source = []
+        decorated_functions_render = []
+        decorated_functions_x = []
+        decorated_functions_xy = []
+        decorated_functions_y = []
+        test_functions = []
+
+        results = merge_dict(dict(
+            configuration=self._block_decorator(decorated_functions_configuration),
+            data_source=self._block_decorator(decorated_functions_data_source),
+            render=self._block_decorator(decorated_functions_render),
+            test=self._block_decorator(test_functions),
+            x=self._block_decorator(decorated_functions_x),
+            xy=self._block_decorator(decorated_functions_xy),
+            y=self._block_decorator(decorated_functions_y),
+        ), outputs_from_input_vars)
+
+        inputs_vars_use = list()
+        if input_vars is not None:
+            inputs_vars_use = input_vars
+
+        self._execute_code_with_results(results, custom_code)
+
+        options = dict(
+            code=custom_code,
+            results=results,
+            upstream_block_uuids=upstream_block_uuids,
+        )
+
+        x = None
+        y = None
+        input_vars_from_data_source = inputs_vars_use.copy()
+
+        if len(decorated_functions_data_source) >= 1:
+            data_source_output = self.execute_block_function(
+                decorated_functions_data_source[0],
+                inputs_vars_use,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
+            input_vars_from_data_source = [data_source_output]
+
+        if len(decorated_functions_xy) >= 1:
+            x, y = self.execute_block_function(
+                decorated_functions_xy[0],
+                input_vars_from_data_source,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
+        else:
+            if len(decorated_functions_x) >= 1:
+                x = self.execute_block_function(
+                    decorated_functions_x[0],
+                    input_vars_from_data_source,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                )
+
+            if len(decorated_functions_y) >= 1:
+                y = self.execute_block_function(
+                    decorated_functions_y[0],
+                    input_vars_from_data_source,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                )
+
+        if x is not None:
+            options['x_values'] = x
+        if y is not None:
+            options['y_values'] = y
+
+        variables = self.get_variables_from_code_execution(results)
+        outputs = self.post_process_variables(variables, **options)
+
+        return outputs

@@ -12,6 +12,14 @@ def format_enum(v):
     return v.value if type(v) is not str else v
 
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
 def replacer(s, newstring, index, nofail=False):
     # raise an error if index is outside of the string
     if not nofail and index not in range(len(s)):
