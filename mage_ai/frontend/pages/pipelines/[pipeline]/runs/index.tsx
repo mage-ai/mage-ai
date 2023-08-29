@@ -84,6 +84,7 @@ function PipelineRuns({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
@@ -114,8 +115,6 @@ function PipelineRuns({
     dataPipeline,
     pipelineUUID,
   ]);
-
-  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -233,6 +232,36 @@ function PipelineRuns({
     },
   );
 
+  const [deletePipelineRun] = useMutation(
+    (id: number) => api.pipeline_runs.useDelete(id)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline_run: {
+              pipeline_uuid: pipelineUUID,
+            },
+          }) => {
+            fetchPipelineRuns?.();
+            if (pipelineUUID) {
+              router.push(
+                '/pipelines/[pipeline]/runs',
+                `/pipelines/${pipelineUUID}/runs`,
+              );
+            } else {
+              fetchPipelineRuns?.();
+            }
+            setSelectedRun(null);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const selectedTabPrev = usePrevious(selectedTab);
   useEffect(() => {
     const uuid = q[TAB_URL_PARAM];
@@ -329,6 +358,8 @@ function PipelineRuns({
     <>
       <PipelineRunsTable
         allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
+        allowDelete
+        deletePipelineRun={deletePipelineRun}
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
@@ -344,6 +375,7 @@ function PipelineRuns({
       {paginationEl}
     </>
   ), [
+    deletePipelineRun,
     fetchPipelineRuns,
     paginationEl,
     pipeline?.type,

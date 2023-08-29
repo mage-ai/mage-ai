@@ -1,6 +1,10 @@
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const MENU_WIDTH: number = UNIT * 20;
+export const DELETE_CONFIRM_WIDTH = UNIT * 40;
+export const DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST = 40;
+export const DELETE_CONFIRM_TOP_OFFSET_DIFF = 96;
+export const DELETE_CONFIRM_LEFT_OFFSET_DIFF = 286;
 
 export enum SortDirectionEnum {
   ASC = 'ascending',
