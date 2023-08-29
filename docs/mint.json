@@ -507,7 +507,8 @@
             "production/data-sync/git",
             "production/data-sync/github"
           ]
-        }
+        },
+        "production/databases/default"
       ]
     },
     {
