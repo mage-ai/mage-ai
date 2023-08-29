@@ -491,7 +491,9 @@ class LLMPipelineWizard:
         chain = LLMChain(llm=self.llm, prompt=prompt_template)
         function_comments_json = await chain.arun(block_content=block_content)
         function_comments = json.loads(function_comments_json)
-        return self.__insert_comments_in_functions(block_content, function_comments)
+        return dict(
+            block_code=self.__insert_comments_in_functions(block_content, function_comments)
+        )
 
     async def async_generate_pipeline_documentation(
         self,
@@ -529,8 +531,7 @@ class LLMPipelineWizard:
     ) -> str:
         pipeline = Pipeline.get(uuid=pipeline_uuid,
                                 repo_path=project_path or get_repo_path())
-        return asyncio.run(
-            self.__async_generate_block_documentation(pipeline.get_block(block_uuid)))
+        return await self.__async_generate_block_documentation(pipeline.get_block(block_uuid))
 
     async def __async_generate_block_documentation(
         self,
