@@ -2,7 +2,7 @@ import os
 import shutil
 import yaml
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict
 
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.presenters.block_layout.constants import BLOCK_LAYOUT_FILENAME_WITH_EXTENSION

@@ -1,2 +1,0 @@
-class BlockLayout():
-  pass
