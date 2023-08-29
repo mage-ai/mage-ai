@@ -17,9 +17,9 @@ def get_timestamp_ms():
 @dataclass
 class InfluxDbConfig(BaseConfig):
     url: str
-    bucket: str = None
-    token: str = None
-    org: str = None
+    token: str
+    org: str
+    bucket: str = "data"
     measurement: str = "default"
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
