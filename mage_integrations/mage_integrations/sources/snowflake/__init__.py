@@ -1,7 +1,8 @@
+from typing import List
+
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.sql.base import Source
-from typing import List
 
 
 class Snowflake(Source):
@@ -23,6 +24,7 @@ class Snowflake(Source):
             schema=self.config['schema'],
             username=self.config['username'],
             warehouse=self.config['warehouse'],
+            role=self.config.get('role'),
         )
 
     def build_discover_query(self, streams: List[str] = None) -> str:
