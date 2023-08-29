@@ -95,7 +95,7 @@ class Widget(Block):
                 dfs.append(results[key])
 
         should_use_no_code = x_values is None and y_values is None and \
-                (self.group_by_columns or self.metrics)
+            (self.group_by_columns or self.metrics)
 
         if x_values is not None and y_values is not None:
             variables[VARIABLE_NAME_X] = x_values
@@ -228,11 +228,11 @@ class Widget(Block):
         decorated_functions_y = []
         test_functions = []
 
-
         results = merge_dict(dict(
-            # configuration=self._block_decorator(decorated_functions_configuration),
+            configuration=self._block_decorator(decorated_functions_configuration),
             data_source=self._block_decorator(decorated_functions_data_source),
-            # render=self._block_decorator(decorated_functions_render),
+            render=self._block_decorator(decorated_functions_render),
+            test=self._block_decorator(test_functions),
             x=self._block_decorator(decorated_functions_x),
             xy=self._block_decorator(decorated_functions_xy),
             y=self._block_decorator(decorated_functions_y),

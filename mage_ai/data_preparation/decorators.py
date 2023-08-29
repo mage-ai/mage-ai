@@ -71,4 +71,3 @@ def configuration(function):
 
 def render(function):
     return function
-
