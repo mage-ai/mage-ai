@@ -48,6 +48,7 @@ from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
     ApiChildListHandler,
+    ApiListHandler,
     ApiResourceDetailHandler,
     ApiResourceListHandler,
 )
@@ -234,6 +235,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         ),
 
         # API v1 routes
+        (
+            r'/api/status(?:es)?',
+            ApiListHandler,
+            {'resource': 'statuses', 'bypass_oauth_check': True},
+        ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
             ApiChildDetailHandler,
