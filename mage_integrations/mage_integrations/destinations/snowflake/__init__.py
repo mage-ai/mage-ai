@@ -48,6 +48,7 @@ class Snowflake(Destination):
             schema=self.config['schema'],
             username=self.config['username'],
             warehouse=self.config['warehouse'],
+            role=self.config.get('role'),
         )
 
     def build_create_table_commands(

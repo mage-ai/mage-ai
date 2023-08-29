@@ -14,6 +14,7 @@ You must enter the following credentials when configuring this source:
 | `database` | The name of the database you want to export data to. | `DEMO_DB` |
 | `disable_double_quotes` | If `true`, table names and columns won’t automatically have double quotes around them. | `false` (default value) |
 | `password` | Password for the user to access the database. | `abc123...` |
+| `role` | Role of the user to access the database. | `ROLE` |
 | `schema` | Schema of the data you want to export to. | `PUBLIC` |
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
