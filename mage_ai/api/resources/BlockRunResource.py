@@ -102,6 +102,7 @@ class BlockRunResource(DatabaseResource):
                 filter(c.pipeline_uuid == pipeline_uuid)
             )
 
+        # The order_by value should be an attribute on the BlockRun model.
         order_by_arg = query_arg.get('order_by', [None])
         if order_by_arg:
             order_by_arg = order_by_arg[0]
@@ -114,8 +115,13 @@ class BlockRunResource(DatabaseResource):
 
             col, asc_desc = order_by
             asc_desc = asc_desc.lower()
-            br_col = getattr(a, col)
-            initial_results = query.order_by(getattr(br_col, asc_desc)())
+            try:
+                br_col = getattr(a, col)
+                initial_results = query.order_by(getattr(br_col, asc_desc)())
+            except (AttributeError):
+                raise Exception('Block run sort column/query is invalid. The sort column ' +
+                                'must be an attribute of the BlockRun model. The sort direction ' +
+                                'is either "asc" (ascending order) or "desc" (descending order).')
         else:
             initial_results = query.order_by(a.created_at.desc(), a.completed_at.desc())
 
