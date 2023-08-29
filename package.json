@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "mintlify": "^4.0.7",
     "react-dropzone": "^14.2.3"
   }
 }
