@@ -1,17 +1,18 @@
-from dataclasses import dataclass
-from influxdb_client import InfluxDBClient, WritePrecision, WriteOptions, Point
-from influxdb_client.client.write_api import SYNCHRONOUS
-from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sinks.base import BaseSink
-from enum import Enum
-import numbers
-from typing import Dict, List
-import json
 import time
+from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import Dict, List
+
+from influxdb_client import InfluxDBClient, WriteOptions, WritePrecision
+
+from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
+from mage_ai.streaming.sinks.base import BaseSink
 
 
 def get_timestamp_ms():
     return int(time.time() * 1e3)
+
 
 @dataclass
 class InfluxDbConfig(BaseConfig):
@@ -20,45 +21,75 @@ class InfluxDbConfig(BaseConfig):
     token: str = None
     org: str = None
     measurement: str = None
+    batch_size: int = DEFAULT_BATCH_SIZE
+    timeout_ms: int = DEFAULT_TIMEOUT_MS
 
 
 class InfluxDbSink(BaseSink):
     config_class = InfluxDbConfig
 
     def init_client(self):
-        self._print('Start initializing writer.')
+        self._print("Start initializing writer.")
         # Initialize influxdb client and write_api
         self.client = InfluxDBClient(
             url=self.config.url,
             token=self.config.token,
             org=self.config.org,
         )
-        self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
-        self._print('Finish initializing writer.')
+        if self.config.batch_size > 0:
+            batch_size = self.config.batch_size
+        else:
+            batch_size = DEFAULT_BATCH_SIZE
+        if self.config.timeout_ms > 0:
+            timeout_ms = self.config.timeout_ms
+        else:
+            timeout_ms = DEFAULT_TIMEOUT_MS
+
+        options = WriteOptions(
+            batch_size=batch_size,
+            flush_interval=timeout_ms,
+            jitter_interval=0,
+            retry_interval=5_000,
+            max_retries=5,
+            max_retry_delay=125_000,
+            exponential_base=2,
+        )
+        self.write_api = self.client.write_api(write_options=options)
+        self._print("Finish initializing writer.")
 
     def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
+        if isinstance(data, dict):
+            record = {
+                "measurement": data.get("measurement", self.config.measurement),
+                "time": data.get("timestamp", get_timestamp_ms()),
+                "tags": data.get("tags", {}),
+                "fields": data.get("fields", data),
+            }
+        elif isinstance(data, Iterable):
+            for i, value in enumerate(data):
+                record = {
+                    "measurement": self.config.measurement,
+                    "time": get_timestamp_ms(),
+                    "tags": {},
+                    "fields": {"_value_{i}": value},
+                }
+        else:  # data is scalar
+            record = {
+                "measurement": self.config.measurement,
+                "time": get_timestamp_ms(),
+                "tags": {},
+                "fields": {"_value": data},
+            }
 
-        record = {
-            "name": data.get("measurement", self.config.measurement),
-            "timestamp": data.get("timestamp", get_timestamp_ms()),
-            "tags": data.get("tags", {}),
-            "fields": data.get("fields", next(iter(data.values()))),
-        }
         self.write_api.write(
-            bucket=self.config.bucket,
-            record=record,
-            write_precision=WritePrecision.MS
+            bucket=self.config.bucket, record=record, write_precision=WritePrecision.MS
         )
-
 
     def batch_write(self, data: List[Dict]):
         if not data:
             return
-        self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
+        self._print(
+            f"Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}"
+        )
         for record in data:
-            self.write_api.write(
-                bucket=self.config.bucket,
-                record=record,
-                write_precision=WritePrecision.MS
-            )
+            self.write(record)
