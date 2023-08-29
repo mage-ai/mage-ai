@@ -2,7 +2,13 @@
 title: "InfluxDB"
 ---
 
+## InfluxDB instance
+
+InfluxDB can be [run locally](https://docs.influxdata.com/influxdb/v2.7/install/) or in the cloud.
+
 ## Basic config
+
+Basic configuration includes the server connection details:
 
 ```yaml
 connector_type: influxdb
@@ -14,3 +20,61 @@ bucket: "data"
 
 ## Data format
 
+InfluxDB supports [data elements](https://docs.influxdata.com/influxdb/v2.7/reference/key-concepts/data-elements/) for structuring your data. The influxdb data exporter can create these elements if the messages received are lists of dictionaries with a specific schema. The following example of a transformer block shows the configuration of all possible elements (measurement, time, tags and fields):
+
+```python
+@transformer
+def transform(messages: List[Dict], *args, **kwargs):
+    record = {
+        "measurement": "census",
+        "time": int(time.time() * 1e3),  # timestamp with ms precision
+        "tags": {"location": "klamath", "scientist": "anderson"},
+        "fields": {"bees": 23}
+        }
+    return [record]
+```
+
+If not all elements are configured, default values are assumed.
+
+- The default measurement is `default` and can be configured in the yaml file.
+
+```yaml
+connector_type: influxdb
+url: "http://localhost:8086"
+token: "my-token"
+org: "my-org"
+bucket: "data"
+measurement: "default"
+```
+
+- The default timestamp is the current time of execution.
+- The default tags are none.
+- The default field name is `_value` for scalar values:
+
+```python
+@transformer
+def transform(messages: List[Dict], *args, **kwargs):
+    return 23
+```
+
+- The default field name is `_value_1` to `_value_n` for lists of n values (numbers, strings):
+
+```python
+@transformer
+def transform(messages: List[Dict], *args, **kwargs):
+    return 1, 2, 3
+```
+
+## Advanced config
+
+The influxdb data exporter writes data to the InfluxDB server in batches, if either the batch size or the timeout are reached. Both values can be changed if necessary in the config file:
+
+```yaml
+connector_type: influxdb
+url: "http://localhost:8086"
+token: "my-token"
+org: "my-org"
+bucket: "data"
+batch_size: 100
+timeout_ms: 500
+```

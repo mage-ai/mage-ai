@@ -20,7 +20,7 @@ class InfluxDbConfig(BaseConfig):
     bucket: str = None
     token: str = None
     org: str = None
-    measurement: str = None
+    measurement: str = "default"
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
 
