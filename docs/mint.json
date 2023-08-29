@@ -113,13 +113,7 @@
                 "design/blocks/extension",
                 "design/blocks/scratchpad",
                 "design/blocks/sensor",
-                "design/blocks/transformer",
-                {
-                  "group": "SQL",
-                  "pages": [
-                    "design/blocks/sql/trino"
-                  ]
-                }
+                "design/blocks/transformer"
               ]
             },
             "design/blocks/dynamic-blocks",
@@ -318,7 +312,8 @@
                 "integrations/databases/PostgreSQL",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
-                "integrations/databases/Snowflake"
+                "integrations/databases/Snowflake",
+                "integrations/databases/trino"
               ]
             },
             "getting-started/kernels",
@@ -756,7 +751,7 @@
     },
     {
       "source": "/development/blocks/sql/trino",
-      "destination": "/design/blocks/sql/trino"
+      "destination": "/integrations/databases/trino"
     },
     {
       "source": "/guides/data-validation",
