@@ -1091,6 +1091,20 @@ class Block:
 
         return dict(output=outputs)
 
+    def _execute_code_with_results(
+        self,
+        results: Dict,
+        custom_code: str = None,
+    ):
+        if custom_code is not None and custom_code.strip():
+            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
+                exec(custom_code, results)
+        elif self.content is not None:
+            exec(self.content, results)
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), results)
+
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -1109,56 +1123,38 @@ class Block:
         run_settings: Dict = None,
         **kwargs,
     ) -> List:
+        decorated_functions = []
+        test_functions = []
+
+        results = merge_dict({
+            'test': self._block_decorator(test_functions),
+            self.type: self._block_decorator(decorated_functions),
+        }, outputs_from_input_vars)
+
         if logging_tags is None:
             logging_tags = dict()
         if input_vars is None:
             input_vars = list()
 
-        decorated_functions = []
-        test_functions = []
+        self._execute_code_with_results(results, custom_code)
 
-        results = {
-            self.type: self._block_decorator(decorated_functions),
-            'test': self._block_decorator(test_functions),
-        }
-        results.update(outputs_from_input_vars)
-
-        if custom_code is not None and custom_code.strip():
-            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
-                exec(custom_code, results)
-        elif self.content is not None:
-            exec(self.content, results)
-        elif os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), results)
-
-        outputs = []
-        if BlockType.CHART == self.type:
-            variables = self.get_variables_from_code_execution(results)
-            outputs = self.post_process_variables(
-                variables,
-                code=custom_code,
-                results=results,
-                upstream_block_uuids=upstream_block_uuids,
+        block_function = self._validate_execution(decorated_functions, input_vars)
+        if block_function is not None:
+            if logger and 'logger' not in global_vars:
+                global_vars['logger'] = logger
+            outputs = self.execute_block_function(
+                block_function,
+                input_vars,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
             )
-        else:
-            block_function = self._validate_execution(decorated_functions, input_vars)
-            if block_function is not None:
-                if logger and 'logger' not in global_vars:
-                    global_vars['logger'] = logger
-                outputs = self.execute_block_function(
-                    block_function,
-                    input_vars,
-                    from_notebook=from_notebook,
-                    global_vars=global_vars,
-                )
 
-            if outputs is None:
-                outputs = []
-            if type(outputs) is not list:
-                outputs = [outputs]
+        self.test_functions = test_functions
 
-            self.test_functions = test_functions
+        if outputs is None:
+            outputs = []
+        if type(outputs) is not list:
+            outputs = [outputs]
 
         return outputs
 
