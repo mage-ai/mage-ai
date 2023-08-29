@@ -1166,7 +1166,8 @@ def build_command_line_arguments(
             # If args do not contain "--vars", continue.
             pass
 
-        args += content_args
+        # Add non-empty content args
+        args += [c for c in content_args if c]
 
     variables_json = {}
     for k, v in variables.items():
