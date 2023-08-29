@@ -1271,6 +1271,7 @@ def run_dbt_tests(
 
     project_full_path = command_line_dict['project_full_path']
     profiles_dir = command_line_dict['profiles_dir']
+    # profile_target = command_line_dict['profile_target']
 
     _, temp_profile_full_path = create_temporary_profile(
         project_full_path,

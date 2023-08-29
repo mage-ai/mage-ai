@@ -1611,9 +1611,14 @@ class Pipeline:
                     child_block = combined_blocks[frame.children.pop()]
                     virtual_stack.append(StackFrame(child_block))
 
+        check_block_uuids = set()
         for uuid in combined_blocks:
             if status[uuid] == 'unvisited' and uuid in self.blocks_by_uuid:
                 __check_cycle(self.blocks_by_uuid[uuid])
+            if uuid in check_block_uuids:
+                raise InvalidPipelineError(f'The block {uuid} is duplicated in the pipeline.')
+            check_block_uuids.add(uuid)
+
 
 
 class StackFrame:
