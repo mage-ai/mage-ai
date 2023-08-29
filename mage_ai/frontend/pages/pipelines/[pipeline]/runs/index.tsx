@@ -51,8 +51,8 @@ import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/const
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { ignoreKeys, isEqual } from '@utils/hash';
-import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
 
 const TAB_PIPELINE_RUNS = {
@@ -85,6 +85,7 @@ function PipelineRuns({
   const refActionsMenu = useRef(null);
 
   const [errors, setErrors] = useState<ErrorsType>(null);
+  const [blockRunErrors, setBlockRunErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
@@ -176,6 +177,9 @@ function PipelineRuns({
     blockRunsRequestQuery,
     {},
   );
+  useEffect(() => {
+    displayErrorFromReadResponse(dataBlockRuns, setBlockRunErrors);
+  }, [dataBlockRuns]);
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   let pipelineRunsRequestQuery = {
@@ -393,7 +397,7 @@ function PipelineRuns({
         })
         : props => buildTableSidekick(props)
       }
-      errors={errors}
+      errors={errors || blockRunErrors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
