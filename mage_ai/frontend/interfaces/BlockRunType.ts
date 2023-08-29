@@ -11,6 +11,7 @@ export enum RunStatus {
 export interface BlockRunReqQueryParamsType {
   _limit?: number;
   _offset?: number;
+  order_by?: string;
   pipeline_run_id?: number;
   pipeline_uuid?: string;
 }

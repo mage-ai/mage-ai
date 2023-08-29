@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import BlockRunsTable, {
+  COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING,
+  DEFAULT_SORTABLE_BR_COL_INDEXES,
+} from '@components/PipelineDetail/BlockRuns/Table';
 import BlockRunType, { BlockRunReqQueryParamsType } from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
@@ -31,6 +34,7 @@ import buildTableSidekick, {
 import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -95,6 +99,13 @@ function PipelineBlockRuns({
     _offset: page * ROW_LIMIT,
     pipeline_run_id: pipelineRunId,
   };
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  if (sortColumnIndexQuery) {
+    const blockRunSortColumn = COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING[sortColumnIndexQuery];
+    const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
+    blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
+  }
   const { data: dataBlockRuns, mutate: fetchBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
     { refreshInterval: 5000 },
@@ -163,6 +174,7 @@ function PipelineBlockRuns({
       pipeline={pipeline}
       selectedRun={selectedRun}
       setErrors={setErrors}
+      sortableColumnIndexes={DEFAULT_SORTABLE_BR_COL_INDEXES}
     />
   ), [
     blockRuns,
