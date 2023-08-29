@@ -289,6 +289,6 @@ class PipelineRunResource(DatabaseResource):
     @safe_db_query
     def delete(self, **kwargs):
         block_runs = self.model.block_runs
-        for br in block_runs:
-            br.delete()
+        block_run_ids = [br.id for br in block_runs]
+        BlockRun.batch_delete(block_run_ids)
         self.model.delete()
