@@ -5,6 +5,7 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -48,6 +49,7 @@ export enum BlockTypeEnum {
   DATA_LOADER = 'data_loader',
   DBT = 'dbt',
   EXTENSION = 'extension',
+  GLOBAL_DATA_PRODUCT = 'global_data_product',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   MARKDOWN = 'markdown',
@@ -69,8 +71,20 @@ export enum BlockColorEnum {
   YELLOW = 'yellow',
 }
 
+export const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
+
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
+  BlockTypeEnum.TRANSFORMER,
+];
+
+export const DRAGGABLE_BLOCK_TYPES = [
   BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
@@ -201,7 +215,9 @@ export interface BlockRequestPayloadType {
   name?: string;
   priority?: number;
   replicated_block?: string;
+  require_unique_name?: boolean;
   type?: BlockTypeEnum;
+  uuid?: string;
   upstream_blocks?: string[];
 }
 
@@ -291,6 +307,7 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
   [BlockTypeEnum.DBT]: 'DBT',
   [BlockTypeEnum.EXTENSION]: 'Extension',
+  [BlockTypeEnum.GLOBAL_DATA_PRODUCT]: 'Global data product',
   [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',

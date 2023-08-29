@@ -1,8 +1,10 @@
-from alembic.config import Config
+import os
+
 from alembic import command
+from alembic.config import Config
+
 from mage_ai.orchestration.db import db_connection_url
 from mage_ai.shared.logger import LoggingLevel
-import os
 
 
 class DatabaseManager:
@@ -20,7 +22,11 @@ class DatabaseManager:
             'script_location',
             os.path.join(cur_dirpath, 'migrations'),
         )
-        alembic_cfg.set_main_option('sqlalchemy.url', db_connection_url)
+        try:
+            alembic_cfg.set_main_option('sqlalchemy.url', db_connection_url)
+        except ValueError:
+            escaped_db_connection_url = db_connection_url.replace('%', '%%')
+            alembic_cfg.set_main_option('sqlalchemy.url', escaped_db_connection_url)
         if log_level is not None:
             alembic_cfg.set_section_option('logger_alembic', 'level', log_level)
         command.upgrade(alembic_cfg, 'head')

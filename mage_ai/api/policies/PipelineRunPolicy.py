@@ -47,6 +47,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
 PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'block_runs',
     'block_runs_count',
+    'completed_block_runs_count',
     'pipeline_schedule_name',
     'pipeline_schedule_token',
     'pipeline_schedule_type',
@@ -89,7 +90,9 @@ PipelineRunPolicy.allow_write([
 
 PipelineRunPolicy.allow_query([
     'backfill_id',
+    'disable_retries_grouping',
     'end_timestamp',
+    'global_data_product_uuid',
     'include_pipeline_type',
     'order_by[]',
     'pipeline_type',

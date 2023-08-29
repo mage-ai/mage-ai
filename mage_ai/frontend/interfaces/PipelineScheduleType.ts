@@ -62,9 +62,11 @@ export interface PipelineScheduleReqQueryParamsType {
 export default interface PipelineScheduleType {
   created_at?: string;
   event_matchers?: EventMatcherType[];
+  global_data_product_uuid?: string;
   id?: string;
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
+  next_pipeline_run_date?: string;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
   runtime_average?: number;
@@ -74,6 +76,7 @@ export default interface PipelineScheduleType {
   sla?: number;
   start_time?: string;
   status?: ScheduleStatusEnum;
+  tags?: string[];
   token?: string;
   updated_at?: string;
   variables?: {

@@ -14,6 +14,7 @@ def create_upstream_block_tables(
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
     query: str = None,
+    variables: Dict = None,
 ):
     create_upstream_block_tables_orig(
         loader,
@@ -29,6 +30,7 @@ def create_upstream_block_tables(
         ],
         no_schema=True,
         query=query,
+        variables=variables,
     )
 
 

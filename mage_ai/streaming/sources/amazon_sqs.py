@@ -37,12 +37,8 @@ class AmazonSqsSource(BaseSource):
 
     def init_client(self):
         self._print('Start initializing consumer.')
-        # Initialize kafka consumer
         self.sqs_client = boto3.resource('sqs')
         self.queue = self.sqs_client.get_queue_by_name(QueueName=self.config.queue_name)
-        # self.details = self.kinesis_client.describe_stream(
-        #     StreamName=self.config.stream_name,
-        # )['StreamDescription']
         print(self.queue.url)
         self._print('Finish initializing consumer.')
 

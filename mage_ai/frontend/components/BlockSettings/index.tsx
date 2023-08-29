@@ -2,64 +2,127 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BlockColorEnum,
+  BLOCK_COLOR_HEX_CODE_MAPPING,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
-import FlexContainer from '@oracle/components/FlexContainer';
+import Circle from '@oracle/elements/Circle';
+import Flex from '@oracle/components/Flex';
+import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
+import GlobalDataProductType, {
+  GlobalDataProductObjectTypeEnum,
+} from '@interfaces/GlobalDataProductType';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
+import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
 import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
+import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
+import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
+import { BannerStyle } from './index.style';
+import { DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
+  ICON_SIZE_SMALL,
+  ICON_SIZE_LARGE,
+} from '@oracle/styles/units/icons';
+import {
   PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { isEmptyObject } from '@utils/hash';
+import { TableContainerStyle } from '@components/IntegrationPipeline/index.style';
+import { YELLOW } from '@oracle/styles/colors/main';
+import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
+
+const SHARED_BUTTON_PROPS = {
+  borderLess: true,
+  iconOnly: true,
+  noBackground: true,
+  outline: true,
+  padding: '4px',
+};
 
 type BlockSettingsProps = {
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  globalDataProducts?: GlobalDataProductType[];
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => void;
 };
 
 function BlockSettings({
   block,
   fetchFileTree,
   fetchPipeline,
+  globalDataProducts,
   pipeline,
   setSelectedBlock,
+  showUpdateBlockModal,
 }: BlockSettingsProps) {
   const refExecutorTypeSelect = useRef(null);
   const refExecutorTypeTextInput = useRef(null);
 
   const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
-  const pipelineRetryConfig: PipelineRetryConfigType = useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+  const pipelineRetryConfig: PipelineRetryConfigType =
+    useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+
+  const {
+    color: blockColor,
+    configuration,
+    name: blockName,
+    type: blockType,
+    uuid: blockUUID,
+  } = block;
 
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockSettings/index',
   });
 
+  const globalDataProductsByUUID =
+    useMemo(() => indexBy(globalDataProducts || [], ({ uuid }) => uuid), [globalDataProducts]);
+  const globalDataProduct = useMemo(() => {
+    const gdpUUID = configuration?.global_data_product?.uuid;
+
+    if (gdpUUID && globalDataProductsByUUID) {
+      return globalDataProductsByUUID?.[gdpUUID];
+    }
+  }, [
+    configuration,
+    globalDataProductsByUUID,
+  ]);
+
   const {
-    type: blockType,
-    uuid: blockUUID,
-  } = block;
+    data: dataPipeline,
+  } = api.pipelines.detail(
+    GlobalDataProductObjectTypeEnum.PIPELINE === globalDataProduct?.object_type
+      && globalDataProduct?.object_uuid,
+  );
+  const globalDataProductPipeline = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
 
   const [blockAttributes, setBlockAttributesState] = useState<BlockType>(null);
   const [blockAttributesTouched, setBlockAttributesTouched] = useState<boolean>(false);
@@ -72,7 +135,8 @@ function BlockSettings({
     }
   }, [block, blockPrev]);
 
-  const blockRetryConfig: BlockRetryConfigType = useMemo(() => blockAttributes?.retry_config || {}, [blockAttributes]);
+  const blockRetryConfig: BlockRetryConfigType =
+    useMemo(() => blockAttributes?.retry_config || {}, [blockAttributes]);
   const setBlockAttributes = useCallback((handlePrevious) => {
     setBlockAttributesTouched(true);
     setBlockAttributesState(handlePrevious);
@@ -109,9 +173,10 @@ function BlockSettings({
     ? Object.values(blockDetails?.pipelines)
     : []
   , [blockDetails]);
+  const blockPipelinesCount = blockPipelines?.length || 1;
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -135,57 +200,60 @@ function BlockSettings({
     },
   );
 
-  const pipelinesTable = useMemo(() => blockPipelines?.length >= 1 && (
-    <Table
-      columnFlex={[null, 1]}
-      columns={[
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Description',
-        },
-      ]}
-      rows={blockPipelines.map(({
-        pipeline: {
-          description,
-          name: pipelineName,
-          uuid: pipelineUUID,
-        },
-      }) => {
-        let nameEl;
+  const pipelinesTable = useMemo(() => blockPipelinesCount >= 1 && (
+    <TableContainerStyle>
+      <Table
+        columnFlex={[null, 1]}
+        columns={[
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Description',
+          },
+        ]}
+        rows={blockPipelines.map(({
+          pipeline: {
+            description,
+            name: pipelineName,
+            uuid: pipelineUUID,
+          },
+        }) => {
+          let nameEl;
 
-        if (pipeline?.uuid === pipelineUUID) {
-          nameEl = (
-            <Text key="name" monospace muted>
-              {pipelineName || pipelineUUID}
-            </Text>
-          );
-        } else {
-          nameEl = (
-            <Link
-              href={`/pipelines/${pipelineUUID}/edit`}
-              key="name"
-              monospace
-              openNewWindow
-              sameColorAsText
-            >
-              {pipelineName || pipelineUUID}
-            </Link>
-          );
-        }
+          if (pipeline?.uuid === pipelineUUID) {
+            nameEl = (
+              <Text key="name" monospace muted>
+                {pipelineName || pipelineUUID} (current)
+              </Text>
+            );
+          } else {
+            nameEl = (
+              <Link
+                href={`/pipelines/${pipelineUUID}/edit`}
+                key="name"
+                monospace
+                openNewWindow
+                sameColorAsText
+              >
+                {pipelineName || pipelineUUID}
+              </Link>
+            );
+          }
 
-        return [
-          nameEl,
-          <Text default key="description" monospace>
-            {description || '-'}
-          </Text>,
-        ];
-      })}
-      uuid="git-branch-blockPipelines"
-    />
+          return [
+            nameEl,
+            <Text default key="description" monospace>
+              {description || '-'}
+            </Text>,
+          ];
+        })}
+        uuid="git-branch-blockPipelines"
+      />
+    </TableContainerStyle>
   ), [
     blockPipelines,
+    blockPipelinesCount,
     pipeline,
   ]);
 
@@ -202,46 +270,119 @@ function BlockSettings({
     pipelineRetryConfig,
   ]);
 
+  const objectAttributes = useMemo(() => blockAttributes?.configuration?.global_data_product || {}, [
+    blockAttributes,
+  ]);
+  const setObjectAttributes = useCallback(prev2 => setBlockAttributes(prev => ({
+    ...prev,
+    configuration: {
+      ...blockAttributes?.configuration,
+      global_data_product: prev2(blockAttributes?.configuration?.global_data_product),
+    },
+  })), [
+    blockAttributes,
+    setBlockAttributes,
+  ]);
+
   return (
     <>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Spacing p={PADDING_UNITS}>
+          {blockPipelinesCount > 1 &&
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <BannerStyle>
+                <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS} >
+                  <Flex>
+                    <DiamondShared fill={YELLOW} size={ICON_SIZE_LARGE} />
+                    <Spacing pr={2} />
+                    <Text
+                      bold
+                      large
+                      lineHeight={UNIT * 3}
+                      warning
+                    >
+                      Shared by {blockPipelinesCount} pipelines
+                    </Text>
+                  </Flex>
+                  {/* <Tooltip
+                    appearBefore
+                    block
+                    label="Duplicates block and removes any attachment to other pipelines"
+                    maxWidth={UNIT * 30}
+                    size={null}
+                  >
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
+                      iconOnly={false}
+                      // onClick={() => {}}
+                      padding={null}
+                    >
+                      Detach
+                    </Button>
+                  </Tooltip> */}
+                </FlexContainer>
+              </BannerStyle>
+            </Spacing>
+          }
           <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <TextInput
-              label="Name"
-              // @ts-ignore
-              onChange={e => setBlockAttributes(prev => ({
-                ...prev,
-                name: e.target.value,
-              }))}
-              primary
-              setContentOnMount
-              value={blockAttributes?.name || ''}
-            />
-
-            {BlockTypeEnum.CUSTOM === block?.type && (
-              <Spacing mt={PADDING_UNITS}>
-                <Select
-                  label="Color"
-                  // @ts-ignore
-                  onChange={e => setBlockAttributes(prev => ({
-                    ...prev,
-                    color: e.target.value,
-                  }))}
-                  primary
-                  value={blockAttributes?.color || ''}
-                >
-                  {Object.values(BlockColorEnum).map((color: BlockColorEnum) => (
-                    <option key={color} value={color}>
-                      {capitalize(color)}
-                    </option>
-                  ))}
-                </Select>
-              </Spacing>
-            )}
+            <RowDataTable
+              noBackground
+              noBoxShadow
+              sameColorBorders
+            >
+              <RowStyle noBorder>
+                <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
+                  <Flex>
+                    <Text bold>
+                      Name:&nbsp;
+                    </Text>
+                    <Text>
+                      {blockName || ''}
+                    </Text>
+                  </Flex>
+                  <Button
+                    {...SHARED_BUTTON_PROPS}
+                    onClick={() => showUpdateBlockModal(block, blockName)}
+                  >
+                    <Edit size={ICON_SIZE_SMALL} />
+                  </Button>
+                </FlexContainer>
+              </RowStyle>
+              {BlockTypeEnum.CUSTOM === block?.type
+                ? (
+                  <RowStyle noBorder>
+                    <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
+                      <Flex>
+                        <Text bold>
+                          Color:&nbsp;
+                        </Text>
+                        <Text>
+                          {capitalize(blockColor || '')}
+                        </Text>
+                      </Flex>
+                      <Button
+                        {...SHARED_BUTTON_PROPS}
+                        onClick={() => showUpdateBlockModal(block, blockName)}
+                        outline={false}
+                      >
+                        <Circle
+                          color={blockColor
+                            ? BLOCK_COLOR_HEX_CODE_MAPPING[blockColor]
+                            : null
+                          }
+                          size={ICON_SIZE_SMALL}
+                          square
+                        />
+                      </Button>
+                    </FlexContainer>
+                  </RowStyle>
+                ) : null
+              }
+            </RowDataTable>
           </Spacing>
 
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline>
               Executor type
             </Headline>
@@ -319,7 +460,7 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline>
               Retry configuration
             </Headline>
@@ -442,22 +583,86 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
-          <Button
-            disabled={!blockAttributesTouched}
-            loading={isLoadingUpdateBlock}
-            // @ts-ignore
-            onClick={() => updateBlock({
-              block: {
-                color: blockAttributes?.color,
-                executor_type: blockAttributes?.executor_type,
-                name: blockAttributes?.name,
-                retry_config: blockRetryConfig,
-              },
-            })}
-            primary
-          >
-            Update block settings
-          </Button>
+          {BlockTypeEnum.DBT === blockType && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline>
+                dbt settings
+              </Headline>
+
+              <Spacing mt={1}>
+                <Checkbox
+                  checked={!!blockAttributes?.configuration?.dbt?.disable_tests}
+                  label="Disable automatically running dbt tests"
+                  onClick={() => setBlockAttributes(prev => ({
+                    ...prev,
+                    configuration: {
+                      ...prev?.configuration,
+                      dbt: {
+                        ...prev?.configuration?.dbt,
+                        disable_tests: !prev?.configuration?.dbt?.disable_tests,
+                      },
+                    },
+                  }))}
+                />
+              </Spacing>
+            </Spacing>
+          )}
+
+          {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline>
+                  Override global data product settings
+                </Headline>
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <OutdatedAfterField
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <OutdatedStartingAtField
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <SettingsField
+                  blocks={globalDataProductPipeline?.blocks}
+                  objectAttributes={objectAttributes}
+                  originalAttributes={globalDataProduct}
+                  // @ts-ignore
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+            </Spacing>
+          )}
+
+          <Spacing px={PADDING_UNITS}>
+            <Button
+              disabled={!blockAttributesTouched}
+              loading={isLoadingUpdateBlock}
+              // @ts-ignore
+              onClick={() => updateBlock({
+                block: {
+                  configuration: blockAttributes?.configuration,
+                  executor_type: blockAttributes?.executor_type,
+                  retry_config: blockRetryConfig,
+                },
+              })}
+              primary
+            >
+              Update block settings
+            </Button>
+          </Spacing>
         </Spacing>
       </Spacing>
 
@@ -473,10 +678,13 @@ function BlockSettings({
           <>
             <Spacing p={PADDING_UNITS}>
               <Headline>
-                Pipelines
+                Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>
-                Here are all the pipelines that are using this block.
+                A shared block is available to and reused by multiple pipelines. It
+                enables you to write code once and have it easily accessible anywhere
+                in the workspace. As a result, any code changes will affect all
+                pipelines sharing the block.
               </Text>
             </Spacing>
 

@@ -1,14 +1,15 @@
 ---
 title: "Mage"
-description: "🧙 A modern replacement for Airflow."
+sidebarTitle: "Overview"
 icon: "hat-wizard"
+description: "🧙 A modern replacement for Airflow."
 "og:image": ""
 ---
 
 <div
   style={{
     display: "flex",
-    flexWrap: "wrap",
+    flexWrap: "wrap"
   }}
 >
   <a
@@ -243,7 +244,7 @@ Mage is an open-source data pipeline tool for transforming and integrating data.
     icon="layer-group"
     href="/design/core-abstractions"
   ></Card>
-  <Card title="Contributing" icon="hand" href="/community/contributing"></Card>
+  <Card title="Contributing" icon="hand" href="/contributing/overview"></Card>
 </CardGroup>
 
 ---
@@ -333,17 +334,17 @@ Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
   <Card
     title="Load data from API, transform it, and export it to PostgreSQL"
     icon="database"
-    href="/tutorials/load-api-data"
+    href="/guides/load-api-data"
   ></Card>
   <Card
-    title="Set up DBT models and orchestrate DBT runs"
+    title="Set up dbt models and orchestrate dbt runs"
     icon="folder-gear"
-    href="/tutorials/setup-dbt"
+    href="/guides/setup-dbt"
   ></Card>
   <Card
     title="Train model on Titanic dataset"
     icon="ship"
-    href="/tutorials/train-model"
+    href="/guides/train-model"
   ></Card>
   <Card
     title="Integrate Mage into an existing Airflow project"
@@ -363,7 +364,7 @@ Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
 | 📓  | [Notebook](/about/features#notebook-for-building-data-pipelines) | Interactive Python, SQL, & R editor for coding data pipelines.         |
 | 🏗️  | [Data integrations](/data-integrations)                          | Synchronize data from 3rd party sources to your internal destinations. |
 | 🚰  | [Streaming pipelines](/guides/streaming-pipeline)                | Ingest and transform real-time data.                                   |
-| ❎  | [DBT](/dbt)                                                      | Build, run, and manage your DBT models with Mage.                      |
+| ❎  | [dbt](/dbt)                                                      | Build, run, and manage your dbt models with Mage.                      |
 
 **A sample data pipeline defined across 3 files ➝**
 
@@ -399,7 +400,7 @@ def export_titanic_data_to_disk(df) -> None:
 />
 
 New? We recommend reading about [blocks](/design/blocks) and learning from a
-[hands-on tutorial](/tutorials/load-api-data).
+[hands-on tutorial](/guides/load-api-data).
 
 <Card
   title="Ask us questions on Slack"
@@ -439,7 +440,7 @@ These are the fundamental concepts that Mage uses to operate.
 
 Add features and instantly improve the experience for everyone.
 
-Check out the [contributing guide](/community/contributing) to setup your
+Check out the [contributing guide](/contributing/overview) to setup your
 development environment and start building.
 
 ---

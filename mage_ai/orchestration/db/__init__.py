@@ -1,18 +1,15 @@
 import logging
 import os
+from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
-from urllib.parse import parse_qs, urlparse
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
-from mage_ai.orchestration.constants import (
-    DATABASE_CONNECTION_URL_ENV_VAR,
-    DB_NAME,
-    DB_PASS,
-    DB_USER,
-)
+from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.shared.environments import is_dev, is_test
 
 DB_RETRY_COUNT = 2
@@ -24,15 +21,14 @@ db_kwargs = dict(
     pool_pre_ping=True,
 )
 
+
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
 elif not db_connection_url:
-    # connect to K8s CloudSQL sidecar
-    if os.getenv(DB_USER):
-        db_user = os.getenv(DB_USER)
-        db_pass = os.getenv(DB_PASS)
-        db_name = os.getenv(DB_NAME)
-        db_connection_url = f'postgresql+psycopg2://{db_user}:{db_pass}@127.0.0.1:5432/{db_name}'
+    pg_db_connection_url = get_postgres_connection_url()
+
+    if pg_db_connection_url:
+        db_connection_url = pg_db_connection_url
     else:
         if is_test():
             db_connection_url = f'sqlite:///{TEST_DB}'
@@ -51,10 +47,25 @@ if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
-engine = create_engine(
-    db_connection_url,
-    **db_kwargs,
-)
+try:
+    engine = create_engine(
+        db_connection_url,
+        **db_kwargs,
+    )
+    engine.connect()
+except SQLAlchemyError:
+    engine.dispose()
+    url_parsed = urlparse(db_connection_url)
+    if url_parsed.password:
+        db_connection_url = db_connection_url.replace(
+            url_parsed.password,
+            quote_plus(url_parsed.password),
+        )
+    engine = create_engine(
+        db_connection_url,
+        **db_kwargs,
+    )
+
 session_factory = sessionmaker(bind=engine)
 
 

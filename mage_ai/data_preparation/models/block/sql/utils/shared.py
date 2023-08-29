@@ -299,6 +299,7 @@ def create_upstream_block_tables(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     database: str = None,
+    variables: Dict = None,
 ):
     if cache_keys is None:
         cache_keys = []
@@ -364,7 +365,7 @@ def create_upstream_block_tables(
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 if not no_schema:
-                    attributes_dict = parse_attributes(block)
+                    attributes_dict = parse_attributes(block, variables=variables)
                     schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
@@ -455,12 +456,26 @@ def extract_insert_statement_table_names(text: str) -> List[str]:
     return matches
 
 
+def extract_drop_statement_table_names(text: str) -> List[str]:
+    matches = re.findall(
+        r'drop table(?: if exists)*',
+        remove_comments(text),
+        re.IGNORECASE,
+    )
+    return matches
+
+
 def has_create_or_insert_statement(text: str) -> bool:
     table_name = extract_create_statement_table_name(text)
     if table_name:
         return True
 
     matches = extract_insert_statement_table_names(text)
+    return len(matches) >= 1
+
+
+def has_drop_statement(text: str) -> bool:
+    matches = extract_drop_statement_table_names(text)
     return len(matches) >= 1
 
 

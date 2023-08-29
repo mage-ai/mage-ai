@@ -1,4 +1,17 @@
+import ast
+import inspect
+import io
+import json
+import os
+import sys
+import traceback
+from os.path import isfile
+from typing import Dict, List
+
+import singer
+import yaml
 from jsonschema.validators import Draft4Validator
+
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
@@ -31,17 +44,6 @@ from mage_integrations.utils.logger.constants import (
     TYPE_SCHEMA,
     TYPE_STATE,
 )
-from os.path import isfile
-from typing import Dict, List
-import ast
-import inspect
-import io
-import json
-import os
-import singer
-import sys
-import traceback
-import yaml
 
 LOGGER = singer.get_logger()
 MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
@@ -60,6 +62,7 @@ class Destination():
         logger=LOGGER,
         settings: Dict = None,
         settings_file_path: str = None,
+        show_templates: bool = False,
         state_file_path: str = None,
         test_connection: bool = False,
     ):
@@ -70,6 +73,7 @@ class Destination():
             argument_parser.add_argument('--input_file_path', type=str, default=None)
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
+            argument_parser.add_argument('--show_templates', action='store_true')
             argument_parser.add_argument('--state', type=str, default=None)
             argument_parser.add_argument('--test_connection', action='store_true')
             args = argument_parser.parse_args()
@@ -86,6 +90,8 @@ class Destination():
                 log_to_stdout = args.log_to_stdout
             if args.settings:
                 settings_file_path = args.settings
+            if args.show_templates:
+                show_templates = args.show_templates
             if args.state:
                 state_file_path = args.state
             if args.test_connection:
@@ -107,6 +113,7 @@ class Destination():
         self.settings_file_path = settings_file_path
         self.state_file_path = state_file_path
         self.should_test_connection = test_connection
+        self.show_templates = show_templates
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
@@ -277,7 +284,8 @@ class Destination():
             schema['properties'] = merge_dict(schema['properties'], static_columns_schema)
 
         if STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY in self.streams_override_settings:
-            self.partition_keys[stream] += self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY]
+            self.partition_keys[stream] += self.streams_override_settings[
+                STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY]
 
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
@@ -313,6 +321,8 @@ class Destination():
             if self.should_test_connection:
                 self.logger.info('Testing connection...')
                 self.test_connection()
+            elif self.show_templates:
+                json.dump(self.templates(), sys.stdout)
             else:
                 self._process(input_buffer)
         except Exception as err:
@@ -379,8 +389,10 @@ class Destination():
                         stream = row['currently_syncing']
                     else:
                         stream = list(bookmarks.keys())[0]
-                else:
+                elif row_value.keys():
                     stream = list(row_value.keys())[0]
+                else:
+                    continue
 
             schema = self.schemas.get(stream)
 
@@ -599,7 +611,8 @@ class Destination():
                     record_adjusted[k] = ast.literal_eval(v1)
 
         if STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY in self.streams_override_settings:
-            for k, v in self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].items():
+            for k, v in self.streams_override_settings[
+                    STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].items():
                 record_adjusted[k] = v
 
         return record_adjusted

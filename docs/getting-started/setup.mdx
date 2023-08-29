@@ -1,16 +1,18 @@
 ---
 title: "Setup and install"
-sidebarTitle: "Setup"
+sidebarTitle: "Quickstart"
 icon: "space-station-moon-construction"
 description: "You can install Mage using Docker, pip, or conda."
 "og:image": "https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
 ---
 
+<Frame>
 <img
   alt="mage start"
   src="https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
-  width="500"
+  width="300"
 />
+</Frame>
 
 ## Using Docker
 
@@ -55,9 +57,21 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
   mage init [project_name]
 ```
 
-### Using PostgreSQL as database
+### Connect to an external database
 
-Mage uses SQLite as the default database engine. To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
+<Note>
+
+Prior to Mage version 0.9.12, you may run into issues using database connection urls with special characters
+in the password such as "%" or "@" symbols. Please upgrade to a Mage version >= 0.9.12 to resolve these issues.
+
+</Note>
+
+Mage uses SQLite as the default database engine, but SQLite is not recommended for production use cases.
+The following databases are other alternatives that you can use with Mage.
+
+#### PostgreSQL
+
+To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
 
 1. Create Docker network
 
@@ -93,35 +107,7 @@ To use a specific schema in the PostgreSQL database, the connection string could
       /app/run_app.sh mage start [project_name]
    ```
 
-### Using MySQL as database
-
-Mage uses SQLite as the default database engine. To use MySQL as the database engine, you'll need to run your Docker container slightly differently:
-
-1. Create Docker network
-
-   ```bash
-   docker network create mage-app
-   ```
-
-2. Start MySQL Docker container in a separate window
-
-   ```bash
-   docker run --network mage-app --network-alias mysql_db \
-      -it -p 3306:3306 -e MYSQL_DATABASE=test_database \
-      -e MYSQL_USER=test_username -e MYSQL_PASSWORD=test_password \
-      -e MYSQL_ALLOW_EMPTY_PASSWORD=yes mysql:8.0
-   ```
-
-3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
-
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL="mysql+mysqlconnector://test_username:test_password@mysql_db:3306/test_database" \
-      mageai/mageai \
-      /app/run_app.sh mage start [project_name]
-   ```
-
-### Using MSSQL as database
+#### MSSQL
 
 MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
 
@@ -231,7 +217,7 @@ mage init [project_name]
 
 4. (Optional) Enable blocks to be executed in separate Kubernetes pods.
 
-   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](https://docs.mage.ai/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
+   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
 
 ---
 
@@ -286,6 +272,26 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 ```
 
 See [here](/development/environment-variables) for a list of environment variables you can configure.
+
+### Setting prefix for Mage url
+
+In some cases, you may need to add a prefix to the Mage url. You can configure the Mage server to start
+at a prefix to the url by setting the `MAGE_BASE_PATH` environment variable.
+
+Make sure to set the base path without the leading slash. For example, if you want to start Mage at
+`http://localhost:6789/base/url/path`, you would configure your environment
+variable like this:
+
+`export MAGE_BASE_PATH=base/url/path`
+
+You can also configure the base path separately for client requests and backend routes by setting
+the `MAGE_REQUESTS_BASE_PATH` and `MAGE_ROUTES_BASE_PATH` environment variables respectively.
+
+|   |   |
+| --- | --- |
+| `MAGE_BASE_PATH` | Set base path for the entire app. |
+| `MAGE_REQUESTS_BASE_PATH` | Set base path for frontend requests and urls, defaults to value of `MAGE_BASE_PATH` |
+| `MAGE_ROUTES_BASE_PATH` | Set base path for backend routes, defaults to value of `MAGE_BASE_PATH` |
 
 ---
 
@@ -352,7 +358,7 @@ Mage also has the following extras:
 - **azure**: to install Azure related packages
 - **bigquery**: to connect to BigQuery for data import or export
 - **clickhouse**: to connect to Clickhouse for data import or export
-- **dbt**: to install DBT packages
+- **dbt**: to install dbt packages
 - **google-cloud-storage**: to connect to Google Cloud Storage for data import or export
 - **hdf5**: to process HDF5 file format
 - **mysql**: to connect to MySQL for data import or export
@@ -388,7 +394,7 @@ apt install libkrb5-dev
 ## Source code development
 
 To setup a development environment for editing source code, please check out
-this [document](/community/contributing).
+this [document](/contributing/overview).
 
 ---
 

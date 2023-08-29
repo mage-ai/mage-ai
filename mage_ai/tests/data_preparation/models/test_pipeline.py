@@ -5,6 +5,7 @@ import uuid
 from unittest.mock import patch
 
 import yaml
+from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -26,6 +27,7 @@ class PipelineTest(DBTestCase):
         self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/__init__.py'))
         self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/metadata.yaml'))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):
         self.__create_pipeline_with_blocks('test pipeline 2')
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
@@ -42,6 +44,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_2',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -112,6 +115,7 @@ class PipelineTest(DBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[
                 dict(
@@ -164,6 +168,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline_run.pipeline_uuid, 'test_pipeline_c2')
         self.assertEqual(pipeline_schedule.pipeline_uuid, 'test_pipeline_c2')
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_delete_block(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
         block = pipeline.blocks_by_uuid['block4']
@@ -183,6 +188,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_3',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -237,10 +243,12 @@ class PipelineTest(DBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_execute(self):
         pipeline = Pipeline.create(
             'test pipeline 4',
@@ -267,6 +275,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_4',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -337,10 +346,12 @@ class PipelineTest(DBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_execute_multiple_paths(self):
         pipeline = Pipeline.create(
             'test pipeline 5',
@@ -373,6 +384,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_5',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -491,6 +503,7 @@ class PipelineTest(DBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
@@ -570,6 +583,7 @@ class PipelineTest(DBTestCase):
         with self.assertRaises(InvalidPipelineError):
             pipeline.update_block(block4)
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_save_and_get_data_integration_catalog(self):
         pipeline = self.__create_pipeline_with_integration('test_pipeline_9')
         pipeline.save()
@@ -599,6 +613,7 @@ class PipelineTest(DBTestCase):
                 config_json,
                 dict(
                     concurrency_config=dict(),
+                    created_at='2023-08-01 08:08:24+00:00',
                     data_integration=None,
                     description=None,
                     executor_config={},
@@ -609,6 +624,7 @@ class PipelineTest(DBTestCase):
                     notification_config={},
                     tags=[],
                     retry_config={},
+                    run_pipeline_in_one_process=False,
                     spark_config={},
                     type='integration',
                     updated_at=None,

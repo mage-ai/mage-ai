@@ -35,6 +35,8 @@ export const RUN_STATUS_TO_LABEL = {
 export interface PipelineRunReqQueryParamsType {
   _limit?: number;
   _offset?: number;
+  disable_retries_grouping?: boolean;
+  global_data_product_uuid?: string;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
 }
@@ -109,6 +111,7 @@ export default interface PipelineRunType {
   backfill_id?: number;
   block_runs?: BlockRunType[];
   block_runs_count?: number;
+  completed_block_runs_count?: number;
   completed_at?: string;
   created_at?: string;
   event_variables?: Obj;

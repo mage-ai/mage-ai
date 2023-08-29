@@ -3,12 +3,12 @@ title: "Run a single model"
 sidebarTitle: "Run a model"
 ---
 
-1. Under the data loader block you just added, click the button **`DBT model`**,
+1. Under the data loader block you just added, click the button **`dbt model`**,
    then click the option `Single model`.
-2. In the file browser that pops up, click the file of the DBT model you want to
+2. In the file browser that pops up, click the file of the dbt model you want to
    add to your pipeline.
-3. In the `DBT profile target` input field, enter the name of the DBT connection
-   profile (e.g. `dev`) that you want to use when running the selected DBT
+3. In the `dbt profile target` input field, enter the name of the dbt connection
+   profile (e.g. `dev`) that you want to use when running the selected dbt
    models.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
@@ -17,25 +17,25 @@ sidebarTitle: "Run a model"
 
 ## Depending on upstream blocks
 
-If your DBT model references other models, those models will also be added to
+If your dbt model references other models, those models will also be added to
 the current pipeline as upstream blocks.
 
-Once you’ve added 1 or more DBT models to your pipeline, you can set its
+Once you’ve added 1 or more dbt models to your pipeline, you can set its
 dependencies on other blocks.
 
-The DBT model won’t run until all upstream blocks have successfully been
+The dbt model won’t run until all upstream blocks have successfully been
 completed.
 
 ---
 
-## Preview DBT model results
+## Preview dbt model results
 
-You can run a DBT model block and see the results of the SQL query.
+You can run a dbt model block and see the results of the SQL query.
 
 Under the hood, Mage is running
 [`dbt compile`](https://docs.getdbt.com/reference/commands/compile) for that
 single model, then executing the compiled SQL query in the data source from your
-DBT project’s
+dbt project’s
 [connection profile](https://docs.getdbt.com/docs/get-started/connection-profiles)
 target.
 
@@ -45,7 +45,7 @@ target.
 
 ## Pipeline execution run
 
-When pipeline is triggered and executes, it’ll run each DBT model block using
+When pipeline is triggered and executes, it’ll run each dbt model block using
 the [`dbt run`](https://docs.getdbt.com/reference/node-selection/syntax)
 command.
 
@@ -54,7 +54,7 @@ command.
 ## Variable interpolation
 
 You can add
-[variables](/production/configuring-production-settings/runtime-variable)
+[variables](/getting-started/runtime-variable)
 specific to your pipeline. These variables are accessible in each block of your
 pipeline.
 
@@ -67,9 +67,9 @@ using the `var` syntax.
 
 ### SQL statement
 
-Within the SQL query in a DBT model block, you can access these variables using
+Within the SQL query in a dbt model block, you can access these variables using
 the `var` syntax. To learn more, read
-[DBT’s documentation](https://docs.getdbt.com/reference/dbt-jinja-functions/var).
+[dbt’s documentation](https://docs.getdbt.com/reference/dbt-jinja-functions/var).
 For example:
 
 ```SQL
@@ -90,7 +90,7 @@ in the dbt code block if it is a YAML dbt code block (i.e. not a SQL dbt block) 
 these steps:
 
 1. In the Pipeline Editor, add a dbt model by selecting on the `All models (w/option exclusion)`
-option from the dropdown when clicking on the `DBT model` button for adding a block.
+option from the dropdown when clicking on the `dbt model` button for adding a block.
 2. For the newly added code block, you should see that is `YAML` type indicated in the top left
 corner of the block.
 3. On the same line as your `--select` or `--exclude` syntax, add the `--vars` syntax with the

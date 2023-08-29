@@ -157,7 +157,9 @@ def produce_collection_schema(collection):
     }
 
 
-def do_discover(client, config, databases=[], return_streams: bool = False):
+def do_discover(client, config, databases=None, return_streams: bool = False):
+    if databases is None:
+        databases = []
     streams = []
 
     for db_name in databases or get_databases(client, config):
@@ -297,7 +299,10 @@ def clear_state_on_replication_change(stream, state):
     return state
 
 
-def sync_stream(client, stream, state):
+def sync_stream(client, stream, state, logger=None):
+    if logger is None:
+        logger = LOGGER
+
     tap_stream_id = stream['tap_stream_id']
 
     common.COUNTS[tap_stream_id] = 0
@@ -327,30 +332,55 @@ def sync_stream(client, stream, state):
             if oplog.oplog_has_aged_out(client, state, tap_stream_id):
                 # remove all state for stream
                 # then it will do a full sync and start oplog again.
-                LOGGER.info("Clearing state because Oplog has aged out")
+                logger.info('Clearing state because Oplog has aged out')
                 state.get('bookmarks', {}).pop(tap_stream_id)
 
             collection_oplog_ts = oplog.get_latest_ts(client)
 
             # make sure initial full table sync has been completed
             if not singer.get_bookmark(state, tap_stream_id, 'initial_full_table_complete'):
-                msg = 'Must complete full table sync before starting oplog replication for %s'
-                LOGGER.info(msg, tap_stream_id)
+                logger.info('Must complete full table sync before starting oplog '
+                            f'replication for {tap_stream_id}')
 
                 # only mark current ts in oplog on first sync so tap has a
                 # starting point after the full table sync
                 if singer.get_bookmark(state, tap_stream_id, 'version') is None:
                     oplog.update_bookmarks(state, tap_stream_id, collection_oplog_ts)
 
-                full_table.sync_collection(client, stream, state, stream_projection)
+                full_table.sync_collection(
+                    client,
+                    stream,
+                    state,
+                    stream_projection,
+                    logger=logger,
+                )
 
-            oplog.sync_collection(client, stream, state, stream_projection, collection_oplog_ts)
+            oplog.sync_collection(
+                client,
+                stream,
+                state,
+                stream_projection,
+                logger=logger,
+                max_oplog_ts=collection_oplog_ts,
+            )
 
         elif replication_method == 'FULL_TABLE':
-            full_table.sync_collection(client, stream, state, stream_projection)
+            full_table.sync_collection(
+                client,
+                stream,
+                state,
+                stream_projection,
+                logger=logger,
+            )
 
         elif replication_method == 'INCREMENTAL':
-            incremental.sync_collection(client, stream, state, stream_projection)
+            incremental.sync_collection(
+                client,
+                stream,
+                state,
+                stream_projection,
+                logger=logger,
+            )
         else:
             raise Exception(
                 "only FULL_TABLE, LOG_BASED, and INCREMENTAL replication \
@@ -361,31 +391,39 @@ def sync_stream(client, stream, state):
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
 
-def do_sync(client, catalog, state):
+def do_sync(client, catalog, state, logger=None):
+    if logger is None:
+        logger = LOGGER
+
     all_streams = catalog['streams']
     streams_to_sync = get_streams_to_sync(all_streams, state)
 
     for stream in streams_to_sync:
-        sync_stream(client, stream, state)
+        sync_stream(client, stream, state, logger=logger)
 
-    LOGGER.info(common.get_sync_summary(catalog))
+    logger.info(common.get_sync_summary(catalog))
 
 
-def build_client(config):
+def build_client(config, logger=None):
+    if logger is None:
+        logger = LOGGER
     # Default SSL verify mode to true, give option to disable
     verify_mode = config.get('verify_mode', 'true') == 'true'
     use_ssl = config.get('ssl') == 'true'
 
-    connection_params = {"host": config['host'],
-                         "port": int(config['port']),
-                         "username": config.get('user', None),
-                         "password": config.get('password', None),
-                         # "authSource": config['database'],
-                         "ssl": use_ssl,
-                         "replicaset": config.get('replica_set', None),
-                         "readPreference": 'secondaryPreferred',
-                         "authSource": config.get('authSource', None),
-                         "authMechanism": config.get('authMechanism', None)}
+    connection_params = {
+        'host': config['host'],
+        'port': int(config['port']),
+        'username': config.get('user', None),
+        'password': config.get('password', None),
+        'ssl': use_ssl,
+        'replicaset': config.get('replica_set', None),
+        'readPreference': 'secondaryPreferred',
+    }
+    if config.get('authSource'):
+        connection_params['authSource'] = config.get('authSource')
+    if config.get('authMechanism'):
+        connection_params['authMechanism'] = config.get('authMechanism')
 
     # NB: "ssl_cert_reqs" must ONLY be supplied if `SSL` is true.
     if not verify_mode and use_ssl:
@@ -393,9 +431,8 @@ def build_client(config):
 
     client = pymongo.MongoClient(**connection_params)
 
-    LOGGER.info('Connected to MongoDB host: %s, version: %s',
-                config['host'],
-                client.server_info().get('version', 'unknown'))
+    logger.info(f"Connected to MongoDB host: {config['host']}, "
+                f"version: {client.server_info().get('version', 'unknown')}")
 
     common.INCLUDE_SCHEMAS_IN_DESTINATION_STREAM_NAME = \
         (config.get('include_schemas_in_destination_stream_name') == 'true')

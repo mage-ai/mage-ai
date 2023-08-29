@@ -1,0 +1,1055 @@
+{
+  "type": ["null", "object"],
+  "properties": {
+    "_sdc_repository": {
+      "type": ["null", "string"]
+    },
+    "actor": {
+      "type": ["null", "object"],
+      "properties": {
+        "avatar_url": {
+          "type": ["null", "string"]
+        },
+        "display_login": {
+          "type": ["null", "string"]
+        },
+        "gravatar_id": {
+          "type": ["null", "string"]
+        },
+        "id": {
+          "type": ["null", "number"]
+        },
+        "login": {
+          "type": ["null", "string"]
+        },
+        "url": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "created_at": {
+      "type": ["null", "string"]
+    },
+    "id": {
+      "type": ["null", "number"]
+    },
+    "org": {
+      "type": ["null", "object"],
+      "properties": {
+        "avatar_url": {
+          "type": ["null", "string"]
+        },
+        "gravatar_id": {
+          "type": ["null", "string"]
+        },
+        "id": {
+          "type": ["null", "number"]
+        },
+        "login": {
+          "type": ["null", "string"]
+        },
+        "url": {
+          "type": ["null", "string"]
+        },
+        "display_login": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "payload": {
+      "type": ["null", "object"],
+      "properties": {
+        "before": {
+          "type": ["null", "string"]
+        },
+        "action": {
+          "type": ["null", "string"]
+        },
+        "comment": {
+          "type": ["null", "object", "string"],
+          "properties": {
+            "id": {
+              "type": ["null", "integer"]
+            },
+            "node_id": {
+              "type": ["null", "string"]
+            },
+            "url": {
+              "type": ["null", "string"]
+            },
+            "body": {
+              "type": ["null", "string"]
+            },
+            "body_text": {
+              "type": ["null", "string"]
+            },
+            "body_html": {
+              "type": ["null", "string"]
+            },
+            "html_url": {
+              "type": ["null", "string"]
+            },
+            "user": {
+              "$ref": "shared/user.json#/"
+            },
+            "created_at": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "issue_url": {
+              "type": ["null", "string"],
+              "format": "uri"
+            },
+            "author_association": {
+              "type": ["null", "string"]
+            },
+            "performed_via_github_app": {
+              "$ref": "shared/performed_via_github_app.json#/"
+            },
+            "reactions": {
+              "$ref": "shared/reactions.json#/"
+            }
+          }
+        },
+        "issue": {
+          "type": ["null", "object", "string"],
+          "properties": {
+            "id": {
+              "type": ["null", "integer"]
+            },
+            "node_id": {
+              "type": ["null", "string"]
+            },
+            "url": {
+              "type": ["null", "string"]
+            },
+            "repository_url": {
+              "type": ["null", "string"]
+            },
+            "labels_url": {
+              "type": ["null", "string"]
+            },
+            "comments_url": {
+              "type": ["null", "string"]
+            },
+            "events_url": {
+              "type": ["null", "string"]
+            },
+            "html_url": {
+              "type": ["null", "string"]
+            },
+            "number": {
+              "type": ["null", "integer"]
+            },
+            "state": {
+              "type": ["null", "string"]
+            },
+            "state_reason": {
+              "type": ["null", "string"]
+            },
+            "title": {
+              "type": ["null", "string"]
+            },
+            "body": {
+              "type": ["null", "string"]
+            },
+            "user": {
+              "$ref": "shared/user.json#/"
+            },
+            "labels": {
+              "type": ["null", "array"],
+              "items": {
+                "type": ["null", "object"],
+                "properties": {
+                  "id": {
+                    "type": ["null", "integer"],
+                    "format": "int64"
+                  },
+                  "node_id": {
+                    "type": ["null", "string"]
+                  },
+                  "url": {
+                    "type": ["null", "string"],
+                    "format": "uri"
+                  },
+                  "name": {
+                    "type": ["null", "string"]
+                  },
+                  "description": {
+                    "type": ["null", "string"]
+                  },
+                  "color": {
+                    "type": ["null", "string"]
+                  },
+                  "default": {
+                    "type": ["null", "boolean"]
+                  }
+                }
+            },
+            "assignee": {
+              "$ref": "shared/user.json#/"
+            },
+            "assignees": {
+              "type": ["null", "array"],
+              "items": {
+                "$ref": "shared/user.json#/"
+              }
+            },
+            "milestone": {
+              "type": ["null", "object"],
+              "properties": {
+                "url": {
+                  "type": ["null", "string"]
+                },
+                "html_url": {
+                  "type": ["null", "string"]
+                },
+                "labels_url": {
+                  "type": ["null", "string"]
+                },
+                "id": {
+                  "type": ["null", "integer"]
+                },
+                "node_id": {
+                  "type": ["null", "string"]
+                },
+                "number": {
+                  "type": ["null", "integer"]
+                },
+                "state": {
+                  "type": ["null", "string"]
+                },
+                "title": {
+                  "type": ["null", "string"]
+                },
+                "description": {
+                  "type": ["null", "string"]
+                },
+                "creator": {
+                  "$ref": "shared/user.json#/"
+                },
+                "open_issues": {
+                  "type": ["null", "integer"]
+                },
+                "closed_issues": {
+                  "type": ["null", "integer"]
+                },
+                "created_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "updated_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "closed_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "due_on": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                }
+              }
+            },
+            "locked": {
+              "type": ["null", "boolean"]
+            },
+            "active_lock_reason": {
+              "type": ["null", "string"]
+            },
+            "comments": {
+              "type": ["null", "integer"]
+            },
+            "pull_request": {
+              "type": ["null", "object"],
+              "properties": {
+                "merged_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "diff_url": {
+                  "type": ["null", "string"]
+                },
+                "html_url": {
+                  "type": ["null", "string"]
+                },
+                "patch_url": {
+                  "type": ["null", "string"]
+                },
+                "url": {
+                  "type": ["null", "string"]
+                }
+              }
+            },
+            "closed_at": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "created_at": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "draft": {
+              "type": ["null", "boolean"]
+            },
+            "closed_by": {
+              "$ref": "shared/user.json#/"
+            },
+            "body_html": {
+              "type": ["null", "string"]
+            },
+            "body_text": {
+              "type": ["null", "string"]
+            },
+            "timeline_url": {
+              "type": ["null", "string"]
+            },
+            "repository": {
+              "type": ["null", "object"],
+              "properties": {
+                "id": {
+                  "type": ["null", "integer"]
+                },
+                "node_id": {
+                  "type": ["null", "string"]
+                },
+                "name": {
+                  "type": ["null", "string"]
+                },
+                "full_name": {
+                  "type": ["null", "string"]
+                },
+                "license": {
+                  "type": ["null", "object"],
+                  "properties": {
+                    "key": {
+                      "type": ["null", "string"]
+                    },
+                    "name": {
+                      "type": ["null", "string"]
+                    },
+                    "url": {
+                      "type": ["null", "string"]
+                    },
+                    "spdx_id": {
+                      "type": ["null", "string"]
+                    },
+                    "node_id": {
+                      "type": ["null", "string"]
+                    },
+                    "html_url": {
+                      "type": ["null", "string"]
+                    }
+                  }
+                },
+                "organization": {
+                  "$ref": "shared/user.json#/"
+                },
+                "forks": {
+                  "type": ["null", "integer"]
+                },
+                "permissions": {
+                  "$ref": "shared/pull_permissions.json#/"
+                },
+                "owner": {
+                  "$ref": "shared/user.json#/"
+                },
+                "private": {
+                  "type": ["null", "boolean"]
+                },
+                "html_url": {
+                  "type": ["null", "string"]
+                },
+                "description": {
+                  "type": ["null", "string"]
+                },
+                "fork": {
+                  "type": ["null", "boolean"]
+                },
+                "url": {
+                  "type": ["null", "string"]
+                },
+                "archive_url": {
+                  "type": ["null", "string"]
+                },
+                "assignees_url": {
+                  "type": ["null", "string"]
+                },
+                "blobs_url": {
+                  "type": ["null", "string"]
+                },
+                "branches_url": {
+                  "type": ["null", "string"]
+                },
+                "collaborators_url": {
+                  "type": ["null", "string"]
+                },
+                "comments_url": {
+                  "type": ["null", "string"]
+                },
+                "commits_url": {
+                  "type": ["null", "string"]
+                },
+                "compare_url": {
+                  "type": ["null", "string"]
+                },
+                "contents_url": {
+                  "type": ["null", "string"]
+                },
+                "contributors_url": {
+                  "type": ["null", "string"]
+                },
+                "deployments_url": {
+                  "type": ["null", "string"]
+                },
+                "downloads_url": {
+                  "type": ["null", "string"]
+                },
+                "events_url": {
+                  "type": ["null", "string"]
+                },
+                "forks_url": {
+                  "type": ["null", "string"]
+                },
+                "git_commits_url": {
+                  "type": ["null", "string"]
+                },
+                "git_refs_url": {
+                  "type": ["null", "string"]
+                },
+                "git_tags_url": {
+                  "type": ["null", "string"]
+                },
+                "git_url": {
+                  "type": ["null", "string"]
+                },
+                "issue_comment_url": {
+                  "type": ["null", "string"]
+                },
+                "issue_events_url": {
+                  "type": ["null", "string"]
+                },
+                "issues_url": {
+                  "type": ["null", "string"]
+                },
+                "keys_url": {
+                  "type": ["null", "string"]
+                },
+                "labels_url": {
+                  "type": ["null", "string"]
+                },
+                "languages_url": {
+                  "type": ["null", "string"]
+                },
+                "merges_url": {
+                  "type": ["null", "string"]
+                },
+                "milestones_url": {
+                  "type": ["null", "string"]
+                },
+                "notifications_url": {
+                  "type": ["null", "string"]
+                },
+                "pulls_url": {
+                  "type": ["null", "string"]
+                },
+                "releases_url": {
+                  "type": ["null", "string"]
+                },
+                "ssh_url": {
+                  "type": ["null", "string"]
+                },
+                "stargazers_url": {
+                  "type": ["null", "string"]
+                },
+                "statuses_url": {
+                  "type": ["null", "string"]
+                },
+                "subscribers_url": {
+                  "type": ["null", "string"]
+                },
+                "subscription_url": {
+                  "type": ["null", "string"]
+                },
+                "tags_url": {
+                  "type": ["null", "string"]
+                },
+                "teams_url": {
+                  "type": ["null", "string"]
+                },
+                "trees_url": {
+                  "type": ["null", "string"]
+                },
+                "clone_url": {
+                  "type": ["null", "string"]
+                },
+                "mirror_url": {
+                  "type": ["null", "string"]
+                },
+                "hooks_url": {
+                  "type": ["null", "string"]
+                },
+                "svn_url": {
+                  "type": ["null", "string"]
+                },
+                "homepage": {
+                  "type": ["null", "string"]
+                },
+                "language": {
+                  "type": ["null", "string"]
+                },
+                "forks_count": {
+                  "type": ["null", "integer"]
+                },
+                "stargazers_count": {
+                  "type": ["null", "integer"]
+                },
+                "watchers_count": {
+                  "type": ["null", "integer"]
+                },
+                "size": {
+                  "type": ["null", "integer"]
+                },
+                "default_branch": {
+                  "type": ["null", "string"]
+                },
+                "open_issues_count": {
+                  "type": ["null", "integer"]
+                },
+                "is_template": {
+                  "type": ["null", "boolean"]
+                },
+                "topics": {
+                  "type": ["null", "array"],
+                  "items": {
+                    "type": ["null", "string"]
+                  }
+                },
+                "has_issues": {
+                  "type": ["null", "boolean"]
+                },
+                "has_projects": {
+                  "type": ["null", "boolean"]
+                },
+                "has_wiki": {
+                  "type": ["null", "boolean"]
+                },
+                "has_pages": {
+                  "type": ["null", "boolean"]
+                },
+                "has_downloads": {
+                  "type": ["null", "boolean"]
+                },
+                "archived": {
+                  "type": ["null", "boolean"]
+                },
+                "disabled": {
+                  "type": ["null", "boolean"]
+                },
+                "visibility": {
+                  "type": ["null", "string"]
+                },
+                "pushed_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "created_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "updated_at": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "allow_rebase_merge": {
+                  "type": ["null", "boolean"]
+                },
+                "template_repository": {
+                  "type": ["null", "object"],
+                  "properties": {
+                    "id": {
+                      "type": ["null", "integer"]
+                    },
+                    "node_id": {
+                      "type": ["null", "string"]
+                    },
+                    "name": {
+                      "type": ["null", "string"]
+                    },
+                    "full_name": {
+                      "type": ["null", "string"]
+                    },
+                    "owner": {
+                      "type": ["null", "object"],
+                      "properties": {
+                        "login": {
+                          "type": ["null", "string"]
+                        },
+                        "id": {
+                          "type": ["null", "integer"]
+                        },
+                        "node_id": {
+                          "type": ["null", "string"]
+                        },
+                        "avatar_url": {
+                          "type": ["null", "string"]
+                        },
+                        "gravatar_id": {
+                          "type": ["null", "string"]
+                        },
+                        "url": {
+                          "type": ["null", "string"]
+                        },
+                        "html_url": {
+                          "type": ["null", "string"]
+                        },
+                        "followers_url": {
+                          "type": ["null", "string"]
+                        },
+                        "following_url": {
+                          "type": ["null", "string"]
+                        },
+                        "gists_url": {
+                          "type": ["null", "string"]
+                        },
+                        "starred_url": {
+                          "type": ["null", "string"]
+                        },
+                        "subscriptions_url": {
+                          "type": ["null", "string"]
+                        },
+                        "organizations_url": {
+                          "type": ["null", "string"]
+                        },
+                        "repos_url": {
+                          "type": ["null", "string"]
+                        },
+                        "events_url": {
+                          "type": ["null", "string"]
+                        },
+                        "received_events_url": {
+                          "type": ["null", "string"]
+                        },
+                        "type": {
+                          "type": ["null", "string"]
+                        },
+                        "site_admin": {
+                          "type": ["null", "boolean"]
+                        }
+                      }
+                    },
+                    "private": {
+                      "type": ["null", "boolean"]
+                    },
+                    "html_url": {
+                      "type": ["null", "string"]
+                    },
+                    "description": {
+                      "type": ["null", "string"]
+                    },
+                    "fork": {
+                      "type": ["null", "boolean"]
+                    },
+                    "url": {
+                      "type": ["null", "string"]
+                    },
+                    "archive_url": {
+                      "type": ["null", "string"]
+                    },
+                    "assignees_url": {
+                      "type": ["null", "string"]
+                    },
+                    "blobs_url": {
+                      "type": ["null", "string"]
+                    },
+                    "branches_url": {
+                      "type": ["null", "string"]
+                    },
+                    "collaborators_url": {
+                      "type": ["null", "string"]
+                    },
+                    "comments_url": {
+                      "type": ["null", "string"]
+                    },
+                    "commits_url": {
+                      "type": ["null", "string"]
+                    },
+                    "compare_url": {
+                      "type": ["null", "string"]
+                    },
+                    "contents_url": {
+                      "type": ["null", "string"]
+                    },
+                    "contributors_url": {
+                      "type": ["null", "string"]
+                    },
+                    "deployments_url": {
+                      "type": ["null", "string"]
+                    },
+                    "downloads_url": {
+                      "type": ["null", "string"]
+                    },
+                    "events_url": {
+                      "type": ["null", "string"]
+                    },
+                    "forks_url": {
+                      "type": ["null", "string"]
+                    },
+                    "git_commits_url": {
+                      "type": ["null", "string"]
+                    },
+                    "git_refs_url": {
+                      "type": ["null", "string"]
+                    },
+                    "git_tags_url": {
+                      "type": ["null", "string"]
+                    },
+                    "git_url": {
+                      "type": ["null", "string"]
+                    },
+                    "issue_comment_url": {
+                      "type": ["null", "string"]
+                    },
+                    "issue_events_url": {
+                      "type": ["null", "string"]
+                    },
+                    "issues_url": {
+                      "type": ["null", "string"]
+                    },
+                    "keys_url": {
+                      "type": ["null", "string"]
+                    },
+                    "labels_url": {
+                      "type": ["null", "string"]
+                    },
+                    "languages_url": {
+                      "type": ["null", "string"]
+                    },
+                    "merges_url": {
+                      "type": ["null", "string"]
+                    },
+                    "milestones_url": {
+                      "type": ["null", "string"]
+                    },
+                    "notifications_url": {
+                      "type": ["null", "string"]
+                    },
+                    "pulls_url": {
+                      "type": ["null", "string"]
+                    },
+                    "releases_url": {
+                      "type": ["null", "string"]
+                    },
+                    "ssh_url": {
+                      "type": ["null", "string"]
+                    },
+                    "stargazers_url": {
+                      "type": ["null", "string"]
+                    },
+                    "statuses_url": {
+                      "type": ["null", "string"]
+                    },
+                    "subscribers_url": {
+                      "type": ["null", "string"]
+                    },
+                    "subscription_url": {
+                      "type": ["null", "string"]
+                    },
+                    "tags_url": {
+                      "type": ["null", "string"]
+                    },
+                    "teams_url": {
+                      "type": ["null", "string"]
+                    },
+                    "trees_url": {
+                      "type": ["null", "string"]
+                    },
+                    "clone_url": {
+                      "type": ["null", "string"]
+                    },
+                    "mirror_url": {
+                      "type": ["null", "string"]
+                    },
+                    "hooks_url": {
+                      "type": ["null", "string"]
+                    },
+                    "svn_url": {
+                      "type": ["null", "string"]
+                    },
+                    "homepage": {
+                      "type": ["null", "string"]
+                    },
+                    "language": {
+                      "type": ["null", "string"]
+                    },
+                    "forks_count": {
+                      "type": ["null", "integer"]
+                    },
+                    "stargazers_count": {
+                      "type": ["null", "integer"]
+                    },
+                    "watchers_count": {
+                      "type": ["null", "integer"]
+                    },
+                    "size": {
+                      "type": ["null", "integer"]
+                    },
+                    "default_branch": {
+                      "type": ["null", "string"]
+                    },
+                    "open_issues_count": {
+                      "type": ["null", "integer"]
+                    },
+                    "is_template": {
+                      "type": ["null", "boolean"]
+                    },
+                    "topics": {
+                      "type": ["null", "array"],
+                      "items": {
+                        "type": ["null", "string"]
+                      }
+                    },
+                    "has_issues": {
+                      "type": ["null", "boolean"]
+                    },
+                    "has_projects": {
+                      "type": ["null", "boolean"]
+                    },
+                    "has_wiki": {
+                      "type": ["null", "boolean"]
+                    },
+                    "has_pages": {
+                      "type": ["null", "boolean"]
+                    },
+                    "has_downloads": {
+                      "type": ["null", "boolean"]
+                    },
+                    "archived": {
+                      "type": ["null", "boolean"]
+                    },
+                    "disabled": {
+                      "type": ["null", "boolean"]
+                    },
+                    "visibility": {
+                      "type": ["null", "string"]
+                    },
+                    "pushed_at": {
+                      "type": ["null", "string"]
+                    },
+                    "created_at": {
+                      "type": ["null", "string"]
+                    },
+                    "updated_at": {
+                      "type": ["null", "string"]
+                    },
+                    "permissions": {
+                      "$ref": "shared/pull_permissions.json#/"
+                    },
+                    "allow_rebase_merge": {
+                      "type": ["null", "boolean"]
+                    },
+                    "temp_clone_token": {
+                      "type": ["null", "string"]
+                    },
+                    "allow_squash_merge": {
+                      "type": ["null", "boolean"]
+                    },
+                    "allow_auto_merge": {
+                      "type": ["null", "boolean"]
+                    },
+                    "delete_branch_on_merge": {
+                      "type": ["null", "boolean"]
+                    },
+                    "allow_update_branch": {
+                      "type": ["null", "boolean"]
+                    },
+                    "use_squash_pr_title_as_default": {
+                      "type": ["null", "boolean"]
+                    },
+                    "allow_merge_commit": {
+                      "type": ["null", "boolean"]
+                    },
+                    "subscribers_count": {
+                      "type": ["null", "integer"]
+                    },
+                    "network_count": {
+                      "type": ["null", "integer"]
+                    }
+                  }
+                },
+                "temp_clone_token": {
+                  "type": ["null", "string"]
+                },
+                "allow_squash_merge": {
+                  "type": ["null", "boolean"]
+                },
+                "allow_auto_merge": {
+                  "type": ["null", "boolean"]
+                },
+                "delete_branch_on_merge": {
+                  "type": ["null", "boolean"]
+                },
+                "allow_update_branch": {
+                  "type": ["null", "boolean"]
+                },
+                "use_squash_pr_title_as_default": {
+                  "type": ["null", "boolean"]
+                },
+                "allow_merge_commit": {
+                  "type": ["null", "boolean"]
+                },
+                "allow_forking": {
+                  "type": ["null", "boolean"]
+                },
+                "subscribers_count": {
+                  "type": ["null", "integer"]
+                },
+                "network_count": {
+                  "type": ["null", "integer"]
+                },
+                "open_issues": {
+                  "type": ["null", "integer"]
+                },
+                "watchers": {
+                  "type": ["null", "integer"]
+                },
+                "master_branch": {
+                  "type": ["null", "string"]
+                },
+                "starred_at": {
+                  "type": ["null", "string"]
+                }
+              }
+            },
+            "performed_via_github_app": {
+              "$ref": "shared/performed_via_github_app.json#/"
+            },
+            "author_association": {
+              "type": ["null", "string"]
+            },
+            "reactions": {
+              "$ref": "shared/reactions.json#/"
+              }
+            }
+          }
+        },
+        "description": {
+          "type": ["null", "string"]
+        },
+        "master_branch": {
+          "type": ["null", "string"]
+        },
+        "pusher_type": {
+          "type": ["null", "string"]
+        },
+        "ref": {
+          "type": ["null", "string"]
+        },
+        "ref_type": {
+          "type": ["null", "string"]
+        },
+        "commits": {
+          "type": ["null", "array"],
+          "items": {
+            "type": ["null", "object"],
+            "properties": {
+              "author": {
+                "type": ["null", "object"],
+                "properties": {
+                  "email": {
+                    "type": ["null", "string"]
+                  },
+                  "name": {
+                    "type": ["null", "string"]
+                  }
+                }
+              },
+              "distinct": {
+                "type": ["null", "boolean"]
+              },
+              "message": {
+                "type": ["null", "string"]
+              },
+              "sha": {
+                "type": ["null", "string"]
+              },
+              "url": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        },
+        "pages": {
+          "type": ["null", "array"],
+          "items": {
+            "type": ["null", "object"],
+            "properties": {
+              "page_name": {
+                "type": ["null", "string"]
+              },
+              "title": {
+                "type": ["null", "string"]
+              },
+              "summary": {
+                "type": ["null", "string"]
+              },
+              "action": {
+                "type": ["null", "string"]
+              },
+              "sha": {
+                "type": ["null", "string"]
+              },
+              "html_url": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "distinct_size": {
+      "type": ["null", "number"]
+    },
+    "head": {
+      "type": ["null", "string"]
+    },
+    "push_id": {
+      "type": ["null", "number"]
+    },
+    "ref": {
+      "type": ["null", "string"]
+    },
+    "size": {
+      "type": ["null", "number"]
+    },
+    "public": {
+      "type": ["null", "boolean"]
+    },
+    "repo": {
+      "type": ["null", "object"],
+      "properties": {
+        "id": {
+          "type": ["null", "number"]
+        },
+        "name": {
+          "type": ["null", "string"]
+        },
+        "url": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "type": {
+      "type": ["null", "string"]
+    }
+  }
+}

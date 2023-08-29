@@ -68,6 +68,7 @@ There're two ways to customize the Kubernetes executor config:
       downstream_blocks: []
       executor_type: k8s
       executor_config:
+        namespace: default
         resource_limits:
           cpu: 1000m
           memory: 2048Mi
@@ -80,6 +81,7 @@ in this project. Example config:
     ```yaml
     k8s_executor_config:
       job_name_prefix: data-prep
+      namespace: default
       resource_limits:
         cpu: 1000m
         memory: 2048Mi
@@ -139,6 +141,16 @@ ecs_config:
   memory: 2048
   wait_timeout: 1200
 ```
+
+Required IAM permissions for using ECS executor:
+```
+[
+  "ecs:DescribeTasks",
+  "ecs:ListTasks",
+  "ecs:RunTask"
+]
+```
+
 
 ### GCP Cloud Run executor
 

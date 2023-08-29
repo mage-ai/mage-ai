@@ -70,6 +70,7 @@ BlockPolicy.allow_write([
     'pipelines',
     'priority',
     'replicated_block',
+    'require_unique_name',
     'type',
     'upstream_blocks',
     'uuid',

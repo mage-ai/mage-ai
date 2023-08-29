@@ -1,6 +1,7 @@
 from enum import Enum
 
 DEFAULT_BATCH_SIZE = 100
+DEFAULT_TIMEOUT_MS = 500
 
 
 class SourceType(str, Enum):
@@ -20,3 +21,4 @@ class SinkType(str, Enum):
     KINESIS = 'kinesis'
     MONGODB = 'mongodb'
     OPENSEARCH = 'opensearch'
+    ELASTICSEARCH = 'elasticsearch'

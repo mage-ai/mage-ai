@@ -15,7 +15,8 @@ Here is an overview of the steps required to use Mage with Databricks Cluster:
 2. [Build docker image](#2-build-docker-image)
 3. [Start Mage](#3-start-mage)
 4. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
-5. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
+5. [Sample pipeline with PySpark code](#5-sample-pipeline-with-pyspark-code)
+6. [Verify everything worked](#6-verify-everything-worked)
 
 If you get stuck, run into problems, or just want someone to walk you through
 these steps, please join our [Slack](https://www.mage.ai/chat)
@@ -23,12 +24,12 @@ these steps, please join our [Slack](https://www.mage.ai/chat)
 ### 1. Set up Databricks cluster
 
 Set up a Databricks workspace and cluster following the docs:
-* https://docs.databricks.com/administration-guide/account-settings-e2/workspaces.html
-* https://docs.databricks.com/clusters/create-cluster.html
+* [Create a workspace using the account console](https://docs.databricks.com/administration-guide/account-settings-e2/workspaces.html)
+* [Create a cluster](https://docs.databricks.com/clusters/create-cluster.html)
 
 ### 2. Build docker image
 
-Use the Dockerfile template from https://github.com/mage-ai/mage-ai/blob/master/integrations/databricks/Dockerfile
+Use the Dockerfile template from [mage-ai/integrations/databricks/Dockerfile](https://github.com/mage-ai/mage-ai/blob/master/integrations/databricks/Dockerfile)
 
 Update the dadabricks-connect version to match the version used in your Databricks cluster.
 
@@ -119,7 +120,7 @@ def export_data(df: DataFrame, **kwargs) -> None:
     )
 ```
 
-#### Verify everything worked
+### 6. Verify everything worked
 
 Let’s load the data from S3 that we just created using Spark:
 

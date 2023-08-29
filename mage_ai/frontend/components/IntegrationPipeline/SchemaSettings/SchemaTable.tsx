@@ -146,9 +146,11 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
+  // The bookmarkValues dependency is not included below in the dep array
+  // because it would cause an infinite rendering loop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bookmarkProperties?.length,
-    bookmarkValues,
     bookmarkValuesInit,
     streamUUID,
   ]);
@@ -531,12 +533,19 @@ function SchemaTable({
         uuid: 'Type',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to avoid adding duplicate records',
         uuid: 'Unique',
       },
       {
+        tooltipMessage: 'Used to keep track of sync progress and incrementally sync new \
+          records (e.g. a column indicating when a record was last updated)',
+        tooltipWidth: 305,
         uuid: 'Bookmark',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to create primary key for destination table',
         uuid: 'Key prop',
       },
     ];
@@ -718,7 +727,7 @@ function SchemaTable({
                 label={(
                   <Text wordBreak>
                     If a new record has the same value as an existing record in
-                    the {pluralize('column', uniqueConstraints?.length)}
+                    the {pluralize('unique column', uniqueConstraints?.length)}
                     {uniqueConstraints?.length > 0 && <>&nbsp;</>}
                     {uniqueConstraints?.sort().map((col: string, idx: number) => (
                       <Text

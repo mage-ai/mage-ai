@@ -39,6 +39,8 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'next_pipeline_run_date',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -47,7 +49,9 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
+    'next_pipeline_run_date',
     'runtime_average',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -57,7 +61,9 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'last_pipeline_run_status',
+    'next_pipeline_run_date',
     'pipeline_runs_count',
+    'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -89,6 +95,7 @@ PipelineSchedulePolicy.allow_write([
     'sla',
     'start_time',
     'status',
+    'tags',
     'variables',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -97,7 +104,16 @@ PipelineSchedulePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineSchedulePolicy.allow_query([
+    'global_data_product_uuid',
     'order_by',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineSchedulePolicy.allow_query([
+    'tag[]',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

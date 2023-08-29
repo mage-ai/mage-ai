@@ -82,6 +82,7 @@ export default interface PipelineType {
   blocks?: BlockType[];
   callbacks?: BlockType[];
   conditionals?: BlockType[];
+  created_at?: string;
   data_integration?: {
     catalog: CatalogType;
   };
@@ -92,6 +93,7 @@ export default interface PipelineType {
   metadata?: PipelineMetadataType;
   name?: string;
   retry_config?: PipelineRetryConfigType;
+  run_pipeline_in_one_process?: boolean;
   schedules?: PipelineScheduleType[];
   tags?: string[];
   type?: PipelineTypeEnum;

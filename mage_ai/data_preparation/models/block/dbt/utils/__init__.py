@@ -66,7 +66,7 @@ def get_dbt_project_name_from_settings(project_folder_name: str) -> Dict:
     )
 
 
-def parse_attributes(block) -> Dict:
+def parse_attributes(block, variables: Dict = None) -> Dict:
     configuration = block.configuration
 
     file_path = configuration['file_path']
@@ -94,6 +94,7 @@ def parse_attributes(block) -> Dict:
     config = model_config(block.content)
     if config.get('alias'):
         table_name = config['alias']
+    database = config.get('database', None)
 
     full_path = os.path.join(get_repo_path(), 'dbt', file_path)
 
@@ -114,7 +115,7 @@ def parse_attributes(block) -> Dict:
 
     profiles_full_path = os.path.join(project_full_path, PROFILES_FILE_NAME)
     profile_target = configuration.get('dbt_profile_target')
-    profile = load_profile(profile_name, profiles_full_path, profile_target)
+    profile = load_profile(profile_name, profiles_full_path, profile_target, variables)
 
     source_name = f'mage_{project_name}'
     if profile:
@@ -131,6 +132,7 @@ def parse_attributes(block) -> Dict:
     snapshot = first_folder_name and first_folder_name in snapshot_paths
 
     return dict(
+        database=database,
         dbt_project=dbt_project,
         dbt_project_full_path=dbt_project_full_path,
         file_extension=file_extension,
@@ -178,10 +180,11 @@ def add_blocks_upstream_from_refs(
     add_current_block: bool = False,
     downstream_blocks: List['Block'] = None,
     read_only: bool = False,
+    variables: Dict = None,
 ) -> None:
     if downstream_blocks is None:
         downstream_blocks = []
-    attributes_dict = parse_attributes(block)
+    attributes_dict = parse_attributes(block, variables=variables)
     models_folder_path = attributes_dict['models_folder_path']
 
     files_by_name = {}
@@ -216,6 +219,7 @@ def add_blocks_upstream_from_refs(
             new_block.upstream_blocks = add_blocks_upstream_from_refs(
                 new_block,
                 read_only=read_only,
+                variables=variables,
             )
             added_blocks += new_block.upstream_blocks
         else:
@@ -248,15 +252,15 @@ def add_blocks_upstream_from_refs(
     return added_blocks
 
 
-def get_source(block) -> Dict:
-    attributes_dict = parse_attributes(block)
+def get_source(block, variables: Dict = None) -> Dict:
+    attributes_dict = parse_attributes(block, variables=variables)
     source_name = attributes_dict['source_name']
-    settings = load_sources(block)
+    settings = load_sources(block, variables=variables)
     return find(lambda x: x['name'] == source_name, settings.get('sources', []))
 
 
-def load_sources(block) -> Dict:
-    attributes_dict = parse_attributes(block)
+def load_sources(block, variables: Dict = None) -> Dict:
+    attributes_dict = parse_attributes(block, variables=variables)
     sources_full_path = attributes_dict['sources_full_path']
     sources_full_path_legacy = attributes_dict['sources_full_path_legacy']
 
@@ -297,8 +301,9 @@ def update_model_settings(
     upstream_blocks: List['Block'],
     upstream_blocks_previous: List['Block'],
     force_update: bool = False,
+    variables: Dict = None,
 ):
-    attributes_dict = parse_attributes(block)
+    attributes_dict = parse_attributes(block, variables=variables)
 
     sources_full_path = attributes_dict['sources_full_path']
     source_name = attributes_dict['source_name']
@@ -338,7 +343,12 @@ def update_model_settings(
                 continue
 
             table_name = source_table_name_for_block(upstream_block)
-            settings = add_table_to_source(block, load_sources(block), source_name, table_name)
+            settings = add_table_to_source(
+                block,
+                load_sources(block, variables=variables),
+                source_name,
+                table_name,
+            )
 
             with open(sources_full_path, 'w') as f:
                 yaml.safe_dump(settings, f)
@@ -374,13 +384,15 @@ def add_table_to_source(block: 'Block', settings: Dict, source_name: str, table_
     return settings
 
 
-def load_profiles_file(profiles_full_path: str) -> Dict:
+def load_profiles_file(profiles_full_path: str, variables: Dict = None) -> Dict:
     try:
         with open(profiles_full_path, 'r') as f:
             try:
                 text = Template(f.read()).render(
+                    variables=lambda x: variables.get(x) if variables else None,
                     **get_template_vars(),
                 )
+
                 return yaml.safe_load(text)
             except Exception as err:
                 print(
@@ -394,12 +406,13 @@ def load_profiles_file(profiles_full_path: str) -> Dict:
         return {}
 
 
-async def load_profiles_file_async(profiles_full_path: str) -> Dict:
+async def load_profiles_file_async(profiles_full_path: str, variables: Dict = None) -> Dict:
     try:
         async with aiofiles.open(profiles_full_path, mode='r') as fp:
             try:
                 file_content = await fp.read()
                 text = Template(file_content).render(
+                    variables=lambda x: variables.get(x) if variables else None,
                     **get_template_vars(),
                 )
                 return yaml.safe_load(text)
@@ -415,8 +428,8 @@ async def load_profiles_file_async(profiles_full_path: str) -> Dict:
         return {}
 
 
-def load_profiles(profile_name: str, profiles_full_path: str) -> Dict:
-    profiles = load_profiles_file(profiles_full_path)
+def load_profiles(profile_name: str, profiles_full_path: str, variables: Dict = None) -> Dict:
+    profiles = load_profiles_file(profiles_full_path, variables=variables)
 
     if not profiles or profile_name not in profiles:
         print(f'Project name {profile_name} does not exist in profile file {profiles_full_path}.')
@@ -425,8 +438,12 @@ def load_profiles(profile_name: str, profiles_full_path: str) -> Dict:
     return profiles[profile_name]
 
 
-async def load_profiles_async(profile_name: str, profiles_full_path: str) -> Dict:
-    profiles = await load_profiles_file_async(profiles_full_path)
+async def load_profiles_async(
+    profile_name: str,
+    profiles_full_path: str,
+    variables: Dict = None,
+) -> Dict:
+    profiles = await load_profiles_file_async(profiles_full_path, variables=variables)
 
     if not profiles or profile_name not in profiles:
         print(f'Project name {profile_name} does not exist in profile file {profiles_full_path}.')
@@ -439,25 +456,30 @@ def load_profile(
     profile_name: str,
     profiles_full_path: str,
     profile_target: str = None,
+    variables: Dict = None,
 ) -> Dict:
-
-    profile = load_profiles(profile_name, profiles_full_path)
+    profile = load_profiles(profile_name, profiles_full_path, variables)
     outputs = profile.get('outputs', {})
     target = profile.get('target', None)
 
     return outputs.get(profile_target or target)
 
 
-def get_profile(block, profile_target: str = None) -> Dict:
-    attr = parse_attributes(block)
+def get_profile(block, profile_target: str = None, variables: Dict = None) -> Dict:
+    attr = parse_attributes(block, variables=variables)
     profile_name = attr['profile_name']
     profiles_full_path = attr['profiles_full_path']
 
-    return load_profile(profile_name, profiles_full_path, profile_target)
+    return load_profile(profile_name, profiles_full_path, profile_target, variables=variables)
 
 
-def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
-    profile = get_profile(block, profile_target)
+def config_file_loader_and_configuration(
+    block,
+    profile_target: str,
+    variables: Dict = None,
+    **kwargs,
+) -> Dict:
+    profile = get_profile(block, profile_target, variables)
 
     if not profile:
         raise Exception(
@@ -492,12 +514,15 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         )
     elif DataSource.BIGQUERY == profile_type:
         keyfile = profile.get('keyfile')
-        database = profile.get('project')
+        database = kwargs.get('database') or profile.get('project')
         schema = profile.get('dataset')
 
-        config_file_loader = ConfigFileLoader(config=dict(
+        config_file_loader_kwargs = dict(
             GOOGLE_SERVICE_ACC_KEY_FILEPATH=keyfile,
-        ))
+        )
+        if profile.get('location'):
+            config_file_loader_kwargs['GOOGLE_LOCATION'] = profile.get('location')
+        config_file_loader = ConfigFileLoader(config=config_file_loader_kwargs)
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,
@@ -573,11 +598,11 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             SNOWFLAKE_ROLE=profile.get('role'),
         )
 
-        if 'password' in profile:
+        if profile.get('password', None):
             config['SNOWFLAKE_PASSWORD'] = profile['password']
-        if 'private_key_passphrase' in profile:
+        if profile.get('private_key_passphrase', None):
             config['SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'] = profile['private_key_passphrase']
-        if 'private_key_path' in profile:
+        if profile.get('private_key_path', None):
             config['SNOWFLAKE_PRIVATE_KEY_PATH'] = profile['private_key_path']
 
         config_file_loader = ConfigFileLoader(config=config)
@@ -639,7 +664,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         )
 
     if not config_file_loader or not configuration:
-        attr = parse_attributes(block)
+        attr = parse_attributes(block, variables=variables)
         profiles_full_path = attr['profiles_full_path']
 
         msg = (f'No configuration matching profile type {profile_type}. '
@@ -654,11 +679,13 @@ def execute_sql_code(
     block,
     query: str,
     profile_target: str,
+    variables: Dict = None,
     **kwargs,
 ):
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
+        variables=variables,
     )
 
     return execute_sql_code_orig(
@@ -674,6 +701,7 @@ def create_upstream_tables(
     block,
     profile_target: str,
     cache_upstream_dbt_models: bool = False,
+    variables: Dict = None,
     **kwargs,
 ) -> None:
     if len([b for b in block.upstream_blocks if BlockType.SENSOR != b.type]) == 0:
@@ -682,6 +710,7 @@ def create_upstream_tables(
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
+        variables=variables,
     )
 
     data_provider = configuration.get('data_provider')
@@ -689,10 +718,11 @@ def create_upstream_tables(
     kwargs_shared = merge_dict(dict(
         configuration=configuration,
         cache_upstream_dbt_models=cache_upstream_dbt_models,
+        variables=variables,
     ), kwargs)
 
     upstream_blocks_init = block.upstream_blocks
-    upstream_blocks = upstream_blocks_from_sources(block)
+    upstream_blocks = upstream_blocks_from_sources(block, variables=variables)
     block.upstream_blocks = upstream_blocks
 
     if DataSource.POSTGRES == data_provider:
@@ -794,6 +824,7 @@ def interpolate_input(
     profile_schema: str,
     quote_str: str = '',
     replace_func=None,
+    variables: Dict = None,
 ) -> str:
     def __quoted(name):
         return quote_str + name + quote_str
@@ -811,7 +842,7 @@ def interpolate_input(
         if BlockType.DBT != upstream_block.type:
             continue
 
-        attrs = parse_attributes(upstream_block)
+        attrs = parse_attributes(upstream_block, variables=variables)
         table_name = attrs['table_name']
 
         arr = []
@@ -840,8 +871,9 @@ def interpolate_refs_with_table_names(
     block: Block,
     profile_target: str,
     configuration: Dict,
+    variables: Dict = None,
 ):
-    profile = get_profile(block, profile_target)
+    profile = get_profile(block, profile_target, variables)
 
     profile_type = profile.get('type')
     quote_str = ''
@@ -882,11 +914,16 @@ def interpolate_refs_with_table_names(
         profile_database=database,
         profile_schema=schema,
         quote_str=quote_str,
+        variables=variables,
     )
 
 
-def compiled_query_string(block: Block, error_if_not_found: bool = False) -> str:
-    attr = parse_attributes(block)
+def compiled_query_string(
+    block: Block,
+    error_if_not_found: bool = False,
+    variables: Dict = None,
+) -> str:
+    attr = parse_attributes(block, variables=variables)
 
     file_path_with_project_name = attr['file_path_with_project_name']
     project_full_path = attr['project_full_path']
@@ -927,10 +964,14 @@ def execute_query(
     profile_target: str,
     query_string: str,
     limit: int = None,
+    database: str = None,
+    variables: Dict = None,
 ) -> DataFrame:
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
+        database=database,
+        variables=variables,
     )
 
     data_provider = configuration['data_provider']
@@ -986,10 +1027,15 @@ def execute_query(
         return loader.load(query_string, **shared_kwargs)
 
 
-def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
-    query_string = compiled_query_string(block, error_if_not_found=True)
+def query_from_compiled_sql(
+    block,
+    profile_target: str,
+    limit: int = None,
+    variables: Dict = None,
+) -> DataFrame:
+    query_string = compiled_query_string(block, error_if_not_found=True, variables=variables)
 
-    return execute_query(block, profile_target, query_string, limit)
+    return execute_query(block, profile_target, query_string, limit, variables=variables)
 
 
 def build_command_line_arguments(
@@ -1029,7 +1075,7 @@ def build_command_line_arguments(
             args += flags
 
     if BlockLanguage.SQL == block.language:
-        attr = parse_attributes(block)
+        attr = parse_attributes(block, variables=variables)
 
         file_path = attr['file_path']
         full_path = attr['full_path']
@@ -1120,7 +1166,8 @@ def build_command_line_arguments(
             # If args do not contain "--vars", continue.
             pass
 
-        args += content_args
+        # Add non-empty content args
+        args += [c for c in content_args if c]
 
     variables_json = {}
     for k, v in variables.items():
@@ -1174,9 +1221,13 @@ def build_command_line_arguments(
     )
 
 
-def create_temporary_profile(project_full_path: str, profiles_dir: str) -> Tuple[str, str]:
+def create_temporary_profile(
+    project_full_path: str,
+    profiles_dir: str,
+    variables: Dict = None,
+) -> Tuple[str, str]:
     profiles_full_path = os.path.join(project_full_path, PROFILES_FILE_NAME)
-    profile = load_profiles_file(profiles_full_path)
+    profile = load_profiles_file(profiles_full_path, variables)
 
     temp_profile_full_path = os.path.join(profiles_dir, PROFILES_FILE_NAME)
     os.makedirs(os.path.dirname(temp_profile_full_path), exist_ok=True)
@@ -1200,7 +1251,7 @@ def run_dbt_tests(
         logging_tags = {}
 
     if block.configuration.get('file_path') is not None:
-        attributes_dict = parse_attributes(block)
+        attributes_dict = parse_attributes(block, variables=global_vars)
         snapshot = attributes_dict['snapshot']
         if snapshot:
             return
@@ -1224,6 +1275,7 @@ def run_dbt_tests(
     _, temp_profile_full_path = create_temporary_profile(
         project_full_path,
         profiles_dir,
+        variables=global_vars,
     )
 
     proc1 = subprocess.run([
@@ -1251,13 +1303,16 @@ def run_dbt_tests(
         raise Exception('DBT test failed.')
 
 
-def get_model_configurations_from_dbt_project_settings(block: 'Block') -> Dict:
-    dbt_project = parse_attributes(block)['dbt_project']
+def get_model_configurations_from_dbt_project_settings(
+    block: 'Block',
+    variables: Dict = None,
+) -> Dict:
+    attributes_dict = parse_attributes(block, variables=variables)
+    dbt_project = attributes_dict['dbt_project']
 
     if not dbt_project.get('models'):
         return
 
-    attributes_dict = parse_attributes(block)
     project_name = attributes_dict['project_name']
     if not dbt_project['models'].get(project_name):
         return
@@ -1278,8 +1333,9 @@ def fetch_model_data(
     block: 'Block',
     profile_target: str,
     limit: int = None,
+    variables: Dict = None,
 ) -> DataFrame:
-    attributes_dict = parse_attributes(block)
+    attributes_dict = parse_attributes(block, variables=variables)
     model_name = attributes_dict['model_name']
     table_name = attributes_dict['table_name']
 
@@ -1288,7 +1344,7 @@ def fetch_model_data(
     # redshift: schema
     # snowflake: schema
     # trino: schema
-    profile = get_profile(block, profile_target)
+    profile = get_profile(block, profile_target, variables=variables)
     schema = profile.get('schema') or profile.get('+schema')
     if not schema and 'dataset' in profile:
         schema = profile['dataset']
@@ -1304,12 +1360,18 @@ def fetch_model_data(
     # If the model SQL file contains a config with schema, change the schema to use that.
     # https://docs.getdbt.com/reference/resource-configs/schema
     config = model_config(block.content)
+    config_database = config.get('database')
     config_schema = config.get('schema')
+
+    # settings from the dbt_project.yml
+    model_configurations = get_model_configurations_from_dbt_project_settings(
+        block,
+        variables=variables,
+    )
+
     if config_schema:
         schema = f'{schema}_{config_schema}'
     else:
-        # settings from the dbt_project.yml
-        model_configurations = get_model_configurations_from_dbt_project_settings(block)
         model_configuration_schema = None
         if model_configurations:
             model_configuration_schema = (model_configurations.get('schema') or
@@ -1318,12 +1380,26 @@ def fetch_model_data(
         if model_configuration_schema:
             schema = f"{schema}_{model_configuration_schema}"
 
+    database = None
+    if config_database:
+        database = config_database
+    elif model_configurations:
+        database = (model_configurations.get('database') or
+                    model_configurations.get('+database'))
+
     query_string = f'SELECT * FROM {schema}.{table_name}'
 
-    return execute_query(block, profile_target, query_string, limit)
+    return execute_query(
+        block,
+        profile_target,
+        query_string,
+        limit,
+        database=database,
+        variables=variables,
+    )
 
 
-def upstream_blocks_from_sources(block: Block) -> List[Block]:
+def upstream_blocks_from_sources(block: Block, variables: Dict = None) -> List[Block]:
     mapping = {}
     sources = extract_sources(block.content)
     for tup in sources:
@@ -1332,7 +1408,7 @@ def upstream_blocks_from_sources(block: Block) -> List[Block]:
             mapping[source_name] = {}
         mapping[source_name][table_name] = True
 
-    attributes_dict = parse_attributes(block)
+    attributes_dict = parse_attributes(block, variables=variables)
     source_name = attributes_dict['source_name']
 
     arr = []

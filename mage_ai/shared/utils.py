@@ -1,9 +1,11 @@
-from datetime import datetime
-from mage_ai.shared.strings import replacer
-from typing import List
 import os
 import re
 import socket
+from datetime import datetime
+from pathlib import Path
+from typing import List
+
+from mage_ai.shared.strings import replacer
 
 
 def clean_name(name, allow_characters: List[str] = []):
@@ -52,13 +54,17 @@ def files_in_single_path(path):
     return f
 
 
+def get_absolute_path(path: str) -> str:
+    return str(Path(os.path.abspath(os.path.expanduser(os.path.expandvars(path)))).resolve())
+
+
 def convert_pandas_dtype_to_python_type(dtype):
     dtype = str(dtype)
     if dtype in ['int64', 'integer']:
         return int
     elif 'float' in dtype:
         return float
-    elif dtype == 'bool':
+    elif dtype in ['bool', 'boolean']:
         return bool
     elif 'datetime' in dtype:
         return datetime

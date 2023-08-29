@@ -30,7 +30,7 @@ For example, if you create a scheduled trigger that runs daily, then on each pip
 start date will be 1 day ago and the end date will be today’s date.
 
 If you want to hardcode and customize the start date and end date,
-follow these [instructions to override the runtime variables](../../../docs/production/runtime_variables.md)
+follow these [instructions to override the runtime variables](https://docs.mage.ai/production/configuring-production-settings/runtime-variable)
 for your pipeline.
 
 Add the following keys and sample values to your pipeline’s variables:

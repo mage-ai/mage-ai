@@ -4,6 +4,7 @@ import {
   BLUE_DARK,
   BLUE_HIGHLIGHT,
   BLUE_LIGHT,
+  BLUE_SKY,
   BLUE_SKY_DARK,
   BLUE_TEXT,
   BLUE_TRANSPARENT,
@@ -204,6 +205,7 @@ export default {
     linkSecondary: PURPLE,
     linkSecondaryDisabled: PURPLE_LIGHT,
     linkText: BLUE_SKY_DARK,
+    linkTextLight: BLUE_SKY,
     rowHoverBackground: 'rgba(0, 0, 0, 0.1)',
     transparent: 'rgba(255, 255, 255, 0)',
   },
@@ -225,6 +227,7 @@ export default {
     grey500: GREY500,
     purple: PURPLE,
     white: WHITE,
+    whiteTransparent: 'rgba(255, 255, 255, 0.6)',
   },
   neutral: {
     n100: '#E7E8EA',

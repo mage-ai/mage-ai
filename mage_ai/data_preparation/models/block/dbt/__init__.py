@@ -58,14 +58,21 @@ class DBTBlock(Block):
         block_metadata = {}
 
         if self.configuration.get('file_path'):
-            attributes_dict = parse_attributes(self)
+            attributes_dict = parse_attributes(
+                self,
+                variables=self.pipeline.variables if self.pipeline else None,
+            )
             profiles_full_path = attributes_dict['profiles_full_path']
             project_name = attributes_dict['project_name']
             profile_name = attributes_dict['profile_name']
             project = project_name
 
             targets = []
-            profiles = await load_profiles_async(profile_name, profiles_full_path)
+            profiles = await load_profiles_async(
+                profile_name,
+                profiles_full_path,
+                variables=self.pipeline.variables if self.pipeline else None,
+            )
             outputs = profiles.get('outputs')
             if outputs:
                 targets += sorted(list(outputs.keys()))
@@ -88,7 +95,11 @@ class DBTBlock(Block):
                 project_name = info.get('project_name', project_name_init)
 
                 targets = []
-                profiles = await load_profiles_async(project_name, profiles_full_path)
+                profiles = await load_profiles_async(
+                    project_name,
+                    profiles_full_path,
+                    variables=self.pipeline.variables if self.pipeline else None,
+                )
                 outputs = profiles.get('outputs')
                 if outputs:
                     targets += sorted(list(outputs.keys()))
@@ -109,6 +120,8 @@ class DBTBlock(Block):
         self,
         build_block_output_stdout=None,
         global_vars=None,
+        logger=None,
+        logging_tags: Dict = None,
         **kwargs,
     ):
         """
@@ -121,16 +134,19 @@ class DBTBlock(Block):
 
         """
         if self.configuration.get('file_path') is not None:
-            attributes_dict = parse_attributes(self)
+            attributes_dict = parse_attributes(self, variables=global_vars)
             snapshot = attributes_dict['snapshot']
             if snapshot:
                 return
 
-        run_dbt_tests(
-            block=self,
-            build_block_output_stdout=build_block_output_stdout,
-            global_vars=global_vars,
-        )
+        if not self.__dbt_configuration().get('disable_tests', False):
+            run_dbt_tests(
+                block=self,
+                build_block_output_stdout=build_block_output_stdout,
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+            )
 
     def tags(self) -> List[str]:
         """
@@ -143,7 +159,10 @@ class DBTBlock(Block):
         arr = super().tags()
 
         if self.configuration.get('file_path') is not None:
-            attributes_dict = parse_attributes(self)
+            attributes_dict = parse_attributes(
+                self,
+                variables=self.pipeline.variables if self.pipeline else None,
+            )
             if attributes_dict['snapshot']:
                 from mage_ai.data_preparation.models.block.constants import (
                     TAG_DBT_SNAPSHOT,
@@ -159,7 +178,12 @@ class DBTBlock(Block):
 
         return arr
 
-    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+    def update_upstream_blocks(
+        self,
+        upstream_blocks: List[Any],
+        variables: Dict = None,
+        **kwargs,
+    ) -> None:
         """
         Update the upstream blocks of the DBT block.
 
@@ -170,7 +194,12 @@ class DBTBlock(Block):
         upstream_blocks_previous = self.upstream_blocks
         super().update_upstream_blocks(upstream_blocks)
         if BlockLanguage.SQL == self.language:
-            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
+            update_model_settings(
+                self,
+                upstream_blocks,
+                upstream_blocks_previous,
+                variables=variables,
+            )
 
     def _execute_block(
         self,
@@ -222,6 +251,7 @@ class DBTBlock(Block):
         _, temp_profile_full_path = create_temporary_profile(
             project_full_path,
             profiles_dir,
+            variables=variables,
         )
 
         try:
@@ -231,6 +261,7 @@ class DBTBlock(Block):
                     self,
                     execution_partition=execution_partition,
                     profile_target=dbt_profile_target,
+                    variables=variables,
                     # TODO (tommy dang): this is creating unnecessary tables in notebook
                     # cache_upstream_dbt_models=from_notebook,
                 )
@@ -266,6 +297,7 @@ class DBTBlock(Block):
                     cmds,
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                     stdout=stdout,
+                    stderr=subprocess.STDOUT,
                 )
 
                 if not snapshot:
@@ -273,6 +305,7 @@ class DBTBlock(Block):
                         self,
                         dbt_profile_target,
                         limit=self.configuration.get('limit'),
+                        variables=variables,
                     )
                     self.store_variables(
                         dict(df=df),
@@ -287,6 +320,7 @@ class DBTBlock(Block):
                     encoding='utf-8',
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                     stdout=stdout,
+                    stderr=subprocess.STDOUT,
                     universal_newlines=True,
                 )
                 for line in proc.stdout:
@@ -298,11 +332,11 @@ class DBTBlock(Block):
             if not from_notebook:
                 target_path = None
                 if self.configuration.get('file_path') is not None:
-                    attributes_dict = parse_attributes(self)
+                    attributes_dict = parse_attributes(self, variables=variables)
                     target_path = attributes_dict['target_path']
 
                 if snapshot and BlockLanguage.SQL == self.language:
-                    query_string = compiled_query_string(self)
+                    query_string = compiled_query_string(self, variables=variables)
                     if query_string:
 
                         print('Compiled snapshot query string:')
@@ -339,6 +373,7 @@ class DBTBlock(Block):
                             self,
                             dbt_profile_target,
                             limit=limit,
+                            variables=variables,
                         )
 
                         self.store_variables(
@@ -357,3 +392,7 @@ class DBTBlock(Block):
                 print(f'Error removing temporary profile at {temp_profile_full_path}: {err}')
 
         return outputs
+
+    def __dbt_configuration(self) -> Dict:
+        config = self.configuration or {}
+        return config.get('dbt') or {}

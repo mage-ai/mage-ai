@@ -5,6 +5,7 @@ import { parse } from 'yaml';
 import {
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -20,7 +21,6 @@ import BlockType, {
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import GraphNode from './GraphNode';
 import KernelOutputType  from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -41,7 +41,6 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import {
   PADDING_UNITS,
   UNIT,
-  WIDTH_OF_SINGLE_CHARACTER_SMALL,
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
@@ -54,7 +53,6 @@ import {
 import { getModelAttributes } from '@utils/models/dbt';
 import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
-import { useDynamicUpstreamBlocks } from '@utils/models/block';
 
 const Canvas = dynamic(
   async () => {
@@ -318,6 +316,19 @@ function DependencyGraph({
   ]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      /*
+       * On Chrome browsers, the dep graph would not center automatically when
+       * navigating to the Pipeline Editor page even though the "fit" prop was
+       * added to the Canvas component. This centers it if it is not already.
+       */
+      if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
+        canvasRef?.current?.fitCanvas?.();
+      }
+    }, 1000);
+  }, [canvasRef]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(
@@ -837,7 +848,11 @@ function DependencyGraph({
                     setShowPorts(true);
                   }
                 }}
-                onLeave={() => setShowPorts(false)}
+                onLeave={() => {
+                  if (!activePort) {
+                    setShowPorts(false);
+                  }
+                }}
                 port={(showPorts && (
                   activePort === null || isActivePort(activePort, node)))
                   ?

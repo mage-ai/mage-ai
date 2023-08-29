@@ -542,3 +542,51 @@ SELECT 1 AS id;
 
         block2 = pipeline.get_block('test_transformer')
         self.assertEqual([], block2.upstream_block_uuids)
+
+    def test_execute_block_from_notebook(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_execute_block_function_from_notebook',
+            repo_path=self.repo_path,
+        )
+        block = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+
+        with open(block.file_path, 'w') as file:
+            file.write("""import pandas as pd
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return df
+""")
+
+        output = block._execute_block(dict(), from_notebook=True)
+        self.assertIsNotNone(block.module)
+        self.assertEqual(len(output), 1)
+
+    def test_execute_block_from_notebook_no_decorator_definition(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_execute_block_function_from_notebook_no_decorator_definition',
+            repo_path=self.repo_path,
+        )
+        block = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+
+        with open(block.file_path, 'w') as file:
+            file.write("""import pandas as pd
+
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return df
+
+@test
+def test_output(output, *args) -> None:
+    assert output is not None, 'The output is undefined'
+""")
+
+        output = block._execute_block(dict(), from_notebook=True)
+        self.assertIsNotNone(block.module)
+        self.assertEqual(len(output), 1)

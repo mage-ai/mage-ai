@@ -22,6 +22,16 @@ def create_pipeline(name: str, repo_path: str):
 
 
 def create_pipeline_with_blocks(name: str, repo_path: str):
+    """
+    Creates a pipeline with blocks for data processing and transformation.
+
+    Args:
+        name (str): The name of the pipeline.
+        repo_path (str): The path to the repository where the pipeline and blocks are stored.
+
+    Returns:
+        Pipeline: The created pipeline with added blocks.
+    """
     pipeline = Pipeline.create(
         name,
         repo_path=repo_path,

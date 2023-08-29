@@ -6,6 +6,7 @@ import shutil
 from typing import Callable, Dict, List
 
 import aiofiles
+import pytz
 import yaml
 from jinja2 import Template
 
@@ -40,7 +41,6 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
@@ -56,6 +56,7 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.concurrency_config = dict()
+        self.created_at = None
         self.data_integration = None
         self.description = None
         self.executor_config = dict()
@@ -65,10 +66,11 @@ class Pipeline:
         self.notification_config = dict()
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
+        self.run_pipeline_in_one_process = False
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.datetime.now(tz=pytz.UTC)
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -139,6 +141,13 @@ class Pipeline:
     def version_name(self):
         return f'v{self.version}'
 
+    @property
+    def all_block_configs(self) -> List[Dict]:
+        return self.block_configs + \
+            self.conditional_configs + \
+            self.callback_configs + \
+            self.widget_configs
+
     @classmethod
     def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
         """
@@ -155,6 +164,7 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
+                created_at=str(datetime.datetime.now(tz=pytz.UTC)),
                 name=name,
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),
@@ -467,6 +477,7 @@ class Pipeline:
             self._executor_count = int(config.get('executor_count'))
         except Exception:
             pass
+        self.created_at = config.get('created_at')
         self.updated_at = config.get('updated_at')
         self.type = config.get('type') or self.type
 
@@ -478,6 +489,7 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
+        self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', False)
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
@@ -509,7 +521,7 @@ class Pipeline:
         callbacks = [build_shared_args_kwargs(c) for c in self.callback_configs]
         conditionals = [build_shared_args_kwargs(c) for c in self.conditional_configs]
         widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
-        all_blocks = blocks + callbacks + widgets
+        all_blocks = blocks + callbacks + conditionals + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
             self.block_configs,
@@ -591,6 +603,7 @@ class Pipeline:
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
             concurrency_config=self.concurrency_config,
+            created_at=self.created_at,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
             executor_config=self.executor_config,
@@ -599,6 +612,7 @@ class Pipeline:
             name=self.name,
             notification_config=self.notification_config,
             retry_config=self.retry_config,
+            run_pipeline_in_one_process=self.run_pipeline_in_one_process,
             tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
@@ -740,29 +754,9 @@ class Pipeline:
 
         return merge_dict(self.to_dict_base(), data)
 
-    @safe_db_query
-    def __transfer_related_models(self, old_uuid, new_uuid):
-        from mage_ai.orchestration.db.models.schedules import (
-            Backfill,
-            PipelineRun,
-            PipelineSchedule,
-        )
-
-        # Migrate pipeline schedules
-        PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({
-            PipelineSchedule.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        # Migrate pipeline runs (block runs have foreign key ref to PipelineRun id)
-        PipelineRun.query.filter(PipelineRun.pipeline_uuid == old_uuid).update({
-            PipelineRun.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        # Migrate backfills
-        Backfill.query.filter(Backfill.pipeline_uuid == old_uuid).update({
-            Backfill.pipeline_uuid: new_uuid
-        }, synchronize_session=False)
-        db_connection.session.commit()
-
     async def update(self, data, update_content=False):
+        from mage_ai.orchestration.db.utils import transfer_related_models_for_pipeline
+
         old_uuid = None
         should_update_block_cache = False
         should_update_tag_cache = False
@@ -785,7 +779,7 @@ class Pipeline:
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
             await self.save_async()
-            self.__transfer_related_models(old_uuid, new_uuid)
+            transfer_related_models_for_pipeline(old_uuid, new_uuid)
 
             # Update pipeline secrets directory.
             try:
@@ -831,6 +825,7 @@ class Pipeline:
             'data_integration',
             'executor_type',
             'retry_config',
+            'run_pipeline_in_one_process',
         ]:
             if key in data:
                 setattr(self, key, data.get(key))
@@ -906,6 +901,10 @@ class Pipeline:
                     if block_data.get('has_callback') is not None:
                         block.update(extract(block_data, ['has_callback']))
 
+                    color = block_data.get('color')
+                    if color is not None and color != block.color:
+                        block.update(extract(block_data, ['color']))
+
                     configuration = block_data.get('configuration')
                     if configuration:
                         if configuration.get('dynamic') and not is_dynamic_block(block):
@@ -933,6 +932,7 @@ class Pipeline:
                             block.upstream_blocks,
                             [],
                             force_update=True,
+                            variables=self.variables,
                         )
 
                     if widget:
@@ -1028,7 +1028,7 @@ class Pipeline:
 
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
-        block.update_upstream_blocks(upstream_blocks)
+        block.update_upstream_blocks(upstream_blocks, variables=self.variables)
         block.pipeline = self
         if priority is None or priority >= len(mapping.keys()):
             mapping[block.uuid] = block
@@ -1217,7 +1217,10 @@ class Pipeline:
                         ]
 
                 # All blocks will depend on non-widget type blocks
-                block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
+                block.update_upstream_blocks(
+                    self.get_blocks(upstream_block_uuids, widget=False),
+                    variables=self.variables,
+                )
         elif callback_block_uuids is not None:
             callback_blocks = []
             for callback_block_uuid in callback_block_uuids:

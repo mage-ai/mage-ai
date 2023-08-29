@@ -28,6 +28,7 @@ import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType, { FileExtensionEnum } from '@interfaces/FileType';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -93,6 +94,9 @@ type PipelineDetailProps = {
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
+  blocksThatNeedToRefresh?: {
+    [uuid: string]: number;
+  };
   dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
   disableShortcuts: boolean;
@@ -100,6 +104,7 @@ type PipelineDetailProps = {
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   files: FileType[];
+  globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
   hiddenBlocks: {
     [uuid: string]: BlockType;
@@ -157,6 +162,13 @@ type PipelineDetailProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -170,6 +182,7 @@ function PipelineDetail({
   autocompleteItems,
   blockRefs,
   blocks = [],
+  blocksThatNeedToRefresh,
   dataProviders,
   deleteBlock,
   disableShortcuts,
@@ -177,6 +190,7 @@ function PipelineDetail({
   fetchPipeline,
   fetchSampleData,
   files,
+  globalDataProducts,
   globalVariables,
   hiddenBlocks,
   interruptKernel,
@@ -208,6 +222,8 @@ function PipelineDetail({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
+  showUpdateBlockModal,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -517,12 +533,20 @@ function PipelineDetail({
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockRef = blockRefs.current[path];
 
+      let key = uuid;
+      const refreshTimestamp = blocksThatNeedToRefresh?.[type]?.[uuid];
+      if (refreshTimestamp) {
+        key = `${key}:${refreshTimestamp}`;
+      }
+
+      // console.log(key)
+
       if (isHidden) {
         el = (
           <HiddenBlock
             block={block}
             blocks={blocks}
-            key={uuid}
+            key={key}
             // @ts-ignore
             onClick={() => setHiddenBlocks(prev => ({
               ...prev,
@@ -578,9 +602,10 @@ function PipelineDetail({
             executionState={executionState}
             fetchFileTree={fetchFileTree}
             fetchPipeline={fetchPipeline}
+            globalDataProducts={globalDataProducts}
             hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
             interruptKernel={interruptKernel}
-            key={uuid}
+            key={key}
             mainContainerRef={mainContainerRef}
             mainContainerWidth={mainContainerWidth}
             messages={messages[uuid]}
@@ -609,6 +634,8 @@ function PipelineDetail({
             setTextareaFocused={setTextareaFocused}
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
+            showGlobalDataProducts={showGlobalDataProducts}
+            showUpdateBlockModal={showUpdateBlockModal}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -629,12 +656,14 @@ function PipelineDetail({
     autocompleteItems,
     blockRefs,
     blockTemplates,
+    blocksThatNeedToRefresh,
     blocks,
     dataProviders,
     deleteBlock,
     disableShortcuts,
     fetchFileTree,
     fetchPipeline,
+    globalDataProducts,
     hiddenBlocks,
     interruptKernel,
     isIntegration,
@@ -666,6 +695,8 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
+    showUpdateBlockModal,
     textareaFocused,
     updateBlock,
     widgets,
@@ -775,9 +806,10 @@ function PipelineDetail({
         setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
         showConfigureProjectModal={showConfigureProjectModal}
+        showGlobalDataProducts={showGlobalDataProducts}
       />
 
-      {!useV2AddNewBlock && (
+      {!useV2AddNewBlock && !isIntegration && !isStreaming && (
         <Spacing mt={1}>
           <Text muted small>
             Want to try the new add block UI?
@@ -815,6 +847,7 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     useV2AddNewBlock,
   ]);
 

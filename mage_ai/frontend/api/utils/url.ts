@@ -1,9 +1,12 @@
 import { queryString } from '@utils/url';
 
+export const DEFAULT_HOST: string = 'localhost';
+export const DEFAULT_PORT: string = '6789';
+
 function getHostCore(
   windowDefined: boolean,
-  defaultHost: string = 'localhost',
-  defaultPort: string = '6789',
+  defaultHost: string = DEFAULT_HOST,
+  defaultPort: string = DEFAULT_PORT,
 ){
   let host = defaultHost;
   if(windowDefined){
@@ -33,7 +36,7 @@ function getHostCore(
 function getProtocol(
   windowDefined: boolean,
   host: string,
-  defaultHost: string = 'localhost',
+  defaultHost: string = DEFAULT_HOST,
 ){
   let protocol = 'http://';
   if(host !== defaultHost){
@@ -47,8 +50,8 @@ function getProtocol(
 
 function getHost(){
   const windowDefined = typeof window !== 'undefined';
-  const LOCALHOST = 'localhost';
-  const PORT = '6789';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
 
   const host = getHostCore(windowDefined, LOCALHOST, PORT);
   const protocol = getProtocol(windowDefined, host, LOCALHOST);
@@ -59,8 +62,8 @@ function getHost(){
 
 export function getWebSocket(path='') {
   const windowDefined = typeof window !== 'undefined';
-  const LOCALHOST = 'localhost';
-  const PORT = '6789';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
 
   const host = getHostCore(windowDefined, LOCALHOST, PORT);
 

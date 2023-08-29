@@ -1,3 +1,8 @@
+import {
+  GlobalDataProductOutdatedAfterType,
+  GlobalDataProductOutdatedStartingAtType,
+} from './GlobalDataProductType';
+
 export const VARIABLE_NAME_BUCKETS = 'buckets';
 export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
 export const VARIABLE_NAME_GROUP_BY = 'group_by';
@@ -112,9 +117,20 @@ export interface ConfigurationType {
   chart_type?: ChartTypeEnum;
   dbt?: {
     command?: string;
+    disable_tests?: boolean;
   };
   dynamic?: boolean;
   file_path?: string;
+  global_data_product?: {
+    outdated_after?: GlobalDataProductOutdatedAfterType;
+    outdated_starting_at?: GlobalDataProductOutdatedStartingAtType;
+    settings?: {
+      [block_uuid: string]: {
+        partitions?: number;
+      };
+    };
+    uuid: string;
+  };
   reduce_output?: boolean;
 }
 

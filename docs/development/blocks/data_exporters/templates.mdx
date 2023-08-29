@@ -40,7 +40,7 @@ def export_data_to_file(df: DataFrame, **kwargs) -> None:
     """
     Template for exporting data to filesystem.
 
-    Docs: https://docs.mage.ai/design/data-loading#fileio
+    Docs: /design/data-loading#fileio
     """
     filepath = 'path/to/write/dataframe/to.csv'
     FileIO().export(df, filepath)
@@ -65,7 +65,7 @@ def export_data_to_azure_blob_storage(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Azure Blob Storage.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
+    Docs: /design/data-loading
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -99,7 +99,7 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#bigquery
+    Docs: /design/data-loading#bigquery
     """
     table_id = 'your-project.your_dataset.your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -131,7 +131,7 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Google Cloud Storage bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#googlecloudstorage
+    Docs: /design/data-loading#googlecloudstorage
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -165,7 +165,7 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a MySQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#mysql
+    Docs: /design/data-loading#mysql
     """
     table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -201,7 +201,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#postgresql
+    Docs: /design/data-loading#postgresql
     """
     schema_name = 'your_schema_name'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to
@@ -237,7 +237,7 @@ def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#redshift
+    Docs: /design/data-loading#redshift
     """
     table_name = 'your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -270,7 +270,7 @@ def export_data_to_s3(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#s3
+    Docs: /design/data-loading#s3
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -305,7 +305,7 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#snowflake
+    Docs: /design/data-loading#snowflake
     """
     table_name = 'your_table_name'
     database = 'your_database_name'
@@ -448,7 +448,7 @@ def trigger(*args, **kwargs):
     """
     Trigger another pipeline to run.
 
-    Documentation: https://docs.mage.ai/orchestration/triggers/trigger-pipeline
+    Documentation: /orchestration/triggers/trigger-pipeline
     """
 
     trigger_pipeline(

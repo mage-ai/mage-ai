@@ -91,9 +91,6 @@ class Source(BaseSource):
                         'date' in column_type:
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
-                    # TODO (tommy dang): remove this so we allow any columns to be
-                    # used as a bookmark
-                    valid_replication_keys.append(column_name)
                 elif 'json' in column_type or 'variant' in column_type:
                     column_properties = {}
                     column_types.append(COLUMN_TYPE_OBJECT)
@@ -124,7 +121,7 @@ class Source(BaseSource):
                 replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema.to_dict(),
                 stream_id=stream_id,
-                valid_replication_keys=unique_constraints + valid_replication_keys,
+                valid_replication_keys=valid_replication_keys,
             )
             catalog_entry = CatalogEntry(
                 key_properties=unique_constraints,
@@ -345,12 +342,15 @@ WHERE table_schema = '{schema}'
             for col, val in bookmarks.items():
                 if col not in bookmark_properties or val is None:
                     continue
+                comparison_operator = '>='
+                if unique_constraints is not None and col in unique_constraints:
+                    comparison_operator = '>'
                 where_statements.append(
                     self._build_comparison_statement(
                         col,
                         val,
                         stream.schema.to_dict()['properties'],
-                        operator='>='
+                        operator=comparison_operator,
                     )
                 )
 

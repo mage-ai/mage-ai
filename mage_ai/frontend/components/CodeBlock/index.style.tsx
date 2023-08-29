@@ -8,9 +8,8 @@ import {
   BORDER_WIDTH,
   BORDER_WIDTH_THICK,
 } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
 // Look at the code editor div class "margin" and role "presentation"
@@ -69,6 +68,9 @@ export function getColorsForBlockType(
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
     accent = (theme || dark).content.default;
     accentLight = (theme || dark).accent.contentDefaultTransparent;
+  } else if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && !blockColor) {
+    accent = (theme || dark).monotone.white;
+    accentLight = (theme || dark).monotone.whiteTransparent;
   }
 
   return {

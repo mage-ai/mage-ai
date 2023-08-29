@@ -30,6 +30,7 @@ export type TextProps = {
   center?: boolean;
   children?: any;
   color?: string;
+  cyan?: boolean;
   cursor?: string;
   danger?: boolean;
   default?: boolean;
@@ -63,6 +64,7 @@ export type TextProps = {
   raw?: boolean;
   rightAligned?: boolean;
   secondary?: boolean;
+  sky?: boolean;
   small?: boolean;
   success?: boolean;
   textOverflow?: boolean;
@@ -222,6 +224,14 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.disabled && `
     color: ${(props.theme.content || dark.content).disabled};
+  `}
+
+  ${props => props.cyan && `
+    color: ${(props.theme || dark).accent.cyan};
+  `}
+
+  ${props => props.sky && `
+    color: ${(props.theme || dark).interactive.linkTextLight};
   `}
 
   ${props => props.black && `

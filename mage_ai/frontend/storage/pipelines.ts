@@ -2,6 +2,8 @@ import { get, set } from './localStorage';
 
 const LOCAL_STORAGE_KEY_PIPELINE_LIST_FILTERS = 'pipeline_list_filters';
 const LOCAL_STORAGE_KEY_PIPELINE_LIST_GROUP_BYS = 'pipeline_list_group_bys';
+export const LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX = 'pipeline_list_sort_column_index';
+export const LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION = 'pipeline_list_sort_direction';
 
 type FilterType = {
   [filterKey: string]: {

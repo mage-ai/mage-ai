@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.10',
+    version='0.9.19',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -74,6 +74,9 @@ setuptools.setup(
         'hdf5': ['tables==3.7.0'],
         'mysql': [
             'mysql-connector-python==8.0.31',
+        ],
+        'oracle': [
+            'oracledb==1.3.1',
         ],
         'postgres': [
             'psycopg2==2.9.3',
@@ -140,6 +143,7 @@ setuptools.setup(
             'ldap3==2.9.1',
             'openai>=0.27.8',
             'opensearch-py==2.0.0',
+            'oracledb==1.3.1',
             'pika==1.3.1',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',

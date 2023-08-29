@@ -1,6 +1,7 @@
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -14,6 +15,7 @@ import KernelOutputType, {
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
+import { getColorsForBlockType } from './index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 
@@ -165,7 +167,7 @@ export const getMoreActionsItems = (
         },
       ]);
 
-      if (!isDBT) {
+      if (!isDBT && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType) {
         items.push({
           label: () => 'Execute block and run tests',
           onClick: () => runBlock({ block, runTests: true }),
@@ -248,7 +250,11 @@ export const getMoreActionsItems = (
         }
       }
 
-      if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
+      if (!isDBT
+        && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType
+        && savePipelineContent
+        && (dynamic || otherDynamicBlocks.length === 0)
+      ) {
         items.push({
           label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
           onClick: () => savePipelineContent({
@@ -452,3 +458,15 @@ export function hasErrorOrOutput(messagesWithType: KernelOutputType[]): {
     hasOutput,
   };
 }
+
+export const getBlockColorHexCodeMapping = () => (
+  Object.values(BlockColorEnum).reduce((acc, color) => ({
+    ...acc,
+    [color]: getColorsForBlockType(
+      BlockTypeEnum.CUSTOM,
+      {
+        blockColor: color,
+      },
+    ).accent,
+  }), {})
+);

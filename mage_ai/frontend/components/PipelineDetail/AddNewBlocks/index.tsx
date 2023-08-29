@@ -10,7 +10,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Sensor as SensorIcon } from '@oracle/icons';
+import { Add, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -69,6 +69,9 @@ type AddNewBlocksProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showGlobalDataProducts?: (opts?: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
+  }) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -103,6 +106,7 @@ function AddNewBlocks({
   setFocusedAddNewBlockSearch,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showGlobalDataProducts,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -246,6 +250,16 @@ function AddNewBlocks({
           label: () => 'Python',
           uuid: 'transformers/python',
         },
+        ...getdataSourceMenuItems(
+          addNewBlock,
+          BlockTypeEnum.TRANSFORMER,
+          pipelineType,
+          {
+            blockTemplatesByBlockType,
+            onlyCustomTemplate: true,
+            showBrowseTemplates,
+          },
+        ),
       ];
     }
 
@@ -350,6 +364,7 @@ function AddNewBlocks({
         setFocused={setFocusedAddNewBlockSearch}
         showBrowseTemplates={showBrowseTemplates}
         showConfigureProjectModal={showConfigureProjectModal}
+        showGlobalDataProducts={showGlobalDataProducts}
       />
     );
   }
@@ -607,6 +622,36 @@ function AddNewBlocks({
                   uuid="AddNewBlocks/Scratchpad"
                 >
                   Scratchpad
+                </KeyboardShortcutButton>
+              </Tooltip>
+            </ButtonWrapper>
+          )}
+
+          {!hideScratchpad && (
+            <ButtonWrapper>
+              <Tooltip
+                block
+                label="Add a global data product block"
+                maxWidth={MAX_TOOLTIP_WIDTH}
+                size={null}
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact}>
+                      <HexagonAll size={iconSize} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    showGlobalDataProducts({
+                      // @ts-ignore
+                      addNewBlock,
+                    });
+                  }}
+                  uuid="AddNewBlocks/GlobalDataProducts"
+                >
+                  Global data product
                 </KeyboardShortcutButton>
               </Tooltip>
             </ButtonWrapper>

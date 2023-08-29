@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import List, Union
+from typing import Union
 
 import typer
 from click import Context
@@ -58,7 +58,7 @@ START_CLUSTER_TYPE_DEFAULT = typer.Option(
 )
 START_PROJECT_UUID_DEFAULT = typer.Option(
     None,
-    help='set project uuid if it has not been set for the project already',
+    help='set project uuid for the repo that is being started',
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
@@ -184,7 +184,7 @@ def run(
     callback_url: Union[str, None] = RUN_CALLBACK_URL_DEFAULT,
     block_run_id: Union[int, None] = RUN_BLOCK_RUN_ID_DEFAULT,
     pipeline_run_id: Union[int, None] = RUN_PIPELINE_RUN_ID_DEFAULT,
-    runtime_vars: Union[List[str], None] = RUN_RUNTIME_VARS_DEFAULT,
+    runtime_vars: Union[str, None] = RUN_RUNTIME_VARS_DEFAULT,
     skip_sensors: bool = RUN_SKIP_SENSORS_DEFAULT,
     template_runtime_configuration: Union[str, None] = RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT,
 ):

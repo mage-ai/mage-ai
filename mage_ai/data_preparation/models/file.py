@@ -4,8 +4,12 @@ from typing import Dict, List, Tuple
 
 import aiofiles
 
-from mage_ai.data_preparation.models.errors import FileExistsError
+from mage_ai.data_preparation.models.errors import (
+    FileExistsError,
+    FileNotInProjectError,
+)
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.utils import get_absolute_path
 
 FILE_VERSIONS_DIR = '.file_versions'
 BLACKLISTED_DIRS = frozenset([
@@ -314,6 +318,7 @@ class File:
 
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
+
         self.create_parent_directories(full_path)
         os.rename(self.file_path, full_path)
 
@@ -348,6 +353,14 @@ class File:
         if include_content:
             data['content'] = await self.content_async()
         return data
+
+
+def ensure_file_is_in_project(file_path: str) -> None:
+    full_file_path = get_absolute_path(file_path)
+    full_repo_path = get_absolute_path(get_repo_path())
+    if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
+        raise FileNotInProjectError(
+            f'File at path: {file_path} is not in the project directory.')
 
 
 def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:

@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -30,7 +31,13 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
+import FileType, {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalDataProductType from '@interfaces/GlobalDataProductType';
+import GlobalDataProducts from '@components/GlobalDataProducts';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KernelOutputType, {
@@ -38,6 +45,7 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
@@ -55,18 +63,15 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Close } from '@oracle/icons';
 import {
+  BLOCK_EXISTS_ERROR,
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
-import {
-  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
-  SpecialFileEnum,
-} from '@interfaces/FileType';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   // LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
@@ -104,7 +109,7 @@ import {
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
-import { getBlockFromFilePath } from '@components/FileBrowser/utils';
+import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
@@ -359,6 +364,10 @@ function PipelineDetailPage({
   const callbackByBlockUUID = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
+
+  const [blocksThatNeedToRefresh, setBlocksThatNeedToRefresh] = useState<{
+    [uuid: string]: number;
+  }>({});
 
   const setCallbackByBlockUUID = useCallback((type: string, uuid: string, value: string) => {
     const d = callbackByBlockUUID.current || {};
@@ -644,6 +653,7 @@ function PipelineDetailPage({
           callback: () => {
             setPipelineContentTouched(false);
             fetchPipeline();
+            fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -659,8 +669,8 @@ function PipelineDetailPage({
     pipeline?: PipelineType | {
       blocks?: BlockType[];
       extensions?: PipelineExtensionsType;
-      name: string;
-      type: string;
+      name?: string;
+      type?: string;
     };
   }, opts?: {
     contentOnly?: boolean;
@@ -687,7 +697,9 @@ function PipelineDetailPage({
     const callbacksByUUID = {};
     const conditionalsByUUID = {};
 
-    blocks.forEach((block: BlockType) => {
+    const blocksFinal = pipelineOverride?.blocks || blocks;
+
+    blocksFinal.forEach((block: BlockType) => {
       const {
         extension_uuid: extensionUUID,
         type,
@@ -924,25 +936,72 @@ function PipelineDetailPage({
       filePaths.push(filePathEncoded);
     }
 
+    // const block = getBlockFromFilePath(filePath, blocks);
+
+    // if (block) {
+    //   setSelectedBlock(block);
+    //   if (blockRefs?.current) {
+    //     const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+    //     blockRef?.current?.scrollIntoView();
+    //   }
+    // } else {
+    //   goToWithQuery({
+    //     file_path: filePathEncoded,
+    //     'file_paths[]': filePaths,
+    //   });
+    // }
+
+    goToWithQuery({
+      file_path: filePathEncoded,
+      'file_paths[]': filePaths,
+    });
+  }, [
+    // blockRefs,
+    // blocks,
+    savePipelineContent,
+  ]);
+
+  const onUpdateFileSuccess = useCallback((fileContent: FileType) => {
+    const {
+      content,
+      path: filePath,
+    } = fileContent || {};
 
     const block = getBlockFromFilePath(filePath, blocks);
 
     if (block) {
-      setSelectedBlock(block);
-      if (blockRefs?.current) {
-        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
-        blockRef?.current?.scrollIntoView();
-      }
-    } else {
-      goToWithQuery({
-        file_path: filePathEncoded,
-        'file_paths[]': filePaths,
+      const {
+        type: blockType,
+        uuid: blockUUID,
+      } = block;
+      onChangeCodeBlock(blockType, blockUUID, content);
+
+      setBlocks((prev) => {
+        const blockIndex =
+          prev?.findIndex(({ type, uuid }) => type === blockType && uuid === blockUUID);
+
+        if (blockIndex >= 0) {
+          prev[blockIndex].content = content;
+        }
+
+        return prev;
       });
+
+      setBlocksThatNeedToRefresh(prev => ({
+        ...prev,
+        [blockType]: {
+          // @ts-ignore
+          ...prev?.[blockType],
+          [blockUUID]: Number(new Date()),
+        },
+      }));
+
+      fetchPipeline();
     }
   }, [
-    blockRefs,
     blocks,
-    savePipelineContent,
+    fetchPipeline,
+    onChangeCodeBlock,
   ]);
 
   const {
@@ -1279,6 +1338,7 @@ function PipelineDetailPage({
         content: blockContent,
         name,
         priority: idx,
+        require_unique_name: true,
         ...block,
       },
     }).then((response: {
@@ -1324,10 +1384,31 @@ function PipelineDetailPage({
               return blocksFinal;
             }));
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            const exception = response?.error?.exception;
+            const filePath = getRelativePathFromBlock({
+              ...block,
+              name,
+            });
+            if (exception && filePath && exception.startsWith(BLOCK_EXISTS_ERROR)) {
+              setErrors(() => ({
+                errors,
+                links: [{
+                  label: 'View existing block file contents and optionally add to pipeline (if applicable).',
+                  onClick: () => {
+                    openFile(filePath);
+                    setErrors(null);
+                  },
+                }],
+                response,
+              }));
+            } else {
+              setErrors({
+                errors,
+                response,
+              });
+            }
+          },
         },
       );
     });
@@ -1336,6 +1417,7 @@ function PipelineDetailPage({
     fetchFileTree,
     fetchPipeline,
     isIntegration,
+    openFile,
     setBlocks,
     setErrors,
     pipeline,
@@ -1349,33 +1431,58 @@ function PipelineDetailPage({
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
     idx,
+    isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
-  }:{
-    block: BlockRequestPayloadType,
-    idx: number,
-    name: string,
-    onCreateCallback?: (block: BlockType) => void,
+    preventDuplicateBlockName,
+  }: {
+    block: BlockRequestPayloadType;
+    idx?: number;
+    isUpdatingBlock?: boolean;
+    name: string;
+    onCreateCallback?: (block: BlockType) => void;
+    preventDuplicateBlockName?: boolean;
   }) => (
     <ErrorProvider>
       <ConfigureBlock
         block={block}
         defaultName={name}
+        isUpdatingBlock={isUpdatingBlock}
         onClose={hideAddBlockModal}
         onSave={(opts: {
           color?: BlockColorEnum;
           language?: BlockLanguageEnum;
           name?: string;
-        } = {}) => addNewBlockAtIndex(
-          {
-            ...block,
-            ...ignoreKeys(opts, ['name']),
-          },
-          idx,
-          onCreateCallback,
-          opts?.name,
-        ).then(() => hideAddBlockModal())}
+        } = {}) => {
+          if (isUpdatingBlock) {
+            savePipelineContent({
+              block: {
+                color: opts?.color || null,
+                name: opts?.name,
+                uuid: block.uuid,
+              },
+              pipeline: {
+                blocks: pipeline?.blocks || [],
+              },
+            }).then(() => {
+              setSelectedBlock(null);
+              hideAddBlockModal();
+            });
+          } else {
+            addNewBlockAtIndex(
+              {
+                ...block,
+                ...ignoreKeys(opts, ['name']),
+              },
+              idx,
+              onCreateCallback,
+              opts?.name,
+            ).then(() => hideAddBlockModal());
+          }
+        }
+        }
         pipeline={pipeline}
+        preventDuplicateBlockName={preventDuplicateBlockName}
       />
     </ErrorProvider>
   ), {
@@ -1919,7 +2026,6 @@ function PipelineDetailPage({
     lastMessage: lastTerminalMessage,
     sendMessage: sendTerminalMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    queryParams: sharedWebsocketData,
     shouldReconnect: () => true,
   });
 
@@ -1958,6 +2064,41 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
+  const { data: dataGlobalProducts } = api.global_data_products.list();
+  const globalDataProducts: GlobalDataProductType[] =
+    useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
+
+  const [showGlobalDataProducts, hideGlobalDataProducts] = useModal(({
+    addNewBlock,
+  }: {
+    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>,
+  }) => (
+    <ErrorProvider>
+      <Panel>
+        <GlobalDataProducts
+          globalDataProducts={globalDataProducts}
+          onClickRow={(globalDataProduct: GlobalDataProductType) => {
+            addNewBlock({
+              configuration: {
+                global_data_product: {
+                  uuid: globalDataProduct?.uuid,
+                },
+              },
+              type: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+            });
+            hideGlobalDataProducts();
+          }}
+        />
+      </Panel>
+    </ErrorProvider>
+  ), {
+  }, [
+    globalDataProducts,
+  ], {
+    background: true,
+    uuid: 'global_data_products',
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1983,6 +2124,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       insights={insights}
       interruptKernel={interruptKernel}
@@ -1995,6 +2137,7 @@ function PipelineDetailPage({
       onChangeChartBlock={onChangeChartBlock}
       onChangeCodeBlock={onChangeCodeBlock}
       onSelectBlockFile={onSelectBlockFile}
+      onUpdateFileSuccess={onUpdateFileSuccess}
       pipeline={pipeline}
       pipelineMessages={pipelineMessages}
       runBlock={runBlock}
@@ -2017,6 +2160,16 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+        preventDuplicateBlockName,
+      ) => new Promise(() => showAddBlockModal({
+        block,
+        isUpdatingBlock: true,
+        name,
+        preventDuplicateBlockName,
+      }))}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -2041,6 +2194,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSecrets,
     fetchVariables,
+    globalDataProducts,
     globalVariables,
     insights,
     interruptKernel,
@@ -2053,6 +2207,7 @@ function PipelineDetailPage({
     onChangeChartBlock,
     onChangeCodeBlock,
     onSelectBlockFile,
+    onUpdateFileSuccess,
     pipeline,
     pipelineMessages,
     runBlock,
@@ -2123,6 +2278,7 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
+      blocksThatNeedToRefresh={blocksThatNeedToRefresh}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       disableShortcuts={disableShortcuts}
@@ -2130,6 +2286,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
+      globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
@@ -2163,6 +2320,15 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
+      showGlobalDataProducts={showGlobalDataProducts}
+      showUpdateBlockModal={(
+        block,
+        name = randomNameGenerator(),
+      ) => new Promise(() => showAddBlockModal({
+        block,
+        isUpdatingBlock: true,
+        name,
+      }))}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2176,6 +2342,7 @@ function PipelineDetailPage({
     blockRefs,
     blocks,
     blocksInNotebook,
+    blocksThatNeedToRefresh,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -2183,6 +2350,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSampleData,
     files,
+    globalDataProducts,
     globalVariables,
     hiddenBlocks,
     interruptKernel,
@@ -2210,6 +2378,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showGlobalDataProducts,
     textareaFocused,
     widgets,
   ]);
@@ -2558,7 +2727,10 @@ function PipelineDetailPage({
                   cb: (block: BlockType) => void,
                 ) => {
                   addNewBlockAtIndex(
-                    b,
+                    {
+                      ...b,
+                      require_unique_name: false,
+                    },
                     blocks.length,
                     cb,
                     b.name,
@@ -2568,6 +2740,7 @@ function PipelineDetailPage({
                 fetchPipeline={fetchPipeline}
                 fetchVariables={fetchVariables}
                 filePath={filePath}
+                onUpdateFileSuccess={onUpdateFileSuccess}
                 openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 selectedFilePath={selectedFilePath}

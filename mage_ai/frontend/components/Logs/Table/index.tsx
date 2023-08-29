@@ -1,7 +1,7 @@
 import Ansi from 'ansi-to-react';
 import NextLink from 'next/link';
 import { FixedSizeList } from 'react-window';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
@@ -12,6 +12,7 @@ import LogType from '@interfaces/LogType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import usePrevious from '@utils/usePrevious';
 
 import { ChevronRight } from '@oracle/icons';
 import { FilterQueryType } from '@components/Logs/Filter';
@@ -24,7 +25,9 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WIDTH_OF_SINGLE_CHARACTER_MONOSPACE } from '@components/DataTable';
 import { formatTimestamp } from '@utils/models/log';
+import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { useWindowSize } from '@utils/sizes';
 
@@ -38,6 +41,7 @@ type LogsTableProps = {
   onRowClick?: (tab?: TabType) => void;
   pipeline: PipelineType;
   query: FilterQueryType;
+  saveScrollPosition?: boolean;
   setSelectedLog: (log: LogType) => void;
   themeContext: ThemeType;
 };
@@ -50,24 +54,38 @@ function LogsTable({
   onRowClick,
   pipeline,
   query,
+  saveScrollPosition,
   setSelectedLog,
   themeContext,
 }: LogsTableProps) {
   const { height: windowHeight } = useWindowSize();
+  const tableRef = useRef(null);
   const isIntegration = useMemo(
     () => PipelineTypeEnum.INTEGRATION === pipeline?.type,
     [pipeline.type],
   );
 
+  const logsPrev = usePrevious(logs);
   useEffect(() => {
-    if (autoScrollLogs) {
+    if (autoScrollLogs && (logsPrev || []).length !== (logs || []).length) {
       tableInnerRef?.current?.scrollIntoView(false);
     }
   }, [
     autoScrollLogs,
     logs,
+    logsPrev,
     tableInnerRef,
   ]);
+
+  const scrollPositionLocalStorageKey = useMemo(() => (
+    getLogScrollPositionLocalStorageKey(pipeline?.uuid)
+  ), [pipeline?.uuid]);
+
+  useEffect(() => {
+    if (saveScrollPosition) {
+      tableRef?.current?.scrollTo(get(scrollPositionLocalStorageKey, 0));
+    }
+  }, [saveScrollPosition, scrollPositionLocalStorageKey]);
 
   let blockUUIDs = Object.keys(blocksByUUID || {});
   if (isIntegration) {
@@ -310,6 +328,17 @@ function LogsTable({
           themeContext,
         }}
         itemSize={UNIT * 3.75}
+        onScroll={({ scrollOffset, scrollDirection }) => {
+          /*
+           * Check for "forward" scrollDirection and "0" scrollOffset value, or else
+           * the saved scroll position will be overwritten to 0 when the page refreshes
+           * or upon initially navigating to the logs page.
+           */
+          if (saveScrollPosition && !(scrollDirection === 'forward' && scrollOffset === 0)) {
+            set(scrollPositionLocalStorageKey, scrollOffset);
+          }
+        }}
+        ref={tableRef}
         width="100%"
       >
         {renderRow}

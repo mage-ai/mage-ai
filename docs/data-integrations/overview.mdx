@@ -1,16 +1,15 @@
 ---
 title: "Overview"
-description: "Data integration is synchronizing data from an external system to an internal system or vice versa."
-icon: "ufo-beam"
+description: "Data integration is the process of synchronizing data between two systems."
 "og:image": "https://www.radicalcompliance.com/wp-content/uploads/2021/02/data-meme.gif"
 ---
 
+<Frame>
 <img
   alt="Data integrations"
   src="https://www.radicalcompliance.com/wp-content/uploads/2021/02/data-meme.gif"
 />
-
----
+</Frame>
 
 ## Requirements
 
@@ -53,20 +52,19 @@ Read more about Sources:
 
 - [Technical documentation](/data-integrations/sources/overview)
 - [Add a new source](/data-integrations/sources/add-new-source)
-- [Adapt an existing source (aka Tap)](/data-integrations/sources/adapt-existing-source)
 
 ### Available sources
 
-- [API](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/api/README.md)
 - [Amazon S3](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/amazon_s3/README.md)
 - [Amplitude](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/amplitude/README.md)
+- [API](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/api/README.md)
 - [Azure Blob Storage](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/azure_blob_storage/README.md)
 - [BigQuery](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/bigquery/README.md)
-- [Datadog](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/datadog/README.md)
-- [DynamoDB](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/dynamodb/README.md)
 - [Chargebee](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/chargebee/README.md)
 - [Commercetools](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/commercetools/README.md)
 - [Couchbase](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/couchbase/README.md)
+- [Datadog](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/datadog/README.md)
+- [DynamoDB](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/dynamodb/README.md)
 - [Facebook Ads](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/facebook_ads/README.md)
 - [Freshdesk](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/freshdesk/README.md)
 - [Front](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/front/README.md)
@@ -78,6 +76,7 @@ Read more about Sources:
 - [Intercom](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/intercom/README.md)
 - [LinkedIn Ads](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/linkedin_ads/README.md)
 - [Microsoft SQL Server](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/mssql/README.md)
+- [Mode](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/mode)
 - [Monday](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/monday/README.md)
 - [MongoDB](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/mongodb/README.md)
 - [MySQL](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/mysql/README.md)
@@ -89,6 +88,7 @@ Read more about Sources:
 - [Postmark](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/postmark/README.md)
 - [Redshift (Amazon Web Services)](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/redshift/README.md)
 - [Salesforce](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/salesforce/README.md)
+- [SFTP](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/sftp)
 - [Snowflake](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/snowflake/README.md)
 - [Stripe](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/stripe/README.md)
 - [Twitter Ads](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/twitter_ads/README.md)
@@ -124,23 +124,25 @@ Read more about destinations:
 
 - [Technical documentation](/data-integrations/destinations/overview)
 - [Add a new destination](/data-integrations/destinations/add-new-destination)
-- [Adapt an existing destination (aka Target)](/data-integrations/destinations/adapt-existing-destination)
 
 ### Available destinations
 
 - [Amazon Web Services (AWS) Redshift](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/redshift/README.md)
 - [Amazon Web Services (AWS) S3](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/amazon_s3/README.md)
 - [BigQuery](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/bigquery/README.md)
+- [Clickhouse](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/destinations/clickhouse)
 - [Delta Lake (S3)](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/delta_lake_s3/README.md)
 - [Google Cloud Storage](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/destinations/google_cloud_storage/README.md)
 - [Microsoft SQL Server](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/mssql/README.md)
+- [MongoDB](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/destinations/mongodb)
 - [MySQL](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/mysql/README.md)
+- [OracleDB](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/destinations/oracledb)
 - [PostgreSQL](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/postgresql/README.md)
+- [Salesforce](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/destinations/salesforce)
 - [Snowflake](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/snowflake/README.md)
 - [Trino](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/trino/README.md)
 - _Azure Blob Storage (coming soon)_
 - _HubSpot (coming soon)_
-- _Salesforce (coming soon)_
 
 Mage adheres to the data engineering standard for data integrations called the
 [Singer Spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).

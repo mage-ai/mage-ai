@@ -22,6 +22,7 @@ IntegrationSourcePolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 IntegrationSourcePolicy.allow_read(IntegrationSourcePresenter.default_attributes + [
+    'docs'
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

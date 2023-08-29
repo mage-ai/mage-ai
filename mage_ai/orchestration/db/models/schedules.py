@@ -45,13 +45,13 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
+from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
-from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 pipeline_schedule_event_matcher_association_table = Table(
     'pipeline_schedule_event_matcher_association',
@@ -119,6 +119,28 @@ class PipelineSchedule(BaseModel):
         if len(self.pipeline_runs) == 0:
             return None
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+
+    @property
+    def tag_associations(self):
+        return (
+            TagAssociation.
+            select(
+                TagAssociation.id,
+                TagAssociation.tag_id,
+                TagAssociation.taggable_id,
+                TagAssociation.taggable_type,
+                Tag.name,
+            ).
+            join(
+                Tag,
+                Tag.id == TagAssociation.tag_id,
+            ).
+            filter(
+                TagAssociation.taggable_id == self.id,
+                TagAssociation.taggable_type == self.__class__.__name__,
+            ).
+            all()
+        )
 
     @classmethod
     @safe_db_query
@@ -221,17 +243,39 @@ class PipelineSchedule(BaseModel):
 
         return current_execution_date
 
+    def next_execution_date(self) -> datetime:
+        next_execution_date = None
+        current_execution_date = self.current_execution_date()
+
+        if current_execution_date is None:
+            return None
+
+        if self.schedule_interval == '@once':
+            pass
+        elif self.schedule_interval == '@daily':
+            next_execution_date = current_execution_date + timedelta(days=1)
+        elif self.schedule_interval == '@hourly':
+            next_execution_date = current_execution_date + timedelta(hours=1)
+        elif self.schedule_interval == '@weekly':
+            next_execution_date = current_execution_date + timedelta(weeks=1)
+        elif self.schedule_interval == '@monthly':
+            next_execution_date = (current_execution_date + timedelta(days=32)).replace(day=1)
+        else:
+            cron_itr = croniter(self.schedule_interval, current_execution_date)
+            next_execution_date = cron_itr.get_next(datetime)
+
+        return next_execution_date
+
     @safe_db_query
     def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
-        now = datetime.now()
+        now = datetime.now(tz=pytz.UTC)
 
         if self.status != ScheduleStatus.ACTIVE:
             return False
 
         if not self.landing_time_enabled() and \
                 self.start_time is not None and \
-                compare(now, self.start_time) == -1:
-
+                compare(now, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
             return False
 
         try:
@@ -386,6 +430,7 @@ class PipelineRun(BaseModel):
     pipeline_uuid = Column(String(255), index=True)
     execution_date = Column(DateTime(timezone=True), index=True)
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL, index=True)
+    started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
     passed_sla = Column(Boolean, default=False)
@@ -398,6 +443,11 @@ class PipelineRun(BaseModel):
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
     backfill = relationship('Backfill', back_populates='pipeline_runs')
 
+    def __init__(self, **kwargs):
+        self.global_data_product_uuid = kwargs.get('global_data_product_uuid', None)
+        kwargs.pop('global_data_product_uuid', None)
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
                f' execution_date={self.execution_date})'
@@ -405,6 +455,10 @@ class PipelineRun(BaseModel):
     @property
     def block_runs_count(self) -> int:
         return len(self.block_runs)
+
+    @property
+    def completed_block_runs_count(self) -> int:
+        return len(self.completed_block_runs)
 
     @property
     def execution_partition(self) -> str:
@@ -480,6 +534,79 @@ class PipelineRun(BaseModel):
     def pipeline_schedule_type(self):
         return self.pipeline_schedule.schedule_type
 
+    def executable_block_runs(
+        self,
+        allow_blocks_to_fail: bool = False,
+    ) -> List['BlockRun']:
+        """Get the list of executable block runs.
+
+        This property returns a list of block runs that are considered executable for the
+        pipeline run. It first builds the block UUIDs for the completed block runs and the block
+        runs in progress.
+        The method iterates over the initial block runs and determines their executability based
+        on the status of their dynamic upstream block runs or upstream blocks.
+        * If the block run has dynamic upstream block UUIDs, it checks if all of them are present in
+        the finished block UUIDs or completed block UUIDs depending on the `allow_blocks_to_fail`
+        flag.
+        * If the block run does not have dynamic upstream block UUIDs, it checks if all upstream
+        blocks are completed.
+        If a block run's upstream blocks all completed, it is added to the list of executable block
+        runs.
+
+        Returns:
+            List[BlockRun]: A list of executable block runs for the pipeline run.
+        """
+
+        pipeline = self.pipeline
+
+        def _build_block_uuids(block_runs: List[BlockRun]) -> List[str]:
+            arr = set()
+
+            for block_run in block_runs:
+                if block_run.status in [
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                    BlockRun.BlockRunStatus.FAILED,
+                ]:
+                    block_uuid = block_run.block_uuid
+                    block = pipeline.get_block(block_uuid)
+                    arr.add(block_uuid)
+
+                    # Block runs for replicated blocks have the following block UUID convention:
+                    # [block.uuid]:[block.replicated_block]
+                    if block and block.replicated_block:
+                        arr.add(block.uuid)
+
+            return arr
+
+        completed_block_uuids = _build_block_uuids(self.completed_block_runs)
+        finished_block_uuids = _build_block_uuids(self.block_runs)
+
+        executable_block_runs = list()
+        for block_run in self.initial_block_runs:
+            completed = False
+
+            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
+                'dynamic_upstream_block_uuids',
+            )
+
+            if dynamic_upstream_block_uuids:
+                if allow_blocks_to_fail:
+                    completed = all(uuid in finished_block_uuids
+                                    for uuid in dynamic_upstream_block_uuids)
+                else:
+                    completed = all(uuid in completed_block_uuids
+                                    for uuid in dynamic_upstream_block_uuids)
+            else:
+                block = pipeline.get_block(block_run.block_uuid)
+                completed = block is not None and \
+                    block.all_upstream_blocks_completed(completed_block_uuids)
+
+            if completed:
+                executable_block_runs.append(block_run)
+
+        return executable_block_runs
+
     @classmethod
     @safe_db_query
     def active_runs_for_pipelines(
@@ -528,10 +655,11 @@ class PipelineRun(BaseModel):
     @safe_db_query
     def complete(self):
         self.update(
-            completed_at=datetime.now(),
+            completed_at=datetime.now(tz=pytz.UTC),
             status=self.PipelineRunStatus.COMPLETED,
         )
 
+        from mage_ai.usage_statistics.logger import UsageStatisticLogger
         asyncio.run(UsageStatisticLogger().pipeline_runs_impression(
             lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
         ))
