@@ -67,7 +67,7 @@ class MySQLSourceTests(unittest.TestCase):
                                         'metadata': {
                                             'table-key-properties': ['id'],
                                             'forced-replication-method': 'FULL_TABLE',
-                                            'valid-replication-keys': ['id'],
+                                            'valid-replication-keys': [],
                                             'inclusion': 'available',
                                             'schema-name': 'demo_users',
                                         },

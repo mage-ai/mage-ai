@@ -121,7 +121,7 @@ class Source(BaseSource):
                 replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema.to_dict(),
                 stream_id=stream_id,
-                valid_replication_keys=unique_constraints + valid_replication_keys,
+                valid_replication_keys=valid_replication_keys,
             )
             catalog_entry = CatalogEntry(
                 key_properties=unique_constraints,
