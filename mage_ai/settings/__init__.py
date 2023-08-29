@@ -37,6 +37,7 @@ DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', '
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
+TOKEN_PERIOD = os.getenv('TOKEN_PERIOD', '30d').lower()
 LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldaps://127.0.0.1:1636')
 LDAP_BIND_DN = os.getenv('LDAP_BIND_DN', 'cd=admin,dc=example,dc=org')
 LDAP_BIND_PASSWORD = os.getenv('LDAP_BIND_PASSWORD', 'admin_password')
