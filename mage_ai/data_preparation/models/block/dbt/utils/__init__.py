@@ -1477,32 +1477,35 @@ def get_schema(
 
     if any([f.startswith('generate_schema_name') for f in os.listdir(macros_path)]):
         file_name = 'mage_get_generate_schema_name'
-        file_path = os.path.join(macros_path, file_name)
+        file_path = os.path.join(macros_path, f'{file_name}.sql')
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(f"""
 {{% macro {file_name}(custom_schema_name, node) -%}}
-{{{{ print('[CUSTOM_SCHEMA]' + generate_schema_name(custom_schema_name, node)) }}}}
+    {{{{ print('[CUSTOM_SCHEMA]' + generate_schema_name(custom_schema_name, node)) }}}}
 {{%- endmacro %}}
     """)
-
         args = [
             '--project-dir',
             project_full_path,
             '--profiles-dir',
             profiles_dir,
-            '-t',
-            profile_target,
+            '--args',
+            f'{{custom_schema_name: {"null" if custom_schema is None else custom_schema}}}',
         ]
-        if custom_schema:
-            args.extend([
-                '--args',
-                f'{{custom_schema_name: {custom_schema}}}',
-            ])
+        if profile_target:
+            args += [
+                '-t',
+                profile_target,
+            ]
+
         cmds = [
             'dbt',
             'run-operation',
             file_name,
         ] + args
+
+        print('Fetching schema from generate_schema_name macro...')
+        print(cmds)
 
         try:
             proc = subprocess.run(
@@ -1517,11 +1520,12 @@ def get_schema(
                 if trimmed_line.startswith('[CUSTOM_SCHEMA]'):
                     overwrite_schema = trimmed_line.replace('[CUSTOM_SCHEMA]', '').strip()
 
-            os.remove(file_path)
-
             if overwrite_schema:
                 return overwrite_schema
         except Exception:
-            pass
+            raise
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
     return schema
