@@ -297,6 +297,7 @@ class DBTBlock(Block):
                     cmds,
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                     stdout=stdout,
+                    stderr=subprocess.STDOUT,
                 )
 
                 if not snapshot:
@@ -319,6 +320,7 @@ class DBTBlock(Block):
                     encoding='utf-8',
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                     stdout=stdout,
+                    stderr=subprocess.STDOUT,
                     universal_newlines=True,
                 )
                 for line in proc.stdout:
