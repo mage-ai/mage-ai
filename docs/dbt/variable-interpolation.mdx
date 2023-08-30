@@ -30,17 +30,17 @@ specific to your [pipeline](/getting-started/runtime-variable) or [project](/dev
 
 ```yaml
 jaffle_shop:
-        target: dev
-        outputs:
-            dev:
-                type: postgres
-                host: host.docker.internal
-                user: postgres
-                password: postgres
-                port: 5432
-                dbname: postgres
-                schema: {{ variables('DBT_SCHEMA') }}
-                threads: 4
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: host.docker.internal
+      user: postgres
+      password: postgres
+      port: 5432
+      dbname: postgres
+      schema: {{ variables('DBT_SCHEMA') }}
+      threads: 4
 ```
 
 ### dbt targets
