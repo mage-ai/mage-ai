@@ -1332,7 +1332,6 @@ def fetch_model_data(
     block: Block,
     profile_target: str,
     project_full_path: str,
-    profiles_dir: str,
     limit: int = None,
     variables: Dict = None,
 ) -> DataFrame:
@@ -1360,7 +1359,6 @@ def fetch_model_data(
         attributes_dict,
         profile_target,
         project_full_path,
-        profiles_dir,
     )
 
     database = None
@@ -1430,102 +1428,58 @@ def model_config(text: str) -> Dict:
 
 
 def get_schema(
-    model_config: Dict,
+    model_runtime_config: Dict,
     model_configurations: Dict,
     profile: Dict,
     dbt_attributes: Dict,
     profile_target: str,
     project_full_path: str,
-    profiles_dir: str,
 ):
     model_name = dbt_attributes['model_name']
-    schema = profile.get('schema') or profile.get('+schema')
-    if not schema and 'dataset' in profile:
-        schema = profile['dataset']
+    project_name = dbt_attributes['project_name']
 
-    if not schema:
-        raise print(
-            f'WARNING: Cannot fetch data from model {model_name}, ' +
-            f'no schema found in profile target {profile_target}.',
-        )
+    schema = None
+    try:
+        with open(
+            os.path.join(project_full_path, 'target', 'manifest.json'),
+            'r',
+            encoding='utf-8',
+        ) as manifest_file:
+            manifest = simplejson.load(manifest_file)
+            manifest_nodes = manifest.get('nodes', {})
+            node_name = f'model.{project_name}.{model_name}'
+            if node_name in manifest_nodes:
+                schema = manifest_nodes.get(node_name, {}).get('schema')
+    except Exception:
+        pass
 
-    # Check dbt_profiles for schema to append
-
-    # If the model SQL file contains a config with schema, change the schema to use that.
-    # https://docs.getdbt.com/reference/resource-configs/schema
-    config_schema = model_config.get('schema')
-
-    custom_schema = None
-    if config_schema:
-        schema = f'{schema}_{config_schema}'
-        custom_schema = config_schema
+    if schema:
+        return schema
     else:
-        model_configuration_schema = None
-        if model_configurations:
-            model_configuration_schema = (model_configurations.get('schema') or
-                                          model_configurations.get('+schema'))
+        schema = profile.get('schema') or profile.get('+schema')
+        if not schema and 'dataset' in profile:
+            schema = profile['dataset']
 
-        if model_configuration_schema:
-            schema = f"{schema}_{model_configuration_schema}"
-            custom_schema = model_configuration_schema
-
-    # DBT supports overwriting the `generate_schema_name` macro to customize how
-    # the name of the schema is determined. In order to fetch the result of that macro,
-    # we will create our own macro `mage_get_generate_schema_name` that prints out the
-    # result of `generate_schema_name`, and then execute that macro with "dbt run-operation".
-    macros_path = os.path.join(project_full_path, 'macros')
-
-    if any([f.startswith('generate_schema_name') for f in os.listdir(macros_path)]):
-        file_name = 'mage_get_generate_schema_name'
-        file_path = os.path.join(macros_path, f'{file_name}.sql')
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(f"""
-{{% macro {file_name}(custom_schema_name, node) -%}}
-    {{{{ print('[CUSTOM_SCHEMA]' + generate_schema_name(custom_schema_name, node)) }}}}
-{{%- endmacro %}}
-    """)
-        args = [
-            '--project-dir',
-            project_full_path,
-            '--profiles-dir',
-            profiles_dir,
-            '--args',
-            f'{{custom_schema_name: {"null" if custom_schema is None else custom_schema}}}',
-        ]
-        if profile_target:
-            args += [
-                '-t',
-                profile_target,
-            ]
-
-        cmds = [
-            'dbt',
-            'run-operation',
-            file_name,
-        ] + args
-
-        print('Fetching schema from generate_schema_name macro...')
-        print(cmds)
-
-        try:
-            proc = subprocess.run(
-                cmds,
-                preexec_fn=os.setsid,
-                stdout=subprocess.PIPE,
+        if not schema:
+            raise print(
+                f'WARNING: Cannot fetch data from model {model_name}, ' +
+                f'no schema found in profile target {profile_target}.',
             )
-            output = proc.stdout.decode()
-            overwrite_schema = None
-            for line in output.split('\n'):
-                trimmed_line = line.strip()
-                if trimmed_line.startswith('[CUSTOM_SCHEMA]'):
-                    overwrite_schema = trimmed_line.replace('[CUSTOM_SCHEMA]', '').strip()
 
-            if overwrite_schema:
-                return overwrite_schema
-        except Exception:
-            raise
-        finally:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+        # Check dbt_profiles for schema to append
 
-    return schema
+        # If the model SQL file contains a config with schema, change the schema to use that.
+        # https://docs.getdbt.com/reference/resource-configs/schema
+        config_schema = model_runtime_config.get('schema')
+
+        if config_schema:
+            schema = f'{schema}_{config_schema}'
+        else:
+            model_configuration_schema = None
+            if model_configurations:
+                model_configuration_schema = (model_configurations.get('schema') or
+                                              model_configurations.get('+schema'))
+
+            if model_configuration_schema:
+                schema = f"{schema}_{model_configuration_schema}"
+        return schema

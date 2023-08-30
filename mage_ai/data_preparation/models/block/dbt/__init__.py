@@ -371,7 +371,6 @@ class DBTBlock(Block):
                             self,
                             dbt_profile_target,
                             project_full_path,
-                            profiles_dir,
                             limit=limit,
                             variables=variables,
                         )
