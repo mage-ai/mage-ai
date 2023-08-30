@@ -60,23 +60,23 @@ class MessageConsumerThread(threading.Thread):
                 self.update_last_message_time()
                 parsed_messages = []
                 for msg in messages:
-                    parsed_msg_body = self.__deserialize_message(msg.body)
+                    parsed_msg_body = self.source.deserialize_message(msg.body)
                     if self.source.config.message_deletion_method == \
                             MessageDeletionMethod.AFTER_RECEIVED:
                         parsed_messages.append(parsed_msg_body)
                         msg.delete()
                     else:
                         parsed_messages.append(dict(
-                            parsed_msg_body=self.__deserialize_message(msg.body),
+                            parsed_msg_body=self.source.deserialize_message(msg.body),
                             raw_message=msg,
                         ))
                 if len(parsed_messages) > 0:
-                    self.source._print(
+                    self.source.print(
                         f'Received {len(parsed_messages)} message. '
                         f'Sample: {parsed_messages[0]}.')
                     self.handler(parsed_messages)
         except Exception:
-            self.source._print(
+            self.source.print(
                 f'Couldn\'t receive messages from queue {self.source.config.queue_name}.')
             raise
 
@@ -88,8 +88,14 @@ class MessageConsumerThread(threading.Thread):
 
 
 class HealthCheckThread(threading.Thread):
-    def __init__(self, message_consumer_thread, timeout_seconds):
+    def __init__(
+        self,
+        source,
+        message_consumer_thread,
+        timeout_seconds,
+    ):
         super().__init__()
+        self.source = source
         self.message_consumer_thread = message_consumer_thread
         self.timeout_seconds = timeout_seconds
 
@@ -97,13 +103,14 @@ class HealthCheckThread(threading.Thread):
         while True:
             current_time = time.time()
             last_message_time = self.message_consumer_thread.last_message_time
-            if current_time - last_message_time > self.timeout_seconds:
-                print("No messages consumed for a while. Initiating restart...")
+            time_since_last_message = current_time - last_message_time
+            if time_since_last_message > self.timeout_seconds:
+                self.source.print(
+                    f'No messages consumed for {time_since_last_message} seconds. '
+                    'Initiating restart...')
                 self.message_consumer_thread.stop()  # Gracefully stop the consumer
-                # Perform any necessary cleanup or notification
-                # Restart the consumer thread
-                self.message_consumer_thread = MessageConsumerThread()
-                self.message_consumer_thread.start()
+                # Stop the health check after consumer is stopped
+                return
 
             time.sleep(self.timeout_seconds)
 
@@ -132,7 +139,11 @@ class AmazonSqsSource(BaseSource):
         consumer_thread.start()
 
         # Set the desired timeout
-        health_check_thread = HealthCheckThread(consumer_thread, timeout_seconds=60)
+        health_check_thread = HealthCheckThread(
+            self,
+            consumer_thread,
+            timeout_seconds=max(60, self.config.wait_time_seconds * 2),
+        )
 
         # Start the health check thread as a daemon thread
         health_check_thread.daemon = True
@@ -141,7 +152,7 @@ class AmazonSqsSource(BaseSource):
         # Wait for the consumer thread to finish (optional)
         consumer_thread.join()
 
-    def __deserialize_message(self, message):
+    def deserialize_message(self, message):
         if self.config.serde_config is not None and \
                 self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
             return message
