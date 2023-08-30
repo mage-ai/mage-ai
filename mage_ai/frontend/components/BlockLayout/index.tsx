@@ -45,6 +45,7 @@ function BlockLayout({
         row.push(
           <BlockLayoutItem
             block={block}
+            blockUUID={blockUUID}
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
             pageBlockLayoutUUID={uuid}
           />,
@@ -53,7 +54,7 @@ function BlockLayout({
 
       rows.push(
         <div key={`row-${idx1}`}>
-          {rows}
+          {row}
         </div>,
       );
     });

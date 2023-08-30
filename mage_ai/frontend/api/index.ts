@@ -188,7 +188,10 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
   }
 
   if (grandchildResource) {
-    apis[resource][parentResource] = {};
+    if (!apis[resource][parentResource]) {
+      apis[resource][parentResource] = {};
+    }
+
     apis[resource][parentResource][grandchildResource] = {};
     apis[resource][parentResource][grandchildResource].detail = (
       parentId: string,
@@ -226,7 +229,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       return await handle(response);
     };
   } else if (parentResource) {
-    apis[resource][parentResource] = {};
+    if (!apis[resource][parentResource]) {
+      apis[resource][parentResource] = {};
+    }
 
     apis[resource][parentResource].useCreate = (parentId, opts?: any) => async (body: any) =>
       fetchCreateWithParent(resource, parentResource, parentId, body, opts);

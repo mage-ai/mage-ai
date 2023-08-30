@@ -5,19 +5,21 @@ import ChartController from '@components/ChartBlock/ChartController';
 import api from '@api';
 
 type BlockLayoutItemProps = {
-  block: BlockLayoutItemType;
+  block?: BlockLayoutItemType;
+  blockUUID: string;
   pageBlockLayoutUUID: string;
 };
 
 function BlockLayoutItem({
   block,
+  blockUUID,
   pageBlockLayoutUUID,
 }: BlockLayoutItemProps) {
   const {
     data,
   } = api.block_layout_items.page_block_layouts.detail(
     encodeURIComponent(pageBlockLayoutUUID),
-    encodeURIComponent(block?.uuid),
+    encodeURIComponent(blockUUID),
   );
 
   const blockLayoutItem: BlockLayoutItemType =
@@ -29,8 +31,16 @@ function BlockLayoutItem({
       data,
     ]);
 
+  if (!blockLayoutItem?.data) {
+    return <div />;
+  }
+
   return (
-    <div />
+    <ChartController
+      block={blockLayoutItem}
+      data={blockLayoutItem?.data}
+      width={100}
+    />
   );
 }
 
