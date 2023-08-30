@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import BlockLayoutItem from './BlockLayoutItem';
 import BlockLayoutItemType from '@interfaces/BlockLayoutItemType';
+import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -11,6 +12,7 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { get, set } from '@storage/localStorage';
 import { sum } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
 
@@ -21,10 +23,22 @@ type BlockLayoutProps = {
 function BlockLayout({
   uuid,
 }: BlockLayoutProps) {
+  const localStorageKeyAfter = `block_layout_after_width_${uuid}`;
+  const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
+
   const mainContainerRef = useRef(null);
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, 200));
+  const [afterMousedownActive, setAfterMousedownActive] = useState(false);
+  const [beforeWidth, setBeforeWidth] = useState(Math.max(
+    get(localStorageKeyBefore),
+    UNIT * 13,
+  ));
+  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+
   const refHeader = useRef(null);
   const windowSize = useWindowSize();
 
+  const [selectedBlockItem, setSelectedBlockItem] = useState<BlockLayoutItemType>(null);
   const {
     data: dataPageBlockLayout,
   } = api.page_block_layouts.detail(encodeURIComponent(uuid));
@@ -40,20 +54,46 @@ function BlockLayout({
   const [headerRect, setHeaderRect] = useState(null);
 
   useEffect(() => {
-    setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
+    if (mainContainerRef?.current && !(afterMousedownActive || beforeMousedownActive)) {
+      setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
+    }
   }, [
+    afterMousedownActive,
+    beforeMousedownActive,
     mainContainerRef,
+    selectedBlockItem,
     windowSize,
   ]);
 
   useEffect(() => {
-    setHeaderRect(refHeader?.current?.getBoundingClientRect());
+    if (refHeader?.current) {
+      setHeaderRect(refHeader?.current?.getBoundingClientRect());
+    }
   }, [
     refHeader,
+    selectedBlockItem,
     windowSize,
   ]);
 
-  const [selectedBlockItem, setSelectedBlockItem] = useState<BlockLayoutItemType>(null);
+  useEffect(() => {
+    if (!afterMousedownActive) {
+      set(localStorageKeyAfter, afterWidth);
+    }
+  }, [
+    afterMousedownActive,
+    afterWidth,
+    localStorageKeyAfter,
+  ]);
+
+  useEffect(() => {
+    if (!beforeMousedownActive) {
+      set(localStorageKeyBefore, beforeWidth);
+    }
+  }, [
+    beforeMousedownActive,
+    beforeWidth,
+    localStorageKeyBefore,
+  ]);
 
   const rowsEl = useMemo(() => {
     const rows = [];
@@ -117,10 +157,38 @@ function BlockLayout({
       headerRect,
     ]);
 
+  const beforeHidden = useMemo(() => !selectedBlockItem, [selectedBlockItem]);
+
   return (
     <TripleLayout
+      before={(
+        <>
+        </>
+      )}
+      beforeHeader={(
+        <>
+          <Breadcrumbs
+            breadcrumbs={[
+              {
+                label: () => 'All content',
+                onClick: () => setSelectedBlockItem(null),
+              },
+              {
+                bold: true,
+                label: () => selectedBlockItem?.name || selectedBlockItem?.uuid,
+              },
+            ]}
+          />
+        </>
+      )}
+      beforeHeightOffset={0}
+      beforeHidden={beforeHidden}
+      beforeWidth={beforeWidth}
       contained
+      hideBeforeCompletely
       mainContainerRef={mainContainerRef}
+      setBeforeMousedownActive={setBeforeMousedownActive}
+      setBeforeWidth={setBeforeWidth}
     >
       <div ref={refHeader}>
         <FlexContainer
@@ -130,14 +198,16 @@ function BlockLayout({
           <Flex flex={1}>
           </Flex>
 
-          <Spacing p={PADDING_UNITS}>
-            <Button
-              beforeIcon={<Add size={UNIT * 2} />}
-              primary
-            >
-              Add content
-            </Button>
-          </Spacing>
+          {beforeHidden && (
+            <Spacing p={PADDING_UNITS}>
+              <Button
+                beforeIcon={<Add size={UNIT * 2} />}
+                primary
+              >
+                Add content
+              </Button>
+            </Spacing>
+          )}
         </FlexContainer>
       </div>
 

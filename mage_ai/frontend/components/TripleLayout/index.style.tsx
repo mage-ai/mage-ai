@@ -107,10 +107,9 @@ const ASIDE_INNER_STYLE = css<{
 const ASIDE_DRAGGABLE_STYLE = css<{
   active?: boolean;
   disabled?: boolean;
+  top?: number;
 }>`
-  height: calc(100% + ${ASIDE_HEADER_HEIGHT}px);
   position: absolute;
-  top: -${ASIDE_HEADER_HEIGHT}px;
   width: ${DRAGGABLE_WIDTH}px;
   z-index: 6;
 
@@ -119,6 +118,11 @@ const ASIDE_DRAGGABLE_STYLE = css<{
       border-color: ${(props.theme.text || dark.text).fileBrowser} !important;
     `}
   }
+
+  ${props => `
+    height: calc(100% + ${props?.top || 0}px);
+    top: -${props?.top || 0}px;
+  `}
 
   ${props => !props.disabled && `
     cursor: col-resize;
@@ -135,13 +139,13 @@ export const AsideHeaderStyle = styled.div<{
   border-bottom: 1px solid transparent;
   height: ${ASIDE_SUBHEADER_HEIGHT}px;
   position: fixed;
-  top: ${ASIDE_HEADER_HEIGHT}px;
   z-index: 4;
 
   ${hideScrollBar()}
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
+    top: ${props?.top || 0}px;
   `}
 
   ${props => !props.visible && `
