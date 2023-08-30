@@ -550,7 +550,10 @@ class PipelineTest(DBTestCase):
             self.assertEqual(original.name, duplicate.name)
             self.assertEqual(original.uuid, duplicate.uuid)
             self.assertEqual(original.type, duplicate.type)
-            self.assertEqual(original.chart_type, duplicate.chart_type)
+            self.assertEqual(
+                original.get_chart_configuration_settings(),
+                duplicate.get_chart_configuration_settings(),
+            )
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
 
     def test_duplicate_integration_pipeline(self):

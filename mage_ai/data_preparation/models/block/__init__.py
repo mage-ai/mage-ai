@@ -798,6 +798,7 @@ class Block:
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
+        disable_json_serialization: bool = False,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -862,14 +863,14 @@ class Block:
                         block_output,
                         default=encode_complex,
                         ignore_nan=True,
-                    )
+                    ) if not disable_json_serialization else block_output,
                 )
             else:
                 output_count = len(block_output)
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables and self.pipeline.type != PipelineType.INTEGRATION:
+            if store_variables and self.pipeline and self.pipeline.type != PipelineType.INTEGRATION:
                 try:
                     self.store_variables(
                         variable_mapping,
@@ -1033,7 +1034,7 @@ class Block:
         global_vars = merge_dict(
             global_vars or dict(),
             dict(
-                pipeline_uuid=self.pipeline.uuid,
+                pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
                 block_uuid=self.uuid,
             ),
         )
@@ -1091,20 +1092,6 @@ class Block:
 
         return dict(output=outputs)
 
-    def _execute_code_with_results(
-        self,
-        results: Dict,
-        custom_code: str = None,
-    ):
-        if custom_code is not None and custom_code.strip():
-            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
-                exec(custom_code, results)
-        elif self.content is not None:
-            exec(self.content, results)
-        elif os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), results)
-
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -1136,7 +1123,14 @@ class Block:
         if input_vars is None:
             input_vars = list()
 
-        self._execute_code_with_results(results, custom_code)
+        if custom_code is not None and custom_code.strip():
+            if BlockType.CHART != self.type:
+                exec(custom_code, results)
+        elif self.content is not None:
+            exec(self.content, results)
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), results)
 
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
