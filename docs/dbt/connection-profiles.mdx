@@ -16,6 +16,8 @@ for that project should be located in `demo_project/dbt/example/profiles.yml`.
 For more information on how to configure your connection profiles, read
 [dbt’s documentation](https://docs.getdbt.com/docs/get-started/connection-profiles).
 
+Using Mage, you may also [interpolate variables](/dbt/variable-interpolation) in your connection profiles.
+
 ---
 
 ## How connection profiles are used
@@ -27,30 +29,3 @@ target that Mage uses when running a dbt model block.
 
 The command Mage executes is `dbt run` with the flag `--target` and the value of
 that flag is the value from the input field labeled `dbt profile target`.
-
----
-
-## Variable interpolation
-
-You can add
-[variables](/getting-started/runtime-variable)
-specific to your pipeline. These variables are accessible in each block of your
-pipeline.
-
-In addition, all the environment variables are accessible within the SQL query
-using the `var` syntax.
-
-| Syntax                   | Description                                 | Example                             |
-| ------------------------ | ------------------------------------------- | ----------------------------------- |
-| `{{ env_var('...') }}`   | Get a value from the environment variables. | `{{ env_var('ENV') }}`              |
-| `{{ variables('...') }}` | Get a value from the runtime variables.     | `{{ variables('execution_date') }}` |
-
-### dbt profile target
-
-When typing in the dbt profile target for a dbt block, you can explicitly state
-the target (e.g. `dev`) you want the block to use or you can use variable
-interpolation. For example:
-
-| Key   | Example string                  | Result          |
-| ----- | ------------------------------- | --------------- |
-| `ENV` | `postgres_{{ env_var('ENV') }}` | `postgres_prod` |
