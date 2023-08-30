@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import BlockLayoutItem from './BlockLayoutItem';
+import BlockLayoutItemType from '@interfaces/BlockLayoutItemType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -21,6 +22,7 @@ function BlockLayout({
   uuid,
 }: BlockLayoutProps) {
   const mainContainerRef = useRef(null);
+  const refHeader = useRef(null);
   const windowSize = useWindowSize();
 
   const {
@@ -35,6 +37,7 @@ function BlockLayout({
   const layout = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
 
   const [containerRect, setContainerRect] = useState(null);
+  const [headerRect, setHeaderRect] = useState(null);
 
   useEffect(() => {
     setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
@@ -42,6 +45,15 @@ function BlockLayout({
     mainContainerRef,
     windowSize,
   ]);
+
+  useEffect(() => {
+    setHeaderRect(refHeader?.current?.getBoundingClientRect());
+  }, [
+    refHeader,
+    windowSize,
+  ]);
+
+  const [selectedBlockItem, setSelectedBlockItem] = useState<BlockLayoutItemType>(null);
 
   const rowsEl = useMemo(() => {
     const rows = [];
@@ -61,6 +73,7 @@ function BlockLayout({
         row.push(
           <Flex
             flex={width}
+            flexDirection="column"
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
           >
             <BlockLayoutItem
@@ -68,6 +81,7 @@ function BlockLayout({
               blockUUID={blockUUID}
               height={height}
               pageBlockLayoutUUID={uuid}
+              setSelectedBlockItem={setSelectedBlockItem}
               width={(width / columnWidthTotal) * containerRect?.width}
             />
           </Flex>,
@@ -79,6 +93,13 @@ function BlockLayout({
           {row}
         </FlexContainer>,
       );
+
+      rows.push(
+        <Spacing
+          key={`row-${idx1}-spacing`}
+          mt={PADDING_UNITS}
+        />,
+      );
     });
 
     return rows;
@@ -86,13 +107,26 @@ function BlockLayout({
     blocks,
     containerRect,
     layout,
+    setSelectedBlockItem,
     uuid,
   ]);
 
+  const heightAdjusted =
+    useMemo(() => containerRect?.height - headerRect?.height, [
+      containerRect,
+      headerRect,
+    ]);
+
   return (
     <TripleLayout
-      mainContainerHeader={(
-        <FlexContainer justifyContent="space-between">
+      contained
+      mainContainerRef={mainContainerRef}
+    >
+      <div ref={refHeader}>
+        <FlexContainer
+          justifyContent="space-between"
+
+        >
           <Flex flex={1}>
           </Flex>
 
@@ -105,10 +139,21 @@ function BlockLayout({
             </Button>
           </Spacing>
         </FlexContainer>
+      </div>
+
+      {selectedBlockItem && (
+        <BlockLayoutItem
+          block={selectedBlockItem}
+          blockUUID={selectedBlockItem?.uuid}
+          detail
+          height={heightAdjusted}
+          pageBlockLayoutUUID={uuid}
+          setSelectedBlockItem={setSelectedBlockItem}
+          width={containerRect?.width}
+        />
       )}
-      mainContainerRef={mainContainerRef}
-    >
-      {rowsEl}
+
+      {!selectedBlockItem && rowsEl}
     </TripleLayout>
   );
 }

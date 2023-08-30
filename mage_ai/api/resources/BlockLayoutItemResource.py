@@ -30,7 +30,7 @@ class BlockLayoutItemResource(GenericResource):
 
         uuid = urllib.parse.unquote(pk)
         block_config = page_block_layout.blocks.get(uuid)
-        block_config_uuid = block_config.get('uuid') or uuid
+        file_path = block_config.get('file_path') or uuid
 
         if not block_config:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
@@ -45,8 +45,8 @@ class BlockLayoutItemResource(GenericResource):
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
                 block = Block.get_block(
-                    block_config.get('name') or block_config_uuid,
-                    os.path.join(*block_config_uuid.split(os.path.sep)[1:]),
+                    block_config.get('name') or file_path,
+                    os.path.join(*file_path.split(os.path.sep)[1:]),
                     block_type,
                     **extract(block_config, [
                         'configuration',
@@ -84,4 +84,5 @@ class BlockLayoutItemResource(GenericResource):
 
         return self(merge_dict(block_config, dict(
             data=data,
+            uuid=uuid,
         )), user, **kwargs)

@@ -71,6 +71,7 @@ type TripleLayoutProps = {
   beforeNavigationItems?: NavigationItem[];
   beforeWidth?: number;
   children: any;
+  contained?: boolean;
   header?: any;
   headerOffset?: number;
   hideAfterCompletely?: boolean;
@@ -105,6 +106,7 @@ function TripleLayout({
   beforeNavigationItems,
   beforeWidth = 0,
   children,
+  contained,
   header,
   headerOffset = 0,
   hideAfterCompletely,
@@ -499,7 +501,10 @@ function TripleLayout({
         {mainContainerHeader}
 
         <MainContentStyle
-          headerOffset={(mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset}
+          headerOffset={contained
+            ? headerOffset
+            : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
+          }
           style={{
             width: mainWidth,
           }}
