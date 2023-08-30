@@ -41,6 +41,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
     SettingsConfig,
     Trigger,
+    load_triggers_file_data,
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -119,6 +120,19 @@ class PipelineSchedule(BaseModel):
         if len(self.pipeline_runs) == 0:
             return None
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+
+    @property
+    def trigger_as_code_exists(self) -> bool:
+        yaml_config = load_triggers_file_data(self.pipeline_uuid)
+        trigger_configs = yaml_config.get('triggers') or []
+        trigger = find(
+            lambda config: config.get('name') == self.name,
+            trigger_configs,
+        )
+        if trigger is not None:
+            return True
+
+        return False
 
     @property
     def tag_associations(self):

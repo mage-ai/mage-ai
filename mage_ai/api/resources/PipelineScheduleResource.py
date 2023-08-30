@@ -4,6 +4,10 @@ import uuid
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.data_preparation.models.triggers import (
+    Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
+)
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
@@ -215,6 +219,21 @@ class PipelineScheduleResource(DatabaseResource):
                 tag_associations_updated.append(taw)
 
             self.tag_associations_updated = tag_associations_updated + tag_associations_to_keep
+
+        trigger_as_code_exists = self.model.trigger_as_code_exists
+        if trigger_as_code_exists:
+            pipeline_uuid = self.model.pipeline_uuid
+            trigger = Trigger(
+                name=payload.get('name', self.model.name),
+                pipeline_uuid=pipeline_uuid,
+                schedule_type=payload.get('schedule_type', self.model.schedule_type),
+                sla=payload.get('sla', self.model.sla),
+                start_time=payload.get('start_time', self.model.start_time),
+                schedule_interval=payload.get('schedule_interval', self.model.schedule_interval),
+                status=payload.get('status', self.model.status),
+                variables=payload.get('variables', self.model.variables),
+            )
+            add_or_update_trigger_for_pipeline_and_persist(trigger, pipeline_uuid)
 
         super().update(payload)
 
