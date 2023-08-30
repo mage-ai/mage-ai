@@ -194,6 +194,7 @@
               "pages": [
                 "dbt/sources",
                 "dbt/connection-profiles",
+                "dbt/variable-interpolation",
                 "dbt/run-dbt-spark"
               ]
             },
