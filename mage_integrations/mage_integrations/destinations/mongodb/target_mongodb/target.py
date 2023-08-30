@@ -1,5 +1,5 @@
 """MongoDB target class."""
-
+import copy
 import json
 import logging
 import sys
@@ -8,8 +8,8 @@ from collections import Counter, defaultdict
 
 from singer_sdk import typing as th
 from singer_sdk.io_base import SingerMessageType
-from target_mongodb.sinks import MongoDbSink
 
+from mage_integrations.destinations.mongodb.target_mongodb.sinks import MongoDbSink
 from mage_integrations.destinations.target import Target
 
 LOGGER = logging.getLogger(__name__)
@@ -21,7 +21,8 @@ class TargetMongoDb(Target):
     name = "target-mongodb"
     config_jsonschema = th.PropertiesList(
         th.Property("connection_string", th.StringType, required=True),
-        th.Property("db_name", th.StringType, required=True)
+        th.Property("db_name", th.StringType, required=True),
+        th.Property("table_name", th.StringType, required=False),
     ).to_dict()
     default_sink_class = MongoDbSink
 
@@ -103,7 +104,7 @@ class TargetMongoDb(Target):
                 self._process_schema_message(line_dict)
 
             elif record_type == SingerMessageType.RECORD:
-                self._process_record_message(line_dict)
+                self._process_record_message_mongo(line_dict)
 
             elif record_type == SingerMessageType.ACTIVATE_VERSION:
                 self._process_activate_version_message(line_dict)
@@ -120,3 +121,46 @@ class TargetMongoDb(Target):
             stats[record_type] += 1
 
         return Counter(**stats)
+
+    def _process_record_message_mongo(self, message_dict: dict) -> None:
+        """Process a RECORD message.
+
+        Args:
+            message_dict: TODO
+        """
+        self._assert_line_requires(message_dict, requires={"stream", "record"})
+
+        stream_name = message_dict["stream"]
+        for stream_map in self.mapper.stream_maps[stream_name]:
+            raw_record = copy.copy(message_dict["record"])
+            transformed_record = stream_map.transform(raw_record)
+            if transformed_record is None:
+                # Record was filtered out by the map transform
+                continue
+
+            sink = self.get_sink(stream_map.stream_alias, record=transformed_record)
+            context = sink._get_context(transformed_record)
+            if sink.include_sdc_metadata_properties:
+                sink._add_sdc_metadata_to_record(
+                    transformed_record,
+                    message_dict,
+                    context,
+                )
+            else:
+                sink._remove_sdc_metadata_from_record(transformed_record)
+
+            transformed_record = sink.preprocess_record(transformed_record, context)
+            sink._validate_and_parse(transformed_record)
+
+            sink.tally_record_read()
+            sink.process_record(transformed_record, context)
+            sink._after_process_record(context)
+
+            if sink.is_full:
+                self.logger.info(
+                    "Target sink for '%s' is full. Draining...",
+                    sink.stream_name,
+                )
+                self.drain_one(sink)
+
+        self._handle_max_record_age()
