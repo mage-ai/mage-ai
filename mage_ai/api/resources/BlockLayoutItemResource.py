@@ -19,7 +19,7 @@ class BlockLayoutItemResource(GenericResource):
         variables = {}
         query = kwargs.get('query') or {}
         for k, v in query.items():
-            if re.match('[\w-]+\[\]$', k):
+            if re.match(r'[\w-]+\[\]$', k):
                 variables[k] = v
             elif isinstance(v, list) and len(v) >= 1:
                 variables[k] = v[0]
