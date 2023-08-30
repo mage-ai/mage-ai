@@ -90,8 +90,10 @@ class Widget(Block):
         should_use_no_code = x_values is None and y_values is None and \
             (group_by_columns or metrics)
 
-        if x_values is not None and y_values is not None:
+        if x_values is not None:
             variables[VARIABLE_NAME_X] = x_values
+
+        if y_values is not None:
             variables[VARIABLE_NAME_Y] = y_values
 
         if ChartType.BAR_CHART == chart_type:

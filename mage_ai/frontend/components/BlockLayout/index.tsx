@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import BlockLayoutItem from './BlockLayoutItem';
 import Button from '@oracle/elements/Button';
@@ -10,6 +10,8 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { sum } from '@utils/array';
+import { useWindowSize } from '@utils/sizes';
 
 type BlockLayoutProps = {
   uuid: string;
@@ -18,6 +20,9 @@ type BlockLayoutProps = {
 function BlockLayout({
   uuid,
 }: BlockLayoutProps) {
+  const mainContainerRef = useRef(null);
+  const windowSize = useWindowSize();
+
   const {
     data: dataPageBlockLayout,
   } = api.page_block_layouts.detail(encodeURIComponent(uuid));
@@ -29,11 +34,22 @@ function BlockLayout({
   const blocks = useMemo(() => pageBlockLayout?.blocks, [pageBlockLayout]);
   const layout = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
 
+  const [containerRect, setContainerRect] = useState(null);
+
+  useEffect(() => {
+    setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
+  }, [
+    mainContainerRef,
+    windowSize,
+  ]);
+
   const rowsEl = useMemo(() => {
     const rows = [];
 
     layout?.forEach((columns, idx1) => {
       const row = [];
+
+      const columnWidthTotal = sum(columns?.map(({ width }) => width || 0));
 
       columns.forEach(({
         block_uuid: blockUUID,
@@ -43,25 +59,32 @@ function BlockLayout({
         const block = blocks?.[blockUUID];
 
         row.push(
-          <BlockLayoutItem
-            block={block}
-            blockUUID={blockUUID}
+          <Flex
+            flex={width}
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
-            pageBlockLayoutUUID={uuid}
-          />,
+          >
+            <BlockLayoutItem
+              block={block}
+              blockUUID={blockUUID}
+              height={height}
+              pageBlockLayoutUUID={uuid}
+              width={(width / columnWidthTotal) * containerRect?.width}
+            />
+          </Flex>,
         );
       });
 
       rows.push(
-        <div key={`row-${idx1}`}>
+        <FlexContainer key={`row-${idx1}`}>
           {row}
-        </div>,
+        </FlexContainer>,
       );
     });
 
     return rows;
   }, [
     blocks,
+    containerRect,
     layout,
     uuid,
   ]);
@@ -83,6 +106,7 @@ function BlockLayout({
           </Spacing>
         </FlexContainer>
       )}
+      mainContainerRef={mainContainerRef}
     >
       {rowsEl}
     </TripleLayout>
