@@ -1049,7 +1049,7 @@ class Pipeline:
         if upstream_block_uuids is None:
             upstream_block_uuids = []
 
-        all_block_uuids = [b.get('uuid') for b in self.all_block_configs]
+        all_block_uuids = {b.get('uuid') for b in self.all_block_configs}
         if block.uuid in all_block_uuids:
             raise InvalidPipelineError(
                 f'Block with uuid {block.uuid} already exists in pipeline {self.uuid}')
@@ -1623,7 +1623,8 @@ class Pipeline:
             if status[uuid] == 'unvisited' and uuid in self.blocks_by_uuid:
                 __check_cycle(self.blocks_by_uuid[uuid])
             if uuid in check_block_uuids:
-                raise InvalidPipelineError(f'Duplicate block UUID {uuid}')
+                raise InvalidPipelineError(
+                    f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
             check_block_uuids.add(uuid)
 
 
