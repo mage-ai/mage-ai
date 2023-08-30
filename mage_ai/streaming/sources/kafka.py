@@ -9,7 +9,7 @@ from kafka import KafkaConsumer
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
-from mage_ai.streaming.sources.base import BaseSource
+from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
 from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
@@ -125,14 +125,28 @@ class KafkaSource(BaseSource):
         self._print('Start consuming messages.')
         for message in self.consumer:
             self.__print_message(message)
-            data = self.__deserialize_message(message.value)
+            data = {
+                "topic": message.topic,
+                "partition": message.partition,
+                "offset": message.offset,
+                "key": message.key.decode(),
+                "value": self.__deserialize_message(message.value),
+                "time": int(message.timestamp),
+            }
             handler(data)
 
     async def read_async(self, handler: Callable):
         self._print('Start consuming messages asynchronously.')
         for message in self.consumer:
             self.__print_message(message)
-            data = self.__deserialize_message(message.value)
+            data = {
+                "topic": message.topic,
+                "partition": message.partition,
+                "offset": message.offset,
+                "key": message.key.decode(),
+                "value": self.__deserialize_message(message.value),
+                "time": int(message.timestamp),
+            }
             await handler(data)
 
     def batch_read(self, handler: Callable):
@@ -160,7 +174,16 @@ class KafkaSource(BaseSource):
                     if not msg_printed:
                         self.__print_message(message)
                         msg_printed = True
-                    message_values.append(self.__deserialize_message(message.value))
+                    message_values.append(
+                        {
+                            "topic": message.topic,
+                            "partition": message.partition,
+                            "offset": message.offset,
+                            "key": message.key.decode(),
+                            "value": self.__deserialize_message(message.value),
+                            "time": int(message.timestamp),
+                        }
+                    )
             if len(message_values) > 0:
                 handler(message_values)
 

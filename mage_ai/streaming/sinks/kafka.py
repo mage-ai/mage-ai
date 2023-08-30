@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from collections.abc import Iterable
 from kafka import KafkaProducer
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from enum import Enum
 from typing import Dict, List
 import json
@@ -37,6 +39,8 @@ class KafkaConfig(BaseConfig):
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
+    batch_size: int = DEFAULT_BATCH_SIZE
+    timeout_ms: int = DEFAULT_TIMEOUT_MS
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -55,9 +59,21 @@ class KafkaSink(BaseSink):
     def init_client(self):
         self._print('Start initializing producer.')
         # Initialize kafka producer
+        if self.config.batch_size > 0:
+            batch_size = self.config.batch_size
+        else:
+            batch_size = DEFAULT_BATCH_SIZE
+        if self.config.timeout_ms > 0:
+            timeout_ms = self.config.timeout_ms
+        else:
+            timeout_ms = DEFAULT_TIMEOUT_MS
         kwargs = dict(
             bootstrap_servers=self.config.bootstrap_server,
             api_version=self.config.api_version,
+            value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+            key_serializer=lambda x: x.encode('utf-8') if x else None,
+            batch_size=batch_size,
+            linger_ms=timeout_ms,
         )
         if self.config.security_protocol == SecurityProtocol.SSL:
             kwargs['security_protocol'] = SecurityProtocol.SSL
@@ -72,24 +88,29 @@ class KafkaSink(BaseSink):
             kwargs['sasl_plain_username'] = self.config.sasl_config.username
             kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-        self.producer = KafkaProducer(
-            **kwargs
-        )
+        self.producer = KafkaProducer(**kwargs)
         self._print('Finish initializing producer.')
 
     def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
-        self.producer.send(
-            self.config.topic,
-            json.dumps(data).encode('utf-8'),
-        )
+        # self._print(f'Ingest data {data}, time={time.time()}')
+        if isinstance(data, dict):
+            self.producer.send(
+                topic=data.get('topic', self.config.topic),
+                value=data.get('value', data),
+                key=data.get('key'),
+                timestamp_ms=data.get('timestamp'),
+            )
+        else:
+            self.producer.send(
+                topic=self.config.topic,
+                value=data,
+            )
 
     def batch_write(self, data: List[Dict]):
         if not data:
             return
-        self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
+        self._print(
+            f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}'
+        )
         for record in data:
-            self.producer.send(
-                self.config.topic,
-                json.dumps(record).encode('utf-8'),
-            )
+            self.write(record)

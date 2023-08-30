@@ -9,6 +9,8 @@ connector_type: kafka
 bootstrap_server: "localhost:9092"
 topic: topic_name
 api_version: "0.10.2"
+batch_size: 100
+timeout_ms: 500
 ```
 
 
@@ -33,3 +35,37 @@ sasl_config:
   username: username
   password: password
 ```
+
+## Data format
+
+Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. The kafka data exporter can create these elements if the messages received are lists of dictionaries with a specific schema. The following example of a transformer block shows the configuration of all possible elements (topic, value, partition, key, timestamp):
+
+```python
+@transformer
+def transform(messages: List[Dict], *args, **kwargs):
+    record = {
+        "topic": "census",
+        "value": {"location": "klamath", "scientist": "anderson", "count": 23},
+        "partition": 0,
+        "key": "bees",
+        "time": int(time.time() * 1e3)  # timestamp with ms precision
+        }
+    return [record]
+```
+
+If not all elements are configured, default values are assumed.
+
+- The default topic can be configured in the yaml file.
+
+```yaml
+connector_type: kafka
+bootstrap_server: "localhost:9092"
+topic: topic_name
+```
+
+- The default value is the whole message (if value is not given explicitly).
+- The default partition is none. 
+- The default key is none.
+- The default time none (current time of execution).
+
+If the message is not of type `dict` the whole message is taken as value. The other elements are the default values from above.

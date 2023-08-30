@@ -11,6 +11,7 @@ topic: topic_name
 consumer_group: unique_consumer_group
 api_version: "0.10.2"
 batch_size: 100
+timeout_ms: 500
 ```
 
 
@@ -36,6 +37,20 @@ sasl_config:
   password: password
 ```
 
+## Data format
+
+Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. The kafka data loader returns these elements as dictionaries with the keys (topic, partition, offset, key, value, time), e.g.
+
+```python
+message = {
+    "topic": "census",
+    "partition": 0,
+    "offset": 6,
+    "key": "bees",
+    "value": {"location": "klamath", "scientist": "anderson", "count": 23},
+    "time": 1693396630163  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+    }
+```
 
 ## Deserialize message with protobuf schema
 
