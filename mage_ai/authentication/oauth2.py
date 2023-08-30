@@ -2,7 +2,7 @@ import os
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict
-from mage_ai.settings import TOKEN_PERIOD
+from mage_ai.settings import MAGE_ACCESS_TOKEN_EXPIRY_TIME
 
 import jwt
 
@@ -30,9 +30,9 @@ def generate_access_token(
             token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
 
     attributes_data = dict(
-        expires=calculate_expiration(),
+        expires=datetime.utcnow() + timedelta(seconds= MAGE_ACCESS_TOKEN_EXPIRY_TIME),
         token=token,
-        user_id=user.id if user else None,
+        user_id=user.id if user else None
     )
 
     if application:
@@ -55,15 +55,5 @@ def encode_token(token: str, expires: datetime) -> str:
 def decode_token(encoded_token: str) -> Dict:
     return jwt.decode(encoded_token, key=JWT_SECRET, algorithms=[JWT_ALGORITHM], verify=True)
 
-def calculate_expiration():
-    
-    unit = TOKEN_PERIOD[-1]
-    value = int(TOKEN_PERIOD[:-1])
-    
-    if unit == 'd':
-        return datetime.utcnow() + timedelta(days=value)
-    elif unit == 'h':
-        return datetime.utcnow() + timedelta(hours=value)
-    elif unit == 'm':
-        return datetime.utcnow() + timedelta(minutes=value)
+
     
