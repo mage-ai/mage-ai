@@ -80,8 +80,8 @@ class BlockLayoutItemResource(GenericResource):
                             get_global_variables(pipeline_uuid) if pipeline_uuid else {},
                             variables or {},
                         ),
-                    )
+                    ).get('output', None)
 
-        return self(dict(
+        return self(merge_dict(block_config, dict(
             data=data,
-        ), user, **kwargs)
+        )), user, **kwargs)
