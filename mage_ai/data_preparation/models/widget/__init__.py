@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from typing import Dict, List
 
@@ -246,8 +247,9 @@ class Widget(Block):
             inputs_vars_use = input_vars
 
         chart_configuration_settings = self.__get_chart_configuration_settings()
-        chart_type = chart_configuration_settings['chart_type']
+
         group_by_columns = chart_configuration_settings['group_by_columns']
+        metrics = chart_configuration_settings['metrics']
 
         if custom_code is not None and custom_code.strip():
             if not group_by_columns or not metrics:
