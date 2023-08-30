@@ -1,6 +1,6 @@
 import importlib
 from collections.abc import Iterable
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import inflection
 
@@ -22,6 +22,7 @@ from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTI
 from mage_ai.shared.hash import extract
 
 ALL_ACTIONS = 'all'
+ALL_ATTRIBUTES_SYMBOL = '__*MAGE*__'
 
 
 class BasePolicy():
@@ -81,15 +82,16 @@ class BasePolicy():
                                                                        'condition'])
 
     @classmethod
-    def allow_query(self, array, **kwargs):
+    def allow_query(self, array: List = None, **kwargs):
         if not self.query_rules.get(self.__name__):
             self.query_rules[self.__name__] = {}
-        for key in array:
+
+        array_use = array or [ALL_ATTRIBUTES_SYMBOL]
+        for key in array_use:
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
             for scope in kwargs.get('scopes', []):
-                self.query_rules[self.__name__][key][scope] = extract(kwargs, [
-                                                                      'condition'])
+                self.query_rules[self.__name__][key][scope] = extract(kwargs, ['condition'])
 
     @classmethod
     def allow_read(self, array, **kwargs):
@@ -240,7 +242,10 @@ class BasePolicy():
             if key != settings.QUERY_API_KEY:
                 error_message = 'Query parameter {} of value {} is not permitted.'.format(
                     key, value)
-                config = self.__class__.query_rule(key)
+
+                config = self.__class__.query_rule(key) or \
+                    self.__class__.query_rule(ALL_ATTRIBUTES_SYMBOL)
+
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
                     error.update({

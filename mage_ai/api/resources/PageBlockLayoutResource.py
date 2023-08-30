@@ -7,9 +7,13 @@ from mage_ai.presenters.block_layout.page import PageBlockLayout
 
 class PageBlockLayoutResource(GenericResource):
     @classmethod
-    def member(self, pk, user, **kwargs):
+    def get_model(self, pk):
         uuid = urllib.parse.unquote(pk)
-        model = PageBlockLayout.load(uuid)
+        return PageBlockLayout.load(uuid)
+
+    @classmethod
+    def member(self, pk, user, **kwargs):
+        model = self.get_model(pk)
 
         if not model:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)

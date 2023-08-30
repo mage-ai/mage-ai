@@ -798,6 +798,7 @@ class Block:
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
+        disable_json_serialization: bool = False,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -862,14 +863,14 @@ class Block:
                         block_output,
                         default=encode_complex,
                         ignore_nan=True,
-                    )
+                    ) if not disable_json_serialization else block_output,
                 )
             else:
                 output_count = len(block_output)
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables and self.pipeline.type != PipelineType.INTEGRATION:
+            if store_variables and self.pipeline and self.pipeline.type != PipelineType.INTEGRATION:
                 try:
                     self.store_variables(
                         variable_mapping,
@@ -1033,7 +1034,7 @@ class Block:
         global_vars = merge_dict(
             global_vars or dict(),
             dict(
-                pipeline_uuid=self.pipeline.uuid,
+                pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
                 block_uuid=self.uuid,
             ),
         )
