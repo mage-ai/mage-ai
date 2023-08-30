@@ -203,7 +203,7 @@ class Widget(Block):
 
         return data
 
-    def __get_chart_configuration_settings(self, configuration: Dict = None) -> Dict:
+    def get_chart_configuration_settings(self, configuration: Dict = None) -> Dict:
         chart_type = (configuration or self.configuration or {}).get('chart_type')
         group_by_columns = (configuration or self.configuration or {}).get(VARIABLE_NAME_GROUP_BY)
         metrics = (configuration or self.configuration or {}).get(VARIABLE_NAME_METRICS)
@@ -246,7 +246,7 @@ class Widget(Block):
         if input_vars is not None:
             inputs_vars_use = input_vars
 
-        chart_configuration_settings = self.__get_chart_configuration_settings()
+        chart_configuration_settings = self.get_chart_configuration_settings()
 
         group_by_columns = chart_configuration_settings['group_by_columns']
         metrics = chart_configuration_settings['metrics']
@@ -315,7 +315,7 @@ class Widget(Block):
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
-            chart_configuration_settings = self.__get_chart_configuration_settings(configuration)
+            chart_configuration_settings = self.get_chart_configuration_settings(configuration)
 
         chart_type = chart_configuration_settings['chart_type']
         group_by_columns = chart_configuration_settings['group_by_columns']
