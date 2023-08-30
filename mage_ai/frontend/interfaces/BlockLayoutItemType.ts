@@ -10,6 +10,16 @@ export enum DataSourceEnum {
   PIPELINE_SCHEDULES = 'pipeline_schedules',
 }
 
+export const DATA_SOURCES = [
+  DataSourceEnum.BLOCK,
+  DataSourceEnum.CHART_CODE,
+];
+
+export const DATA_SOURCES_HUMAN_READABLE_MAPPING = {
+  [DataSourceEnum.BLOCK]: 'Block data output',
+  [DataSourceEnum.CHART_CODE]: 'Custom code',
+};
+
 export interface DataSourceType {
   block_uuid?: string;
   partitions?: number | string[];
