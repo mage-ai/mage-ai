@@ -1092,20 +1092,6 @@ class Block:
 
         return dict(output=outputs)
 
-    def _execute_code_with_results(
-        self,
-        results: Dict,
-        custom_code: str = None,
-    ):
-        if custom_code is not None and custom_code.strip():
-            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
-                exec(custom_code, results)
-        elif self.content is not None:
-            exec(self.content, results)
-        elif os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), results)
-
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -1137,7 +1123,14 @@ class Block:
         if input_vars is None:
             input_vars = list()
 
-        self._execute_code_with_results(results, custom_code)
+        if custom_code is not None and custom_code.strip():
+            if BlockType.CHART != self.type:
+                exec(custom_code, results)
+        elif self.content is not None:
+            exec(self.content, results)
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), results)
 
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
