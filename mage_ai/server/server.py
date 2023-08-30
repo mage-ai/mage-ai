@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import os
 import shutil
+import stat
 import traceback
 import webbrowser
 from time import sleep
@@ -82,6 +83,7 @@ from mage_ai.settings import (
 )
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
 from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -144,6 +146,7 @@ def replace_base_path(base_path: str) -> str:
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
+    chmod(dst, stat.S_IRWXU)
     for path, _, files in os.walk(os.path.abspath(dst)):
         for filename in files:
             if filename.endswith(('.html', '.js', '.css')):
