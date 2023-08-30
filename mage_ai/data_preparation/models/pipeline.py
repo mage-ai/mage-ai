@@ -1048,6 +1048,12 @@ class Pipeline:
     ) -> Block:
         if upstream_block_uuids is None:
             upstream_block_uuids = []
+
+        all_block_uuids = [b.get('uuid') for b in self.all_block_configs]
+        if block.uuid in all_block_uuids:
+            raise InvalidPipelineError(
+                f'Block with uuid {block.uuid} already exists in pipeline {self.uuid}')
+
         if widget:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
@@ -1612,13 +1618,13 @@ class Pipeline:
                     virtual_stack.append(StackFrame(child_block))
 
         check_block_uuids = set()
-        for uuid in combined_blocks:
+        for config in self.all_block_configs:
+            uuid = config.get('uuid')
             if status[uuid] == 'unvisited' and uuid in self.blocks_by_uuid:
                 __check_cycle(self.blocks_by_uuid[uuid])
             if uuid in check_block_uuids:
-                raise InvalidPipelineError(f'The block {uuid} is duplicated in the pipeline.')
+                raise InvalidPipelineError(f'Duplicate block UUID {uuid}')
             check_block_uuids.add(uuid)
-
 
 
 class StackFrame:
