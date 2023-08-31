@@ -878,6 +878,14 @@ class BlockRun(BaseModel):
 
     @classmethod
     @safe_db_query
+    def batch_delete(self, block_run_ids: List[int]):
+        BlockRun.query.filter(BlockRun.id.in_(block_run_ids)).delete(
+            synchronize_session=False
+        )
+        db_connection.session.commit()
+
+    @classmethod
+    @safe_db_query
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
             BlockRun.pipeline_run_id == pipeline_run_id,

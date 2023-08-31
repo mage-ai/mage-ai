@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
+
 import FlexContainer from '@oracle/components/FlexContainer';
 import Flex from '@oracle/components/Flex';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tile from '@oracle/components/Tile';
 import dark from '@oracle/styles/themes/dark';
-
 import { GroupedPipelineRunCountType } from '@interfaces/MonitorStatsType';
 import { MetricsSummaryContainerStyle } from './index.style';
 import {

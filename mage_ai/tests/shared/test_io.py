@@ -1,10 +1,32 @@
-from mage_ai.shared.io import safe_write, safe_write_async
-from mage_ai.tests.base_test import TestCase
 import asyncio
 import os
+import stat
+
+from mage_ai.shared.io import chmod, safe_write, safe_write_async
+from mage_ai.tests.base_test import TestCase
 
 
 class IOTests(TestCase):
+    def test_chmod(self):
+        path = 'test_io'
+        file = 'test_chmod'
+        file_path = os.path.join(path, file)
+
+        os.mkdir(path)
+        with open(file_path, 'w') as fp:
+            fp.write('MESSAGE1')
+
+        target_mode = stat.S_IRWXU
+        chmod(file_path, target_mode)
+
+        # checks whether the permission bits target_mode are set in current_mode
+        # current_mode & target_mode will keep only those bits which are true for both expressions
+        self.assertTrue(os.stat(path).st_mode & target_mode == target_mode)
+        self.assertTrue(os.stat(file_path).st_mode & target_mode == target_mode)
+
+        os.remove(file_path)
+        os.rmdir(path)
+
     def test_safe_write(self):
         file_path = 'test_file_write'
         with open(file_path, 'w') as fp:

@@ -17,7 +17,6 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import actions from './actions';
-
 import { Check, Close } from '@oracle/icons';
 import {
   ContainerStyle,

@@ -13,7 +13,6 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
-
 import { ChevronRight } from '@oracle/icons';
 import { FilterQueryType } from '@components/Logs/Filter';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';

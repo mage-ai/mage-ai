@@ -134,7 +134,8 @@ class Api(Source):
             'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) \
              Chrome/86.0.4240.111 Safari/537.36',
         }
-        headers.update(self.config.get('headers', {}))
+        if self.config.get('headers') is not None:  # preventing iteration errors in headers.update
+            headers.update(self.config.get('headers', {}))
 
         tags = dict(
             headers=headers,

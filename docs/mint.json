@@ -194,6 +194,7 @@
               "pages": [
                 "dbt/sources",
                 "dbt/connection-profiles",
+                "dbt/variable-interpolation",
                 "dbt/run-dbt-spark"
               ]
             },
@@ -414,7 +415,8 @@
             "development/testing/great-expectations",
             "development/testing/unit-tests"
           ]
-        }
+        },
+        "development/ai/overview"
       ]
     },
     {
@@ -644,6 +646,7 @@
             "production/configuring-production-settings/compute-resource"
           ]
         },
+        "production/databases/default",
         {
           "group": "Secrets",
           "icon": "lock",
@@ -675,8 +678,7 @@
             "production/data-sync/git",
             "production/data-sync/github"
           ]
-        },
-        "production/databases/default"
+        }
       ]
     },
     {
