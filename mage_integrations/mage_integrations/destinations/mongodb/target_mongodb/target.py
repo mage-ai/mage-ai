@@ -126,7 +126,7 @@ class TargetMongoDb(Target):
         """Process a RECORD message.
 
         Args:
-            message_dict: TODO
+            message_dict (dict): JSONL Singer RECORD message
         """
         self._assert_line_requires(message_dict, requires={"stream", "record"})
 
