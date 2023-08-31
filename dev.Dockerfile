@@ -58,7 +58,7 @@ RUN \
 RUN npm install --global yarn && yarn global add next
 
 # Python Packages
-COPY --link --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 RUN \
   mkdir ~/.sparkmagic && \

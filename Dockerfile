@@ -49,7 +49,7 @@ RUN \
   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
 # Python Packages
-COPY --link --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 RUN \
   mkdir ~/.sparkmagic && \
