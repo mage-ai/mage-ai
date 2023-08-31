@@ -11,11 +11,11 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Ellipsis } from '@oracle/icons';
 import { ItemStyle, WIDTH_OFFSET } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { VARIABLE_NAME_HEIGHT } from '@interfaces/ChartBlockType';
 
 type BlockLayoutItemProps = {
   block?: BlockLayoutItemType;
+  blockLayoutItem?: BlockLayoutItemType;
   blockUUID: string;
   detail?: boolean;
   height?: number;
@@ -26,6 +26,7 @@ type BlockLayoutItemProps = {
 
 function BlockLayoutItem({
   block,
+  blockLayoutItem: blockLayoutItemProp = null,
   blockUUID,
   detail,
   height,
@@ -33,8 +34,16 @@ function BlockLayoutItem({
   setSelectedBlockItem,
   width,
 }: BlockLayoutItemProps) {
-  const [blockLayoutItem, setBlockLayoutItem] = useState<BlockLayoutItemType>(null);
-  const [data, setData] = useState(null);
+  const [blockLayoutItemState, setBlockLayoutItem] = useState<BlockLayoutItemType>(null);
+  const blockLayoutItem = useMemo(() => blockLayoutItemProp || blockLayoutItemState, [
+    blockLayoutItemProp,
+    blockLayoutItemState,
+  ]);
+  const [dataState, setData] = useState(null);
+  const data = useMemo(() => blockLayoutItem?.data || dataState, [
+    blockLayoutItem,
+    dataState,
+  ]);
 
   const refreshInterval = useMemo(() => blockLayoutItem?.data_source?.refresh_interval, [
     blockLayoutItem,
@@ -43,8 +52,8 @@ function BlockLayoutItem({
   const {
     data: dataBlockLayoutItem,
   } = api.block_layout_items.page_block_layouts.detail(
-    encodeURIComponent(pageBlockLayoutUUID),
-    encodeURIComponent(blockUUID),
+    !blockLayoutItemProp && encodeURIComponent(pageBlockLayoutUUID),
+    !blockLayoutItemProp && encodeURIComponent(blockUUID),
     {},
     {
       refreshInterval,
@@ -66,7 +75,9 @@ function BlockLayoutItem({
   ]);
 
   useEffect(() => {
-    setData(dataBlockLayoutItem?.block_layout_item?.data);
+    if (dataBlockLayoutItem?.block_layout_item?.data) {
+      setData(dataBlockLayoutItem?.block_layout_item?.data);
+    }
   }, [
     dataBlockLayoutItem?.block_layout_item?.data,
   ]);

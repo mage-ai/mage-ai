@@ -73,7 +73,9 @@ class Widget(Block):
         variables,
         chart_type: str = None,
         code: str = None,
+        data_source_output: List = None,
         group_by_columns: List[str] = None,
+        input_vars_from_data_source: List = None,
         metrics: List[str] = None,
         results: Dict = {},
         upstream_block_uuids: List[str] = [],
@@ -83,9 +85,21 @@ class Widget(Block):
         data = variables.copy()
         dfs = []
 
-        for key in upstream_block_uuids:
-            if key in results.keys():
-                dfs.append(results[key])
+        if data_source_output is not None:
+            if isinstance(data_source_output, list):
+                dfs += data_source_output
+            else:
+                dfs.append(data_source_output)
+        elif len(upstream_block_uuids) >= 1:
+            for key in upstream_block_uuids:
+                if key in results.keys():
+                    dfs.append(results[key])
+        elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
+            for input_var in input_vars_from_data_source:
+                if isinstance(input_var, list):
+                    dfs += input_var
+                else:
+                    dfs.append(input_var)
 
         should_use_no_code = x_values is None and y_values is None and \
             (group_by_columns or metrics)
@@ -95,6 +109,12 @@ class Widget(Block):
 
         if y_values is not None:
             variables[VARIABLE_NAME_Y] = y_values
+
+        if variables.get(VARIABLE_NAME_X) is None:
+            variables[VARIABLE_NAME_X] = []
+
+        if variables.get(VARIABLE_NAME_Y) is None:
+            variables[VARIABLE_NAME_Y] = []
 
         if ChartType.BAR_CHART == chart_type:
             if should_use_no_code:
@@ -226,6 +246,7 @@ class Widget(Block):
         upstream_block_uuids: List[str] = None,
         **kwargs,
     ) -> List:
+        decorated_functions_columns = []
         decorated_functions_configuration = []
         decorated_functions_data_source = []
         decorated_functions_render = []
@@ -235,6 +256,7 @@ class Widget(Block):
         test_functions = []
 
         results = merge_dict(dict(
+            columns=self._block_decorator(decorated_functions_columns),
             configuration=self._block_decorator(decorated_functions_configuration),
             data_source=self._block_decorator(decorated_functions_data_source),
             render=self._block_decorator(decorated_functions_render),
@@ -271,6 +293,7 @@ class Widget(Block):
         x = None
         y = None
         input_vars_from_data_source = inputs_vars_use.copy()
+        data_source_output = None
 
         if len(decorated_functions_data_source) >= 1:
             data_source_output = self.execute_block_function(
@@ -305,8 +328,41 @@ class Widget(Block):
                     global_vars=global_vars,
                 )
 
+        columns = []
+
+        if len(decorated_functions_columns) >= 1:
+            columns = self.execute_block_function(
+                decorated_functions_columns[0],
+                input_vars_from_data_source,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
+        else:
+            item = None
+
+            if input_vars_from_data_source is not None and \
+                    isinstance(input_vars_from_data_source, list) and \
+                    len(input_vars_from_data_source) >= 1:
+
+                item = input_vars_from_data_source[0]
+            else:
+                item = input_vars_from_data_source
+
+            if item is not None and \
+                    isinstance(item, list) and \
+                    len(item) >= 1:
+
+                item = item[0]
+
+            if item is not None:
+                if isinstance(item, dict):
+                    columns = list(item.keys())
+                elif hasattr(item, 'columns'):
+                    columns = list(item.columns)
+
         if x is not None:
             options['x_values'] = x
+
         if y is not None:
             options['y_values'] = y
 
@@ -327,9 +383,11 @@ class Widget(Block):
         outputs = self.post_process_variables(
             variables,
             chart_type=chart_type,
+            data_source_output=data_source_output,
             group_by_columns=group_by_columns,
+            input_vars_from_data_source=input_vars_from_data_source,
             metrics=metrics,
             **options,
         )
 
-        return outputs
+        return merge_dict(outputs, dict(columns=columns))

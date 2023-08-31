@@ -72,6 +72,22 @@ function BlockLayout({
     setSelectedBlockItemState,
   ]);
 
+  const refreshInterval = useMemo(() => selectedBlockItem?.data_source?.refresh_interval, [
+    selectedBlockItem,
+  ]);
+  const {
+    data: dataBlockLayoutItem,
+    mutate: fetchBlockLayoutItem,
+  } = api.block_layout_items.page_block_layouts.detail(
+    selectedBlockItem && encodeURIComponent(uuid),
+    selectedBlockItem && encodeURIComponent(selectedBlockItem?.uuid),
+    {},
+    {
+      refreshInterval,
+      revalidateOnFocus: !refreshInterval,
+    },
+  );
+
   const {
     data: dataPageBlockLayout,
     mutate: fetchPageBlockLayout,
@@ -211,6 +227,8 @@ function BlockLayout({
             if (blockItemNew) {
               setSelectedBlockItem(blockItemNew);
             }
+
+            fetchBlockLayoutItem();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -492,7 +510,19 @@ function BlockLayout({
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
         <ChartConfigurations
-          configuration={objectAttributes?.configuration}
+          block={{
+            ...selectedBlockItem,
+            ...objectAttributes,
+          }}
+          updateConfiguration={(configuration) => {
+            setObjectAttributes(prev => ({
+              ...prev,
+              configuration: {
+                ...prev?.configuration,
+                ...configuration,
+              },
+            }));
+          }}
         />
       </Spacing>
     </div>
@@ -500,6 +530,7 @@ function BlockLayout({
     blocksFromPipeline,
     objectAttributes,
     pipelines,
+    selectedBlockItem,
     setObjectAttributes,
   ]);
 
@@ -566,6 +597,7 @@ function BlockLayout({
       {selectedBlockItem && (
         <BlockLayoutItem
           block={selectedBlockItem}
+          blockLayoutItem={dataBlockLayoutItem?.block_layout_item}
           blockUUID={selectedBlockItem?.uuid}
           detail
           height={heightAdjusted}

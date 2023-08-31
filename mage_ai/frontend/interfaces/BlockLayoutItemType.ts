@@ -32,7 +32,9 @@ export interface DataSourceType {
 export default interface BlockLayoutItemType {
   configuration?: ConfigurationType;
   data?: {
-    [key: string]: any;
+    columns?: string[];
+    x?: string[];
+    y?: number[][];
   };
   data_source: DataSourceType;
   name?: string;

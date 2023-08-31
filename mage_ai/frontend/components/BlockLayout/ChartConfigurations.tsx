@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import Chip from '@oracle/components/Chip';
 import MultiSelect from '@oracle/elements/Inputs/MultiSelect';
@@ -21,14 +21,22 @@ import {
   ConfigurationOptionType,
 } from '@components/ChartBlock/constants';
 import { capitalize } from '@utils/string';
-import { sortByKey } from '@utils/array';
+import { remove, sortByKey } from '@utils/array';
 
 function ChartConfigurations({
-  configuration,
+  block,
+  updateConfiguration,
 }) {
+  const {
+    data,
+    configuration,
+  } = block || {};
   const {
     chart_type: chartType,
   } = configuration || {};
+  const {
+    columns,
+  } = data || {};
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
 
   const {
@@ -55,11 +63,11 @@ function ChartConfigurations({
           label: capitalize(label()),
           monospace: monospace,
           // onBlur: () => setSelectedBlock(block),
-          // onChange: e => updateConfiguration({
-          //   [uuid]: e.target.value,
-          // }, {
-          //   autoRun,
-          // }),
+          onChange: e => updateConfiguration({
+            [uuid]: e.target.value,
+          }, {
+            autoRun,
+          }),
           // onFocus: () => setSelectedBlock(block),
           value: configuration?.[uuid] || '',
         };
@@ -83,8 +91,6 @@ function ChartConfigurations({
         //     return acc2;
         //   }, []));
         // }, []);
-
-        const columns = ['Hello'];
 
         if (ConfigurationItemType.COLUMNS === type) {
           const columnsFromConfig = configuration[uuid] || [];
@@ -267,11 +273,12 @@ function ChartConfigurations({
     noCode: [],
   }), [
     // block,
+    columns,
     configuration,
     configurationOptions,
     // dataBlock,
     // setSelectedBlock,
-    // updateConfiguration,
+    updateConfiguration,
   ]);
 
   return (
