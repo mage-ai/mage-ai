@@ -1338,15 +1338,12 @@ def fetch_model_data(
     attributes_dict = parse_attributes(block, variables=variables)
     table_name = attributes_dict['table_name']
 
-    # bigquery: dataset, schema
-    # postgres: schema
-    # redshift: schema
-    # snowflake: schema
-    # trino: schema
     profile = get_profile(block, profile_target, variables=variables)
 
     config = model_config(block.content)
     config_database = config.get('database')
+
+    # settings from the dbt_project.yml
     model_configurations = get_model_configurations_from_dbt_project_settings(
         block,
         variables=variables,
@@ -1456,6 +1453,11 @@ def get_schema(
     if schema:
         return schema
     else:
+        # bigquery: dataset, schema
+        # postgres: schema
+        # redshift: schema
+        # snowflake: schema
+        # trino: schema
         schema = profile.get('schema') or profile.get('+schema')
         if not schema and 'dataset' in profile:
             schema = profile['dataset']
