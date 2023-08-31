@@ -95,7 +95,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         return [r[0].lower() for r in results]
 
     def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
-        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
+        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
             return {
                 INTERNAL_COLUMN_DELETED_AT: DATETIME_COLUMN_SCHEMA,
                 INTERNAL_COLUMN_LSN: {'type': ['integer']},
