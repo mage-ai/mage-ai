@@ -56,7 +56,8 @@ class OauthResource(GenericResource):
         else:
             access_token = generate_access_token(
                 user,
-                oauth_client,
+                application=oauth_client,
+                duration=int(timedelta(days=30).total_seconds()),
                 token=token,
             )
 
