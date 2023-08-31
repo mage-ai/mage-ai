@@ -71,9 +71,9 @@ triggers:
 
 ## Modify triggers
 
-For triggers that are configured in yaml file, any trigger settings made through UI will be overriden by
-the config from yaml file. Thus, to modify the trigger settings, you'll need to update the trigger configs
-in yaml file directly. The new trigger configs will be automatically synced to the triggers in UI.
+If an existing trigger is configured in the yaml file, any updates to it through the UI will also update
+trigger config in the yaml file. If you modify the trigger settings directly in the yaml, it will
+automatically update the trigger in the UI. The new trigger configs are synced to the triggers in UI.
 
 
 ## Delete triggers
@@ -81,5 +81,6 @@ in yaml file directly. The new trigger configs will be automatically synced to t
 If you don't want to use a trigger anymore, you can either update the trigger status to `inactive` or
 delete the trigger completely.
 
-To delete the trigger completely, you'll need to remove the trigger config from the yaml file first and
-then delete the trigger from the UI.
+To delete the trigger completely, you can delete the trigger from the UI by clicking the delete button
+(with trash can icon) in the Pipeline triggers table (`/pipeline/[pipeline_uuid]/triggers`). This will
+also remove the trigger from the pipeline's `triggers.yaml` config file.
