@@ -1314,8 +1314,12 @@ function Edit({
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Text>
+              Set a timeout for each run of this trigger (optional) 
+            </Text>
+            <Spacing mb={1} />
             <TextInput
-              label="Run timeout (in seconds)"
+              label="Timeout (in seconds)"
               onChange={e => setSettings(prev => ({
                 ...prev,
                 timeout: e.target.value,

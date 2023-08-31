@@ -183,7 +183,10 @@ class PipelineScheduler:
         for b in self.pipeline_run.block_runs:
             b.refresh()
 
-        self.check_timeout()
+        try:
+            self.__check_run_timeout()
+        except Exception:
+            pass
 
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
@@ -358,8 +361,36 @@ class PipelineScheduler:
 
                 calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
+    def memory_usage_failure(self, tags: Dict = None) -> None:
+        if tags is None:
+            tags = dict()
+        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
+            f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
+        self.logger.info(msg, tags=tags)
+
+        self.stop()
+
+        self.notification_sender.send_pipeline_run_failure_message(
+            pipeline=self.pipeline,
+            pipeline_run=self.pipeline_run,
+            summary=msg,
+        )
+
+        if PipelineType.INTEGRATION == self.pipeline.type:
+            calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
+
+    def build_tags(self, **kwargs):
+        base_tags = dict(
+            pipeline_run_id=self.pipeline_run.id,
+            pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
+            pipeline_uuid=self.pipeline.uuid,
+        )
+        if HOSTNAME:
+            base_tags['hostname'] = HOSTNAME
+        return merge_dict(kwargs, base_tags)
+
     @safe_db_query
-    def check_timeout(self) -> None:
+    def __check_run_timeout(self) -> None:
         pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
 
         if self.pipeline_run.started_at and pipeline_run_timeout:
@@ -400,34 +431,6 @@ class PipelineScheduler:
                     )
                     self.on_block_failure(block_run.block_uuid)
                     job_manager.kill_block_run_job(block_run.id)
-
-    def memory_usage_failure(self, tags: Dict = None) -> None:
-        if tags is None:
-            tags = dict()
-        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
-            f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
-        self.logger.info(msg, tags=tags)
-
-        self.stop()
-
-        self.notification_sender.send_pipeline_run_failure_message(
-            pipeline=self.pipeline,
-            pipeline_run=self.pipeline_run,
-            summary=msg,
-        )
-
-        if PipelineType.INTEGRATION == self.pipeline.type:
-            calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
-
-    def build_tags(self, **kwargs):
-        base_tags = dict(
-            pipeline_run_id=self.pipeline_run.id,
-            pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
-            pipeline_uuid=self.pipeline.uuid,
-        )
-        if HOSTNAME:
-            base_tags['hostname'] = HOSTNAME
-        return merge_dict(kwargs, base_tags)
 
     def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
         """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.

@@ -79,6 +79,7 @@ def create_pipeline_run_with_schedule(
     execution_date: datetime = None,
     pipeline_schedule_id: int = None,
     pipeline_schedule_settings: Dict = None,
+    **kwargs,
 ):
     if pipeline_schedule_settings is None:
         pipeline_schedule_settings = dict()
@@ -93,6 +94,7 @@ def create_pipeline_run_with_schedule(
         execution_date=execution_date,
         pipeline_uuid=pipeline_uuid,
         pipeline_schedule_id=pipeline_schedule_id,
+        **kwargs,
     )
     return pipeline_run
 
