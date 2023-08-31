@@ -78,12 +78,15 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
             ScheduleStatus.INACTIVE,
         )
 
+        update_payload = dict(
+            schedule_interval='@hourly',
+            status='active',
+        )
         operation = self.build_update_operation(
             pipeline_schedule.id,
-            dict(
-                schedule_interval=ScheduleInterval.HOURLY,
-                status=ScheduleStatus.ACTIVE,
-            ),
+            {
+                'pipeline_schedule': update_payload,
+            },
             user=user,
         )
         response = await operation.execute()
@@ -94,6 +97,7 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
             ScheduleInterval.HOURLY,
         )
 
+        # Check if trigger in triggers.yaml config file was also updated
         updated_trigger_configs_by_name = get_trigger_configs_by_name('test_pipeline')
         self.assertEqual(
             updated_trigger_configs_by_name['test_schedule_2']['schedule_interval'],
