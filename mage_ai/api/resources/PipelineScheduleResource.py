@@ -7,6 +7,7 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.triggers import (
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
+    remove_trigger,
 )
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
@@ -249,6 +250,14 @@ class PipelineScheduleResource(DatabaseResource):
             return self.tag_associations
         else:
             return self.tag_associations_updated
+
+    @safe_db_query
+    def delete(self, **kwargs):
+        if self.model.trigger_as_code_exists:
+            remove_trigger(self.model.name, self.model.pipeline_uuid)
+        self.model.delete()
+
+        return self
 
 
 def __load_tag_associations(resource):

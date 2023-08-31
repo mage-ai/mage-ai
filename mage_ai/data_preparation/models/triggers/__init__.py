@@ -204,3 +204,17 @@ def update_triggers_for_pipeline_and_persist(
     safe_write(trigger_file_path, content)
 
     return trigger_configs
+
+
+def remove_trigger(
+    name: str,
+    pipeline_uuid: str,
+) -> Dict:
+    trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
+    deleted_trigger = trigger_configs_by_name.pop(name, None)
+    update_triggers_for_pipeline_and_persist(
+        list(trigger_configs_by_name.values()),
+        pipeline_uuid,
+    )
+
+    return deleted_trigger
