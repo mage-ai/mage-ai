@@ -10,6 +10,7 @@ import BlockLayoutItemType, {
 import BlockType from '@interfaces/BlockType';
 import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
+import ChartConfigurations from '@components/BlockLayout/ChartConfigurations';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -219,8 +220,8 @@ function BlockLayout({
       ),
     },
   );
-  const updateBlockLayoutItemCustom = useCallback((blockLayoutItem: BlockLayoutItem) => {
-    return updateBlockLayoutItem({
+  const updateBlockLayoutItemCustom =
+    useCallback((blockLayoutItem: BlockLayoutItem) => updateBlockLayoutItem({
       page_block_layout: {
         blocks: {
           ...pageBlockLayout?.blocks,
@@ -228,11 +229,10 @@ function BlockLayout({
         },
         layout: pageBlockLayout?.layout,
       },
-    });
-  }, [
-    pageBlockLayout,
-    updateBlockLayoutItem,
-  ]);
+    }), [
+      pageBlockLayout,
+      updateBlockLayoutItem,
+    ]);
 
   const { data: dataPipeline } = api.pipelines.detail(objectAttributes?.data_source?.pipeline_uuid);
   const pipeline: PipelineType = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
@@ -244,7 +244,12 @@ function BlockLayout({
     useMemo(() => sortByKey(dataPipelines?.pipelines || [], 'uuid'), [dataPipelines]);
 
   const before = useMemo(() => (
-    <div style={{ paddingTop: ASIDE_HEADER_HEIGHT }}>
+    <div
+      style={{
+        paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
+        paddingTop: ASIDE_HEADER_HEIGHT,
+      }}
+    >
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
         <Spacing mb={1}>
           <Text bold>
@@ -483,6 +488,12 @@ function BlockLayout({
         <Headline>
           Chart display settings
         </Headline>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <ChartConfigurations
+          configuration={objectAttributes?.configuration}
+        />
       </Spacing>
     </div>
   ), [
