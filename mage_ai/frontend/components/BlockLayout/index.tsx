@@ -15,7 +15,7 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import PageBlockLayoutType from '@interfaces/PageBlockLayoutType';
+import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -23,10 +23,11 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { Add } from '@oracle/icons';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { Add } from '@oracle/icons';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { ignoreKeys } from '@utils/hash';
@@ -59,6 +60,7 @@ function BlockLayout({
     UNIT * 13,
   ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [layout, setLayout] = useState<ColumnType[][]>(null);
 
   const refHeader = useRef(null);
   const windowSize = useWindowSize();
@@ -97,8 +99,81 @@ function BlockLayout({
     useMemo(() => dataPageBlockLayout?.page_block_layout, [
       dataPageBlockLayout,
     ]);
+
+  const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
+    api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            page_block_layout: {
+              blocks: blocksNew,
+            },
+          }) => {
+            fetchPageBlockLayout();
+
+            const blockItemNew =
+              Object.values(blocksNew).find(({ name }) => name === objectAttributes?.name_new);
+
+            if (blockItemNew) {
+              setSelectedBlockItem(blockItemNew);
+            }
+
+            fetchBlockLayoutItem();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const updateBlockLayoutItemCustom =
+    useCallback((blockLayoutItem: BlockLayoutItem) => updateBlockLayoutItem({
+      page_block_layout: {
+        blocks: {
+          ...pageBlockLayout?.blocks,
+          [blockLayoutItem?.uuid]: ignoreKeys(blockLayoutItem, ['data']),
+        },
+        layout: pageBlockLayout?.layout,
+      },
+    }), [
+      pageBlockLayout,
+      updateBlockLayoutItem,
+    ]);
+
+  const saveLayout = useCallback(() => updateBlockLayoutItem({
+    page_block_layout: {
+      blocks: pageBlockLayout?.blocks,
+      layout: layout || pageBlockLayout?.layout,
+    },
+  }), [
+    layout,
+    pageBlockLayout,
+    updateBlockLayoutItem,
+  ]);
+
   const blocks = useMemo(() => pageBlockLayout?.blocks, [pageBlockLayout]);
-  const layout = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
+
+  const updateLayout = useCallback((rowIndex: number, columnIndex: number, column: ColumnType) => {
+    const newLayout = [...layout];
+    newLayout[rowIndex][columnIndex] = column;
+    setLayout(newLayout);
+  }, [
+    layout,
+    setLayout,
+  ]);
+
+  useEffect(() => {
+    if (!layout && pageBlockLayout?.layout) {
+      setLayout(pageBlockLayout?.layout);
+    }
+  }, [
+    layout,
+    pageBlockLayout,
+    setLayout,
+  ]);
 
   const [containerRect, setContainerRect] = useState(null);
   const [headerRect, setHeaderRect] = useState(null);
@@ -153,26 +228,42 @@ function BlockLayout({
 
       const columnWidthTotal = sum(columns?.map(({ width }) => width || 0));
 
-      columns.forEach(({
-        block_uuid: blockUUID,
-        height,
-        width,
-      }, idx2: number) => {
+      columns.forEach((column, idx2: number) => {
+        const {
+          block_uuid: blockUUID,
+          height,
+          max_width_percentage: maxWidthPercentage,
+          width,
+        } = column;
         const block = blocks?.[blockUUID];
+
+        const maxWidth = typeof maxWidthPercentage !== 'undefined' && maxWidthPercentage !== null
+          ? maxWidthPercentage >= 0
+            ? maxWidthPercentage / 100
+            : maxWidthPercentage
+          : null;
+        const widthPercentage = width / columnWidthTotal;
+        const widthPercentageFinal = maxWidth && widthPercentage > maxWidth
+          ? maxWidth
+          : widthPercentage;
+        const containerWidth = containerRect?.width - SCROLLBAR_WIDTH;
 
         row.push(
           <Flex
-            flex={width}
+            flexBasis={`${Math.floor(widthPercentageFinal * 100)}%`}
             flexDirection="column"
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
           >
             <BlockLayoutItem
               block={block}
               blockUUID={blockUUID}
+              columnLayoutSettings={column}
               height={height}
+              onSave={saveLayout}
               pageBlockLayoutUUID={uuid}
               setSelectedBlockItem={setSelectedBlockItem}
-              width={(width / columnWidthTotal) * containerRect?.width}
+              updateLayout={(column: ColumnType) => updateLayout(idx1, idx2, column)}
+              width={Math.floor(widthPercentageFinal * containerWidth)}
             />
           </Flex>,
         );
@@ -197,7 +288,9 @@ function BlockLayout({
     blocks,
     containerRect,
     layout,
+    saveLayout,
     setSelectedBlockItem,
+    updateLayout,
     uuid,
   ]);
 
@@ -208,49 +301,6 @@ function BlockLayout({
     ]);
 
   const beforeHidden = useMemo(() => !selectedBlockItem, [selectedBlockItem]);
-
-  const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
-    api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            page_block_layout: {
-              blocks: blocksNew,
-            },
-          }) => {
-            fetchPageBlockLayout();
-
-            const blockItemNew =
-              Object.values(blocksNew).find(({ name }) => name === objectAttributes?.name_new);
-
-            if (blockItemNew) {
-              setSelectedBlockItem(blockItemNew);
-            }
-
-            fetchBlockLayoutItem();
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-  const updateBlockLayoutItemCustom =
-    useCallback((blockLayoutItem: BlockLayoutItem) => updateBlockLayoutItem({
-      page_block_layout: {
-        blocks: {
-          ...pageBlockLayout?.blocks,
-          [blockLayoutItem?.uuid]: ignoreKeys(blockLayoutItem, ['data']),
-        },
-        layout: pageBlockLayout?.layout,
-      },
-    }), [
-      pageBlockLayout,
-      updateBlockLayoutItem,
-    ]);
 
   const { data: dataPipeline } = api.pipelines.detail(objectAttributes?.data_source?.pipeline_uuid);
   const pipeline: PipelineType = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);

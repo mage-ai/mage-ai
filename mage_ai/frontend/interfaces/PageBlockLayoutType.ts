@@ -1,8 +1,9 @@
 import { BlockLayoutItemType } from './BlockLayoutItemType';
 
-interface ColumnType {
+export interface ColumnType {
   block_uuid: string;
   height?: number;
+  max_width_percentage?: number;
   width: number;
 }
 
