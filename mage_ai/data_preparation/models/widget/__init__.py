@@ -104,6 +104,9 @@ class Widget(Block):
         should_use_no_code = x_values is None and y_values is None and \
             (group_by_columns or metrics)
 
+        if should_use_no_code and len(dfs) == 0:
+            return data
+
         if x_values is not None:
             variables[VARIABLE_NAME_X] = x_values
 
@@ -119,7 +122,8 @@ class Widget(Block):
         if ChartType.BAR_CHART == chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                data = build_x_y(df, group_by_columns, metrics)
+                if group_by_columns and metrics:
+                    data = build_x_y(df, group_by_columns, metrics)
             else:
                 data[VARIABLE_NAME_X] = encode_values_in_list(
                     convert_to_list(variables[VARIABLE_NAME_X])
@@ -131,7 +135,8 @@ class Widget(Block):
 
             if should_use_no_code:
                 df = dfs[0]
-                arr = df[group_by_columns[0]]
+                if group_by_columns:
+                    arr = df[group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
@@ -146,7 +151,8 @@ class Widget(Block):
         elif ChartType.LINE_CHART == chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                data = build_x_y(df, group_by_columns, metrics)
+                if group_by_columns and metrics:
+                    data = build_x_y(df, group_by_columns, metrics)
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     data.update(
@@ -162,7 +168,8 @@ class Widget(Block):
 
             if should_use_no_code:
                 df = dfs[0]
-                arr1 = df[group_by_columns[0]]
+                if group_by_columns:
+                    arr1 = df[group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
@@ -187,8 +194,9 @@ class Widget(Block):
         elif ChartType.TABLE == chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                data[VARIABLE_NAME_X] = group_by_columns
-                data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
+                if group_by_columns:
+                    data[VARIABLE_NAME_X] = group_by_columns
+                    data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables.get(var_name_orig, None)
@@ -214,14 +222,15 @@ class Widget(Block):
         elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]
-                buckets, values = build_time_series_buckets(
-                    df,
-                    group_by_columns[0],
-                    self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
-                    metrics,
-                )
-                data[VARIABLE_NAME_X] = buckets
-                data[VARIABLE_NAME_Y] = values
+                if group_by_columns and metrics:
+                    buckets, values = build_time_series_buckets(
+                        df,
+                        group_by_columns[0],
+                        self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
+                        metrics,
+                    )
+                    data[VARIABLE_NAME_X] = buckets
+                    data[VARIABLE_NAME_Y] = values
 
         return data
 

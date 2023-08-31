@@ -7,13 +7,14 @@ import BlockLayoutItemType, {
   DATA_SOURCES_HUMAN_READABLE_MAPPING,
   DataSourceEnum,
 } from '@interfaces/BlockLayoutItemType';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ChartConfigurations from '@components/BlockLayout/ChartConfigurations';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
@@ -28,7 +29,7 @@ import { Add } from '@oracle/icons';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { capitalize } from '@utils/string';
+import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -47,7 +48,9 @@ function BlockLayout({
     uuid: `BlockLayout/${uuid}`,
   });
 
-  const [objectAttributes, setObjectAttributes] = useState<BlockLayoutItemType>(null);
+  const [objectAttributes, setObjectAttributesState] = useState<BlockLayoutItemType>(null);
+  const [menuVisible, setMenuVisible] = useState<boolean>(false);
+  const refMenu = useRef(null);
 
   const localStorageKeyAfter = `block_layout_after_width_${uuid}`;
   const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
@@ -66,13 +69,6 @@ function BlockLayout({
   const windowSize = useWindowSize();
 
   const [selectedBlockItem, setSelectedBlockItemState] = useState<BlockLayoutItemType>(null);
-  const setSelectedBlockItem = useCallback((prev) => {
-    setObjectAttributes(prev);
-    setSelectedBlockItemState(prev);
-  }, [
-    setObjectAttributes,
-    setSelectedBlockItemState,
-  ]);
 
   const refreshInterval = useMemo(() => selectedBlockItem?.data_source?.refresh_interval, [
     selectedBlockItem,
@@ -83,12 +79,31 @@ function BlockLayout({
   } = api.block_layout_items.page_block_layouts.detail(
     selectedBlockItem && encodeURIComponent(uuid),
     selectedBlockItem && encodeURIComponent(selectedBlockItem?.uuid),
-    {},
+    {
+      configuration_override: encodeURIComponent(JSON.stringify(objectAttributes?.configuration || '')),
+      data_source_override: encodeURIComponent(JSON.stringify(objectAttributes?.data_source || '')),
+    },
     {
       refreshInterval,
       revalidateOnFocus: !refreshInterval,
     },
   );
+
+  const setObjectAttributes = useCallback((prev) => {
+    fetchBlockLayoutItem();
+    setObjectAttributesState(prev);
+  }, [
+    fetchBlockLayoutItem,
+    setObjectAttributesState,
+  ]);
+
+  const setSelectedBlockItem = useCallback((prev) => {
+    setObjectAttributes(prev);
+    setSelectedBlockItemState(prev);
+  }, [
+    setObjectAttributes,
+    setSelectedBlockItemState,
+  ]);
 
   const {
     data: dataPageBlockLayout,
@@ -108,6 +123,7 @@ function BlockLayout({
           callback: ({
             page_block_layout: {
               blocks: blocksNew,
+              layout: layoutNew,
             },
           }) => {
             fetchPageBlockLayout();
@@ -120,6 +136,7 @@ function BlockLayout({
             }
 
             fetchBlockLayoutItem();
+            setLayout(layoutNew);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -563,6 +580,11 @@ function BlockLayout({
           block={{
             ...selectedBlockItem,
             ...objectAttributes,
+            data: {
+              ...selectedBlockItem?.data,
+              ...objectAttributes?.data,
+              ...dataBlockLayoutItem?.block_layout_item?.data,
+            },
           }}
           updateConfiguration={(configuration) => {
             setObjectAttributes(prev => ({
@@ -578,6 +600,7 @@ function BlockLayout({
     </div>
   ), [
     blocksFromPipeline,
+    dataBlockLayoutItem,
     objectAttributes,
     pipelines,
     selectedBlockItem,
@@ -622,12 +645,59 @@ function BlockLayout({
 
           {beforeHidden && (
             <Spacing p={PADDING_UNITS}>
-              <Button
-                beforeIcon={<Add size={UNIT * 2} />}
-                primary
+              <FlyoutMenuWrapper
+                items={[
+                  {
+                    label: () => 'Existing chart',
+                    onClick: () => false,
+                  },
+                  {
+                    label: () => 'Create new chart',
+                    onClick: () => {
+                      const blockItemName = randomNameGenerator();
+                      const blockItem = {
+                        name: blockItemName,
+                        type: BlockTypeEnum.CHART,
+                        uuid: cleanName(blockItemName),
+                      };
+
+                      const layoutUpdated = [...pageBlockLayout?.layout];
+                      layoutUpdated.push([
+                        {
+                          block_uuid: blockItem.uuid,
+                          width: 1,
+                        },
+                      ]);
+
+                      updateBlockLayoutItem({
+                        page_block_layout: {
+                          blocks: {
+                            ...pageBlockLayout?.blocks,
+                            [blockItem.uuid]: blockItem,
+                          },
+                          layout: layoutUpdated,
+                        },
+                      });
+                      setSelectedBlockItem(blockItem);
+                    },
+                  },
+                ]}
+                onClickCallback={() => setMenuVisible(false)}
+                onClickOutside={() => setMenuVisible(false)}
+                open={menuVisible}
+                parentRef={refMenu}
+                rightOffset={0}
+                uuid={`BlockLayout/${uuid}`}
+                zIndex={1}
               >
-                Add content
-              </Button>
+                <Button
+                  beforeIcon={<Add size={UNIT * 2} />}
+                  onClick={() => setMenuVisible(true)}
+                  primary
+                >
+                  Add content
+                </Button>
+              </FlyoutMenuWrapper>
             </Spacing>
           )}
           {!beforeHidden && (
@@ -647,7 +717,17 @@ function BlockLayout({
       {selectedBlockItem && (
         <BlockLayoutItem
           block={selectedBlockItem}
-          blockLayoutItem={dataBlockLayoutItem?.block_layout_item}
+          blockLayoutItem={{
+            ...dataBlockLayoutItem?.block_layout_item,
+            configuration: {
+              ...dataBlockLayoutItem?.block_layout_item?.configuration,
+              ...objectAttributes?.configuration,
+            },
+            data_source: {
+              ...dataBlockLayoutItem?.block_layout_item?.data_source,
+              ...objectAttributes?.data_source,
+            },
+          }}
           blockUUID={selectedBlockItem?.uuid}
           detail
           height={heightAdjusted}

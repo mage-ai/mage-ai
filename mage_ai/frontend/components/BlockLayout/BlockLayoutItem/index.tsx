@@ -180,10 +180,10 @@ function BlockLayoutItem({
         </FlexContainer>
       </Spacing>
 
-      {!data && <Spinner inverted />}
+      {!dataBlockLayoutItem && !data && <Spinner inverted />}
       {data && buildChart({
         height: height || blockLayoutItem?.configuration?.[VARIABLE_NAME_HEIGHT],
-        width: width - WIDTH_OFFSET,
+        width: width - (WIDTH_OFFSET + 1),
       })}
 
       {editing && (

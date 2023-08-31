@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import urllib.parse
@@ -26,6 +27,13 @@ class BlockLayoutItemResource(GenericResource):
             else:
                 variables[k] = v
 
+        configuration_override = variables.pop('configuration_override', None)
+        if configuration_override:
+            configuration_override = json.loads(urllib.parse.unquote(configuration_override))
+        data_source_override = variables.pop('data_source_override', None)
+        if data_source_override:
+            data_source_override = json.loads(urllib.parse.unquote(data_source_override))
+
         page_block_layout = kwargs.get('parent_model')
 
         uuid = urllib.parse.unquote(pk)
@@ -42,6 +50,9 @@ class BlockLayoutItemResource(GenericResource):
         if BlockType.CHART == block_type:
             data_source_config = block_config.get('data_source')
             if data_source_config:
+                if data_source_override:
+                    data_source_config.update(data_source_override)
+
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
@@ -49,8 +60,8 @@ class BlockLayoutItemResource(GenericResource):
                     block_config.get('name') or file_path or uuid,
                     block_uuid,
                     block_type,
+                    configuration=configuration_override or block_config.get('configuration'),
                     **extract(block_config, [
-                        'configuration',
                         'language',
                     ]),
                 )
@@ -62,10 +73,14 @@ class BlockLayoutItemResource(GenericResource):
                     )
                     data = data_source.load_data(block=block)
                 else:
+                    data_source_block_uuid = data_source_config.get('block_uuid')
+
                     data_source_class_options = merge_dict(extract(data_source_config, [
-                        'block_uuid',
                         'pipeline_schedule_id',
-                    ]), dict(pipeline_uuid=pipeline_uuid))
+                    ]), dict(
+                        block_uuid=data_source_block_uuid,
+                        pipeline_uuid=pipeline_uuid,
+                    ))
                     data_source_output = None
 
                     if ChartDataSourceType.BLOCK == data_source_type:

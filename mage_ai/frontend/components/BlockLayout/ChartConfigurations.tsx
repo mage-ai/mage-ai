@@ -72,26 +72,6 @@ function ChartConfigurations({
           value: configuration?.[uuid] || '',
         };
 
-        // const blocks = dataBlock?.block ? [dataBlock.block] : [];
-
-        // const columns = blocks.reduce((acc, {
-        //   outputs,
-        // }) => {
-        //   if (!outputs) {
-        //     return acc;
-        //   }
-
-        //   return acc.concat(outputs.reduce((acc2, {
-        //     sample_data: sampleData,
-        //   }) => {
-        //     if (sampleData?.columns) {
-        //       return acc2.concat(sampleData.columns);
-        //     }
-
-        //     return acc2;
-        //   }, []));
-        // }, []);
-
         if (ConfigurationItemType.COLUMNS === type) {
           const columnsFromConfig = configuration[uuid] || [];
 
@@ -117,7 +97,7 @@ function ChartConfigurations({
                   }}
                   value={null}
                 >
-                  {sortByKey(columns.filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
+                  {sortByKey((columns || []).filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>
@@ -201,7 +181,7 @@ function ChartConfigurations({
                   {...sharedProps}
                   label="column"
                 >
-                  {sortByKey(columns, v => v).map((val: string) => (
+                  {sortByKey(columns || [], v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>
