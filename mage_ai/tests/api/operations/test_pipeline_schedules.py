@@ -49,14 +49,14 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
     async def test_execute_update_schedule_saved_in_code(self):
         email = self.faker.email()
         user = create_user(email=email, roles=1)
-        pipeline_schedule = PipelineSchedule.create(dict(
+        pipeline_schedule = PipelineSchedule.create(
             name='test_schedule_2',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.DAILY,
             schedule_type=ScheduleType.TIME,
             start_time=datetime(2023, 8, 30, 12, 30, 45),
             status=ScheduleStatus.INACTIVE,
-        ))
+        )
         trigger = Trigger(
             name=pipeline_schedule.name,
             pipeline_uuid=pipeline_schedule.pipeline_uuid,
