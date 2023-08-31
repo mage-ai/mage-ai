@@ -122,6 +122,17 @@ def get_triggers_by_pipeline(pipeline_uuid: str) -> List[Trigger]:
     return triggers
 
 
+def get_trigger_configs_by_name(pipeline_uuid: str) -> Dict:
+    yaml_config = load_triggers_file_data(pipeline_uuid)
+    trigger_configs = yaml_config.get('triggers') or {}
+    trigger_configs_by_name = index_by(
+        lambda config: config.get('name'),
+        trigger_configs,
+    )
+
+    return trigger_configs_by_name
+
+
 def build_triggers(
     trigger_configs: Dict,
     pipeline_uuid: str = None,
@@ -175,3 +186,16 @@ def add_or_update_trigger_for_pipeline_and_persist(
     safe_write(trigger_file_path, content)
 
     return triggers_by_name
+
+
+def update_triggers_for_pipeline_and_persist(
+    trigger_configs: List[Dict],
+    pipeline_uuid: str,
+) -> Dict:
+    yaml_config = dict()
+    yaml_config['triggers'] = trigger_configs
+    content = yaml.safe_dump(yaml_config)
+    trigger_file_path = get_triggers_file_path(pipeline_uuid)
+    safe_write(trigger_file_path, content)
+
+    return trigger_configs

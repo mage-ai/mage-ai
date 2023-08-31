@@ -226,10 +226,10 @@ class PipelineScheduleResource(DatabaseResource):
             trigger = Trigger(
                 name=payload.get('name', self.model.name),
                 pipeline_uuid=pipeline_uuid,
+                schedule_interval=payload.get('schedule_interval', self.model.schedule_interval),
                 schedule_type=payload.get('schedule_type', self.model.schedule_type),
                 sla=payload.get('sla', self.model.sla),
                 start_time=payload.get('start_time', self.model.start_time),
-                schedule_interval=payload.get('schedule_interval', self.model.schedule_interval),
                 status=payload.get('status', self.model.status),
                 variables=payload.get('variables', self.model.variables),
             )
