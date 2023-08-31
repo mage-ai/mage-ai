@@ -88,7 +88,7 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
         )
         response = await operation.execute()
 
-        self.assertEqual(response['pipeline_schedule']['status'], ScheduleStatus.INACTIVE)
+        self.assertEqual(response['pipeline_schedule']['status'], ScheduleStatus.ACTIVE)
         self.assertEqual(
             response['pipeline_schedule']['schedule_interval'],
             ScheduleInterval.HOURLY,
@@ -97,11 +97,11 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
         updated_trigger_configs_by_name = get_trigger_configs_by_name('test_pipeline')
         self.assertEqual(
             updated_trigger_configs_by_name['test_schedule_2']['schedule_interval'],
-            ScheduleInterval.DAILY,
+            ScheduleInterval.HOURLY,
         )
         self.assertEqual(
             updated_trigger_configs_by_name['test_schedule_2']['status'],
-            ScheduleStatus.INACTIVE,
+            ScheduleStatus.ACTIVE,
         )
 
     async def test_execute_list(self):
