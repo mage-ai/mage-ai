@@ -476,10 +476,7 @@ class Git:
         if files:
             for file in files:
                 self.repo.git.add(file)
-            self.repo.index.commit(message)
-        elif self.repo.index.diff(None) or self.repo.untracked_files:
-            self.repo.git.add('.')
-            self.repo.index.commit(message)
+        self.repo.index.commit(message)
 
     def commit_message(self, message: str) -> None:
         self.repo.index.commit(message)
