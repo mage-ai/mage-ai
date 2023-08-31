@@ -515,6 +515,7 @@ class Pipeline:
                 replicated_block=c.get('replicated_block'),
                 retry_config=c.get('retry_config'),
                 status=c.get('status'),
+                timeout=c.get('timeout'),
             )
 
         blocks = [build_shared_args_kwargs(c) for c in self.block_configs]

@@ -183,6 +183,8 @@ class PipelineScheduler:
         for b in self.pipeline_run.block_runs:
             b.refresh()
 
+        self.check_timeout()
+
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
         else:
@@ -356,6 +358,39 @@ class PipelineScheduler:
 
                 calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
+    def check_timeout(self) -> None:
+        pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
+
+        if self.pipeline_run.started_at and pipeline_run_timeout:
+            time_difference = datetime.now(tz=pytz.UTC) - self.pipeline_run.started_at
+            if time_difference > timedelta(seconds=pipeline_run_timeout):
+                self.logger.error(
+                    f'Pipeline run timed out after {time_difference.total_seconds()} seconds',
+                    **self.build_tags(),
+                )
+                stop_pipeline_run(
+                    self.pipeline_run,
+                    self.pipeline,
+                    status=PipelineRun.PipelineRunStatus.FAILED
+                )
+                return
+
+        block_runs = self.pipeline_run.running_block_runs
+
+        for block_run in block_runs:
+            block = self.pipeline.get_block(block_run.block_uuid)
+            if block and block.timeout and block_run.started_at:
+                time_difference = datetime.now(tz=pytz.UTC) - block_run.started_at
+                if time_difference > timedelta(seconds=block.timeout):
+                    self.on_block_failure(
+                        block_run.block_uuid,
+                        error=TimeoutError(
+                            f'Block {block_run.block_uuid} timed out after ' +
+                            f'{time_difference.total_seconds()} seconds'
+                        )
+                    )
+                    job_manager.kill_block_run_job(block_run.id)
+
     def memory_usage_failure(self, tags: Dict = None) -> None:
         if tags is None:
             tags = dict()
@@ -499,6 +534,8 @@ class PipelineScheduler:
                 status=BlockRun.BlockRunStatus.QUEUED,
             )
 
+            block = self.pipeline.get_block(b.block_uuid)
+
             job_manager.add_job(
                 JobType.BLOCK_RUN,
                 b.id,
@@ -508,6 +545,7 @@ class PipelineScheduler:
                 b.id,
                 self.pipeline_run.get_variables(),
                 self.build_tags(**tags),
+                timeout=block.timeout,
             )
 
     def __schedule_integration_streams(self, block_runs: List[BlockRun] = None) -> None:
@@ -1118,6 +1156,7 @@ def retry_pipeline_run(
 def stop_pipeline_run(
     pipeline_run: PipelineRun,
     pipeline: Pipeline = None,
+    status: PipelineRun.PipelineRunStatus = PipelineRun.PipelineRunStatus.CANCELLED,
 ) -> None:
     """Stop a pipeline run.
 
@@ -1138,7 +1177,7 @@ def stop_pipeline_run(
         return
 
     # Update pipeline run status to cancelled
-    pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+    pipeline_run.update(status=status)
 
     asyncio.run(UsageStatisticLogger().pipeline_run_ended(pipeline_run))
 

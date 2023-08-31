@@ -383,7 +383,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Executor type
             </Headline>
 
@@ -461,7 +461,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Retry configuration
             </Headline>
 
@@ -583,9 +583,33 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+            <Headline level={5}>
+              Block run timeout
+            </Headline>
+            <Spacing mb={1} />
+            <TextInput
+              label="Time in seconds"
+              monospace
+              onChange={e => setBlockAttributes(prev => ({
+                ...prev,
+                timeout: e.target.value,
+              }))}
+              primary
+              setContentOnMount
+              type="number"
+              value={blockAttributes?.timeout || ''}
+            />
+            <Spacing mb={1} />
+            <Text small>
+              The block timeout will only be applied when the block is run through a trigger.
+              If a block times out, the block run will be set to a failed state.
+            </Text>
+          </Spacing>
+
           {BlockTypeEnum.DBT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 dbt settings
               </Headline>
 
@@ -611,7 +635,7 @@ function BlockSettings({
           {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS}>
               <Spacing px={PADDING_UNITS}>
-                <Headline>
+                <Headline level={5}>
                   Override global data product settings
                 </Headline>
               </Spacing>
@@ -656,6 +680,7 @@ function BlockSettings({
                   configuration: blockAttributes?.configuration,
                   executor_type: blockAttributes?.executor_type,
                   retry_config: blockRetryConfig,
+                  timeout: blockAttributes?.timeout,
                 },
               })}
               primary
@@ -677,7 +702,7 @@ function BlockSettings({
         {dataBlock && (
           <>
             <Spacing p={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>
