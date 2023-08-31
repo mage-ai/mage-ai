@@ -358,14 +358,16 @@ class PipelineScheduler:
 
                 calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
+    @safe_db_query
     def check_timeout(self) -> None:
         pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
 
         if self.pipeline_run.started_at and pipeline_run_timeout:
-            time_difference = datetime.now(tz=pytz.UTC) - self.pipeline_run.started_at
-            if time_difference > timedelta(seconds=pipeline_run_timeout):
+            time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                self.pipeline_run.started_at.timestamp()
+            if time_difference > int(pipeline_run_timeout):
                 self.logger.error(
-                    f'Pipeline run timed out after {time_difference.total_seconds()} seconds',
+                    f'Pipeline run timed out after {int(time_difference)} seconds',
                     **self.build_tags(),
                 )
                 stop_pipeline_run(
@@ -380,15 +382,23 @@ class PipelineScheduler:
         for block_run in block_runs:
             block = self.pipeline.get_block(block_run.block_uuid)
             if block and block.timeout and block_run.started_at:
-                time_difference = datetime.now(tz=pytz.UTC) - block_run.started_at
-                if time_difference > timedelta(seconds=block.timeout):
-                    self.on_block_failure(
-                        block_run.block_uuid,
-                        error=TimeoutError(
-                            f'Block {block_run.block_uuid} timed out after ' +
-                            f'{time_difference.total_seconds()} seconds'
-                        )
+                time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                    block_run.started_at.timestamp()
+                if time_difference > int(block.timeout):
+                    block_executor = ExecutorFactory.get_block_executor(
+                        self.pipeline,
+                        block.uuid,
+                        execution_partition=self.pipeline_run.execution_partition,
                     )
+                    block_executor.logger.error(
+                        f'Block {block_run.block_uuid} timed out after ' +
+                        f'{int(time_difference)} seconds',
+                        **block_executor.build_tags(
+                            block_run_id=block_run.id,
+                            pipeline_run_id=self.pipeline_run.id,
+                        ),
+                    )
+                    self.on_block_failure(block_run.block_uuid)
                     job_manager.kill_block_run_job(block_run.id)
 
     def memory_usage_failure(self, tags: Dict = None) -> None:
