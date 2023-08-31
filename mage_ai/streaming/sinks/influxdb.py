@@ -57,39 +57,53 @@ class InfluxDbSink(BaseSink):
         self.write_api = self.client.write_api(write_options=options)
         self._print('Finish initializing writer.')
 
-    def write(self, data: Dict):
+    def write(self, message: Dict):
+        data = message['data']
+        metadata = message.get('metadata', {})
+
         if isinstance(data, dict):
             record = {
-                'measurement': data.get('measurement', self.config.measurement),
-                'time': data.get('timestamp', get_timestamp_ms()),
-                'tags': data.get('tags', {}),
-                'fields': data.get('fields', data),
+                'measurement': metadata.get('measurement', self.config.measurement),
+                'time': metadata.get('timestamp', get_timestamp_ms()),
+                'tags': metadata.get('tags', {}),
+                'fields': data,
             }
+            self.write_api.write(
+                bucket=self.config.bucket,
+                record=record,
+                write_precision=WritePrecision.MS,
+            )
         elif isinstance(data, Iterable):
-            for i, value in enumerate(data):
+            for value in data:
                 record = {
-                    'measurement': self.config.measurement,
-                    'time': get_timestamp_ms(),
-                    'tags': {},
-                    'fields': {'_value_{i}': value},
+                    'measurement': metadata.get('measurement', self.config.measurement),
+                    'time': metadata.get('timestamp', get_timestamp_ms()),
+                    'tags': metadata.get('tags', {}),
+                    'fields': {'_value': value},
                 }
+                self.write_api.write(
+                    bucket=self.config.bucket,
+                    record=record,
+                    write_precision=WritePrecision.MS,
+                )
         else:  # data is scalar
             record = {
-                'measurement': self.config.measurement,
-                'time': get_timestamp_ms(),
-                'tags': {},
+                'measurement': metadata.get('measurement', self.config.measurement),
+                'time': metadata.get('timestamp', get_timestamp_ms()),
+                'tags': metadata.get('tags', {}),
                 'fields': {'_value': data},
             }
+            self.write_api.write(
+                bucket=self.config.bucket,
+                record=record,
+                write_precision=WritePrecision.MS,
+            )
 
-        self.write_api.write(
-            bucket=self.config.bucket, record=record, write_precision=WritePrecision.MS
-        )
-
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             return
         self._print(
-            f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}'
+            f'Batch ingest {len(messages)} messages, time={time.time()}. Sample: {messages[0]}'
         )
-        for record in data:
-            self.write(record)
+        for message in messages:
+            self.write(message)
