@@ -19,8 +19,8 @@ class InfluxDbConfig(BaseConfig):
     url: str
     token: str
     org: str
-    bucket: str = "data"
-    measurement: str = "default"
+    bucket: str = 'data'
+    measurement: str = 'default'
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
 
@@ -29,7 +29,7 @@ class InfluxDbSink(BaseSink):
     config_class = InfluxDbConfig
 
     def init_client(self):
-        self._print("Start initializing writer.")
+        self._print('Start initializing writer.')
         # Initialize influxdb client and write_api
         self.client = InfluxDBClient(
             url=self.config.url,
@@ -55,30 +55,30 @@ class InfluxDbSink(BaseSink):
             exponential_base=2,
         )
         self.write_api = self.client.write_api(write_options=options)
-        self._print("Finish initializing writer.")
+        self._print('Finish initializing writer.')
 
     def write(self, data: Dict):
         if isinstance(data, dict):
             record = {
-                "measurement": data.get("measurement", self.config.measurement),
-                "time": data.get("timestamp", get_timestamp_ms()),
-                "tags": data.get("tags", {}),
-                "fields": data.get("fields", data),
+                'measurement': data.get('measurement', self.config.measurement),
+                'time': data.get('timestamp', get_timestamp_ms()),
+                'tags': data.get('tags', {}),
+                'fields': data.get('fields', data),
             }
         elif isinstance(data, Iterable):
             for i, value in enumerate(data):
                 record = {
-                    "measurement": self.config.measurement,
-                    "time": get_timestamp_ms(),
-                    "tags": {},
-                    "fields": {"_value_{i}": value},
+                    'measurement': self.config.measurement,
+                    'time': get_timestamp_ms(),
+                    'tags': {},
+                    'fields': {'_value_{i}': value},
                 }
         else:  # data is scalar
             record = {
-                "measurement": self.config.measurement,
-                "time": get_timestamp_ms(),
-                "tags": {},
-                "fields": {"_value": data},
+                'measurement': self.config.measurement,
+                'time': get_timestamp_ms(),
+                'tags': {},
+                'fields': {'_value': data},
             }
 
         self.write_api.write(
@@ -89,7 +89,7 @@ class InfluxDbSink(BaseSink):
         if not data:
             return
         self._print(
-            f"Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}"
+            f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}'
         )
         for record in data:
             self.write(record)
