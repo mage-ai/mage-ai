@@ -416,6 +416,8 @@ class PipelineScheduler:
                 time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
                     block_run.started_at.timestamp()
                 if time_difference > int(block.timeout):
+                    # Get logger from block_executor so that the error log shows up in the block run
+                    # log file and not the pipeline run log file.
                     block_executor = ExecutorFactory.get_block_executor(
                         self.pipeline,
                         block.uuid,
