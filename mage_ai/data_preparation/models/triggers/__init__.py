@@ -182,7 +182,7 @@ def add_or_update_trigger_for_pipeline_and_persist(
     have, so we need to set "envs" on the updated trigger if it already exists.
     Otherwise, it will get overwritten when updating the trigger in code.
     """
-    existing_trigger = triggers_by_name[trigger.name]
+    existing_trigger = triggers_by_name.get(trigger.name)
     if existing_trigger is not None:
         trigger.envs = existing_trigger.envs
     triggers_by_name[trigger.name] = trigger
