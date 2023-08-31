@@ -16,8 +16,11 @@ To effectively connect on a StrongDM Resource inside Mage's docker, you may need
     If using docker-compose setup:
     <br/>
         ```yaml
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+        services:
+            server:
+                .....
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
         ```
 
 ## Install StrongDM CLI tool
