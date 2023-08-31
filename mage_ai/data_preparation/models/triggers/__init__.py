@@ -172,11 +172,19 @@ def add_or_update_trigger_for_pipeline_and_persist(
 ) -> Dict:
     yaml_config = load_triggers_file_data(pipeline_uuid)
     trigger_configs = yaml_config.get('triggers') or {}
-
     triggers_by_name = index_by(
         lambda trigger: trigger.name,
         build_triggers(trigger_configs, pipeline_uuid),
     )
+
+    """
+    The Trigger class has an "envs" attribute that the PipelineSchedule class does not
+    have, so we need to set "envs" on the updated trigger if it already exists.
+    Otherwise, it will get overwritten when updating the trigger in code.
+    """
+    existing_trigger = triggers_by_name[trigger.name]
+    if existing_trigger is not None:
+        trigger.envs = existing_trigger.envs
     triggers_by_name[trigger.name] = trigger
 
     yaml_config['triggers'] = [trigger.to_dict() for trigger in triggers_by_name.values()]
