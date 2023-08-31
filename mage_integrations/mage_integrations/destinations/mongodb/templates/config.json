@@ -1,4 +1,5 @@
 {
     "connection_string": "",
-    "db_name": ""
+    "db_name": "",
+    "table_name": ""
 }
