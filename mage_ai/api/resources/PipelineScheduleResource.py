@@ -14,7 +14,11 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
-from mage_ai.orchestration.db.models.tags import Tag, TagAssociation, TagAssociationWithTag
+from mage_ai.orchestration.db.models.tags import (
+    Tag,
+    TagAssociation,
+    TagAssociationWithTag,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
@@ -228,6 +232,7 @@ class PipelineScheduleResource(DatabaseResource):
                 pipeline_uuid=pipeline_uuid,
                 schedule_interval=payload.get('schedule_interval', self.model.schedule_interval),
                 schedule_type=payload.get('schedule_type', self.model.schedule_type),
+                settings=payload.get('settings', self.model.settings),
                 sla=payload.get('sla', self.model.sla),
                 start_time=payload.get('start_time', self.model.start_time),
                 status=payload.get('status', self.model.status),

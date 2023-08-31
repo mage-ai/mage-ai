@@ -1,3 +1,13 @@
+from datetime import datetime
+
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+    Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
+    get_trigger_configs_by_name,
+)
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -35,6 +45,64 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
 
         self.assertEqual(response['pipeline_schedule']['name'], 'test_schedule')
         self.assertEqual(response['pipeline_schedule']['repo_path'], get_repo_path())
+
+    async def test_execute_update_schedule_saved_in_code(self):
+        email = self.faker.email()
+        user = create_user(email=email, roles=1)
+        pipeline_schedule = PipelineSchedule.create(dict(
+            name='test_schedule_2',
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 30, 12, 30, 45),
+            status=ScheduleStatus.INACTIVE,
+        ))
+        trigger = Trigger(
+            name=pipeline_schedule.name,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            schedule_interval=pipeline_schedule.schedule_interval,
+            schedule_type=pipeline_schedule.schedule_type,
+            start_time=pipeline_schedule.start_time,
+        )
+        triggers_by_name = add_or_update_trigger_for_pipeline_and_persist(
+            trigger,
+            pipeline_schedule.pipeline_uuid,
+        )
+
+        self.assertEqual(
+            triggers_by_name['test_schedule_2'].schedule_interval,
+            ScheduleInterval.DAILY,
+        )
+        self.assertEqual(
+            triggers_by_name['test_schedule_2'].status,
+            ScheduleStatus.INACTIVE,
+        )
+
+        operation = self.build_update_operation(
+            pipeline_schedule.id,
+            dict(
+                schedule_interval=ScheduleInterval.HOURLY,
+                status=ScheduleStatus.ACTIVE,
+            ),
+            user=user,
+        )
+        response = await operation.execute()
+
+        self.assertEqual(response['pipeline_schedule']['status'], ScheduleStatus.INACTIVE)
+        self.assertEqual(
+            response['pipeline_schedule']['schedule_interval'],
+            ScheduleInterval.HOURLY,
+        )
+
+        updated_trigger_configs_by_name = get_trigger_configs_by_name('test_pipeline')
+        self.assertEqual(
+            updated_trigger_configs_by_name['test_schedule_2']['schedule_interval'],
+            ScheduleInterval.DAILY,
+        )
+        self.assertEqual(
+            updated_trigger_configs_by_name['test_schedule_2']['status'],
+            ScheduleStatus.INACTIVE,
+        )
 
     async def test_execute_list(self):
         email = self.faker.email()
