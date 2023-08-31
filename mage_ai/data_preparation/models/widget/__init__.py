@@ -389,14 +389,24 @@ class Widget(Block):
         metrics = chart_configuration_settings['metrics']
 
         variables = self.get_variables_from_code_execution(results)
-        outputs = self.post_process_variables(
-            variables,
-            chart_type=chart_type,
-            data_source_output=data_source_output,
-            group_by_columns=group_by_columns,
-            input_vars_from_data_source=input_vars_from_data_source,
-            metrics=metrics,
-            **options,
-        )
+
+        try:
+            outputs = self.post_process_variables(
+                variables,
+                chart_type=chart_type,
+                data_source_output=data_source_output,
+                group_by_columns=group_by_columns,
+                input_vars_from_data_source=input_vars_from_data_source,
+                metrics=metrics,
+                **options,
+            )
+        except Exception as err:
+            outputs = dict(
+                error=dict(
+                    errors=[
+                        str(err),
+                    ],
+                ),
+            )
 
         return merge_dict(outputs, dict(columns=columns))

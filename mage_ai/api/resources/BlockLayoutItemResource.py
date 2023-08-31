@@ -49,10 +49,13 @@ class BlockLayoutItemResource(GenericResource):
 
         if BlockType.CHART == block_type:
             data_source_config = block_config.get('data_source')
-            if data_source_config:
-                if data_source_override:
+            if data_source_override:
+                if data_source_config:
                     data_source_config.update(data_source_override)
+                else:
+                    data_source_config = data_source_override
 
+            if data_source_config:
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
@@ -75,6 +78,7 @@ class BlockLayoutItemResource(GenericResource):
                 else:
                     data_source_block_uuid = data_source_config.get('block_uuid')
 
+
                     data_source_class_options = merge_dict(extract(data_source_config, [
                         'pipeline_schedule_id',
                     ]), dict(
@@ -85,9 +89,10 @@ class BlockLayoutItemResource(GenericResource):
 
                     if ChartDataSourceType.BLOCK == data_source_type:
                         data_source = ChartDataSourceBlock(**data_source_class_options)
-                        data_source_output = data_source.load_data(
-                            partitions=data_source_config.get('partitions'),
-                        )
+                        if data_source.block_uuid:
+                            data_source_output = data_source.load_data(
+                                partitions=data_source_config.get('partitions'),
+                            )
 
                     data = block.execute_with_callback(
                         disable_json_serialization=True,

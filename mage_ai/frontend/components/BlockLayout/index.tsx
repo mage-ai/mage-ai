@@ -89,6 +89,17 @@ function BlockLayout({
     },
   );
 
+  useEffect(() => {
+    if (dataBlockLayoutItem?.block_layout_item?.data?.error) {
+      showError({
+        ...dataBlockLayoutItem?.block_layout_item?.data?.error,
+      });
+    }
+  }, [
+    dataBlockLayoutItem,
+    showError,
+]);
+
   const setObjectAttributes = useCallback((prev) => {
     fetchBlockLayoutItem();
     setObjectAttributesState(prev);

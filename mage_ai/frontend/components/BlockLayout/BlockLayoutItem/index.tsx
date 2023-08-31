@@ -78,11 +78,12 @@ function BlockLayoutItem({
   );
 
   useEffect(() => {
-    if (!blockLayoutItem && dataBlockLayoutItem?.block_layout_item) {
-      setBlockLayoutItem({
-        ...block,
-        ...dataBlockLayoutItem?.block_layout_item,
-      });
+    if (!blockLayoutItem) {
+      if (block) {
+        setBlockLayoutItem(block);
+      } else if (dataBlockLayoutItem?.block_layout_item) {
+        setBlockLayoutItem(dataBlockLayoutItem?.block_layout_item);
+      }
     }
   }, [
     block,
