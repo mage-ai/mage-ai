@@ -2,7 +2,7 @@ import os
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict
-
+from mage_ai.settings import MAGE_ACCESS_TOKEN_EXPIRY_TIME
 import jwt
 
 from mage_ai.orchestration.db.models.oauth import (
@@ -29,7 +29,7 @@ def generate_access_token(
             token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
 
     attributes_data = dict(
-        expires=datetime.utcnow() + timedelta(days=30),
+        expires= expires=datetime.utcnow() + timedelta(seconds= MAGE_ACCESS_TOKEN_EXPIRY_TIME),
         token=token,
         user_id=user.id if user else None,
     )
