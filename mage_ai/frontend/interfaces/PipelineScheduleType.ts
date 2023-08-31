@@ -50,7 +50,7 @@ export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
   [SortQueryParamEnum.CREATED_AT]: 'Created at',
   [SortQueryParamEnum.NAME]: 'Name',
   [SortQueryParamEnum.PIPELINE]: 'Pipeline',
-  [SortQueryParamEnum.STATUS]: 'Status',
+  [SortQueryParamEnum.STATUS]: 'Info (active/inactive)',
   [SortQueryParamEnum.TYPE]: 'Type',
 };
 
