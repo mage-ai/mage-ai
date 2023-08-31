@@ -192,6 +192,11 @@ def update_triggers_for_pipeline_and_persist(
     trigger_configs: List[Dict],
     pipeline_uuid: str,
 ) -> Dict:
+    """
+    Used to update all of a pipeline's triggers saved in code at once.
+    Overwrites triggers in triggers.yaml config with updated triggers
+    passed as first argument.
+    """
     yaml_config = dict()
     yaml_config['triggers'] = trigger_configs
     content = yaml.safe_dump(yaml_config)
