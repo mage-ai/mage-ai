@@ -1,8 +1,8 @@
 ---
-title: "🧙 Welcome to Mage"
+title: "🧙🏻‍♂️ Welcome to Mage"
 sidebarTitle: "Overview"
 icon: "hat-wizard"
-description: "an open-source pipeline tool for transforming and integrating your data."
+description: "Mage is an open-source, hybrid framework for transforming and integrating data. Mage makes data engineering fun by prioritizing the developer experience. ✨"
 ---
 
 <Snippet file="overview-shields.mdx" />
@@ -22,7 +22,7 @@ description: "an open-source pipeline tool for transforming and integrating your
   </Card>
 </CardGroup>
 
-## 🪄 Make data magical
+## 🦄 Make data magical
 
 - **Extract** and synchronize data from 3rd party sources.
 - **Transform** data with real-time and batch pipelines using Python, SQL, and R.
@@ -35,11 +35,9 @@ description: "an open-source pipeline tool for transforming and integrating your
 
 ### 1️⃣ Build
 
-Have you met anyone who said they loved developing in Airflow? That's why we
-designed an easy developer experience that you'll enjoy.
+Have you met anyone who loves developing in Airflow? That's why we designed an easy developer experience that you'll enjoy.
 
-- **Simple developer experience**: Start developing locally with a single command
-  or launch a dev environment in your cloud using Terraform.
+- **Simple developer experience**: Start developing locally with a single command or launch a dev environment in your cloud using Terraform.
 - **Language of choice**: Write code in Python, SQL, or R in the same pipeline for _ultimate_ flexibility.
 - **Engineering best practices built-in**: Every step in your pipeline is a standalone file with modular code that's reusable and testable. No more DAGs with spaghetti code 🍝.
 - **Bring your favorite tools:** Write [dbt](dbt/overview) models, use your favorite [IDE](development/text-editor), [track changes with Git](getting-started/setting-up-git), and much much more.
@@ -50,11 +48,11 @@ designed an easy developer experience that you'll enjoy.
 
 ### 2️⃣ Preview
 
-Stop wasting time waiting for your DAGs to finish testing. Get instant feedback from your code _every_ time you run it.
+Don't waste time waiting for your DAGs to finish testing. Get instant feedback from your code _every_ time you run it.
 
 - **Interactive code**: Immediately see results from your code's output with an interactive notebook UI.
 - **Data is a first-class citizen**: Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.
-- **Collaborate on cloud**: Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment.
+- **Collaborate on cloud**: Develop collaboratively on [cloud resources](production/deploying-to-cloud/architecture), version control with [Git](getting-started/setting-up-git), and [test](development/data-validation) pipelines without waiting for an available shared staging environment.
 
 <p align="center">
   <img src= "media/overview/mage-preview.gif"/>
@@ -64,8 +62,8 @@ Stop wasting time waiting for your DAGs to finish testing. Get instant feedback 
 
 Don't have a large team dedicated to Airflow? Mage makes it easy for a single developer or small team to scale up and manage thousands of pipelines.
 
-- **Fast deploy**: Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.
-- **Scaling made simple**: Transform very large datasets directly in your data warehouse or through a native integration with Spark.
+- **Fast deploy**: Deploy Mage to [AWS](production/deploying-to-cloud/aws/setup), [GCP](production/deploying-to-cloud/gcp/setup), or [Azure](production/deploying-to-cloud/azure/setup) with only 2 commands using maintained Terraform templates.
+- **Scaling made simple**: Transform very large datasets directly in your data warehouse or through a native integration with [Spark](integrations/spark-pyspark).
 - **Observability**: Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI.
 
 <p align="center">
@@ -76,9 +74,9 @@ Don't have a large team dedicated to Airflow? Mage makes it easy for a single de
 |       |                                                                  |                                                                        |
 | ----- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | 🎶   | [Orchestration](/design/data-pipeline-management)                | Schedule and manage data pipelines with observability.                 |
-| 📓   | [Notebook](/about/features#notebook-for-building-data-pipelines) | Interactive Python, SQL, & R editor for coding data pipelines.         |
-| 🏗️ | [Data integrations](/data-integrations)                          | Synchronize data from 3rd party sources to your internal destinations. |
-| 🚰   | [Streaming pipelines](/guides/streaming-pipeline)                | Ingest and transform real-time data.                                   |
+| 📓   | [Notebook editor](/about/features#notebook-for-building-data-pipelines) | Interactive Python, SQL, & R editor for coding data pipelines.         |
+| 🏗️ | [Data integration](/data-integrations)                          | Synchronize data from 3rd party sources to your internal destinations. |
+| 🚰   | [Streaming](/guides/streaming-pipeline)                | Ingest and transform real-time data.                                   |
 | 🧱   | [dbt](/dbt)                                                      | Build, run, and manage your dbt models with Mage.                      |
 
 ## 🏔️ [Core design principles](/design/core-design-principles)
@@ -88,9 +86,9 @@ Every user experience and technical design decision adheres to these principles.
 |     |                                                                                                           |                                                                                                                              |
 | --- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 💻 | [Easy developer experience](/design/core-design-principles#easy-developer-experience)                     | Open-source engine that comes with a custom notebook UI for building data pipelines.                                         |
-| 🚢 | [Engineering best practices built-in](/design/core-design-principles#engineering-best-practices-built-in) | Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts. |
-| 💳 | [Data is a first-class citizen](/design/core-design-principles#data-is-a-first-class-citizen)             | Designed from the ground up specifically for running data-intensive workflows.                                               |
-| 🪐 | [Scaling is made simple](/design/core-design-principles#scaling-is-made-simple)                           | Analyze and process large data quickly for rapid iteration.                                                                  |
+| 🚢 | [Engineering best practices](/design/core-design-principles#engineering-best-practices-built-in) | Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts. |
+| 💳 | [Data as a first-class citizen](/design/core-design-principles#data-is-a-first-class-citizen)             | Designed from the ground up specifically for running data-intensive workflows.                                               |
+| 🪐 | [Scaling made simple](/design/core-design-principles#scaling-is-made-simple)                           | Analyze and process large data quickly for rapid iteration.                                                                  |
 
 ## 🛸 [Core abstractions](/design/core-abstractions)
 
@@ -117,11 +115,11 @@ Individually, we're a mage.
 >
 > A group of mages who help each other realize their full potential! Join us on [Slack](https://www.mage.ai/chat).
 
-## 🪪 License
+<p align="center">
+  <img src= "media/overview/slack.gif"/>
+</p>
 
-See the
-[LICENSE](https://github.com/mage-ai/mage-ai/blob/master/LICENSE) file
-for licensing information.
+## 🪪 [License](https://github.com/mage-ai/mage-ai/blob/master/LICENSE)
 
 <p align='center'>
 <img

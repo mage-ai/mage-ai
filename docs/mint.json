@@ -21,7 +21,7 @@
     "thumbsRating": true
   },
   "search": {
-    "prompt": "✨ Find something magical..."
+    "prompt": "✨ Make magic..."
   },
   "metadata": {
     "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
@@ -230,8 +230,7 @@
           "group": "Schedules and triggers",
           "icon": "clock",
           "pages": [
-            "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/schedule-pipelines",
+            "orchestration/triggers/configure-triggers-in-code",
             {
               "group": "Event triggers",
               "pages": [
@@ -239,9 +238,9 @@
                 "orchestration/triggers/events/aws"
               ]
             },
-            "orchestration/triggers/trigger-pipeline-api",
             "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/configure-triggers-in-code"
+            "orchestration/triggers/trigger-pipeline-api",
+            "orchestration/triggers/schedule-pipelines"
           ]
         },
         {
