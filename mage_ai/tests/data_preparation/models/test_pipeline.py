@@ -137,6 +137,19 @@ class PipelineTest(DBTestCase):
             ],
         ))
 
+    def test_add_block_with_duplicate_uuid(self):
+        self.__create_pipeline_with_blocks('test_pipeline_duplicate_blocks')
+        pipeline = Pipeline('test_pipeline_duplicate_blocks', self.repo_path)
+
+        block = Block.create(
+            'block1',
+            'data_exporter',
+            self.repo_path
+        )
+
+        with self.assertRaises(InvalidPipelineError):
+            pipeline.add_block(block)
+
     def test_update_name_existing_pipeline(self):
         pipeline1 = Pipeline.create(
             'test_pipeline_a',
