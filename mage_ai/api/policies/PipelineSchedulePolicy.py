@@ -85,6 +85,7 @@ PipelineSchedulePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineSchedulePolicy.allow_write([
+    'description',
     'event_matchers',
     'id',
     'name',
