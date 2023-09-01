@@ -91,26 +91,39 @@ class KafkaSink(BaseSink):
         self.producer = KafkaProducer(**kwargs)
         self._print('Finish initializing producer.')
 
-    def write(self, data: Dict):
-        # self._print(f'Ingest data {data}, time={time.time()}')
+    def write(self, message: Dict):
+        # self._print(f'Ingest message {message}, time={time.time()}')
+
+        data = message['data']
+        metadata = message.get('metadata', {})
+
         if isinstance(data, dict):
+            for key, value in data.items():
+                self.producer.send(
+                    topic=metadata.get('topic', self.config.topic),
+                    value=value,
+                    key=key,
+                    timestamp_ms=metadata.get('time'),
+                )
+        elif isinstance(data, Iterable):
+            for value in data:
+                self.producer.send(
+                    topic=metadata.get('topic', self.config.topic),
+                    value=value,
+                    timestamp_ms=metadata.get('time'),
+                )
+        else:  # data is scalar
             self.producer.send(
-                topic=data.get('topic', self.config.topic),
-                value=data.get('value', data),
-                key=data.get('key'),
-                timestamp_ms=data.get('timestamp'),
-            )
-        else:
-            self.producer.send(
-                topic=self.config.topic,
+                topic=metadata.get('topic', self.config.topic),
                 value=data,
+                timestamp_ms=metadata.get('time'),
             )
 
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             return
         self._print(
-            f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}'
+            f'Batch ingest {len(messages)} messages, time={time.time()}. Sample: {messages[0]}'
         )
-        for record in data:
-            self.write(record)
+        for message in messages:
+            self.write(message)

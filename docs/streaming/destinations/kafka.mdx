@@ -38,24 +38,51 @@ sasl_config:
 
 ## Data format
 
-Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. The kafka data exporter can create these elements if the messages received are lists of dictionaries with a specific schema. The following example of a transformer block shows the configuration of all possible elements (topic, value, partition, key, timestamp):
+The Kafka data exporter accepts only dictionaries as messages with a specific format:
+
+```
+message = {
+    'data': <Any>
+    'metadata': <Optional[Dict]>
+}
+```
+
+Every message contains at least some data in a `data` field. The following messages are valid:
 
 ```python
-@transformer
-def transform(messages: List[Dict], *args, **kwargs):
-    record = {
-        "topic": "census",
-        "value": {"location": "klamath", "scientist": "anderson", "count": 23},
-        "partition": 0,
-        "key": "bees",
-        "time": int(time.time() * 1e3)  # timestamp with ms precision
-        }
-    return [record]
+message_1 = {'data': {'bees': 23, 'ants': 30}}
+message_2 = {'data': 23}  # implicit for {None: 23}
+message_3 = {'data': [23, 30]}  # implicit for {None: 23} and {None: 30}
+```
+
+Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. 
+The Kafka data exporter can create these elements if the messages received contain a metadata dictionary: 
+
+```python
+message['metadata'] = {
+    'topic': str
+    'time': int
+}
+```
+
+The following message shows the configuration of all possible elements data and metadata:
+
+```python
+message = {
+    "data": {
+      'bees': 23, 
+      'ants': 30}
+      ,
+    "metadata": {
+        'topic': 'census',
+        'time': 1693396630163,  # timestamp with ms precision
+    }
+}
 ```
 
 If not all elements are configured, default values are assumed.
 
-- The default topic can be configured in the yaml file.
+- The default topic has to be configured in the yaml file.
 
 ```yaml
 connector_type: kafka
@@ -63,9 +90,7 @@ bootstrap_server: "localhost:9092"
 topic: topic_name
 ```
 
-- The default value is the whole message (if value is not given explicitly).
-- The default partition is none. 
-- The default key is none.
-- The default time none (current time of execution).
+- The default time timestamp is the current time of execution.
 
-If the message is not of type `dict` the whole message is taken as value. The other elements are the default values from above.
+If the `data` part of the message is a dictionary it taken for the keys and values. 
+Otherwise only the values are assigned with empty keys.
