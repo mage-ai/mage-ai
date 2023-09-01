@@ -169,31 +169,28 @@ def load_trigger_configs(
 def add_or_update_trigger_for_pipeline_and_persist(
     trigger: Trigger,
     pipeline_uuid: str,
+    update_only_if_exists: bool = False,
 ) -> Dict:
-    yaml_config = load_triggers_file_data(pipeline_uuid)
-    trigger_configs = yaml_config.get('triggers') or {}
-    triggers_by_name = index_by(
-        lambda trigger: trigger.name,
-        build_triggers(trigger_configs, pipeline_uuid),
-    )
+    trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
 
     """
     The Trigger class has an "envs" attribute that the PipelineSchedule class does not
     have, so we need to set "envs" on the updated trigger if it already exists.
     Otherwise, it will get overwritten when updating the trigger in code.
     """
-    existing_trigger = triggers_by_name.get(trigger.name)
+    existing_trigger = trigger_configs_by_name.get(trigger.name)
     if existing_trigger is not None:
-        trigger.envs = existing_trigger.envs
-    triggers_by_name[trigger.name] = trigger
+        trigger.envs = existing_trigger.get('envs', [])
+    elif update_only_if_exists:
+        return None
 
-    yaml_config['triggers'] = [trigger.to_dict() for trigger in triggers_by_name.values()]
-
+    trigger_configs_by_name[trigger.name] = trigger.to_dict()
+    yaml_config = dict(triggers=list(trigger_configs_by_name.values()))
     content = yaml.safe_dump(yaml_config)
     trigger_file_path = get_triggers_file_path(pipeline_uuid)
     safe_write(trigger_file_path, content)
 
-    return triggers_by_name
+    return trigger_configs_by_name
 
 
 def update_triggers_for_pipeline_and_persist(
@@ -205,8 +202,7 @@ def update_triggers_for_pipeline_and_persist(
     Overwrites triggers in triggers.yaml config with updated triggers
     passed as first argument.
     """
-    yaml_config = dict()
-    yaml_config['triggers'] = trigger_configs
+    yaml_config = dict(triggers=trigger_configs)
     content = yaml.safe_dump(yaml_config)
     trigger_file_path = get_triggers_file_path(pipeline_uuid)
     safe_write(trigger_file_path, content)
@@ -220,9 +216,10 @@ def remove_trigger(
 ) -> Dict:
     trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
     deleted_trigger = trigger_configs_by_name.pop(name, None)
-    update_triggers_for_pipeline_and_persist(
-        list(trigger_configs_by_name.values()),
-        pipeline_uuid,
-    )
+    if deleted_trigger is not None:
+        update_triggers_for_pipeline_and_persist(
+            list(trigger_configs_by_name.values()),
+            pipeline_uuid,
+        )
 
     return deleted_trigger

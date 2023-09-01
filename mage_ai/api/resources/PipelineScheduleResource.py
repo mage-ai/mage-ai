@@ -225,23 +225,24 @@ class PipelineScheduleResource(DatabaseResource):
 
             self.tag_associations_updated = tag_associations_updated + tag_associations_to_keep
 
-        trigger_as_code_exists = self.model.trigger_as_code_exists
-        if trigger_as_code_exists:
-            pipeline_uuid = self.model.pipeline_uuid
-            trigger = Trigger(
-                name=payload.get('name', self.model.name),
-                pipeline_uuid=pipeline_uuid,
-                schedule_interval=payload.get('schedule_interval', self.model.schedule_interval),
-                schedule_type=payload.get('schedule_type', self.model.schedule_type),
-                settings=payload.get('settings', self.model.settings),
-                sla=payload.get('sla', self.model.sla),
-                start_time=payload.get('start_time', self.model.start_time),
-                status=payload.get('status', self.model.status),
-                variables=payload.get('variables', self.model.variables),
-            )
-            add_or_update_trigger_for_pipeline_and_persist(trigger, pipeline_uuid)
-
-        super().update(payload)
+        resource = super().update(payload)
+        updated_model = resource.model
+        trigger = Trigger(
+            name=updated_model.name,
+            pipeline_uuid=updated_model.pipeline_uuid,
+            schedule_interval=updated_model.schedule_interval,
+            schedule_type=updated_model.schedule_type,
+            settings=updated_model.settings,
+            sla=updated_model.sla,
+            start_time=updated_model.start_time,
+            status=updated_model.status,
+            variables=updated_model.variables,
+        )
+        add_or_update_trigger_for_pipeline_and_persist(
+            trigger,
+            updated_model.pipeline_uuid,
+            update_only_if_exists=True,
+        )
 
         return self
 
@@ -253,8 +254,7 @@ class PipelineScheduleResource(DatabaseResource):
 
     @safe_db_query
     def delete(self, **kwargs):
-        if self.model.trigger_as_code_exists:
-            remove_trigger(self.model.name, self.model.pipeline_uuid)
+        remove_trigger(self.model.name, self.model.pipeline_uuid)
         self.model.delete()
 
         return self
