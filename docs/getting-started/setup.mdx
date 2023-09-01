@@ -1,33 +1,27 @@
 ---
-title: "Setup and install"
+title: "Quickstart"
 sidebarTitle: "Quickstart"
 icon: "space-station-moon-construction"
 description: "You can install Mage using Docker, pip, or conda."
-"og:image": "https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
 ---
 
-<Frame>
-<img
-  alt="mage start"
-  src="https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
-  width="300"
-/>
-</Frame>
+<AccordionGroup>
+<Accordion title="Docker template" icon="Docker">
 
-## Using Docker
+Be sure that Docker and Git are installed and run:
 
-1. Create new project and launch tool
+```bash
+git clone github.com/mage-ai/mage-template mage-quickstart \
+&& cd mage-quickstart \
+&& docker compose up
+```
 
-   ```bash
-   docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     /app/run_app.sh mage start [project_name]
-   ```
-
-    > Windows
-    >
-    > If you are running Mage in Docker on Windows OS, `$(pwd)` won’t work. Instead, use the following
-    > command:
+</Accordion>
+<Accordion title="Docker" icon="docker">
     <CodeGroup>
+        ```bash Mac/Linux
+        docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+        ```
         ```bash Windows Command Line
         docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
         ```
@@ -37,162 +31,139 @@ description: "You can install Mage using Docker, pip, or conda."
         ```
     </CodeGroup>
 
+   ### Connect to an external database
 
-2. Open http://localhost:6789 in your browser and build a pipeline.
+   <Note>
 
-3. Run pipeline after building it in the tool
+   Prior to Mage version 0.9.12, you may run into issues using database connection urls with special characters
+   in the password such as "%" or "@" symbols. Please upgrade to a Mage version >= 0.9.12 to resolve these issues.
 
-   ```bash
-   docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     /app/run_app.sh mage run [project_name] [pipeline]
-   ```
+   </Note>
 
-### Initialize new project
+   Mage uses SQLite as the default database engine, but SQLite is not recommended for production use cases.
+   The following databases are other alternatives that you can use with Mage.
 
-If you want to create a different project with a different name, run the
-following:
+   #### PostgreSQL
 
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-  mage init [project_name]
-```
+   To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
 
-### Connect to an external database
+   1. Create Docker network
 
-<Note>
+      ```bash
+      docker network create mage-app
+      ```
 
-Prior to Mage version 0.9.12, you may run into issues using database connection urls with special characters
-in the password such as "%" or "@" symbols. Please upgrade to a Mage version >= 0.9.12 to resolve these issues.
+   2. Start PostgreSQL Docker container in a separate window
 
-</Note>
+      ```bash
+      docker run --network mage-app --network-alias postgres_db \
+         -it -p 5432:5432 -v pgdata:/var/lib/postgresql/data \
+         -e POSTGRES_USER=<username> -e POSTGRES_PASSWORD=<password> \
+         -e POSTGRES_DB=<database> -e PG_DATA=/var/lib/postgresql/data/pgdata \
+         postgres:13-alpine3.17 postgres
+      ```
 
-Mage uses SQLite as the default database engine, but SQLite is not recommended for production use cases.
-The following databases are other alternatives that you can use with Mage.
+   3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
 
-#### PostgreSQL
+      ```bash
+      docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+         -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
+         mageai/mageai \
+         /app/run_app.sh mage start [project_name]
+      ```
 
-To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
+   To use a specific schema in the PostgreSQL database, the connection string could contain the schema name as a parameter:
 
-1. Create Docker network
+      ```bash
+      docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+         -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name>" \
+         mageai/mageai \
+         /app/run_app.sh mage start [project_name]
+      ```
 
-   ```bash
-   docker network create mage-app
-   ```
+   #### MSSQL
 
-2. Start PostgreSQL Docker container in a separate window
+   MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
 
-   ```bash
-   docker run --network mage-app --network-alias postgres_db \
-      -it -p 5432:5432 -v pgdata:/var/lib/postgresql/data \
-      -e POSTGRES_USER=<username> -e POSTGRES_PASSWORD=<password> \
-      -e POSTGRES_DB=<database> -e PG_DATA=/var/lib/postgresql/data/pgdata \
-      postgres:13-alpine3.17 postgres
-   ```
+   1. Create Docker network
 
-3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+      ```bash
+      docker network create mage-app
+      ```
 
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
+   2. Start MSSQL Docker container in a separate window
+
+      ```bash
+      docker run --network mage-app --network-alias mssql_db \
+      -it -p 1433:1433 -e "ACCEPT_EULA=Y" \
+      -e "MSSQL_SA_PASSWORD=test_Password123" \
+      mcr.microsoft.com/mssql/server:2022-latest
+      ```
+
+      More details about the MSSQL docker image are available at [Microsoft SQL Server - Ubuntu based images](https://hub.docker.com/_/microsoft-mssql-server)
+
+   3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+
+      ```bash
+      docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+      -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Password123;ENCRYPT=yes;TrustServerCertificate=yes;" \
       mageai/mageai \
       /app/run_app.sh mage start [project_name]
-   ```
+      ```
 
-To use a specific schema in the PostgreSQL database, the connection string could contain the schema name as a parameter:
+      The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
 
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name>" \
-      mageai/mageai \
-      /app/run_app.sh mage start [project_name]
-   ```
+      * `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
+      * `SERVER=database_server`: the name or IP address of the database server
+      * `DATABASE=database`: the name of the database
+      * `UID=user`: the user ID for the database
+      * `PWD=password`: the password for the user
+      * `ENCRYPT=yes`: whether to use encryption
+      * `TrustServerCertificate=yes`: whether to trust the server certificate
 
-#### MSSQL
+</Accordion>
+<Accordion title="pip/conda" icon="python">
 
-MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
+   1. Install Mage
 
-1. Create Docker network
+       <CodeGroup>
+          ```bash pip
+          pip install mage-ai
+          ```
 
-   ```bash
-   docker network create mage-app
-   ```
+          ```bash conda
+          conda install -c conda-forge mage-ai
+          ```
+       </CodeGroup>
 
-2. Start MSSQL Docker container in a separate window
+      <sub>If you run into errors, see the [errors section](#errors) below.</sub>
+      <br />
+      <sub>If you’re installing on Linux and need help, check out this [community provided video walkthrough](https://www.youtube.com/watch?v=WVH7LHqND1I).</sub>
 
-   ```bash
-   docker run --network mage-app --network-alias mssql_db \
-   -it -p 1433:1433 -e "ACCEPT_EULA=Y" \
-   -e "MSSQL_SA_PASSWORD=test_Password123" \
-   mcr.microsoft.com/mssql/server:2022-latest
-   ```
+   2. Create new project and launch tool
 
-   More details about the MSSQL docker image are available at [Microsoft SQL Server - Ubuntu based images](https://hub.docker.com/_/microsoft-mssql-server)
+      ```bash
+      mage start [project_name]
+      ```
 
-3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+   3. Open http://localhost:6789 in your browser and build a pipeline.
+   4. Run pipeline after building it in the tool
 
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-   -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Password123;ENCRYPT=yes;TrustServerCertificate=yes;" \
-   mageai/mageai \
-   /app/run_app.sh mage start [project_name]
-   ```
+      ```bash
+      mage run [project_name] [pipeline]
+      ```
 
-   The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
+   ### Initialize new project
 
-   * `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
-   * `SERVER=database_server`: the name or IP address of the database server
-   * `DATABASE=database`: the name of the database
-   * `UID=user`: the user ID for the database
-   * `PWD=password`: the password for the user
-   * `ENCRYPT=yes`: whether to use encryption
-   * `TrustServerCertificate=yes`: whether to trust the server certificate
-
----
-
-## Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
-
-1. Install Mage
-
-    <CodeGroup>
-       ```bash pip
-       pip install mage-ai
-       ```
-
-       ```bash conda
-       conda install -c conda-forge mage-ai
-       ```
-    </CodeGroup>
-
-   <sub>If you run into errors, see the [errors section](#errors) below.</sub>
-   <br />
-   <sub>If you’re installing on Linux and need help, check out this [community provided video walkthrough](https://www.youtube.com/watch?v=WVH7LHqND1I).</sub>
-
-2. Create new project and launch tool
+   If you want to create a different project with a different name, run the
+   following:
 
    ```bash
-   mage start [project_name]
+   mage init [project_name]
    ```
 
-3. Open http://localhost:6789 in your browser and build a pipeline.
-4. Run pipeline after building it in the tool
-
-   ```bash
-   mage run [project_name] [pipeline]
-   ```
-
-### Initialize new project
-
-If you want to create a different project with a different name, run the
-following:
-
-```bash
-mage init [project_name]
-```
-
----
-
-## Using Kubernetes
-
+</Accordion>
+<Accordion title="Kubernetes" icon="network-wired">
 1. Start a Kubernetes cluster locally
 
    [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
@@ -219,7 +190,8 @@ mage init [project_name]
 
    If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
 
----
+</Accordion>
+</AccordionGroup>
 
 ## Download new version of Mage
 
