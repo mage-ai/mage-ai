@@ -6,7 +6,7 @@ import os
 import sys
 import time
 import traceback
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
@@ -1048,7 +1048,7 @@ class Block:
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 input_args,
