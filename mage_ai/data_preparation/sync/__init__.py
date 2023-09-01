@@ -13,6 +13,7 @@ GIT_SSH_PUBLIC_KEY_SECRET_NAME = 'mage_git_ssh_public_key_b64'
 class AuthType(str, Enum):
     SSH = 'ssh'
     HTTPS = 'https'
+    OAUTH = 'oauth'
 
 
 @dataclass
@@ -22,7 +23,7 @@ class GitConfig(BaseConfig):
     branch: str = 'main'
     sync_on_pipeline_run: bool = False
     sync_on_start: bool = False
-    auth_type: AuthType = AuthType.SSH
+    auth_type: AuthType = None
     # User settings moved to UserGitConfig, these will be used for Git syncs
     username: str = ''
     email: str = ''
