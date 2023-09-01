@@ -64,17 +64,17 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
             schedule_type=pipeline_schedule.schedule_type,
             start_time=pipeline_schedule.start_time,
         )
-        triggers_by_name = add_or_update_trigger_for_pipeline_and_persist(
+        trigger_configs_by_name = add_or_update_trigger_for_pipeline_and_persist(
             trigger,
             pipeline_schedule.pipeline_uuid,
         )
 
         self.assertEqual(
-            triggers_by_name['test_schedule_2'].schedule_interval,
+            trigger_configs_by_name['test_schedule_2'].get('schedule_interval'),
             ScheduleInterval.DAILY,
         )
         self.assertEqual(
-            triggers_by_name['test_schedule_2'].status,
+            trigger_configs_by_name['test_schedule_2'].get('status'),
             ScheduleStatus.INACTIVE,
         )
 
