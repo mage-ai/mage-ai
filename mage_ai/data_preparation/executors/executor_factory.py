@@ -72,6 +72,11 @@ class ExecutorFactory:
 
             # Run pipeline on EMR cluster
             return PySparkPipelineExecutor(pipeline)
+        elif executor_type == ExecutorType.ECS:
+            from mage_ai.data_preparation.executors.ecs_pipeline_executor import (
+                EcsPipelineExecutor,
+            )
+            return EcsPipelineExecutor(pipeline, execution_partition=execution_partition)
         elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_pipeline_executor import (
                 K8sPipelineExecutor,

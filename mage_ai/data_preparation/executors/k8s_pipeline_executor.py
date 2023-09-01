@@ -36,23 +36,17 @@ class K8sPipelineExecutor(PipelineExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-        cmd = f'/app/run_app.sh '\
-              f'mage run {self.pipeline.repo_config.repo_path} '\
-              f'{self.pipeline.uuid}'
-        options = [
-            '--executor-type local_python',
-        ]
-        if self.execution_partition is not None:
-            options.append(f'--execution-partition {self.execution_partition}')
-        if pipeline_run_id is not None:
-            options.append(f'--pipeline-run-id {pipeline_run_id}')
-        options_str = ' '.join(options)
         job_manager = K8sJobManager(
             job_name=f'mage-data-prep-pipeline-{pipeline_run_id}',
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
         )
+        cmd = self._run_commands(
+            global_vars=global_vars,
+            pipeline_run_id=pipeline_run_id,
+            **kwargs
+        )
         job_manager.run_job(
-            f'{cmd} {options_str}',
+            cmd,
             k8s_config=self.executor_config,
         )
