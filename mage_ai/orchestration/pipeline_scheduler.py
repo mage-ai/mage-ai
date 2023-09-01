@@ -536,8 +536,6 @@ class PipelineScheduler:
         Returns:
             None
         """
-        if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
-            return
         self.__update_block_run_statuses(self.pipeline_run.initial_block_runs)
         if block_runs is None:
             block_runs_to_schedule = self.pipeline_run.executable_block_runs(

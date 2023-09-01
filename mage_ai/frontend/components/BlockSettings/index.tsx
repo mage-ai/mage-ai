@@ -90,9 +90,11 @@ function BlockSettings({
   const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
   const pipelineRetryConfig: PipelineRetryConfigType =
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+  
+  console.log('pipeline', pipeline);
   const showBlockRunTimeout = useMemo(
     () => !pipeline?.run_pipeline_in_one_process &&
-      pipeline?.type in [PipelineTypeEnum.PYSPARK, PipelineTypeEnum.PYSPARK],
+      [PipelineTypeEnum.PYSPARK, PipelineTypeEnum.PYTHON].includes(pipeline?.type),
     [pipeline]);
 
   const {

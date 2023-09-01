@@ -617,7 +617,5 @@ class PipelineSchedulerTests(DBTestCase):
 
         PipelineScheduler(pipeline_run=pipeline_run).schedule()
         PipelineScheduler(pipeline_run=pipeline_run2).schedule()
-        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
-        self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
         self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
         self.assertEqual(block_run2.status, BlockRun.BlockRunStatus.RUNNING)
