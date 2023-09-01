@@ -11,6 +11,7 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ChartConfigurations from '@components/BlockLayout/ChartConfigurations';
+import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -89,10 +90,14 @@ function BlockLayout({
     },
   );
 
+  const blockLayoutItemServer = useMemo(() => dataBlockLayoutItem?.block_layout_item, [
+    dataBlockLayoutItem,
+  ]);
+
   useEffect(() => {
-    if (dataBlockLayoutItem?.block_layout_item?.data?.error) {
+    if (blockLayoutItemServer?.data?.error) {
       showError({
-        ...dataBlockLayoutItem?.block_layout_item?.data?.error,
+        ...blockLayoutItemServer?.data?.error,
       });
     }
   }, [
@@ -594,7 +599,7 @@ function BlockLayout({
             data: {
               ...selectedBlockItem?.data,
               ...objectAttributes?.data,
-              ...dataBlockLayoutItem?.block_layout_item?.data,
+              ...blockLayoutItemServer?.data,
             },
           }}
           updateConfiguration={(configuration) => {
@@ -610,16 +615,69 @@ function BlockLayout({
       </Spacing>
     </div>
   ), [
+    blockLayoutItemServer,
     blocksFromPipeline,
-    dataBlockLayoutItem,
     objectAttributes,
     pipelines,
     selectedBlockItem,
     setObjectAttributes,
   ]);
 
+  const after = useMemo(() => selectedBlockItem && (
+    <CodeEditor
+      autoHeight
+      // autocompleteProviders={autocompleteProviders}
+      block={selectedBlockItem}
+      // height={height}
+      // language={selectedBlockItem}
+      onChange={(val: string) => {
+        setObjectAttributes(prev => ({
+          ...prev,
+          content: val,
+        }));
+      }}
+      // onDidChangeCursorPosition={onDidChangeCursorPosition}
+      // placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
+      //   ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
+      //   : 'Start typing here...'
+      // }
+      // selected={selected}
+      // setSelected={setSelected}
+      // setTextareaFocused={setTextareaFocused}
+      // shortcuts={hideRunButton
+      //   ? []
+      //   : [
+      //     (monaco, editor) => executeCode(monaco, () => {
+      //       if (!hideRunButton) {
+      //         runBlockAndTrack({
+      //           /*
+      //           * This block doesn't get updated when the upstream dependencies change,
+      //           * so we need to update the shortcuts in the CodeEditor component.
+      //           */
+      //           block,
+      //           code: editor.getValue(),
+      //         });
+      //       }
+      //     }),
+      //   ]
+      // }
+      // textareaFocused={textareaFocused}
+      value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
+      width="100%"
+    />
+  ), [
+    blockLayoutItemServer,
+    objectAttributes,
+    selectedBlockItem,
+    setObjectAttributes,
+  ]);
+
   return (
     <TripleLayout
+      after={after}
+      afterHeightOffset={0}
+      afterHidden={beforeHidden}
+      afterWidth={afterWidth}
       before={before}
       beforeHeader={(
         <>
@@ -641,8 +699,11 @@ function BlockLayout({
       beforeHidden={beforeHidden}
       beforeWidth={beforeWidth}
       contained
+      hideAfterCompletely
       hideBeforeCompletely
       mainContainerRef={mainContainerRef}
+      setAfterMousedownActive={setAfterMousedownActive}
+      setAfterWidth={setAfterWidth}
       setBeforeMousedownActive={setBeforeMousedownActive}
       setBeforeWidth={setBeforeWidth}
     >
@@ -729,13 +790,13 @@ function BlockLayout({
         <BlockLayoutItem
           block={selectedBlockItem}
           blockLayoutItem={{
-            ...dataBlockLayoutItem?.block_layout_item,
+            ...blockLayoutItemServer,
             configuration: {
-              ...dataBlockLayoutItem?.block_layout_item?.configuration,
+              ...blockLayoutItemServer?.configuration,
               ...objectAttributes?.configuration,
             },
             data_source: {
-              ...dataBlockLayoutItem?.block_layout_item?.data_source,
+              ...blockLayoutItemServer?.data_source,
               ...objectAttributes?.data_source,
             },
           }}

@@ -44,6 +44,7 @@ class BlockLayoutItemResource(GenericResource):
         if not block_config:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
+        content = None
         data = None
         block_type = block_config.get('type')
 
@@ -68,6 +69,8 @@ class BlockLayoutItemResource(GenericResource):
                         'language',
                     ]),
                 )
+
+                content = block.content
 
                 if ChartDataSourceType.CHART_CODE == data_source_type:
                     data_source = ChartDataSourceChartCode(
@@ -104,6 +107,7 @@ class BlockLayoutItemResource(GenericResource):
                     ).get('output', None)
 
         return self(merge_dict(block_config, dict(
+            content=content,
             data=data,
             uuid=uuid,
         )), user, **kwargs)
