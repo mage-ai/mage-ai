@@ -97,11 +97,11 @@ function BlockLayout({
   useEffect(() => {
     if (blockLayoutItemServer?.data?.error) {
       showError({
-        ...blockLayoutItemServer?.data?.error,
+        response: blockLayoutItemServer?.data,
       });
     }
   }, [
-    dataBlockLayoutItem,
+    blockLayoutItemServer,
     showError,
 ]);
 

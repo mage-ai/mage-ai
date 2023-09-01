@@ -403,9 +403,7 @@ class Widget(Block):
         except Exception as err:
             outputs = dict(
                 error=dict(
-                    errors=[
-                        str(err),
-                    ],
+                    message=str(err),
                 ),
             )
 
