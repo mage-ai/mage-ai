@@ -289,9 +289,10 @@
             {
               "group": "Variables",
               "pages": [
-                "development/environment-variables",
+                "development/variables/environment-variables",
                 "getting-started/runtime-variable",
-                "getting-started/secrets"
+                "development/variables/secrets",
+                "development/variables/referencing-variables"
               ]
             },
             {
@@ -729,6 +730,14 @@
   },
   "redirects": [
     {
+      "source": "/getting-started/secrets",
+      "destination": "/development/variables/secrets"
+    },
+    {
+      "source": "/development/environment-variables",
+      "destination": "/development/variables/environment-variables"
+    },
+    {
       "source": "/contributing/code-of-conduct",
       "destination": "/about/code-of-conduct"
     },
@@ -778,7 +787,7 @@
     },
     {
       "source": "/development/secrets/secrets",
-      "destination": "/getting-started/secrets"
+      "destination": "/development/variables/secrets"
     },
     {
       "source": "/developing-in-the-cloud/setting-up-git",
