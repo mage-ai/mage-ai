@@ -9,7 +9,7 @@ from kafka import KafkaConsumer
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
-from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
+from mage_ai.streaming.sources.base import BaseSource
 from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
@@ -184,7 +184,7 @@ class KafkaSource(BaseSource):
             msg_printed = False
             for _tp, messages in msg_pack.items():
                 self._print(
-                    f'Received {len(messages)} messages from topic="{_tp.topic}" ' + 
+                    f'Received {len(messages)} messages from topic="{_tp.topic}" ' +
                     f'partition={_tp.partition} at time={time.time()}'
                 )
                 for message in messages:
