@@ -18,7 +18,7 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
 import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
-import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
+import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from '@interfaces/PipelineType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
 import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
@@ -90,6 +90,10 @@ function BlockSettings({
   const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
   const pipelineRetryConfig: PipelineRetryConfigType =
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+  const showBlockRunTimeout = useMemo(
+    () => !pipeline?.run_pipeline_in_one_process &&
+      pipeline?.type in [PipelineTypeEnum.PYSPARK, PipelineTypeEnum.PYSPARK],
+    [pipeline]);
 
   const {
     color: blockColor,
@@ -582,30 +586,31 @@ function BlockSettings({
               </Spacing>
             </Spacing>
           </Spacing>
-
-          <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline level={5}>
-              Block run timeout
-            </Headline>
-            <Spacing mb={1} />
-            <TextInput
-              label="Time in seconds"
-              monospace
-              onChange={e => setBlockAttributes(prev => ({
-                ...prev,
-                timeout: e.target.value,
-              }))}
-              primary
-              setContentOnMount
-              type="number"
-              value={blockAttributes?.timeout || ''}
-            />
-            <Spacing mb={1} />
-            <Text small>
-              The block timeout will only be applied when the block is run through a trigger.
-              If a block times out, the block run will be set to a failed state.
-            </Text>
-          </Spacing>
+          {showBlockRunTimeout && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline level={5}>
+                Block run timeout
+              </Headline>
+              <Spacing mb={1} />
+              <TextInput
+                label="Time in seconds"
+                monospace
+                onChange={e => setBlockAttributes(prev => ({
+                  ...prev,
+                  timeout: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={blockAttributes?.timeout || ''}
+              />
+              <Spacing mb={1} />
+              <Text small>
+                The block timeout will only be applied when the block is run through a trigger.
+                If a block times out, the block run will be set to a failed state.
+              </Text>
+            </Spacing>
+          )}
 
           {BlockTypeEnum.DBT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>

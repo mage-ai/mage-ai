@@ -1313,23 +1313,25 @@ function Edit({
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <Text>
-              Set a timeout for each run of this trigger (optional) 
-            </Text>
-            <Spacing mb={1} />
-            <TextInput
-              label="Timeout (in seconds)"
-              onChange={e => setSettings(prev => ({
-                ...prev,
-                timeout: e.target.value,
-              }))}
-              primary
-              setContentOnMount
-              type="number"
-              value={settings?.timeout}
-            />
-          </Spacing>
+          {!isStreamingPipeline && (
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text>
+                Set a timeout for each run of this trigger (optional) 
+              </Text>
+              <Spacing mb={1} />
+              <TextInput
+                label="Timeout (in seconds)"
+                onChange={e => setSettings(prev => ({
+                  ...prev,
+                  timeout: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={settings?.timeout}
+              />
+            </Spacing>
+          )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
               <ToggleSwitch
