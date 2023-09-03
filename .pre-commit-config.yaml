@@ -11,6 +11,7 @@ repos:
         types: [python]
     -   id: check-yaml
         args: [--unsafe]
+    -   id: check-json
     -   id: debug-statements
         types: [python]
     -   id: name-tests-test
