@@ -10,7 +10,7 @@ repos:
     -   id: end-of-file-fixer
         types: [python]
     -   id: check-yaml
-        types: [yaml]
+        args: [--unsafe]
     -   id: debug-statements
         types: [python]
     -   id: name-tests-test
