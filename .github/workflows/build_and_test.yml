@@ -24,22 +24,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
       - name: Install dependencies
         run: |
           sudo apt-get install libkrb5-dev
           sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r mage_integrations/requirements.txt
-          pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          python -m pip install -e ./[all,dev]
+          python -m pip install -e ./mage_integrations
+          python -m pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast

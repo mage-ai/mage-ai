@@ -44,17 +44,17 @@ RUN \
   sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json && \
   jupyter-kernelspec install --user $(${PIP} show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
 # Mage Integration
-COPY requirements.txt requirements.txt
 RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
-COPY mage_integrations mage_integrations
-RUN ${PIP} install mage_integrations/
+COPY ./mage_integrations /home/src/mage_integrations
+RUN ${PIP} install --no-cache-dir -e /home/src/mage_integrations
 # Mage Dependencies
-RUN ${PIP} install --no-cache-dir -r requirements.txt
+COPY ./pyproject.toml /home/src/
+COPY ./mage_ai /home/src/mage_ai
+RUN ${PIP} install --no-cache-dir -e /home/src[all,dev]
 
 # Mage Frontend
-COPY ./mage_ai /home/src/mage_ai
 RUN cd /home/src/mage_ai/frontend && yarn install
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
