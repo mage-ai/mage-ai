@@ -254,8 +254,8 @@ class PipelineScheduler:
             elif self.pipeline.run_pipeline_in_one_process:
                 self.__schedule_pipeline()
             else:
-                self.__check_block_run_timeout()
-                self.__schedule_blocks(block_runs)
+                if not self.__check_block_run_timeout():
+                    self.__schedule_blocks(block_runs)
 
     @safe_db_query
     def on_block_complete(self, block_uuid: str) -> None:
@@ -414,14 +414,18 @@ class PipelineScheduler:
         return False
 
     @safe_db_query
-    def __check_block_run_timeout(self) -> None:
+    def __check_block_run_timeout(self) -> bool:
         """
         Check run timeout block runs. Currently only works for batch pipelines that are run
         using the `__schedule_blocks` method. This method checks if a block run has exceeded
         its timeout and puts the block run into a failed state and cancels the block run job.
+
+        Returns:
+            bool: True if any block runs have timed out, False otherwise.
         """
         block_runs = self.pipeline_run.running_block_runs
 
+        any_block_run_timed_out = False
         for block_run in block_runs:
             try:
                 block = self.pipeline.get_block(block_run.block_uuid)
@@ -446,8 +450,10 @@ class PipelineScheduler:
                         )
                         self.on_block_failure(block_run.block_uuid)
                         job_manager.kill_block_run_job(block_run.id)
+                        any_block_run_timed_out = True
             except Exception:
                 pass
+        return any_block_run_timed_out
 
     def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
         """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
