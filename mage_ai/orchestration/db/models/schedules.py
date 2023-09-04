@@ -88,6 +88,7 @@ class PipelineSchedule(BaseModel):
 
     @classproperty
     def repo_query(cls):
+        db_connection.session.commit()
         return cls.query.filter(
             or_(
                 PipelineSchedule.repo_path == get_repo_path(),
