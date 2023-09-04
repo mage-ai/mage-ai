@@ -58,11 +58,16 @@ class Destination(BaseDestination):
             r['record'] = update_record_with_internal_columns(r['record'])
 
         # Create schema if not exists
-        create_schema_commands = self.build_create_schema_commands(
-            database_name=database_name,
-            schema_name=schema_name,
-        )
-        self.build_connection().execute(create_schema_commands, commit=True)
+        # Pass if user decides to skip it
+        if self.config.get("skip_schema_creation") is True:
+            # User decided not to run CREATE SCHEMA command
+            self.logger.info('Skipping CREATE SCHEMA command')
+        else:
+            create_schema_commands = self.build_create_schema_commands(
+                database_name=database_name,
+                schema_name=schema_name,
+            )
+            self.build_connection().execute(create_schema_commands, commit=True)
 
         query_strings = self.build_query_strings(record_data, stream)
 
