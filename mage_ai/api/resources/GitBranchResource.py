@@ -157,7 +157,7 @@ class GitBranchResource(GenericResource):
                 try:
                     access_token = api.get_access_token_for_user(self.current_user)
                     if access_token:
-                        branch_name = payload.get('branch')
+                        branch_name = pull.get('branch')
                         remote = git_manager.repo.remotes[pull['remote']]
                         url = list(remote.urls)[0]
 
@@ -188,12 +188,62 @@ class GitBranchResource(GenericResource):
                     self.model['error'] = str(err)
             else:
                 git_manager.pull()
+        elif action_type == 'fetch':
+            fetch = payload.get('fetch', None)
+            if fetch and 'remote' in fetch:
+                from git.exc import GitCommandError
+
+                try:
+                    access_token = api.get_access_token_for_user(self.current_user)
+                    if access_token:
+                        remote = git_manager.repo.remotes[fetch['remote']]
+                        url = list(remote.urls)[0]
+
+                        custom_progress = api.fetch(
+                            remote.name,
+                            url,
+                            access_token.token,
+                        )
+
+                        if custom_progress and custom_progress.other_lines:
+                            lines = custom_progress.other_lines
+                            if type(lines) is list:
+                                lines = '\n'.join(lines)
+                            self.model['progress'] = lines
+                    else:
+                        self.model['error'] = \
+                            'Please authenticate with GitHub before trying to pull.'
+                except GitCommandError as err:
+                    self.model['error'] = str(err)
+            else:
+                self.model['error'] = 'Please specify a remote for the fetch command'
         elif action_type == 'reset':
             if files and len(files) >= 1:
                 for file_path in files:
                     git_manager.reset_file(file_path)
             else:
-                git_manager.reset()
+                reset = payload.get('reset', {})
+                if reset and 'remote' in reset:
+                    from git.exc import GitCommandError
+
+                    try:
+                        access_token = api.get_access_token_for_user(self.current_user)
+                        if access_token:
+                            branch_name = reset.get('branch')
+                            remote = git_manager.repo.remotes[reset['remote']]
+                            url = list(remote.urls)[0]
+
+                            api.reset_hard(
+                                remote.name,
+                                url,
+                                branch_name,
+                                access_token.token,
+                            )
+                        else:
+                            self.model['error'] = \
+                                'Please authenticate with GitHub before trying to pull.'
+                    except GitCommandError as err:
+                        self.model['error'] = str(err)
         elif action_type == 'clone':
             git_manager.clone()
         elif action_type == 'add':
