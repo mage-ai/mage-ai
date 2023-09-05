@@ -128,8 +128,8 @@ class PipelineExecutor:
         Run the commands for the pipeline.
 
         Args:
-            block_run_id: The ID of the block run.
             global_vars: Global variables for the block execution.
+            pipeline_run_id: The ID of the pipeline run.
             **kwargs: Additional keyword arguments.
 
         Returns:
