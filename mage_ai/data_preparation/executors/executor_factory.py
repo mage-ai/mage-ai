@@ -55,7 +55,7 @@ class ExecutorFactory:
             b. If the pipeline type is STREAMING, use StreamingPipelineExecutor.
             c. Otherwise, use default PipelineExecutor.
 
-        TODO: Add pipeline executor for ECS, GCP_CLOUD_RUN executor_type
+        TODO: Add pipeline executor for GCP_CLOUD_RUN executor_type
 
         Args:
             pipeline (Pipeline): The pipeline to be executed.
