@@ -10,6 +10,10 @@ class SourceFactory:
             from mage_ai.streaming.sources.amazon_sqs import AmazonSqsSource
 
             return AmazonSqsSource(config, **kwargs)
+        elif connector_type == SourceType.INFLUXDB:
+            from mage_ai.streaming.sources.influxdb import InfluxDbSource
+
+            return InfluxDbSource(config, **kwargs)
         elif connector_type == SourceType.KAFKA:
             from mage_ai.streaming.sources.kafka import KafkaSource
 
