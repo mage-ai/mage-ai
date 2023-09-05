@@ -35,7 +35,7 @@ class BaseStream:
     path = None
     params = {}
     parent = None
-    default_data_key = "_embedded" # This is unique for Mode since the data comes under "_embedded" in the response
+    default_data_key = "value" # This is unique for powerbi since the data comes under the "value" key in the response
     data_key = None
     
 
