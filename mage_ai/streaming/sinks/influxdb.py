@@ -58,8 +58,12 @@ class InfluxDbSink(BaseSink):
         self._print('Finish initializing writer.')
 
     def write(self, message: Dict):
-        data = message['data']
-        metadata = message.get('metadata', {})
+        if isinstance(message, dict):
+            data = message.get('data', message)
+            metadata = message.get('metadata', {})
+        else:
+            data = message
+            metadata = {}
 
         if isinstance(data, dict):
             record = {
