@@ -41,7 +41,7 @@ class SettingsConfig(BaseConfig):
     skip_if_previous_running: bool = False
     allow_blocks_to_fail: bool = False
     landing_time_enabled: bool = False
-    timeout: int = None  # in seconds
+    timeout: int = None
 
 
 @dataclass

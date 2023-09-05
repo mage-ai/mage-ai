@@ -1,11 +1,13 @@
-from datetime import datetime
-from mage_ai.shared.parsers import encode_complex
-from mage_ai.shared.hash import merge_dict
-from typing import Dict
 import logging
-import simplejson
 import traceback
 import uuid
+from datetime import datetime
+from typing import Dict
+
+import simplejson
+
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import encode_complex
 
 
 class DictLogger():
@@ -44,7 +46,7 @@ class DictLogger():
     ):
         now = datetime.utcnow()
         data = dict(
-            level=method_name.upper(),
+            level=logging.getLevelName(log_level) if log_level else method_name.upper(),
             message=message,
             timestamp=now.timestamp(),
             uuid=uuid.uuid4().hex,
