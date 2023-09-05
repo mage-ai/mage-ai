@@ -1,12 +1,14 @@
+import time
 from dataclasses import dataclass
-from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sinks.base import BaseSink
+from typing import Dict, List
+
+import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
 from requests_aws4auth import AWS4Auth
-from typing import Dict, List
-import boto3
-import time
+
+from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.sinks.base import BaseSink
 
 
 @dataclass
@@ -50,7 +52,7 @@ class OpenSearchSink(BaseSink):
         return True
 
     def write(self, data: Dict):
-        self._print(f'[Opensearch] Ingest data {data}, time={time.time()}')
+        self._print(f'Ingest data {data}, time={time.time()}')
         self.client.index(
             index=self.config.index_name,
             body=data,
@@ -58,6 +60,6 @@ class OpenSearchSink(BaseSink):
         )
 
     def batch_write(self, data: List[Dict]):
-        self._print(f'[Opensearch] Batch ingest data {data}, time={time.time()}')
+        self._print(f'Batch ingest data {data}, time={time.time()}')
         docs = [{'_index': self.config.index_name, '_source': doc} for doc in data]
         bulk(self.client, docs)

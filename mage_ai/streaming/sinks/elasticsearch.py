@@ -34,7 +34,7 @@ class ElasticSearchSink(BaseSink):
         return True
 
     def write(self, data: Dict):
-        self._print(f'[Elasticsearch] Ingest data {data}, time={time.time()}')
+        self._print(f'Ingest data {data}, time={time.time()}')
         if self.config._id is not None:
             self.client.index(
                 index=self.config.index_name,
@@ -50,7 +50,7 @@ class ElasticSearchSink(BaseSink):
             )
 
     def batch_write(self, data: List[Dict]):
-        self._print(f'[Elasticsearch] Batch ingest data {data}, time={time.time()}')
+        self._print(f'Batch ingest data {data}, time={time.time()}')
         if self.config._id is not None:
             docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
                      'doc': doc} for doc in data]
