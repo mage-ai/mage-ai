@@ -37,6 +37,7 @@ import { PlayButton } from '@oracle/icons';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
+import { getPipelineScheduleApiFilterQuery } from '@components/Triggers/utils';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
@@ -74,6 +75,7 @@ function PipelineSchedules({
     PipelineScheduleFilterQueryEnum.TAG,
     PipelineScheduleFilterQueryEnum.TYPE,
   ]);
+  const apiFilterQuery = getPipelineScheduleApiFilterQuery(query);
   const page = q?.page ? q.page : 0;
   const {
     data: dataPipelineSchedules,
@@ -81,6 +83,7 @@ function PipelineSchedules({
   } = api.pipeline_schedules.pipelines.list(
     pipelineUUID,
     {
+      ...apiFilterQuery,
       _limit: ROW_LIMIT,
       _offset: (q?.page ? q.page : 0) * ROW_LIMIT,
     },
@@ -221,7 +224,6 @@ function PipelineSchedules({
 
   const {
     data: dataPipelineTriggers,
-    mutate: fetchPipelineTriggers,
   } = api.pipeline_triggers.pipelines.list(pipelineUUID);
   const pipelineTriggersByName: {
     [name: string]: PipelineTriggerType;

@@ -112,6 +112,9 @@ PipelineSchedulePolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelineSchedulePolicy.allow_query([
+    'schedule_interval[]',
+    'schedule_type[]',
+    'status[]',
     'tag[]',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
