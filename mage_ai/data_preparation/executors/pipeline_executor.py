@@ -139,7 +139,8 @@ class PipelineExecutor:
               f'mage run {self.pipeline.repo_config.repo_path} '\
               f'{self.pipeline.uuid}'
         options = [
-            '--executor-type local_python',
+            '--executor-type',
+            'local_python',
         ]
         if self.execution_partition is not None:
             options += [
