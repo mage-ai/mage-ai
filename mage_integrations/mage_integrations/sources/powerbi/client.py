@@ -133,22 +133,15 @@ def raise_for_error(response):
 
 class PowerbiClient(object):
     def __init__(self,
-                tenant_id,
-                client_id,
-                username,
-                password,
+                access_token,
                 config_request_timeout, # request_timeout parameter
                 user_agent=None):
-        self.__tenant_id = tenant_id
-        self.__client_id = client_id
-        self.__username = username
-        self.__password = password
+        self.__access_token = access_token
         self.__user_agent = user_agent
         # Rate limit initial values, reset by check_access_token headers
         self.__session = requests.Session()
         self.__verified = False
-        # TODO Needs to be changed
-        self.base_url = 'https://app.Powerbi.com/api/{}'.format(self.__workspace)
+        self.base_url = 'https://api.powerbi.com/v1.0/myorg'
 
         # Set request timeout to config param `request_timeout` value.
         # If value is 0,"0","" or not passed then it set default to 300 seconds.
@@ -169,21 +162,17 @@ class PowerbiClient(object):
 
     @utils.ratelimit(1000, 60)
     def check_access_token(self):
-        # TODO Access token logic should be changed
         if self.__access_token is None:
             raise Exception('Error: Missing access_token.')
         headers = {}
         if self.__user_agent:
             headers['User-Agent'] = self.__user_agent
-
-        credentials = f"{self.__access_token}:{self.__password}"
-        encrypted_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
         
-        headers['Authorization'] = 'Basic {}'.format(encrypted_credentials)
+        headers['Authorization'] = 'Basic {}'.format(self.__access_token)
         headers['Accept'] = 'application/json'
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
-            url='{}/{}'.format(self.base_url, 'spaces'),
+            url='{}/{}'.format(self.base_url, 'dashboards'),
             timeout=self.__request_timeout, # Pass request timeout
             headers=headers)
         if response.status_code != 200:
@@ -219,11 +208,7 @@ class PowerbiClient(object):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
 
-        # TODO Change access token logic
-        credentials = f"{self.__access_token}:{self.__password}"
-        encrypted_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
-        kwargs['headers']['Authorization'] = 'Basic {}'.format(encrypted_credentials)
-        
+        kwargs['headers']['Authorization'] = 'Basic {}'.format(self.__access_token)
         kwargs['headers']['Accept'] = 'application/json'
 
         if self.__user_agent:

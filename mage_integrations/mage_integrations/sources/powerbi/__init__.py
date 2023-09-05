@@ -18,15 +18,9 @@ class Powerbi(Source):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        tenant_id = self.config.get('tenant_id')
-        client_id = self.config.get('client_id')
-        username = self.config.get('username')
-        password = self.config.get('password')
+        access_token = self.config.get('access_token')
         client = PowerbiClient(
-            tenant_id,
-            client_id,
-            username,
-            password,
+            access_token,
             self.config.get('request_timeout'),
             self.config.get('user_agent')
         )
