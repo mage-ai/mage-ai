@@ -148,15 +148,18 @@ function TriggersTable({
     ]);
   }
 
-  columnFlex.push(...[1]);
+  columnFlex.push(...[1, 2]);
   columns.push(...[
     {
       uuid: 'Name',
     },
+    {
+      uuid: 'Description',
+    },
   ]);
 
   if (!disableActions) {
-    columnFlex.push(...[null, 2]);
+    columnFlex.push(...[null, 1]);
     columns.push(...[
       {
         uuid: 'Frequency',
@@ -229,6 +232,7 @@ function TriggersTable({
               const {
                 id,
                 created_at: createdAt,
+                description,
                 next_pipeline_run_date: nextRunDate,
                 pipeline_runs_count: pipelineRunsCount,
                 pipeline_uuid: triggerPipelineUUID,
@@ -355,6 +359,15 @@ function TriggersTable({
                   </Text>,
                 ]);
               }
+
+              rows.push(...[
+                <Text
+                  default
+                  key={`trigger_description_${idx}`}
+                >
+                  {description}
+                </Text>,
+              ]);
 
               if (!disableActions) {
                 rows.push(...[

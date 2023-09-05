@@ -145,6 +145,7 @@ function Edit({
   ]);
 
   const {
+    description,
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
@@ -348,6 +349,7 @@ function Edit({
     const data = {
       ...selectKeys(schedule, [
         'name',
+        'description',
         'schedule_type',
         'tags',
       ]),
@@ -650,33 +652,61 @@ function Edit({
     showLandingTime,
   ]);
 
+  const triggerNameRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_name"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger name
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_name_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          name: e.target.value,
+        }));
+      }}
+      placeholder="Name this trigger"
+      value={name}
+    />,
+  ]), [name]);
+  const triggerDescriptionRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_description"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger description
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_description_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          description: e.target.value,
+        }));
+      }}
+      placeholder="Description"
+      value={description}
+    />
+  ]), [description]);
+
   const detailsMemo = useMemo(() => {
     const rows = [
-      [
-        <FlexContainer
-          alignItems="center"
-          key="trigger_name_detail"
-        >
-          <Alphabet default size={1.5 * UNIT} />
-          <Spacing mr={1} />
-          <Text default>
-            Trigger name
-          </Text>
-        </FlexContainer>,
-        <TextInput
-          key="trigger_name_input_detail"
-          monospace
-          onChange={(e) => {
-            e.preventDefault();
-            setSchedule(s => ({
-              ...s,
-              name: e.target.value,
-            }));
-          }}
-          placeholder="Name this trigger"
-          value={name}
-        />,
-      ],
+      triggerNameRowEl,
+      triggerDescriptionRowEl,
       [
         <FlexContainer
           alignItems="center"
@@ -928,13 +958,14 @@ function Edit({
     landingTimeDisabled,
     landingTimeEnabled,
     landingTimeInputs,
-    name,
     readableCronExpression,
     runtimeAverage,
     scheduleInterval,
     showCalendar,
     showLandingTime,
     time,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
   ]);
 
   const updateEventMatcher = useCallback((idx, data: {
@@ -962,31 +993,8 @@ function Edit({
       <Table
         columnFlex={[null, 1]}
         rows={[
-          [
-            <FlexContainer
-              alignItems="center"
-              key="trigger_name_event"
-            >
-              <Alphabet default size={1.5 * UNIT} />
-              <Spacing mr={1} />
-              <Text default>
-                Trigger name
-              </Text>
-            </FlexContainer>,
-            <TextInput
-              key="trigger_name_input_event"
-              monospace
-              onChange={(e) => {
-                e.preventDefault();
-                setSchedule(s => ({
-                  ...s,
-                  name: e.target.value,
-                }));
-              }}
-              placeholder="Name this trigger"
-              value={name}
-            />,
-          ],
+          triggerNameRowEl,
+          triggerDescriptionRowEl,
         ]}
       />
 
@@ -1147,7 +1155,8 @@ function Edit({
     eventMatchers,
     eventRules,
     eventRulesByName,
-    name,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
     updateEventMatcher,
   ]);
 
@@ -1167,31 +1176,8 @@ function Edit({
         <Table
           columnFlex={[null, 1]}
           rows={[
-            [
-              <FlexContainer
-                alignItems="center"
-                key="trigger_name_api"
-              >
-                <Alphabet default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Trigger name
-                </Text>
-              </FlexContainer>,
-              <TextInput
-                key="trigger_name_input_api"
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
-                placeholder="Name this trigger"
-                value={name}
-              />,
-            ],
+            triggerNameRowEl,
+            triggerDescriptionRowEl,
           ]}
         />
 
@@ -1284,10 +1270,7 @@ function Edit({
         </Spacing>
       </>
     );
-  }, [
-    name,
-    pipelineSchedule,
-  ]);
+  }, [pipelineSchedule, triggerDescriptionRowEl, triggerNameRowEl]);
 
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType
@@ -1530,6 +1513,7 @@ function Edit({
     dbtBlocks,
     enableSLA,
     formattedVariables,
+    isStreamingPipeline,
     overwriteVariables,
     runtimeVariables,
     schedule,

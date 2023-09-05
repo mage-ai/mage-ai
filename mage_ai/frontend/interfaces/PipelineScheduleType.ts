@@ -69,6 +69,7 @@ export interface PipelineScheduleReqQueryParamsType {
 
 export default interface PipelineScheduleType {
   created_at?: string;
+  description?: string;
   event_matchers?: EventMatcherType[];
   global_data_product_uuid?: string;
   id?: number;
