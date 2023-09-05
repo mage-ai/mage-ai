@@ -2,8 +2,6 @@ name: Build and test
 
 on:
   push:
-    branches:
-      - "master"
     paths:
       - "mage_ai/**"
       - "mage_integrations/**"
@@ -13,6 +11,7 @@ on:
       - "mage_ai/**"
       - "mage_integrations/**"
       - "requirements.txt"
+    types: [opened, reopened]
 
 jobs:
   flake8-lint:
