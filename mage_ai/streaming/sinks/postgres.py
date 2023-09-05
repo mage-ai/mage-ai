@@ -21,8 +21,8 @@ class PostgresConfig(BaseConfig):
     table: str
     username: str
     port: int = 5432
-    unique_conflict_method = UNIQUE_CONFLICT_METHOD_IGNORE,
-    unique_constraints = [],
+    unique_conflict_method = UNIQUE_CONFLICT_METHOD_IGNORE
+    unique_constraints = []
 
 
 class PostgresSink(BaseSink):
@@ -32,12 +32,13 @@ class PostgresSink(BaseSink):
         # Initialize postgres connection
         self.postgres_client = Postgres(
             dbname=self.config.database,
-            user=self.config.host,
+            user=self.config.username,
             password=self.config.password,
             host=self.config.host,
             port=self.config.port,
             schema=self.config.schema,
         )
+        self.postgres_client.open()
 
     def write(self, data: Dict):
         self.batch_write([data])
@@ -50,7 +51,7 @@ class PostgresSink(BaseSink):
             df,
             self.config.schema,
             self.config.table,
-            if_exists=ExportWritePolicy.REPLACE,
+            if_exists=ExportWritePolicy.APPEND,
             unique_conflict_method=self.config.unique_conflict_method,
             unique_constraints=self.config.unique_constraints,
         )
