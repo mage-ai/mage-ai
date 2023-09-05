@@ -2281,8 +2281,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if os.path.exists(new_file_path):
                 raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
-            file_path_parts = new_file_path.split(os.sep)
-            parent_dir = os.path.join(*file_path_parts[:-1])
+            parent_dir = os.path.dirname(new_file_path)
             os.makedirs(parent_dir, exist_ok=True)
 
             os.rename(old_file_path, new_file_path)
