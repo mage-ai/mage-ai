@@ -8,7 +8,6 @@ import requests
 
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
 from mage_ai.data_preparation.models.block.utils import (
     create_block_runs_from_dynamic_block,
 )
@@ -365,7 +364,7 @@ class BlockExecutor:
         )
 
         if BlockType.DBT == self.block.type:
-            run_dbt_tests(
+            self.block.run_tests(
                 block=self.block,
                 global_vars=global_vars,
                 logger=self.logger,

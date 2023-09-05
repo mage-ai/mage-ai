@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 from typing import Dict
 
@@ -5,8 +6,11 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.errors import FileExistsError
-from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.errors import (
+    FileExistsError,
+    FileNotInProjectError,
+)
+from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
 
@@ -35,7 +39,10 @@ class FileResource(GenericResource):
         else:
             filename = payload['name']
 
+        error = ApiError.RESOURCE_INVALID.copy()
+        file_path = File(filename, dir_path, repo_path).file_path
         try:
+            ensure_file_is_in_project(file_path)
             file = File.create(
                 filename,
                 dir_path,
@@ -51,8 +58,11 @@ class FileResource(GenericResource):
 
             return self(file, user, **kwargs)
         except FileExistsError as err:
-            error = ApiError.RESOURCE_INVALID.copy()
             error.update(dict(message=str(err)))
+            raise ApiError(error)
+        except FileNotInProjectError:
+            error.update(dict(
+                message=f'File at path: {file_path} is not in the project directory.'))
             raise ApiError(error)
 
     @classmethod
@@ -87,6 +97,19 @@ class FileResource(GenericResource):
                 remove=True,
             )
 
+        new_path = os.path.join(
+            self.model.repo_path,
+            payload['dir_path'],
+            payload['name'],
+        )
+        try:
+            ensure_file_is_in_project(new_path)
+        except FileNotInProjectError:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(dict(
+                message=f'File cannot be moved to path: {new_path} because '
+                         'it is not in the project directory.'))
+            raise ApiError(error)
         self.model.rename(payload['dir_path'], payload['name'])
 
         if block_type and cache_block_action_object:

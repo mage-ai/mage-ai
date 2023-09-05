@@ -875,7 +875,6 @@ function AddNewBlocksV2({
                   } = blockActionObject;
 
                   if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
-
                     showConfigureProjectModal?.({
                       cancelButtonText: 'Set this up later',
                       header: (

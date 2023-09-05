@@ -71,8 +71,6 @@ export enum BlockColorEnum {
   YELLOW = 'yellow',
 }
 
-export const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
-
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.CUSTOM,

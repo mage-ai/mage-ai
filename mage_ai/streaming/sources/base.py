@@ -1,7 +1,7 @@
+import json
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Callable, Dict
-import json
 
 
 class SourceConsumeMethod(str, Enum):
@@ -67,5 +67,8 @@ class BaseSource(ABC):
     def test_connection(self):
         return True
 
-    def _print(self, msg):
+    def print(self, msg: str):
+        self._print(msg)
+
+    def _print(self, msg: str):
         print(f'[{self.__class__.__name__}] {msg}')

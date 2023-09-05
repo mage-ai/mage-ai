@@ -28,7 +28,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import { Check } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
 import {

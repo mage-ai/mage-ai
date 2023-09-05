@@ -14,7 +14,6 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-
 import {
   BAR_STACK_COLORS,
   BAR_STACK_STATUSES,

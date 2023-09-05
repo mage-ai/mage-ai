@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAbsoluteLayout, useTable } from 'react-table';
-import Text from '@oracle/elements/Text';
 
+import Text from '@oracle/elements/Text';
 import { DataTableColumn, DataTableRow } from './types';
 import {
   TableBodyStyle,
@@ -9,8 +9,8 @@ import {
   TableRowStyle,
   TableStyle,
 } from './Table.style';
-import { cutTextSize } from './helpers';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { cutTextSize } from './helpers';
 
 export type DataTableProps = {
   children?: any;

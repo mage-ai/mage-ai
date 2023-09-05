@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import os
 import shutil
+import stat
 import traceback
 import webbrowser
 from time import sleep
@@ -48,6 +49,7 @@ from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
     ApiChildListHandler,
+    ApiListHandler,
     ApiResourceDetailHandler,
     ApiResourceListHandler,
 )
@@ -81,6 +83,7 @@ from mage_ai.settings import (
 )
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
 from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -143,6 +146,7 @@ def replace_base_path(base_path: str) -> str:
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
+    chmod(dst, stat.S_IRWXU)
     for path, _, files in os.walk(os.path.abspath(dst)):
         for filename in files:
             if filename.endswith(('.html', '.js', '.css')):
@@ -234,6 +238,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         ),
 
         # API v1 routes
+        (
+            r'/api/status(?:es)?',
+            ApiListHandler,
+            {'resource': 'statuses', 'bypass_oauth_check': True},
+        ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
             ApiChildDetailHandler,

@@ -2026,7 +2026,6 @@ function PipelineDetailPage({
     lastMessage: lastTerminalMessage,
     sendMessage: sendTerminalMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    queryParams: sharedWebsocketData,
     shouldReconnect: () => true,
   });
 

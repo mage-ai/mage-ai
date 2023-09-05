@@ -64,7 +64,6 @@ import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
-
 import {
   ArrowDown,
   ChevronDown,
@@ -1368,6 +1367,7 @@ function CodeBlock({
                   addNewBlock={addNewBlock}
                   addWidget={addWidget}
                   block={block}
+                  blockContent={content}
                   blocks={blocks}
                   deleteBlock={deleteBlock}
                   executionState={executionState}
@@ -1381,6 +1381,10 @@ function CodeBlock({
                   project={project}
                   runBlock={hideRunButton ? null : runBlockAndTrack}
                   savePipelineContent={savePipelineContent}
+                  setBlockContent={(val: string) => {
+                    setContent(val);
+                    onChange?.(val);
+                  }}
                   setErrors={setErrors}
                   setIsEditingBlock={setIsEditingBlock}
                   setOutputCollapsed={setOutputCollapsed}

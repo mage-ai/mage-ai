@@ -1,16 +1,18 @@
 ---
 title: "Setup and install"
-sidebarTitle: "Setup"
+sidebarTitle: "Quickstart"
 icon: "space-station-moon-construction"
 description: "You can install Mage using Docker, pip, or conda."
 "og:image": "https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
 ---
 
+<Frame>
 <img
   alt="mage start"
   src="https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
-  width="500"
+  width="300"
 />
+</Frame>
 
 ## Using Docker
 
@@ -215,7 +217,7 @@ mage init [project_name]
 
 4. (Optional) Enable blocks to be executed in separate Kubernetes pods.
 
-   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](https://docs.mage.ai/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
+   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
 
 ---
 
@@ -269,7 +271,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
     mageai/mageai /app/run_app.sh mage start [project_name]
 ```
 
-See [here](/development/environment-variables) for a list of environment variables you can configure.
+See [here](/development/variables/environment-variables) for a list of environment variables you can configure.
 
 ### Setting prefix for Mage url
 
@@ -356,7 +358,7 @@ Mage also has the following extras:
 - **azure**: to install Azure related packages
 - **bigquery**: to connect to BigQuery for data import or export
 - **clickhouse**: to connect to Clickhouse for data import or export
-- **dbt**: to install DBT packages
+- **dbt**: to install dbt packages
 - **google-cloud-storage**: to connect to Google Cloud Storage for data import or export
 - **hdf5**: to process HDF5 file format
 - **mysql**: to connect to MySQL for data import or export
@@ -392,7 +394,7 @@ apt install libkrb5-dev
 ## Source code development
 
 To setup a development environment for editing source code, please check out
-this [document](/community/contributing).
+this [document](/contributing/overview).
 
 ---
 

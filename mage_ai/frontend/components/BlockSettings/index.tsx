@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BLOCK_COLOR_HEX_CODE_MAPPING,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
@@ -31,7 +30,6 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { BannerStyle } from './index.style';
 import { DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
@@ -49,6 +47,7 @@ import { TableContainerStyle } from '@components/IntegrationPipeline/index.style
 import { YELLOW } from '@oracle/styles/colors/main';
 import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
@@ -60,6 +59,7 @@ const SHARED_BUTTON_PROPS = {
   outline: true,
   padding: '4px',
 };
+const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
   block: BlockType;
@@ -176,7 +176,7 @@ function BlockSettings({
   const blockPipelinesCount = blockPipelines?.length || 1;
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -582,6 +582,31 @@ function BlockSettings({
               </Spacing>
             </Spacing>
           </Spacing>
+
+          {BlockTypeEnum.DBT === blockType && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline>
+                dbt settings
+              </Headline>
+
+              <Spacing mt={1}>
+                <Checkbox
+                  checked={!!blockAttributes?.configuration?.dbt?.disable_tests}
+                  label="Disable automatically running dbt tests"
+                  onClick={() => setBlockAttributes(prev => ({
+                    ...prev,
+                    configuration: {
+                      ...prev?.configuration,
+                      dbt: {
+                        ...prev?.configuration?.dbt,
+                        disable_tests: !prev?.configuration?.dbt?.disable_tests,
+                      },
+                    },
+                  }))}
+                />
+              </Spacing>
+            </Spacing>
+          )}
 
           {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS}>

@@ -798,6 +798,7 @@ class Block:
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
+        disable_json_serialization: bool = False,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -862,14 +863,14 @@ class Block:
                         block_output,
                         default=encode_complex,
                         ignore_nan=True,
-                    )
+                    ) if not disable_json_serialization else block_output,
                 )
             else:
                 output_count = len(block_output)
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables and self.pipeline.type != PipelineType.INTEGRATION:
+            if store_variables and self.pipeline and self.pipeline.type != PipelineType.INTEGRATION:
                 try:
                     self.store_variables(
                         variable_mapping,
@@ -1033,7 +1034,7 @@ class Block:
         global_vars = merge_dict(
             global_vars or dict(),
             dict(
-                pipeline_uuid=self.pipeline.uuid,
+                pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
                 block_uuid=self.uuid,
             ),
         )
@@ -1109,22 +1110,21 @@ class Block:
         run_settings: Dict = None,
         **kwargs,
     ) -> List:
+        decorated_functions = []
+        test_functions = []
+
+        results = merge_dict({
+            'test': self._block_decorator(test_functions),
+            self.type: self._block_decorator(decorated_functions),
+        }, outputs_from_input_vars)
+
         if logging_tags is None:
             logging_tags = dict()
         if input_vars is None:
             input_vars = list()
 
-        decorated_functions = []
-        test_functions = []
-
-        results = {
-            self.type: self._block_decorator(decorated_functions),
-            'test': self._block_decorator(test_functions),
-        }
-        results.update(outputs_from_input_vars)
-
         if custom_code is not None and custom_code.strip():
-            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
+            if BlockType.CHART != self.type:
                 exec(custom_code, results)
         elif self.content is not None:
             exec(self.content, results)
@@ -1132,33 +1132,23 @@ class Block:
             with open(self.file_path) as file:
                 exec(file.read(), results)
 
-        outputs = []
-        if BlockType.CHART == self.type:
-            variables = self.get_variables_from_code_execution(results)
-            outputs = self.post_process_variables(
-                variables,
-                code=custom_code,
-                results=results,
-                upstream_block_uuids=upstream_block_uuids,
+        block_function = self._validate_execution(decorated_functions, input_vars)
+        if block_function is not None:
+            if logger and 'logger' not in global_vars:
+                global_vars['logger'] = logger
+            outputs = self.execute_block_function(
+                block_function,
+                input_vars,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
             )
-        else:
-            block_function = self._validate_execution(decorated_functions, input_vars)
-            if block_function is not None:
-                if logger and 'logger' not in global_vars:
-                    global_vars['logger'] = logger
-                outputs = self.execute_block_function(
-                    block_function,
-                    input_vars,
-                    from_notebook=from_notebook,
-                    global_vars=global_vars,
-                )
 
-            if outputs is None:
-                outputs = []
-            if type(outputs) is not list:
-                outputs = [outputs]
+        self.test_functions = test_functions
 
-            self.test_functions = test_functions
+        if outputs is None:
+            outputs = []
+        if type(outputs) is not list:
+            outputs = [outputs]
 
         return outputs
 
@@ -2291,8 +2281,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if os.path.exists(new_file_path):
                 raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
-            file_path_parts = new_file_path.split(os.sep)
-            parent_dir = os.path.join(*file_path_parts[:-1])
+            parent_dir = os.path.dirname(new_file_path)
             os.makedirs(parent_dir, exist_ok=True)
 
             os.rename(old_file_path, new_file_path)

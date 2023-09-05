@@ -8,7 +8,6 @@ import PipelineRunType from '@interfaces/PipelineRunType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-
 import {
   ALL_PIPELINE_RUNS_TYPE,
   PipelineTypeEnum,

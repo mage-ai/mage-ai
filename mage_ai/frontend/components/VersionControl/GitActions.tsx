@@ -26,6 +26,7 @@ import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 import { remove } from '@utils/array';
+import { getUser } from '@utils/session';
 
 
 const GIT_ACTION_OPTIONS = {
@@ -181,32 +182,29 @@ function GitActions({
   );
 
   useEffect(() => updateStatus(), [action, updateStatus]);
-
-  const token = useMemo(() => new AuthToken(), []);
+  
+  const user = useMemo(() => getUser() || {}, []);
   const sharedWebsocketData = useMemo(() => {
     const params = {
-      api_key: OAUTH2_APPLICATION_CLIENT_ID,
-      term_name: 'git',
-      token: token.decodedToken.token,
+      term_name: user?.id ? `git_${user?.id}` : 'git',
     };
     if (gitSettings?.repo_path) {
       params['cwd'] = gitSettings?.repo_path;
     }
     return params;
   }, [
-    token,
     gitSettings?.repo_path,
+    user,
   ]);
 
   const {
     lastMessage,
     sendMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    queryParams: sharedWebsocketData,
     shouldReconnect: () => true,
   }, 'cwd' in sharedWebsocketData);
 
-  const fileCheckbox = (file) => (
+  const fileCheckbox = useCallback((file) => (
     <Checkbox
       checked={(payload?.['files'] || []).includes(file)}
       key={file}
@@ -231,7 +229,7 @@ function GitActions({
       }}
       small
     />
-  );
+  ), [payload]);
 
   const addFilesEl = useMemo(() => (
     <>
@@ -265,8 +263,8 @@ function GitActions({
       )}
     </>
   ), [
+    fileCheckbox,
     modifiedFiles,
-    payload,
     untrackedFiles,
   ]);
 

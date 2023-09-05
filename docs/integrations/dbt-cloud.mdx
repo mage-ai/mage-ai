@@ -1,7 +1,7 @@
 ---
-title: "DBT Cloud in Mage"
-sidebarTitle: "DBT Cloud"
-description: "Trigger model runs in DBT Cloud."
+title: "dbt Cloud in Mage"
+sidebarTitle: "dbt Cloud"
+description: "Trigger model runs in dbt Cloud."
 ---
 
 ## Configuration
@@ -10,7 +10,7 @@ Here are the following keyword arguments that can be used for configuration:
 
 | Keyword argument | Description | Sample value |
 | --- | --- | --- |
-| `account_id` | DBT Cloud account ID | `12345` |
+| `account_id` | dbt Cloud account ID | `12345` |
 | `api_token` | [Service account tokens](https://docs.getdbt.com/docs/dbt-cloud-apis/service-tokens) | `abc123` |
 
 ---
@@ -32,9 +32,9 @@ client.trigger_job_run(12345, poll_status=True)
 Sample output:
 
 ```
-Polling DBT Cloud run 12345. Current status: Starting.
-Polling DBT Cloud run 12345. Current status: Running.
-Polling DBT Cloud run 12345. Current status: Success.
+Polling dbt Cloud run 12345. Current status: Starting.
+Polling dbt Cloud run 12345. Current status: Running.
+Polling dbt Cloud run 12345. Current status: Success.
 Job run status for run 12345: Success. Polling complete
 ```
 
@@ -42,7 +42,7 @@ Job run status for run 12345: Success. Polling complete
 
 ## Methods
 
-Common [APIs in DBT Cloud](https://docs.getdbt.com/dbt-cloud/api-v2) implemented in the
+Common [APIs in dbt Cloud](https://docs.getdbt.com/dbt-cloud/api-v2) implemented in the
 [`DbtCloudClient`](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/services/dbt/dbt.py).
 
 1. `get_run`

@@ -3,7 +3,10 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
-import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import BlockRunsTable, {
+  COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING,
+  DEFAULT_SORTABLE_BR_COL_INDEXES,
+} from '@components/PipelineDetail/BlockRuns/Table';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -31,7 +34,6 @@ import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineRun/shared/buildTableSidekick';
 import usePrevious from '@utils/usePrevious';
-
 import {
   AlertTriangle,
   ArrowDown,
@@ -45,11 +47,12 @@ import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { ignoreKeys, isEqual } from '@utils/hash';
-import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
 
 const TAB_PIPELINE_RUNS = {
@@ -82,8 +85,10 @@ function PipelineRuns({
   const refActionsMenu = useRef(null);
 
   const [errors, setErrors] = useState<ErrorsType>(null);
+  const [blockRunErrors, setBlockRunErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
@@ -114,8 +119,6 @@ function PipelineRuns({
     dataPipeline,
     pipelineUUID,
   ]);
-
-  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -157,16 +160,25 @@ function PipelineRuns({
   };
   let blockRunsRequestQuery = ignoreKeys(
     { ...query, ...runsRequestQuery },
-    [TAB_URL_PARAM, 'page'],
+    [TAB_URL_PARAM, 'page', SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION],
   );
   if (isPipelineRunsTab) {
     blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM]);
   }
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  if (sortColumnIndexQuery) {
+    const blockRunSortColumn = COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING[sortColumnIndexQuery];
+    const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
+    blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
+  }
   const { data: dataBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
     {},
-    { pauseFetch: !query },
   );
+  useEffect(() => {
+    displayErrorFromReadResponse(dataBlockRuns, setBlockRunErrors);
+  }, [dataBlockRuns]);
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   let pipelineRunsRequestQuery = {
@@ -223,6 +235,36 @@ function PipelineRuns({
           callback: () => {
             setSelectedRuns({});
             fetchPipelineRuns();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [deletePipelineRun] = useMutation(
+    (id: number) => api.pipeline_runs.useDelete(id)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline_run: {
+              pipeline_uuid: pipelineUUID,
+            },
+          }) => {
+            fetchPipelineRuns?.();
+            if (pipelineUUID) {
+              router.push(
+                '/pipelines/[pipeline]/runs',
+                `/pipelines/${pipelineUUID}/runs`,
+              );
+            } else {
+              fetchPipelineRuns?.();
+            }
+            setSelectedRun(null);
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -329,6 +371,8 @@ function PipelineRuns({
     <>
       <PipelineRunsTable
         allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
+        allowDelete
+        deletePipelineRun={deletePipelineRun}
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
@@ -344,6 +388,7 @@ function PipelineRuns({
       {paginationEl}
     </>
   ), [
+    deletePipelineRun,
     fetchPipelineRuns,
     paginationEl,
     pipeline?.type,
@@ -357,6 +402,7 @@ function PipelineRuns({
       <BlockRunsTable
         blockRuns={blockRuns}
         pipeline={pipeline}
+        sortableColumnIndexes={DEFAULT_SORTABLE_BR_COL_INDEXES}
       />
       {paginationEl}
     </>
@@ -383,7 +429,7 @@ function PipelineRuns({
         })
         : props => buildTableSidekick(props)
       }
-      errors={errors}
+      errors={errors || blockRunErrors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
@@ -395,8 +441,10 @@ function PipelineRuns({
           <FlexContainer alignItems="center">
             <ButtonTabs
               onClickTab={({ uuid }) => {
-                setQuery(null);
-                goToWithQuery({ tab: uuid }, { replaceParams: true });
+                if (uuid !== selectedTab?.uuid) {
+                  setQuery(null);
+                  goToWithQuery({ tab: uuid }, { replaceParams: true });
+                }
               }}
               selectedTabUUID={selectedTab?.uuid}
               tabs={TABS}

@@ -62,3 +62,19 @@ class ApiResourceListHandler(BaseApiHandler):
 
     async def post(self, resource):
         return await execute_operation(self, resource)
+
+
+class ApiListHandler(BaseApiHandler):
+    def initialize(
+        self,
+        resource: str,
+        bypass_oauth_check: bool = False,
+    ):
+        super().initialize(bypass_oauth_check=bypass_oauth_check)
+        self.resource = resource
+
+    async def get(self):
+        return await execute_operation(self, self.resource)
+
+    async def post(self):
+        return await execute_operation(self, self.resource)

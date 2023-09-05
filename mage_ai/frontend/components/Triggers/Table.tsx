@@ -29,6 +29,13 @@ import {
   Logs,
   Trash,
 } from '@oracle/icons';
+import {
+  DELETE_CONFIRM_WIDTH,
+  DELETE_CONFIRM_LEFT_OFFSET_DIFF,
+  DELETE_CONFIRM_TOP_OFFSET_DIFF,
+  DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
+} from '@components/shared/Table/constants';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -73,7 +80,7 @@ function TriggersTable({
   const pipelineUUID = pipeline?.uuid;
   const router = useRouter();
   const deleteButtonRefs = useRef({});
-  const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
+  const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<number>(null);
   const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
   const [confirmDialogueLeftOffset, setConfirmDialogueLeftOffset] = useState<number>(0);
 
@@ -98,7 +105,7 @@ function TriggersTable({
   );
 
   const [deletePipelineTrigger] = useMutation(
-    (id: string) => api.pipeline_schedules.useDelete(id)(),
+    (id: number) => api.pipeline_schedules.useDelete(id)(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -274,8 +281,8 @@ function TriggersTable({
                     }}
                   >
                     {ScheduleStatusEnum.ACTIVE === status
-                      ? <Pause muted size={2 * UNIT} />
-                      : <PlayButtonFilled default size={2 * UNIT} />
+                      ? <Pause muted size={ICON_SIZE_SMALL} />
+                      : <PlayButtonFilled default size={ICON_SIZE_SMALL} />
                     }
                   </Button>,
                   <FlexContainer
@@ -400,7 +407,7 @@ function TriggersTable({
                     `/pipelines/${finalPipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
                   )}
                 >
-                  <Logs default size={2 * UNIT} />
+                  <Logs default size={ICON_SIZE_SMALL} />
                 </Button>,
               ]);
 
@@ -414,7 +421,7 @@ function TriggersTable({
                       onClick={() => router.push(`/pipelines/${finalPipelineUUID}/triggers/${id}/edit`)}
                       title="Edit"
                     >
-                      <Edit default size={2 * UNIT} />
+                      <Edit default size={ICON_SIZE_SMALL} />
                     </Button>
                     <Spacing mr={1} />
                     <Button
@@ -429,7 +436,7 @@ function TriggersTable({
                       ref={deleteButtonRefs.current[id]}
                       title="Delete"
                     >
-                      <Trash default size={2 * UNIT} />
+                      <Trash default size={ICON_SIZE_SMALL} />
                     </Button>
                     <ClickOutside
                       onClickOutside={() => setDeleteConfirmationOpenIdx(null)}
@@ -437,15 +444,17 @@ function TriggersTable({
                     >
                       <PopupMenu
                         danger
-                        left={(confirmDialogueLeftOffset || 0) - 286}
+                        left={(confirmDialogueLeftOffset || 0) - DELETE_CONFIRM_LEFT_OFFSET_DIFF}
                         onCancel={() => setDeleteConfirmationOpenIdx(null)}
                         onClick={() => {
                           setDeleteConfirmationOpenIdx(null);
                           deletePipelineTrigger(id);
                         }}
                         title={`Are you sure you want to delete the trigger ${name}?`}
-                        top={(confirmDialogueTopOffset || 0) - (idx <= 1 ? 40 : 96)}
-                        width={UNIT * 40}
+                        top={(confirmDialogueTopOffset || 0)
+                          - (idx <= 1 ? DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST : DELETE_CONFIRM_TOP_OFFSET_DIFF)
+                        }
+                        width={DELETE_CONFIRM_WIDTH}
                       />
                     </ClickOutside>
                   </FlexContainer>,

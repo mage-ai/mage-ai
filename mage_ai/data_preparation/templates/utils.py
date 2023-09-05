@@ -1,7 +1,9 @@
 import jinja2
 import os
+import stat
 import shutil
 
+from mage_ai.shared.io import chmod
 
 template_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -28,6 +30,7 @@ def copy_template_directory(template_path: str, dest_path: str) -> None:
     if not os.path.exists(template_path):
         raise IOError(f'Could not find templates for {template_path}.')
     shutil.copytree(template_path, dest_path)
+    chmod(dest_path, stat.S_IRWXU)
 
 
 def read_template_file(template_path: str) -> jinja2.Template:

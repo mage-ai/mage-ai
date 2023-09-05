@@ -2,10 +2,20 @@ import traceback
 from typing import Dict
 
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
+from mage_ai.shared.hash import merge_dict
 
 
 class K8sPipelineExecutor(PipelineExecutor):
+    def __init__(self, pipeline: Pipeline, execution_partition: str = None):
+        super().__init__(pipeline, execution_partition=execution_partition)
+        self.executor_config = self.pipeline.repo_config.k8s_executor_config or dict()
+        if self.pipeline.executor_config is not None:
+            self.executor_config = merge_dict(self.executor_config, self.pipeline.executor_config)
+        self.executor_config = K8sExecutorConfig.load(config=self.executor_config)
+
     def cancel(
         self,
         pipeline_run_id: int = None,
@@ -42,4 +52,7 @@ class K8sPipelineExecutor(PipelineExecutor):
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
         )
-        job_manager.run_job(f'{cmd} {options_str}')
+        job_manager.run_job(
+            f'{cmd} {options_str}',
+            k8s_config=self.executor_config,
+        )

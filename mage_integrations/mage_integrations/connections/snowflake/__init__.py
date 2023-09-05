@@ -1,5 +1,6 @@
-from mage_integrations.connections.sql.base import Connection
 from snowflake.connector import connect
+
+from mage_integrations.connections.sql.base import Connection
 
 
 class Snowflake(Connection):
@@ -11,6 +12,7 @@ class Snowflake(Connection):
         schema: str,
         username: str,
         warehouse: str,
+        role: str = None,
     ):
         super().__init__()
         self.account = account
@@ -19,9 +21,10 @@ class Snowflake(Connection):
         self.schema = schema
         self.username = username
         self.warehouse = warehouse
+        self.role = role
 
     def build_connection(self):
-        return connect(
+        connect_kwargs = dict(
             account=self.account,
             database=self.database,
             password=self.password,
@@ -29,3 +32,6 @@ class Snowflake(Connection):
             user=self.username,
             warehouse=self.warehouse,
         )
+        if self.role:
+            connect_kwargs['role'] = self.role
+        return connect(**connect_kwargs)

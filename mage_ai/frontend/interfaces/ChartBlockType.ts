@@ -117,6 +117,7 @@ export interface ConfigurationType {
   chart_type?: ChartTypeEnum;
   dbt?: {
     command?: string;
+    disable_tests?: boolean;
   };
   dynamic?: boolean;
   file_path?: string;

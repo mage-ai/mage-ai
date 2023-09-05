@@ -31,6 +31,7 @@ PipelineRunPolicy.allow_actions([
 
 PipelineRunPolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -64,6 +65,12 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scope
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DELETE,
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineRunPolicy.allow_write([
     'backfill_id',

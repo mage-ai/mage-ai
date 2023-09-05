@@ -42,7 +42,7 @@ import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { isJsonString } from '@utils/string';
-import { onSuccess } from '@api/utils/response';
+import { errorOrSuccess, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -108,8 +108,15 @@ function FileEditor({
   useEffect(() => {
     if (data?.file_content) {
       setFile(data.file_content);
+    } else if (data?.error) {
+      errorOrSuccess(data, {
+        onErrorCallback: (response, errors) => setErrors({
+          errors,
+          response,
+        }),
+      });
     }
-  }, [data]);
+  }, [data, setErrors]);
 
   const [content, setContentState] = useState<string>(file?.content);
   const setContent = useCallback((content: string) => {

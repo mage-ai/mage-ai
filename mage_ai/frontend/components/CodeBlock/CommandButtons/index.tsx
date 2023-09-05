@@ -53,6 +53,7 @@ import { getColorsForBlockType } from '../index.style';
 import { isMac } from '@utils/os';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 
 export type CommandButtonsSharedProps = {
   addWidget?: (widget: BlockType, opts?: {
@@ -67,6 +68,7 @@ export type CommandButtonsSharedProps = {
 type CommandButtonsProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
+  blockContent?: string;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   hideExtraButtons?: boolean;
@@ -93,6 +95,7 @@ type CommandButtonsProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setBlockContent?: (content: string) => void;
   setIsEditingBlock?: (isEditingBlock: any) => void;
   setOutputCollapsed: (outputCollapsed: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
@@ -108,6 +111,7 @@ function CommandButtons({
   addNewBlock,
   addWidget,
   block,
+  blockContent,
   blocks,
   deleteBlock,
   executionState,
@@ -120,12 +124,17 @@ function CommandButtons({
   pipeline,
   project,
   runBlock,
+  setBlockContent,
   setIsEditingBlock,
   savePipelineContent,
   setErrors,
   setOutputCollapsed,
   showConfigureProjectModal,
 }: CommandButtonsProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: `CommandButtons/${block?.uuid}`,
+  });
+
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
     color: blockColor,
@@ -194,6 +203,27 @@ function CommandButtons({
     },
   );
 
+  const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
+    api.llms.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            llm,
+          }) => {
+            if (llm?.response && setBlockContent) {
+              setBlockContent?.(llm?.response);
+            }
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const itemsAIActions = useMemo(() => {
     const shouldShowModal = !project?.openai_api_key;
     const showModal = (llm: LLMType) => {
@@ -241,7 +271,7 @@ function CommandButtons({
 
     return [
       {
-        label: () => 'Document block',
+        label: () => 'Document block (beta)',
         onClick: () => {
           llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_BLOCK;
 
@@ -258,25 +288,8 @@ function CommandButtons({
         },
         uuid: 'Document block',
       },
-      // {
-      //   label: () => 'Add comments in block',
-      //   onClick: () => {
-      //     llm.use_case = LLMUseCaseEnum.GENERATE_COMMENT_FOR_BLOCK;
-
-      //     if (shouldShowModal) {
-      //       showModal(llm);
-      //     } else {
-      //       updatePipeline({
-      //         pipeline: {
-      //           llm,
-      //         },
-      //       });
-      //     }
-      //   },
-      //   uuid: 'Add comments in block',
-      // },
       {
-        label: () => 'Document pipeline and all blocks',
+        label: () => 'Document pipeline and all blocks (beta)',
         onClick: () => {
           llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_PIPELINE;
 
@@ -293,9 +306,30 @@ function CommandButtons({
         },
         uuid: 'Document pipeline and all blocks',
       },
+      {
+        label: () => 'Add comments in code (beta)',
+        onClick: () => {
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            createLLM({
+              llm: {
+                request: {
+                  block_code: blockContent,
+                },
+                use_case: LLMUseCaseEnum.GENERATE_COMMENT_FOR_CODE,
+              },
+            });
+          }
+        },
+        uuid: 'Add comments in code',
+      },
     ];
   }, [
     block,
+    blockContent,
+    createLLM,
     pipeline,
     project,
     showConfigureProjectModal,

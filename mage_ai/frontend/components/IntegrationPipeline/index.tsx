@@ -2,6 +2,8 @@ import { parse, stringify } from 'yaml';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import Button from '@oracle/elements/Button';
 import BlockType, {
@@ -24,6 +26,7 @@ import IntegrationSourceType, {
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
 import Link from '@oracle/elements/Link';
+import Markdown from '@oracle/components/Markdown';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import SchemaSettings from './SchemaSettings';
@@ -38,7 +41,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import { SectionStyle } from './index.style';
+import { DocsStyle, SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy } from '@utils/array';
@@ -97,6 +100,8 @@ function IntegrationPipeline({
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
   const [transformerVisible, setTransformerVisible] = useState(true);
+  const [integrationSourceDocs, setIntegrationSourceDocs] =
+    useState<string>('');
 
   const { data: dataIntegrationSources } = api.integration_sources.list({}, {
     revalidateOnFocus: false,
@@ -127,6 +132,13 @@ function IntegrationPipeline({
 
     return parse(dataLoaderBlock.content);
   }, [dataLoaderBlock]);
+
+  useEffect(() => {
+    if (dataLoaderBlockContent?.source) {
+      setIntegrationSourceDocs(integrationSourcesByUUID[dataLoaderBlockContent.source]?.docs);
+    }
+  }, [integrationSourcesByUUID, dataLoaderBlockContent]);
+
   const dataLoaderEditor = useMemo(() => (
     <SourceConfig
       api="integration_sources"
@@ -667,7 +679,7 @@ function IntegrationPipeline({
                       if (!sourceUUID) {
                         return;
                       }
-
+                      setIntegrationSourceDocs(integrationSourcesByUUID[sourceUUID]?.docs);
                       const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
                       if (config) {
                         Object.keys(config).forEach((key: string) => {
@@ -730,18 +742,17 @@ function IntegrationPipeline({
                     Configuration
                   </Headline>
 
-                  {dataLoaderBlockContent?.source && (
+                  {dataLoaderBlockContent?.source && integrationSourceDocs && (
                     <Spacing mb={2}>
-                      <Text default>
-                        For more information on how to configure this source,
-                        read the <Link
-                          href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
-                          openNewWindow
-                          primary
-                        >
-                          {dataLoaderBlockContent.source} documentation
-                        </Link>
-                      </Text>
+                      <Accordion>
+                        <AccordionPanel title={`Documentation: ${dataLoaderBlockContent.source}`}>
+                          <DocsStyle>
+                            <Markdown>
+                              { integrationSourceDocs.replace(/\<br \/\>/g, '\n\n') }
+                            </Markdown>
+                          </DocsStyle>
+                        </AccordionPanel>
+                      </Accordion>
 
                       {buildVariablesTable('https://docs.mage.ai/guides/data-integration-pipeline#configure-source')}
                     </Spacing>

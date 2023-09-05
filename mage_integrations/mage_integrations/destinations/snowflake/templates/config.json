@@ -3,6 +3,7 @@
   "database": "",
   "disable_double_quotes": false,
   "password": "",
+  "role": "",
   "schema": "",
   "table": "",
   "username": "",

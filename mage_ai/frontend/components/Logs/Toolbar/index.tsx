@@ -20,7 +20,6 @@ import {
   SPECIFIC_LOG_RANGES,
 } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-
 import { calculateStartTimestamp } from '@utils/number';
 import {
   getDatePartsFromUnixTimestamp,
