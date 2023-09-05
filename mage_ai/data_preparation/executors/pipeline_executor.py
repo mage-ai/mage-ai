@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import Dict, List
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -117,3 +117,39 @@ class PipelineExecutor:
         if kwargs.get('pipeline_run_id'):
             default_tags['pipeline_run_id'] = kwargs.get('pipeline_run_id')
         return merge_dict(kwargs.get('tags', {}), default_tags)
+
+    def _run_commands(
+        self,
+        global_vars: Dict = None,
+        pipeline_run_id: int = None,
+        **kwargs,
+    ) -> List[str]:
+        """
+        Run the commands for the pipeline.
+
+        Args:
+            global_vars: Global variables for the block execution.
+            pipeline_run_id: The ID of the pipeline run.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            A list of command arguments.
+        """
+        cmd = f'/app/run_app.sh '\
+              f'mage run {self.pipeline.repo_config.repo_path} '\
+              f'{self.pipeline.uuid}'
+        options = [
+            '--executor-type',
+            'local_python',
+        ]
+        if self.execution_partition is not None:
+            options += [
+                '--execution-partition',
+                f'{self.execution_partition}',
+            ]
+        if pipeline_run_id is not None:
+            options += [
+                '--pipeline-run-id',
+                f'{pipeline_run_id}',
+            ]
+        return cmd.split(' ') + options

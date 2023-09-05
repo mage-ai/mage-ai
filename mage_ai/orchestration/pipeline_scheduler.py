@@ -1253,7 +1253,10 @@ def cancel_block_runs_and_jobs(
     )
 
     # Kill jobs for integration streams and pipeline run
-    if pipeline and pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
+    if pipeline and (
+        pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]
+        or pipeline.run_pipeline_in_one_process
+    ):
         job_manager.kill_pipeline_run_job(pipeline_run.id)
         if pipeline.type == PipelineType.INTEGRATION:
             for stream in pipeline.streams():
