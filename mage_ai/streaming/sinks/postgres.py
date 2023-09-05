@@ -44,7 +44,7 @@ class PostgresSink(BaseSink):
         self.batch_write([data])
 
     def batch_write(self, data: List[Dict]):
-        self._print(f'Batch ingest data {data}, time={time.time()}. Sample: {data[0]}')
+        self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
 
         df = pd.DataFrame.from_records(data)
         self.postgres_client.export(
