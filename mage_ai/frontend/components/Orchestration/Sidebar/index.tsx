@@ -16,7 +16,7 @@ type SidebarProps = {
   pipelineSchedules: {
     [uuid: string]: PipelineScheduleType[],
   };
-  pipelineScheduleId: string;
+  pipelineScheduleId: number;
   pipelineUuid: string;
   width?: number;
 };
@@ -25,7 +25,7 @@ type PipelineSchedulesProps = {
   pipelineUuid: string;
   schedules: PipelineScheduleType[];
   selectedPipelineUuid: string;
-  selectedScheduleId: string;
+  selectedScheduleId: number;
 };
 
 function PipelineSchedules({
@@ -92,6 +92,7 @@ function PipelineSchedules({
 
         return (
           <Link
+            key={id}
             noHoverUnderline
             noOutline
             onClick={() => Router.push({
@@ -127,8 +128,9 @@ function Sidebar({
 }: SidebarProps) {
   return (
     <FlexContainer flexDirection="column" width={width}>
-      {Object.entries(pipelineSchedules || {}).map(([pipelineUuid, schedules]) => (
+      {Object.entries(pipelineSchedules || {}).map(([pipelineUuid, schedules], idx) => (
         <PipelineSchedules
+          key={`${pipelineUuid}_${idx}`}
           pipelineUuid={pipelineUuid}
           schedules={schedules}
           selectedPipelineUuid={selectedPipelineUuid}

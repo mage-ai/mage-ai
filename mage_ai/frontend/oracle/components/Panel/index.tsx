@@ -4,7 +4,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';

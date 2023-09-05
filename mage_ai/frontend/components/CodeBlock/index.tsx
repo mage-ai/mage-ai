@@ -64,7 +64,6 @@ import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
-
 import {
   ArrowDown,
   ChevronDown,

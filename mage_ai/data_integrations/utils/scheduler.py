@@ -103,6 +103,10 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
 
+    if data_exporter_block is None:
+        raise Exception("No Destination Block was found. \
+                         Mage expects 1 Source and 1 Destination Block")
+
     transformer_blocks = [b for b in executable_blocks if b.uuid not in [
         data_loader_block.uuid,
         data_exporter_block.uuid,

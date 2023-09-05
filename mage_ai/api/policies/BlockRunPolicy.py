@@ -35,6 +35,7 @@ BlockRunPolicy.allow_read(BlockRunPresenter.default_attributes + [], scopes=[
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockRunPolicy.allow_query([
+    'order_by',
     'pipeline_run_id',
     'pipeline_uuid',
 ], scopes=[

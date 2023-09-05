@@ -15,10 +15,10 @@ import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
+import { displayErrorFromReadResponse } from '@api/utils/response';
 import { getUser } from '@utils/session';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
-import { displayErrorFromReadResponse } from '@api/utils/response';
 
 function UsersListPage() {
   const router = useRouter();

@@ -7,7 +7,6 @@ import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
-
 import {
   DISTRIBUTION_COLUMNS,
   DISTRIBUTION_STATS,

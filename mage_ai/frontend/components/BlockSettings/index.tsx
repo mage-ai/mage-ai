@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BLOCK_COLOR_HEX_CODE_MAPPING,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
@@ -19,7 +18,7 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
 import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
-import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
+import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from '@interfaces/PipelineType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
 import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
@@ -31,7 +30,6 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { BannerStyle } from './index.style';
 import { DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
@@ -49,6 +47,7 @@ import { TableContainerStyle } from '@components/IntegrationPipeline/index.style
 import { YELLOW } from '@oracle/styles/colors/main';
 import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
@@ -60,6 +59,7 @@ const SHARED_BUTTON_PROPS = {
   outline: true,
   padding: '4px',
 };
+const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
   block: BlockType;
@@ -90,6 +90,12 @@ function BlockSettings({
   const pipelineUUID = useMemo(() => pipeline?.uuid, [pipeline]);
   const pipelineRetryConfig: PipelineRetryConfigType =
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
+  
+  console.log('pipeline', pipeline);
+  const showBlockRunTimeout = useMemo(
+    () => !pipeline?.run_pipeline_in_one_process &&
+      [PipelineTypeEnum.PYSPARK, PipelineTypeEnum.PYTHON].includes(pipeline?.type),
+    [pipeline]);
 
   const {
     color: blockColor,
@@ -383,7 +389,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Executor type
             </Headline>
 
@@ -461,7 +467,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Retry configuration
             </Headline>
 
@@ -582,10 +588,35 @@ function BlockSettings({
               </Spacing>
             </Spacing>
           </Spacing>
+          {showBlockRunTimeout && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline level={5}>
+                Block run timeout
+              </Headline>
+              <Spacing mb={1} />
+              <TextInput
+                label="Time in seconds"
+                monospace
+                onChange={e => setBlockAttributes(prev => ({
+                  ...prev,
+                  timeout: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={blockAttributes?.timeout || ''}
+              />
+              <Spacing mb={1} />
+              <Text small>
+                The block timeout will only be applied when the block is run through a trigger.
+                If a block times out, the block run will be set to a failed state.
+              </Text>
+            </Spacing>
+          )}
 
           {BlockTypeEnum.DBT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 dbt settings
               </Headline>
 
@@ -611,7 +642,7 @@ function BlockSettings({
           {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS}>
               <Spacing px={PADDING_UNITS}>
-                <Headline>
+                <Headline level={5}>
                   Override global data product settings
                 </Headline>
               </Spacing>
@@ -656,6 +687,7 @@ function BlockSettings({
                   configuration: blockAttributes?.configuration,
                   executor_type: blockAttributes?.executor_type,
                   retry_config: blockRetryConfig,
+                  timeout: blockAttributes?.timeout,
                 },
               })}
               primary
@@ -677,7 +709,7 @@ function BlockSettings({
         {dataBlock && (
           <>
             <Spacing p={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>

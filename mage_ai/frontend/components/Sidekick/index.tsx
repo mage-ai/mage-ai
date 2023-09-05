@@ -32,7 +32,6 @@ import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
-
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import {
   Charts as ChartsIcon,

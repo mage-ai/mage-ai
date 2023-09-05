@@ -43,6 +43,7 @@ export interface PipelineScheduleSettingsType {
   allow_blocks_to_fail?: boolean;
   landing_time_enabled?: boolean;
   skip_if_previous_running?: boolean;
+  timeout?: number;
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
@@ -63,7 +64,7 @@ export default interface PipelineScheduleType {
   created_at?: string;
   event_matchers?: EventMatcherType[];
   global_data_product_uuid?: string;
-  id?: string;
+  id?: number;
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   next_pipeline_run_date?: string;

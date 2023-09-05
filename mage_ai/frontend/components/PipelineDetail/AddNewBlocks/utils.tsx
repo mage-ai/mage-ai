@@ -46,6 +46,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.MONGODB,
         DataSourceTypeEnum.OPENSEARCH,
+        DataSourceTypeEnum.POSTGRES,
         DataSourceTypeEnum.ELASTICSEARCH,
       ],
       [BlockTypeEnum.TRANSFORMER]: [

@@ -71,8 +71,6 @@ export enum BlockColorEnum {
   YELLOW = 'yellow',
 }
 
-export const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
-
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.CUSTOM,
@@ -286,6 +284,7 @@ export default interface BlockType {
   retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
+  timeout?: number;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;
