@@ -88,6 +88,8 @@ class PipelineSchedule(BaseModel):
 
     @classproperty
     def repo_query(cls):
+        # SQLAcademy has an issue with automatic session data sync-ups with MySQL. Therefore,
+        # session data refresh was forced by calling 'db_connection.session.commit()' explicitly
         db_connection.session.commit()
         return cls.query.filter(
             or_(
