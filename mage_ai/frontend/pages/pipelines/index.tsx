@@ -526,6 +526,19 @@ function PipelineListPage() {
           }
         },
       }}
+      extraActionButtonProps={{
+        Icon: Clone,
+        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+          configuration and code blocks. The blocks use the same block files as the original pipeline. \
+          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+        isLoading: isLoadingClone,
+        onClick: () => clonePipeline({
+          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+        }),
+        openConfirmationDialogue: true,
+        tooltip: 'Clone pipeline',
+      }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
         tag: tags.map(({ uuid }) => uuid),
@@ -647,19 +660,6 @@ function PipelineListPage() {
       searchProps={{
         onChange: setSearchText,
         value: searchText,
-      }}
-      secondaryActionButtonProps={{
-        Icon: Clone,
-        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
-          configuration and code blocks. The blocks use the same block files as the original pipeline. \
-          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
-        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
-        isLoading: isLoadingClone,
-        onClick: () => clonePipeline({
-          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
-        }),
-        openConfirmationDialogue: true,
-        tooltip: 'Clone pipeline',
       }}
       selectedRowId={selectedPipeline?.uuid}
       setSelectedRow={setSelectedPipeline}

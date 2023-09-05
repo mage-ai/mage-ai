@@ -118,7 +118,7 @@ function PipelineSchedules({
       `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}/edit`,
     ),
   );
-  const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }] =
+  const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }]: any =
     useCreateScheduleMutation(fetchPipelineSchedules);
 
   const variablesOrig = useMemo(() => (
@@ -131,7 +131,7 @@ function PipelineSchedules({
     }), {})
   ), [globalVariables]);
 
-  const pipelineOnceSchedulePayload = {
+  const pipelineOnceSchedulePayload = useMemo(() => ({
     name: randomNameGenerator(),
     schedule_interval: ScheduleIntervalEnum.ONCE,
     schedule_type: ScheduleTypeEnum.TIME,
@@ -140,7 +140,7 @@ function PipelineSchedules({
       { dayAgo: true, utcFormat: true },
     ),
     status: ScheduleStatusEnum.ACTIVE,
-  };
+  }), []);
   const [showModal, hideModal] = useModal(() => (
     <RunPipelinePopup
       initialPipelineSchedulePayload={pipelineOnceSchedulePayload}
@@ -267,14 +267,32 @@ function PipelineSchedules({
         );
       }}
       query={query}
+      secondaryButtonProps={{
+        disabled: isViewerRole,
+        isLoading: isLoadingCreateOnceSchedule,
+        label: 'Run @once',
+        onClick: isEmptyObject(variablesOrig)
+          ? () => createOnceSchedule({
+            pipeline_schedule: pipelineOnceSchedulePayload,
+          })
+          : showModal,
+        tooltip: 'Creates an @once trigger and runs pipeline immediately',
+      }}
+      showDivider
     />
   ), [
     createNewSchedule,
+    createOnceSchedule,
     isLoadingCreateNewSchedule,
+    isLoadingCreateOnceSchedule,
+    isViewerRole,
+    pipelineOnceSchedulePayload,
     pipelineUUID,
     query,
     router,
+    showModal,
     tags,
+    variablesOrig,
   ]);
 
   return (
@@ -293,38 +311,7 @@ function PipelineSchedules({
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
-      <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-        <FlexContainer justifyContent="space-between">
-          <Headline level={5}>
-            Pipeline triggers
-          </Headline>
-          <Tooltip
-            appearBefore
-            default
-            fullSize
-            label="Creates an @once trigger and runs pipeline immediately"
-            widthFitContent
-          >
-            <Button
-              beforeIcon={<PlayButton inverted size={UNIT * 2} />}
-              disabled={isViewerRole}
-              loading={isLoadingCreateOnceSchedule}
-              onClick={isEmptyObject(variablesOrig)
-                // @ts-ignore
-                ? () => createOnceSchedule({
-                  pipeline_schedule: pipelineOnceSchedulePayload,
-                })
-                : showModal}
-              outline
-              success={!isViewerRole}
-            >
-              Run pipeline now
-            </Button>
-          </Tooltip>
-        </FlexContainer>
-      </Spacing>
-
-      <Divider light mt={PADDING_UNITS} short />
+      <Divider light />
 
       {!dataPipelineSchedules
         ?

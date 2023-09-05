@@ -25,6 +25,7 @@ import { Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
 
@@ -41,6 +42,16 @@ type ToolbarProps = {
     item: string;
     onDelete: (id: string | number) => void;
   }
+  extraActionButtonProps?: {
+    Icon: any;
+    confirmationDescription?: string;
+    confirmationMessage?: string;
+    isLoading?: boolean;
+    label?: string;
+    onClick: () => void;
+    openConfirmationDialogue?: boolean;
+    tooltip?: string;
+  };
   filterOptions?: {
     [keyof: string]: string[];
   };
@@ -63,28 +74,27 @@ type ToolbarProps = {
   query?: {
     [keyof: string]: string[];
   };
+  secondaryButtonProps?: {
+    disabled?: boolean;
+    isLoading?: boolean;
+    label?: string;
+    onClick?: () => void;
+    tooltip?: string;
+  };
   searchProps?: {
     placeholder?: string;
     onChange: (text: string) => void;
     value: string;
   }
-  secondaryActionButtonProps?: {
-    Icon: any;
-    confirmationDescription?: string;
-    confirmationMessage?: string;
-    isLoading?: boolean;
-    label?: string;
-    onClick: () => void;
-    openConfirmationDialogue?: boolean;
-    tooltip?: string;
-  };
   selectedRowId?: string | number;
   setSelectedRow?: (row: any) => void;
+  showDivider?: boolean;
 };
 
 function Toolbar({
   addButtonProps,
   deleteRowProps,
+  extraActionButtonProps,
   filterOptions = {},
   filterValueLabelMapping,
   groupButtonProps,
@@ -92,10 +102,11 @@ function Toolbar({
   onClickFilterDefaults,
   onFilterApply,
   query = {},
+  secondaryButtonProps,
   searchProps,
-  secondaryActionButtonProps,
   selectedRowId,
   setSelectedRow,
+  showDivider,
 }: ToolbarProps) {
   const isViewerRole = isViewer();
   const addButtonMenuRef = useRef(null);
@@ -118,15 +129,15 @@ function Toolbar({
   const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpenIdx(null), []);
 
   const {
-    Icon: secondaryActionIcon,
-    confirmationDescription: secondaryActionConfirmDescription,
-    confirmationMessage: secondaryActionConfirmMessage,
-    isLoading: isLoadingSecondaryAction,
-    label: secondaryActionLabel,
-    onClick: onSecondaryActionClick,
-    openConfirmationDialogue: openSecondaryActionConfirmDialogue,
-    tooltip: secondaryActionTooltip,
-  } = secondaryActionButtonProps || {};
+    Icon: extraActionIcon,
+    confirmationDescription: extraActionConfirmDescription,
+    confirmationMessage: extraActionConfirmMessage,
+    isLoading: isLoadingExtraAction,
+    label: extraActionLabel,
+    onClick: onExtraActionClick,
+    openConfirmationDialogue: openExtraActionConfirmDialogue,
+    tooltip: extraActionTooltip,
+  } = extraActionButtonProps || {};
   const {
     confirmationMessage: deleteConfirmMessage,
     isLoading: isLoadingDelete,
@@ -177,6 +188,36 @@ function Toolbar({
     closeAddButtonMenu,
     isLoadingAddButton,
     onClickAddButton,
+  ]);
+
+  const {
+    disabled: secondaryButtonDisabled,
+    label: secondaryButtonLabel,
+    onClick: onClickSecondaryButton,
+    isLoading: isLoadingSecondaryButton,
+    tooltip: secondaryButtonTooltip,
+  } = secondaryButtonProps || {};
+  const secondaryButtonEl = useMemo(() => (
+    <KeyboardShortcutButton
+      bold
+      disabled={secondaryButtonDisabled}
+      greyBorder
+      loading={isLoadingSecondaryButton}
+      onClick={onClickSecondaryButton}
+      outline
+      paddingBottom={9}
+      paddingTop={9}
+      title={secondaryButtonTooltip}
+      uuid="Table/Toolbar/SecondaryButton"
+    >
+      {secondaryButtonLabel}
+    </KeyboardShortcutButton>
+  ), [
+    isLoadingSecondaryButton,
+    onClickSecondaryButton,
+    secondaryButtonDisabled,
+    secondaryButtonLabel,
+    secondaryButtonTooltip,
   ]);
 
   const filtersAppliedCount = useMemo(
@@ -303,6 +344,19 @@ function Toolbar({
   return (
     <FlexContainer alignItems="center">
       {addButtonProps && addButtonEl}
+      {secondaryButtonProps && (
+        <Spacing ml={1}>
+          {secondaryButtonEl}
+        </Spacing>
+      )}
+
+      {showDivider && (
+        <>
+          <Spacing ml="12px" />
+          <VerticalDividerStyle />
+        </>
+      )}
+
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
 
@@ -312,26 +366,26 @@ function Toolbar({
         </Spacing>
       }
 
-      {(!isViewerRole && onSecondaryActionClick) &&
+      {(!isViewerRole && onExtraActionClick) &&
         <Spacing ml={BUTTON_PADDING}>
           <Tooltip
             {...SHARED_TOOLTIP_PROPS}
-            label={secondaryActionTooltip}
+            label={extraActionTooltip}
           >
             <KeyboardShortcutButton
-              Icon={!isLoadingSecondaryAction && secondaryActionIcon}
+              Icon={!isLoadingExtraAction && extraActionIcon}
               bold
               disabled={disabledActions}
               greyBorder
-              loading={isLoadingSecondaryAction}
-              onClick={openSecondaryActionConfirmDialogue
+              loading={isLoadingExtraAction}
+              onClick={openExtraActionConfirmDialogue
                 ? () => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.SECONDARY)
-                : onSecondaryActionClick
+                : onExtraActionClick
               }
               smallIcon
-              uuid="Table/Toolbar/SecondaryActionButton"
+              uuid="Table/Toolbar/ExtraActionButton"
             >
-              {secondaryActionLabel}
+              {extraActionLabel}
             </KeyboardShortcutButton>
           </Tooltip>
           <ClickOutside
@@ -341,12 +395,12 @@ function Toolbar({
             <PopupMenu
               onCancel={closeConfirmationDialogue}
               onClick={() => {
-                onSecondaryActionClick?.();
+                onExtraActionClick?.();
                 closeConfirmationDialogue();
                 setSelectedRow?.(null);
               }}
-              subtitle={secondaryActionConfirmDescription}
-              title={secondaryActionConfirmMessage}
+              subtitle={extraActionConfirmDescription}
+              title={extraActionConfirmMessage}
               top={POPUP_TOP_OFFSET}
               width={POPUP_MENU_WIDTH}
             />
