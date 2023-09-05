@@ -92,6 +92,7 @@ class Trino(BaseSQL):
                 source=settings.get('source'),
                 user=settings.get('user'),
                 verify=settings.get('verify'),
+                precision=settings.get('precision'),
             )
 
         return cls(
@@ -247,9 +248,10 @@ class Trino(BaseSQL):
 
         cursor.executemany(sql, values)
 
-    def get_type(self, column: Series, dtype: str) -> str:
+    def get_type(self, column: Series, dtype: str, settings) -> str:
         return convert_python_type_to_trino_type(
-            convert_pandas_dtype_to_python_type(dtype)
+            convert_pandas_dtype_to_python_type(dtype),
+            settings.get('precision')
         )
 
     def export(
@@ -338,7 +340,7 @@ class Trino(BaseSQL):
                 else:
                     if should_create_table:
                         db_dtypes = {
-                            col: self.get_type(df[col], dtypes[col])
+                            col: self.get_type(df[col], dtypes[col], settings=self.settings)
                             for col in dtypes
                         }
                         query = self.build_create_table_command(
