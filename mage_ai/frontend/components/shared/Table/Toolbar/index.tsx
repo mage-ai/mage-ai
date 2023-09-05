@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
 
 import AddButton from '@components/shared/AddButton';
 import Badge from '@oracle/components/Badge';
@@ -28,26 +27,26 @@ import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
-import { setFilters } from '@storage/pipelines';
 
 type ToolbarProps = {
   addButtonProps?: {
     isLoading?: boolean;
     label?: string;
+    onClick?: () => void;
     menuItems?: FlyoutMenuItemType[];
   };
   deleteRowProps?: {
     confirmationMessage: string;
     isLoading: boolean;
     item: string;
-    onDelete: (id: string) => void;
+    onDelete: (id: string | number) => void;
   }
   filterOptions?: {
     [keyof: string]: string[];
   };
   filterValueLabelMapping?: {
     [keyof: string]: {
-      [keyof: string]: string;
+      [keyof: string]: string | (() => string);
     };
   };
   moreActionsMenuItems?: FlyoutMenuItemType[];
@@ -55,6 +54,7 @@ type ToolbarProps = {
     menuItems: FlyoutMenuItemType[];
     groupByLabel?: string;
   };
+  onClickFilterDefaults?: () => void;
   onFilterApply?: (query?: {
     [key: string]: string | string[] | number | number[];
   }, updatedQuery?: {
@@ -78,8 +78,8 @@ type ToolbarProps = {
     openConfirmationDialogue?: boolean;
     tooltip?: string;
   };
-  selectedRowId: string;
-  setSelectedRow: (row: any) => void;
+  selectedRowId?: string | number;
+  setSelectedRow?: (row: any) => void;
 };
 
 function Toolbar({
@@ -89,6 +89,7 @@ function Toolbar({
   filterValueLabelMapping,
   groupButtonProps,
   moreActionsMenuItems,
+  onClickFilterDefaults,
   onFilterApply,
   query = {},
   searchProps,
@@ -97,7 +98,6 @@ function Toolbar({
   setSelectedRow,
 }: ToolbarProps) {
   const isViewerRole = isViewer();
-  const router = useRouter();
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const groupButtonMenuRef = useRef(null);
@@ -154,6 +154,7 @@ function Toolbar({
   const {
     label: addButtonLabel,
     menuItems: addButtonMenuItems,
+    onClick: onClickAddButton,
     isLoading: isLoadingAddButton,
   } = addButtonProps || {};
   const addButtonEl = useMemo(() => (
@@ -163,7 +164,10 @@ function Toolbar({
       isLoading={isLoadingAddButton}
       label={addButtonLabel}
       menuItems={addButtonMenuItems}
-      onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
+      onClick={onClickAddButton
+        ? onClickAddButton
+        : () => setAddButtonMenuOpen(prevOpenState => !prevOpenState)
+      }
       onClickCallback={closeAddButtonMenu}
     />
   ), [
@@ -172,6 +176,7 @@ function Toolbar({
     addButtonMenuOpen,
     closeAddButtonMenu,
     isLoadingAddButton,
+    onClickAddButton,
   ]);
 
   const filtersAppliedCount = useMemo(
@@ -190,10 +195,7 @@ function Toolbar({
         }
       }}
       onClickOutside={closeFilterButtonMenu}
-      onSecondaryClick={() => {
-        setFilters({});
-        router.push('/pipelines');
-      }}
+      onSecondaryClick={onClickFilterDefaults}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
@@ -225,9 +227,9 @@ function Toolbar({
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
     filtersAppliedCount,
+    onClickFilterDefaults,
     onFilterApply,
     query,
-    router,
   ]);
 
   const {
@@ -300,7 +302,7 @@ function Toolbar({
 
   return (
     <FlexContainer alignItems="center">
-      {addButtonEl}
+      {addButtonProps && addButtonEl}
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
 
@@ -339,9 +341,9 @@ function Toolbar({
             <PopupMenu
               onCancel={closeConfirmationDialogue}
               onClick={() => {
-                onSecondaryActionClick();
+                onSecondaryActionClick?.();
                 closeConfirmationDialogue();
-                setSelectedRow(null);
+                setSelectedRow?.(null);
               }}
               subtitle={secondaryActionConfirmDescription}
               title={secondaryActionConfirmMessage}
@@ -377,9 +379,9 @@ function Toolbar({
               danger
               onCancel={closeConfirmationDialogue}
               onClick={() => {
-                onDelete(selectedRowId);
+                onDelete?.(selectedRowId);
                 closeConfirmationDialogue();
-                setSelectedRow(null);
+                setSelectedRow?.(null);
               }}
               subtitle={deleteConfirmMessage}
               title={`Are you sure you want to delete the ${item} ${selectedRowId}?`}
@@ -412,7 +414,7 @@ function Toolbar({
               defaultColor
               fullWidth
               greyBorder
-              maxWidth={UNIT * 60}
+              maxWidth={UNIT * 40}
               onChange={e => onSearchChange(e.target.value)}
               paddingVertical={9}
               placeholder={searchPlaceholder ? searchPlaceholder : null}

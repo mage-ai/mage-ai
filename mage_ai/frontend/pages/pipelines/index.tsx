@@ -633,6 +633,10 @@ function PipelineListPage() {
           uuid: 'Pipelines/MoreActionsMenu/EditDescription',
         },
       ]}
+      onClickFilterDefaults={() => {
+        setFilters({});
+        router.push('/pipelines');
+      }}
       onFilterApply={(query, updatedQuery) => {
         // @ts-ignore
         if (Object.values(updatedQuery).every(arr => !arr?.length)) {
@@ -669,6 +673,7 @@ function PipelineListPage() {
     isLoadingDelete,
     newPipelineButtonMenuItems,
     query,
+    router,
     searchText,
     selectedPipeline?.description,
     selectedPipeline?.name,
