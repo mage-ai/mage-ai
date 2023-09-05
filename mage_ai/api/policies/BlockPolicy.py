@@ -104,6 +104,7 @@ BlockPolicy.allow_write([
     'status',
     'tags',
     'tap_stream_id',
+    'timeout',
     'type',
     'upstream_blocks',
     'uuid',

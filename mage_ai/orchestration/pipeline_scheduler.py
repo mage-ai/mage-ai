@@ -235,8 +235,9 @@ class PipelineScheduler:
                             schedule.schedule_interval == ScheduleInterval.ONCE:
 
                         schedule.update(status=ScheduleStatus.INACTIVE)
-            elif self.pipeline_run.any_blocks_failed() and \
-                    not self.allow_blocks_to_fail:
+            elif self.__check_pipeline_run_timeout() or \
+                    (self.pipeline_run.any_blocks_failed() and
+                     not self.allow_blocks_to_fail):
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
 
@@ -253,7 +254,8 @@ class PipelineScheduler:
             elif self.pipeline.run_pipeline_in_one_process:
                 self.__schedule_pipeline()
             else:
-                self.__schedule_blocks(block_runs)
+                if not self.__check_block_run_timeout():
+                    self.__schedule_blocks(block_runs)
 
     @safe_db_query
     def on_block_complete(self, block_uuid: str) -> None:
@@ -383,6 +385,75 @@ class PipelineScheduler:
         if HOSTNAME:
             base_tags['hostname'] = HOSTNAME
         return merge_dict(kwargs, base_tags)
+
+    @safe_db_query
+    def __check_pipeline_run_timeout(self) -> bool:
+        """
+        Check run timeout for pipeline run. The method checks if a pipeline run timeout is set
+        and compares to the pipeline run time. If the run time is greater than the timeout,
+        the run will be put into a failed state and the corresponding job is cancelled.
+
+        Returns:
+            bool: True if the pipeline run has timed out, False otherwise.
+        """
+        try:
+            pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
+
+            if self.pipeline_run.started_at and pipeline_run_timeout:
+                time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                    self.pipeline_run.started_at.timestamp()
+                if time_difference > int(pipeline_run_timeout):
+                    self.logger.error(
+                        f'Pipeline run timed out after {int(time_difference)} seconds',
+                        **self.build_tags(),
+                    )
+                    return True
+        except Exception:
+            pass
+
+        return False
+
+    @safe_db_query
+    def __check_block_run_timeout(self) -> bool:
+        """
+        Check run timeout block runs. Currently only works for batch pipelines that are run
+        using the `__schedule_blocks` method. This method checks if a block run has exceeded
+        its timeout and puts the block run into a failed state and cancels the block run job.
+
+        Returns:
+            bool: True if any block runs have timed out, False otherwise.
+        """
+        block_runs = self.pipeline_run.running_block_runs
+
+        any_block_run_timed_out = False
+        for block_run in block_runs:
+            try:
+                block = self.pipeline.get_block(block_run.block_uuid)
+                if block and block.timeout and block_run.started_at:
+                    time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                        block_run.started_at.timestamp()
+                    if time_difference > int(block.timeout):
+                        # Get logger from block_executor so that the error log shows up in the
+                        # block run log file and not the pipeline run log file.
+                        block_executor = ExecutorFactory.get_block_executor(
+                            self.pipeline,
+                            block.uuid,
+                            execution_partition=self.pipeline_run.execution_partition,
+                        )
+                        block_executor.logger.error(
+                            f'Block {block_run.block_uuid} timed out after ' +
+                            f'{int(time_difference)} seconds',
+                            **block_executor.build_tags(
+                                block_run_id=block_run.id,
+                                pipeline_run_id=self.pipeline_run.id,
+                            ),
+                        )
+                        self.on_block_failure(block_run.block_uuid)
+                        job_manager.kill_block_run_job(block_run.id)
+                        any_block_run_timed_out = True
+            except Exception:
+                pass
+        return any_block_run_timed_out
 
     def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
         """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
@@ -1118,6 +1189,7 @@ def retry_pipeline_run(
 def stop_pipeline_run(
     pipeline_run: PipelineRun,
     pipeline: Pipeline = None,
+    status: PipelineRun.PipelineRunStatus = PipelineRun.PipelineRunStatus.CANCELLED,
 ) -> None:
     """Stop a pipeline run.
 
@@ -1138,7 +1210,7 @@ def stop_pipeline_run(
         return
 
     # Update pipeline run status to cancelled
-    pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+    pipeline_run.update(status=status)
 
     asyncio.run(UsageStatisticLogger().pipeline_run_ended(pipeline_run))
 

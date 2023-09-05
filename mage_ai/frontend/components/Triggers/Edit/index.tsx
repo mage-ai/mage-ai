@@ -1309,38 +1309,29 @@ function Edit({
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
-          Pipeline run settings
+          Run settings
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
-            <Checkbox
-              checked={settings?.allow_blocks_to_fail}
-              label="Keep running pipeline even if blocks fail"
-              onClick={() => setSettings(prev => ({
-                ...prev,
-                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
-              }))}
-            />
-          </FlexContainer>
-        </Spacing>
-
-        {ScheduleTypeEnum.TIME === scheduleType && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.skip_if_previous_running}
-                label="Skip run if previous run still in progress"
-                onClick={() => setSettings(prev => ({
+          {!isStreamingPipeline && (
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text>
+                Set a timeout for each run of this trigger (optional) 
+              </Text>
+              <Spacing mb={1} />
+              <TextInput
+                label="Timeout (in seconds)"
+                onChange={e => setSettings(prev => ({
                   ...prev,
-                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                  timeout: e.target.value,
                 }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={settings?.timeout}
               />
-            </FlexContainer>
-          </Spacing>
-        )}
-
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            </Spacing>
+          )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
               <ToggleSwitch
@@ -1420,6 +1411,34 @@ function Edit({
             />
           )}
         </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Checkbox
+              checked={settings?.allow_blocks_to_fail}
+              label="Keep running pipeline even if blocks fail"
+              onClick={() => setSettings(prev => ({
+                ...prev,
+                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+
+        {ScheduleTypeEnum.TIME === scheduleType && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Checkbox
+                checked={settings?.skip_if_previous_running}
+                label="Skip run if previous run still in progress"
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                }))}
+              />
+            </FlexContainer>
+          </Spacing>
+        )}
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>

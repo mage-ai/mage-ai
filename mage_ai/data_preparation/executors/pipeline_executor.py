@@ -110,7 +110,7 @@ class PipelineExecutor:
             block_run_tasks = [create_block_task(b) for b in executable_block_runs]
             await asyncio.gather(*block_run_tasks)
 
-    def _build_tags(self, **kwargs):
+    def build_tags(self, **kwargs):
         default_tags = dict(
             pipeline_uuid=self.pipeline.uuid,
         )

@@ -43,6 +43,7 @@ export interface PipelineScheduleSettingsType {
   allow_blocks_to_fail?: boolean;
   landing_time_enabled?: boolean;
   skip_if_previous_running?: boolean;
+  timeout?: number;
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
