@@ -31,6 +31,13 @@ export interface SelectedScheduleType {
   scheduleName?: string;
 }
 
+export enum PipelineScheduleFilterQueryEnum {
+  INTERVAL = 'frequency[]',
+  STATUS = 'status[]',
+  TAG = 'tag[]',
+  TYPE = 'type[]',
+}
+
 export enum SortQueryParamEnum {
   CREATED_AT = 'created_at',
   NAME = 'name',

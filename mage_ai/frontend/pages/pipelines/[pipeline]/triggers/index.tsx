@@ -8,11 +8,12 @@ import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGra
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, {
+  PipelineScheduleFilterQueryEnum,
+  SCHEDULE_TYPE_TO_LABEL,
   ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
@@ -23,24 +24,23 @@ import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import TagType from '@interfaces/TagType';
 import Text from '@oracle/elements/Text';
+import Toolbar from '@components/shared/Table/Toolbar';
 import Tooltip from '@oracle/components/Tooltip';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
-import {
-  Add,
-  PlayButton,
-} from '@oracle/icons';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { PlayButton } from '@oracle/icons';
 import { dateFormatLong } from '@utils/date';
+import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
-import { indexBy } from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
-import { queryFromUrl, queryString } from '@utils/url';
 import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
 
@@ -68,6 +68,12 @@ function PipelineSchedules({
   const globalVariables = dataGlobalVariables?.variables;
 
   const q = queryFromUrl();
+  const query = filterQuery(q, [
+    PipelineScheduleFilterQueryEnum.INTERVAL,
+    PipelineScheduleFilterQueryEnum.STATUS,
+    PipelineScheduleFilterQueryEnum.TAG,
+    PipelineScheduleFilterQueryEnum.TYPE,
+  ]);
   const page = q?.page ? q.page : 0;
   const {
     data: dataPipelineSchedules,
@@ -103,7 +109,7 @@ function PipelineSchedules({
       ),
     },
   );
-  const [createNewSchedule, { isLoading: isLoadingCreateNewSchedule }] = useCreateScheduleMutation(
+  const [createNewSchedule, { isLoading: isLoadingCreateNewSchedule }]: any = useCreateScheduleMutation(
     (pipelineScheduleId) => router.push(
       '/pipelines/[pipeline]/triggers/[...slug]',
       `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}/edit`,
@@ -220,8 +226,54 @@ function PipelineSchedules({
   const pipelineTriggersByName: {
     [name: string]: PipelineTriggerType;
   } = useMemo(() => indexBy(dataPipelineTriggers?.pipeline_triggers || [], ({ name }) => name), [
-      dataPipelineTriggers,
-    ]);
+    dataPipelineTriggers,
+  ]);
+
+  const { data: dataTags } = api.tags.list();
+  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
+    dataTags,
+  ]);
+
+  const toolbarEl = useMemo(() => (
+    <Toolbar
+      addButtonProps={{
+        isLoading: isLoadingCreateNewSchedule,
+        label: 'New trigger',
+        onClick: () => createNewSchedule({
+          pipeline_schedule: {
+            name: randomNameGenerator(),
+          },
+        }),
+      }}
+      filterOptions={{
+        frequency: Object.values(ScheduleIntervalEnum),
+        status: Object.values(ScheduleStatusEnum),
+        tag: tags.map(({ uuid }) => uuid),
+        type: Object.values(ScheduleTypeEnum),
+      }}
+      filterValueLabelMapping={{
+        tag: tags.reduce((acc, { uuid }) => ({
+          ...acc,
+          [uuid]: uuid,
+        }), {}),
+        type: SCHEDULE_TYPE_TO_LABEL,
+      }}
+      onClickFilterDefaults={() => {
+        router.push(
+          '/pipelines/[pipeline]/triggers',
+          `/pipelines/${pipelineUUID}/triggers`,
+        );
+      }}
+      query={query}
+    />
+  ), [
+    createNewSchedule,
+    isLoadingCreateNewSchedule,
+    pipelineUUID,
+    query,
+    router,
+    tags,
+  ]);
 
   return (
     <PipelineDetailPage
@@ -235,27 +287,7 @@ function PipelineSchedules({
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheaderBackgroundImage={`${router.basePath}/images/banner-shape-purple-peach.jpg`}
-      subheaderButton={
-        <KeyboardShortcutButton
-          beforeElement={<Add size={2.5 * UNIT} />}
-          blackBorder
-          inline
-          loading={isLoadingCreateNewSchedule}
-          noHoverUnderline
-          // @ts-ignore
-          onClick={() => createNewSchedule({
-            pipeline_schedule: {
-              name: randomNameGenerator(),
-            },
-          })}
-          sameColorAsText
-          uuid="PipelineDetailPage/add_new_schedule"
-        >
-          Create new trigger
-        </KeyboardShortcutButton>
-      }
-      subheaderText={<Text bold large>Run this pipeline using a schedule, event, or API.</Text>}
+      subheader={toolbarEl}
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
