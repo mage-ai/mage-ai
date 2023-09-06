@@ -192,8 +192,15 @@ class Widget(Block):
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
+            limit_config = int(
+                self.configuration.get(
+                    VARIABLE_NAME_LIMIT,
+                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )
+            )
+
             if should_use_no_code:
-                df = dfs[0]
+                df = dfs[0].iloc[:limit_config]
                 if group_by_columns:
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
@@ -204,12 +211,7 @@ class Widget(Block):
                     if arr is not None:
                         limit = len(arr)
                         if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
-                            limit = int(
-                                self.configuration.get(
-                                    VARIABLE_NAME_LIMIT,
-                                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                                )
-                            )
+                            limit = limit_config
 
                         data.update(
                             {
@@ -406,5 +408,6 @@ class Widget(Block):
                     message=str(err),
                 ),
             )
+            raise err
 
         return merge_dict(outputs or {}, dict(columns=columns))

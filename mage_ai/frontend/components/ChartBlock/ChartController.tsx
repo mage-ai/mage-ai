@@ -60,7 +60,7 @@ function ChartController({
 
   const chartHeight = configuration[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT;
 
-  let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
+  const metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
     || [];
 
   let variableDateFormat = DATE_FORMAT_SHORT;
@@ -253,7 +253,7 @@ function ChartController({
               {legendNames && legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
           )}
-          width={width ? width - (3 * UNIT) : width}
+          width={width ? width - ((3 * UNIT) + 3) : width}
           xAxisLabel={xAxisLabelProp
             || xAxisLabel
             || String(configuration[VARIABLE_NAME_X] || '')

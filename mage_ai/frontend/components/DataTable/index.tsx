@@ -402,6 +402,7 @@ function Table({
     maxWidthOfIndexColumns,
     numberOfIndexes,
     prepareRow,
+    removedRowIndexes,
     rows,
     shouldUseIndexProp,
   ]);
@@ -566,7 +567,7 @@ function DataTable({
       columnHeaderHeight={columnHeaderHeight}
       disableScrolling={disableScrolling}
       height={height}
-      maxHeight={(maxHeight || 0) + 37}    // Add 37px so horizontal scrollbar is visible
+      maxHeight={maxHeight ? maxHeight + 37 : maxHeight}    // Add 37px so horizontal scrollbar is visible
       noBorderBottom={noBorderBottom}
       noBorderLeft={noBorderLeft}
       noBorderRight={noBorderRight}

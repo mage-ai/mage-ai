@@ -82,7 +82,6 @@ class BlockLayoutItemResource(GenericResource):
                 else:
                     data_source_block_uuid = data_source_config.get('block_uuid')
 
-
                     data_source_class_options = merge_dict(extract(data_source_config, [
                         'pipeline_schedule_id',
                     ]), dict(
