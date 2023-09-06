@@ -284,6 +284,7 @@ export default interface BlockType {
   retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
+  timeout?: number;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;

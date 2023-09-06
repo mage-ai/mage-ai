@@ -84,7 +84,14 @@
         "introduction/overview",
         "getting-started/setup",
         "design/core-design-principles",
-        "design/core-abstractions"
+        {
+          "group": "Abstractions",
+          "icon": "object-subtract",
+          "pages": [
+            "design/core-abstractions",
+            "design/abstractions/project-structure"
+          ]
+        }
       ]
     },
     {
@@ -269,6 +276,7 @@
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
                 "streaming/destinations/opensearch",
+                "streaming/destinations/postgres",
                 "streaming/destinations/redshift"
               ]
             }

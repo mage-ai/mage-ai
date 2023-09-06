@@ -248,6 +248,8 @@ function ChartBlock({
     block,
     blocksMapping,
     content,
+    runBlock,
+    savePipelineContent,
     setRunCount,
     upstreamBlocks,
   ]);

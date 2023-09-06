@@ -17,15 +17,15 @@ api: "GET /api/pipelines/:pipeline_uuid/pipeline_schedules"
   least 1 of the tags specified.
 </ParamField>
 
-<CodeGroup>
+<RequestExample>
 ```curl cURL
 curl --request GET \
   --url 'http://localhost:6789/api/pipelines/:pipeline_uuid/pipeline_schedules?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "pipeline_schedules": [
     {
@@ -78,4 +78,4 @@ curl --request GET \
   }
 }
 ```
-
+</ResponseExample>

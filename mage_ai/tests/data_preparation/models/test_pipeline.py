@@ -63,6 +63,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -79,6 +80,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -95,6 +97,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -111,6 +114,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=['widget1'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
             ],
             callbacks=[],
@@ -133,6 +137,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block4'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
             ],
         ))
@@ -220,6 +225,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -236,6 +242,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -252,6 +259,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 )
             ],
             callbacks=[],
@@ -307,6 +315,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -323,6 +332,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -339,6 +349,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -355,6 +366,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 )
             ],
             callbacks=[],
@@ -416,6 +428,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -432,6 +445,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -448,6 +462,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -464,6 +479,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block5'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -480,6 +496,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block4'],
                     downstream_blocks=['block6'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -496,6 +513,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block5'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -512,6 +530,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3', 'block6'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 )
             ],
             callbacks=[],
@@ -661,6 +680,7 @@ class PipelineTest(DBTestCase):
                             type='data_loader',
                             upstream_blocks=[],
                             uuid='source_block',
+                            timeout=None,
                         ),
                         dict(
                             all_upstream_blocks_executed=False,
@@ -677,6 +697,7 @@ class PipelineTest(DBTestCase):
                             type='transformer',
                             upstream_blocks=['source_block'],
                             uuid='destination_block',
+                            timeout=None,
                         ),
                     ],
                     callbacks=[],
