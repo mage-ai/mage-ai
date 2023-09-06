@@ -289,9 +289,6 @@
         ]
       }
     },
-    "excluded_custom_audiences": {
-      "$ref": "targeting.json#/definitions/id_name_pairs"
-    },
     "excluded_publisher_categories": {
       "type": [
         "null",
