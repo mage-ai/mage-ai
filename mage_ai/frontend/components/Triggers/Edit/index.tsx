@@ -878,7 +878,9 @@ function Edit({
     ]);
 
     if (isStreamingPipeline) {
-      rows.splice(1, 1);
+      // Remove frequency and landing time rows since they are not
+      // relevant for streaming pipelines.
+      rows.splice(2, 2);
     }
 
     if (isCustomInterval) {
