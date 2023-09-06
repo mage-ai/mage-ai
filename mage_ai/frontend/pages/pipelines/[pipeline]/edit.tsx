@@ -2014,7 +2014,7 @@ function PipelineDetailPage({
         },
       }, {
         contentOnly: true,
-      }).then(() => runBlockOrig(payload));
+      })?.then(() => runBlockOrig(payload));
     }
   }, [
     disablePipelineEditAccess,
