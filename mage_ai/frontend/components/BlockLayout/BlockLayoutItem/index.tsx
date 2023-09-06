@@ -29,7 +29,7 @@ type BlockLayoutItemProps = {
   removeBlockLayoutItem?: () => void;
   pageBlockLayoutUUID: string;
   setSelectedBlockItem?: (block: BlockLayoutItemType) => void;
-  updateLayout: (column: ColumnType) => void;
+  updateLayout?: (column: ColumnType) => void;
   width?: number;
 };
 
@@ -155,14 +155,17 @@ function BlockLayoutItem({
                 {
                   label: () => 'Edit content',
                   onClick: () => setSelectedBlockItem?.(blockLayoutItem),
+                  uuid: 'Edit content',
                 },
                 {
                   label: () => 'Change height and/or width',
                   onClick: () => setEditing(true),
+                  uuid: 'Change',
                 },
                 {
                   label: () => 'Remove chart',
                   onClick: () => removeBlockLayoutItem?.(),
+                  uuid: 'Remove chart',
                 },
               ]}
               onClickCallback={() => setMenuVisible(false)}
@@ -208,7 +211,7 @@ function BlockLayoutItem({
               fullWidth
               label="Width"
               // @ts-ignore
-              onChange={e => updateLayout({
+              onChange={e => updateLayout?.({
                 ...columnLayoutSettings,
                 width: typeof e.target.value !== 'undefined'
                   ? Number(e.target.value)
@@ -229,7 +232,7 @@ function BlockLayoutItem({
               fullWidth
               label="Max width percentage"
               // @ts-ignore
-              onChange={e => updateLayout({
+              onChange={e => updateLayout?.({
                 ...columnLayoutSettings,
                 max_width_percentage: typeof e.target.value !== 'undefined'
                   ? Number(e.target.value)
@@ -250,7 +253,7 @@ function BlockLayoutItem({
               fullWidth
               label="Height"
               // @ts-ignore
-              onChange={e => updateLayout({
+              onChange={e => updateLayout?.({
                 ...columnLayoutSettings,
                 height: typeof e.target.value !== 'undefined'
                   ? Number(e.target.value)
@@ -288,7 +291,7 @@ function BlockLayoutItem({
                 compact
                 onClick={() => {
                   setEditing(false);
-                  updateLayout(columnLayoutSettingsInit);
+                  updateLayout?.(columnLayoutSettingsInit);
                 }}
                 secondary
                 small

@@ -1,4 +1,4 @@
-import { BlockLayoutItemType } from './BlockLayoutItemType';
+import BlockLayoutItemType from './BlockLayoutItemType';
 
 export interface ColumnType {
   block_uuid: string;

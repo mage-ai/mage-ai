@@ -300,8 +300,8 @@ function ChartController({
     return Array.isArray(x) && Array.isArray(y) && Array.isArray(y[0]) && (
       <DataTable
         columns={x}
-        index={index}
         height={configuration[VARIABLE_NAME_HEIGHT] ? null : chartHeight}
+        index={index}
         maxHeight={configuration[VARIABLE_NAME_HEIGHT] ? chartHeight : null}
         noBorderBottom
         noBorderLeft

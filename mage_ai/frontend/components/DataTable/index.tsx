@@ -284,9 +284,10 @@ function Table({
     useBlockLayout,
     useSticky,
   );
-  const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
 
   const renderRow = useCallback(({ index, style }) => {
+    const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
+
     const row = rows[index];
     prepareRow(row);
     const { original } = row;
@@ -402,9 +403,9 @@ function Table({
     maxWidthOfIndexColumns,
     numberOfIndexes,
     prepareRow,
-    removedRowIndexes,
     rows,
     shouldUseIndexProp,
+    previewIndexes,
   ]);
 
   const listHeight = useMemo(() => {
@@ -562,6 +563,36 @@ function DataTable({
     numberOfIndexes,
   ]);
 
+  const table = useMemo(() => (
+    <Table
+      columnHeaderHeight={columnHeaderHeight}
+      columns={columns}
+      data={rowsProp}
+      disableScrolling={disableScrolling}
+      height={height}
+      index={index}
+      invalidValues={invalidValues}
+      maxHeight={maxHeight}
+      numberOfIndexes={numberOfIndexes}
+      previewIndexes={previewIndexes}
+      renderColumnHeader={renderColumnHeader}
+      width={width}
+    />
+  ), [
+    columnHeaderHeight,
+    columns,
+    rowsProp,
+    disableScrolling,
+    height,
+    index,
+    invalidValues,
+    maxHeight,
+    numberOfIndexes,
+    previewIndexes,
+    renderColumnHeader,
+    width,
+  ]);
+
   return (
     <Styles
       columnHeaderHeight={columnHeaderHeight}
@@ -573,20 +604,7 @@ function DataTable({
       noBorderRight={noBorderRight}
       noBorderTop={noBorderTop}
     >
-      <Table
-        columnHeaderHeight={columnHeaderHeight}
-        columns={columns}
-        data={rowsProp}
-        disableScrolling={disableScrolling}
-        height={height}
-        index={index}
-        invalidValues={invalidValues}
-        maxHeight={maxHeight}
-        numberOfIndexes={numberOfIndexes}
-        previewIndexes={previewIndexes}
-        renderColumnHeader={renderColumnHeader}
-        width={width}
-      />
+      {table}
     </Styles>
   );
 }

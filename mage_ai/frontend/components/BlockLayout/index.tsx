@@ -49,7 +49,10 @@ function BlockLayout({
     uuid: `BlockLayout/${uuid}`,
   });
 
-  const [objectAttributes, setObjectAttributesState] = useState<BlockLayoutItemType>(null);
+  const [objectAttributes, setObjectAttributesState] = useState<{
+    content?: string;
+    name_new?: string;
+  } & BlockLayoutItemType>(null);
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const refMenu = useRef(null);
 
@@ -163,7 +166,8 @@ function BlockLayout({
     },
   );
   const updateBlockLayoutItemCustom =
-    useCallback((blockLayoutItem: BlockLayoutItem) => updateBlockLayoutItem({
+    // @ts-ignore
+    useCallback((blockLayoutItem: BlockLayoutItemType) => updateBlockLayoutItem({
       page_block_layout: {
         blocks: {
           ...pageBlockLayout?.blocks,
@@ -176,6 +180,7 @@ function BlockLayout({
       updateBlockLayoutItem,
     ]);
 
+  // @ts-ignore
   const saveLayout = useCallback(() => updateBlockLayoutItem({
     page_block_layout: {
       blocks: pageBlockLayout?.blocks,
@@ -273,6 +278,7 @@ function BlockLayout({
       newLayout[rowIndex] = newRow;
     }
 
+    // @ts-ignore
     updateBlockLayoutItem({
       page_block_layout: {
         blocks: newBlocks,
@@ -659,42 +665,13 @@ function BlockLayout({
   const after = useMemo(() => selectedBlockItem && (
     <CodeEditor
       autoHeight
-      // autocompleteProviders={autocompleteProviders}
       block={selectedBlockItem}
-      // height={height}
-      // language={selectedBlockItem}
       onChange={(val: string) => {
         setObjectAttributes(prev => ({
           ...prev,
           content: val,
         }));
       }}
-      // onDidChangeCursorPosition={onDidChangeCursorPosition}
-      // placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
-      //   ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
-      //   : 'Start typing here...'
-      // }
-      // selected={selected}
-      // setSelected={setSelected}
-      // setTextareaFocused={setTextareaFocused}
-      // shortcuts={hideRunButton
-      //   ? []
-      //   : [
-      //     (monaco, editor) => executeCode(monaco, () => {
-      //       if (!hideRunButton) {
-      //         runBlockAndTrack({
-      //           /*
-      //           * This block doesn't get updated when the upstream dependencies change,
-      //           * so we need to update the shortcuts in the CodeEditor component.
-      //           */
-      //           block,
-      //           code: editor.getValue(),
-      //         });
-      //       }
-      //     }),
-      //   ]
-      // }
-      // textareaFocused={textareaFocused}
       value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
       width="100%"
     />
@@ -710,6 +687,7 @@ function BlockLayout({
       after={after}
       afterHeightOffset={0}
       afterHidden={beforeHidden}
+      afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
       beforeHeader={(
@@ -730,6 +708,7 @@ function BlockLayout({
       )}
       beforeHeightOffset={0}
       beforeHidden={beforeHidden}
+      beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
       hideAfterCompletely
@@ -752,10 +731,11 @@ function BlockLayout({
             <Spacing p={PADDING_UNITS}>
               <FlyoutMenuWrapper
                 items={[
-                  {
-                    label: () => 'Existing chart',
-                    onClick: () => false,
-                  },
+                  // {
+                  //   label: () => 'Existing chart',
+                  //   onClick: () => false,
+                  //   uuid: 'Existing chart',
+                  // },
                   {
                     label: () => 'Create new chart',
                     onClick: () => {
@@ -774,6 +754,7 @@ function BlockLayout({
                         },
                       ]);
 
+                      // @ts-ignore
                       updateBlockLayoutItem({
                         page_block_layout: {
                           blocks: {
@@ -785,6 +766,7 @@ function BlockLayout({
                       });
                       setSelectedBlockItem(blockItem);
                     },
+                    uuid: 'Create new chart',
                   },
                 ]}
                 onClickCallback={() => setMenuVisible(false)}

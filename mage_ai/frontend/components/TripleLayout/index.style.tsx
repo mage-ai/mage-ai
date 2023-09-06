@@ -134,6 +134,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 `;
 
 export const AsideHeaderStyle = styled.div<{
+  top?: number;
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
@@ -228,6 +229,7 @@ export const DraggableStyle = styled.div<{
   disabled?: boolean;
   left?: number;
   right?: number;
+  top?: number;
 }>`
   ${ASIDE_DRAGGABLE_STYLE}
 
