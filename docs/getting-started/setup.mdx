@@ -224,48 +224,7 @@ Use your cloud provider’s UI to deploy a new container (e.g. revision, task de
 
 ---
 
-## Environment variables
 
-If you’re running Mage using `pip` or `conda`, your local machine’s environment variables
-are accessible within the running Mage app.
-
-If you’re running Mage using Docker, you must add the following command line flags:
-
-```bash
--e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2
-```
-
-The command to run Mage using Docker could look like this:
-
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-    -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    mageai/mageai /app/run_app.sh mage start [project_name]
-```
-
-See [here](/development/variables/environment-variables) for a list of environment variables you can configure.
-
-### Setting prefix for Mage url
-
-In some cases, you may need to add a prefix to the Mage url. You can configure the Mage server to start
-at a prefix to the url by setting the `MAGE_BASE_PATH` environment variable.
-
-Make sure to set the base path without the leading slash. For example, if you want to start Mage at
-`http://localhost:6789/base/url/path`, you would configure your environment
-variable like this:
-
-`export MAGE_BASE_PATH=base/url/path`
-
-You can also configure the base path separately for client requests and backend routes by setting
-the `MAGE_REQUESTS_BASE_PATH` and `MAGE_ROUTES_BASE_PATH` environment variables respectively.
-
-|   |   |
-| --- | --- |
-| `MAGE_BASE_PATH` | Set base path for the entire app. |
-| `MAGE_REQUESTS_BASE_PATH` | Set base path for frontend requests and urls, defaults to value of `MAGE_BASE_PATH` |
-| `MAGE_ROUTES_BASE_PATH` | Set base path for backend routes, defaults to value of `MAGE_BASE_PATH` |
-
----
 
 ## Using secret credential files in Docker
 
