@@ -20,15 +20,15 @@ api: "GET /api/pipeline_schedules/:pipeline_schedule_id/pipeline_runs"
   Example: `10`
 </ParamField>
 
-<CodeGroup>
+<RequestExample>
 ```curl cURL
 curl --request GET \
   --url 'http://localhost:6789/api/pipeline_schedules/1/pipeline_runs?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --header 'OAUTH-TOKEN=some_really_long_string' \
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "pipeline_runs": [
     ...
@@ -39,3 +39,4 @@ curl --request GET \
   }
 }
 ```
+</ResponseExample>
