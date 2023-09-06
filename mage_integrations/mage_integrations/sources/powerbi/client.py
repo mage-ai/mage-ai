@@ -168,7 +168,7 @@ class PowerbiClient(object):
         if self.__user_agent:
             headers['User-Agent'] = self.__user_agent
         
-        headers['Authorization'] = 'Basic {}'.format(self.__access_token)
+        headers['Authorization'] = 'Bearer {}'.format(self.__access_token)
         headers['Accept'] = 'application/json'
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
@@ -208,7 +208,7 @@ class PowerbiClient(object):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
 
-        kwargs['headers']['Authorization'] = 'Basic {}'.format(self.__access_token)
+        kwargs['headers']['Authorization'] = 'Bearer {}'.format(self.__access_token)
         kwargs['headers']['Accept'] = 'application/json'
 
         if self.__user_agent:

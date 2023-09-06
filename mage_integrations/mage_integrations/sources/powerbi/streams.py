@@ -114,7 +114,7 @@ class DashboardList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key):
+        if response.get(self.default_data_key) is None:
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 
@@ -204,7 +204,7 @@ class ReportList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key):
+        if response.get(self.default_data_key) is None:
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 
@@ -242,7 +242,7 @@ class DatasetList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key):
+        if response.get(self.default_data_key) is None:
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 
@@ -280,7 +280,7 @@ class AppList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key):
+        if response.get(self.default_data_key) is None:
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 
@@ -318,7 +318,7 @@ class GroupList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key):
+        if response.get(self.default_data_key) is None:
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 

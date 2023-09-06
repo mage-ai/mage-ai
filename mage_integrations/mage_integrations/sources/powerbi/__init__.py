@@ -9,7 +9,7 @@ from typing import Dict, Generator, List
 import singer
 
 
-class Powerbi(Source):
+class PowerBI(Source):
 
     def load_data(
         self,
@@ -51,4 +51,4 @@ class Powerbi(Source):
 
 
 if __name__ == '__main__':
-    main(Powerbi)
+    main(PowerBI)
