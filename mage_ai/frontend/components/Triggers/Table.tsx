@@ -153,22 +153,14 @@ function TriggersTable({
   ]);
 
   if (!disableActions) {
-    columnFlex.push(...[null, 1]);
-    columns.push(...[
-      {
-        uuid: 'Frequency',
-      },
-      {
-        uuid: 'Tags',
-      },
-    ]);
+    columnFlex.push(...[null]);
+    columns.push({
+      uuid: 'Frequency',
+    });
   }
 
-  columnFlex.push(...[null, 1, 1, null]);
+  columnFlex.push(...[1, 1,  null]);
   columns.push(...[
-    {
-      uuid: 'Runs',
-    },
     {
       uuid: 'Next run date',
     },
@@ -176,9 +168,21 @@ function TriggersTable({
       uuid: 'Latest status',
     },
     {
-      uuid: 'Logs',
+      uuid: 'Runs',
     },
   ]);
+
+  if (!disableActions) {
+    columnFlex.push(...[1]);
+    columns.push({
+      uuid: 'Tags',
+    });
+  }
+
+  columnFlex.push(...[null]);
+  columns.push({
+    uuid: 'Logs',
+  });
 
   if (!disableActions && !isViewer()) {
     columnFlex.push(...[null]);
@@ -190,11 +194,11 @@ function TriggersTable({
 
   if (!disableActions && includePipelineColumn) {
     columns.splice(2, 0, { uuid: 'Pipeline' });
-    columnFlex.splice(2, 0, 2);
+    columnFlex.splice(2, 0, 1);
   }
   if (!disableActions && includeCreatedAtColumn) {
-    columns.splice(3, 0, { uuid: 'Created at' });
-    columnFlex.splice(3, 0, null);
+    columns.splice(5, 0, { uuid: 'Created at' });
+    columnFlex.splice(5, 0, null);
   }
 
   return (
@@ -340,22 +344,14 @@ function TriggersTable({
               ]);
 
               if (!disableActions) {
-                rows.push(...[
+                rows.push(
                   <Text default key={`trigger_frequency_${idx}`} monospace>
                     {scheduleInterval}
                   </Text>,
-                  <div key={`pipeline_tags_${idx}`}>
-                    <TagsContainer
-                      tags={tags?.map(tag => ({ uuid: tag }))}
-                    />
-                  </div>,
-                ]);
+                );
               }
 
               rows.push(...[
-                <Text default key={`trigger_run_count_${idx}`} monospace>
-                  {pipelineRunsCount}
-                </Text>,
                 <Text
                   key={`trigger_next_run_date_${idx}`}
                   monospace
@@ -380,6 +376,22 @@ function TriggersTable({
                 >
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,
+                <Text default key={`trigger_run_count_${idx}`} monospace>
+                  {pipelineRunsCount}
+                </Text>,
+              ]);
+
+              if (!disableActions) {
+                rows.push(
+                  <div key={`pipeline_tags_${idx}`}>
+                    <TagsContainer
+                      tags={tags?.map(tag => ({ uuid: tag }))}
+                    />
+                  </div>,
+                );
+              }
+
+              rows.push(
                 <Button
                   default
                   iconOnly
@@ -391,7 +403,7 @@ function TriggersTable({
                 >
                   <Logs default size={ICON_SIZE_SMALL} />
                 </Button>,
-              ]);
+              );
 
               if (!disableActions && !isViewer()) {
                 rows.push(
@@ -458,14 +470,14 @@ function TriggersTable({
               }
               if (!disableActions && includeCreatedAtColumn) {
                 rows.splice(
-                  3,
+                  5,
                   0,
                   <Text
                     default
                     key={`created_at_${idx}`}
                     monospace
                   >
-                    {createdAt}
+                    {createdAt?.slice(0, 19)}
                   </Text>,
                 );
               }
