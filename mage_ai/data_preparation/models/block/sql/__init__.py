@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     clickhouse,
     druid,
+    duckdb,
     mssql,
     mysql,
     postgres,
@@ -279,6 +280,58 @@ def execute_sql_code(
                             verbose=False,
                         ),
                     ]
+    elif DataSource.DUCKDB.value == data_provider:
+        from mage_ai.io.duckdb import DuckDB
+
+        loader = DuckDB.with_config(config_file_loader)
+        print("Testing create_upstream_block_tables")
+
+        schema = schema or 'main'
+        duckdb.create_upstream_block_tables(
+            loader,
+            block,
+            **create_upstream_block_tables_kwargs,
+        )
+        print(f"Testing configuration: {configuration}")
+
+        print("Testing interpolate_input_data")
+        query_string = duckdb.interpolate_input_data(
+            block,
+            query,
+            **interpolate_input_data_kwargs,
+        )
+
+        print("Testing interpolate_vars")
+        query_string = interpolate_vars(
+            query_string, global_vars=global_vars)
+
+        print(f"Testing use_raw_sql: {use_raw_sql}")
+        print(f"Testing database: {database} {loader.default_database()}")
+
+        if use_raw_sql:
+            return execute_raw_sql(
+                loader,
+                block,
+                query_string,
+                configuration=configuration,
+                should_query=should_query,
+            )
+        else:
+            loader.export(
+                None,
+                schema,
+                table_name=table_name,
+                query_string=query_string,
+                **kwargs_shared,
+            )
+
+            if should_query:
+                return [
+                    loader.load(
+                        f'SELECT * FROM {table_name}',
+                        verbose=False,
+                    ),
+                ]
     elif DataSource.MSSQL.value == data_provider:
         from mage_ai.io.mssql import MSSQL
 
@@ -614,6 +667,7 @@ def execute_raw_sql(
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(block.full_table_name)
 
+    print(f"Testing query string: {query_string}")
     results = loader.execute_queries(
         queries,
         commit=True,

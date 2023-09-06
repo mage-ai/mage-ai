@@ -41,6 +41,8 @@ class ConfigKey(str, Enum):
     DRUID_SCHEME = 'DRUID_SCHEME'
     DRUID_USER = 'DRUID_USER'
 
+    DUCKDB_DATABASE = 'DUCKDB_DATABASE'
+
     GOOGLE_LOCATION = 'GOOGLE_LOCATION'
     GOOGLE_SERVICE_ACC_KEY = 'GOOGLE_SERVICE_ACC_KEY'
     GOOGLE_SERVICE_ACC_KEY_FILEPATH = 'GOOGLE_SERVICE_ACC_KEY_FILEPATH'
@@ -315,6 +317,7 @@ class VerboseConfigKey(str, Enum):
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'
     DRUID = 'Druid'
+    DUCKDB = 'Duck DB'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
@@ -376,6 +379,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.DRUID_PORT: (VerboseConfigKey.DRUID, 'port'),
         ConfigKey.DRUID_SCHEME: (VerboseConfigKey.DRUID, 'scheme'),
         ConfigKey.DRUID_USER: (VerboseConfigKey.DRUID, 'user'),
+        ConfigKey.DUCKDB_DATABASE: (VerboseConfigKey.DUCKDB, 'database'),
         ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),

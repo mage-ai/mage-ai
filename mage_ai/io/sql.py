@@ -57,7 +57,7 @@ class BaseSQL(BaseSQLConnection):
         return gen_table_creation_query(
             dtypes,
             schema_name,
-            table_name,
+        table_name,
             unique_constraints=unique_constraints,
         )
 
@@ -129,13 +129,18 @@ class BaseSQL(BaseSQLConnection):
     ) -> List:
         results = []
 
+        print(f'Testing execute_queries inn SQL Base: {fetch_query_at_indexes}')
         with self.conn.cursor() as cursor:
+            print("Testing 111 idx: {idx}")
             for idx, query in enumerate(queries):
                 variables = query_variables[idx] \
                                 if query_variables and idx < len(query_variables) \
                                 else {}
+                print("Testing _clean_query idx: {idx}")
+                
                 query = self._clean_query(query)
 
+                print(f"Testing execute_queries inn SQL Base idx: {idx}")
                 if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                         fetch_query_at_indexes[idx]:
                     result = self.fetch_query(
@@ -233,6 +238,7 @@ class BaseSQL(BaseSQLConnection):
             **kwargs: Additional query parameters.
         """
 
+        print(f"Testing export in base_sql.py schema_name: {schema_name}")
         if type(df) is dict:
             df = DataFrame([df])
         elif type(df) is list:
@@ -260,7 +266,9 @@ class BaseSQL(BaseSQLConnection):
 
         def __process():
             buffer = StringIO()
+
             table_exists = self.table_exists(schema_name, table_name)
+            print(f"Testing table_exists {table_exists}")
 
             with self.conn.cursor() as cur:
                 if schema_name:
@@ -285,6 +293,7 @@ class BaseSQL(BaseSQLConnection):
                             cur.execute(f'DELETE FROM {full_table_name}')
 
                 if query_string:
+                    print(f"Testing query string: {query_string}")
                     query = self.build_create_table_as_command(
                         full_table_name,
                         query_string,
@@ -295,6 +304,7 @@ class BaseSQL(BaseSQLConnection):
                             full_table_name,
                             query_string,
                         )
+                    print(f"Testing query: {query}")
                     cur.execute(query)
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}

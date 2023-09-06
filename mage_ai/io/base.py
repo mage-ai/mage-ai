@@ -18,6 +18,7 @@ class DataSource(str, Enum):
     BIGQUERY = 'bigquery'
     CLICKHOUSE = 'clickhouse'
     DRUID = 'druid'
+    DUCKDB = 'duckdb'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     KAFKA = 'kafka'
@@ -279,7 +280,7 @@ class BaseSQLDatabase(BaseIO):
 
         Args:
             query_string (str): Query string to clean
-
+close
         Returns:
             str: Clean query string
         """

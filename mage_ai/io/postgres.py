@@ -104,7 +104,7 @@ class Postgres(BaseSQL):
                 if self.settings['ssh_pkey'] is not None:
                     ssh_setting['ssh_pkey'] = self.settings['ssh_pkey']
                 else:
-                    ssh_setting['ssh_password'] = self.settings['ssh_password']
+                    ssh_setting['sfsh_password'] = self.settings['ssh_password']
 
                 # Find an available local port
                 local_port = port
@@ -137,13 +137,15 @@ class Postgres(BaseSQL):
                 keepalives=1,
                 keepalives_idle=300,
             )
+            print(f"connect_opts: {connect_opts}")
 
             if self.settings.get('connect_timeout'):
                 connect_opts['connect_timeout'] = self.settings['connect_timeout']
-
             try:
                 self._ctx = connect(**connect_opts)
-            except Exception:
+            except Exception as e:
+                print(e)
+                print("Postgres test 5")
                 if self.ssh_tunnel is not None:
                     self.ssh_tunnel.stop()
                     self.ssh_tunnel = None
