@@ -1,6 +1,6 @@
-# Mode
+# PowerBI
 
-![Mode](https://ta-relay-public-files-prod.s3.us-east-2.amazonaws.com/icp/product_images/163aa82596261bf2ce6b6d88e9b68a4f.png)
+![PowerBI](https://icon-library.com/images/power-bi-icon/power-bi-icon-21.jpg)
 
 ## Config
 
@@ -8,14 +8,13 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `access_token` | The access token used to authenticate your Intercom account. | `abcdefg123456` |
-| `password` | Your Mode Token password | `supersecurepassword` |
-| `workspace` | The workspace ID | `ws-12345` |
-| `user_agent` | The User Agent string to send in the request header | `my-app-v1.0`|
-| `start_date` | Used to filter the results. When using IncrementalSync, only fetch records updated after `start_date` | `2023-01-01` |
+| `access_token` | (REQUIRED) The access token used to authenticate your PowerBI account. | `abcdefg123456` |
+| `request_timeout` | (OPTIONAL) The amout of time before the request times out, default: 300 | `300`|
+| `user_agent` | (OPTIONAL) The User Agent string to send in the request header | `my-app-v1.0`|
+| `start_date` | (OPTIONAL) Used to filter the results. When using IncrementalSync, only fetch records updated after `start_date` | `2023-01-01` |
 
 <br />
 
-### How to get your `access_token` and `password`
+### How to get your `access_token`
 
-Follow Mode's [instructions](https://mode.com/developer/api-reference/authentication/) to get your `access_token` and `password`.
+Follow PowerBI's [instructions](https://community.fabric.microsoft.com/t5/Developer/REST-API-Get-Access-Token/m-p/1895937/) to get your `access_token`.
