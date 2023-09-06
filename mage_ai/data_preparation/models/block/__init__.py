@@ -1699,8 +1699,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update_upstream_blocks(self, upstream_blocks: List[Any], **kwargs) -> None:
         self.upstream_blocks = upstream_blocks
 
-    def update_content(self, content, widget=False) -> 'Block':
-        if not self.file.exists():
+    def update_content(
+        self,
+        content: str,
+        widget=False,
+        error_if_file_missing: bool = True,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         if content != self.content:
