@@ -1043,7 +1043,7 @@ class Block:
         # Set up logger
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
+        elif logger is not None and not from_notebook:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
@@ -1802,7 +1802,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
+        elif logger is not None and not from_notebook:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
@@ -1832,7 +1832,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             tests_passed = 0
             for func in test_functions:
                 test_function = func
@@ -1876,7 +1876,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             handle_run_tests(
                 self,
                 dynamic_block_uuid=dynamic_block_uuid,
@@ -2449,7 +2449,7 @@ class ConditionalBlock(AddonBlock):
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2512,7 +2512,7 @@ class CallbackBlock(AddonBlock):
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
