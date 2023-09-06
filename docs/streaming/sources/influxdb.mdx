@@ -50,6 +50,7 @@ The influxdb data reader reads data from InfluxDB server in timed intervals.
 Every `timeout_ms` data with time stamps in the interval `(t-time_delay, t-time_delay+timeout_ms)` will be returned, where `t` is the current time.
 Note that InfluxDB is not a streaming database, so trying to set `time_delay` too small may result in data loss.
 This will occur if data is written to the database after the corresponding interval has been read.
+The time delay is given as [InfluxDB duration](https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/).
 
 The `batch_size` limits the size of batches returned by the data reader. 
 

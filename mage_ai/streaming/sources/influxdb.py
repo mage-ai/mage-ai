@@ -47,7 +47,7 @@ class InfluxDbConfig(BaseConfig):
     bucket: str = 'data'
     measurement: str = 'default'
     batch_size: int = DEFAULT_BATCH_SIZE
-    timeout_ms: int = DEFAULT_TIMEOUT_MS
+    timeout_ms: int = 60_000
     time_delay: str = '-5m'
 
 
