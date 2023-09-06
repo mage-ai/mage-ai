@@ -11,8 +11,10 @@ from mage_ai.shared.parsers import encode_complex
 
 
 class DictLogger():
-    def __init__(self, logger: logging.Logger, logging_tags: Dict = dict()):
+    def __init__(self, logger: logging.Logger, logging_tags: Dict = None):
         self.logger = logger
+        if logging_tags is None:
+            logging_tags = dict()
         self.logging_tags = logging_tags
 
     def critical(self, message, **kwargs):
