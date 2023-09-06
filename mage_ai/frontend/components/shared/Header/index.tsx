@@ -68,7 +68,7 @@ function Header({
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_custom_branches.detail(
+  } = api.git_branches.detail(
     'test',
     {
       _format: 'with_basic_details',
@@ -76,7 +76,7 @@ function Header({
     {
       revalidateOnFocus: false,
     });
-  const branch = useMemo(() => dataGitBranch?.['git_custom_branch']?.['name'], [dataGitBranch]);
+  const branch = useMemo(() => dataGitBranch?.['git_branch']?.['name'], [dataGitBranch]);
 
   const {
     data: dataProjects,

@@ -33,6 +33,7 @@ class Git:
         setup_repo: bool = True,
     ) -> None:
         import git
+        import git.exc
 
         self.auth_type = auth_type if auth_type else AuthType.SSH
         self.git_config = git_config

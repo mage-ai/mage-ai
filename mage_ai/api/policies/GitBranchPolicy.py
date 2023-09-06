@@ -62,3 +62,11 @@ GitBranchPolicy.allow_query([
 ], on_action=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+GitBranchPolicy.allow_query([
+    'skip_repo_setup',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())

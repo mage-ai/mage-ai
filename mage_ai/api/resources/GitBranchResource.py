@@ -23,8 +23,8 @@ def build_file_object(obj):
 
 class GitBranchResource(GenericResource):
     @classmethod
-    def get_git_manager(self, user) -> Git:
-        return Git.get_manager(setup_repo=True, user=user)
+    def get_git_manager(self, user, setup_repo: bool = True) -> Git:
+        return Git.get_manager(setup_repo=setup_repo, user=user)
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
@@ -70,7 +70,11 @@ class GitBranchResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        git_manager = self.get_git_manager(user=user)
+        preferences = get_preferences(user=user)
+        setup_repo = False
+        if preferences.is_git_integration_enabled():
+            setup_repo = True
+        git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:

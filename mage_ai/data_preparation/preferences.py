@@ -67,6 +67,8 @@ class Preferences:
     def is_git_integration_enabled(self) -> bool:
         return 'remote_repo_link' in self.sync_config and \
             'repo_path' in self.sync_config and \
+            'username' in self.sync_config and \
+            'email' in self.sync_config and \
             self.sync_config.get('branch') is None
 
     def update_preferences(self, updates: Dict):
