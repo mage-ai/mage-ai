@@ -222,9 +222,6 @@
     "taxCalculationMode": {
       "type": ["null", "string"]
     },
-    "taxCalculationMode": {
-      "type": ["null", "string"]
-    },
     "customerGroup": {
       "type": ["null", "object"],
       "additionalProperties": true

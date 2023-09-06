@@ -1,5 +1,7 @@
+import json
 import os
 import re
+import traceback
 import urllib.parse
 
 from mage_ai.api.errors import ApiError
@@ -26,33 +28,50 @@ class BlockLayoutItemResource(GenericResource):
             else:
                 variables[k] = v
 
+        configuration_override = variables.pop('configuration_override', None)
+        if configuration_override:
+            configuration_override = json.loads(urllib.parse.unquote(configuration_override))
+        data_source_override = variables.pop('data_source_override', None)
+        if data_source_override:
+            data_source_override = json.loads(urllib.parse.unquote(data_source_override))
+
         page_block_layout = kwargs.get('parent_model')
 
         uuid = urllib.parse.unquote(pk)
         block_config = page_block_layout.blocks.get(uuid)
-        block_config_uuid = block_config.get('uuid') or uuid
+        file_path = block_config.get('file_path')
+        block_uuid = os.path.join(*file_path.split(os.path.sep)[1:]) if file_path else uuid
 
         if not block_config:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
+        content = None
         data = None
         block_type = block_config.get('type')
 
         if BlockType.CHART == block_type:
             data_source_config = block_config.get('data_source')
+            if data_source_override:
+                if data_source_config:
+                    data_source_config.update(data_source_override)
+                else:
+                    data_source_config = data_source_override
+
             if data_source_config:
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
                 block = Block.get_block(
-                    block_config.get('name') or block_config_uuid,
-                    os.path.join(*block_config_uuid.split(os.path.sep)[1:]),
+                    block_config.get('name') or file_path or uuid,
+                    block_uuid,
                     block_type,
+                    configuration=configuration_override or block_config.get('configuration'),
                     **extract(block_config, [
-                        'configuration',
                         'language',
                     ]),
                 )
+
+                content = block.content
 
                 if ChartDataSourceType.CHART_CODE == data_source_type:
                     data_source = ChartDataSourceChartCode(
@@ -61,27 +80,40 @@ class BlockLayoutItemResource(GenericResource):
                     )
                     data = data_source.load_data(block=block)
                 else:
+                    data_source_block_uuid = data_source_config.get('block_uuid')
+
                     data_source_class_options = merge_dict(extract(data_source_config, [
-                        'block_uuid',
                         'pipeline_schedule_id',
-                    ]), dict(pipeline_uuid=pipeline_uuid))
+                    ]), dict(
+                        block_uuid=data_source_block_uuid,
+                        pipeline_uuid=pipeline_uuid,
+                    ))
                     data_source_output = None
 
                     if ChartDataSourceType.BLOCK == data_source_type:
                         data_source = ChartDataSourceBlock(**data_source_class_options)
-                        data_source_output = data_source.load_data(
-                            partitions=data_source_config.get('partitions'),
-                        )
+                        if data_source.block_uuid:
+                            data_source_output = data_source.load_data(
+                                partitions=data_source_config.get('partitions'),
+                            )
 
-                    data = block.execute_with_callback(
-                        disable_json_serialization=True,
-                        input_args=[data_source_output] if data_source_output else None,
-                        global_vars=merge_dict(
-                            get_global_variables(pipeline_uuid) if pipeline_uuid else {},
-                            variables or {},
-                        ),
-                    )
+                    try:
+                        data = block.execute_with_callback(
+                            disable_json_serialization=True,
+                            input_args=[data_source_output] if data_source_output else None,
+                            global_vars=merge_dict(
+                                get_global_variables(pipeline_uuid) if pipeline_uuid else {},
+                                variables or {},
+                            ),
+                        ).get('output', None)
+                    except Exception as err:
+                        error = ApiError(ApiError.RESOURCE_NOT_FOUND.copy())
+                        error.message = str(err)
+                        error.errors = traceback.format_exc()
+                        raise error
 
-        return self(dict(
+        return self(merge_dict(block_config, dict(
+            content=content,
             data=data,
-        ), user, **kwargs)
+            uuid=uuid,
+        )), user, **kwargs)

@@ -515,6 +515,7 @@ class Pipeline:
                 replicated_block=c.get('replicated_block'),
                 retry_config=c.get('retry_config'),
                 status=c.get('status'),
+                timeout=c.get('timeout'),
             )
 
         blocks = [build_shared_args_kwargs(c) for c in self.block_configs]
@@ -1048,6 +1049,12 @@ class Pipeline:
     ) -> Block:
         if upstream_block_uuids is None:
             upstream_block_uuids = []
+
+        all_block_uuids = {b.get('uuid') for b in self.all_block_configs}
+        if block.uuid in all_block_uuids:
+            raise InvalidPipelineError(
+                f'Block with uuid {block.uuid} already exists in pipeline {self.uuid}')
+
         if widget:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
@@ -1614,6 +1621,14 @@ class Pipeline:
         for uuid in combined_blocks:
             if status[uuid] == 'unvisited' and uuid in self.blocks_by_uuid:
                 __check_cycle(self.blocks_by_uuid[uuid])
+
+        check_block_uuids = set()
+        for config in self.all_block_configs:
+            uuid = config.get('uuid')
+            if uuid in check_block_uuids:
+                raise InvalidPipelineError(
+                    f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
+            check_block_uuids.add(uuid)
 
 
 class StackFrame:

@@ -12,12 +12,6 @@
         "integer"
       ]
     },
-    "problem_id": {
-      "type": [
-        "null",
-        "integer"
-      ]
-    },
     "is_public": {
       "type": [
         "null",

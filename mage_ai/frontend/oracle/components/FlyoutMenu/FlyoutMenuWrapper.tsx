@@ -7,6 +7,7 @@ type FlyoutMenuWrapperProps = {
   children: JSX.Element;
   onClickCallback: () => void;
   onClickOutside?: () => void;
+  zIndex?: number;
 } & FlyoutMenuProps;
 
 function FlyoutMenuWrapper({
@@ -17,13 +18,14 @@ function FlyoutMenuWrapper({
   onClickOutside,
   parentRef,
   uuid,
+  zIndex,
   ...props
 }: FlyoutMenuWrapperProps) {
   const flyoutMenuEl = (
     <div
       style={{
         position: 'relative',
-        zIndex: onClickOutside ? 3 : 2,
+        zIndex: (onClickOutside ? 3 : 2) + (zIndex || 0),
       }}
     >
       <div ref={parentRef}>

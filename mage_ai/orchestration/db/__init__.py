@@ -103,9 +103,12 @@ if db_connection_url.startswith('postgresql'):
     if db_schema:
         db_connection.start_session()
         db_connection.session.execute(f'CREATE SCHEMA IF NOT EXISTS {db_schema};')
+        # Get the current database name from the query fetchall() result, e.g., [('test_database',)]
+        db_current = db_connection.session.execute('SELECT current_database()').fetchall()[0][0]
+        db_connection.session.execute(f'ALTER DATABASE {db_current} SET search_path TO {db_schema}')
         db_connection.session.commit()
         db_connection.close_session()
-        print(f'Set the default PostgreSQL schema to {db_schema}')
+        print(f'Set the default PostgreSQL schema for {db_current} to {db_schema}')
     else:
         print('No schema in PostgreSQL connection URL: use the default "public" schema')
 
