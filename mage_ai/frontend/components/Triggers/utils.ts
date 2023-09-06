@@ -3,6 +3,8 @@ import moment from 'moment';
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import { DEFAULT_PORT } from '@api/utils/url';
+import { PipelineScheduleFilterQueryEnum } from '@interfaces/PipelineScheduleType';
+import { ignoreKeys } from '@utils/hash';
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
@@ -33,6 +35,28 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
     },
     {},
   );
+}
+
+export function getPipelineScheduleApiFilterQuery(
+  query: any,
+) {
+  const apiFilterQuery = ignoreKeys(
+    query,
+    [
+      PipelineScheduleFilterQueryEnum.INTERVAL,
+      PipelineScheduleFilterQueryEnum.TYPE,
+    ],
+  );
+  const intervalQueryValue = query[PipelineScheduleFilterQueryEnum.INTERVAL];
+  if (intervalQueryValue) {
+    apiFilterQuery['schedule_interval[]'] = encodeURIComponent(intervalQueryValue);
+  }
+  const typeQueryValue = query[PipelineScheduleFilterQueryEnum.TYPE];
+  if (typeQueryValue) {
+    apiFilterQuery['schedule_type[]'] = typeQueryValue;
+  }
+
+  return apiFilterQuery;
 }
 
 export function getTimeInUTC(dateTime: string) {
