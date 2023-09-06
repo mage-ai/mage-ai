@@ -71,3 +71,7 @@ def configuration(function):
 
 def render(function):
     return function
+
+
+def columns(function):
+    return function

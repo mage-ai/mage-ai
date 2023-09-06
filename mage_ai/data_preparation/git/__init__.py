@@ -26,10 +26,15 @@ GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig = None, setup_repo: bool = True) -> None:
+    def __init__(
+        self,
+        auth_type: AuthType = None,
+        git_config: GitConfig = None,
+        setup_repo: bool = True,
+    ) -> None:
         import git
 
-        self.auth_type = AuthType.SSH
+        self.auth_type = auth_type if auth_type else AuthType.SSH
         self.git_config = git_config
         self.origin = None
         self.remote_repo_link = None
@@ -86,12 +91,21 @@ class Git:
                 self.origin.set_url(self.remote_repo_link)
 
     @classmethod
-    def get_manager(self, user: User = None, setup_repo: bool = True) -> 'Git':
+    def get_manager(
+        self,
+        user: User = None,
+        setup_repo: bool = True,
+        auth_type: str = None,
+    ) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
         if preferences and preferences.sync_config:
             git_config = GitConfig.load(config=preferences.sync_config)
-        return Git(git_config, setup_repo=setup_repo)
+        return Git(
+            auth_type=auth_type,
+            git_config=git_config,
+            setup_repo=setup_repo,
+        )
 
     @property
     def current_branch(self) -> Any:
@@ -185,8 +199,10 @@ class Git:
 
         return [item.a_path for item in self.repo.index.diff(None)]
 
-    async def check_connection(self) -> None:
-        proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
+    async def check_connection(self, remote: str = None) -> None:
+        if remote is None:
+            remote = self.origin.name
+        proc = self.repo.git.ls_remote(remote, as_process=True)
 
         await self.__poll_process_with_timeout(
             proc,
@@ -235,17 +251,21 @@ class Git:
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     return func(self, *args, **kwargs)
             else:
-                asyncio.run(self.check_connection())
+                asyncio.run(self.check_connection(remote=kwargs.get('remote')))
                 return func(self, *args, **kwargs)
 
         return wrapper
 
     @_remote_command
-    def reset(self, branch: str = None) -> None:
-        self.origin.fetch()
+    def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
         if branch is None:
             branch = self.current_branch
-        self.repo.git.reset('--hard', f'{self.origin.name}/{branch}')
+        if remote_name is None:
+            remote = self.origin
+        else:
+            remote = self.repo.remotes[remote_name]
+        remote.fetch()
+        self.repo.git.reset('--hard', f'{remote_name}/{branch}')
         self.__pip_install()
 
     @_remote_command

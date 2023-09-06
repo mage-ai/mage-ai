@@ -71,9 +71,11 @@ type TripleLayoutProps = {
   beforeNavigationItems?: NavigationItem[];
   beforeWidth?: number;
   children: any;
+  contained?: boolean;
   header?: any;
   headerOffset?: number;
   hideAfterCompletely?: boolean;
+  hideBeforeCompletely?: boolean;
   leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
@@ -81,7 +83,7 @@ type TripleLayoutProps = {
   setAfterHidden?: (value: boolean) => void;
   setAfterMousedownActive?: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
-  setBeforeHidden: (value: boolean) => void;
+  setBeforeHidden?: (value: boolean) => void;
   setBeforeMousedownActive?: (value: boolean) => void;
   setBeforeWidth: (width: number) => void;
   uuid?: string;
@@ -105,9 +107,11 @@ function TripleLayout({
   beforeNavigationItems,
   beforeWidth = 0,
   children,
+  contained,
   header,
   headerOffset = 0,
   hideAfterCompletely,
+  hideBeforeCompletely,
   leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
@@ -136,7 +140,7 @@ function TripleLayout({
   ]);
   const toggleBefore = useCallback(() => {
     const val = !beforeHidden;
-    setBeforeHidden(val);
+    setBeforeHidden?.(val);
     set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
   }, [
     beforeHidden,
@@ -239,7 +243,11 @@ function TripleLayout({
   const afterWidthFinal = shouldHideAfterWrapper
     ? 0
     : (afterHidden ? UNIT * 4 : afterWidth);
-  const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
+
+  const shouldHideBeforeWrapper = hideBeforeCompletely && beforeHidden;
+  const beforeWidthFinal = shouldHideBeforeWrapper
+    ? 0
+    : (beforeHidden ? UNIT * 4 : beforeWidth);
   const mainWidth =
     `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
@@ -257,6 +265,7 @@ function TripleLayout({
                 ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH - 1)
                 : afterWidthFinal,
             }}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
             visible={afterHidden}
           >
             <FlexContainer alignItems="center" fullHeight fullWidth>
@@ -324,6 +333,7 @@ function TripleLayout({
     afterOverflow,
     afterSubheader,
     afterWidthFinal,
+    contained,
     hasAfterNavigationItems,
     refAfterInner,
     setAfterHidden,
@@ -335,7 +345,7 @@ function TripleLayout({
   ]);
   const beforeContent = useMemo(() => (
     <>
-      {setBeforeHidden && (
+      {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
           style={{
             overflow: beforeHidden
@@ -346,6 +356,7 @@ function TripleLayout({
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
               : beforeWidthFinal,
           }}
+          top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           visible={beforeHidden}
         >
           <FlexContainer
@@ -360,35 +371,37 @@ function TripleLayout({
             </AsideHeaderInnerStyle>
 
             <Flex>
-              <Tooltip
-                appearAbove={!beforeHidden}
-                appearBefore={!beforeHidden}
-                block
-                key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
-                label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
-                size={null}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => toggleBefore()}
+              {setBeforeHidden && (
+                <Tooltip
+                  appearAbove={!beforeHidden}
+                  appearBefore={!beforeHidden}
+                  block
+                  key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
+                  label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
+                  size={null}
+                  widthFitContent
                 >
-                  {beforeHidden && (
-                    <ChevronRight
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                  {!beforeHidden && (
-                    <ChevronLeft
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                </Button>
-              </Tooltip>
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => toggleBefore()}
+                  >
+                    {beforeHidden && (
+                      <ChevronRight
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                    {!beforeHidden && (
+                      <ChevronLeft
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                  </Button>
+                </Tooltip>
+              )}
 
               <Spacing pr={beforeHidden ? 1 : 2} />
             </Flex>
@@ -410,6 +423,7 @@ function TripleLayout({
     beforeHeightOffset,
     beforeHidden,
     beforeWidthFinal,
+    contained,
     hasBeforeNavigationItems,
     refBeforeInner,
     setBeforeHidden,
@@ -451,6 +465,7 @@ function TripleLayout({
             disabled={beforeHidden}
             ref={refBeforeInnerDraggable}
             right={0}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           />
 
           {hasBeforeNavigationItems && (
@@ -499,7 +514,10 @@ function TripleLayout({
         {mainContainerHeader}
 
         <MainContentStyle
-          headerOffset={(mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset}
+          headerOffset={contained
+            ? headerOffset
+            : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
+          }
           style={{
             width: mainWidth,
           }}
@@ -525,6 +543,7 @@ function TripleLayout({
             disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           />
 
           {hasAfterNavigationItems && (
