@@ -76,7 +76,10 @@ function Header({
     {
       revalidateOnFocus: false,
     });
-  const branch = useMemo(() => dataGitBranch?.['git_branch']?.['name'], [dataGitBranch]);
+  const {
+    is_git_integration_enabled: gitIntegrationEnabled,
+    name: branch,
+  } = useMemo(() => dataGitBranch?.['git_branch'] || {}, [dataGitBranch]);
 
   const {
     data: dataProjects,
@@ -215,7 +218,7 @@ function Header({
               </Spacing>
             )}
 
-            {branch && (
+            {gitIntegrationEnabled && branch && (
               <Spacing ml={2}>
                 <KeyboardShortcutButton
                   blackBorder

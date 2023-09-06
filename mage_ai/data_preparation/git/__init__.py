@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -200,10 +200,8 @@ class Git:
 
         return [item.a_path for item in self.repo.index.diff(None)]
 
-    async def check_connection(self, remote: str = None) -> None:
-        if remote is None:
-            remote = self.origin.name
-        proc = self.repo.git.ls_remote(remote, as_process=True)
+    async def check_connection(self) -> None:
+        proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
         await self.__poll_process_with_timeout(
             proc,
@@ -215,7 +213,7 @@ class Git:
         proc = subprocess.Popen(args=command, shell=True)
         proc.wait()
 
-    def _remote_command(func) -> None:
+    def _remote_command(func: Callable) -> None:
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
@@ -252,7 +250,7 @@ class Git:
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     return func(self, *args, **kwargs)
             else:
-                asyncio.run(self.check_connection(remote=kwargs.get('remote')))
+                asyncio.run(self.check_connection())
                 return func(self, *args, **kwargs)
 
         return wrapper
@@ -266,7 +264,7 @@ class Git:
         else:
             remote = self.repo.remotes[remote_name]
         remote.fetch()
-        self.repo.git.reset('--hard', f'{remote_name}/{branch}')
+        self.repo.git.reset('--hard', f'{remote.name}/{branch}')
         self.__pip_install()
 
     @_remote_command

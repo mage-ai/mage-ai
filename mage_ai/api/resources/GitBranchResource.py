@@ -80,6 +80,7 @@ class GitBranchResource(GenericResource):
         if 'with_basic_details' == display_format:
             return self(dict(
                 files={},
+                is_git_integration_enabled=preferences.is_git_integration_enabled(),
                 modified_files=[],
                 name=git_manager.current_branch,
                 staged_files=[],
@@ -93,6 +94,7 @@ class GitBranchResource(GenericResource):
 
         return self(dict(
             files={},
+            is_git_integration_enabled=preferences.is_git_integration_enabled(),
             modified_files=modified_files,
             name=git_manager.current_branch,
             staged_files=staged_files,
