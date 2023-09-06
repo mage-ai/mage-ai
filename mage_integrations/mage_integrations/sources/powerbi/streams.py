@@ -114,21 +114,17 @@ class DashboardList(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if not response.get(self.default_data_key).get(self.data_key):
+        if not response.get(self.default_data_key):
             self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
-            for record in response.get(self.default_data_key).get(self.data_key):
-                yield record.get('token')
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
 
 
 class Dashboards(FullTableStream):
-    """
-    Retrieves spaces for a workspace
-
-    """
     tap_stream_id = 'dashboards'
     key_properties = ['id']
     path = 'dashboards/{}'
@@ -138,15 +134,229 @@ class Dashboards(FullTableStream):
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
         dashboards = []
 
-        for space_token in self.get_parent_data():
-            call_path = self.path.format(space_token)
+        for dashboard_id in self.get_parent_data():
+            call_path = self.path.format(dashboard_id)
             results = self.client.get(call_path)
 
             dashboards.append(results)
 
         yield from dashboards
 
+class TileList(FullTableStream):
+    tap_stream_id = 'tile_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'dashboards/{}/tiles'
+    data_key = 'queries'
+    parent = DashboardList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        counter = 0
+
+        for dashboard_id in self.get_parent_data():
+            call_path = self.path.format(dashboard_id)
+            response = self.client.get(call_path)
+
+            tiles_in_response = response.get(self.default_data_key)
+
+            # Only yield records when called by child streams
+            if is_parent and tiles_in_response != []:
+                counter += 1
+                for record in tiles_in_response:
+                    yield {
+                        'tile_id': record.get('id'),
+                        'dashboard_id': dashboard_id
+                    }
+
+        if counter == 0:
+            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+            raise PowerbiError
+
+class Tiles(FullTableStream):
+    tap_stream_id = 'tiles'
+    key_properties = ['id']
+    path = 'dashboards/{}/tiles/{}'
+    parent = TileList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        tiles = []
+
+        for tokens in self.get_parent_data():
+            dashboard_id = tokens.get("dashboard_id")
+            tile_id = tokens.get("tile_id")
+
+            call_path = self.path.format(dashboard_id, tile_id)
+            results = self.client.get(call_path)
+
+            tiles.append(results)
+
+        yield from tiles
+
+
+class ReportList(FullTableStream):
+    tap_stream_id = 'report_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'reports'
+    data_key = 'reports'
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        response = self.client.get(self.path)
+
+        if not response.get(self.default_data_key):
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            raise PowerbiError
+
+        # Only yield records when called by child streams
+        if is_parent:
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
+
+
+class Reports(FullTableStream):
+    tap_stream_id = 'reports'
+    key_properties = ['id']
+    path = 'reports/{}'
+    parent = ReportList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        reports = []
+
+        for report_id in self.get_parent_data():
+            call_path = self.path.format(report_id)
+            results = self.client.get(call_path)
+
+            reports.append(results)
+
+        yield from reports
+
+class DatasetList(FullTableStream):
+    tap_stream_id = 'dataset_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'datasets'
+    data_key = 'datasets'
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        response = self.client.get(self.path)
+
+        if not response.get(self.default_data_key):
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            raise PowerbiError
+
+        # Only yield records when called by child streams
+        if is_parent:
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
+
+
+class Datasets(FullTableStream):
+    tap_stream_id = 'datasets'
+    key_properties = ['id']
+    path = 'datasets/{}'
+    parent = DatasetList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        datasets = []
+
+        for dataset_id in self.get_parent_data():
+            call_path = self.path.format(dataset_id)
+            results = self.client.get(call_path)
+
+            datasets.append(results)
+
+        yield from datasets
+
+class AppList(FullTableStream):
+    tap_stream_id = 'app_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'apps'
+    data_key = 'apps'
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        response = self.client.get(self.path)
+
+        if not response.get(self.default_data_key):
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            raise PowerbiError
+
+        # Only yield records when called by child streams
+        if is_parent:
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
+
+
+class Apps(FullTableStream):
+    tap_stream_id = 'apps'
+    key_properties = ['id']
+    path = 'apps/{}'
+    parent = AppList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        apps = []
+
+        for app_id in self.get_parent_data():
+            call_path = self.path.format(app_id)
+            results = self.client.get(call_path)
+
+            apps.append(results)
+
+        yield from apps
+
+class GroupList(FullTableStream):
+    tap_stream_id = 'group_list'
+    key_properties = ['id']
+    to_replicate = False
+    path = 'groups'
+    data_key = 'groups'
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        response = self.client.get(self.path)
+
+        if not response.get(self.default_data_key):
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            raise PowerbiError
+
+        # Only yield records when called by child streams
+        if is_parent:
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
+
+
+class Groups(FullTableStream):
+    tap_stream_id = 'groups'
+    key_properties = ['id']
+    path = 'groups/{}'
+    parent = GroupList
+
+    def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
+        groups = []
+
+        for group_id in self.get_parent_data():
+            call_path = self.path.format(group_id)
+            results = self.client.get(call_path)
+
+            groups.append(results)
+
+        yield from groups
+
 STREAMS = {
     'dashboard_list': DashboardList,
     'dashboards': Dashboards,
+    'tile_list': TileList,
+    'tiles': Tiles,
+    'report_list': ReportList,
+    'reports': Reports,
+    'dataset_list': DatasetList,
+    'datasets': Datasets,
+    'app_list': AppList,
+    'apps': Apps,
+    'group_list': GroupList,
+    'groups': Groups,
 }
