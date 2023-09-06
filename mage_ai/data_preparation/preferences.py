@@ -65,10 +65,10 @@ class Preferences:
         self.sync_config = merge_dict(env_sync_config, project_sync_config)
 
     def is_git_integration_enabled(self) -> bool:
-        return 'remote_repo_link' in self.sync_config and \
-            'repo_path' in self.sync_config and \
-            'username' in self.sync_config and \
-            'email' in self.sync_config and \
+        return self.sync_config.get('remote_repo_link') and \
+            self.sync_config.get('repo_path') and \
+            self.sync_config.get('username') and \
+            self.sync_config.get('email') and \
             self.sync_config.get('branch') is None
 
     def update_preferences(self, updates: Dict):

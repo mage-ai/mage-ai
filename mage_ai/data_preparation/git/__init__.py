@@ -54,6 +54,7 @@ class Git:
         os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
+            url = None
             if self.remote_repo_link:
                 url = urlsplit(self.remote_repo_link)
 
@@ -65,7 +66,7 @@ class Git:
                     repo_name=get_repo_path(),
                 )
 
-            if self.git_config:
+            if self.git_config and url:
                 user = self.git_config.username
                 url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                 self.remote_repo_link = urlunsplit(url)
