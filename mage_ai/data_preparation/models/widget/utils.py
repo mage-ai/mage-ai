@@ -94,6 +94,15 @@ def calculate_metrics_for_group(metrics, group):
 
 def build_x_y(df, group_by_columns, metrics):
     data = {}
+
+    if not hasattr(df, 'groupby') or not hasattr(df, 'columns'):
+        return data
+
+    columns = df.columns
+
+    if not all([col in columns for col in group_by_columns]):
+        return data
+
     groups = df.groupby(group_by_columns)
     data[VARIABLE_NAME_X] = list(groups.groups.keys())
 

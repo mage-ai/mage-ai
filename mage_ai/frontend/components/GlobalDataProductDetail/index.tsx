@@ -31,6 +31,7 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { capitalize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { sortByKey } from '@utils/array';
 import { useError } from '@context/Error';
 
 type GlobalDataProductDetailProps = {
@@ -115,7 +116,8 @@ function GlobalDataProductDetail({
   const blocks: BlockType[] = useMemo(() => pipeline?.blocks || [], [pipeline]);
 
   const { data: dataPipelines } = api.pipelines.list();
-  const pipelines: PipelineType[] = useMemo(() => dataPipelines?.pipelines || [], [dataPipelines]);
+  const pipelines: PipelineType[] =
+    useMemo(() => sortByKey(dataPipelines?.pipelines || [], 'uuid'), [dataPipelines]);
 
   const before = useMemo(() => (
     <FlexContainer

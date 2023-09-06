@@ -15,6 +15,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.dummy import DummySink
 
             return DummySink(config, **kwargs)
+        elif connector_type == SinkType.INFLUXDB:
+            from mage_ai.streaming.sinks.influxdb import InfluxDbSink
+
+            return InfluxDbSink(config, **kwargs)
         elif connector_type == SinkType.KAFKA:
             from mage_ai.streaming.sinks.kafka import KafkaSink
 
