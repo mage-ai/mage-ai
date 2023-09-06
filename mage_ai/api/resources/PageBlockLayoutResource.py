@@ -1,4 +1,3 @@
-import inflection
 import os
 import urllib.parse
 
