@@ -105,6 +105,10 @@ class PipelineSchedule(BaseModel):
     def pipeline_runs_count(self) -> int:
         return len(self.pipeline_runs)
 
+    @property
+    def timeout(self) -> int:
+        return (self.settings or {}).get('timeout')
+
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
         if schedule_interval and schedule_interval not in \
@@ -476,6 +480,13 @@ class PipelineRun(BaseModel):
     def initial_block_runs(self) -> List['BlockRun']:
         return [b for b in self.block_runs
                 if b.status == BlockRun.BlockRunStatus.INITIAL]
+
+    @property
+    def running_block_runs(self) -> List['BlockRun']:
+        return [
+            b for b in self.block_runs
+            if b.status == BlockRun.BlockRunStatus.RUNNING
+        ]
 
     @property
     def queued_or_running_block_runs(self) -> List['BlockRun']:

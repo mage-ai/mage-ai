@@ -242,6 +242,7 @@ class Block:
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
+        timeout: int = None,
     ) -> None:
         if configuration is None:
             configuration = dict()
@@ -258,6 +259,7 @@ class Block:
         self.color = block_color
         self.configuration = configuration
         self.has_callback = has_callback
+        self.timeout = timeout
         self.retry_config = retry_config
 
         self._outputs = None
@@ -1534,6 +1536,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             language=language,
             retry_config=self.retry_config,
             status=format_enum(self.status) if self.status else None,
+            timeout=self.timeout,
             type=format_enum(self.type) if self.type else None,
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
@@ -1681,6 +1684,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.retry_config = data['retry_config']
             self.__update_pipeline_block()
 
+        if 'timeout' in data and data['timeout'] != self.timeout:
+            self.timeout = data['timeout']
+            self.__update_pipeline_block()
+
         return self
 
     def update_callback_blocks(self, callback_blocks: List[Any]) -> None:
@@ -1692,8 +1699,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update_upstream_blocks(self, upstream_blocks: List[Any], **kwargs) -> None:
         self.upstream_blocks = upstream_blocks
 
-    def update_content(self, content, widget=False) -> 'Block':
-        if not self.file.exists():
+    def update_content(
+        self,
+        content: str,
+        widget=False,
+        error_if_file_missing: bool = True,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         if content != self.content:
