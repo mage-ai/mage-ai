@@ -47,6 +47,7 @@ class RepoConfig:
         self.azure_container_instance_config = None
         self.ecs_config = None
         self.emr_config = None
+        self.hdinsight_config = None
         self.features = None
         self.gcp_cloud_run_config = None
         self.k8s_executor_config = None
@@ -102,6 +103,7 @@ class RepoConfig:
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
+            self.hdinsight_config = repo_config.get('hdinsight_config')
             self.features = repo_config.get('features', {})
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.k8s_executor_config = repo_config.get('k8s_executor_config')
@@ -148,6 +150,7 @@ class RepoConfig:
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
+            hdinsight_config=self.hdinsight_config,
             features=self.features,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
             help_improve_mage=self.help_improve_mage,

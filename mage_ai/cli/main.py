@@ -110,6 +110,9 @@ CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT = typer.Option(
     None, help='uuid of the pipeline to clean.'
 )
 
+CREATE_HDINSIGHT_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project that contains the HDInsight config.'
+)
 CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the EMR config.'
 )
@@ -302,6 +305,19 @@ def clean_old_logs(
     LoggerManagerFactory.get_logger_manager(
         pipeline_uuid=pipeline_uuid,
     ).delete_old_logs()
+
+
+@app.command()
+def create_hdinsight_spark_cluster(
+    project_path: str = CREATE_HDINSIGHT_SPARK_CLUSTER_PROJECT_PATH_DEFAULT,
+):
+    """
+    Create HDInsight cluster for Mage project.
+    """
+    from mage_ai.services.azure.hdinsight.launcher import create_cluster
+
+    project_path = os.path.abspath(project_path)
+    create_cluster(project_path)
 
 
 @app.command()
