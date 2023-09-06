@@ -6,7 +6,7 @@ import os
 import sys
 import time
 import traceback
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
@@ -1043,12 +1043,12 @@ class Block:
         # Set up logger
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
+        elif logger is not None and not from_notebook:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 input_args,
@@ -1699,8 +1699,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update_upstream_blocks(self, upstream_blocks: List[Any], **kwargs) -> None:
         self.upstream_blocks = upstream_blocks
 
-    def update_content(self, content, widget=False) -> 'Block':
-        if not self.file.exists():
+    def update_content(
+        self,
+        content: str,
+        widget=False,
+        error_if_file_missing: bool = True,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         if content != self.content:
@@ -1802,7 +1807,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
+        elif logger is not None and not from_notebook:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
@@ -1832,7 +1837,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             tests_passed = 0
             for func in test_functions:
                 test_function = func
@@ -1876,7 +1881,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             handle_run_tests(
                 self,
                 dynamic_block_uuid=dynamic_block_uuid,
@@ -2449,7 +2454,7 @@ class ConditionalBlock(AddonBlock):
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2512,7 +2517,7 @@ class CallbackBlock(AddonBlock):
         else:
             stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), redirect_stderr(stdout):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,

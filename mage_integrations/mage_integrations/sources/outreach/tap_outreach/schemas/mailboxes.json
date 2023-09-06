@@ -190,12 +190,6 @@
         "string"
       ]
     },
-    "smtpHost":  {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "smtpPort":  {
       "type": [
         "null",

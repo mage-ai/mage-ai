@@ -4,7 +4,7 @@ api: "POST /api/sessions"
 ---
 `POST /api/sessions`
 
-<CodeGroup>
+<RequestExample>
 ```curl cURL
 curl --request POST \
   --url http://localhost:6789/api/sessions \
@@ -17,9 +17,9 @@ curl --request POST \
   }
 }'
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "session": {
     "expires": "2023-04-30 03:02:14.781970+00:00",
@@ -37,3 +37,4 @@ curl --request POST \
   }
 }
 ```
+</ResponseExample>

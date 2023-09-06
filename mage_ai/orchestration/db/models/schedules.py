@@ -20,6 +20,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     Table,
     or_,
 )
@@ -63,6 +64,7 @@ pipeline_schedule_event_matcher_association_table = Table(
 
 class PipelineSchedule(BaseModel):
     name = Column(String(255))
+    description = Column(Text)
     pipeline_uuid = Column(String(255), index=True)
     schedule_type = Column(Enum(ScheduleType))
     start_time = Column(DateTime(timezone=True), default=None)

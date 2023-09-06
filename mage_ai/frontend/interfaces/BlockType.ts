@@ -5,7 +5,6 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
-import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 
 export enum TagEnum {
   CONDITION = 'condition',
