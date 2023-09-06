@@ -407,4 +407,4 @@ class Widget(Block):
                 ),
             )
 
-        return merge_dict(outputs, dict(columns=columns))
+        return merge_dict(outputs or {}, dict(columns=columns))

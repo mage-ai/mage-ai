@@ -2,6 +2,7 @@ from .constants import TimeInterval, TIME_INTERVAL_TO_TIME_DELTA
 from .utils import calculate_metric_for_series, clean_series
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from mage_ai.shared.strings import is_number
 import dateutil.parser
 import math
 import numpy as np
@@ -13,6 +14,9 @@ TIME_SERIES_BUCKETS = 40
 
 
 def build_buckets(min_value, max_value, max_buckets):
+    if not is_number(min_value) or not is_number(max_value):
+        return [], 0
+
     diff = max_value - min_value
     total_interval = 1 + diff
     bucket_interval = total_interval / max_buckets
@@ -48,8 +52,8 @@ def build_buckets(min_value, max_value, max_buckets):
 
 
 def build_histogram_data(arr, max_buckets):
-    max_value = max(arr)
-    min_value = min(arr)
+    max_value = max(arr) if len(arr) >= 1 else None
+    min_value = min(arr) if len(arr) >= 1 else None
 
     buckets, bucket_interval = build_buckets(min_value, max_value, max_buckets)
 

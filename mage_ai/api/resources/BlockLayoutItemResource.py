@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import traceback
 import urllib.parse
 
 from mage_ai.api.errors import ApiError
@@ -97,14 +98,20 @@ class BlockLayoutItemResource(GenericResource):
                                 partitions=data_source_config.get('partitions'),
                             )
 
-                    data = block.execute_with_callback(
-                        disable_json_serialization=True,
-                        input_args=[data_source_output] if data_source_output else None,
-                        global_vars=merge_dict(
-                            get_global_variables(pipeline_uuid) if pipeline_uuid else {},
-                            variables or {},
-                        ),
-                    ).get('output', None)
+                    try:
+                        data = block.execute_with_callback(
+                            disable_json_serialization=True,
+                            input_args=[data_source_output] if data_source_output else None,
+                            global_vars=merge_dict(
+                                get_global_variables(pipeline_uuid) if pipeline_uuid else {},
+                                variables or {},
+                            ),
+                        ).get('output', None)
+                    except Exception as err:
+                        error = ApiError(ApiError.RESOURCE_NOT_FOUND.copy())
+                        error.message = str(err)
+                        error.errors = traceback.print_exc()
+                        raise error
 
         return self(merge_dict(block_config, dict(
             content=content,
