@@ -109,7 +109,7 @@ class BlockLayoutItemResource(GenericResource):
                     except Exception as err:
                         error = ApiError(ApiError.RESOURCE_NOT_FOUND.copy())
                         error.message = str(err)
-                        error.errors = traceback.print_exc()
+                        error.errors = traceback.format_exc()
                         raise error
 
         return self(merge_dict(block_config, dict(

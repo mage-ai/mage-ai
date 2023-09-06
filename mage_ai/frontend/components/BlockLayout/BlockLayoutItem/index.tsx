@@ -26,6 +26,7 @@ type BlockLayoutItemProps = {
   height?: number;
   columnLayoutSettings?: ColumnType;
   onSave?: () => void;
+  removeBlockLayoutItem?: () => void;
   pageBlockLayoutUUID: string;
   setSelectedBlockItem?: (block: BlockLayoutItemType) => void;
   updateLayout: (column: ColumnType) => void;
@@ -41,6 +42,7 @@ function BlockLayoutItem({
   height,
   onSave,
   pageBlockLayoutUUID,
+  removeBlockLayoutItem,
   setSelectedBlockItem,
   updateLayout,
   width,
@@ -157,6 +159,10 @@ function BlockLayoutItem({
                 {
                   label: () => 'Change height and/or width',
                   onClick: () => setEditing(true),
+                },
+                {
+                  label: () => 'Remove chart',
+                  onClick: () => removeBlockLayoutItem?.(),
                 },
               ]}
               onClickCallback={() => setMenuVisible(false)}

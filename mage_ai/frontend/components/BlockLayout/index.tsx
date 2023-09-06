@@ -34,7 +34,7 @@ import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { sortByKey, sum } from '@utils/array';
+import { removeAtIndex, sortByKey, sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
@@ -253,6 +253,37 @@ function BlockLayout({
     localStorageKeyBefore,
   ]);
 
+  const removeBlockLayoutItem = useCallback((
+    blockUUID: string,
+    rowIndex: number,
+    columnIndex: number,
+  ) => {
+    const newBlocks = {
+      ...pageBlockLayout?.blocks,
+    };
+    delete newBlocks?.[blockUUID];
+
+    let newLayout = [...pageBlockLayout?.layout];
+    const row = newLayout[rowIndex] || [];
+    const newRow = removeAtIndex(row, columnIndex);
+
+    if (newRow?.length === 0) {
+      newLayout = removeAtIndex(newLayout, rowIndex);
+    } else {
+      newLayout[rowIndex] = newRow;
+    }
+
+    updateBlockLayoutItem({
+      page_block_layout: {
+        blocks: newBlocks,
+        layout: newLayout,
+      },
+    });
+  }, [
+    pageBlockLayout,
+    updateBlockLayoutItem,
+  ]);
+
   const rowsEl = useMemo(() => {
     const rows = [];
 
@@ -294,6 +325,7 @@ function BlockLayout({
               height={height}
               onSave={saveLayout}
               pageBlockLayoutUUID={uuid}
+              removeBlockLayoutItem={() => removeBlockLayoutItem(blockUUID, idx1, idx2)}
               setSelectedBlockItem={setSelectedBlockItem}
               updateLayout={(column: ColumnType) => updateLayout(idx1, idx2, column)}
               width={Math.floor(widthPercentageFinal * containerWidth)}
@@ -321,6 +353,7 @@ function BlockLayout({
     blocks,
     containerRect,
     layout,
+    removeBlockLayoutItem,
     saveLayout,
     setSelectedBlockItem,
     updateLayout,

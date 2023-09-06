@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
+import traceback
 from typing import Dict, List
 
 from .charts import (
@@ -169,11 +170,16 @@ class Widget(Block):
             if should_use_no_code:
                 df = dfs[0]
                 if group_by_columns:
-                    arr1 = df[group_by_columns[0]]
+                    col = group_by_columns[0]
+                    if isinstance(df, list):
+                        arr1 = [item[col] for item in df]
+                    else:
+                        arr1 = df[col]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
+
             if type(arr1) is pd.Series:
                 values = arr1[arr1.notna()]
                 value_counts = values.value_counts().to_dict()
@@ -405,9 +411,9 @@ class Widget(Block):
         except Exception as err:
             outputs = dict(
                 error=dict(
-                    message=str(err),
+                    exception=str(err),
+                    message=traceback.format_exc(),
                 ),
             )
-            raise err
 
         return merge_dict(outputs or {}, dict(columns=columns))
