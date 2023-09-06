@@ -6,12 +6,6 @@
         "string"
       ]
     },
-    "object_story_id": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "image_url": {
       "type": [
         "null",
@@ -590,12 +584,6 @@
           "type": [
             "null",
             "object"
-          ]
-        },
-        "page_id": {
-          "type": [
-            "null",
-            "string"
           ]
         },
         "photo_data": {

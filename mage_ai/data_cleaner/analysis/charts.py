@@ -66,8 +66,8 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
 def build_histogram_data(col1, series, column_type):
     increment(f'{DD_KEY}.build_histogram_data.start', dict(feature_uuid=col1))
 
-    max_value = series.max()
-    min_value = series.min()
+    max_value = series.max() if len(series) >= 1 else None
+    min_value = series.min() if len(series) >= 1 else None
 
     buckets, bucket_interval = build_buckets(min_value, max_value, BUCKETS, column_type)
 

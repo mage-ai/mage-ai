@@ -214,6 +214,7 @@ class Worker(mp.Process):
             if self.job_dict[job_id] != JobStatus.QUEUED:
                 return
             self.job_dict[job_id] = self.pid
+
             try:
                 start_session_and_run(args[1], *args[2], **args[3])
             except Exception as e:

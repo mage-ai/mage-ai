@@ -22,7 +22,11 @@ from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template i
     CustomPipelineTemplate,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.triggers import ScheduleStatus
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleStatus,
+    get_trigger_configs_by_name,
+    update_triggers_for_pipeline_and_persist,
+)
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import (
@@ -359,13 +363,25 @@ class PipelineResource(BaseResource):
 
         @safe_db_query
         def update_schedule_status(status, pipeline_uuid):
+            trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
+            triggers_in_code_to_update = []
             schedules = (
                 PipelineSchedule.
                 query.
                 filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
             ).all()
             for schedule in schedules:
+                trigger_config = trigger_configs_by_name.get(schedule.name)
+                if trigger_config is not None:
+                    trigger_config['status'] = status
+                    triggers_in_code_to_update.append(trigger_config)
                 schedule.update(status=status)
+
+            if triggers_in_code_to_update:
+                update_triggers_for_pipeline_and_persist(
+                    triggers_in_code_to_update,
+                    schedule.pipeline_uuid,
+                )
 
         @safe_db_query
         def cancel_pipeline_runs(

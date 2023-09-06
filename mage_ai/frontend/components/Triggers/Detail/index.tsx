@@ -405,7 +405,34 @@ function TriggerDetail({
         </CopyToClipboard>,
       ]);
     }
-
+    
+    if (settings?.timeout) {
+      const { time, unit } = convertSeconds(settings?.timeout);
+      const finalUnit = time === 1 ? unit : `${unit}s`;
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_timeout"
+        >
+          <Tooltip
+            default
+            label="Timeout set for runs of this trigger"
+            size={UNIT*1.5}
+            widthFitContent
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Timeout
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_timeout_label"
+          monospace
+        >
+          {`${time} ${finalUnit}`}
+        </Text>,
+      ]);
+    }
     if (settings?.skip_if_previous_running) {
       rows.push([
         <FlexContainer

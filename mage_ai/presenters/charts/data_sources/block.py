@@ -18,7 +18,7 @@ class ChartDataSourceBlock(ChartDataSourceBase):
 
         arr = []
 
-        if partitions is not None:
+        if partitions is not None and (not is_number(partitions) or partitions != 0):
             execution_partitions = []
 
             if isinstance(partitions, List):

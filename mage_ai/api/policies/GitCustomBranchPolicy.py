@@ -42,6 +42,7 @@ GitCustomBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=
 
 GitCustomBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
     'delete',
+    'fetch',
     'merge',
     'pull',
     'push',

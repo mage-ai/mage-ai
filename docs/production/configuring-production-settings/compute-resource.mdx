@@ -23,11 +23,16 @@ service by updating the Terraform variables and then running `terraform apply`
 ## 2. Set executor type and customize the compute resource of the Mage executor
 
 Mage provides multiple executors to execute blocks. Here are the available executor types:
-* `local_python`
-* `ecs`
-* `gcp_cloud_run`
-* `azure_container_instance`
-* `k8s`
+* Block executor
+  * `local_python`
+  * `ecs`
+  * `gcp_cloud_run`
+  * `azure_container_instance`
+  * `k8s`
+* Pipeline executor
+  * `local_python`
+  * `ecs`
+  * `k8s`
 
 Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
 you can set the environment variable `DEFAULT_EXECUTOR_TYPE` to one executor type mentioned above.

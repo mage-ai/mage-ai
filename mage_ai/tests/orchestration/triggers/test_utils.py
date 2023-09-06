@@ -5,7 +5,9 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.orchestration.triggers.global_data_product import fetch_or_create_pipeline_schedule
+from mage_ai.orchestration.triggers.global_data_product import (
+    fetch_or_create_pipeline_schedule,
+)
 from mage_ai.orchestration.triggers.utils import (
     check_pipeline_run_status,
     create_and_start_pipeline_run,
@@ -22,12 +24,12 @@ class TriggerUtilsTest(DBTestCase):
                 'test pipeline',
                 repo_path=self.repo_path,
             )
+            self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
+            self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
+            self.pipeline.add_block(
+                Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
             self.pipeline = Pipeline.get('test_pipeline')
-
-        self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
-        self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
-        self.pipeline.add_block(Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',
