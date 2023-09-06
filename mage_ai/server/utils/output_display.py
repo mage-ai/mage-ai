@@ -315,6 +315,7 @@ def execute_custom_code():
         block.run_upstream_blocks(global_vars=global_vars, incomplete_only=run_incomplete_upstream)
 
     logger = logging.getLogger('{block_uuid}_test')
+    logger.setLevel('INFO')
     block_output = block.execute_with_callback(
         custom_code=code,
         from_notebook=True,
