@@ -5,7 +5,7 @@ icon: "space-station-moon-construction"
 description: "You can install Mage using Docker, pip, or conda."
 ---
 
-<Note>If you're familiar with Docker Compose or plan on adding or extending images (e.g. Postgres) in your project, we recommend starting from the compose template. Otherwise, we recommend Docker run.</Note>
+<Note>If you're familiar with <a href="https://docs.docker.com/compose/">Docker Compose</a> or plan on adding or extending images (e.g. Postgres) in your project, we recommend starting from the <i>Docker compose template</i>. Otherwise, we recommend <i>Docker run</i>.</Note>
 
 <p align="center">
 <img width="65%" src="https://github.com/mage-ai/mage-ai/assets/59450879/b969f512-0a2a-46b6-9c76-312dd4b75f88"/>
@@ -21,8 +21,7 @@ Be sure that [Docker](https://docs.docker.com/engine/install/) and [Git](https:/
 ```bash
 git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart \
 && cd mage-quickstart \
-&& cp dev.env .env \
-&& rm dev.env \
+&& cp dev.env .env && rm dev.env \
 && docker compose up
 ```
 
