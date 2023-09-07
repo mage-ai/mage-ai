@@ -34,7 +34,7 @@ def build_comparison_statement(
     if col_type:
         comparison_value = f"CAST('{val}' AS {col_type})"
     else:
-        comparison_value = f'{val}'
+        comparison_value = f"'{val}'"
     return f"{column_cleaned if column_cleaned else col} {operator} {comparison_value}"
 
 
