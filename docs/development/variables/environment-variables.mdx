@@ -49,4 +49,27 @@ the `MAGE_REQUESTS_BASE_PATH` and `MAGE_ROUTES_BASE_PATH` environment variables 
 | `MAGE_REQUESTS_BASE_PATH` | Set base path for frontend requests and urls, defaults to value of `MAGE_BASE_PATH` |
 | `MAGE_ROUTES_BASE_PATH` | Set base path for backend routes, defaults to value of `MAGE_BASE_PATH` |
 
----
+## Using credential files in Docker
+
+If you have files containing secret credentials (e.g. GCP credentials JSON files),
+you’ll need to mount them as a volume so that those files appear in your running Docker container.
+
+Use the `-v` command in your `docker run` command to mount the directory containing your files:
+
+```bash
+docker run -it -p 6789:6789
+    -v /Users/dragon/secrets:/home/secrets \
+    -v $(pwd):/home/src mageai/mageai \
+    /app/run_app.sh mage start [project_name]
+```
+
+or, using `docker compose`, add a volume mount to your Mage service. The following is an example of mounting the `~/.aws` directory for authenticating via the AWS CLI:
+
+```yaml
+services:
+  mage:
+    image: mageai/mageai:latest
+    ...
+    volumes:
+      - ~/.aws:/root/.aws
+```
