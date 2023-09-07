@@ -265,7 +265,7 @@ function TripleLayout({
                 ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH - 1)
                 : afterWidthFinal,
             }}
-            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+            top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
             visible={afterHidden}
           >
             <FlexContainer alignItems="center" fullHeight fullWidth>
@@ -335,6 +335,7 @@ function TripleLayout({
     afterWidthFinal,
     contained,
     hasAfterNavigationItems,
+    headerOffset,
     refAfterInner,
     setAfterHidden,
     toggleAfter,
@@ -356,7 +357,7 @@ function TripleLayout({
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
               : beforeWidthFinal,
           }}
-          top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+          top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
           visible={beforeHidden}
         >
           <FlexContainer
@@ -424,6 +425,7 @@ function TripleLayout({
     beforeHidden,
     beforeWidthFinal,
     contained,
+    headerOffset,
     hasBeforeNavigationItems,
     refBeforeInner,
     setBeforeHidden,
