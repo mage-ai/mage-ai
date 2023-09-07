@@ -24,7 +24,7 @@
     "prompt": "✨ Make magic..."
   },
   "metadata": {
-    "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
+    "og:image": "/media/og.png",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
@@ -296,8 +296,10 @@
             {
               "group": "Variables",
               "pages": [
+                "development/variables/overview",
                 "development/variables/environment-variables",
                 "getting-started/runtime-variable",
+                "development/variables/default-variables",
                 "development/variables/secrets",
                 "development/variables/referencing-variables"
               ]
