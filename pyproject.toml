@@ -231,23 +231,6 @@ all = [
   'mage-ai[transformations]',
 ]
 
-# dev dependencies
-dev = [
-  'mypy',
-  'black',
-  'flake8',
-  'pre-commit',
-  'pytest',
-  'pytest-cov',
-  'interrogate',
-  'ipykernel>=6.17.1,<7',
-  'isort',
-  'commitizen',
-  'pandas-stubs',
-  'flake8-bugbear',
-  'sourcery',
-]
-
 [project.urls]
 homepage = "https://mage.ai"
 documentation = "https://docs.mage.ai"

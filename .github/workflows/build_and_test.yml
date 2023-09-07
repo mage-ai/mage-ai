@@ -23,26 +23,22 @@ jobs:
     name: Check Code Quality
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
-      - name: Install Poetry
-        run: pipx install poetry
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: 'poetry'
+          cache: 'pip'
       - name: Install Python dev dependencies
         run: |
-          poetry install --no-interaction --only dev
-          poetry run pre-commit install
+          python -m pip install --upgrade pip
+          python -m pip install -r dev_requirements.txt
+          pre-commit install
       - id: changed-files
         uses: tj-actions/changed-files@v36
-        with:
-          files_ignore: |
-            requirements.txt
       - name: Run pre-commit hooks
-        run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
+        run: pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
     runs-on: ubuntu-latest
@@ -62,7 +58,7 @@ jobs:
           sudo apt-get install libkrb5-dev
           sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
-          python -m pip install -e ./[all,dev]
+          python -m pip install -e ./[all]
           python -m pip install -e ./mage_integrations
           python -m pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
