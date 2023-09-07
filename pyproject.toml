@@ -33,8 +33,6 @@ dependencies = [
   'cryptography==36.0.2',
   'dask>=2022.2.0',
   'Faker==4.14.0',
-  'flask-cors',
-  'flask',
   'freezegun==1.2.2',
   'GitPython==3.1.31',
   'httpx==0.23.1',
