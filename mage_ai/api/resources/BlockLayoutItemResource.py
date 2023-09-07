@@ -48,7 +48,7 @@ class BlockLayoutItemResource(GenericResource):
         page_block_layout = kwargs.get('parent_model')
 
         uuid = urllib.parse.unquote(pk)
-        block_config = page_block_layout.blocks.get(uuid)
+        block_config = page_block_layout.blocks.get(uuid) or {}
         file_path = block_config.get('file_path')
         block_uuid = os.path.join(*file_path.split(os.path.sep)[1:]) if file_path else uuid
 

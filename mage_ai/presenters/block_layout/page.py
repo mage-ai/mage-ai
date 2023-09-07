@@ -2,7 +2,7 @@ import os
 import shutil
 import yaml
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List
 
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.presenters.block_layout.constants import BLOCK_LAYOUT_FILENAME_WITH_EXTENSION
@@ -20,7 +20,7 @@ from mage_ai.shared.io import safe_write
 class PageBlockLayout(BaseConfig):
     blocks: Dict = field(default_factory=dict)
     directory_path: str = None
-    layout: Dict = field(default_factory=dict)
+    layout: List = field(default_factory=list)
     uuid: str = None
 
     @classmethod

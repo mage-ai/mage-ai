@@ -42,10 +42,14 @@ import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 type BlockLayoutProps = {
+  leftOffset?: number;
+  topOffset?: number;
   uuid: string;
 };
 
 function BlockLayout({
+  leftOffset,
+  topOffset,
   uuid,
 }: BlockLayoutProps) {
   const [showError] = useError(null, {}, [], {
@@ -307,7 +311,7 @@ function BlockLayout({
     rowIndexNew: number,
     columnIndexNew: number,
   ) => {
-    let newLayout = [...layout];
+    let newLayout = [...(layout || [])];
     const row = newLayout[rowIndex] || [];
     const column = row[columnIndex];
 
@@ -368,7 +372,7 @@ function BlockLayout({
       uuid: cleanName(blockItemName),
     };
 
-    let layoutUpdated = [...layout];
+    let layoutUpdated = [...(layout || [])];
     const layoutItem = {
       block_uuid: blockItem.uuid,
       width: 1,
@@ -554,7 +558,7 @@ function BlockLayout({
     <div
       style={{
         paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
-        paddingTop: ASIDE_HEADER_HEIGHT,
+        paddingTop: typeof topOffset === 'undefined' ? ASIDE_HEADER_HEIGHT : 0,
       }}
     >
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
@@ -879,21 +883,24 @@ function BlockLayout({
     pipelines,
     selectedBlockItem,
     setObjectAttributes,
+    topOffset,
   ]);
 
   const after = useMemo(() => selectedBlockItem && (
-    <CodeEditor
-      autoHeight
-      block={selectedBlockItem}
-      onChange={(val: string) => {
-        setObjectAttributes(prev => ({
-          ...prev,
-          content: val,
-        }));
-      }}
-      value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
-      width="100%"
-    />
+    <Spacing py={PADDING_UNITS}>
+      <CodeEditor
+        autoHeight
+        block={selectedBlockItem}
+        onChange={(val: string) => {
+          setObjectAttributes(prev => ({
+            ...prev,
+            content: val,
+          }));
+        }}
+        value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
+        width="100%"
+      />
+    </Spacing>
   ), [
     blockLayoutItemServer,
     objectAttributes,
@@ -904,7 +911,7 @@ function BlockLayout({
   return (
     <TripleLayout
       after={after}
-      afterHeightOffset={0}
+      afterHeightOffset={topOffset || 0}
       afterHidden={beforeHidden}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
@@ -925,13 +932,15 @@ function BlockLayout({
           />
         </>
       )}
-      beforeHeightOffset={0}
+      beforeHeightOffset={topOffset || 0}
       beforeHidden={beforeHidden}
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
+      headerOffset={topOffset || 0}
       hideAfterCompletely
       hideBeforeCompletely
+      leftOffset={leftOffset || 0}
       mainContainerRef={mainContainerRef}
       setAfterMousedownActive={setAfterMousedownActive}
       setAfterWidth={setAfterWidth}
