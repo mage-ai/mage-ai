@@ -1,39 +1,73 @@
-import math
+import datetime
 import time
 from dataclasses import dataclass
-from typing import Callable, Dict
+from typing import Callable
 
 from influxdb_client import InfluxDBClient, QueryApi
 from influxdb_client.client.flux_table import TableList
 
 from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
 
 
+def build_query(bucket: str, start_time: float, stop_time: float, time_delay: str):
+    '''
+    Build Flux query for data in the range (start_time + time_delay, stop_time + time_delay)
+    start_time and stop_time are float timestamps
+    time_delay should be negative and of flux type duration:
+    Work with durations, see https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/
+    '''
+    start_time_ns = int(1e9 * start_time)
+    stop_time_ns = int(1e9 * stop_time)
+    # experimental.addDuration will be removed in the future, use date.add instead
+    # currently experimental.addDuration is better supported than date.add
+    query = (
+        'import "experimental" '
+        f'from(bucket:"{bucket}") '
+        '|> range('
+        f'start: experimental.addDuration(d: {time_delay}, to: time(v: {start_time_ns})), '
+        f'stop: experimental.addDuration(d: {time_delay}, to: time(v: {stop_time_ns}))'
+        ')'
+    )
+    return query
+
+
+def batches(iterable, batch_size):
+    for i in range(0, len(iterable), batch_size):
+        yield iterable[i : min(i + batch_size, len(iterable))]
+
+
 class InfluxDbSourceTimer:
-    def __init__(self, every_n_seconds=1):
-        """
+    def __init__(self, update_interval_s: float = 1.0, print_intervals=False):
+        '''
         Timer class wakes every n seconds and returns last and current wakeup time
-        :param every_n_seconds: wakeup every n seconds
-        """
-        self.next_update_time_s = math.floor(time.time())
-        self.every = max(1, int(every_n_seconds))
+        '''
+        self.next_time_s = None
+        self.update_interval_s = update_interval_s
+        self.print_intervals = print_intervals
 
     def wait(self):
-        current_time = time.time()
-        current_update_time_s = math.floor(current_time)
-        if current_update_time_s == self.next_update_time_s:
-            print('Timer doing update')
-            self.next_update_time_s = self.next_update_time_s + self.every
-            time.sleep(self.next_update_time_s - current_time)
-        elif current_update_time_s < self.next_update_time_s:
-            print('Timer skipping update')
-            time.sleep(self.next_update_time_s - current_time)
-        else:  # current_update_time > self.next_update_time
-            print(f'Timer missed an update')
-            self.next_update_time_s = current_update_time_s
-        return current_update_time_s, self.next_update_time_s
+        last_time_s = self.next_time_s
+        current_time_s = time.time()
+        if not self.next_time_s:
+            last_time_s = current_time_s
+            self.next_time_s = current_time_s + self.update_interval_s
+        else:
+            missed_updates = (current_time_s - self.next_time_s) // self.update_interval_s
+            if missed_updates < 1:
+                self.next_time_s += self.update_interval_s
+            else:
+                self._print(f'Missed {int(missed_updates)} update(s). Please increase timeout_ms.')
+                self.next_time_s += self.update_interval_s * (missed_updates + 1)
+        
+        if self.print_intervals:
+            last_time = datetime.datetime.fromtimestamp(last_time_s)
+            next_time = datetime.datetime.fromtimestamp(self.next_time_s)
+            self._print(f'Interval: {last_time:%H:%M:%S.%f} -> {next_time:%H:%M:%S.%f}')
+        
+        time.sleep(self.next_time_s - current_time_s)
+        return last_time_s, self.next_time_s
 
     def _print(self, msg):
         print(f'[{self.__class__.__name__}] {msg}')
@@ -47,8 +81,9 @@ class InfluxDbConfig(BaseConfig):
     bucket: str = 'data'
     measurement: str = 'default'
     batch_size: int = DEFAULT_BATCH_SIZE
-    timeout_ms: int = 60_000
+    timeout_ms: int = 1000
     time_delay: str = '-5m'
+    print_intervals: bool = False
 
 
 class InfluxDbSource(BaseSource):
@@ -65,10 +100,12 @@ class InfluxDbSource(BaseSource):
         if self.config.timeout_ms > 0:
             timeout_ms = self.config.timeout_ms
         else:
-            timeout_ms = DEFAULT_TIMEOUT_MS
+            timeout_ms = 1_000
 
         # Initialize timer
-        self.timer = InfluxDbSourceTimer(every_n_seconds=1e-3 * timeout_ms)
+        self.timer = InfluxDbSourceTimer(
+            update_interval_s=1e-3 * timeout_ms, 
+            print_intervals=self.config.print_intervals)
         self.time_delay = self.config.time_delay
 
         self.query_api: QueryApi = self.client.query_api()
@@ -78,15 +115,9 @@ class InfluxDbSource(BaseSource):
         self._print('Start consuming messages.')
         while True:
             last_time, current_time = self.timer.wait()
-            ms_to_ns = lambda ms: 1_000_000_000 * ms
-            # experimental.addDuration will be removed, use date.add instead
-            query = (
-                f'import "experimental" '
-                f'from(bucket:"{self.config.bucket}") '
-                f'|> range(start: experimental.addDuration(d: {self.time_delay}, to: time(v: {ms_to_ns(last_time)})), '
-                f'stop: experimental.addDuration(d: {self.time_delay}, to: time(v: {ms_to_ns(current_time)})))'
+            query = build_query(
+                self.config.bucket, last_time, current_time, self.time_delay
             )
-            self._print(query)
             tables: TableList = self.query_api.query(query)
             for table in tables:
                 for i, record in enumerate(table.records):
@@ -98,12 +129,13 @@ class InfluxDbSource(BaseSource):
                                 k: v
                                 for k, v in record.values.items()
                                 if not k.startswith('_')
-                                and not k in ['table', "result"]
-                            },
+                                and k not in ['table', "result"]
+                            },  # remove influxdb internal fields
                         },
                     }
-                    if i == 0:
-                        self._print(message)
+                    if i == 0 and j == 0:
+                        no_records = sum([len(t.records) for t in tables])
+                        self._print(f'Received {no_records} records. Sample: {message}')
                     handler(message)
 
     def batch_read(self, handler: Callable):
@@ -115,18 +147,13 @@ class InfluxDbSource(BaseSource):
 
         while True:
             last_time, current_time = self.timer.wait()
-            ms_to_ns = lambda ms: 1_000_000_000 * ms
-            # experimental.addDuration will be removed, use date.add instead
-            query = (
-                f'import "experimental" '
-                f'from(bucket:"{self.config.bucket}") '
-                f'|> range(start: experimental.addDuration(d: {self.time_delay}, to: time(v: {ms_to_ns(last_time)})), '
-                f'stop: experimental.addDuration(d: {self.time_delay}, to: time(v: {ms_to_ns(current_time)})))'
+            query = build_query(
+                self.config.bucket, last_time, current_time, self.time_delay
             )
             tables: TableList = self.query_api.query(query)
             messages = []
-            for table in tables:
-                for i, record in enumerate(table.records):
+            for i, table in enumerate(tables):
+                for j, record in enumerate(table.records):
                     message = {
                         'data': {record.get_field(): record.get_value()},
                         'metadata': {
@@ -135,17 +162,14 @@ class InfluxDbSource(BaseSource):
                                 k: v
                                 for k, v in record.values.items()
                                 if not k.startswith('_')
-                                and not k in ['table', "result"]
-                            },
+                                and k not in ['table', "result"]
+                            },  # remove influxdb internal fields
                         },
                     }
-                    if i == 0:
-                        self._print(message)
+                    if i == 0 and j == 0:
+                        no_records = sum([len(t.records) for t in tables])
+                        self._print(f'Received {no_records} records. Sample: {message}')
                     messages.append(message)
-
-            def batches(iterable, batch_size):
-                for i in range(0, len(iterable), batch_size):
-                    yield iterable[i : min(i + batch_size, len(iterable))]
 
             for message_batch in batches(messages, batch_size):
                 handler(message_batch)

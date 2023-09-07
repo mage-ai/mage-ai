@@ -53,6 +53,7 @@ This will occur if data is written to the database after the corresponding inter
 The time delay is given as [InfluxDB duration](https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/).
 
 The `batch_size` limits the size of batches returned by the data reader. 
+If `print_intervals` is `true` the intervals are printed on every time step.
 
 ```yaml
 connector_type: influxdb
@@ -60,7 +61,8 @@ url: "http://localhost:8086"
 token: "my-token"
 org: "my-org"
 bucket: "data"
+time_delay: '-5m'
+timeout_ms: 1000
 batch_size: 100
-timeout_ms: 500
-time_delay: str = '-5m'
+print_intervals: false
 ```
