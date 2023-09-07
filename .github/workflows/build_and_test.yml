@@ -20,8 +20,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r dev_requirements.txt
           pre-commit install
+      - id: changed-files
+        uses: tj-actions/changed-files@v36
       - name: Run pre-commit hooks
-        run: pre-commit run --show-diff-on-failure
+        run: pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
     runs-on: ubuntu-latest

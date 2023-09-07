@@ -1,9 +1,11 @@
-FROM python:3.10
+FROM python:3.10-bookworm
 LABEL description="Mage data management platform"
 ARG PIP=pip3
 USER root
 
-# Packages
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+## System Packages
 RUN \
   curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
   curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
@@ -27,35 +29,37 @@ RUN \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# R Packages
+## R Packages
 # RUN \
 #   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
 #   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
-# Node Packages
+## Node Packages
 RUN npm install --global yarn && yarn global add next
 
-# Python Packages
+## Python Packages
 RUN \
-  ${PIP} install --no-cache-dir sparkmagic && \
+  pip3 install --no-cache-dir sparkmagic && \
   mkdir ~/.sparkmagic && \
-  wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json && \
-  mv example_config.json ~/.sparkmagic/config.json && \
+  curl https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json > ~/.sparkmagic/config.json && \
   sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json && \
-  jupyter-kernelspec install --user $(${PIP} show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
-# Mage Integration
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
-RUN ${PIP} install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
+  jupyter-kernelspec install --user "$(pip3 show sparkmagic | grep Location | cut -d' ' -f2)/sparkmagic/kernels/pysparkkernel"
+# Mage integrations and other related packages
+RUN \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 COPY ./mage_integrations /home/src/mage_integrations
-RUN ${PIP} install --no-cache-dir -e /home/src/mage_integrations
-# Mage Dependencies
+RUN pip3 install --no-cache-dir -e /home/src/mage_integrations
+# Mage
 COPY ./pyproject.toml /home/src/
 COPY ./mage_ai /home/src/mage_ai
-RUN ${PIP} install --no-cache-dir -e /home/src[all,dev]
+RUN pip3 install --no-cache-dir -e /home/src[all]
 
-# Mage Frontend
-RUN cd /home/src/mage_ai/frontend && yarn install
+## Mage Frontend
+COPY ./mage_ai /home/src/mage_ai
+WORKDIR /home/src/mage_ai/frontend
+RUN yarn install && yarn cache clean
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
