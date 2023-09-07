@@ -15,12 +15,14 @@ type ToggleSwitchProps = {
   disabled?: boolean;
   monotone?: boolean;
   onCheck: Dispatch<SetStateAction<boolean>>;
+  purpleBackground?: boolean;
 } & InputWrapperProps;
 
 const ToggleSwitchStyle = styled.label<
   InputWrapperProps & {
     compact?: boolean;
     monotone?: boolean;
+    purpleBackground?: boolean;
   }
 >`
   ${SHARED_INPUT_STYLES}
@@ -70,14 +72,19 @@ const ToggleSwitchStyle = styled.label<
     transform: ${({ compact }) => (compact ? 'translateX(15px)' : 'translateX(20px)')};
   }
 
-  ${(props) =>
-    !props.disabled && !props.monotone && `
+  ${props => !props.disabled && !props.monotone && `
     & input[type="checkbox"]:checked + span {
-      background-color: #6AA1E0;
+      background-color: ${dark.accent.sky};
     }
 
     & input[type="checkbox"]:checked + span::before {
       background-color: ${dark.monotone.white};
+    }
+  `}
+
+  ${({ purpleBackground }) => purpleBackground && `
+    & input[type="checkbox"]:checked + span {
+      background-color: ${dark.interactive.purple};
     }
   `}
 `;

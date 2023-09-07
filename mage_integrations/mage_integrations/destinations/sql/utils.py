@@ -1,4 +1,7 @@
+import json
 from ast import literal_eval
+from typing import Callable, Dict, List
+
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
@@ -9,9 +12,9 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
 )
 from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS_SUBSET
-from mage_integrations.destinations.utils import clean_column_name as clean_column_name_orig
-from typing import Callable, Dict, List
-import json
+from mage_integrations.destinations.utils import (
+    clean_column_name as clean_column_name_orig,
+)
 
 
 def clean_column_name(col, lower_case: bool = True):
@@ -30,6 +33,7 @@ def build_create_table_command(
     create_temporary_table: bool = False,
     column_identifier: str = '',
     if_not_exists: bool = False,
+    key_properties: List[str] = None,
 ) -> str:
     columns_and_types = [
         f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
@@ -48,6 +52,13 @@ def build_create_table_command(
         columns_and_types.append(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
         )
+
+    if key_properties and len(key_properties) >= 1:
+        key_properties_clean = [
+            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
+            for col in key_properties
+        ]
+        columns_and_types.append(f"PRIMARY KEY ({', '.join(key_properties_clean)})")
 
     if_not_exists_command = ''
     if if_not_exists:
@@ -249,7 +260,8 @@ def build_insert_command(
                     else:
                         value_final = [str(s).replace("'", "''") for s in v]
                         value_final = f"'{{{', '.join(value_final)}}}'"
-                elif COLUMN_FORMAT_DATETIME == column_settings.get('format') and convert_datetime_func:
+                elif COLUMN_FORMAT_DATETIME == column_settings.get('format') \
+                        and convert_datetime_func:
                     value_final = convert_datetime_func(v, column_type_dict)
                 else:
                     if type(v) is dict or type(v) is list:
@@ -261,7 +273,10 @@ def build_insert_command(
                         value_final = string_parse_func(value_final, column_type_dict)
 
                     if convert_column_types:
-                        value_final = convert_column_to_type_func(value_final, column_type_converted)
+                        value_final = convert_column_to_type_func(
+                            value_final,
+                            column_type_converted,
+                        )
 
             vals.append(value_final)
         if stringify_values:

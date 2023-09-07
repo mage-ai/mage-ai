@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
+import traceback
 from typing import Dict, List
 
 from .charts import (
@@ -73,7 +74,9 @@ class Widget(Block):
         variables,
         chart_type: str = None,
         code: str = None,
+        data_source_output: List = None,
         group_by_columns: List[str] = None,
+        input_vars_from_data_source: List = None,
         metrics: List[str] = None,
         results: Dict = {},
         upstream_block_uuids: List[str] = [],
@@ -83,21 +86,45 @@ class Widget(Block):
         data = variables.copy()
         dfs = []
 
-        for key in upstream_block_uuids:
-            if key in results.keys():
-                dfs.append(results[key])
+        if data_source_output is not None:
+            if isinstance(data_source_output, list):
+                dfs += data_source_output
+            else:
+                dfs.append(data_source_output)
+        elif len(upstream_block_uuids) >= 1:
+            for key in upstream_block_uuids:
+                if key in results.keys():
+                    dfs.append(results[key])
+        elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
+            for input_var in input_vars_from_data_source:
+                if isinstance(input_var, list):
+                    dfs += input_var
+                else:
+                    dfs.append(input_var)
 
         should_use_no_code = x_values is None and y_values is None and \
             (group_by_columns or metrics)
 
-        if x_values is not None and y_values is not None:
+        if should_use_no_code and len(dfs) == 0:
+            return data
+
+        if x_values is not None:
             variables[VARIABLE_NAME_X] = x_values
+
+        if y_values is not None:
             variables[VARIABLE_NAME_Y] = y_values
+
+        if variables.get(VARIABLE_NAME_X) is None:
+            variables[VARIABLE_NAME_X] = []
+
+        if variables.get(VARIABLE_NAME_Y) is None:
+            variables[VARIABLE_NAME_Y] = []
 
         if ChartType.BAR_CHART == chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                data = build_x_y(df, group_by_columns, metrics)
+                if group_by_columns and metrics:
+                    data = build_x_y(df, group_by_columns, metrics)
             else:
                 data[VARIABLE_NAME_X] = encode_values_in_list(
                     convert_to_list(variables[VARIABLE_NAME_X])
@@ -109,7 +136,8 @@ class Widget(Block):
 
             if should_use_no_code:
                 df = dfs[0]
-                arr = df[group_by_columns[0]]
+                if group_by_columns:
+                    arr = df[group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
@@ -124,7 +152,8 @@ class Widget(Block):
         elif ChartType.LINE_CHART == chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                data = build_x_y(df, group_by_columns, metrics)
+                if group_by_columns and metrics:
+                    data = build_x_y(df, group_by_columns, metrics)
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     data.update(
@@ -140,11 +169,17 @@ class Widget(Block):
 
             if should_use_no_code:
                 df = dfs[0]
-                arr1 = df[group_by_columns[0]]
+                if group_by_columns:
+                    col = group_by_columns[0]
+                    if isinstance(df, list):
+                        arr1 = [item[col] for item in df]
+                    else:
+                        arr1 = df[col]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
+
             if type(arr1) is pd.Series:
                 values = arr1[arr1.notna()]
                 value_counts = values.value_counts().to_dict()
@@ -163,10 +198,18 @@ class Widget(Block):
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
+            limit_config = int(
+                self.configuration.get(
+                    VARIABLE_NAME_LIMIT,
+                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )
+            )
+
             if should_use_no_code:
-                df = dfs[0]
-                data[VARIABLE_NAME_X] = group_by_columns
-                data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
+                df = dfs[0].iloc[:limit_config]
+                if group_by_columns:
+                    data[VARIABLE_NAME_X] = group_by_columns
+                    data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables.get(var_name_orig, None)
@@ -174,12 +217,7 @@ class Widget(Block):
                     if arr is not None:
                         limit = len(arr)
                         if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
-                            limit = int(
-                                self.configuration.get(
-                                    VARIABLE_NAME_LIMIT,
-                                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                                )
-                            )
+                            limit = limit_config
 
                         data.update(
                             {
@@ -192,14 +230,15 @@ class Widget(Block):
         elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]
-                buckets, values = build_time_series_buckets(
-                    df,
-                    group_by_columns[0],
-                    self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
-                    metrics,
-                )
-                data[VARIABLE_NAME_X] = buckets
-                data[VARIABLE_NAME_Y] = values
+                if group_by_columns and metrics:
+                    buckets, values = build_time_series_buckets(
+                        df,
+                        group_by_columns[0],
+                        self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
+                        metrics,
+                    )
+                    data[VARIABLE_NAME_X] = buckets
+                    data[VARIABLE_NAME_Y] = values
 
         return data
 
@@ -224,6 +263,7 @@ class Widget(Block):
         upstream_block_uuids: List[str] = None,
         **kwargs,
     ) -> List:
+        decorated_functions_columns = []
         decorated_functions_configuration = []
         decorated_functions_data_source = []
         decorated_functions_render = []
@@ -233,6 +273,7 @@ class Widget(Block):
         test_functions = []
 
         results = merge_dict(dict(
+            columns=self._block_decorator(decorated_functions_columns),
             configuration=self._block_decorator(decorated_functions_configuration),
             data_source=self._block_decorator(decorated_functions_data_source),
             render=self._block_decorator(decorated_functions_render),
@@ -269,6 +310,7 @@ class Widget(Block):
         x = None
         y = None
         input_vars_from_data_source = inputs_vars_use.copy()
+        data_source_output = None
 
         if len(decorated_functions_data_source) >= 1:
             data_source_output = self.execute_block_function(
@@ -303,8 +345,41 @@ class Widget(Block):
                     global_vars=global_vars,
                 )
 
+        columns = []
+
+        if len(decorated_functions_columns) >= 1:
+            columns = self.execute_block_function(
+                decorated_functions_columns[0],
+                input_vars_from_data_source,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
+        else:
+            item = None
+
+            if input_vars_from_data_source is not None and \
+                    isinstance(input_vars_from_data_source, list) and \
+                    len(input_vars_from_data_source) >= 1:
+
+                item = input_vars_from_data_source[0]
+            else:
+                item = input_vars_from_data_source
+
+            if item is not None and \
+                    isinstance(item, list) and \
+                    len(item) >= 1:
+
+                item = item[0]
+
+            if item is not None:
+                if isinstance(item, dict):
+                    columns = list(item.keys())
+                elif hasattr(item, 'columns'):
+                    columns = list(item.columns)
+
         if x is not None:
             options['x_values'] = x
+
         if y is not None:
             options['y_values'] = y
 
@@ -322,12 +397,23 @@ class Widget(Block):
         metrics = chart_configuration_settings['metrics']
 
         variables = self.get_variables_from_code_execution(results)
-        outputs = self.post_process_variables(
-            variables,
-            chart_type=chart_type,
-            group_by_columns=group_by_columns,
-            metrics=metrics,
-            **options,
-        )
 
-        return outputs
+        try:
+            outputs = self.post_process_variables(
+                variables,
+                chart_type=chart_type,
+                data_source_output=data_source_output,
+                group_by_columns=group_by_columns,
+                input_vars_from_data_source=input_vars_from_data_source,
+                metrics=metrics,
+                **options,
+            )
+        except Exception as err:
+            outputs = dict(
+                error=dict(
+                    exception=str(err),
+                    message=traceback.format_exc(),
+                ),
+            )
+
+        return merge_dict(outputs or {}, dict(columns=columns))

@@ -83,6 +83,7 @@ azure-storage-blob==12.14.1
 
 # Streaming
 confluent-avro
+influxdb_client==1.36.1
 kafka-python==2.0.2
 opensearch-py==2.0.0
 requests_aws4auth==1.1.2

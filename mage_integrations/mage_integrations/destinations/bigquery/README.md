@@ -15,4 +15,11 @@ You must enter the following credentials when configuring this destination:
 | `disable_update_column_types` | If `false` and an existing column has a different column type than the schema, the existing column type will be altered to match the column type in the schema. | `false` (default value) |
 | `use_batch_load` | (In beta) Instruct the BigQuery destination to use BigQuery load jobs instead of the query API. If you encounter any issues with batch loading, let us know in the [community slack](https://www.mage.ai/chat). | `false` (default value) |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`
+<br />
+
 <br />

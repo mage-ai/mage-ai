@@ -25,13 +25,6 @@
         "string"
       ],
       "format": "date-time"
-    },
-    "createdAt": {
-      "type": [
-        "null",
-        "string"
-      ],
-      "format": "date-time"
     }
   }
 }

@@ -19,7 +19,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { ACTION_PULL } from '../constants';
+import { ACTION_FETCH, ACTION_PULL, ACTION_RESET, ACTION_RESET_HARD } from '../constants';
 import {
   Add,
   Branch,
@@ -608,8 +608,14 @@ function Remote({
                   placeholder="Action"
                   value={actionName || ''}
                 >
+                  <option value={ACTION_FETCH}>
+                    {capitalizeRemoveUnderscoreLower(ACTION_FETCH)}
+                  </option>
                   <option value={ACTION_PULL}>
                     {capitalizeRemoveUnderscoreLower(ACTION_PULL)}
+                  </option>
+                  <option value={ACTION_RESET}>
+                    {capitalizeRemoveUnderscoreLower(ACTION_RESET_HARD)}
                   </option>
                 </Select>
 
@@ -629,23 +635,25 @@ function Remote({
                     </option>
                   ))}
                 </Select>
-
-                <Spacing mr={1} />
-
-                <Select
-                  beforeIcon={<Branch />}
-                  beforeIconSize={UNIT * 1.5}
-                  monospace
-                  onChange={e => setActionBranchName(e.target.value)}
-                  value={actionBranchName || ''}
-                >
-                  <option value="">All branches</option>
-                  {branches?.map(({ name }) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                
+                {actionName !== ACTION_FETCH && (
+                  <Spacing ml={1}>
+                    <Select
+                      beforeIcon={<Branch />}
+                      beforeIconSize={UNIT * 1.5}
+                      monospace
+                      onChange={e => setActionBranchName(e.target.value)}
+                      value={actionBranchName || ''}
+                    >
+                      <option value="">All branches</option>
+                      {branches?.map(({ name }) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+                )}
 
               </FlexContainer>
 
@@ -660,7 +668,7 @@ function Remote({
                     actionGitBranch({
                       git_custom_branch: {
                         action_type: actionName,
-                        pull: {
+                        [actionName]: {
                           branch: actionBranchName,
                           remote: actionRemoteName,
                         },

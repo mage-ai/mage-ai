@@ -107,12 +107,13 @@ class BlockExecutor:
         try:
             result = dict()
 
-            tags = self._build_tags(
+            tags = self.build_tags(
                 block_run_id=block_run_id,
                 pipeline_run_id=pipeline_run_id,
                 **kwargs
             )
 
+            self.logger.logging_tags = tags
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
@@ -603,7 +604,7 @@ class BlockExecutor:
             **tags,
         )
 
-    def _build_tags(self, **kwargs):
+    def build_tags(self, **kwargs):
         """
         Build tags for logging.
 

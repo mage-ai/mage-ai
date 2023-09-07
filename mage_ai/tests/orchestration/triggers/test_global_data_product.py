@@ -1,6 +1,6 @@
 import os
-
 from datetime import datetime, timedelta, timezone
+
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
@@ -24,12 +24,12 @@ class TriggerGlobalDataProductTest(DBTestCase):
                 'test pipeline',
                 repo_path=self.repo_path,
             )
+            self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
+            self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
+            self.pipeline.add_block(
+                Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
             self.pipeline = Pipeline.get('test_pipeline')
-
-        self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
-        self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
-        self.pipeline.add_block(Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',
