@@ -13,11 +13,13 @@ export enum DataSourceEnum {
 export const DATA_SOURCES = [
   DataSourceEnum.BLOCK,
   DataSourceEnum.CHART_CODE,
+  DataSourceEnum.PIPELINES,
 ];
 
 export const DATA_SOURCES_HUMAN_READABLE_MAPPING = {
   [DataSourceEnum.BLOCK]: 'Block data output',
   [DataSourceEnum.CHART_CODE]: 'Custom code',
+  [DataSourceEnum.PIPELINES]: 'Pipelines',
 };
 
 export interface DataSourceType {

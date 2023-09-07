@@ -12,12 +12,13 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.presenters.charts.data_sources.block import ChartDataSourceBlock
 from mage_ai.presenters.charts.data_sources.chart_code import ChartDataSourceChartCode
 from mage_ai.presenters.charts.data_sources.constants import ChartDataSourceType
+from mage_ai.presenters.charts.data_sources.pipelines import ChartDataSourcePipelines
 from mage_ai.shared.hash import extract, merge_dict
 
 
 class BlockLayoutItemResource(GenericResource):
     @classmethod
-    def member(self, pk, user, **kwargs):
+    async def member(self, pk, user, **kwargs):
         variables = {}
         query = kwargs.get('query') or {}
         for k, v in query.items():
@@ -96,11 +97,21 @@ class BlockLayoutItemResource(GenericResource):
                             data_source_output = data_source.load_data(
                                 partitions=data_source_config.get('partitions'),
                             )
+                    elif ChartDataSourceType.PIPELINES == data_source_type:
+                        data_source = ChartDataSourcePipelines(**data_source_class_options)
+                        data_source_output = await data_source.load_data(
+                            user=user,
+                            **kwargs,
+                        )
 
                     try:
+                        input_args = None
+                        if data_source_output is not None:
+                            input_args = [data_source_output]
+
                         data = block.execute_with_callback(
                             disable_json_serialization=True,
-                            input_args=[data_source_output] if data_source_output else None,
+                            input_args=input_args,
                             global_vars=merge_dict(
                                 get_global_variables(pipeline_uuid) if pipeline_uuid else {},
                                 variables or {},

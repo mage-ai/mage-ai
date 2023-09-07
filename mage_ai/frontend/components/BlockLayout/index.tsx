@@ -70,7 +70,6 @@ function BlockLayout({
     UNIT * 13,
   ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [layout, setLayout] = useState<ColumnType[][]>(null);
 
   const refHeader = useRef(null);
   const windowSize = useWindowSize();
@@ -129,13 +128,23 @@ function BlockLayout({
 
   const {
     data: dataPageBlockLayout,
-    mutate: fetchPageBlockLayout,
   } = api.page_block_layouts.detail(encodeURIComponent(uuid));
 
-  const pageBlockLayout: PageBlockLayoutType =
-    useMemo(() => dataPageBlockLayout?.page_block_layout, [
-      dataPageBlockLayout,
-    ]);
+  const [pageBlockLayout, setPageBlockLayout] = useState<PageBlockLayoutType>(null);
+
+  const layout: ColumnType[][] = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
+  const setLayout = useCallback((layoutNew) => {
+    setPageBlockLayout(prev => ({
+      ...prev,
+      layout: layoutNew,
+    }));
+  }, [setPageBlockLayout]);
+
+  useEffect(() => {
+    if (dataPageBlockLayout?.page_block_layout) {
+      setPageBlockLayout(dataPageBlockLayout?.page_block_layout);
+    }
+  }, [dataPageBlockLayout]);
 
   const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
     api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
@@ -143,12 +152,13 @@ function BlockLayout({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            page_block_layout: {
-              blocks: blocksNew,
-              layout: layoutNew,
-            },
+            page_block_layout: pbl,
           }) => {
-            fetchPageBlockLayout();
+            const {
+              blocks: blocksNew,
+            } = pbl;
+
+            setPageBlockLayout(pbl);
 
             const blockItemNew =
               Object.values(blocksNew).find(({ name }) => name === objectAttributes?.name_new);
@@ -158,7 +168,6 @@ function BlockLayout({
             }
 
             fetchBlockLayoutItem();
-            setLayout(layoutNew);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -187,10 +196,9 @@ function BlockLayout({
   const saveLayout = useCallback(() => updateBlockLayoutItem({
     page_block_layout: {
       blocks: pageBlockLayout?.blocks,
-      layout: layout || pageBlockLayout?.layout,
+      layout: pageBlockLayout?.layout,
     },
   }), [
-    layout,
     pageBlockLayout,
     updateBlockLayoutItem,
   ]);
@@ -206,15 +214,15 @@ function BlockLayout({
     setLayout,
   ]);
 
-  useEffect(() => {
-    if (!layout && pageBlockLayout?.layout) {
-      setLayout(pageBlockLayout?.layout);
-    }
-  }, [
-    layout,
-    pageBlockLayout,
-    setLayout,
-  ]);
+  // useEffect(() => {
+  //   if (!layout && pageBlockLayout?.layout) {
+  //     setLayout(pageBlockLayout?.layout);
+  //   }
+  // }, [
+  //   layout,
+  //   pageBlockLayout,
+  //   setLayout,
+  // ]);
 
   const [containerRect, setContainerRect] = useState(null);
   const [headerRect, setHeaderRect] = useState(null);
@@ -302,6 +310,8 @@ function BlockLayout({
     let newLayout = [...layout];
     const row = newLayout[rowIndex] || [];
     const column = row[columnIndex];
+
+    console.log(rowIndex, columnIndex, rowIndexNew, columnIndexNew)
 
     // Same row
     if (rowIndex === rowIndexNew && columnIndex !== columnIndexNew) {
