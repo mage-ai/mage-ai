@@ -207,6 +207,7 @@ sources-destinations = [
   'mage-ai[druid]',
   'mage-ai[elasticsearch]',
   'mage-ai[github]',
+  'mage-ai[influxdb]',
   'mage-ai[kafka]',
   'mage-ai[mongodb]',
   'mage-ai[mssql]',
