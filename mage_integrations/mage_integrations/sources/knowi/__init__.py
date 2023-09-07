@@ -1,15 +1,14 @@
 from datetime import datetime
+from typing import Dict, Generator, List
+
+import singer
 from mage_integrations.sources.base import Source, main
-from mage_integrations.sources.constants import (
-    REPLICATION_METHOD_INCREMENTAL,
-)
+from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.knowi.client import KnowiClient
 from mage_integrations.sources.knowi.streams import STREAMS
-from typing import Dict, Generator, List
-import singer
+
 
 class Knowi(Source):
-
     def load_data(
         self,
         stream,
@@ -17,18 +16,20 @@ class Knowi(Source):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        access_token = self.config.get('access_token')
+        access_token = self.config.get("access_token")
         client = KnowiClient(
             access_token,
-            self.config.get('request_timeout'),
-            self.config.get('user_agent')
+            self.config.get("request_timeout"),
+            self.config.get("user_agent"),
         )
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](client, logger=self.logger)
 
         bookmarks = bookmarks or dict()
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            bookmark_datetime = bookmarks.get('updated_at', self.config.get('start_date'))
+            bookmark_datetime = bookmarks.get(
+                "updated_at", self.config.get("start_date")
+            )
         else:
             bookmark_datetime = None
         if bookmark_datetime is not None:
@@ -48,5 +49,6 @@ class Knowi(Source):
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].valid_replication_keys
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main(Knowi)
