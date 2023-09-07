@@ -18,6 +18,7 @@ class SinkType(str, Enum):
     AZURE_DATA_LAKE = 'azure_data_lake'
     DUMMY = 'dummy'
     ELASTICSEARCH = 'elasticsearch'
+    INFLUXDB = 'influxdb'
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
     MONGODB = 'mongodb'

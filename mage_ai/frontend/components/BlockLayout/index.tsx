@@ -1,3 +1,5 @@
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -17,6 +19,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
+import LayoutDivider from './LayoutDivider';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
@@ -34,7 +37,7 @@ import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { removeAtIndex, sortByKey, sum } from '@utils/array';
+import { pushAtIndex, removeAtIndex, sortByKey, sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
@@ -290,6 +293,121 @@ function BlockLayout({
     updateBlockLayoutItem,
   ]);
 
+  const moveBlockLayoutItem = useCallback((
+    rowIndex: number,
+    columnIndex: number,
+    rowIndexNew: number,
+    columnIndexNew: number,
+  ) => {
+    let newLayout = [...layout];
+    const row = newLayout[rowIndex] || [];
+    const column = row[columnIndex];
+
+    // Same row
+    if (rowIndex === rowIndexNew && columnIndex !== columnIndexNew) {
+      const rowUpdated = removeAtIndex(row, columnIndex);
+      newLayout[rowIndex] = pushAtIndex(
+        column,
+        columnIndexNew > columnIndex ? columnIndexNew : columnIndexNew - 1,
+        rowUpdated,
+      );
+    } else {
+      const rowOld = removeAtIndex(row, columnIndex);
+      newLayout[rowIndex] = rowOld;
+
+      const rowUpdated = pushAtIndex(
+        column,
+        columnIndexNew,
+        newLayout[rowIndexNew],
+      );
+      newLayout[rowIndexNew] = rowUpdated;
+
+      // Remove row
+      if (rowOld?.length === 0) {
+        newLayout = removeAtIndex(
+          newLayout,
+          rowIndex,
+        );
+      }
+    }
+
+    if (rowIndex !== rowIndexNew || columnIndex !== columnIndexNew) {
+      // @ts-ignore
+      updateBlockLayoutItem({
+        page_block_layout: {
+          blocks: pageBlockLayout?.blocks,
+          layout: newLayout,
+        },
+      });
+    }
+  }, [
+    layout,
+    pageBlockLayout,
+    updateBlockLayoutItem,
+  ]);
+
+  const createNewBlockItem = useCallback((opts?: {
+    columnIndex?: number;
+    rowIndex?: number;
+    rowIndexInsert?: number;
+  }) => {
+    const blockItemName = randomNameGenerator();
+    const blockItem = {
+      name: blockItemName,
+      type: BlockTypeEnum.CHART,
+      uuid: cleanName(blockItemName),
+    };
+
+    let layoutUpdated = [...layout];
+    const layoutItem = {
+      block_uuid: blockItem.uuid,
+      width: 1,
+    };
+
+    if (opts) {
+      const {
+        columnIndex = 0,
+        rowIndex,
+        rowIndexInsert,
+      } = opts || {};
+
+      if (typeof rowIndexInsert !== 'undefined') {
+        layoutUpdated = pushAtIndex(
+          [layoutItem],
+          rowIndexInsert,
+          layoutUpdated,
+        );
+      } else {
+        layoutUpdated[rowIndex] = pushAtIndex(
+          layoutItem,
+          columnIndex,
+          layoutUpdated[rowIndex],
+        );
+      }
+    } else {
+      layoutUpdated.push([
+        layoutItem,
+      ]);
+    }
+
+    // @ts-ignore
+    updateBlockLayoutItem({
+      page_block_layout: {
+        blocks: {
+          ...pageBlockLayout?.blocks,
+          [blockItem.uuid]: blockItem,
+        },
+        layout: layoutUpdated,
+      },
+    });
+    setSelectedBlockItem(blockItem);
+  }, [
+    layout,
+    pageBlockLayout,
+    setSelectedBlockItem,
+    updateBlockLayoutItem,
+  ]);
+
   const rowsEl = useMemo(() => {
     const rows = [];
 
@@ -321,17 +439,32 @@ function BlockLayout({
         row.push(
           <Flex
             flexBasis={`${Math.floor(widthPercentageFinal * 100)}%`}
-            flexDirection="column"
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
           >
             <BlockLayoutItem
               block={block}
               blockUUID={blockUUID}
+              columnIndex={idx2}
               columnLayoutSettings={column}
+              columnsInRow={columns?.length}
+              createNewBlockItem={createNewBlockItem}
+              first={0 === idx2}
               height={height}
+              onDrop={({
+                columnIndex,
+                rowIndex,
+              }) => {
+                moveBlockLayoutItem(
+                  rowIndex,
+                  columnIndex,
+                  idx1,
+                  idx2,
+                );
+              }}
               onSave={saveLayout}
               pageBlockLayoutUUID={uuid}
               removeBlockLayoutItem={() => removeBlockLayoutItem(blockUUID, idx1, idx2)}
+              rowIndex={idx1}
               setSelectedBlockItem={setSelectedBlockItem}
               updateLayout={(column: ColumnType) => updateLayout(idx1, idx2, column)}
               width={Math.floor(widthPercentageFinal * containerWidth)}
@@ -340,6 +473,18 @@ function BlockLayout({
         );
       });
 
+      if (idx1 === 0) {
+        rows.push(
+          <LayoutDivider
+            horizontal
+            key={`layout-divider-${idx1}-top`}
+            onClickAdd={() => createNewBlockItem({
+              rowIndexInsert: idx1,
+            })}
+          />,
+        );
+      }
+
       rows.push(
         <FlexContainer key={`row-${idx1}`}>
           {row}
@@ -347,9 +492,12 @@ function BlockLayout({
       );
 
       rows.push(
-        <Spacing
-          key={`row-${idx1}-spacing`}
-          mt={PADDING_UNITS}
+        <LayoutDivider
+           horizontal
+           key={`layout-divider-${idx1}-bottom`}
+           onClickAdd={() => createNewBlockItem({
+            rowIndexInsert: idx1 + 1,
+          })}
         />,
       );
     });
@@ -358,7 +506,9 @@ function BlockLayout({
   }, [
     blocks,
     containerRect,
+    createNewBlockItem,
     layout,
+    moveBlockLayoutItem,
     removeBlockLayoutItem,
     saveLayout,
     setSelectedBlockItem,
@@ -739,32 +889,7 @@ function BlockLayout({
                   {
                     label: () => 'Create new chart',
                     onClick: () => {
-                      const blockItemName = randomNameGenerator();
-                      const blockItem = {
-                        name: blockItemName,
-                        type: BlockTypeEnum.CHART,
-                        uuid: cleanName(blockItemName),
-                      };
-
-                      const layoutUpdated = [...pageBlockLayout?.layout];
-                      layoutUpdated.push([
-                        {
-                          block_uuid: blockItem.uuid,
-                          width: 1,
-                        },
-                      ]);
-
-                      // @ts-ignore
-                      updateBlockLayoutItem({
-                        page_block_layout: {
-                          blocks: {
-                            ...pageBlockLayout?.blocks,
-                            [blockItem.uuid]: blockItem,
-                          },
-                          layout: layoutUpdated,
-                        },
-                      });
-                      setSelectedBlockItem(blockItem);
+                      createNewBlockItem();
                     },
                     uuid: 'Create new chart',
                   },
@@ -801,30 +926,33 @@ function BlockLayout({
         </FlexContainer>
       </div>
 
-      {selectedBlockItem && (
-        <BlockLayoutItem
-          block={selectedBlockItem}
-          blockLayoutItem={{
-            ...blockLayoutItemServer,
-            configuration: {
-              ...blockLayoutItemServer?.configuration,
-              ...objectAttributes?.configuration,
-            },
-            data_source: {
-              ...blockLayoutItemServer?.data_source,
-              ...objectAttributes?.data_source,
-            },
-          }}
-          blockUUID={selectedBlockItem?.uuid}
-          detail
-          height={heightAdjusted}
-          pageBlockLayoutUUID={uuid}
-          setSelectedBlockItem={setSelectedBlockItem}
-          width={containerRect?.width}
-        />
-      )}
+      <DndProvider backend={HTML5Backend}>
+        {selectedBlockItem && (
+          <BlockLayoutItem
+            block={selectedBlockItem}
+            blockLayoutItem={{
+              ...blockLayoutItemServer,
+              configuration: {
+                ...blockLayoutItemServer?.configuration,
+                ...objectAttributes?.configuration,
+              },
+              data_source: {
+                ...blockLayoutItemServer?.data_source,
+                ...objectAttributes?.data_source,
+              },
+            }}
+            blockUUID={selectedBlockItem?.uuid}
+            detail
+            disableDrag
+            height={heightAdjusted}
+            pageBlockLayoutUUID={uuid}
+            setSelectedBlockItem={setSelectedBlockItem}
+            width={containerRect?.width}
+          />
+        )}
 
-      {!selectedBlockItem && rowsEl}
+        {!selectedBlockItem && rowsEl}
+      </DndProvider>
     </TripleLayout>
   );
 }

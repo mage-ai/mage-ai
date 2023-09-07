@@ -3,29 +3,33 @@ name: Build and test
 on: [push, pull_request]
 
 jobs:
-  flake8-lint:
+  check-code-quality:
     runs-on: ubuntu-latest
-    name: Lint
+    name: Check Code Quality
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
-      - name: Set up Python environment
+      # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
-      - name: flake8 Lint
-        uses: py-actions/flake8@v2
-        with:
-          ignore: "E121,E126,W503,W504"
-          exclude: "mage_ai/data_preparation/templates,mage_ai/orchestration/db/migrations/versions/"
-          max-line-length: "100"
-          path: "mage_ai"
+          python-version: "3.10"
+          cache: 'poetry'
+      - name: Install Python dev dependencies
+        run: |
+          poetry install --no-interaction --only dev
+          poetry run pre-commit install
+      - name: Run pre-commit hooks
+        run: poetry run pre-commit run --show-diff-on-failure
+
   test_backend:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-
+    needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}

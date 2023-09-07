@@ -19,7 +19,7 @@ api: "POST /api/pipelines/:pipeline_uuid/backfills"
   </Expandable>
 </ParamField>
 
-<CodeGroup>
+<RequestExample>
 ```curl cURL
 curl --request PUT \
   --url 'http://localhost:6789/api/pipelines/example_pipeline/backfills?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
@@ -30,9 +30,9 @@ curl --request PUT \
     }
   }'
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "backfill": {
     "id": 10,
@@ -55,3 +55,4 @@ curl --request PUT \
   }
 }
 ```
+</ResponseExample>
