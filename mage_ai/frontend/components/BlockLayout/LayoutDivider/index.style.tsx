@@ -51,7 +51,9 @@ export const BarStyle = styled.div<{
   `};
 `;
 
-export const ButtonStyle = styled.a`
+export const ButtonStyle = styled.a<{
+  horizontal?: boolean;
+}>`
   align-items: center;
   border-radius: 50%;
   display: flex;
