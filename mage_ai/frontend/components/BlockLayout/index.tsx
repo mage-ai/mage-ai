@@ -1,7 +1,6 @@
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
 import { useMutation } from 'react-query';
 
 import BlockLayoutItem from './BlockLayoutItem';
@@ -20,6 +19,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
+import LayoutDivider from './LayoutDivider';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
@@ -346,6 +346,68 @@ function BlockLayout({
     updateBlockLayoutItem,
   ]);
 
+  const createNewBlockItem = useCallback((opts?: {
+    columnIndex?: number;
+    rowIndex?: number;
+    rowIndexInsert?: number;
+  }) => {
+    const blockItemName = randomNameGenerator();
+    const blockItem = {
+      name: blockItemName,
+      type: BlockTypeEnum.CHART,
+      uuid: cleanName(blockItemName),
+    };
+
+    let layoutUpdated = [...layout];
+    const layoutItem = {
+      block_uuid: blockItem.uuid,
+      width: 1,
+    };
+
+    if (opts) {
+      const {
+        columnIndex = 0,
+        rowIndex,
+        rowIndexInsert,
+      } = opts || {};
+
+      if (typeof rowIndexInsert !== 'undefined') {
+        layoutUpdated = pushAtIndex(
+          [layoutItem],
+          rowIndexInsert,
+          layoutUpdated,
+        );
+      } else {
+        layoutUpdated[rowIndex] = pushAtIndex(
+          layoutItem,
+          columnIndex,
+          layoutUpdated[rowIndex],
+        );
+      }
+    } else {
+      layoutUpdated.push([
+        layoutItem,
+      ]);
+    }
+
+    // @ts-ignore
+    updateBlockLayoutItem({
+      page_block_layout: {
+        blocks: {
+          ...pageBlockLayout?.blocks,
+          [blockItem.uuid]: blockItem,
+        },
+        layout: layoutUpdated,
+      },
+    });
+    setSelectedBlockItem(blockItem);
+  }, [
+    layout,
+    pageBlockLayout,
+    setSelectedBlockItem,
+    updateBlockLayoutItem,
+  ]);
+
   const rowsEl = useMemo(() => {
     const rows = [];
 
@@ -377,7 +439,6 @@ function BlockLayout({
         row.push(
           <Flex
             flexBasis={`${Math.floor(widthPercentageFinal * 100)}%`}
-            flexDirection="column"
             key={`row-${idx1}-column-${idx2}-${blockUUID}`}
           >
             <BlockLayoutItem
@@ -385,6 +446,9 @@ function BlockLayout({
               blockUUID={blockUUID}
               columnIndex={idx2}
               columnLayoutSettings={column}
+              columnsInRow={columns?.length}
+              createNewBlockItem={createNewBlockItem}
+              first={0 === idx2}
               height={height}
               onDrop={({
                 columnIndex,
@@ -409,6 +473,18 @@ function BlockLayout({
         );
       });
 
+      if (idx1 === 0) {
+        rows.push(
+          <LayoutDivider
+            horizontal
+            key={`layout-divider-${idx1}-top`}
+            onClickAdd={() => createNewBlockItem({
+              rowIndexInsert: idx1,
+            })}
+          />,
+        );
+      }
+
       rows.push(
         <FlexContainer key={`row-${idx1}`}>
           {row}
@@ -416,9 +492,12 @@ function BlockLayout({
       );
 
       rows.push(
-        <Spacing
-          key={`row-${idx1}-spacing`}
-          mt={PADDING_UNITS}
+        <LayoutDivider
+           horizontal
+           key={`layout-divider-${idx1}-bottom`}
+           onClickAdd={() => createNewBlockItem({
+            rowIndexInsert: idx1 + 1,
+          })}
         />,
       );
     });
@@ -427,6 +506,7 @@ function BlockLayout({
   }, [
     blocks,
     containerRect,
+    createNewBlockItem,
     layout,
     moveBlockLayoutItem,
     removeBlockLayoutItem,
@@ -809,32 +889,7 @@ function BlockLayout({
                   {
                     label: () => 'Create new chart',
                     onClick: () => {
-                      const blockItemName = randomNameGenerator();
-                      const blockItem = {
-                        name: blockItemName,
-                        type: BlockTypeEnum.CHART,
-                        uuid: cleanName(blockItemName),
-                      };
-
-                      const layoutUpdated = [...pageBlockLayout?.layout];
-                      layoutUpdated.push([
-                        {
-                          block_uuid: blockItem.uuid,
-                          width: 1,
-                        },
-                      ]);
-
-                      // @ts-ignore
-                      updateBlockLayoutItem({
-                        page_block_layout: {
-                          blocks: {
-                            ...pageBlockLayout?.blocks,
-                            [blockItem.uuid]: blockItem,
-                          },
-                          layout: layoutUpdated,
-                        },
-                      });
-                      setSelectedBlockItem(blockItem);
+                      createNewBlockItem();
                     },
                     uuid: 'Create new chart',
                   },
