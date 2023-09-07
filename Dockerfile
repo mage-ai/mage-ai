@@ -1,6 +1,10 @@
 FROM python:3.10
 LABEL description="Deploy Mage on ECS"
 ARG PIP=pip3
+ARG USERNAME=mage-user
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
 USER root
 
 # Packages
@@ -52,5 +56,16 @@ ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
 EXPOSE 6789
 EXPOSE 7789
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    #
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    && chown -R $USER_UID:$USER_GID /home/src
+USER $USERNAME
 
 CMD ["/bin/sh", "-c", "/app/run_app.sh"]
