@@ -6,6 +6,7 @@ class GitCustomBranchPresenter(GitBranchPresenter):
         'action_type',
         'error',
         'files',
+        'is_git_integration_enabled',
         'message',
         'modified_files',
         'name',
