@@ -21,7 +21,7 @@ class ChartDataSourcePipelineSchedules(ChartDataSourceBase):
         response = await BaseOperation(
             action=constants.LIST,
             meta=merge_dict({
-                constants.META_KEY_LIMIT: 1000,
+                constants.META_KEY_LIMIT: 10000,
             }, meta or {}),
             query=variables,
             resource='pipeline_schedules',

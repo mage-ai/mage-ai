@@ -652,6 +652,7 @@ function BlockLayout({
 
       {[
         DataSourceEnum.BLOCK,
+        DataSourceEnum.BLOCK_RUNS,
         DataSourceEnum.PIPELINE_RUNS,
         DataSourceEnum.PIPELINE_SCHEDULES,
       ].includes(objectAttributes?.data_source?.type) && (
