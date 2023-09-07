@@ -163,7 +163,7 @@ function PipelineRuns({
     [TAB_URL_PARAM, 'page', SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION],
   );
   if (isPipelineRunsTab) {
-    blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM]);
+    blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM, 'status']);
   }
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
