@@ -21,6 +21,7 @@ class EcsConfig(BaseConfig):
     network_configuration: Dict = None
     cpu: int = 512
     memory: int = 1024
+    launch_type: str = 'FARGATE'
     wait_timeout: int = 600
 
     @classmethod
@@ -77,7 +78,7 @@ class EcsConfig(BaseConfig):
 
         task_config = dict(
             taskDefinition=self.task_definition,
-            launchType='FARGATE',
+            launchType=self.launch_type,
             cluster=self.cluster,
             platformVersion='LATEST',
             count=1,
