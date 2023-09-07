@@ -120,6 +120,9 @@ elasticsearch = [
 github = [
   'PyGithub==1.59.0',
 ]
+influxdb = [
+  'influxdb_client==1.36.1',
+]
 kafka = [
   'confluent-avro',
   'kafka-python==2.0.2',
