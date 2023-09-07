@@ -7,6 +7,7 @@ install-hooks:
 dev_env:
 	@echo "Generating poetry virtual environment"
 	poetry install --no-root --no-interaction
-	poetry run pip install -e ./[all,dev]
+	poetry run pip install -e ./[all]
 	poetry run pip install -e ./mage_integrations
+	poetry run pip install -r dev_requirements.txt
 	poetry run pre-commit install
