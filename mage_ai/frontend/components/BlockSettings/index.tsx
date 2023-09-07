@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
+  BLOCK_TYPES_WITH_VARIABLES,
+  BlockLanguageEnum,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
@@ -107,6 +109,7 @@ function BlockSettings({
   const {
     color: blockColor,
     configuration,
+    language,
     name: blockName,
     type: blockType,
     uuid: blockUUID,
@@ -663,7 +666,7 @@ function BlockSettings({
             </Spacing>
           )}
 
-          {BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType && (
+          {BLOCK_TYPES_WITH_VARIABLES.includes(blockType) && BlockLanguageEnum.PYTHON === language && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
               <FlexContainer alignItems="center">
                 <Headline level={5}>
