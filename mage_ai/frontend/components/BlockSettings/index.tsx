@@ -160,7 +160,7 @@ function BlockSettings({
   }, []);
 
   const blockVariables: { [key: string]: string } = useMemo(() =>
-    ignoreKeys(blockAttributes?.configuration || configuration, ['global_data_product']),
+    ignoreKeys(blockAttributes?.configuration || configuration, ['global_data_product', 'file_path']),
     [blockAttributes?.configuration, configuration],
   );
   const updateBlockVariable = useCallback(
@@ -692,12 +692,13 @@ function BlockSettings({
                   Press
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Enter</Text> or
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Return</Text> on a row to add or update a variable.
+                  These variables are pipeline-specific (they are not accessible on other pipelines).
                 </Text>
                 <Text muted>
                   <Text bold inline warning>Note: </Text>
                   Click the
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Update block settings</Text> button
-                  below to save changes. If you do not, any new block variables will not be added.
+                  below to save changes. If you do not, any new or updated block variables will not be persisted.
                 </Text>
               </Spacing>
 
