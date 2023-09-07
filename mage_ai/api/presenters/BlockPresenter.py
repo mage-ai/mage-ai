@@ -1,6 +1,7 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
+# from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
 
 class BlockPresenter(BasePresenter):
@@ -53,15 +54,15 @@ class BlockPresenter(BasePresenter):
             )
 
             if 'dbt' == display_format:
-                upstream_blocks = DBTBlock.add_blocks_upstream_from_refs(
-                    self.model,
-                    add_current_block=True,
-                    read_only=True,
-                )
-                query_string = DBTBlock.compiled_query_string(self.model)
+                # upstream_blocks = DBTBlock.add_blocks_upstream_from_refs(
+                #     self.model,
+                #     add_current_block=True,
+                #     read_only=True,
+                # )
+                # query_string = DBTBlock.compiled_query_string(self.model)
                 data['metadata'] = dict(dbt=dict(
-                    lineage=[b.to_dict() for b in upstream_blocks],
-                    sql=query_string,
+                    lineage=None,  # [b.to_dict() for b in upstream_blocks],
+                    sql=None  # query_string,
                 ))
 
             return data

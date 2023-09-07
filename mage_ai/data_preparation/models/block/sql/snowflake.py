@@ -24,7 +24,7 @@ def create_upstream_block_tables(
     dynamic_upstream_block_uuids: List[str] = None,
     variables: Dict = None,
 ):
-    from mage_ai.data_preparation.models.block.dbt import DBTBlock
+    # from mage_ai.data_preparation.models.block.dbt import DBTBlock
     configuration = configuration if configuration else block.configuration
 
     database_default = (configuration.get(
@@ -93,10 +93,10 @@ def create_upstream_block_tables(
             if table_name:
                 table_name = table_name.upper()
 
-            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
-                attributes_dict = DBTBlock.parse_attributes(block, variables=variables)
-                schema_name = attributes_dict['source_name'].upper()
-                table_name = DBTBlock.source_table_name_for_block(upstream_block).upper()
+            # if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
+            #     attributes_dict = DBTBlock.parse_attributes(block, variables=variables)
+            #     schema_name = attributes_dict['source_name'].upper()
+            #     table_name = DBTBlock.source_table_name_for_block(upstream_block).upper()
 
             loader.export(
                 df,

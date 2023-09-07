@@ -430,20 +430,20 @@ class Block:
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
+        # from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = DBTBlock.add_blocks_upstream_from_refs(block)
-                upstream_block_uuids += [b.uuid for b in arr]
-                upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
-                priority_final = priority if len(upstream_block_uuids) == 0 else None
-            else:
-                priority_final = priority
+            # if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+            #     arr = DBTBlock.add_blocks_upstream_from_refs(block)
+            #     upstream_block_uuids += [b.uuid for b in arr]
+            #     upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
+            #     priority_final = priority if len(upstream_block_uuids) == 0 else None
+            # else:
+            priority_final = priority
 
             pipeline.add_block(
                 block,
@@ -468,7 +468,10 @@ class Block:
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
-            return DBTBlock
+            if BlockLanguage.SQL == language:
+                return DBTBlock  # TODO: Change to DBTBlocKSQL
+            else:
+                return DBTBlock  # TODO: Change to DBTBlocKYAML
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
                 return CallbackBlock
