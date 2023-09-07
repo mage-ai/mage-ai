@@ -12,14 +12,20 @@ export enum DataSourceEnum {
 
 export const DATA_SOURCES = [
   DataSourceEnum.BLOCK,
+  DataSourceEnum.BLOCK_RUNS,
   DataSourceEnum.CHART_CODE,
   DataSourceEnum.PIPELINES,
+  DataSourceEnum.PIPELINE_RUNS,
+  DataSourceEnum.PIPELINE_SCHEDULES,
 ];
 
 export const DATA_SOURCES_HUMAN_READABLE_MAPPING = {
   [DataSourceEnum.BLOCK]: 'Block data output',
+  [DataSourceEnum.BLOCK_RUNS]: 'Block runs',
   [DataSourceEnum.CHART_CODE]: 'Custom code',
   [DataSourceEnum.PIPELINES]: 'Pipelines',
+  [DataSourceEnum.PIPELINE_RUNS]: 'Pipeline runs',
+  [DataSourceEnum.PIPELINE_SCHEDULES]: 'Triggers',
 };
 
 export interface DataSourceType {

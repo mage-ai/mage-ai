@@ -32,6 +32,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.strings import is_number
 
 
 class Widget(Block):
@@ -198,12 +199,11 @@ class Widget(Block):
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
-            limit_config = int(
-                self.configuration.get(
-                    VARIABLE_NAME_LIMIT,
-                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                )
-            )
+            limit_config = self.configuration.get(VARIABLE_NAME_LIMIT) or \
+                DATAFRAME_SAMPLE_COUNT_PREVIEW
+            if is_number(limit_config):
+                limit_config = int(limit_config)
+
 
             if should_use_no_code:
                 df = dfs[0].iloc[:limit_config]
@@ -231,14 +231,17 @@ class Widget(Block):
             if should_use_no_code:
                 df = dfs[0]
                 if group_by_columns and metrics:
-                    buckets, values = build_time_series_buckets(
+                    tup = build_time_series_buckets(
                         df,
                         group_by_columns[0],
                         self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
                         metrics,
                     )
-                    data[VARIABLE_NAME_X] = buckets
-                    data[VARIABLE_NAME_Y] = values
+
+                    if len(tup) == 2:
+                        buckets, values = tup
+                        data[VARIABLE_NAME_X] = buckets
+                        data[VARIABLE_NAME_Y] = values
 
         return data
 
