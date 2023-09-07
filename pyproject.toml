@@ -29,7 +29,6 @@ dependencies = [
   'async_timeout',
   'bcrypt==4.0.1',
   'click',
-  'confluent-avro',
   'croniter==1.3.7',
   'cryptography==36.0.2',
   'dask>=2022.2.0',
@@ -122,6 +121,7 @@ github = [
   'PyGithub==1.59.0',
 ]
 kafka = [
+  'confluent-avro',
   'kafka-python==2.0.2',
 ]
 mongodb = [
