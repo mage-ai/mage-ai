@@ -13,9 +13,12 @@ class Knowi(Source):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query == None:
+            query = {}
+
         access_token = self.config.get("access_token")
         client = KnowiClient(
             access_token,
