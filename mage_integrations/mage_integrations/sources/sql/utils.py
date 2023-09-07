@@ -1,3 +1,5 @@
+from typing import Any, Callable, Dict
+
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -7,7 +9,6 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
 )
 from mage_integrations.utils.array import find
-from typing import Any, Callable, Dict
 
 
 def build_comparison_statement(
@@ -30,7 +31,11 @@ def build_comparison_statement(
     if column_format == COLUMN_FORMAT_DATETIME and convert_datetime_func is not None:
         val = convert_datetime_func(val)
 
-    return f"{column_cleaned if column_cleaned else col} {operator} CAST('{val}' AS {col_type})"
+    if col_type:
+        comparison_value = f"CAST('{val}' AS {col_type})"
+    else:
+        comparison_value = f'{val}'
+    return f"{column_cleaned if column_cleaned else col} {operator} {comparison_value}"
 
 
 def column_type_mapping(column_type: str, column_format: str = None) -> str:
