@@ -35,7 +35,7 @@ class BaseStream:
     path = None
     params = {}
     parent = None
-    default_data_key = "value" # This is unique for Knowi since the data comes under the "value" key in the response
+    default_data_key = "list" # This is unique for Knowi since the data comes under the "list" key in the response
     data_key = None
     
 
@@ -142,62 +142,49 @@ class Dashboards(FullTableStream):
 
         yield from dashboards
 
-class TileList(FullTableStream):
-    tap_stream_id = 'tile_list'
+class WidgetList(FullTableStream):
+    tap_stream_id = 'widget_list'
     key_properties = ['id']
     to_replicate = False
-    path = 'dashboards/{}/tiles'
-    data_key = 'queries'
-    parent = DashboardList
+    path = 'widgets'
+    data_key = 'widgets'
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
-        counter = 0
+        response = self.client.get(self.path)
 
-        for dashboard_id in self.get_parent_data():
-            call_path = self.path.format(dashboard_id)
-            response = self.client.get(call_path)
-
-            tiles_in_response = response.get(self.default_data_key)
-
-            # Only yield records when called by child streams
-            if is_parent and tiles_in_response != []:
-                counter += 1
-                for record in tiles_in_response:
-                    yield {
-                        'tile_id': record.get('id'),
-                        'dashboard_id': dashboard_id
-                    }
-
-        if counter == 0:
-            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+        if response.get(self.default_data_key) is None:
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise KnowiError
 
-class Tiles(FullTableStream):
-    tap_stream_id = 'tiles'
+        # Only yield records when called by child streams
+        if is_parent:
+            for record in response.get(self.default_data_key):
+                yield record.get('id')
+
+
+class Widgets(FullTableStream):
+    tap_stream_id = 'widgets'
     key_properties = ['id']
-    path = 'dashboards/{}/tiles/{}'
-    parent = TileList
+    path = 'widgets/{}'
+    parent = WidgetList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
-        tiles = []
+        widgets = []
 
-        for tokens in self.get_parent_data():
-            dashboard_id = tokens.get("dashboard_id")
-            tile_id = tokens.get("tile_id")
-
-            call_path = self.path.format(dashboard_id, tile_id)
+        for widget_id in self.get_parent_data():
+            call_path = self.path.format(widget_id)
             results = self.client.get(call_path)
 
-            tiles.append(results)
+            widgets.append(results)
 
-        yield from tiles
+        yield from widgets
 
 
 
 STREAMS = {
     'dashboard_list': DashboardList,
     'dashboards': Dashboards,
-    'tile_list': TileList,
-    'tiles': Tiles,
+    'widget_list': WidgetList,
+    'widgets': Widgets,
 }
