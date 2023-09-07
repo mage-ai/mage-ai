@@ -54,7 +54,7 @@ RUN pip3 install --no-cache-dir -e /home/src/mage_integrations
 # Mage Dependencies
 COPY ./pyproject.toml /home/src/
 COPY ./mage_ai /home/src/mage_ai
-RUN pip3 install --no-cache-dir -e /home/src[all,dev]
+RUN pip3 install --no-cache-dir -e "/home/src[all]"
 
 # Mage Frontend
 WORKDIR /home/src/mage_ai/frontend
