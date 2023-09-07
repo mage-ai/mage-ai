@@ -16,5 +16,6 @@ export const ItemStyle = styled.div`
 
   ${props => `
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBorder};
+    background-color: ${(props.theme || dark).background.chartBlock};
   `}
 `;
