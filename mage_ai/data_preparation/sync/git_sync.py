@@ -14,7 +14,7 @@ class GitSync(BaseSync):
         self.git_manager = Git(sync_config, setup_repo=setup_repo)
 
     def sync_data(self):
-        self.git_manager.reset(self.branch)
+        self.git_manager.reset_hard(branch=self.branch)
 
     # Reset git sync by cloning the remote repo
     def reset(self):

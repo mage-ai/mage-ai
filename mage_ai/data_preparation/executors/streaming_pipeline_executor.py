@@ -73,7 +73,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # 1. Support multiple sources and sinks
         # 2. Support flink pipeline
 
-        tags = self._build_tags(**kwargs)
+        tags = self.build_tags(**kwargs)
         if build_block_output_stdout:
             stdout_logger = logging.getLogger('streaming_pipeline_executor')
             self.logger = DictLogger(stdout_logger)

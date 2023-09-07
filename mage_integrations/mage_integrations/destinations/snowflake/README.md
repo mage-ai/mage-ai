@@ -21,4 +21,9 @@ You must enter the following credentials when configuring this source:
 | `warehouse` | Name of the warehouse that contains the specified database and schema. | `COMPUTE_WH` |
 | `use_batch_load` | If `true`, use batch upload instead of insertion query. | `false` (default value) |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`
 <br />

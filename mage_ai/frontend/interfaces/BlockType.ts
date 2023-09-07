@@ -5,7 +5,6 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
-import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -284,6 +283,7 @@ export default interface BlockType {
   retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
+  timeout?: number;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;

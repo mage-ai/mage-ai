@@ -106,6 +106,7 @@ export interface ConfigurationType {
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
   [VARIABLE_NAME_GROUP_BY]?: string[];
+  [VARIABLE_NAME_HEIGHT]?: number;
   [VARIABLE_NAME_INDEX]?: string;
   [VARIABLE_NAME_LEGEND_LABELS]?: string;
   [VARIABLE_NAME_LIMIT]?: number;
@@ -132,6 +133,7 @@ export interface ConfigurationType {
     uuid: string;
   };
   reduce_output?: boolean;
+  x_axis_label?: string;
 }
 
 export function buildMetricName(metric: MetricType) {

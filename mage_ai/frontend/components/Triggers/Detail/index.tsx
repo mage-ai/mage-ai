@@ -37,6 +37,7 @@ import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTa
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
+  Alphabet,
   CalendarDate,
   Info,
   Lightning,
@@ -99,6 +100,7 @@ function TriggerDetail({
     uuid: pipelineUUID,
   } = pipeline || {};
   const {
+    description,
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
     name: pipelineScheduleName,
@@ -288,6 +290,26 @@ function TriggerDetail({
       ],
     ];
 
+    if (description) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_description_label"
+        >
+          <Alphabet {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            Description
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_description"
+        >
+          {description}
+        </Text>,
+      ]);
+    }
+
     if (sla) {
       const { time, unit } = convertSeconds(sla);
       const finalUnit = time === 1 ? unit : `${unit}s`;
@@ -405,7 +427,34 @@ function TriggerDetail({
         </CopyToClipboard>,
       ]);
     }
-
+    
+    if (settings?.timeout) {
+      const { time, unit } = convertSeconds(settings?.timeout);
+      const finalUnit = time === 1 ? unit : `${unit}s`;
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_timeout"
+        >
+          <Tooltip
+            default
+            label="Timeout set for runs of this trigger"
+            size={UNIT*1.5}
+            widthFitContent
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Timeout
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_timeout_label"
+          monospace
+        >
+          {`${time} ${finalUnit}`}
+        </Text>,
+      ]);
+    }
     if (settings?.skip_if_previous_running) {
       rows.push([
         <FlexContainer
@@ -464,6 +513,7 @@ function TriggerDetail({
       />
     );
   }, [
+    description,
     isActive,
     nextRunDate,
     pipelineSchedule,

@@ -46,6 +46,24 @@ class PipelineScheduleResource(DatabaseResource):
             if isinstance(tag_names, str):
                 tag_names = tag_names.split(',')
 
+        schedule_types = query_arg.get('schedule_type[]', [])
+        if schedule_types:
+            schedule_types = schedule_types[0]
+        if schedule_types:
+            schedule_types = schedule_types.split(',')
+
+        schedule_intervals = query_arg.get('schedule_interval[]', [])
+        if schedule_intervals:
+            schedule_intervals = schedule_intervals[0]
+        if schedule_intervals:
+            schedule_intervals = schedule_intervals.split(',')
+
+        statuses = query_arg.get('status[]', [])
+        if statuses:
+            statuses = statuses[0]
+        if statuses:
+            statuses = statuses.split(',')
+
         query = PipelineSchedule.repo_query
 
         if len(tag_names) >= 1:
@@ -68,6 +86,19 @@ class PipelineScheduleResource(DatabaseResource):
             )
             query = query.filter(
                 PipelineSchedule.id.in_([ta.taggable_id for ta in tag_associations]),
+            )
+
+        if schedule_types:
+            query = query.filter(
+                PipelineSchedule.schedule_type.in_(schedule_types),
+            )
+        if schedule_intervals:
+            query = query.filter(
+                PipelineSchedule.schedule_interval.in_(schedule_intervals),
+            )
+        if statuses:
+            query = query.filter(
+                PipelineSchedule.status.in_(statuses),
             )
 
         if global_data_product_uuid or pipeline:

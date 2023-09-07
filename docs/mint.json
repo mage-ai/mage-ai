@@ -21,7 +21,7 @@
     "thumbsRating": true
   },
   "search": {
-    "prompt": "✨ Find something magical..."
+    "prompt": "✨ Make magic..."
   },
   "metadata": {
     "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
@@ -56,7 +56,7 @@
       "url": "contributing"
     },
     {
-      "name": "Live Support",
+      "name": "Slack",
       "url": "https://www.mage.ai/chat"
     }
   ],
@@ -84,7 +84,14 @@
         "introduction/overview",
         "getting-started/setup",
         "design/core-design-principles",
-        "design/core-abstractions"
+        {
+          "group": "Abstractions",
+          "icon": "object-subtract",
+          "pages": [
+            "design/core-abstractions",
+            "design/abstractions/project-structure"
+          ]
+        }
       ]
     },
     {
@@ -231,8 +238,7 @@
           "group": "Schedules and triggers",
           "icon": "clock",
           "pages": [
-            "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/schedule-pipelines",
+            "orchestration/triggers/configure-triggers-in-code",
             {
               "group": "Event triggers",
               "pages": [
@@ -240,9 +246,9 @@
                 "orchestration/triggers/events/aws"
               ]
             },
-            "orchestration/triggers/trigger-pipeline-api",
             "orchestration/triggers/trigger-pipeline",
-            "orchestration/triggers/configure-triggers-in-code"
+            "orchestration/triggers/trigger-pipeline-api",
+            "orchestration/triggers/schedule-pipelines"
           ]
         },
         {
@@ -270,6 +276,7 @@
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
                 "streaming/destinations/opensearch",
+                "streaming/destinations/postgres",
                 "streaming/destinations/redshift"
               ]
             }

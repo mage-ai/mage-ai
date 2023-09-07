@@ -18,4 +18,11 @@ You must enter the following credentials when configuring this source:
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`
+<br />
+
 <br />

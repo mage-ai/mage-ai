@@ -23,6 +23,7 @@ class BlockPresenter(BasePresenter):
         'replicated_block',
         'retry_config',
         'status',
+        'timeout',
         'type',
         'upstream_blocks',
         'uuid',

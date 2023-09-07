@@ -167,9 +167,6 @@
     "ctr": {
       "type": ["null", "number"]
     },
-    "reach": {
-      "type": ["null", "integer"]
-    },
     "dma": {
       "type": ["null", "string"]
     },
