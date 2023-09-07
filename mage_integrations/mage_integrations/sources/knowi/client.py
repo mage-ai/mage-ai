@@ -7,74 +7,56 @@ LOGGER = singer.get_logger()
 
 REQUEST_TIMEOUT = 300
 
-
 class Server5xxError(Exception):
     pass
-
 
 class Server429Error(Exception):
     pass
 
-
 class KnowiError(Exception):
     pass
-
 
 class KnowiBadRequestError(KnowiError):
     pass
 
-
 class KnowiScrollExistsError(KnowiError):
     pass
-
 
 class KnowiUnauthorizedError(KnowiError):
     pass
 
-
 class KnowiPaymentRequiredError(KnowiError):
     pass
-
 
 class KnowiForbiddenError(KnowiError):
     pass
 
-
 class KnowiNotFoundError(KnowiError):
     pass
-
 
 class KnowiMethodNotAllowedError(KnowiError):
     pass
 
-
 class KnowiNotAcceptableError(KnowiError):
     pass
-
 
 class KnowiRequestTimeoutError(KnowiError):
     pass
 
-
 class KnowiConflictError(KnowiError):
     pass
-
 
 class KnowiUserConflictError(KnowiError):
     pass
 
-
 class KnowiUnsupportedMediaTypeError(KnowiError):
     pass
-
 
 class KnowiUnprocessableEntityError(KnowiError):
     pass
 
-
 class KnowiInternalServiceError(KnowiError):
     pass
-
 
 ERROR_CODE_EXCEPTION_MAPPING = {
     400: KnowiBadRequestError,
@@ -92,13 +74,11 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     500: KnowiInternalServiceError
 }
 
-
 def get_exception_for_error_code(error_code, knowi_error_code):
 
     if knowi_error_code == 'scroll_exists':
         error_code = 423
     return ERROR_CODE_EXCEPTION_MAPPING.get(error_code, KnowiError)
-
 
 def raise_for_error(response):
     try:
@@ -129,7 +109,6 @@ def raise_for_error(response):
             raise KnowiError(error) from error
         except (ValueError, TypeError) as inner_error:
             raise KnowiError(error) from inner_error
-
 
 class KnowiClient(object):
     def __init__(self,

@@ -7,8 +7,7 @@ import datetime
 from typing import Iterator
 
 import singer
-from singer import Transformer, metrics, UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
-from singer.transform import transform, unix_milliseconds_to_datetime
+from singer.transform import unix_milliseconds_to_datetime
 
 from mage_integrations.sources.knowi.client import (
     KnowiClient,
@@ -18,7 +17,6 @@ from mage_integrations.sources.knowi.client import (
 LOGGER = singer.get_logger()
 
 MAX_PAGE_SIZE = 150
-
 
 class BaseStream:
     """
@@ -35,7 +33,8 @@ class BaseStream:
     path = None
     params = {}
     parent = None
-    default_data_key = "list" # This is unique for Knowi since the data comes under the "list" key in the response
+    # default_data_key is unique for Knowi since the data comes under the "list" key
+    default_data_key = "list" 
     data_key = None
     
 
@@ -102,8 +101,6 @@ class FullTableStream(BaseStream):
     """
     replication_method = 'FULL_TABLE'
 
-
-# TODO Change all the stream classes and add schemas
 class DashboardList(FullTableStream):
     tap_stream_id = 'dashboard_list'
     key_properties = ['id']
@@ -122,7 +119,6 @@ class DashboardList(FullTableStream):
         if is_parent:
             for record in response.get(self.default_data_key):
                 yield record.get('id')
-
 
 class Dashboards(FullTableStream):
     tap_stream_id = 'dashboards'
@@ -161,7 +157,6 @@ class WidgetList(FullTableStream):
             for record in response.get(self.default_data_key):
                 yield record.get('id')
 
-
 class Widgets(FullTableStream):
     tap_stream_id = 'widgets'
     key_properties = ['id']
@@ -179,8 +174,6 @@ class Widgets(FullTableStream):
             widgets.append(results)
 
         yield from widgets
-
-
 
 STREAMS = {
     'dashboard_list': DashboardList,

@@ -8,7 +8,6 @@ from mage_integrations.sources.knowi.streams import STREAMS
 from typing import Dict, Generator, List
 import singer
 
-
 class Knowi(Source):
 
     def load_data(
@@ -48,7 +47,6 @@ class Knowi(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].valid_replication_keys
-
 
 if __name__ == '__main__':
     main(Knowi)
