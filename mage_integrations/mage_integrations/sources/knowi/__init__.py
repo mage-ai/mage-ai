@@ -16,7 +16,7 @@ class Knowi(Source):
         query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        if query == None:
+        if query is None:
             query = {}
 
         access_token = self.config.get("access_token")
