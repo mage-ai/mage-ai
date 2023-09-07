@@ -5,16 +5,20 @@ on:
     paths:
       - "mage_ai/**"
       - "mage_integrations/**"
+      - "pyproject.toml"
       - "requirements.txt"
+      - "setup.py"
   pull_request:
     paths:
       - "mage_ai/**"
       - "mage_integrations/**"
+      - "pyproject.toml"
       - "requirements.txt"
-    types: [opened, reopened]
+      - "setup.py"
 
 jobs:
   check-code-quality:
+
     runs-on: ubuntu-latest
     name: Check Code Quality
     steps:
