@@ -21,8 +21,10 @@ jobs:
         run: |
           poetry install --no-interaction --only dev
           poetry run pre-commit install
+      - id: changed-files
+        uses: tj-actions/changed-files@v36
       - name: Run pre-commit hooks
-        run: poetry run pre-commit run --show-diff-on-failure
+        run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
     runs-on: ubuntu-latest
