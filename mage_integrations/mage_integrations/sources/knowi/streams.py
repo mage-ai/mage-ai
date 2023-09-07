@@ -6,8 +6,9 @@ import datetime
 from typing import Iterator
 
 import singer
-from mage_integrations.sources.knowi.client import KnowiClient, KnowiError
 from singer.transform import unix_milliseconds_to_datetime
+
+from mage_integrations.sources.knowi.client import KnowiClient, KnowiError
 
 LOGGER = singer.get_logger()
 

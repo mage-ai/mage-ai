@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Dict, Generator, List
 
 import singer
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.knowi.client import KnowiClient

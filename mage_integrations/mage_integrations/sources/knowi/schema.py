@@ -1,8 +1,9 @@
 import json
 import os
 
-from mage_integrations.sources.knowi.streams import STREAMS
 from singer import metadata
+
+from mage_integrations.sources.knowi.streams import STREAMS
 
 # Reference:
 # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#Metadata
