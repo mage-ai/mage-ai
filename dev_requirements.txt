@@ -1,0 +1,13 @@
+black
+commitizen
+flake8
+flake8-bugbear
+interrogate
+ipykernel>=6.17.1,<7
+isort
+mypy
+pandas-stubs
+pre-commit
+pytest
+pytest-cov
+sourcery
