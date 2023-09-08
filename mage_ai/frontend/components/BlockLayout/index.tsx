@@ -558,7 +558,7 @@ function BlockLayout({
 
           {pageBlockLayoutTemplate && (
             <Text center default>
-              Or, you can add a few predefined charts with a click of a button.
+              Or, you can add recommended charts with a click of a button.
             </Text>
           )}
         </Spacing>
@@ -570,12 +570,13 @@ function BlockLayout({
           {pageBlockLayoutTemplate && (
             <>
               <Button
+                // @ts-ignore
                 onClick={() => updateBlockLayoutItem({
                   page_block_layout: pageBlockLayoutTemplate,
                 })}
                 primary
               >
-                Add predefined charts
+                Add recommended charts
               </Button>
 
               <Spacing mr={1} />
