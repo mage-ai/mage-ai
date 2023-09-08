@@ -190,29 +190,33 @@ function Preferences({
             </Headline>
           </Spacing>
 
-          {Object.entries(projectAttributes?.features || {}).map(([k, v]) => (
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
+          {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
+            <Spacing
               key={k}
+              mt={idx === 0 ? 0 : '4px'}
             >
-              <Text default monospace>
-                {k}
-              </Text>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Text default monospace>
+                  {k}
+                </Text>
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <ToggleSwitch
-                checked={!!v}
-                onCheck={() => setProjectAttributes(prev => ({
-                  ...prev,
-                  features: {
-                    ...projectAttributes?.features,
-                    [k]: !v,
-                  },
-                }))}
-              />
-            </FlexContainer>
+                <ToggleSwitch
+                  checked={!!v}
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
           ))}
         </Spacing>
       </Panel>
