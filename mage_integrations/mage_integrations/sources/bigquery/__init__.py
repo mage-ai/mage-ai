@@ -37,7 +37,8 @@ FROM {dataset}.INFORMATION_SCHEMA.COLUMNS
 
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         if COLUMN_FORMAT_DATETIME == column_format:
-            return 'DATETIME'
+            # Not cast datetime value type when comparing bookmark values
+            return None
         return super().column_type_mapping(column_type, column_format)
 
     def update_column_names(self, columns: List[str]) -> List[str]:

@@ -88,6 +88,7 @@ class ExecutorFactory:
             )
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
+            # Used for local_python or local_python_force
             return PipelineExecutor(pipeline, execution_partition=execution_partition)
 
     @classmethod
@@ -158,4 +159,5 @@ class ExecutorFactory:
             )
             return K8sBlockExecutor(**executor_kwargs)
         else:
+            # Used for local_python or local_python_force
             return BlockExecutor(**executor_kwargs)

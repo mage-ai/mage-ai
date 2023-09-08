@@ -20,35 +20,47 @@ import api from '@api';
 type VariableRowProps = {
   copyText?: string;
   deleteVariable?: () => void;
+  disableKeyEdit?: boolean;
+  editStateInit?: boolean;
   fetchVariables?: () => void;
+  focusKey?: boolean;
   hideEdit?: boolean;
   obfuscate?: boolean;
-  pipelineUUID: string;
-  variable: VariableType;
+  onEnterCallback?: () => void;
+  onEscapeCallback?: () => void;
+  pipelineUUID?: string;
+  updateVariable?: (variable: { [key: string]: string }) => void;
+  variable?: VariableType;
 };
 
 function VariableRow({
   copyText: copyTextProp,
   deleteVariable,
+  disableKeyEdit,
+  editStateInit = false,
   fetchVariables,
+  focusKey,
   hideEdit,
   obfuscate,
+  onEnterCallback,
+  onEscapeCallback,
   pipelineUUID,
+  updateVariable: updateVariableProp,
   variable,
 }: VariableRowProps) {
   const {
     uuid,
-    type,
     value,
-  } = variable;
+  } = variable || {};
 
+  const refVariableKeyInput = useRef(null);
   const refTextInput = useRef(null);
   const [showActions, setShowActions] = useState<boolean>(false);
   const [variableName, setVariableName] = useState<string>(uuid);
   const [variableValue, setVariableValue] = useState<string>(value);
-  const [edit, setEdit] = useState<boolean>(false);
+  const [edit, setEdit] = useState<boolean>(editStateInit);
 
-  const [updateVariable] = useMutation(
+  const [updateVariable]: any = useMutation(
     api.variables.pipelines.useUpdate(pipelineUUID, uuid),
     {
       onSuccess: (response: any) => onSuccess(
@@ -70,26 +82,44 @@ function VariableRow({
       } catch {
         // do nothing
       }
-      // @ts-ignore
-      updateVariable({
-        variable: {
-          name: variableName,
-          value: updatedValue,
-        },
-      });
+      if (updateVariableProp) {
+        if (variableName && variableValue) {
+          updateVariableProp?.({
+            [variableName]: variableValue,
+          });
+          setEdit(false);
+        }
+      } else {
+        updateVariable({
+          variable: {
+            name: variableName,
+            value: updatedValue,
+          },
+        });
+      }
+      onEnterCallback?.();
     } else if (e.key === 'Escape') {
       setEdit(false);
+      onEscapeCallback?.();
     }
   }, [
+    onEnterCallback,
+    onEscapeCallback,
+    updateVariableProp,
+    updateVariable,
     variableName,
     variableValue,
   ]);
 
   useEffect(() => {
     if (edit) {
-      refTextInput?.current?.focus();
+      if (focusKey) {
+        refVariableKeyInput?.current?.focus();
+      } else {
+        refTextInput?.current?.focus();
+      }
     }
-  }, [edit, refTextInput]);
+  }, [edit, focusKey]);
 
   const copyText = copyTextProp || `kwargs['${uuid}']`;
 
@@ -125,11 +155,11 @@ function VariableRow({
           </CellStyle>
         </Col>
         <Col md={4}>
-          {edit ? (
+          {(edit && !disableKeyEdit) ? (
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {
@@ -139,6 +169,7 @@ function VariableRow({
                 onKeyDown={handleKeyDown}
                 paddingHorizontal={0}
                 placeholder="variable"
+                ref={refVariableKeyInput}
                 small
                 value={variableName}
               />
@@ -155,8 +186,8 @@ function VariableRow({
           {edit ? (
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {

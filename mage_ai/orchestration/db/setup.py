@@ -10,7 +10,6 @@ from mage_ai.orchestration.constants import (
     PG_DB_PORT,
     PG_DB_USER,
 )
-from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
 
 DEFAULT_POSTGRES_HOST = '127.0.0.1'
 DEFAULT_POSTGRES_PORT = '5432'
@@ -24,6 +23,7 @@ def get_postgres_connection_url() -> Optional[str]:
     db_port = None
     if os.getenv(AWS_DB_SECRETS_NAME):
         try:
+            from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
             response = get_secret(os.getenv(AWS_DB_SECRETS_NAME))
             secrets = json.loads(response)
 

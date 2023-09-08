@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
 
 import AddButton from '@components/shared/AddButton';
 import Badge from '@oracle/components/Badge';
@@ -26,49 +25,24 @@ import { Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
-import { setFilters } from '@storage/pipelines';
 
 type ToolbarProps = {
   addButtonProps?: {
     isLoading?: boolean;
     label?: string;
+    onClick?: () => void;
     menuItems?: FlyoutMenuItemType[];
   };
   deleteRowProps?: {
     confirmationMessage: string;
     isLoading: boolean;
     item: string;
-    onDelete: (id: string) => void;
+    onDelete: (id: string | number) => void;
   }
-  filterOptions?: {
-    [keyof: string]: string[];
-  };
-  filterValueLabelMapping?: {
-    [keyof: string]: {
-      [keyof: string]: string;
-    };
-  };
-  moreActionsMenuItems?: FlyoutMenuItemType[];
-  groupButtonProps?: {
-    menuItems: FlyoutMenuItemType[];
-    groupByLabel?: string;
-  };
-  onFilterApply?: (query?: {
-    [key: string]: string | string[] | number | number[];
-  }, updatedQuery?: {
-    [key: string]: string | string[] | number | number[];
-  }) => void;
-  query?: {
-    [keyof: string]: string[];
-  };
-  searchProps?: {
-    placeholder?: string;
-    onChange: (text: string) => void;
-    value: string;
-  }
-  secondaryActionButtonProps?: {
+  extraActionButtonProps?: {
     Icon: any;
     confirmationDescription?: string;
     confirmationMessage?: string;
@@ -78,26 +52,63 @@ type ToolbarProps = {
     openConfirmationDialogue?: boolean;
     tooltip?: string;
   };
-  selectedRowId: string;
-  setSelectedRow: (row: any) => void;
+  filterOptions?: {
+    [keyof: string]: string[];
+  };
+  filterValueLabelMapping?: {
+    [keyof: string]: {
+      [keyof: string]: string | (() => string);
+    };
+  };
+  moreActionsMenuItems?: FlyoutMenuItemType[];
+  groupButtonProps?: {
+    menuItems: FlyoutMenuItemType[];
+    groupByLabel?: string;
+  };
+  onClickFilterDefaults?: () => void;
+  onFilterApply?: (query?: {
+    [key: string]: string | string[] | number | number[];
+  }, updatedQuery?: {
+    [key: string]: string | string[] | number | number[];
+  }) => void;
+  query?: {
+    [keyof: string]: string[];
+  };
+  secondaryButtonProps?: {
+    disabled?: boolean;
+    isLoading?: boolean;
+    label?: string;
+    onClick?: () => void;
+    tooltip?: string;
+  };
+  searchProps?: {
+    placeholder?: string;
+    onChange: (text: string) => void;
+    value: string;
+  }
+  selectedRowId?: string | number;
+  setSelectedRow?: (row: any) => void;
+  showDivider?: boolean;
 };
 
 function Toolbar({
   addButtonProps,
   deleteRowProps,
+  extraActionButtonProps,
   filterOptions = {},
   filterValueLabelMapping,
   groupButtonProps,
   moreActionsMenuItems,
+  onClickFilterDefaults,
   onFilterApply,
   query = {},
+  secondaryButtonProps,
   searchProps,
-  secondaryActionButtonProps,
   selectedRowId,
   setSelectedRow,
+  showDivider,
 }: ToolbarProps) {
   const isViewerRole = isViewer();
-  const router = useRouter();
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const groupButtonMenuRef = useRef(null);
@@ -118,15 +129,15 @@ function Toolbar({
   const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpenIdx(null), []);
 
   const {
-    Icon: secondaryActionIcon,
-    confirmationDescription: secondaryActionConfirmDescription,
-    confirmationMessage: secondaryActionConfirmMessage,
-    isLoading: isLoadingSecondaryAction,
-    label: secondaryActionLabel,
-    onClick: onSecondaryActionClick,
-    openConfirmationDialogue: openSecondaryActionConfirmDialogue,
-    tooltip: secondaryActionTooltip,
-  } = secondaryActionButtonProps || {};
+    Icon: extraActionIcon,
+    confirmationDescription: extraActionConfirmDescription,
+    confirmationMessage: extraActionConfirmMessage,
+    isLoading: isLoadingExtraAction,
+    label: extraActionLabel,
+    onClick: onExtraActionClick,
+    openConfirmationDialogue: openExtraActionConfirmDialogue,
+    tooltip: extraActionTooltip,
+  } = extraActionButtonProps || {};
   const {
     confirmationMessage: deleteConfirmMessage,
     isLoading: isLoadingDelete,
@@ -154,6 +165,7 @@ function Toolbar({
   const {
     label: addButtonLabel,
     menuItems: addButtonMenuItems,
+    onClick: onClickAddButton,
     isLoading: isLoadingAddButton,
   } = addButtonProps || {};
   const addButtonEl = useMemo(() => (
@@ -163,7 +175,10 @@ function Toolbar({
       isLoading={isLoadingAddButton}
       label={addButtonLabel}
       menuItems={addButtonMenuItems}
-      onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
+      onClick={onClickAddButton
+        ? onClickAddButton
+        : () => setAddButtonMenuOpen(prevOpenState => !prevOpenState)
+      }
       onClickCallback={closeAddButtonMenu}
     />
   ), [
@@ -172,6 +187,37 @@ function Toolbar({
     addButtonMenuOpen,
     closeAddButtonMenu,
     isLoadingAddButton,
+    onClickAddButton,
+  ]);
+
+  const {
+    disabled: secondaryButtonDisabled,
+    label: secondaryButtonLabel,
+    onClick: onClickSecondaryButton,
+    isLoading: isLoadingSecondaryButton,
+    tooltip: secondaryButtonTooltip,
+  } = secondaryButtonProps || {};
+  const secondaryButtonEl = useMemo(() => (
+    <KeyboardShortcutButton
+      bold
+      disabled={secondaryButtonDisabled}
+      greyBorder
+      loading={isLoadingSecondaryButton}
+      onClick={onClickSecondaryButton}
+      outline
+      paddingBottom={9}
+      paddingTop={9}
+      title={secondaryButtonTooltip}
+      uuid="Table/Toolbar/SecondaryButton"
+    >
+      {secondaryButtonLabel}
+    </KeyboardShortcutButton>
+  ), [
+    isLoadingSecondaryButton,
+    onClickSecondaryButton,
+    secondaryButtonDisabled,
+    secondaryButtonLabel,
+    secondaryButtonTooltip,
   ]);
 
   const filtersAppliedCount = useMemo(
@@ -190,10 +236,7 @@ function Toolbar({
         }
       }}
       onClickOutside={closeFilterButtonMenu}
-      onSecondaryClick={() => {
-        setFilters({});
-        router.push('/pipelines');
-      }}
+      onSecondaryClick={onClickFilterDefaults}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
@@ -225,9 +268,9 @@ function Toolbar({
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
     filtersAppliedCount,
+    onClickFilterDefaults,
     onFilterApply,
     query,
-    router,
   ]);
 
   const {
@@ -300,7 +343,20 @@ function Toolbar({
 
   return (
     <FlexContainer alignItems="center">
-      {addButtonEl}
+      {addButtonProps && addButtonEl}
+      {secondaryButtonProps && (
+        <Spacing ml={1}>
+          {secondaryButtonEl}
+        </Spacing>
+      )}
+
+      {showDivider && (
+        <>
+          <Spacing ml="12px" />
+          <VerticalDividerStyle />
+        </>
+      )}
+
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
 
@@ -310,26 +366,26 @@ function Toolbar({
         </Spacing>
       }
 
-      {(!isViewerRole && onSecondaryActionClick) &&
+      {(!isViewerRole && onExtraActionClick) &&
         <Spacing ml={BUTTON_PADDING}>
           <Tooltip
             {...SHARED_TOOLTIP_PROPS}
-            label={secondaryActionTooltip}
+            label={extraActionTooltip}
           >
             <KeyboardShortcutButton
-              Icon={!isLoadingSecondaryAction && secondaryActionIcon}
+              Icon={!isLoadingExtraAction && extraActionIcon}
               bold
               disabled={disabledActions}
               greyBorder
-              loading={isLoadingSecondaryAction}
-              onClick={openSecondaryActionConfirmDialogue
+              loading={isLoadingExtraAction}
+              onClick={openExtraActionConfirmDialogue
                 ? () => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.SECONDARY)
-                : onSecondaryActionClick
+                : onExtraActionClick
               }
               smallIcon
-              uuid="Table/Toolbar/SecondaryActionButton"
+              uuid="Table/Toolbar/ExtraActionButton"
             >
-              {secondaryActionLabel}
+              {extraActionLabel}
             </KeyboardShortcutButton>
           </Tooltip>
           <ClickOutside
@@ -339,12 +395,12 @@ function Toolbar({
             <PopupMenu
               onCancel={closeConfirmationDialogue}
               onClick={() => {
-                onSecondaryActionClick();
+                onExtraActionClick?.();
                 closeConfirmationDialogue();
-                setSelectedRow(null);
+                setSelectedRow?.(null);
               }}
-              subtitle={secondaryActionConfirmDescription}
-              title={secondaryActionConfirmMessage}
+              subtitle={extraActionConfirmDescription}
+              title={extraActionConfirmMessage}
               top={POPUP_TOP_OFFSET}
               width={POPUP_MENU_WIDTH}
             />
@@ -377,9 +433,9 @@ function Toolbar({
               danger
               onCancel={closeConfirmationDialogue}
               onClick={() => {
-                onDelete(selectedRowId);
+                onDelete?.(selectedRowId);
                 closeConfirmationDialogue();
-                setSelectedRow(null);
+                setSelectedRow?.(null);
               }}
               subtitle={deleteConfirmMessage}
               title={`Are you sure you want to delete the ${item} ${selectedRowId}?`}
@@ -412,7 +468,7 @@ function Toolbar({
               defaultColor
               fullWidth
               greyBorder
-              maxWidth={UNIT * 60}
+              maxWidth={UNIT * 40}
               onChange={e => onSearchChange(e.target.value)}
               paddingVertical={9}
               placeholder={searchPlaceholder ? searchPlaceholder : null}

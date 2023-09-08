@@ -98,7 +98,7 @@ const ASIDE_INNER_STYLE = css<{
   position: relative;
   z-index: 2;
 
-  ${props => typeof props.verticalOffset !== 'undefined' && `
+  ${props => typeof props.verticalOffset !== 'undefined' && props.verticalOffset !== null && `
     height: calc(100% - ${props.verticalOffset}px);
     top: ${props.verticalOffset}px;
   `}

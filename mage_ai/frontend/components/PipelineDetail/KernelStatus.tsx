@@ -310,7 +310,6 @@ function KernelStatus({
                         : () => updateCluster({
                             cluster: {
                               id,
-                              is_active: true,
                             },
                           }),
                       uuid: id,
