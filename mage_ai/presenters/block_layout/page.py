@@ -1,11 +1,14 @@
 import os
 import shutil
-import yaml
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+import yaml
+
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
-from mage_ai.presenters.block_layout.constants import BLOCK_LAYOUT_FILENAME_WITH_EXTENSION
+from mage_ai.presenters.block_layout.constants import (
+    BLOCK_LAYOUT_FILENAME_WITH_EXTENSION,
+)
 from mage_ai.presenters.constants import (
     MAGE_PRESENTERS_DIRECTORY_DEFAULT,
     MAGE_PRESENTERS_DIRECTORY_ENVIRONMENT_VARIABLE_NAME,

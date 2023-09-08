@@ -1,5 +1,6 @@
-import pandas as pd
 from typing import Dict
+
+import pandas as pd
 
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation

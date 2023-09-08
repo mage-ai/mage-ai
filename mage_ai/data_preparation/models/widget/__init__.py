@@ -1,8 +1,14 @@
-import numpy as np
 import os
-import pandas as pd
 import traceback
 from typing import Dict, List
+
+import numpy as np
+import pandas as pd
+
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.strings import is_number
 
 from .charts import (
     MAX_BUCKETS,
@@ -11,8 +17,6 @@ from .charts import (
     build_time_series_buckets,
 )
 from .constants import (
-    ChartType,
-    VARIABLE_NAMES_BY_CHART_TYPE,
     VARIABLE_NAME_BUCKETS,
     VARIABLE_NAME_GROUP_BY,
     VARIABLE_NAME_INDEX,
@@ -21,18 +25,10 @@ from .constants import (
     VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
+    VARIABLE_NAMES_BY_CHART_TYPE,
+    ChartType,
 )
-from .utils import (
-    build_x_y,
-    convert_to_list,
-    encode_values_in_list,
-)
-from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-)
-from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.strings import is_number
+from .utils import build_x_y, convert_to_list, encode_values_in_list
 
 
 class Widget(Block):

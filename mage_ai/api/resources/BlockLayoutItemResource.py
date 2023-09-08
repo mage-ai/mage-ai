@@ -10,9 +10,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.presenters.charts.data_sources.block import ChartDataSourceBlock
-from mage_ai.presenters.charts.data_sources.block_runs import (
-    ChartDataSourceBlockRuns,
-)
+from mage_ai.presenters.charts.data_sources.block_runs import ChartDataSourceBlockRuns
 from mage_ai.presenters.charts.data_sources.chart_code import ChartDataSourceChartCode
 from mage_ai.presenters.charts.data_sources.constants import ChartDataSourceType
 from mage_ai.presenters.charts.data_sources.pipeline_runs import (
