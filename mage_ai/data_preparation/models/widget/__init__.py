@@ -204,7 +204,6 @@ class Widget(Block):
             if is_number(limit_config):
                 limit_config = int(limit_config)
 
-
             if should_use_no_code:
                 df = dfs[0].iloc[:limit_config]
                 if group_by_columns:
