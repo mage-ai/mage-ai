@@ -692,7 +692,17 @@ function BlockSettings({
                   Press
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Enter</Text> or
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Return</Text> on a row to add or update a variable.
-                  These variables are pipeline-specific (they are not accessible on other pipelines).
+                  These variables are only accessible in this block&nbsp;
+                  <Text {...SHARED_EMPHASIZED_TEXT_PROPS} bold={false}>
+                    &#40;{blockUUID}&#41;.
+                  </Text>
+                  <Text inline muted> Refer to the
+                    <Link
+                      href="https://docs.mage.ai/development/variables/block-variables"
+                      openNewWindow
+                    > documentation
+                    </Link> for more details.
+                  </Text>
                 </Text>
                 <Text muted>
                   <Text bold inline warning>Note: </Text>
