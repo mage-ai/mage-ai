@@ -15,6 +15,6 @@ export default interface PipelineVariableType {
 
 export interface VariableType {
   uuid: string,
-  type: string,
+  type?: string,
   value: any,
 }
