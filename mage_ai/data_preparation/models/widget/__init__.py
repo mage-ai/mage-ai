@@ -75,8 +75,8 @@ class Widget(Block):
         group_by_columns: List[str] = None,
         input_vars_from_data_source: List = None,
         metrics: List[str] = None,
-        results: Dict = {},
-        upstream_block_uuids: List[str] = [],
+        results: Dict = None,
+        upstream_block_uuids: List[str] = None,
         x_values: List = None,
         y_values: List = None,
     ):
@@ -88,9 +88,9 @@ class Widget(Block):
                 dfs += data_source_output
             else:
                 dfs.append(data_source_output)
-        elif len(upstream_block_uuids) >= 1:
+        elif upstream_block_uuids and len(upstream_block_uuids) >= 1:
             for key in upstream_block_uuids:
-                if key in results.keys():
+                if results and key in results.keys():
                     dfs.append(results[key])
         elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
             for input_var in input_vars_from_data_source:
@@ -136,7 +136,7 @@ class Widget(Block):
                 if group_by_columns:
                     arr = df[group_by_columns[0]]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
             if type(arr) is pd.Series:
                 values = arr[arr.notna()].tolist()
@@ -152,7 +152,7 @@ class Widget(Block):
                 if group_by_columns and metrics:
                     data = build_x_y(df, group_by_columns, metrics)
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     data.update(
                         {
                             var_name_orig: encode_values_in_list(
@@ -173,7 +173,7 @@ class Widget(Block):
                     else:
                         arr1 = df[col]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
 
@@ -206,7 +206,7 @@ class Widget(Block):
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables.get(var_name_orig, None)
 
                     if arr is not None:
