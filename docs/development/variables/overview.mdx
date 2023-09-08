@@ -11,7 +11,7 @@ There are four types of variable in Mage: Environment variables, runtime variabl
 | Environment variable | System   | Code     | `{{ env_var() }}`               | 🚫       |
 | Runtime variable     | Pipeline | Code/UI  | `kwargs` or `{{ variables() }}` | 🚫       |
 | Block variable       | Block    | Code/UI  | `kwargs`                        | 🚫       |
-| Secret               | Pipeline | UI       | `{{ mage_secret_var() }}`       | ✅        |
+| Secret               | Project  | UI       | `{{ mage_secret_var() }}`       | ✅        |
 
 Here's a brief overview of each:
 
