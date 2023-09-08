@@ -430,9 +430,7 @@ class Block:
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt.utils import (
-            add_blocks_upstream_from_refs,
-        )
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
@@ -440,7 +438,7 @@ class Block:
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = add_blocks_upstream_from_refs(block)
+                arr = DBTBlock.add_blocks_upstream_from_refs(block)
                 upstream_block_uuids += [b.uuid for b in arr]
                 upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
                 priority_final = priority if len(upstream_block_uuids) == 0 else None

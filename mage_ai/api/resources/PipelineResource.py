@@ -10,9 +10,7 @@ from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-from mage_ai.data_preparation.models.block.dbt.utils import (
-    add_blocks_upstream_from_refs,
-)
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -234,7 +232,7 @@ class PipelineResource(BaseResource):
                             upstream_block_uuids=upstream_block_uuids,
                         )
 
-                    for block_number, config in blocks_mapping.items():
+                    for _block_number, config in blocks_mapping.items():
                         upstream_block_uuids = config['upstream_block_uuids']
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
@@ -277,7 +275,7 @@ class PipelineResource(BaseResource):
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']
             block = self.model.get_block(block_uuid, widget=False)
-            arr = add_blocks_upstream_from_refs(block)
+            arr = DBTBlock.add_blocks_upstream_from_refs(block)
             upstream_block_uuids = [b.uuid for b in arr]
 
             for b in block.upstream_blocks:

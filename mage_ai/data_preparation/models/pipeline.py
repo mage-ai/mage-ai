@@ -11,7 +11,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
-from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
     NoMultipleDynamicUpstreamBlocks,
@@ -928,7 +928,7 @@ class Pipeline:
                         should_save_async = should_save_async or True
 
                     if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                        update_model_settings(
+                        DBTBlock.update_model_settings(
                             block,
                             block.upstream_blocks,
                             [],
