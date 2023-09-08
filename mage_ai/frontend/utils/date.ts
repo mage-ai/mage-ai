@@ -60,6 +60,20 @@ export function dateFormatLong(
   return momentObj.format(dateFormat);
 }
 
+export function datetimeInLocalTimezone(
+  datetime: string,
+  enableLocalTimezoneConversion?: boolean,
+) {
+  if (enableLocalTimezoneConversion) {
+    return moment
+      .utc(datetime)
+      .local()
+      .format();
+  }
+
+  return datetime;
+}
+
 export function utcNowDate(opts?: { dateObj?: boolean }): any {
   const utcDate: string = dateFormatLong(
     new Date().toISOString(),
