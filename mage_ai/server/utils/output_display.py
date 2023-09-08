@@ -271,6 +271,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 import datetime
 import json
+import logging
 import pandas as pd
 
 
@@ -313,10 +314,13 @@ def execute_custom_code():
     if run_incomplete_upstream or run_upstream:
         block.run_upstream_blocks(global_vars=global_vars, incomplete_only=run_incomplete_upstream)
 
+    logger = logging.getLogger('{block_uuid}_test')
+    logger.setLevel('INFO')
     block_output = block.execute_with_callback(
         custom_code=code,
         from_notebook=True,
         global_vars=global_vars,
+        logger=logger,
         output_messages_to_logs={output_messages_to_logs},
         run_settings=json.loads('{run_settings_json}'),
         update_status={update_status},
@@ -325,6 +329,7 @@ def execute_custom_code():
         block.run_tests(
             custom_code=code,
             from_notebook=True,
+            logger=logger,
             global_vars=global_vars,
             update_tests=False,
         )
