@@ -10,6 +10,7 @@ class OauthPolicy(BasePolicy):
 
 OauthPolicy.allow_actions([
     constants.CREATE,
+    constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
@@ -27,6 +28,7 @@ OauthPolicy.allow_read(OauthPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 
@@ -45,6 +47,15 @@ OauthPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+OauthPolicy.allow_write([
+    'action_type',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 

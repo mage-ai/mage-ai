@@ -1,13 +1,23 @@
 from datetime import datetime
 from typing import List
 
-from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.oauth import (
+    Oauth2AccessToken,
+    Oauth2Application,
+    User,
+)
 
 
-def access_tokens_for_provider(provider: str) -> List[Oauth2AccessToken]:
-    oauth_client = Oauth2Application.query.filter(
-        Oauth2Application.client_id == provider,
-    ).first()
+@safe_db_query
+def access_tokens_for_client(client_id: str, user: User = None) -> List[Oauth2AccessToken]:
+    query = Oauth2Application.query.filter(
+        Oauth2Application.client_id == client_id
+    )
+    if user:
+        query.filter(Oauth2Application.user_id == user.id)
+
+    oauth_client = query.first()
 
     access_tokens = []
     if oauth_client:

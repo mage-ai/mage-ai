@@ -13,7 +13,8 @@ from mage_ai.authentication.oauth.constants import (
     OAUTH_PROVIDER_GITHUB,
     VALID_OAUTH_PROVIDERS,
 )
-from mage_ai.authentication.oauth.utils import access_tokens_for_provider
+from mage_ai.authentication.oauth.utils import access_tokens_for_client
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
 from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
@@ -36,12 +37,14 @@ class OauthResource(GenericResource):
             error.update(dict(message='Invalid token.'))
             raise ApiError(error)
 
+        client_id = self.get_client_id(provider)
+
         oauth_client = Oauth2Application.query.filter(
-            Oauth2Application.client_id == provider,
+            Oauth2Application.client_id == client_id,
         ).first()
         if not oauth_client:
             oauth_client = Oauth2Application.create(
-                client_id=provider,
+                client_id=client_id,
                 client_type=Oauth2Application.ClientType.PRIVATE,
                 name=provider,
                 user_id=user.id if user else None,
@@ -76,7 +79,10 @@ class OauthResource(GenericResource):
             error.update(dict(message='Invalid provider.'))
             raise ApiError(error)
 
-        access_tokens = access_tokens_for_provider(pk)
+        access_tokens = access_tokens_for_client(
+            self.get_client_id(pk),
+            user=user,
+        )
         authenticated = len(access_tokens) >= 1
         if authenticated:
             model['authenticated'] = authenticated
@@ -123,3 +129,22 @@ class OauthResource(GenericResource):
                     model['url'] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
 
         return self(model, user, **kwargs)
+
+    def update(self, payload, **kwargs):
+        provider = self.model.get('provider')
+
+        action_type = payload.get('action_type')
+        if action_type == 'reset':
+            access_tokens = access_tokens_for_client(
+                self.get_client_id(provider),
+                user=self.current_user,
+            )
+            for access_token in access_tokens:
+                access_token.delete()
+
+        return self
+
+    @classmethod
+    def get_client_id(self, provider: str) -> str:
+        return f'github_{get_project_uuid()}' \
+            if provider == OAUTH_PROVIDER_GITHUB else provider
