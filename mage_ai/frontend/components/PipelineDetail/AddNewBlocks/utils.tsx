@@ -42,6 +42,7 @@ const getDataSourceTypes = (
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.DUMMY,
+        DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,

@@ -14,6 +14,8 @@ class PostgresTests(TestCase):
                 schema='test_schema',
                 table='test_table',
                 username='test_username',
+                unique_conflict_method='UPDATE',
+                unique_constraints=['col1', 'col2'],
             ))
             mock_init_client.assert_called_once()
 

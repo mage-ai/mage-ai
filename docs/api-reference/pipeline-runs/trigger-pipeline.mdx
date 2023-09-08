@@ -15,7 +15,7 @@ read this [guide](/orchestration/triggers/trigger-pipeline-api).
   Unique token of the pipeline schedule that you want to trigger.
 </ParamField>
 
-<CodeGroup>
+<RequestExample>
 ```curl cURL
 curl --request POST \
   --url 'http://localhost:6789/api/pipeline_schedules/71/pipeline_runs/4506463a01944ef492f70005996dac1a' \
@@ -24,9 +24,9 @@ curl --request POST \
   "test": 1
 }'
 ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "pipeline_run": {
     "id": 1249,
@@ -48,3 +48,4 @@ curl --request POST \
   }
 }
 ```
+</ResponseExample>
