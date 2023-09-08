@@ -37,6 +37,7 @@ import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTa
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
+  Alphabet,
   CalendarDate,
   Info,
   Lightning,
@@ -99,6 +100,7 @@ function TriggerDetail({
     uuid: pipelineUUID,
   } = pipeline || {};
   const {
+    description,
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
     name: pipelineScheduleName,
@@ -287,6 +289,26 @@ function TriggerDetail({
         </Text>,
       ],
     ];
+
+    if (description) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_description_label"
+        >
+          <Alphabet {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            Description
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_description"
+        >
+          {description}
+        </Text>,
+      ]);
+    }
 
     if (sla) {
       const { time, unit } = convertSeconds(sla);
@@ -491,6 +513,7 @@ function TriggerDetail({
       />
     );
   }, [
+    description,
     isActive,
     nextRunDate,
     pipelineSchedule,

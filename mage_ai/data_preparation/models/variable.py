@@ -378,13 +378,16 @@ class Variable:
             except Exception as e:
                 if raise_exception:
                     raise e
-                pass
+                else:
+                    traceback.print_exc()
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
             except Exception as e:
                 if raise_exception:
                     raise e
+                else:
+                    traceback.print_exc()
                 df = pd.DataFrame()
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT

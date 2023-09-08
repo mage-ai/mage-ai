@@ -31,7 +31,7 @@ class GcpCloudRunBlockExecutor(BlockExecutor):
             **kwargs,
         )
         cloud_run.run_job(
-            ' '.join(cmd),
+            cmd,
             f'mage-data-prep-block-{block_run_id}',
             cloud_run_config=self.executor_config,
         )

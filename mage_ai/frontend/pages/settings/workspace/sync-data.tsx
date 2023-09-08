@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import NextLink from 'next/link';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 
@@ -200,6 +201,17 @@ function SyncData() {
         <Headline>
           Git repository settings
         </Headline>
+        <Text>
+          If you are using Github and want to use a more feature rich integration, you can check out
+          the <NextLink
+            as="/version-control"
+            href="/version-control"
+          >
+            <Link inline>version control app</Link>
+          </NextLink>.
+        </Text>
+        <Link>
+        </Link>
         <Spacing mt={1}>
           <Text bold>
             Authentication type

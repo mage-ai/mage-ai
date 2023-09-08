@@ -300,6 +300,7 @@
                 "development/variables/environment-variables",
                 "getting-started/runtime-variable",
                 "development/variables/default-variables",
+                "development/variables/block-variables",
                 "development/variables/secrets",
                 "development/variables/referencing-variables"
               ]

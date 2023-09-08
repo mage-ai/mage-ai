@@ -193,6 +193,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
   `}
 
+  ${props => props.withIcon && `
+    padding: ${(UNIT * 1.25) - 1}px;
+  `}
+
   ${props => !props.noPadding && !props.spacious && props.paddingTop && `
     padding-top: ${props.paddingTop}px;
   `}
@@ -392,10 +396,6 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
 
   ${props => (props.selected || props.useModelTheme) && props.water && `
     background-color: ${(props.theme.brand || dark.brand).water400};
-  `}
-
-  ${props => props.withIcon && `
-    padding: ${(UNIT * 1.25) - 1}px;
   `}
 
   ${props => props.padding > 0 && `
