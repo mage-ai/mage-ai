@@ -35,7 +35,7 @@ def build_query(bucket: str, start_time: float, stop_time: float, time_delay: st
 
 def batches(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
-        yield iterable[i : min(i + batch_size, len(iterable))]
+        yield iterable[i: min(i + batch_size, len(iterable))]
 
 
 class InfluxDbSourceTimer:
@@ -119,8 +119,8 @@ class InfluxDbSource(BaseSource):
                 self.config.bucket, last_time, current_time, self.time_delay
             )
             tables: TableList = self.query_api.query(query)
-            for table in tables:
-                for i, record in enumerate(table.records):
+            for i, table in enumerate(tables):
+                for j, record in enumerate(table.records):
                     message = {
                         'data': {record.get_field(): record.get_value()},
                         'metadata': {
