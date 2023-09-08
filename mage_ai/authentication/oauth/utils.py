@@ -10,10 +10,10 @@ from mage_ai.orchestration.db.models.oauth import (
 
 
 @safe_db_query
-def access_tokens_for_client(client_id: str, user: User = None) -> List[Oauth2AccessToken]:
-    query = Oauth2Application.query.filter(
-        Oauth2Application.client_id == client_id
-    )
+def access_tokens_for_client(
+    client_id: str, user: User = None
+) -> List[Oauth2AccessToken]:
+    query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
     if user:
         query.filter(Oauth2Application.user_id == user.id)
 
