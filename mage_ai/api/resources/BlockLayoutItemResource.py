@@ -10,9 +10,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.presenters.charts.data_sources.block import ChartDataSourceBlock
-from mage_ai.presenters.charts.data_sources.block_runs import (
-    ChartDataSourceBlockRuns,
-)
+from mage_ai.presenters.charts.data_sources.block_runs import ChartDataSourceBlockRuns
 from mage_ai.presenters.charts.data_sources.chart_code import ChartDataSourceChartCode
 from mage_ai.presenters.charts.data_sources.constants import ChartDataSourceType
 from mage_ai.presenters.charts.data_sources.pipeline_runs import (
@@ -48,7 +46,7 @@ class BlockLayoutItemResource(GenericResource):
         page_block_layout = kwargs.get('parent_model')
 
         uuid = urllib.parse.unquote(pk)
-        block_config = page_block_layout.blocks.get(uuid)
+        block_config = page_block_layout.blocks.get(uuid) or {}
         file_path = block_config.get('file_path')
         block_uuid = os.path.join(*file_path.split(os.path.sep)[1:]) if file_path else uuid
 

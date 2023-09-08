@@ -1,10 +1,9 @@
-import pandas as pd
 from typing import Dict
+
+import pandas as pd
 
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
-from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.presenters.charts.data_sources.base import ChartDataSourceBase
 from mage_ai.shared.hash import merge_dict
 
@@ -12,7 +11,7 @@ from mage_ai.shared.hash import merge_dict
 class ChartDataSourcePipelineRuns(ChartDataSourceBase):
     async def load_data(
         self,
-        user = None,
+        user=None,
         meta: Dict = None,
         variables: Dict = None,
         **kwargs,

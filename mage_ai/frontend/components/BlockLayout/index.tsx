@@ -31,7 +31,12 @@ import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
@@ -42,10 +47,16 @@ import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 type BlockLayoutProps = {
+  leftOffset?: number;
+  pageBlockLayoutTemplate?: PageBlockLayoutType;
+  topOffset?: number;
   uuid: string;
 };
 
 function BlockLayout({
+  leftOffset,
+  pageBlockLayoutTemplate,
+  topOffset,
   uuid,
 }: BlockLayoutProps) {
   const [showError] = useError(null, {}, [], {
@@ -307,11 +318,9 @@ function BlockLayout({
     rowIndexNew: number,
     columnIndexNew: number,
   ) => {
-    let newLayout = [...layout];
+    let newLayout = [...(layout || [])];
     const row = newLayout[rowIndex] || [];
     const column = row[columnIndex];
-
-    console.log(rowIndex, columnIndex, rowIndexNew, columnIndexNew)
 
     // Same row
     if (rowIndex === rowIndexNew && columnIndex !== columnIndexNew) {
@@ -368,7 +377,7 @@ function BlockLayout({
       uuid: cleanName(blockItemName),
     };
 
-    let layoutUpdated = [...layout];
+    let layoutUpdated = [...(layout || [])];
     const layoutItem = {
       block_uuid: blockItem.uuid,
       width: 1,
@@ -526,6 +535,70 @@ function BlockLayout({
     uuid,
   ]);
 
+  const isEmpty = useMemo(() => dataPageBlockLayout && layout?.length === 0, [
+    dataPageBlockLayout,
+    layout,
+  ]);
+
+  const emtpyState = useMemo(() => (
+    <FlexContainer
+      justifyContent="center"
+    >
+      <Spacing my={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Spacing mb={1}>
+            <Headline center>
+              You currently have no content added
+            </Headline>
+          </Spacing>
+
+          <Text center default>
+            To get started, you can create a new chart and customize it to your needs.
+          </Text>
+
+          {pageBlockLayoutTemplate && (
+            <Text center default>
+              Or, you can add recommended charts with a click of a button.
+            </Text>
+          )}
+        </Spacing>
+
+        <FlexContainer
+          alignContent="center"
+          justifyContent="center"
+        >
+          {pageBlockLayoutTemplate && (
+            <>
+              <Button
+                // @ts-ignore
+                onClick={() => updateBlockLayoutItem({
+                  page_block_layout: pageBlockLayoutTemplate,
+                })}
+                primary
+              >
+                Add recommended charts
+              </Button>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <Button
+            onClick={() => createNewBlockItem()}
+            primary={!pageBlockLayoutTemplate}
+            secondary={!!pageBlockLayoutTemplate}
+          >
+            Create new chart
+          </Button>
+        </FlexContainer>
+      </Spacing>
+    </FlexContainer>
+  ), [
+    createNewBlockItem,
+    pageBlockLayoutTemplate,
+    updateBlockLayoutItem,
+  ]);
+
   const heightAdjusted =
     useMemo(() => containerRect?.height - headerRect?.height, [
       containerRect,
@@ -554,7 +627,7 @@ function BlockLayout({
     <div
       style={{
         paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
-        paddingTop: ASIDE_HEADER_HEIGHT,
+        paddingTop: typeof topOffset === 'undefined' ? ASIDE_HEADER_HEIGHT : 0,
       }}
     >
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
@@ -879,21 +952,24 @@ function BlockLayout({
     pipelines,
     selectedBlockItem,
     setObjectAttributes,
+    topOffset,
   ]);
 
   const after = useMemo(() => selectedBlockItem && (
-    <CodeEditor
-      autoHeight
-      block={selectedBlockItem}
-      onChange={(val: string) => {
-        setObjectAttributes(prev => ({
-          ...prev,
-          content: val,
-        }));
-      }}
-      value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
-      width="100%"
-    />
+    <Spacing py={PADDING_UNITS}>
+      <CodeEditor
+        autoHeight
+        block={selectedBlockItem}
+        onChange={(val: string) => {
+          setObjectAttributes(prev => ({
+            ...prev,
+            content: val,
+          }));
+        }}
+        value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
+        width="100%"
+      />
+    </Spacing>
   ), [
     blockLayoutItemServer,
     objectAttributes,
@@ -904,7 +980,7 @@ function BlockLayout({
   return (
     <TripleLayout
       after={after}
-      afterHeightOffset={0}
+      afterHeightOffset={topOffset || 0}
       afterHidden={beforeHidden}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
@@ -925,13 +1001,15 @@ function BlockLayout({
           />
         </>
       )}
-      beforeHeightOffset={0}
+      beforeHeightOffset={topOffset || 0}
       beforeHidden={beforeHidden}
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
+      headerOffset={topOffset || 0}
       hideAfterCompletely
       hideBeforeCompletely
+      leftOffset={leftOffset || 0}
       mainContainerRef={mainContainerRef}
       setAfterMousedownActive={setAfterMousedownActive}
       setAfterWidth={setAfterWidth}
@@ -1020,7 +1098,8 @@ function BlockLayout({
           />
         )}
 
-        {!selectedBlockItem && rowsEl}
+        {!selectedBlockItem && !isEmpty && rowsEl}
+        {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
     </TripleLayout>
   );

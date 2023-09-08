@@ -1,8 +1,14 @@
-import numpy as np
 import os
-import pandas as pd
 import traceback
 from typing import Dict, List
+
+import numpy as np
+import pandas as pd
+
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.strings import is_number
 
 from .charts import (
     MAX_BUCKETS,
@@ -11,8 +17,6 @@ from .charts import (
     build_time_series_buckets,
 )
 from .constants import (
-    ChartType,
-    VARIABLE_NAMES_BY_CHART_TYPE,
     VARIABLE_NAME_BUCKETS,
     VARIABLE_NAME_GROUP_BY,
     VARIABLE_NAME_INDEX,
@@ -21,18 +25,10 @@ from .constants import (
     VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
+    VARIABLE_NAMES_BY_CHART_TYPE,
+    ChartType,
 )
-from .utils import (
-    build_x_y,
-    convert_to_list,
-    encode_values_in_list,
-)
-from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-)
-from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.strings import is_number
+from .utils import build_x_y, convert_to_list, encode_values_in_list
 
 
 class Widget(Block):
@@ -79,8 +75,8 @@ class Widget(Block):
         group_by_columns: List[str] = None,
         input_vars_from_data_source: List = None,
         metrics: List[str] = None,
-        results: Dict = {},
-        upstream_block_uuids: List[str] = [],
+        results: Dict = None,
+        upstream_block_uuids: List[str] = None,
         x_values: List = None,
         y_values: List = None,
     ):
@@ -92,9 +88,9 @@ class Widget(Block):
                 dfs += data_source_output
             else:
                 dfs.append(data_source_output)
-        elif len(upstream_block_uuids) >= 1:
+        elif upstream_block_uuids and len(upstream_block_uuids) >= 1:
             for key in upstream_block_uuids:
-                if key in results.keys():
+                if results and key in results.keys():
                     dfs.append(results[key])
         elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
             for input_var in input_vars_from_data_source:
@@ -140,7 +136,7 @@ class Widget(Block):
                 if group_by_columns:
                     arr = df[group_by_columns[0]]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
             if type(arr) is pd.Series:
                 values = arr[arr.notna()].tolist()
@@ -156,7 +152,7 @@ class Widget(Block):
                 if group_by_columns and metrics:
                     data = build_x_y(df, group_by_columns, metrics)
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     data.update(
                         {
                             var_name_orig: encode_values_in_list(
@@ -177,7 +173,7 @@ class Widget(Block):
                     else:
                         arr1 = df[col]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
 
@@ -204,14 +200,13 @@ class Widget(Block):
             if is_number(limit_config):
                 limit_config = int(limit_config)
 
-
             if should_use_no_code:
                 df = dfs[0].iloc[:limit_config]
                 if group_by_columns:
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables.get(var_name_orig, None)
 
                     if arr is not None:
@@ -226,7 +221,6 @@ class Widget(Block):
                                 ),
                             }
                         )
-
         elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]
