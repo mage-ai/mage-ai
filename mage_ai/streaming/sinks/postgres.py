@@ -1,6 +1,6 @@
 import time
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 import pandas as pd
@@ -21,8 +21,8 @@ class PostgresConfig(BaseConfig):
     table: str
     username: str
     port: int = 5432
-    unique_conflict_method = UNIQUE_CONFLICT_METHOD_IGNORE
-    unique_constraints = []
+    unique_conflict_method: str = UNIQUE_CONFLICT_METHOD_IGNORE
+    unique_constraints: List = field(default_factory=list)
 
 
 class PostgresSink(BaseSink):
