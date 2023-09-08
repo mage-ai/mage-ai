@@ -111,6 +111,10 @@ class HealthCheckThread(threading.Thread):
                 self.message_consumer_thread.stop()  # Gracefully stop the consumer
                 # Stop the health check after consumer is stopped
                 return
+            else:
+                self.source.print(
+                    'Message consumer is healthy. '
+                    f'Time since last message consuming attempt: {time_since_last_message} seconds')
 
             time.sleep(self.timeout_seconds)
 
