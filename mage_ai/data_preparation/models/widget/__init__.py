@@ -226,7 +226,6 @@ class Widget(Block):
                                 ),
                             }
                         )
-
         elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]

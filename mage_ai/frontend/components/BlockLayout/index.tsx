@@ -31,7 +31,12 @@ import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
@@ -43,12 +48,14 @@ import { useWindowSize } from '@utils/sizes';
 
 type BlockLayoutProps = {
   leftOffset?: number;
+  pageBlockLayoutTemplate?: PageBlockLayoutType;
   topOffset?: number;
   uuid: string;
 };
 
 function BlockLayout({
   leftOffset,
+  pageBlockLayoutTemplate,
   topOffset,
   uuid,
 }: BlockLayoutProps) {
@@ -315,8 +322,6 @@ function BlockLayout({
     const row = newLayout[rowIndex] || [];
     const column = row[columnIndex];
 
-    console.log(rowIndex, columnIndex, rowIndexNew, columnIndexNew)
-
     // Same row
     if (rowIndex === rowIndexNew && columnIndex !== columnIndexNew) {
       const rowUpdated = removeAtIndex(row, columnIndex);
@@ -528,6 +533,69 @@ function BlockLayout({
     setSelectedBlockItem,
     updateLayout,
     uuid,
+  ]);
+
+  const isEmpty = useMemo(() => dataPageBlockLayout && layout?.length === 0, [
+    dataPageBlockLayout,
+    layout,
+  ]);
+
+  const emtpyState = useMemo(() => (
+    <FlexContainer
+      justifyContent="center"
+    >
+      <Spacing my={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Spacing mb={1}>
+            <Headline center>
+              You currently have no content added
+            </Headline>
+          </Spacing>
+
+          <Text center default>
+            To get started, you can create a new chart and customize it to your needs.
+          </Text>
+
+          {pageBlockLayoutTemplate && (
+            <Text center default>
+              Or, you can add a few predefined charts with a click of a button.
+            </Text>
+          )}
+        </Spacing>
+
+        <FlexContainer
+          alignContent="center"
+          justifyContent="center"
+        >
+          {pageBlockLayoutTemplate && (
+            <>
+              <Button
+                onClick={() => updateBlockLayoutItem({
+                  page_block_layout: pageBlockLayoutTemplate,
+                })}
+                primary
+              >
+                Add predefined charts
+              </Button>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <Button
+            onClick={() => createNewBlockItem()}
+            primary={!pageBlockLayoutTemplate}
+            secondary={!!pageBlockLayoutTemplate}
+          >
+            Create new chart
+          </Button>
+        </FlexContainer>
+      </Spacing>
+    </FlexContainer>
+  ), [
+    createNewBlockItem,
+    pageBlockLayoutTemplate,
+    updateBlockLayoutItem,
   ]);
 
   const heightAdjusted =
@@ -1029,7 +1097,8 @@ function BlockLayout({
           />
         )}
 
-        {!selectedBlockItem && rowsEl}
+        {!selectedBlockItem && !isEmpty && rowsEl}
+        {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
     </TripleLayout>
   );
