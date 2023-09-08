@@ -113,7 +113,6 @@ class BlockExecutor:
                 **kwargs
             )
 
-            self.logger.logging_tags = tags
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 import uuid
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stdout
 from datetime import datetime
 from logging import Logger
 from typing import Callable, Dict, List, Tuple
@@ -1285,7 +1285,7 @@ def run_dbt_tests(
 
     number_of_errors = 0
 
-    with redirect_stdout(stdout), redirect_stderr(stdout):
+    with redirect_stdout(stdout):
         lines = proc1.stdout.decode().split('\n')
         for _, line in enumerate(lines):
             print(line)

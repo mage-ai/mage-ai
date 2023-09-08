@@ -48,7 +48,7 @@ class DictLogger():
     ):
         now = datetime.utcnow()
         data = dict(
-            level=logging.getLevelName(log_level) if log_level else method_name.upper(),
+            level=method_name.upper(),
             message=message,
             timestamp=now.timestamp(),
             uuid=uuid.uuid4().hex,
