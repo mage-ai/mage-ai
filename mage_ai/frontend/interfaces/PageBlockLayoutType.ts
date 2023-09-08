@@ -12,5 +12,5 @@ export default interface PageBlockLayoutType {
     [uuid: string]: BlockLayoutItemType;
   };
   layout: ColumnType[][];
-  uuid: string;
+  uuid?: string;
 }
