@@ -21,6 +21,7 @@ import { Edit } from '@oracle/icons';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
 
 type PreferencesProps = {
@@ -67,6 +68,7 @@ function Preferences({
             fetchProjects();
             setProjectAttributes(p);
             setEditingOpenAIKey(false);
+            storeLocalTimezoneSetting(p?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]);
 
             if (onSaveSuccess) {
               onSaveSuccess?.(p);
