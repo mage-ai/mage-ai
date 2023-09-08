@@ -61,6 +61,14 @@ function SyncData() {
     }
   }, [dataSyncs]);
 
+  const showSyncOperations = useMemo(() => {
+    if (dataSyncs) {
+      const config = dataSyncs?.syncs?.[0];
+      return !!config?.branch;
+    }
+    return false;
+  }, [dataSyncs]);
+
   const [createSync, { isLoading: isLoadingCreateSync }] = useMutation(
     api.syncs.useCreate(),
     {
@@ -464,7 +472,7 @@ function SyncData() {
           </Spacing>
         )}
         
-        {showSyncSettings && (
+        {showSyncOperations && (
           <Spacing mt={UNITS_BETWEEN_SECTIONS}>
             <Headline>
               Synchronize code from remote repository
