@@ -1,20 +1,16 @@
+from datetime import datetime
+from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.hash import merge_dict
+from typing import Dict
 import logging
+import simplejson
 import traceback
 import uuid
-from datetime import datetime
-from typing import Dict
-
-import simplejson
-
-from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.parsers import encode_complex
 
 
 class DictLogger():
-    def __init__(self, logger: logging.Logger, logging_tags: Dict = None):
+    def __init__(self, logger: logging.Logger, logging_tags: Dict = dict()):
         self.logger = logger
-        if logging_tags is None:
-            logging_tags = dict()
         self.logging_tags = logging_tags
 
     def critical(self, message, **kwargs):
@@ -48,7 +44,7 @@ class DictLogger():
     ):
         now = datetime.utcnow()
         data = dict(
-            level=logging.getLevelName(log_level) if log_level else method_name.upper(),
+            level=method_name.upper(),
             message=message,
             timestamp=now.timestamp(),
             uuid=uuid.uuid4().hex,
