@@ -292,19 +292,23 @@
           "group": "Configuration",
           "icon": "gear",
           "pages": [
-            "custom-templates/overview",
             {
               "group": "Variables",
               "pages": [
                 "development/variables/overview",
-                "development/variables/environment-variables",
-                "getting-started/runtime-variable",
-                "development/variables/default-variables",
-                "development/variables/block-variables",
-                "development/variables/secrets",
-                "development/variables/referencing-variables"
+                "development/variables/referencing-variables",
+                {
+                  "group": "Variable Types",
+                  "pages": [
+                    "development/variables/environment-variables",
+                    "getting-started/runtime-variable",
+                    "development/variables/block-variables",
+                    "development/variables/secrets"
+                  ]
+                }
               ]
             },
+            "custom-templates/overview",
             {
               "group": "Dependencies",
               "pages": [
@@ -475,6 +479,7 @@
           "icon": "pipe-section",
           "pages": [
             "guides/streaming-pipeline",
+            "guides/streaming/magic-devcontainer",
             "guides/streaming-pipeline-rabbitmq",
             "guides/train-model"
           ]
