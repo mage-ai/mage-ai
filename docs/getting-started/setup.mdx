@@ -61,8 +61,6 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 
    We're executing `docker run`, which runs a Docker container from the Mage image. additionally, we're _mounting a volume_ (the `-v` command) to persist our project files on our container. This mounts the current folder to `home/src` in the mage container. We're executing our docker image `mageai/mageai` and running a script to start up the container.
 
-   If you'd like to connect to an external database, either Postgres or MSSQL, using Docker containers, please see the [external database quickstart](/getting-started/external-database-quickstart).
-
    </Accordion>
    <Accordion title="pip/conda" icon="python">
 
@@ -89,7 +87,7 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 
    </Accordion>
    <Accordion title="Kubernetes" icon="network-wired">
-      1. Start a Kubernetes cluster locally
+      4. Start a Kubernetes cluster locally
 
          [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
 
@@ -97,19 +95,19 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
          * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
          * [Minikube](https://minikube.sigs.k8s.io/docs/start/)
 
-      2. Download and update Kubernetes config file
+      5. Download and update Kubernetes config file
 
          * Download Mage Kubernetes config file. https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml
          * Replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
 
-      3. Run Mage app in Kubernetes cluster
+      6. Run Mage app in Kubernetes cluster
 
          * Install command line tool [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) if you haven't.
          * Run command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod.
          * You can check the pod status with command `kubectl get pods -o wide`.
          * Set up port forwarding with command `kubectl port-forward mage-server 6789:6789`.
 
-      4. Open http://localhost:6789 in your browser.
+      7. Open http://localhost:6789 in your browser.
    </Accordion>
 </AccordionGroup>
 
