@@ -198,6 +198,7 @@ class Widget(Block):
                 reverse=True,
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
+
         elif ChartType.TABLE == chart_type:
             limit_config = self.configuration.get(VARIABLE_NAME_LIMIT) or \
                 DATAFRAME_SAMPLE_COUNT_PREVIEW
