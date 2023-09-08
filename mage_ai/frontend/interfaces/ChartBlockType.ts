@@ -64,7 +64,7 @@ export enum ChartStyleEnum {
   VERTICAL = 'vertical',
 }
 
-enum AggregationFunctionEnum {
+export enum AggregationFunctionEnum {
   AVERAGE = 'average',
   COUNT = 'count',
   COUNT_DISTINCT = 'count_distinct',
