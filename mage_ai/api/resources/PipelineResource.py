@@ -10,8 +10,7 @@ from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-
-# from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -274,21 +273,16 @@ class PipelineResource(BaseResource):
     @safe_db_query
     async def update(self, payload, **kwargs):
         if 'add_upstream_for_block_uuid' in payload:
-            # block_uuid = payload['add_upstream_for_block_uuid']
-            # block = self.model.get_block(block_uuid, widget=False)
-            # arr = DBTBlock.add_blocks_upstream_from_refs(block)
-            # upstream_block_uuids = [b.uuid for b in arr]
-
-            # for b in block.upstream_blocks:
-            #     upstream_block_uuids.append(b.uuid)
-
-            # self.model.add_block(
-            #     block,
-            #     upstream_block_uuids,
-            #     priority=len(upstream_block_uuids),
-            #     widget=False,
-            # )
-
+            block_uuid = payload['add_upstream_for_block_uuid']
+            block = self.model.get_block(block_uuid, widget=False)
+            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks
+                }
+                self.model.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                self.model.validate('A cycle was formed while adding a block')
+                self.model.save()
             return self
 
         query = kwargs.get('query', {})

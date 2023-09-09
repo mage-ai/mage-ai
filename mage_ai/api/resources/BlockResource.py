@@ -10,11 +10,11 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
-
-# from mage_ai.data_preparation.models.block.dbt import DBTBlock
-# from mage_ai.data_preparation.models.block.utils import clean_name
-from mage_ai.data_preparation.models.constants import (  # BlockLanguage,; BlockType,
+from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
+    BlockLanguage,
+    BlockType,
 )
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.custom_templates.custom_block_template impo
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.utils import clean_name
 
 
 class BlockResource(GenericResource):
@@ -65,18 +66,18 @@ class BlockResource(GenericResource):
         New DBT models include "content" in its block create payload,
         whereas creating blocks from existing DBT model files do not.
         """
-        # if payload.get('type') == BlockType.DBT and content and language == BlockLanguage.SQL:
-        #     dbt_block = DBTBlock(
-        #         name,
-        #         clean_name(name),
-        #         BlockType.DBT,
-        #         configuration=payload.get('configuration'),
-        #         language=language,
-        #     ) #TODO: Change to DBTBlocKSQL
-        #     if dbt_block.file_path and dbt_block.file.exists():
-        #         raise Exception('DBT model at that folder location already exists. \
-        #             Please choose a different model name, or add a DBT model by \
-        #             selecting single model from file.')
+        if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
+            dbt_block = DBTBlock(
+                name,
+                clean_name(name),
+                BlockType.DBT,
+                configuration=payload.get('configuration'),
+                language=language,
+            )
+            if dbt_block.file_path and dbt_block.file.exists():
+                raise Exception('DBT model at that folder location already exists. \
+                    Please choose a different model name, or add a DBT model by \
+                    selecting single model from file.')
 
         block_attributes = dict(
             color=payload.get('color'),
@@ -191,24 +192,16 @@ class BlockResource(GenericResource):
         if block_language:
             language = block_language
 
-        # if BlockType.DBT == block_type and BlockLanguage.SQL == block_language:
-        #     block = DBTBlock(
-        #         block_uuid,
-        #         block_uuid,
-        #         block_type,
-        #         configuration=dict(file_path=block_uuid_with_extension),
-        #         language=language,
-        #     ) #TODO: Change to DBTBlocKSQL
-        # elif BlockType.DBT == block_type and BlockLanguage.YAML == block_language:
-        #     block = DBTBlock(
-        #         block_uuid,
-        #         block_uuid,
-        #         block_type,
-        #         configuration=dict(file_path=block_uuid_with_extension),
-        #         language=language,
-        #     ) #TODO: Change to DBTBlocKYAML
-        # else:
-        block = Block.get_block(block_uuid, block_uuid, block_type, language=language)
+        if BlockType.DBT == block_type:
+            block = DBTBlock(
+                block_uuid,
+                block_uuid,
+                block_type,
+                configuration=dict(file_path=block_uuid_with_extension),
+                language=language,
+            )
+        else:
+            block = Block.get_block(block_uuid, block_uuid, block_type, language=language)
 
         if not block.exists():
             error.update(ApiError.RESOURCE_NOT_FOUND)

@@ -430,32 +430,22 @@ class Block:
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        # from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
-
-            # if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-            #     arr = DBTBlock.add_blocks_upstream_from_refs(block)
-            #     upstream_block_uuids += [b.uuid for b in arr]
-            #     upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
-            #     priority_final = priority if len(upstream_block_uuids) == 0 else None
-            # else:
-            priority_final = priority
-
             pipeline.add_block(
                 block,
                 upstream_block_uuids,
-                priority=priority_final,
+                priority=priority,
                 widget=widget,
             )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
+        from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             DestinationBlock,
             SourceBlock,
@@ -468,10 +458,7 @@ class Block:
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
-            if BlockLanguage.SQL == language:
-                return DBTBlock  # TODO: Change to DBTBlocKSQL
-            else:
-                return DBTBlock  # TODO: Change to DBTBlocKYAML
+            return DBTBlock
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
                 return CallbackBlock
@@ -1090,6 +1077,24 @@ class Block:
                 run_settings=run_settings,
                 **kwargs,
             )
+
+            # If block has downstream dbt block, then materialize output
+            from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+            if (
+                not isinstance(self, DBTBlock) and
+                self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
+            ):
+                DBTBlock.materialize_df(
+                    df=outputs[0],
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=self.uuid,
+                    project_paths=list(set(
+                        block.project_path
+                        for _uuid, block in self.pipeline.blocks_by_uuid.items()
+                        if isinstance(block, DBTBlock)
+                    ))
+                )
 
         return dict(output=outputs)
 

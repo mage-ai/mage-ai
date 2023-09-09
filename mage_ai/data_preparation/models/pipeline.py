@@ -11,14 +11,13 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
-
-# from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
     NoMultipleDynamicUpstreamBlocks,
 )
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
-from mage_ai.data_preparation.models.constants import (  # BlockLanguage,
+from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
@@ -927,15 +926,6 @@ class Pipeline:
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
-                    # if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                    #     DBTBlock.update_model_settings(
-                    #         block,
-                    #         block.upstream_blocks,
-                    #         [],
-                    #         force_update=True,
-                    #         variables=self.variables,
-                    #     )
-
                     if widget:
                         keys_to_update = []
 
@@ -970,6 +960,11 @@ class Pipeline:
                         block_type=block.type,
                         widget=widget,
                     )
+
+        # If there are any dbt block we need to update mage_sources.yml
+        # TODO: Only do this, if its really necessary
+        if any(isinstance(block, DBTBlock) for _uuid, block in self.blocks_by_uuid.items()):
+            DBTBlock.update_sources(self.blocks_by_uuid)
 
         if should_update_block_cache:
             from mage_ai.cache.block import BlockCache
