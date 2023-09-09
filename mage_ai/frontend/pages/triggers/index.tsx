@@ -5,6 +5,7 @@ import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -18,12 +19,20 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 
 function TriggerListPage() {
   const router = useRouter();
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
   const orderByQuery = q?.order_by || SortQueryParamEnum.CREATED_AT;
+
+  const { data: dataProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const pipelineSchedulesRequestQuery: PipelineScheduleReqQueryParamsType = {
     _limit: ROW_LIMIT,

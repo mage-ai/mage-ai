@@ -37,10 +37,11 @@ import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
-import { dateFormatLong } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 const ICON_SIZE = UNIT * 1.5;
 
@@ -81,6 +82,8 @@ function TriggersTable({
   const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<number>(null);
   const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
   const [confirmDialogueLeftOffset, setConfirmDialogueLeftOffset] = useState<number>(0);
+
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -358,12 +361,15 @@ function TriggersTable({
                   small
                 >
                   {nextRunDate
-                    ?
-                      dateFormatLong(
+                    ? (displayLocalTimezone
+                      ? datetimeInLocalTimezone(nextRunDate, displayLocalTimezone)
+                      : dateFormatLong(
                         nextRunDate,
                         { includeSeconds: true, utcFormat: true },
                       )
-                    : <>&#8212;</>
+                    ): (
+                      <>&#8212;</>
+                    )
                   }
                 </Text>,
                 <Text
@@ -476,8 +482,9 @@ function TriggersTable({
                     default
                     key={`created_at_${idx}`}
                     monospace
+                    small
                   >
-                    {createdAt?.slice(0, 19)}
+                    {datetimeInLocalTimezone(createdAt?.slice(0, 19), displayLocalTimezone)}
                   </Text>,
                 );
               }
