@@ -22,6 +22,7 @@ class Knowi(Source):
 
         access_token = self.config.get("access_token")
         client = KnowiClient(
+            self.logger,
             access_token,
             self.config.get("request_timeout"),
             self.config.get("user_agent"),
@@ -52,6 +53,15 @@ class Knowi(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].valid_replication_keys
+
+    def test_connection(self) -> None:
+        client = KnowiClient(
+            self.logger,
+            self.config.get("access_token"),
+            self.config.get("request_timeout"),
+            self.config.get("user_agent"),
+        )
+        client.check_access_token()
 
 
 if __name__ == "__main__":

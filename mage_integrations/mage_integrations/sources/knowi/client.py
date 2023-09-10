@@ -2,8 +2,6 @@ import requests
 import singer
 from singer import metrics, utils
 
-LOGGER = singer.get_logger()
-
 REQUEST_TIMEOUT = 300
 
 
@@ -98,7 +96,7 @@ def get_exception_for_error_code(error_code, knowi_error_code):
     return ERROR_CODE_EXCEPTION_MAPPING.get(error_code, KnowiError)
 
 
-def raise_for_error(response):
+def raise_for_error(response, logger):
     try:
         response.raise_for_status()
     except (requests.HTTPError, requests.ConnectionError) as error:
@@ -110,7 +108,7 @@ def raise_for_error(response):
                 return
             response_json = response.json()
             status_code = response.status_code
-            LOGGER.error("RESPONSE: {}".format(response_json))
+            logger.error("RESPONSE: {}".format(response_json))
             if response_json.get("type") == "error.list":
                 message = ""
                 for err in response_json["errors"]:
@@ -120,7 +118,7 @@ def raise_for_error(response):
                         error_code=status_code, Knowi_error_code=error_code
                     )
                     if status_code == 401 and "access_token" in error_code:
-                        LOGGER.error(
+                        logger.error(
                             "Your API access_token is expired/invalid as per Knowi's"
                             "security policy. \n Please re-authenticate your connection to "
                             "generate a new access_token and resume extraction."
@@ -135,6 +133,7 @@ def raise_for_error(response):
 class KnowiClient(object):
     def __init__(
         self,
+        logger,
         access_token,
         config_request_timeout,  # request_timeout parameter
         user_agent=None,
@@ -145,6 +144,7 @@ class KnowiClient(object):
         self.__session = requests.Session()
         self.__verified = False
         self.base_url = "https://knowi.com/api/1.0"
+        self.logger = logger
 
         # Set request timeout to config param `request_timeout` value.
         # If value is 0,"0","" or not passed then it set default to 300 seconds.
@@ -180,11 +180,11 @@ class KnowiClient(object):
             headers=headers,
         )
         if response.status_code != 200:
-            LOGGER.error("Error status_code = {}".format(response.status_code))
-            raise_for_error(response)
+            self.logger.error("Error status_code = {}".format(response.status_code))
+            raise_for_error(response, self.logger)
         else:
             resp = response.json()
-            if "type" in resp:
+            if "list" in resp:
                 return True
             return False
 
@@ -196,7 +196,7 @@ class KnowiClient(object):
         if not url and path:
             url = "{}/{}".format(self.base_url, path)
 
-        LOGGER.info(
+        self.logger.info(
             "URL: {} {}, Params: {}, JSON Body: {}".format(
                 method,
                 url,
@@ -233,12 +233,12 @@ class KnowiClient(object):
             raise Server5xxError()
 
         if response.status_code != 200:
-            raise_for_error(response)
+            raise_for_error(response, self.logger)
 
         return response.json()
 
     def get(self, path, **kwargs):
-        LOGGER.info(f"Get request with the path: {path}")
+        self.logger.info(f"Get request with the path: {path}")
         return self.request("GET", path=path, **kwargs)
 
     def post(self, path, **kwargs):
