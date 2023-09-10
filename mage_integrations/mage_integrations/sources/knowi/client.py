@@ -1,5 +1,4 @@
 import requests
-import singer
 from singer import metrics, utils
 
 REQUEST_TIMEOUT = 300
