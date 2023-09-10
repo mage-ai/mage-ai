@@ -27,9 +27,7 @@ def create_upstream_block_tables(
         execution_partition,
         cache_upstream_dbt_models,
         cache_keys=[
-            ConfigKey.MYSQL_DATABASE,
-            ConfigKey.MYSQL_HOST,
-            ConfigKey.MYSQL_PORT,
+            ConfigKey.DUCKDB_DATABASE,
         ],
         no_schema=True,
         query=query,

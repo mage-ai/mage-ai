@@ -280,7 +280,7 @@ class BaseSQLDatabase(BaseIO):
 
         Args:
             query_string (str): Query string to clean
-close
+
         Returns:
             str: Clean query string
         """

@@ -284,29 +284,21 @@ def execute_sql_code(
         from mage_ai.io.duckdb import DuckDB
 
         loader = DuckDB.with_config(config_file_loader)
-        print("Testing create_upstream_block_tables")
-
         schema = schema or 'main'
         duckdb.create_upstream_block_tables(
             loader,
             block,
             **create_upstream_block_tables_kwargs,
         )
-        print(f"Testing configuration: {configuration}")
 
-        print("Testing interpolate_input_data")
         query_string = duckdb.interpolate_input_data(
             block,
             query,
             **interpolate_input_data_kwargs,
         )
 
-        print("Testing interpolate_vars")
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
-
-        print(f"Testing use_raw_sql: {use_raw_sql}")
-        print(f"Testing database: {database} {loader.default_database()}")
 
         if use_raw_sql:
             return execute_raw_sql(
@@ -667,7 +659,6 @@ def execute_raw_sql(
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(block.full_table_name)
 
-    print(f"Testing query string: {query_string}")
     results = loader.execute_queries(
         queries,
         commit=True,
