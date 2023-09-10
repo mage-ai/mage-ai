@@ -181,7 +181,7 @@ class IntegrationBlock(Block):
             # in case of transformer code using pandas.rename
             output_col_aliases = {}
             # We need to look at original stream_catalog schema props:
-            for name, col_props in stream_catalog['schema']['properties'].items():
+            for _name, col_props in stream_catalog['schema']['properties'].items():
                 for alias in col_props.get('aliases', []):
                     output_col_aliases[alias] = col_props
 
@@ -256,9 +256,11 @@ class IntegrationBlock(Block):
                                     }
                                     # Separately, update schema types from alias map
                                     if len(output_col_aliases.keys()):
-                                        for col_name in schema_updated['schema']['properties']:
-                                            if col_name in output_col_aliases:
-                                                schema_updated['schema']['properties'][col_name] = output_col_aliases[col_name]
+                                        for cname in schema_updated['schema']['properties']:
+                                            if cname in output_col_aliases:
+                                                prop = output_col_aliases[cname]
+                                                schema_updated['schema']['properties'][cname] = prop
+                                                    
 
                                     # Update column names in unique_constraints and key_properties
                                     new_columns = schema_updated['schema']['properties'].keys()
