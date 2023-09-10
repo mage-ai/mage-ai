@@ -2,18 +2,13 @@
 This module defines the stream classes and their individual sync logic.
 """
 
-
 import datetime
 from typing import Iterator
 
 import singer
-from singer import Transformer, metrics, UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
-from singer.transform import transform, unix_milliseconds_to_datetime
+from singer.transform import unix_milliseconds_to_datetime
 
-from mage_integrations.sources.powerbi.client import (
-    PowerbiClient,
-    PowerbiError,
-)
+from mage_integrations.sources.powerbi.client import PowerbiClient, PowerbiError
 
 LOGGER = singer.get_logger()
 
@@ -26,6 +21,7 @@ class BaseStream:
 
     :param client: The API client used to extract records from external source
     """
+
     tap_stream_id = None
     replication_method = None
     replication_key = None
@@ -35,15 +31,17 @@ class BaseStream:
     path = None
     params = {}
     parent = None
-    default_data_key = "value" # This is unique for powerbi since the data comes under the "value" key in the response
+    # default_data_key is unique for Powerbi since the data comes under the "value" key
+    default_data_key = "value"
     data_key = None
-    
 
     def __init__(self, client: PowerbiClient, logger=LOGGER):
         self.client = client
         self.logger = logger
 
-    def get_records(self, bookmark_datetime: datetime = None, is_parent: bool = False) -> list:
+    def get_records(
+        self, bookmark_datetime: datetime = None, is_parent: bool = False
+    ) -> list:
         """
         Returns a list of records for that stream.
 
@@ -53,8 +51,9 @@ class BaseStream:
             that is returned for a child stream to consume
         :return: list of records
         """
-        raise NotImplementedError("Child classes of BaseStream require "
-                                  "`get_records` implementation")
+        raise NotImplementedError(
+            "Child classes of BaseStream require " "`get_records` implementation"
+        )
 
     def get_parent_data(self, bookmark_datetime: datetime = None) -> list:
         """
@@ -89,7 +88,8 @@ class IncrementalStream(BaseStream):
 
     :param client: The API client used extract records from the external source
     """
-    replication_method = 'INCREMENTAL'
+
+    replication_method = "INCREMENTAL"
 
 
 # pylint: disable=abstract-method
@@ -100,34 +100,34 @@ class FullTableStream(BaseStream):
 
     :param client: The API client used extract records from the external source
     """
-    replication_method = 'FULL_TABLE'
+
+    replication_method = "FULL_TABLE"
 
 
-# TODO Change all the stream classes and add schemas
 class DashboardList(FullTableStream):
-    tap_stream_id = 'dashboard_list'
-    key_properties = ['id']
+    tap_stream_id = "dashboard_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'dashboards'
-    data_key = 'dashboards'
+    path = "dashboards"
+    data_key = "dashboards"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
         if response.get(self.default_data_key) is None:
-            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
             for record in response.get(self.default_data_key):
-                yield record.get('id')
+                yield record.get("id")
 
 
 class Dashboards(FullTableStream):
-    tap_stream_id = 'dashboards'
-    key_properties = ['id']
-    path = 'dashboards/{}'
+    tap_stream_id = "dashboards"
+    key_properties = ["id"]
+    path = "dashboards/{}"
     parent = DashboardList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -142,12 +142,13 @@ class Dashboards(FullTableStream):
 
         yield from dashboards
 
+
 class TileList(FullTableStream):
-    tap_stream_id = 'tile_list'
-    key_properties = ['id']
+    tap_stream_id = "tile_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'dashboards/{}/tiles'
-    data_key = 'queries'
+    path = "dashboards/{}/tiles"
+    data_key = "queries"
     parent = DashboardList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -163,19 +164,17 @@ class TileList(FullTableStream):
             if is_parent and tiles_in_response != []:
                 counter += 1
                 for record in tiles_in_response:
-                    yield {
-                        'tile_id': record.get('id'),
-                        'dashboard_id': dashboard_id
-                    }
+                    yield {"tile_id": record.get("id"), "dashboard_id": dashboard_id}
 
         if counter == 0:
-            self.logger.error(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.error(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
+
 class Tiles(FullTableStream):
-    tap_stream_id = 'tiles'
-    key_properties = ['id']
-    path = 'dashboards/{}/tiles/{}'
+    tap_stream_id = "tiles"
+    key_properties = ["id"]
+    path = "dashboards/{}/tiles/{}"
     parent = TileList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -195,29 +194,29 @@ class Tiles(FullTableStream):
 
 
 class ReportList(FullTableStream):
-    tap_stream_id = 'report_list'
-    key_properties = ['id']
+    tap_stream_id = "report_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'reports'
-    data_key = 'reports'
+    path = "reports"
+    data_key = "reports"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
         if response.get(self.default_data_key) is None:
-            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
             for record in response.get(self.default_data_key):
-                yield record.get('id')
+                yield record.get("id")
 
 
 class Reports(FullTableStream):
-    tap_stream_id = 'reports'
-    key_properties = ['id']
-    path = 'reports/{}'
+    tap_stream_id = "reports"
+    key_properties = ["id"]
+    path = "reports/{}"
     parent = ReportList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -232,30 +231,31 @@ class Reports(FullTableStream):
 
         yield from reports
 
+
 class DatasetList(FullTableStream):
-    tap_stream_id = 'dataset_list'
-    key_properties = ['id']
+    tap_stream_id = "dataset_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'datasets'
-    data_key = 'datasets'
+    path = "datasets"
+    data_key = "datasets"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
         if response.get(self.default_data_key) is None:
-            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
             for record in response.get(self.default_data_key):
-                yield record.get('id')
+                yield record.get("id")
 
 
 class Datasets(FullTableStream):
-    tap_stream_id = 'datasets'
-    key_properties = ['id']
-    path = 'datasets/{}'
+    tap_stream_id = "datasets"
+    key_properties = ["id"]
+    path = "datasets/{}"
     parent = DatasetList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -270,30 +270,31 @@ class Datasets(FullTableStream):
 
         yield from datasets
 
+
 class AppList(FullTableStream):
-    tap_stream_id = 'app_list'
-    key_properties = ['id']
+    tap_stream_id = "app_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'apps'
-    data_key = 'apps'
+    path = "apps"
+    data_key = "apps"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
         if response.get(self.default_data_key) is None:
-            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
             for record in response.get(self.default_data_key):
-                yield record.get('id')
+                yield record.get("id")
 
 
 class Apps(FullTableStream):
-    tap_stream_id = 'apps'
-    key_properties = ['id']
-    path = 'apps/{}'
+    tap_stream_id = "apps"
+    key_properties = ["id"]
+    path = "apps/{}"
     parent = AppList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -308,30 +309,31 @@ class Apps(FullTableStream):
 
         yield from apps
 
+
 class GroupList(FullTableStream):
-    tap_stream_id = 'group_list'
-    key_properties = ['id']
+    tap_stream_id = "group_list"
+    key_properties = ["id"]
     to_replicate = False
-    path = 'groups'
-    data_key = 'groups'
+    path = "groups"
+    data_key = "groups"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
         if response.get(self.default_data_key) is None:
-            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
+            self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise PowerbiError
 
         # Only yield records when called by child streams
         if is_parent:
             for record in response.get(self.default_data_key):
-                yield record.get('id')
+                yield record.get("id")
 
 
 class Groups(FullTableStream):
-    tap_stream_id = 'groups'
-    key_properties = ['id']
-    path = 'groups/{}'
+    tap_stream_id = "groups"
+    key_properties = ["id"]
+    path = "groups/{}"
     parent = GroupList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
@@ -346,17 +348,18 @@ class Groups(FullTableStream):
 
         yield from groups
 
+
 STREAMS = {
-    'dashboard_list': DashboardList,
-    'dashboards': Dashboards,
-    'tile_list': TileList,
-    'tiles': Tiles,
-    'report_list': ReportList,
-    'reports': Reports,
-    'dataset_list': DatasetList,
-    'datasets': Datasets,
-    'app_list': AppList,
-    'apps': Apps,
-    'group_list': GroupList,
-    'groups': Groups,
+    "dashboard_list": DashboardList,
+    "dashboards": Dashboards,
+    "tile_list": TileList,
+    "tiles": Tiles,
+    "report_list": ReportList,
+    "reports": Reports,
+    "dataset_list": DatasetList,
+    "datasets": Datasets,
+    "app_list": AppList,
+    "apps": Apps,
+    "group_list": GroupList,
+    "groups": Groups,
 }
