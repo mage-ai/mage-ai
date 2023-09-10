@@ -153,7 +153,7 @@ class PowerbiClient(object):
             self.__request_timeout = REQUEST_TIMEOUT
 
     # `check_access_token` may throw timeout error. `request` method also call `check_access_token`.
-    # So, to add backoff over `check_access_token` may cause 5*5 = 25 times backoff which 
+    # So, to add backoff over `check_access_token` may cause 5*5 = 25 times backoff which
     # is not expected. That's why added backoff here.
     def __enter__(self):
         self.__verified = self.check_access_token()
