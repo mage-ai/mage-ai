@@ -21,13 +21,21 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
    The following is useful if you plan on customizing your image or adding additional services to a Docker network with Mage. Read more about Docker compose [here](https://docs.docker.com/compose/).
 
    Be sure that [Docker](https://docs.docker.com/engine/install/) and [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) are installed and run:
-
-   ```bash
+   <CodeGroup>
+   ```bash Mac/Linux
    git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart \
    && cd mage-quickstart \
    && cp dev.env .env && rm dev.env \
    && docker compose up
    ```
+   ```bash Windows
+   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
+   cd mage-quickstart
+   cp dev.env .env
+   rm dev.env
+   docker compose up
+   ```
+   </CodeGroup>
 
    Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
 
