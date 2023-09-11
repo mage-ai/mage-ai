@@ -162,9 +162,18 @@ class PipelineScheduleTests(DBTestCase):
                 datetime(2023, 10, 1, 0, 0, 0),
             ),
         ]:
+            pipeline_schedule_false = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
+                schedule_interval=schedule_interval,
+                # Set the start time to one second ago
+                start_time=datetime(2023, 10, 11, 12, 13, 13),
+                status=ScheduleStatus.ACTIVE,
+            )))
+            self.assertFalse(pipeline_schedule_false.should_schedule())
+
             pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
                 schedule_interval=schedule_interval,
-                start_time=datetime(2023, 10, 11, 12, 13, 13),
+                # Set the start time to one month ago
+                start_time=datetime(2023, 9, 11, 12, 13, 13),
                 status=ScheduleStatus.ACTIVE,
             )))
             PipelineRun.create(
@@ -202,16 +211,16 @@ class PipelineScheduleTests(DBTestCase):
                 # AVG: 4
                 # STD: 2
                 [1, 2, 3, 4, 5, 6, 7],
-                datetime(2023, 10, 12, 13, 13, 20),
-                datetime(2023, 10, 13, 14, 13, 21),
+                datetime(2023, 10, 5, 13, 13, 20),
+                datetime(2023, 10, 6, 14, 13, 21),
             ),
             (
                 ScheduleInterval.DAILY,
                 # AVG: 4000
                 # STD: 1081
                 [1000, 2000, 3000, 4000, 5000, 6000, 7000],
-                datetime(2023, 10, 12, 13, 37, 55),
-                datetime(2023, 10, 13, 13, 37, 56),
+                datetime(2023, 10, 5, 13, 37, 55),
+                datetime(2023, 10, 6, 13, 37, 56),
             ),
             (
                 # 2023-10-11 is a Wednesday
@@ -228,8 +237,8 @@ class PipelineScheduleTests(DBTestCase):
                     4 * 86400,
                 ],
                 # 2023-10-21 is a Saturday
-                datetime(2023, 10, 21, 13, 10, 56),
-                datetime(2023, 10, 28, 13, 10, 57),
+                datetime(2023, 10, 7, 13, 10, 56),
+                datetime(2023, 10, 7, 13, 10, 57),
             ),
             (
                 ScheduleInterval.MONTHLY,
@@ -248,8 +257,8 @@ class PipelineScheduleTests(DBTestCase):
                     7.5 * 86400,
                     12 * 86400,
                 ],
-                datetime(2023, 11, 19, 5, 50, 13),
-                datetime(2023, 12, 19, 5, 50, 14),
+                datetime(2023, 9, 19, 5, 50, 13),
+                datetime(2023, 9, 19, 5, 50, 14),
             ),
         ]:
             self.assertTrue(PipelineSchedule.create(**merge_dict(shared_attrs, dict(
