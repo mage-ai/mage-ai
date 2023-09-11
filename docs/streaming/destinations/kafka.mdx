@@ -38,16 +38,27 @@ sasl_config:
 
 ## Data format
 
-The Kafka data exporter accepts only dictionaries as messages with a specific format:
+The Kafka data exporter scalar values
+
+```
+message = <Any>
+```
+
+or dictionaries with a specific format as messages:
 
 ```
 message = {
-    'data': <Any>
+    'data': {
+      'key': <Any>,
+      'value': <Any>
+    }
     'metadata': <Optional[Dict]>
 }
 ```
 
-Every message contains at least some data in a `data` field. The following messages are valid:
+If the data contains no dictionary it will be written to the database as value with the current time value and no key (list types will be written as seperate messages).
+Otherwise, every dictionary message contains at least some data in a `data` field. 
+The following messages are valid:
 
 ```python
 message_1 = {'data': {'bees': 23, 'ants': 30}}
@@ -69,11 +80,11 @@ The following message shows the configuration of all possible elements data and 
 
 ```python
 message = {
-    "data": {
+    'data': {
       'bees': 23, 
-      'ants': 30}
-      ,
-    "metadata": {
+      'ants': 30
+    },
+    'metadata': {
         'topic': 'census',
         'time': 1693396630163,  # timestamp with ms precision
     }

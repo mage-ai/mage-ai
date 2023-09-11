@@ -42,6 +42,7 @@ class KafkaConfig(BaseConfig):
     api_version: str = '0.10.2'
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
+    include_metadata: bool = False
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
@@ -128,10 +129,8 @@ class KafkaSource(BaseSource):
                     self.registry_client, self.config.topic
                 )
 
-    def read(self, handler: Callable):
-        self._print('Start consuming single messages.')
-        for message in self.consumer:
-            self.__print_message(message)
+    def _convert_message(self, message):
+        if self.config.include_metadata:
             message = {
                 'data': {
                     message.key.decode(): self.__deserialize_message(message.value)
@@ -143,23 +142,22 @@ class KafkaSource(BaseSource):
                     'time': int(message.timestamp),
                 },
             }
+        else:
+            message = self.__deserialize_message(message.value)
+        return message
+
+    def read(self, handler: Callable):
+        self._print('Start consuming single messages.')
+        for message in self.consumer:
+            self.__print_message(message)
+            message = self._convert_message(message)
             handler(message)
 
     async def read_async(self, handler: Callable):
         self._print('Start consuming messages asynchronously.')
         for message in self.consumer:
             self.__print_message(message)
-            message = {
-                'data': {
-                    message.key.decode(): self.__deserialize_message(message.value)
-                },
-                'metadata': {
-                    'topic': message.topic,
-                    'partition': message.partition,
-                    'offset': message.offset,
-                    'time': int(message.timestamp),
-                },
-            }
+            message = self._convert_message(message)
             await handler(message)
 
     def batch_read(self, handler: Callable):
@@ -184,28 +182,16 @@ class KafkaSource(BaseSource):
             msg_printed = False
             for _tp, messages in msg_pack.items():
                 self._print(
-                    f'Received {len(messages)} messages from topic="{_tp.topic}" ' +
-                    f'partition={_tp.partition} at time={time.time()}'
+                    f'Received {len(messages)} messages from topic="{_tp.topic}" '
+                    + f'partition={_tp.partition} at time={time.time()}'
                 )
                 for message in messages:
                     if not msg_printed:
                         self.__print_message(message)
                         msg_printed = True
 
-                    message_value = {
-                        'data': {
-                            message.key.decode(): self.__deserialize_message(
-                                message.value
-                            )
-                        },
-                        'metadata': {
-                            'topic': message.topic,
-                            'partition': message.partition,
-                            'offset': message.offset,
-                            'time': int(message.timestamp),
-                        },
-                    }
-                    message_values.append(message_value)
+                    message = self._convert_message(message)
+                    message_values.append(message)
             if len(message_values) > 0:
                 handler(message_values)
 

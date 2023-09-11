@@ -94,8 +94,12 @@ class KafkaSink(BaseSink):
     def write(self, message: Dict):
         # self._print(f'Ingest message {message}, time={time.time()}')
 
-        data = message['data']
-        metadata = message.get('metadata', {})
+        if isinstance(message, dict):
+            data = message.get('data', message)
+            metadata = message.get('metadata', {})
+        else:
+            data = message
+            metadata = {}
 
         if isinstance(data, dict):
             for key, value in data.items():
