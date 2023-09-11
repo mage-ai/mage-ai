@@ -224,7 +224,7 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((setRowsSorted && (sortedColumn || defaultSortColumnIndex))
+  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn)
     ?
       sortByKey(
         rows,
