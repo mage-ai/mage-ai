@@ -3,11 +3,8 @@ import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import Button from '@oracle/elements/Button';
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
@@ -20,6 +17,7 @@ import PipelineScheduleType, {
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
@@ -27,13 +25,11 @@ import Spinner from '@oracle/components/Spinner';
 import TagType from '@interfaces/TagType';
 import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
-import Tooltip from '@oracle/components/Tooltip';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { PlayButton } from '@oracle/icons';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
@@ -43,6 +39,7 @@ import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 
 type PipelineSchedulesProp = {
@@ -58,6 +55,13 @@ function PipelineSchedules({
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
   const [errors, setErrors] = useState(null);
+
+  const { data: dataProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const {
     data: dataGlobalVariables,
