@@ -1,13 +1,15 @@
-from dataclasses import dataclass
-from collections.abc import Iterable
-from kafka import KafkaProducer
-from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sinks.base import BaseSink
-from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
-from enum import Enum
-from typing import Dict, List
 import json
 import time
+from collections.abc import Iterable
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List
+
+from kafka import KafkaProducer
+
+from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
+from mage_ai.streaming.sinks.base import BaseSink
 
 
 class SecurityProtocol(str, Enum):
