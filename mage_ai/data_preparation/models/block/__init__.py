@@ -6,12 +6,12 @@ import os
 import sys
 import time
 import traceback
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
 from queue import Queue
-from typing import Any, Callable, Dict, List, Set, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import pandas as pd
 import simplejson
@@ -1040,15 +1040,13 @@ class Block:
                 block_uuid=self.uuid,
             ),
         )
-        # Set up logger
-        if build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None and not from_notebook:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
 
-        with redirect_stdout(stdout), redirect_stderr(stdout):
+        with self._redirect_streams(
+            build_block_output_stdout=build_block_output_stdout,
+            from_notebook=from_notebook,
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 input_args,
@@ -1093,6 +1091,24 @@ class Block:
             )
 
         return dict(output=outputs)
+
+    @contextmanager
+    def _redirect_streams(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        from_notebook: bool = False,
+        logger: Logger = None,
+        logging_tags: Dict = None,
+    ) -> Generator[None, None, None]:
+        if build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None and not from_notebook:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+
+        with redirect_stdout(stdout) as out, redirect_stderr(stdout) as err:
+            yield (out, err)
 
     def _execute_block(
         self,
@@ -1805,13 +1821,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             return
 
-        if build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None and not from_notebook:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
         test_functions = []
         if update_tests:
             results = {
@@ -1837,7 +1846,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
 
-        with redirect_stdout(stdout), redirect_stderr(stdout):
+        with self._redirect_streams(
+            build_block_output_stdout=build_block_output_stdout,
+            from_notebook=from_notebook,
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             tests_passed = 0
             for func in test_functions:
                 test_function = func
@@ -1878,10 +1892,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             else:
                 print('--------------------------------------------------------------')
                 print(message)
-        if tests_passed != len(test_functions):
-            raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-        with redirect_stdout(stdout), redirect_stderr(stdout):
+            if tests_passed != len(test_functions):
+                raise Exception(f'Failed to pass tests for block {self.uuid}')
+
             handle_run_tests(
                 self,
                 dynamic_block_uuid=dynamic_block_uuid,
@@ -2449,12 +2463,10 @@ class ConditionalBlock(AddonBlock):
         logging_tags: Dict = None,
         **kwargs
     ) -> bool:
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
-        with redirect_stdout(stdout), redirect_stderr(stdout):
+        with self._redirect_streams(
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2512,12 +2524,10 @@ class CallbackBlock(AddonBlock):
         parent_block: Block = None,
         **kwargs
     ) -> None:
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
-        with redirect_stdout(stdout), redirect_stderr(stdout):
+        with self._redirect_streams(
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
