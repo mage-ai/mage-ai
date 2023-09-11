@@ -105,8 +105,8 @@ def convert_python_type_to_trino_type(python_type, usr_data_types):
         return 'BOOLEAN'
     elif python_type is datetime and usr_data_types is None:
         return 'TIMESTAMP'
-    elif python_type is datetime and usr_data_types is not None:
-        return f'TIMESTAMP({usr_data_types.get("timestamp_precision")})'
+    elif python_type is datetime and usr_data_types.get('timestamp_precision') is not None:
+        return f"TIMESTAMP({usr_data_types.get('timestamp_precision')})"
     return 'VARCHAR'
 
 
