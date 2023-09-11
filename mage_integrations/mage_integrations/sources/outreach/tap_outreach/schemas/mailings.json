@@ -225,13 +225,6 @@
       ],
       "format": "date-time"
     },
-    "updatedAt": {
-      "type": [
-        "null",
-        "string"
-      ],
-      "format": "date-time"
-    },
     "calendarId": {
       "type": [
         "null",

@@ -33,7 +33,7 @@ All default attributes for a backfill may be updated in addittion to the followi
 
 ![Global Pipeline Vars](https://github.com/mage-ai/mage-ai/blob/master/media/pipeline-variables.png)
 
-<CodeGroup>
+<RequestExample>
   ```curl cURL
   curl -X PUT
   --url http://localhost:6789/api/pipelines/arwen_starlight/backfills/6
@@ -67,9 +67,9 @@ All default attributes for a backfill may be updated in addittion to the followi
 
   r = r.put('http://localhost:6789/api/pipelines/arwen_starlight/backfills/6', json=json_data, headers=headers)
   ```
-</CodeGroup>
-
-```json
+</RequestExample>
+<ResponseExample>
+```json Response
 {
   "backfill": {
     "id": 6,
@@ -91,6 +91,5 @@ All default attributes for a backfill may be updated in addittion to the followi
     "variables": null
   }
 }
-
 ```
-
+</ResponseExample>

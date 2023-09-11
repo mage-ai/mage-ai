@@ -1,3 +1,4 @@
+import traceback
 from typing import IO, List, Union
 
 import numpy as np
@@ -146,6 +147,7 @@ class Postgres(BaseSQL):
                 if self.ssh_tunnel is not None:
                     self.ssh_tunnel.stop()
                     self.ssh_tunnel = None
+                traceback.print_exc()
 
     def close(self) -> None:
         """

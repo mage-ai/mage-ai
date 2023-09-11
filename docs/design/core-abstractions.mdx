@@ -1,6 +1,6 @@
 ---
-title: "Core Abstractions"
-sidebarTitle: "Overview"
+title: "Abstractions"
+sidebarTitle: "Core abstractions"
 description: "These are the fundamental concepts that Mage uses to operate."
 "og:image": "https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg"
 ---
@@ -14,114 +14,19 @@ description: "These are the fundamental concepts that Mage uses to operate."
 
 ## Project
 
-A project is like a repository on GitHub; this is where you write all your code.
+A Mage project forms the basis for all the work you do in Mage. It contains the code for your data pipelines, blocks, and other project-specific data. You can think of it like a GitHub repo— it can even track your [file history, too](https://docs.mage.ai/getting-started/file-versions#where-are-the-file-versions-stored).
 
-Here is a [sample project](https://github.com/mage-ai/demo%5Fetl%5Fpipeline) and
-a sample folder structure:
-
-```
-📁./
-  📁 mage_data/
-⌄ 📁 my-first-project/
-    📁 charts/
-    📁 custom/
-    📁 data_exporters/
-    📁 data_loaders/
-    📁 dbt/
-    📁 extensions/
-    📁 pipelines/
-      ⌄ 📁 demo/
-        📝 __init__.py
-        📝 metadata.yaml
-    📁 scratchpads/
-    📁 transformers/
-    📁 utils/
-    📝 __init__.py
-    📝 io_config.yaml
-    📝 metadata.yaml
-    📝 requirements.txt
-```
-
-### Structure
-
-- Each [Block](/design/core-abstractions#block) type has it's own directory:
-  - `charts`
-  - [`custom`](/guides/blocks/custom-blocks)
-  - [`data_loaders`](/design/blocks/data-loader)
-  - [`data_exporters`](/design/blocks/data-exporter)
-  - [`extensions`](/design/blocks/extension)
-  - [`sensors`](/design/blocks/sensor)
-  - [`scratchpads`](/design/blocks/scratchpad)
-  - [`transformers`](/design/blocks/transformer)
-- dbt assets are stored in the [dbt directory](/dbt/overview).
-- Each [pipeline](/design/core-abstractions#pipeline) is represented by a YAML file in the `pipelines` folder under the Mage project directory.
-- The `utils` folder is meant to hold custom utilities for your project. For example, [Python scripts](/development/dependencies/custom-files).
-- The `extensions` folder is used for Mage extensions that integrate other data tools, like [Great Expectations](/development/testing/great-expectations).
-- The `metadata.yaml` file contains project-level metadata. There's a metadata file in each pipeline as well.
-- Data loader and exporter [configurations](/guides/io_config) are stored in the `io_config.yaml` file.
-
-Code in a project can be shared across the entire project.
-
-### Project Data
-
-Project-level data is stored in the `mage_data` directory— located at the same level as your project folder. 
-
-`mage_data` holds project-level cache data and stores the result of Block runs, which are then returned to the user via the UI. Here are the locations for various components of `mage_data`:
-
-- SQLite DB: `mage_data/[project_folder]/mage-ai.db`
-  - The SQLite DB stores project-level metadata, such as pipeline and block run data. Here's a sample tree tables in the `tables` schema:
-   ```
-    └── tables
-        ├── backfill
-        ├── block_run
-        ├── event_matcher
-        ├── oauth2_access_token
-        ├── oauth2_application
-        ├── permission
-        ├── pipeline_run
-        ├── pipeline_schedule
-        ├── pipeline_schedule_event_matcher_association
-        ├── role
-        ├── secret
-        ├── sqlite_master
-        ├── user
-        └── user_role
-    ```
-  - You can connect to the SQLite DB like any other database. The JDBC URL `jdbc:sqlite:PATH`, where PATH is `/home/src/mage_data/[project_folder]/mage-ai.db` for Docker installs or `~/.mage_data/[project_folder]/mage-ai.db` for pip installs.
-- Block output: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.variables/`
-- Pipeline and block logs: `mage_data/[project_folder]/pipelines/[pipeline_uuid]/.logs/`
-- Cache: `mage_data/[project_folder]/.cache`
-
-To clear project block output, cache data, or log data, consider performing routine operations on this folder. This might be helpful for reducing storage size, optimizing cost, or otherwise maintaining your Mage project, 
-
-### Creating Projects
-
-You can create a new project by running the following command:
-
-**Using Docker**
-
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage init [project_name]
-```
-
-**Using** **`pip`**
-
-```bash
-mage init [project_name]
-```
+Check out our detailed [project structure](/design/abstractions/project-structure) docs for more info.
 
 ## Pipeline
 
 A pipeline contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code.
 
-Each pipeline is represented by a YAML file. Here is an [example](https://github.com/mage-ai/demo%5Fetl%5Fpipeline/blob/master/pipelines/etl%5Fdemo/metadata.yaml).
-
-This is what it could look like in the notebook UI:
+Each pipeline is represented by a YAML file (here's an [example](https://github.com/mage-ai/demo%5Fetl%5Fpipeline/blob/master/pipelines/etl%5Fdemo/metadata.yaml)) in the `pipelines` folder under the Mage project directory.
 
 <img
   alt="Pipeline"
-  src="https://github.com/mage-ai/mage-ai/raw/master/media/data-pipeline-overview.jpg"
+  src="media/overview/mage-build.gif"
 />
 
 Pipelines can be filtered, tagged, and grouped by various properties. See our [docs page](/pipelines/pipeline-tagging) for more info.
@@ -129,10 +34,7 @@ Pipelines can be filtered, tagged, and grouped by various properties. See our [d
 ## Block
 
 A block is a file with code that can be executed independently or within a
-pipeline.
-
-Blocks can depend on each other. A block won’t start running in a pipeline until
-all its upstream dependencies are met.
+pipeline. Together, blocks form a Directed Acyclic Graph (DAG), which we call pipelines. A block won't start running in a pipeline until all its upstream dependencies are met.
 
 There are 5 types of blocks.
 
@@ -168,10 +70,10 @@ transformers are stored in `[project_name]/transformers/`.
 
 ## Sensor
 
-A sensor is a block that continuously evaluates a condition until it’s met or
+A sensor is a block that continuously evaluates a condition until it's met or
 until a period of time has elapsed.
 
-If there is a block with a sensor as an upstream dependency, that block won’t
+If there is a block with a sensor as an upstream dependency, that block won't
 start running until the sensor has evaluated its condition successfully.
 
 Sensors can check for anything. Examples of common sensors check for:
@@ -315,7 +217,7 @@ and potentially create a block run record.
 
 A log is a file that contains system output information.
 
-It’s created whenever a pipeline or block is ran.
+It's created whenever a pipeline or block is ran.
 
 Logs can contain information about the internal state of a run, text that is
 outputted by loggers or `print` statements in blocks, or errors and stack traces

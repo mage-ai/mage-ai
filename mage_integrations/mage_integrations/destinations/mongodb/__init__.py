@@ -9,6 +9,7 @@ from mage_integrations.destinations.mongodb.target_mongodb.target import TargetM
 
 class MongoDb(Destination):
     def _process(self, input_buffer) -> None:
+        self.config['state_path'] = self.state_file_path
         TargetMongoDb(config=self.config, logger=self.logger).listen_override(
             file_input=open(self.input_file_path, 'r'))
 

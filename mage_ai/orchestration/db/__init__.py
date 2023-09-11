@@ -8,12 +8,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
-from mage_ai.orchestration.constants import (
-    DATABASE_CONNECTION_URL_ENV_VAR,
-    DB_NAME,
-    DB_PASS,
-    DB_USER,
-)
+from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.shared.environments import is_dev, is_test
 
 DB_RETRY_COUNT = 2
@@ -25,15 +21,14 @@ db_kwargs = dict(
     pool_pre_ping=True,
 )
 
+
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
 elif not db_connection_url:
-    # connect to K8s CloudSQL sidecar
-    if os.getenv(DB_USER):
-        db_user = os.getenv(DB_USER)
-        db_pass = os.getenv(DB_PASS)
-        db_name = os.getenv(DB_NAME)
-        db_connection_url = f'postgresql+psycopg2://{db_user}:{db_pass}@127.0.0.1:5432/{db_name}'
+    pg_db_connection_url = get_postgres_connection_url()
+
+    if pg_db_connection_url:
+        db_connection_url = pg_db_connection_url
     else:
         if is_test():
             db_connection_url = f'sqlite:///{TEST_DB}'
@@ -108,9 +103,12 @@ if db_connection_url.startswith('postgresql'):
     if db_schema:
         db_connection.start_session()
         db_connection.session.execute(f'CREATE SCHEMA IF NOT EXISTS {db_schema};')
+        # Get the current database name from the query fetchall() result, e.g., [('test_database',)]
+        db_current = db_connection.session.execute('SELECT current_database()').fetchall()[0][0]
+        db_connection.session.execute(f'ALTER DATABASE {db_current} SET search_path TO {db_schema}')
         db_connection.session.commit()
         db_connection.close_session()
-        print(f'Set the default PostgreSQL schema to {db_schema}')
+        print(f'Set the default PostgreSQL schema for {db_current} to {db_schema}')
     else:
         print('No schema in PostgreSQL connection URL: use the default "public" schema')
 

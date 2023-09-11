@@ -1,7 +1,7 @@
 import NextLink from 'next/link';
-import Router from 'next/router';
-import { useCallback, useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
+import { MutateFunction, useMutation } from 'react-query';
+import { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -14,6 +14,7 @@ import PipelineRunType, {
   RunStatus,
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
+import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
@@ -21,7 +22,21 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { Check, ChevronRight, Logs, PlayButtonFilled, Subitem } from '@oracle/icons';
+import {
+  Check,
+  ChevronRight,
+  Logs,
+  PlayButtonFilled,
+  Subitem,
+  Trash,
+} from '@oracle/icons';
+import {
+  DELETE_CONFIRM_WIDTH,
+  DELETE_CONFIRM_LEFT_OFFSET_DIFF,
+  DELETE_CONFIRM_TOP_OFFSET_DIFF,
+  DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
+} from '@components/shared/Table/constants';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -30,6 +45,7 @@ import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 
 const SHARED_DATE_FONT_PROPS = {
@@ -141,11 +157,11 @@ function RetryButton({
         beforeIcon={
           (RunStatus.INITIAL !== status && !disabled) && (
             <>
-              {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
+              {RunStatus.COMPLETED === status && <Check size={ICON_SIZE_SMALL} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
                 <PlayButtonFilled
                   inverted={RunStatus.CANCELLED === status && !isViewerRole}
-                  size={2 * UNIT}
+                  size={ICON_SIZE_SMALL}
                 />
               )}
               {[RunStatus.RUNNING].includes(status) && (
@@ -237,6 +253,8 @@ function RetryButton({
 
 type PipelineRunsTableProps = {
   allowBulkSelect?: boolean;
+  allowDelete?: boolean;
+  deletePipelineRun?: MutateFunction<any>;
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
@@ -251,6 +269,8 @@ type PipelineRunsTableProps = {
 
 function PipelineRunsTable({
   allowBulkSelect,
+  allowDelete,
+  deletePipelineRun,
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
@@ -262,8 +282,14 @@ function PipelineRunsTable({
   setSelectedRuns,
   setErrors,
 }: PipelineRunsTableProps) {
+  const router = useRouter();
+  const isViewerRole = isViewer();
+  const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
+  const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<number>(null);
+  const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
+  const [confirmDialogueLeftOffset, setConfirmDialogueLeftOffset] = useState<number>(0);
   const [updatePipelineRun, { isLoading: isLoadingCancelPipeline }] = useMutation(
     ({
       id,
@@ -292,6 +318,8 @@ function PipelineRunsTable({
       ),
     },
   );
+
+  
 
   const columnFlex = [null, 1];
   const columns: ColumnType[] = [
@@ -325,6 +353,14 @@ function PipelineRunsTable({
       uuid: 'Logs',
     },
   ]);
+
+  if (allowDelete && !isViewerRole) {
+    columnFlex.push(...[null]);
+    columns.push({
+      label: () => '',
+      uuid: 'Delete',
+    });
+  }
 
   const allRunsSelected =  useMemo(() =>
     pipelineRuns.every(({ id }) => !!selectedRuns?.[id]),
@@ -394,6 +430,7 @@ function PipelineRunsTable({
                 pipeline_uuid: pipelineUUID,
                 status,
               } = pipelineRun;
+              deleteButtonRefs.current[id] = createRef();
               const disabled = !id && !status;
               const blockRunCountTooltipMessage =
                 `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
@@ -408,7 +445,7 @@ function PipelineRunsTable({
                 arr = [
                   <Spacing key="row_status" ml={1}>
                     <FlexContainer alignItems="center">
-                      <Subitem size={2 * UNIT} useStroke/>
+                      <Subitem size={ICON_SIZE_SMALL} useStroke/>
                       <Button
                         borderRadius={BORDER_RADIUS_XXXLARGE}
                         notClickable
@@ -463,11 +500,11 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => Router.push(
+                    onClick={() => router.push(
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <Logs default size={2 * UNIT} />
+                    <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
                 ]);
               } else {
@@ -539,15 +576,58 @@ function PipelineRunsTable({
                     default
                     disabled={disabled}
                     iconOnly
-                    key="row_item_13"
+                    key="row_logs"
                     noBackground
-                    onClick={() => Router.push(
+                    onClick={() => router.push(
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
                     )}
                   >
-                    <Logs default size={2 * UNIT} />
+                    <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
                 ]);
+              }
+
+              if (allowDelete && !isViewerRole) {
+                arr.push(
+                  <>
+                    <Button
+                      default
+                      iconOnly
+                      noBackground
+                      onClick={(e) => {
+                        pauseEvent(e);
+                        setDeleteConfirmationOpenIdx(id);
+                        setConfirmDialogueTopOffset(deleteButtonRefs.current[id]?.current?.offsetTop || 0);
+                        setConfirmDialogueLeftOffset(deleteButtonRefs.current[id]?.current?.offsetLeft || 0);
+                      }}
+                      ref={deleteButtonRefs.current[id]}
+                      title="Delete"
+                    >
+                      <Trash default size={ICON_SIZE_SMALL} />
+                    </Button>
+                    <ClickOutside
+                      onClickOutside={() => setDeleteConfirmationOpenIdx(null)}
+                      open={deleteConfirmationOpenIdx === id}
+                    >
+                      <PopupMenu
+                        danger
+                        left={(confirmDialogueLeftOffset || 0) - DELETE_CONFIRM_LEFT_OFFSET_DIFF}
+                        onCancel={() => setDeleteConfirmationOpenIdx(null)}
+                        onClick={() => {
+                          setDeleteConfirmationOpenIdx(null);
+                          deletePipelineRun(id);
+                        }}
+                        title={
+                          `Are you sure you want to delete this run (id ${id} for trigger "${pipelineScheduleName}")?`
+                        }
+                        top={(confirmDialogueTopOffset || 0)
+                          - (index <= 1 ? DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST : DELETE_CONFIRM_TOP_OFFSET_DIFF)
+                        }
+                        width={DELETE_CONFIRM_WIDTH}
+                      />
+                    </ClickOutside>
+                  </>,
+                );
               }
 
               if (allowBulkSelect) {
@@ -569,7 +649,7 @@ function PipelineRunsTable({
               if (!disableRowSelect && onClickRow) {
                 arr.push(
                   <Flex flex={1} justifyContent="flex-end">
-                    <ChevronRight default size={2 * UNIT} />
+                    <ChevronRight default size={ICON_SIZE_SMALL} />
                   </Flex>,
                 );
               }

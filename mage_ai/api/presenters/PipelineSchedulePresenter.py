@@ -5,6 +5,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class PipelineSchedulePresenter(BasePresenter):
     default_attributes = [
         'created_at',
+        'description',
         'global_data_product_uuid',
         'id',
         'name',

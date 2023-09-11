@@ -56,6 +56,7 @@ class PostgreSQL(Destination):
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
                 column_identifier=self.quote,
+                key_properties=self.key_properties.get(stream),
             ),
         ]
 

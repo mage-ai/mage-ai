@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, {
-  BLOCK_COLOR_HEX_CODE_MAPPING,
+  BLOCK_TYPES_WITH_VARIABLES,
+  BlockLanguageEnum,
   BlockPipelineType,
   BlockRetryConfigType,
   BlockTypeEnum,
@@ -16,10 +17,11 @@ import GlobalDataProductType, {
   GlobalDataProductObjectTypeEnum,
 } from '@interfaces/GlobalDataProductType';
 import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
 import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
-import PipelineType, { PipelineRetryConfigType } from '@interfaces/PipelineType';
+import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from '@interfaces/PipelineType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
 import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
@@ -28,12 +30,11 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import Tooltip from '@oracle/components/Tooltip';
+import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
+import { Add, DiamondShared, Edit } from '@oracle/icons';
 import { BannerStyle } from './index.style';
-import { DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   ICON_SIZE_SMALL,
@@ -49,7 +50,8 @@ import { TableContainerStyle } from '@components/IntegrationPipeline/index.style
 import { YELLOW } from '@oracle/styles/colors/main';
 import { indexBy } from '@utils/array';
 import { capitalize } from '@utils/string';
-import { isEmptyObject } from '@utils/hash';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -60,6 +62,14 @@ const SHARED_BUTTON_PROPS = {
   outline: true,
   padding: '4px',
 };
+const SHARED_EMPHASIZED_TEXT_PROPS = {
+  bold: true,
+  default: true,
+  inline: true,
+  monospace: true,
+  small: true,
+};
+const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
   block: BlockType;
@@ -91,9 +101,15 @@ function BlockSettings({
   const pipelineRetryConfig: PipelineRetryConfigType =
     useMemo(() => pipeline?.retry_config || {}, [pipeline]);
 
+  const showBlockRunTimeout = useMemo(
+    () => !pipeline?.run_pipeline_in_one_process &&
+      [PipelineTypeEnum.PYSPARK, PipelineTypeEnum.PYTHON].includes(pipeline?.type),
+    [pipeline]);
+
   const {
     color: blockColor,
     configuration,
+    language,
     name: blockName,
     type: blockType,
     uuid: blockUUID,
@@ -127,6 +143,7 @@ function BlockSettings({
   const [blockAttributes, setBlockAttributesState] = useState<BlockType>(null);
   const [blockAttributesTouched, setBlockAttributesTouched] = useState<boolean>(false);
   const [editCustomExecutorType, setEditCustomExecutorType] = useState<boolean>(false);
+  const [showNewBlockVariable, setShowNewBlockVariable] = useState<boolean>(false);
 
   const blockPrev = usePrevious(block);
   useEffect(() => {
@@ -141,6 +158,21 @@ function BlockSettings({
     setBlockAttributesTouched(true);
     setBlockAttributesState(handlePrevious);
   }, []);
+
+  const blockVariables: { [key: string]: string } = useMemo(() =>
+    ignoreKeys(blockAttributes?.configuration || configuration, ['global_data_product', 'file_path']),
+    [blockAttributes?.configuration, configuration],
+  );
+  const updateBlockVariable = useCallback(
+    (variable:  { [key: string]: string }) => setBlockAttributes(prev => ({
+      ...prev,
+      configuration: {
+        ...blockAttributes?.configuration,
+        ...variable,
+      },
+    })),
+    [blockAttributes?.configuration, setBlockAttributes],
+  );
 
   const executorType = useMemo(() => blockAttributes?.executor_type, [blockAttributes]);
   useEffect(() => {
@@ -383,7 +415,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Executor type
             </Headline>
 
@@ -461,7 +493,7 @@ function BlockSettings({
           </Spacing>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-            <Headline>
+            <Headline level={5}>
               Retry configuration
             </Headline>
 
@@ -583,9 +615,35 @@ function BlockSettings({
             </Spacing>
           </Spacing>
 
+          {showBlockRunTimeout && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <Headline level={5}>
+                Block run timeout
+              </Headline>
+              <Spacing mb={1} />
+              <TextInput
+                label="Time in seconds"
+                monospace
+                onChange={e => setBlockAttributes(prev => ({
+                  ...prev,
+                  timeout: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={blockAttributes?.timeout || ''}
+              />
+              <Spacing mb={1} />
+              <Text muted small>
+                The block timeout will only be applied when the block is run through a trigger.
+                If a block times out, the block run will be set to a failed state.
+              </Text>
+            </Spacing>
+          )}
+
           {BlockTypeEnum.DBT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 dbt settings
               </Headline>
 
@@ -608,10 +666,99 @@ function BlockSettings({
             </Spacing>
           )}
 
+          {BLOCK_TYPES_WITH_VARIABLES.includes(blockType) && BlockLanguageEnum.PYTHON === language && (
+            <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Headline level={5}>
+                  Block variables
+                </Headline>
+                <Spacing ml={2} />
+                <KeyboardShortcutButton
+                  Icon={Add}
+                  blackBorder
+                  halfPaddingBottom
+                  halfPaddingTop
+                  inline
+                  onClick={() => setShowNewBlockVariable(prevState => !prevState)}
+                  smallIcon
+                  uuid="Sidekick/BlockSettings/addNewBlockVariable"
+                >
+                  New
+                </KeyboardShortcutButton>
+              </FlexContainer>
+
+              <Spacing mb={PADDING_UNITS}>
+                <Text muted>
+                  Press
+                  <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Enter</Text> or
+                  <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Return</Text> on a row to add or update a variable.
+                  These variables are only accessible in this block&nbsp;
+                  <Text {...SHARED_EMPHASIZED_TEXT_PROPS} bold={false}>
+                    &#40;{blockUUID}&#41;.
+                  </Text>
+                  <Text inline muted> Refer to the
+                    <Link
+                      href="https://docs.mage.ai/development/variables/block-variables"
+                      openNewWindow
+                    > documentation
+                    </Link> for more details.
+                  </Text>
+                </Text>
+                <Text muted>
+                  <Text bold inline warning>Note: </Text>
+                  Click the
+                  <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Update block settings</Text> button
+                  below to save changes. If you do not, any new or updated block variables will not be persisted.
+                </Text>
+              </Spacing>
+
+              <Spacing mb={PADDING_UNITS}>
+                {showNewBlockVariable &&
+                  <VariableRow
+                    editStateInit
+                    focusKey
+                    key="new_block_variable"
+                    onEnterCallback={() => setShowNewBlockVariable(false)}
+                    onEscapeCallback={() => setShowNewBlockVariable(false)}
+                    updateVariable={updateBlockVariable}
+                  />
+                }
+                {Object.entries(blockVariables)?.map((tuple: [string, any]) => {
+                  const variableKey = tuple[0];
+
+                  return (
+                    <VariableRow
+                      copyText={`kwargs['configuration'].get('${variableKey}')`}
+                      deleteVariable={() =>{
+                        const blockConfigUpdated = {
+                          ...blockAttributes?.configuration,
+                        };
+                        delete blockConfigUpdated[variableKey];
+                        setBlockAttributes(prev => ({
+                          ...prev,
+                          configuration: {
+                            ...blockConfigUpdated,
+                          },
+                        }));
+                      }}
+                      disableKeyEdit
+                      key={variableKey}
+                      updateVariable={updateBlockVariable}
+                      variable={{
+                        uuid: variableKey,
+                        value: tuple[1],
+                      }}
+                    />
+                  );
+                })}
+              </Spacing>
+            </Spacing>
+          )}
+
           {BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && (
             <Spacing mb={UNITS_BETWEEN_SECTIONS}>
               <Spacing px={PADDING_UNITS}>
-                <Headline>
+                <Headline level={5}>
                   Override global data product settings
                 </Headline>
               </Spacing>
@@ -656,6 +803,7 @@ function BlockSettings({
                   configuration: blockAttributes?.configuration,
                   executor_type: blockAttributes?.executor_type,
                   retry_config: blockRetryConfig,
+                  timeout: blockAttributes?.timeout,
                 },
               })}
               primary
@@ -677,7 +825,7 @@ function BlockSettings({
         {dataBlock && (
           <>
             <Spacing p={PADDING_UNITS}>
-              <Headline>
+              <Headline level={5}>
                 Pipelines using this block ({blockPipelinesCount})
               </Headline>
               <Text default>

@@ -1107,6 +1107,13 @@ Connections to third-party data storage require you to specify confidential info
 
 Instead, Mage provides **configuration loaders** which allow data loading clients to use your secrets without explicitly writing them in code.
 
+<Warning>
+  Currently Mage only supports AWS Secrets Manager as a configuration loader. If you need to use secrets from Azure Key Vault
+  or GCP Secret Manager, you can reference the following docs:
+    - [Azure Key Vault](https://docs.mage.ai/production/deploying-to-cloud/secrets/Azure)
+    - [GCP Secret Manager](https://docs.mage.ai/production/deploying-to-cloud/secrets/GCP)
+</Warning>
+
 Currently, the following sources (and their corresponding configuration loader) can be used to load configuration settings:
 
 -   Configuration File - `ConfigFileLoader`

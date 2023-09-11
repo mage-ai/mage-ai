@@ -1,9 +1,9 @@
 import os
-
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
+
 from dateutil.relativedelta import relativedelta
 from freezegun import freeze_time
-from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
@@ -11,7 +11,9 @@ from mage_ai.data_preparation.models.global_data_product import GlobalDataProduc
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.orchestration.triggers.global_data_product import fetch_or_create_pipeline_schedule
+from mage_ai.orchestration.triggers.global_data_product import (
+    fetch_or_create_pipeline_schedule,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.base_test import DBTestCase
 
@@ -25,12 +27,12 @@ class GlobalDataProductTest(DBTestCase):
                 'test pipeline',
                 repo_path=self.repo_path,
             )
+            self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
+            self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
+            self.pipeline.add_block(
+                Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
             self.pipeline = Pipeline.get('test_pipeline')
-
-        self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
-        self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
-        self.pipeline.add_block(Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',

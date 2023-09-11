@@ -47,3 +47,31 @@ def on_success(function):
 
 def on_failure(function):
     return function
+
+
+def data_source(function):
+    return function
+
+
+def xy(function):
+    return function
+
+
+def x(function):
+    return function
+
+
+def y(function):
+    return function
+
+
+def configuration(function):
+    return function
+
+
+def render(function):
+    return function
+
+
+def columns(function):
+    return function

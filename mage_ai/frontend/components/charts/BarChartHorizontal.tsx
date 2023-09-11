@@ -80,12 +80,11 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
     yLabelFormat: yLabelFormatProp,
   });
 
+
   const tickValuesToDisplay = [];
-  const ticksToShow = Math.floor(tickValues?.length / Math.floor(height / Y_TICK_HEIGHT));
-  tickValues?.forEach((val, idx: number) => {
-    if (idx % ticksToShow === 0) {
-      tickValuesToDisplay.push(val);
-    }
+  const ticksToShow = Math.min((tickValues?.length || 0), Math.floor(height / Y_TICK_HEIGHT));
+  tickValues?.forEach((val) => {
+    tickValuesToDisplay.push(val);
   });
 
   return width < 10 ? null : (

@@ -107,7 +107,7 @@ class BlockExecutor:
         try:
             result = dict()
 
-            tags = self._build_tags(
+            tags = self.build_tags(
                 block_run_id=block_run_id,
                 pipeline_run_id=pipeline_run_id,
                 **kwargs
@@ -603,7 +603,7 @@ class BlockExecutor:
             **tags,
         )
 
-    def _build_tags(self, **kwargs):
+    def build_tags(self, **kwargs):
         """
         Build tags for logging.
 

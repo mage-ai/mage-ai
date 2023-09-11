@@ -19,9 +19,9 @@ from mage_ai.cluster_manager.constants import (
 from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
-    DB_NAME,
-    DB_PASS,
-    DB_USER,
+    PG_DB_NAME,
+    PG_DB_PASS,
+    PG_DB_USER,
 )
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
@@ -412,7 +412,7 @@ class WorkloadManager:
         if db_secrets_name:
             env_vars.extend([
                 {
-                    'name': DB_USER,
+                    'name': PG_DB_USER,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,
@@ -421,7 +421,7 @@ class WorkloadManager:
                     }
                 },
                 {
-                    'name': DB_PASS,
+                    'name': PG_DB_PASS,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,
@@ -430,7 +430,7 @@ class WorkloadManager:
                     }
                 },
                 {
-                    'name': DB_NAME,
+                    'name': PG_DB_NAME,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,

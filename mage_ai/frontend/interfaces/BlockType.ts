@@ -5,7 +5,6 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
-import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -71,8 +70,6 @@ export enum BlockColorEnum {
   YELLOW = 'yellow',
 }
 
-export const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
-
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.CUSTOM,
@@ -125,6 +122,14 @@ export const BLOCK_TYPES_WITH_NO_PARENTS = [
   BlockTypeEnum.EXTENSION,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.MARKDOWN,
+];
+
+export const BLOCK_TYPES_WITH_VARIABLES = [
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.TRANSFORMER,
 ];
 
 export enum StatusTypeEnum {
@@ -286,6 +291,7 @@ export default interface BlockType {
   retry_config?: BlockRetryConfigType;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
+  timeout?: number;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;

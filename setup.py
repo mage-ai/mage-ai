@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.18',
+    version='0.9.22',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -100,6 +100,7 @@ setuptools.setup(
         ],
         'streaming': [
             'confluent-avro',
+            'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
@@ -137,6 +138,7 @@ setuptools.setup(
             'google-cloud-run==0.5.0',
             'google-cloud-storage==2.5.0',
             'great_expectations==0.15.50',
+            'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
             'langchain>=0.0.222',

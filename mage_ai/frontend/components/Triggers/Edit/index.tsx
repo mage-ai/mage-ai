@@ -145,6 +145,7 @@ function Edit({
   ]);
 
   const {
+    description,
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
@@ -348,6 +349,7 @@ function Edit({
     const data = {
       ...selectKeys(schedule, [
         'name',
+        'description',
         'schedule_type',
         'tags',
       ]),
@@ -650,33 +652,61 @@ function Edit({
     showLandingTime,
   ]);
 
+  const triggerNameRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_name"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger name
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_name_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          name: e.target.value,
+        }));
+      }}
+      placeholder="Name this trigger"
+      value={name}
+    />,
+  ]), [name]);
+  const triggerDescriptionRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_description"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger description
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_description_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          description: e.target.value,
+        }));
+      }}
+      placeholder="Description"
+      value={description}
+    />
+  ]), [description]);
+
   const detailsMemo = useMemo(() => {
     const rows = [
-      [
-        <FlexContainer
-          alignItems="center"
-          key="trigger_name_detail"
-        >
-          <Alphabet default size={1.5 * UNIT} />
-          <Spacing mr={1} />
-          <Text default>
-            Trigger name
-          </Text>
-        </FlexContainer>,
-        <TextInput
-          key="trigger_name_input_detail"
-          monospace
-          onChange={(e) => {
-            e.preventDefault();
-            setSchedule(s => ({
-              ...s,
-              name: e.target.value,
-            }));
-          }}
-          placeholder="Name this trigger"
-          value={name}
-        />,
-      ],
+      triggerNameRowEl,
+      triggerDescriptionRowEl,
       [
         <FlexContainer
           alignItems="center"
@@ -848,7 +878,9 @@ function Edit({
     ]);
 
     if (isStreamingPipeline) {
-      rows.splice(1, 1);
+      // Remove frequency and landing time rows since they are not
+      // relevant for streaming pipelines.
+      rows.splice(2, 2);
     }
 
     if (isCustomInterval) {
@@ -928,13 +960,14 @@ function Edit({
     landingTimeDisabled,
     landingTimeEnabled,
     landingTimeInputs,
-    name,
     readableCronExpression,
     runtimeAverage,
     scheduleInterval,
     showCalendar,
     showLandingTime,
     time,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
   ]);
 
   const updateEventMatcher = useCallback((idx, data: {
@@ -962,31 +995,8 @@ function Edit({
       <Table
         columnFlex={[null, 1]}
         rows={[
-          [
-            <FlexContainer
-              alignItems="center"
-              key="trigger_name_event"
-            >
-              <Alphabet default size={1.5 * UNIT} />
-              <Spacing mr={1} />
-              <Text default>
-                Trigger name
-              </Text>
-            </FlexContainer>,
-            <TextInput
-              key="trigger_name_input_event"
-              monospace
-              onChange={(e) => {
-                e.preventDefault();
-                setSchedule(s => ({
-                  ...s,
-                  name: e.target.value,
-                }));
-              }}
-              placeholder="Name this trigger"
-              value={name}
-            />,
-          ],
+          triggerNameRowEl,
+          triggerDescriptionRowEl,
         ]}
       />
 
@@ -1147,7 +1157,8 @@ function Edit({
     eventMatchers,
     eventRules,
     eventRulesByName,
-    name,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
     updateEventMatcher,
   ]);
 
@@ -1167,31 +1178,8 @@ function Edit({
         <Table
           columnFlex={[null, 1]}
           rows={[
-            [
-              <FlexContainer
-                alignItems="center"
-                key="trigger_name_api"
-              >
-                <Alphabet default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Trigger name
-                </Text>
-              </FlexContainer>,
-              <TextInput
-                key="trigger_name_input_api"
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
-                placeholder="Name this trigger"
-                value={name}
-              />,
-            ],
+            triggerNameRowEl,
+            triggerDescriptionRowEl,
           ]}
         />
 
@@ -1284,10 +1272,7 @@ function Edit({
         </Spacing>
       </>
     );
-  }, [
-    name,
-    pipelineSchedule,
-  ]);
+  }, [pipelineSchedule, triggerDescriptionRowEl, triggerNameRowEl]);
 
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType
@@ -1309,38 +1294,29 @@ function Edit({
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
-          Pipeline run settings
+          Run settings
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
-            <Checkbox
-              checked={settings?.allow_blocks_to_fail}
-              label="Keep running pipeline even if blocks fail"
-              onClick={() => setSettings(prev => ({
-                ...prev,
-                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
-              }))}
-            />
-          </FlexContainer>
-        </Spacing>
-
-        {ScheduleTypeEnum.TIME === scheduleType && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.skip_if_previous_running}
-                label="Skip run if previous run still in progress"
-                onClick={() => setSettings(prev => ({
+          {!isStreamingPipeline && (
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text>
+                Set a timeout for each run of this trigger (optional) 
+              </Text>
+              <Spacing mb={1} />
+              <TextInput
+                label="Timeout (in seconds)"
+                onChange={e => setSettings(prev => ({
                   ...prev,
-                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                  timeout: e.target.value,
                 }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={settings?.timeout}
               />
-            </FlexContainer>
-          </Spacing>
-        )}
-
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            </Spacing>
+          )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
               <ToggleSwitch
@@ -1420,6 +1396,34 @@ function Edit({
             />
           )}
         </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Checkbox
+              checked={settings?.allow_blocks_to_fail}
+              label="Keep running pipeline even if blocks fail"
+              onClick={() => setSettings(prev => ({
+                ...prev,
+                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+
+        {ScheduleTypeEnum.TIME === scheduleType && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Checkbox
+                checked={settings?.skip_if_previous_running}
+                label="Skip run if previous run still in progress"
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                }))}
+              />
+            </FlexContainer>
+          </Spacing>
+        )}
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -1511,6 +1515,7 @@ function Edit({
     dbtBlocks,
     enableSLA,
     formattedVariables,
+    isStreamingPipeline,
     overwriteVariables,
     runtimeVariables,
     schedule,

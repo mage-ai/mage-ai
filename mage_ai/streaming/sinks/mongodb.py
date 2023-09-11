@@ -1,9 +1,11 @@
+import time
 from dataclasses import dataclass
+from typing import Dict, List
+
+from pymongo import MongoClient
+
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
-from pymongo import MongoClient
-from typing import Dict, List
-import time
 
 
 @dataclass
@@ -26,7 +28,7 @@ class MongoDbSink(BaseSink):
             self.collection.insert_one(data)
         else:
             self.collection.insert_one({"data": data})
-        self._print(f'[MongoDB] Ingest data {data}, time={time.time()}')
+        self._print(f'Ingest data {data}, time={time.time()}')
 
     def batch_write(self, data: List[Dict]):
         if not data:
@@ -38,4 +40,4 @@ class MongoDbSink(BaseSink):
             else:
                 output_docs.append({"data": doc})
         self.collection.insert_many(output_docs)
-        self._print(f'[MongoDB] Batch ingest {len(data)} records, time={time.time()}.')
+        self._print(f'Batch ingest {len(data)} records, time={time.time()}.')

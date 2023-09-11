@@ -5,6 +5,7 @@ import {
   Lightning,
   Logs,
   Monitor,
+  NavDashboard,
   PipeIcon,
   Schedule,
   Settings,
@@ -113,6 +114,17 @@ export function buildNavigationItems(
       },
     });
   }
+
+  // navigationItems.unshift({
+  //   Icon: NavDashboard,
+  //   id: PageNameEnum.DASHBOARD,
+  //   isSelected: () => PageNameEnum.DASHBOARD === pageName,
+  //   label: () => 'Dashboard',
+  //   linkProps: {
+  //     as: `/pipelines/${pipelineUUID}/dashboard`,
+  //     href: '/pipelines/[pipeline]/dashboard',
+  //   },
+  // });
 
   return navigationItems;
 }

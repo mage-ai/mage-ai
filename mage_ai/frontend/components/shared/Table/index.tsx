@@ -16,11 +16,6 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
-import {
-  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX,
-  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION,
-} from '@storage/pipelines';
 import {
   MENU_WIDTH,
   SortDirectionEnum,
@@ -71,8 +66,11 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
+  getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
   highlightRowOnHover?: boolean;
+  localStorageKeySortColIdx?: string;
+  localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   noHeader?: boolean;
@@ -91,6 +89,7 @@ type TableProps = {
   sortedColumn?: SortedColumnType;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
+  uuidColumnIndex?: number;
   uuid?: string;
   wrapColumns?: boolean;
 };
@@ -106,9 +105,12 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
+  getUUIDFromRow,
   getUniqueRowIdentifier,
   highlightRowOnHover,
   isSelectedRow,
+  localStorageKeySortColIdx,
+  localStorageKeySortDirection,
   noBorder,
   noHeader,
   onClickRow,
@@ -126,6 +128,7 @@ function Table({
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
+  uuidColumnIndex,
   uuid,
   wrapColumns,
 }: TableProps, ref) {
@@ -221,22 +224,30 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((sortedColumn || defaultSortColumnIndex)
+  const rowsSorted = useMemo(() => ((setRowsSorted && (sortedColumn || defaultSortColumnIndex))
     ?
       sortByKey(
         rows,
         (row) => {
-          const sortColumn = row?.[sortedColumnIndex || defaultSortColumnIndex];
+          const columnIndex = typeof sortedColumnIndex === 'number'
+            ? sortedColumnIndex
+            : defaultSortColumnIndex;
+          const sortColumn = row?.[columnIndex];
           let sortValue = sortColumn?.props?.children;
-          const maxDepth = 10;
-          let currentDepth = 0;
-          while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
-            && currentDepth < maxDepth
-          ) {
-            sortValue = sortValue?.props?.children;
-            currentDepth += 1;
-            if (typeof sortValue === 'undefined') {
-              sortValue = '';
+
+          if (getUUIDFromRow && columnIndex === uuidColumnIndex) {
+            sortValue = getUUIDFromRow?.(row);
+          } else {
+            const maxDepth = 10;
+            let currentDepth = 0;
+            while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
+              && currentDepth < maxDepth
+            ) {
+              sortValue = sortValue?.props?.children;
+              currentDepth += 1;
+              if (typeof sortValue === 'undefined') {
+                sortValue = '';
+              }
             }
           }
 
@@ -247,7 +258,16 @@ function Table({
         },
       )
     : rows
-  ), [defaultSortColumnIndex, rows, sortedColumn, sortedColumnIndex, sortedColumnDirection]);
+  ), [
+    defaultSortColumnIndex,
+    getUUIDFromRow,
+    rows,
+    setRowsSorted,
+    sortedColumn,
+    sortedColumnDirection,
+    sortedColumnIndex,
+    uuidColumnIndex,
+  ]);
 
   const sortedRowIds = useMemo(
     () => (getUniqueRowIdentifier
@@ -265,14 +285,24 @@ function Table({
      * order and update the rowsSorted state in order to perform actions on
      * the correct row.
      */
-    if (sortableColumnIndexes && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-      || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+    if (sortableColumnIndexes
+      && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
+        || (sortedRowIdsPrev?.length > 0
+          && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+      )
     ) {
       setRowsSorted?.(rowsSorted);
-      const sortColIdx = sortedColumnIndex || null;
+      const sortColIdx = typeof sortedColumnIndex === 'number'
+        ? sortedColumnIndex
+        : null;
       const sortDirection = sortedColumnDirection || null;
-      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColIdx);
-      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirection);
+
+      if (localStorageKeySortColIdx) {
+        set(localStorageKeySortColIdx, sortColIdx);
+      }
+      if (localStorageKeySortDirection) {
+        set(localStorageKeySortDirection, sortDirection);
+      }
 
       goToWithQuery({
         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
@@ -283,6 +313,8 @@ function Table({
     }
   }, [
     defaultSortColumnIndex,
+    localStorageKeySortColIdx,
+    localStorageKeySortDirection,
     rowsSorted,
     setRowsSorted,
     sortableColumnIndexes,

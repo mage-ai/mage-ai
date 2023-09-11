@@ -10,6 +10,7 @@ from mage_ai.orchestration.db.models.oauth import (
     Oauth2Application,
     User,
 )
+from mage_ai.settings import MAGE_ACCESS_TOKEN_EXPIRY_TIME
 
 JWT_ALGORITHM = 'HS256'
 JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
@@ -19,7 +20,11 @@ def generate_access_token(
     user: User,
     application: Oauth2Application = None,
     token: str = None,
+    duration: int = None,
 ) -> Oauth2AccessToken:
+    if duration is None:
+        duration = MAGE_ACCESS_TOKEN_EXPIRY_TIME
+
     if not token:
         token = secrets.token_urlsafe()
 
@@ -29,7 +34,7 @@ def generate_access_token(
             token_count = Oauth2AccessToken.query.filter(Oauth2AccessToken.token == token).count()
 
     attributes_data = dict(
-        expires=datetime.utcnow() + timedelta(days=30),
+        expires=datetime.utcnow() + timedelta(seconds=duration),
         token=token,
         user_id=user.id if user else None,
     )

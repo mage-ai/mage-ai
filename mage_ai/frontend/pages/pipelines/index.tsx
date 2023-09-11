@@ -53,8 +53,7 @@ import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/c
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { SortDirectionEnum } from '@components/shared/Table/constants';
-import { SortQueryEnum } from '@components/shared/Table/constants';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
@@ -142,7 +141,7 @@ function PipelineListPage() {
           columnIndex: +sortColumnIndexQuery,
           sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
         }
-      : null
+      : undefined
   ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
@@ -527,6 +526,19 @@ function PipelineListPage() {
           }
         },
       }}
+      extraActionButtonProps={{
+        Icon: Clone,
+        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+          configuration and code blocks. The blocks use the same block files as the original pipeline. \
+          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+        isLoading: isLoadingClone,
+        onClick: () => clonePipeline({
+          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+        }),
+        openConfirmationDialogue: true,
+        tooltip: 'Clone pipeline',
+      }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
         tag: tags.map(({ uuid }) => uuid),
@@ -634,6 +646,10 @@ function PipelineListPage() {
           uuid: 'Pipelines/MoreActionsMenu/EditDescription',
         },
       ]}
+      onClickFilterDefaults={() => {
+        setFilters({});
+        router.push('/pipelines');
+      }}
       onFilterApply={(query, updatedQuery) => {
         // @ts-ignore
         if (Object.values(updatedQuery).every(arr => !arr?.length)) {
@@ -644,19 +660,6 @@ function PipelineListPage() {
       searchProps={{
         onChange: setSearchText,
         value: searchText,
-      }}
-      secondaryActionButtonProps={{
-        Icon: Clone,
-        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
-          configuration and code blocks. The blocks use the same block files as the original pipeline. \
-          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
-        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
-        isLoading: isLoadingClone,
-        onClick: () => clonePipeline({
-          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
-        }),
-        openConfirmationDialogue: true,
-        tooltip: 'Clone pipeline',
       }}
       selectedRowId={selectedPipeline?.uuid}
       setSelectedRow={setSelectedPipeline}
@@ -670,6 +673,7 @@ function PipelineListPage() {
     isLoadingDelete,
     newPipelineButtonMenuItems,
     query,
+    router,
     searchText,
     selectedPipeline?.description,
     selectedPipeline?.name,
@@ -987,6 +991,8 @@ function PipelineListPage() {
               defaultSortColumnIndex={2}
               getUniqueRowIdentifier={getUniqueRowIdentifier}
               isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
+              localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
+              localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
                 const pipeline = pipelinesSorted[rowIndex];
 

@@ -30,7 +30,6 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,

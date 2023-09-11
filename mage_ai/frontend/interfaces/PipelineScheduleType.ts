@@ -31,6 +31,13 @@ export interface SelectedScheduleType {
   scheduleName?: string;
 }
 
+export enum PipelineScheduleFilterQueryEnum {
+  INTERVAL = 'frequency[]',
+  STATUS = 'status[]',
+  TAG = 'tag[]',
+  TYPE = 'type[]',
+}
+
 export enum SortQueryParamEnum {
   CREATED_AT = 'created_at',
   NAME = 'name',
@@ -43,13 +50,14 @@ export interface PipelineScheduleSettingsType {
   allow_blocks_to_fail?: boolean;
   landing_time_enabled?: boolean;
   skip_if_previous_running?: boolean;
+  timeout?: number;
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
   [SortQueryParamEnum.CREATED_AT]: 'Created at',
   [SortQueryParamEnum.NAME]: 'Name',
   [SortQueryParamEnum.PIPELINE]: 'Pipeline',
-  [SortQueryParamEnum.STATUS]: 'Status',
+  [SortQueryParamEnum.STATUS]: 'Active',
   [SortQueryParamEnum.TYPE]: 'Type',
 };
 
@@ -61,9 +69,10 @@ export interface PipelineScheduleReqQueryParamsType {
 
 export default interface PipelineScheduleType {
   created_at?: string;
+  description?: string;
   event_matchers?: EventMatcherType[];
   global_data_product_uuid?: string;
-  id?: string;
+  id?: number;
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   next_pipeline_run_date?: string;

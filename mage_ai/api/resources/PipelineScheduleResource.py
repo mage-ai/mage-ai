@@ -4,13 +4,22 @@ import uuid
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.data_preparation.models.triggers import (
+    Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
+    remove_trigger,
+)
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
-from mage_ai.orchestration.db.models.tags import Tag, TagAssociation, TagAssociationWithTag
+from mage_ai.orchestration.db.models.tags import (
+    Tag,
+    TagAssociation,
+    TagAssociationWithTag,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
@@ -37,6 +46,24 @@ class PipelineScheduleResource(DatabaseResource):
             if isinstance(tag_names, str):
                 tag_names = tag_names.split(',')
 
+        schedule_types = query_arg.get('schedule_type[]', [])
+        if schedule_types:
+            schedule_types = schedule_types[0]
+        if schedule_types:
+            schedule_types = schedule_types.split(',')
+
+        schedule_intervals = query_arg.get('schedule_interval[]', [])
+        if schedule_intervals:
+            schedule_intervals = schedule_intervals[0]
+        if schedule_intervals:
+            schedule_intervals = schedule_intervals.split(',')
+
+        statuses = query_arg.get('status[]', [])
+        if statuses:
+            statuses = statuses[0]
+        if statuses:
+            statuses = statuses.split(',')
+
         query = PipelineSchedule.repo_query
 
         if len(tag_names) >= 1:
@@ -59,6 +86,19 @@ class PipelineScheduleResource(DatabaseResource):
             )
             query = query.filter(
                 PipelineSchedule.id.in_([ta.taggable_id for ta in tag_associations]),
+            )
+
+        if schedule_types:
+            query = query.filter(
+                PipelineSchedule.schedule_type.in_(schedule_types),
+            )
+        if schedule_intervals:
+            query = query.filter(
+                PipelineSchedule.schedule_interval.in_(schedule_intervals),
+            )
+        if statuses:
+            query = query.filter(
+                PipelineSchedule.status.in_(statuses),
             )
 
         if global_data_product_uuid or pipeline:
@@ -216,7 +256,24 @@ class PipelineScheduleResource(DatabaseResource):
 
             self.tag_associations_updated = tag_associations_updated + tag_associations_to_keep
 
-        super().update(payload)
+        resource = super().update(payload)
+        updated_model = resource.model
+        trigger = Trigger(
+            name=updated_model.name,
+            pipeline_uuid=updated_model.pipeline_uuid,
+            schedule_interval=updated_model.schedule_interval,
+            schedule_type=updated_model.schedule_type,
+            settings=updated_model.settings,
+            sla=updated_model.sla,
+            start_time=updated_model.start_time,
+            status=updated_model.status,
+            variables=updated_model.variables,
+        )
+        add_or_update_trigger_for_pipeline_and_persist(
+            trigger,
+            updated_model.pipeline_uuid,
+            update_only_if_exists=True,
+        )
 
         return self
 
@@ -225,6 +282,13 @@ class PipelineScheduleResource(DatabaseResource):
             return self.tag_associations
         else:
             return self.tag_associations_updated
+
+    @safe_db_query
+    def delete(self, **kwargs):
+        remove_trigger(self.model.name, self.model.pipeline_uuid)
+        self.model.delete()
+
+        return self
 
 
 def __load_tag_associations(resource):

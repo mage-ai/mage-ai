@@ -40,12 +40,14 @@ type ChartControllerProps = {
     [key: string]: any;
   };
   width: number;
+  xAxisLabel?: string;
 };
 
 function ChartController({
   block,
   data,
   width,
+  xAxisLabel: xAxisLabelProp,
 }: ChartControllerProps) {
   const {
     configuration = {},
@@ -58,7 +60,7 @@ function ChartController({
 
   const chartHeight = configuration[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT;
 
-  let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
+  const metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
     || [];
 
   let variableDateFormat = DATE_FORMAT_SHORT;
@@ -122,7 +124,7 @@ function ChartController({
           <BarChartHorizontal
             {...sharedProps}
             xAxisLabel={yAxisLabel || configuration[VARIABLE_NAME_Y]}
-            yAxisLabel={xAxisLabel || configuration[VARIABLE_NAME_X]}
+            yAxisLabel={xAxisLabelProp || xAxisLabel || configuration[VARIABLE_NAME_X]}
           />
         );
       }
@@ -130,7 +132,7 @@ function ChartController({
       return (
         <BarChartVertical
           {...sharedProps}
-          xAxisLabel={xAxisLabel}
+          xAxisLabel={xAxisLabelProp || xAxisLabel}
           xLabelFormat={ts => {
             if (isTimeSeries) {
               return moment(ts * 1000).format(DATE_FORMAT_SHORT);
@@ -182,7 +184,7 @@ function ChartController({
           showYAxisLabels
           showZeroes
           sortData={d => sortByKey(d, '[0]')}
-          xAxisLabel={xAxisLabel || configuration[VARIABLE_NAME_X]}
+          xAxisLabel={xAxisLabelProp || xAxisLabel || configuration[VARIABLE_NAME_X]}
           yAxisLabel={xAxisLabel ? `count(${xAxisLabel})` : configuration[VARIABLE_NAME_Y]}
         />
       );
@@ -251,8 +253,11 @@ function ChartController({
               {legendNames && legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
           )}
-          width={width ? width - (3 * UNIT) : width}
-          xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
+          width={width ? width - ((3 * UNIT) + 3) : width}
+          xAxisLabel={xAxisLabelProp
+            || xAxisLabel
+            || String(configuration[VARIABLE_NAME_X] || '')
+          }
           xLabelFormat={ts => {
             if (isTimeSeries) {
               return moment(ts * 1000).format(DATE_FORMAT_SHORT);
@@ -266,7 +271,7 @@ function ChartController({
       );
     }
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
-    const varName = String(configuration[VARIABLE_NAME_X]);
+    const varName = String(configuration[VARIABLE_NAME_X] || VARIABLE_NAME_X);
     const chartData = data[varName];
     const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
 
@@ -278,7 +283,10 @@ function ChartController({
           getY={([, value]) => value}
           height={chartHeight}
           width={width}
-          xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
+          xAxisLabel={xAxisLabelProp
+            || xAxisLabel
+            || String(configuration[VARIABLE_NAME_X] || '')
+          }
         />
       );
     }
@@ -292,8 +300,8 @@ function ChartController({
     return Array.isArray(x) && Array.isArray(y) && Array.isArray(y[0]) && (
       <DataTable
         columns={x}
-        index={index}
         height={configuration[VARIABLE_NAME_HEIGHT] ? null : chartHeight}
+        index={index}
         maxHeight={configuration[VARIABLE_NAME_HEIGHT] ? chartHeight : null}
         noBorderBottom
         noBorderLeft
