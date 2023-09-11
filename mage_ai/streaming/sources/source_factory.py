@@ -1,5 +1,6 @@
-from mage_ai.streaming.constants import SourceType
 from typing import Dict
+
+from mage_ai.streaming.constants import SourceType
 
 
 class SourceFactory:
@@ -15,7 +16,9 @@ class SourceFactory:
 
             return AzureEventHubSource(config, **kwargs)
         elif connector_type == SourceType.GOOGLE_CLOUD_PUBSUB:
-            from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
+            from mage_ai.streaming.sources.google_cloud_pubsub import (
+                GoogleCloudPubSubSource,
+            )
 
             return GoogleCloudPubSubSource(config, **kwargs)
         elif connector_type == SourceType.INFLUXDB:

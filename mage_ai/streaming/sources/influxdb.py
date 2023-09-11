@@ -129,7 +129,7 @@ class InfluxDbSource(BaseSource):
                                 k: v
                                 for k, v in record.values.items()
                                 if not k.startswith('_')
-                                and k not in ['table', "result"]
+                                and k not in ['table', 'result']
                             },  # remove influxdb internal fields
                         },
                     }
@@ -162,7 +162,7 @@ class InfluxDbSource(BaseSource):
                                 k: v
                                 for k, v in record.values.items()
                                 if not k.startswith('_')
-                                and k not in ['table', "result"]
+                                and k not in ['table', 'result']
                             },  # remove influxdb internal fields
                         },
                     }
