@@ -20,8 +20,8 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    Text,
     Table,
+    Text,
     or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates

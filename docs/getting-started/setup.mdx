@@ -123,6 +123,40 @@ Select the first cell by clicking it and select the "play" icon in the top right
 
 Do the same for the following cells in the pipeline to transform and export the data. Congrats, you're now a Mage ninja! 🥷
 
+## 🧙🏻‍♂️ Install Mage dependencies (optional)
+
+Mage also has the following add-on packages:
+
+| Package              | Install               | Description                                        |
+| -------------------- | --------------------- | -------------------------------------------------- |
+| all                  | `mage-ai[all]`        | install all add-ons                                |
+| azure                | `mage-ai[azure]`      | install Azure related packages                     |
+| clickhouse           | `mage-ai[clickhouse]` | use Clickhouse for data import or export           |
+| dbt                  | `mage-ai[dbt]`        | install dbt packages                               |
+| google-cloud-storage | `mage-ai[storage]`    | use Google Cloud Storage for data import or export |
+| hdf5                 | `mage-ai[hdf5]`       | process data in HDF5 file format                   |
+| mysql                | `mage-ai[mysql]`      | use MySQL for data import or export                |
+| postgres             | `mage-ai[postgres]`   | use PostgreSQL for data import or export           |
+| redshift             | `mage-ai[redshift]`   | use Redshift for data import or export             |
+| s3                   | `mage-ai[s3]`         | use S3 for data import or export                   |
+| snowflake            | `mage-ai[snowflake]`  | use Snowflake for data import or export            |
+| spark                | `mage-ai[spark]`      | use Spark (EMR) in your Mage pipeline              |
+| streaming            | `mage-ai[streaming]`  | use Streaming pipelines                            |
+
+To install these, run the following command from the Mage terminal:
+
+```bash
+pip install "mage-ai[spark]"
+```
+
+or add the following to your `requirements.txt` file:
+
+```
+mage-ai[spark]
+```
+
+read more about installing from `requirements.txt` [here](/development/dependencies/requirements).
+
 ## 🧭 Journey on
 
 Navigate to our [tutorials](/guides/overview) to learn more about Mage and how to build your own pipelines or continue exploring our docs for advanced configuration and deployment options.
