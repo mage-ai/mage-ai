@@ -35,7 +35,7 @@ def build_query(bucket: str, start_time: float, stop_time: float, time_delay: st
 
 def batches(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
-        yield iterable[i : min(i + batch_size, len(iterable))]
+        yield iterable[i: min(i + batch_size, len(iterable))]
 
 
 class InfluxDbSourceTimer:
