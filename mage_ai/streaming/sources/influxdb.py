@@ -35,7 +35,7 @@ def build_query(bucket: str, start_time: float, stop_time: float, time_delay: st
 
 def batches(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
-        yield iterable[i: min(i + batch_size, len(iterable))]
+        yield iterable[i : min(i + batch_size, len(iterable))]
 
 
 class InfluxDbSourceTimer:
@@ -54,18 +54,22 @@ class InfluxDbSourceTimer:
             last_time_s = current_time_s
             self.next_time_s = current_time_s + self.update_interval_s
         else:
-            missed_updates = (current_time_s - self.next_time_s) // self.update_interval_s
+            missed_updates = (
+                current_time_s - self.next_time_s
+            ) // self.update_interval_s
             if missed_updates < 1:
                 self.next_time_s += self.update_interval_s
             else:
-                self._print(f'Missed {int(missed_updates)} update(s). Please increase timeout_ms.')
+                self._print(
+                    f'Missed {int(missed_updates)} update(s). Please increase timeout_ms.'
+                )
                 self.next_time_s += self.update_interval_s * (missed_updates + 1)
-        
+
         if self.print_intervals:
             last_time = datetime.datetime.fromtimestamp(last_time_s)
             next_time = datetime.datetime.fromtimestamp(self.next_time_s)
             self._print(f'Interval: {last_time:%H:%M:%S.%f} -> {next_time:%H:%M:%S.%f}')
-        
+
         time.sleep(self.next_time_s - current_time_s)
         return last_time_s, self.next_time_s
 
@@ -104,8 +108,9 @@ class InfluxDbSource(BaseSource):
 
         # Initialize timer
         self.timer = InfluxDbSourceTimer(
-            update_interval_s=1e-3 * timeout_ms, 
-            print_intervals=self.config.print_intervals)
+            update_interval_s=1e-3 * timeout_ms,
+            print_intervals=self.config.print_intervals,
+        )
         self.time_delay = self.config.time_delay
 
         self.query_api: QueryApi = self.client.query_api()
