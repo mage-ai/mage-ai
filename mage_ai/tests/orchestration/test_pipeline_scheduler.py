@@ -118,7 +118,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
 
         pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
-            start_time=datetime(2023, 10, 12, 13, 13, 20),
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
         )))
 
         # No previous pipeline runs
@@ -159,7 +159,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
 
         pipeline_schedule = PipelineSchedule.create(**merge_dict(shared_attrs, dict(
-            start_time=datetime(2023, 10, 12, 13, 13, 20),
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
         )))
 
         # No previous pipeline runs
