@@ -1100,6 +1100,21 @@ class Block:
         logger: Logger = None,
         logging_tags: Dict = None,
     ) -> Generator[None, None, None]:
+        """
+        Redirect stdout and stderr based on the input arguments. If no input arguments are
+        passed in, then stdout and stderr will be redirected to system stdout.
+
+        Args:
+            build_block_output_stdout (optional): A function that returns a file-like object.
+            from_notebook (optional): Whether the block is being executed from the notebook.
+                Defaults to False.
+            logger (optional): A logger object.
+            logging_tags (optional): A dictionary of logging tags.
+
+        Returns:
+            Generator: A contextmanager generator that yields the redirected stdout and stderr.
+                The return value is meant to be used in a with statement.
+        """
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
         elif logger is not None and not from_notebook:
