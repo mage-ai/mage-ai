@@ -56,6 +56,7 @@ import { useWindowSize } from '@utils/sizes';
 type TripleLayoutProps = {
   after?: any;
   afterHeader?: any;
+  afterHeaderOffset?: number;
   afterHeightOffset?: number;
   afterHidden: boolean;
   afterMousedownActive: boolean;
@@ -65,6 +66,7 @@ type TripleLayoutProps = {
   afterWidth?: number;
   before?: any;
   beforeHeader?: any;
+  beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
   beforeHidden: boolean;
   beforeMousedownActive: boolean;
@@ -92,6 +94,7 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   afterHeader,
+  afterHeaderOffset,
   afterHeightOffset,
   afterHidden,
   afterMousedownActive,
@@ -101,6 +104,7 @@ function TripleLayout({
   afterWidth = 0,
   before,
   beforeHeader,
+  beforeHeaderOffset,
   beforeHeightOffset,
   beforeHidden,
   beforeMousedownActive,
@@ -256,7 +260,7 @@ function TripleLayout({
   ]);
   const afterContent = useMemo(() => (
     <>
-      {setAfterHidden && (
+      {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
             style={{
@@ -318,7 +322,7 @@ function TripleLayout({
         verticalOffset={afterHeader
           ? afterSubheader
             ? ASIDE_HEADER_HEIGHT + afterHeightOffset
-            : afterHeightOffset
+            : (afterHeaderOffset || afterHeightOffset)
           : null
         }
       >
@@ -413,7 +417,10 @@ function TripleLayout({
       <BeforeInnerStyle
         noScrollbarTrackBackground
         ref={refBeforeInner}
-        verticalOffset={beforeHeader ? beforeHeightOffset : null}
+        verticalOffset={beforeHeader
+          ? (beforeHeaderOffset || beforeHeightOffset)
+          : null
+        }
       >
         {!beforeHidden && before}
       </BeforeInnerStyle>
