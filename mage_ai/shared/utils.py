@@ -3,7 +3,7 @@ import re
 import socket
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from mage_ai.shared.strings import replacer
 
@@ -96,14 +96,28 @@ def convert_python_type_to_bigquery_type(python_type):
     return 'STRING'
 
 
-def convert_python_type_to_trino_type(python_type, usr_data_types):
+def convert_python_type_to_trino_type(python_type, usr_data_types: Dict):
+    """This method converts Python Data Type to Trino Data Type
+    It also allows for the user to set TIMESTAMP precision using the
+    usr_data_type dict
+
+    Args:
+        python_type: Python Data Type
+        usr_data_types (dict | None): Trino settings dict containing user data type
+        modifications
+
+    Returns:
+        str: Trino SQL Data Type string
+    """
+    if usr_data_types is None:
+        usr_data_types = {}
     if python_type is int:
         return 'BIGINT'
     elif python_type is float:
         return 'DOUBLE'
     elif python_type is bool:
         return 'BOOLEAN'
-    elif python_type is datetime and usr_data_types is None:
+    elif python_type is datetime and usr_data_types.get('timestamp_precision') is None:
         return 'TIMESTAMP'
     elif python_type is datetime and usr_data_types.get('timestamp_precision') is not None:
         return f"TIMESTAMP({usr_data_types.get('timestamp_precision')})"
