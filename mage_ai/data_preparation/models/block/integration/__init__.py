@@ -177,6 +177,14 @@ class IntegrationBlock(Block):
             schema_original = None
             schema_updated = None
             schema_index = None
+            # Support an 'aliases' property for columns, which keeps types mapped correctly
+            # in case of transformer code using pandas.rename
+            output_col_aliases = {}
+            # We need to look at original stream_catalog schema props:
+            for _name, col_props in stream_catalog['schema']['properties'].items():
+                for alias in col_props.get('aliases', []):
+                    output_col_aliases[alias] = col_props
+
             output_arr = []
             records_transformed = 0
             df_sample = None
@@ -246,6 +254,13 @@ class IntegrationBlock(Block):
                                         if k in properties_original else v
                                         for k, v in properties_updated.items()
                                     }
+                                    # Separately, update schema types from alias map
+                                    if len(output_col_aliases.keys()):
+                                        for cname in schema_updated['schema']['properties'].keys():
+                                            if cname in output_col_aliases:
+                                                prop = output_col_aliases[cname]
+                                                schema_updated['schema']['properties'][cname] = prop
+
                                     # Update column names in unique_constraints and key_properties
                                     new_columns = schema_updated['schema']['properties'].keys()
                                     __update_col_names(
