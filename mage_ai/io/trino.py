@@ -4,6 +4,7 @@ from typing import IO, List, Mapping, Union
 
 import numpy as np
 import simplejson
+import urllib3
 from pandas import DataFrame, Series
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection
@@ -21,6 +22,8 @@ from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
 )
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Cursor(CursorParent):
