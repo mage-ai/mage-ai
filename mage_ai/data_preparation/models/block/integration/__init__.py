@@ -256,11 +256,10 @@ class IntegrationBlock(Block):
                                     }
                                     # Separately, update schema types from alias map
                                     if len(output_col_aliases.keys()):
-                                        for cname in schema_updated['schema']['properties']:
+                                        for cname in schema_updated['schema']['properties'].keys():
                                             if cname in output_col_aliases:
                                                 prop = output_col_aliases[cname]
                                                 schema_updated['schema']['properties'][cname] = prop
-                                                    
 
                                     # Update column names in unique_constraints and key_properties
                                     new_columns = schema_updated['schema']['properties'].keys()
