@@ -141,7 +141,7 @@ class IntegrationBlock(Block):
                         json.dumps(selected_streams),
                     ]
 
-                proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
                     f.write(line.decode()),
@@ -354,11 +354,7 @@ class IntegrationBlock(Block):
                 ),
                 '--input_file_path',
                 source_output_file_path,
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            with open(f'data_exporter_output_{self.uuid}.txt', 'w') as f:
-                for line in proc.stderr:
-                    f.write(line.decode())
+            ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             for line in proc.stdout:
                 print_log_from_line(
