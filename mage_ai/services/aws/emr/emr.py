@@ -41,8 +41,10 @@ def create_a_new_cluster(
     idle_timeout=0,
     keep_alive=False,
     log_uri=None,
-    tags=dict(),
+    tags=None,
 ):
+    if tags is None:
+        tags = dict()
     region_name = get_aws_region_name()
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
@@ -72,6 +74,9 @@ def create_a_new_cluster(
         Tags=[dict(Key=k, Value=v) for k, v in tags.items()],
         VisibleToAllUsers=True,
     )
+    managed_scaling_policy = emr_config.get_managed_scaling_policy()
+    if managed_scaling_policy:
+        emr_kwargs['ManagedScalingPolicy'] = managed_scaling_policy
     if log_uri is not None:
         emr_kwargs['LogUri'] = log_uri
     if bootstrap_script_path is not None:
