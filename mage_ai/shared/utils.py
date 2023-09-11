@@ -8,7 +8,9 @@ from typing import List
 from mage_ai.shared.strings import replacer
 
 
-def clean_name(name, allow_characters: List[str] = []):
+def clean_name(name, allow_characters: List[str] = None):
+    if allow_characters is None:
+        allow_characters = []
     for c in ['\ufeff', '\uFEFF', '"', '$', '\n', '\r', '\t']:
         name = name.replace(c, '')
 
@@ -35,7 +37,7 @@ def clean_name(name, allow_characters: List[str] = []):
 def files_in_path(path, verbose=0):
     files = []
     # r=root, d=directories, f = files
-    for r, d, f in os.walk(path):
+    for r, _, f in os.walk(path):
         for file in f:
             files.append(os.path.join(r, file))
 
@@ -48,7 +50,8 @@ def files_in_path(path, verbose=0):
 
 def files_in_single_path(path):
     f = []
-    for (dirpath, dirnames, filenames) in os.walk(path):
+    # dirpath, dirnames, filenames
+    for (dirpath, _, filenames) in os.walk(path):
         f.extend([os.path.join(dirpath, file) for file in filenames])
         break
     return f
