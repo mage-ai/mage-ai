@@ -5,18 +5,18 @@ import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import api from '@api';
-import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   AggregationFunctionEnum,
+  ChartStyleEnum,
   ChartTypeEnum,
   SortOrderEnum,
   TimeIntervalEnum,
-  VARIABLE_NAME_TIME_INTERVAL,
   VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_METRICS,
-  ChartStyleEnum,
+  VARIABLE_NAME_TIME_INTERVAL,
   VARIABLE_NAME_Y_SORT_ORDER,
 } from '@interfaces/ChartBlockType';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DataSourceEnum } from '@interfaces/BlockLayoutItemType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';

@@ -1001,6 +1001,7 @@ function BlockLayout({
           />
         </>
       )}
+      beforeHeaderOffset={6 * UNIT}
       beforeHeightOffset={topOffset || 0}
       beforeHidden={beforeHidden}
       beforeMousedownActive={beforeMousedownActive}
