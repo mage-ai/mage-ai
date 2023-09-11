@@ -95,7 +95,7 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 
    </Accordion>
    <Accordion title="Kubernetes" icon="network-wired">
-      4. Start a Kubernetes cluster locally
+      1. Start a Kubernetes cluster locally
 
          [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
 
@@ -103,12 +103,12 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
          * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
          * [Minikube](https://minikube.sigs.k8s.io/docs/start/)
 
-      5. Download and update Kubernetes config file
+      2. Download and update Kubernetes config file
 
          * Download Mage Kubernetes config file. https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml
          * Replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
 
-      6. Run Mage app in Kubernetes cluster
+      3. Run Mage app in Kubernetes cluster
 
          * Install command line tool [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) if you haven't.
          * Run command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod.
