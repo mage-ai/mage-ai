@@ -363,7 +363,7 @@ function PipelineListPage() {
       textArea={!pipelineName}
       title={pipelineName
         ? 'Rename pipeline'
-        : 'Edit description'
+        : `Edit description for ${pipeline?.uuid}`
       }
       value={pipelineName ? pipelineName : pipelineDescription}
     />
@@ -642,7 +642,10 @@ function PipelineListPage() {
         },
         {
           label: () => 'Edit description',
-          onClick: () => showInputModal({ pipelineDescription: selectedPipeline?.description }),
+          onClick: () => showInputModal({
+            pipeline: selectedPipeline,
+            pipelineDescription: selectedPipeline?.description,
+          }),
           uuid: 'Pipelines/MoreActionsMenu/EditDescription',
         },
       ]}
@@ -675,9 +678,7 @@ function PipelineListPage() {
     query,
     router,
     searchText,
-    selectedPipeline?.description,
-    selectedPipeline?.name,
-    selectedPipeline?.uuid,
+    selectedPipeline,
     showInputModal,
     tags,
   ]);
@@ -851,7 +852,7 @@ function PipelineListPage() {
       let value = pipeline?.[groupByQuery];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
-        const { schedules = [] } = pipeline;
+        const { schedules = [] } = pipeline || {};
         // TODO (tommy dang): when is the pipeline status RETRY?
         const schedulesCount = schedules.length;
         const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
