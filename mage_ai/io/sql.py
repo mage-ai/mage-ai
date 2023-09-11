@@ -53,12 +53,14 @@ class BaseSQL(BaseSQLConnection):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = [],
+        user_types: Dict = None,
     ) -> str:
         return gen_table_creation_query(
             dtypes,
             schema_name,
             table_name,
             unique_constraints=unique_constraints,
+            user_types=user_types,
         )
 
     def build_create_table_as_command(
@@ -213,6 +215,7 @@ class BaseSQL(BaseSQLConnection):
         allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        overwrite_type: Dict = None,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -299,12 +302,16 @@ class BaseSQL(BaseSQLConnection):
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                     if should_create_table:
+
                         query = self.build_create_table_command(
                             db_dtypes,
                             schema_name,
                             table_name,
                             unique_constraints=unique_constraints,
+                            user_types=overwrite_type,
                         )
+                        with self.printer.print_msg(query):
+                            print('')
                         cur.execute(query)
 
                     self.upload_dataframe(

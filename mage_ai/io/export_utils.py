@@ -1,8 +1,10 @@
 from enum import Enum
-from mage_ai.shared.utils import clean_name
+from typing import Callable, Dict, List, Mapping
+
 from pandas import DataFrame, Series
 from pandas.api.types import infer_dtype
-from typing import Callable, Dict, List, Mapping
+
+from mage_ai.shared.utils import clean_name, get_user_type
 
 """
 Utilities for exporting Python data frames to external databases.
@@ -103,6 +105,7 @@ def gen_table_creation_query(
     schema_name: str,
     table_name: str,
     unique_constraints: List[str] = [],
+    user_types: Dict = None,
 ) -> str:
     """
     Generates a database table creation query from a data frame.
@@ -117,8 +120,20 @@ def gen_table_creation_query(
         str: Table creation query for this table.
     """
     query = []
-    for cname in dtypes:
-        query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
+    if user_types is not None:
+        user_mod_columns, col_with_usr_types = get_user_type(user_types)
+
+        for cname in dtypes:
+            if cname in user_mod_columns:
+                pass
+            else:
+                query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
+
+        query = query + col_with_usr_types
+
+    else:
+        for cname in dtypes:
+            query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
 
     if schema_name:
         full_table_name = f'{schema_name}.{table_name}'
