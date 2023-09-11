@@ -96,17 +96,17 @@ def convert_python_type_to_bigquery_type(python_type):
     return 'STRING'
 
 
-def convert_python_type_to_trino_type(python_type, precision):
+def convert_python_type_to_trino_type(python_type, usr_data_types):
     if python_type is int:
         return 'BIGINT'
     elif python_type is float:
         return 'DOUBLE'
     elif python_type is bool:
         return 'BOOLEAN'
-    elif python_type is datetime and precision is None:
+    elif python_type is datetime and usr_data_types is None:
         return 'TIMESTAMP'
-    elif python_type is datetime and precision is not None:
-        return f'TIMESTAMP({precision})'
+    elif python_type is datetime and usr_data_types is not None:
+        return f'TIMESTAMP({usr_data_types.get("precision")})'
     return 'VARCHAR'
 
 

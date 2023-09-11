@@ -116,5 +116,6 @@ default:
     source: trino-cli                         # Optional
     user: admin
     verify: /path/to/your/ca.crt              # Optional
-    precision: 3                              # Optional. Set TIMESTAMP(n) precision
+    data_type_properties:
+      precision: 3                              # Optional. Set TIMESTAMP(n) precision
 ```

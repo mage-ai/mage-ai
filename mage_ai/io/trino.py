@@ -95,7 +95,7 @@ class Trino(BaseSQL):
                 source=settings.get('source'),
                 user=settings.get('user'),
                 verify=settings.get('verify'),
-                precision=settings.get('precision'),
+                data_type_properties=settings.get('data_type_properties'),
             )
 
         return cls(
@@ -254,7 +254,7 @@ class Trino(BaseSQL):
     def get_type(self, column: Series, dtype: str, settings) -> str:
         return convert_python_type_to_trino_type(
             convert_pandas_dtype_to_python_type(dtype),
-            settings.get('precision')
+            settings.get('data_type_properties')
         )
 
     def export(
