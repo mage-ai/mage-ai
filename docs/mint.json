@@ -272,6 +272,7 @@
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
+                "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
