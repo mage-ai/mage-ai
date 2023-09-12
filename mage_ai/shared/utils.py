@@ -96,7 +96,7 @@ def convert_python_type_to_bigquery_type(python_type):
     return 'STRING'
 
 
-def convert_python_type_to_trino_type(python_type, usr_data_types: Dict):
+def convert_python_type_to_trino_type(python_type, usr_data_types: Dict = None):
     """This method converts Python Data Type to Trino Data Type
     It also allows for the user to set TIMESTAMP precision using the
     usr_data_type dict
@@ -117,10 +117,11 @@ def convert_python_type_to_trino_type(python_type, usr_data_types: Dict):
         return 'DOUBLE'
     elif python_type is bool:
         return 'BOOLEAN'
-    elif python_type is datetime and usr_data_types.get('timestamp_precision') is None:
-        return 'TIMESTAMP'
-    elif python_type is datetime and usr_data_types.get('timestamp_precision') is not None:
-        return f"TIMESTAMP({usr_data_types.get('timestamp_precision')})"
+    elif python_type is datetime:
+        dtype = 'TIMESTAMP'
+        if usr_data_types.get('timestamp_precision') is not None:
+            dtype = f"{dtype}({usr_data_types.get('timestamp_precision')})"
+        return dtype
     return 'VARCHAR'
 
 
