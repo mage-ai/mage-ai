@@ -54,6 +54,10 @@ The time delay is given as [InfluxDB duration](https://docs.influxdata.com/flux/
 
 The `batch_size` limits the size of batches returned by the data reader. 
 If `print_intervals` is `true` the intervals are printed on every time step.
+The `filter_fn` can be used to further specify the data, e.g. `r._measurement == "cpu" and r._field == "usage_system"` (note the usage of single quotation marks outside and double quotation marks inside the filter_fn string).
+Defaults to `true` for no further filtering. 
+For documentation, see [InfluxDB filter() function](https://docs.influxdata.com/flux/v0.x/stdlib/universe/filter/)
+
 
 ```yaml
 connector_type: influxdb
@@ -61,8 +65,9 @@ url: "http://localhost:8086"
 token: "my-token"
 org: "my-org"
 bucket: "data"
-time_delay: '-5m'
+time_delay: "5m"
 timeout_ms: 1000
 batch_size: 100
 print_intervals: false
+filter_fn: 'true'
 ```

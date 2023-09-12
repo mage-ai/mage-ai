@@ -1,7 +1,7 @@
 import datetime
 import time
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Tuple
 
 from influxdb_client import InfluxDBClient, QueryApi
 from influxdb_client.client.flux_table import TableList
@@ -11,13 +11,27 @@ from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
 
 
-def build_query(bucket: str, start_time: float, stop_time: float, time_delay: str):
-    '''
-    Build Flux query for data in the range (start_time + time_delay, stop_time + time_delay)
-    start_time and stop_time are float timestamps
-    time_delay should be negative and of flux type duration:
-    Work with durations, see https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/
-    '''
+def build_query(
+    bucket: str,
+    start_time: float,
+    stop_time: float,
+    time_delay: str,
+    filter_fn: str,
+) -> str:
+    """Build flux query for data in the range (start_time - time_delay, stop_time - time_delay)
+
+    Args:
+        bucket (str): Bucket to query from.
+        stop_time (float): Time range stop timestamp.
+        time_delay (str): Flux duration. E.g. 3d12h4m25s for 3 days, 12 hours, 4 minutes, and 25 seconds.
+            For documentation, see https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/
+        filter_fn (str): Flux filter function. E.g. r._measurement == "cpu" and r._field == "usage_system".
+            For documentation, see https://docs.influxdata.com/flux/v0.x/stdlib/universe/filter/
+
+    Returns:
+        str: Flux query.
+    """
+
     start_time_ns = int(1e9 * start_time)
     stop_time_ns = int(1e9 * stop_time)
     # experimental.addDuration will be removed in the future, use date.add instead
@@ -26,28 +40,39 @@ def build_query(bucket: str, start_time: float, stop_time: float, time_delay: st
         'import "experimental" '
         f'from(bucket:"{bucket}") '
         '|> range('
-        f'start: experimental.addDuration(d: {time_delay}, to: time(v: {start_time_ns})), '
-        f'stop: experimental.addDuration(d: {time_delay}, to: time(v: {stop_time_ns}))'
+        f'start: experimental.addDuration(d: -{time_delay}, to: time(v: {start_time_ns})), '
+        f'stop: experimental.addDuration(d: -{time_delay}, to: time(v: {stop_time_ns}))'
         ')'
+        f'|> filter(fn: (r) => {filter_fn})'
     )
     return query
 
 
 def batches(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
-        yield iterable[i: min(i + batch_size, len(iterable))]
+        yield iterable[i : min(i + batch_size, len(iterable))]
 
 
 class InfluxDbSourceTimer:
+    """Timer class wakes every update_interval_s seconds, returning the last and current wakeup time.
+    """    
     def __init__(self, update_interval_s: float = 1.0, print_intervals=False):
-        '''
-        Timer class wakes every n seconds and returns last and current wakeup time
-        '''
+        """ Initialize InfluxDbSourceTime.
+        
+        Args:
+            update_interval_s (float, optional): Time wait() blocks before returning. Defaults to 1.0 second.
+            print_intervals (bool, optional): If True time intervals are printed on every time step. Defaults to False.
+        """
         self.next_time_s = None
         self.update_interval_s = update_interval_s
         self.print_intervals = print_intervals
 
-    def wait(self):
+    def wait(self) -> Tuple[float, float]:
+        """ Wait one interval before returning.
+
+        Returns:
+            Tuple[float, float]: Last and current timestamp
+        """        
         last_time_s = self.next_time_s
         current_time_s = time.time()
         if not self.next_time_s:
@@ -86,8 +111,9 @@ class InfluxDbConfig(BaseConfig):
     measurement: str = 'default'
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = 1000
-    time_delay: str = '-5m'
+    time_delay: str = '5m'
     print_intervals: bool = False
+    filter_fn: str = 'true'
 
 
 class InfluxDbSource(BaseSource):
@@ -121,7 +147,11 @@ class InfluxDbSource(BaseSource):
         while True:
             last_time, current_time = self.timer.wait()
             query = build_query(
-                self.config.bucket, last_time, current_time, self.time_delay
+                self.config.bucket,
+                last_time,
+                current_time,
+                self.time_delay,
+                self.config.filter_fn,
             )
             tables: TableList = self.query_api.query(query)
             for i, table in enumerate(tables):
@@ -153,7 +183,11 @@ class InfluxDbSource(BaseSource):
         while True:
             last_time, current_time = self.timer.wait()
             query = build_query(
-                self.config.bucket, last_time, current_time, self.time_delay
+                self.config.bucket,
+                last_time,
+                current_time,
+                self.time_delay,
+                self.config.filter_fn,
             )
             tables: TableList = self.query_api.query(query)
             messages = []
