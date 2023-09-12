@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from mage_ai.cluster_manager.cluster_manager import ClusterManager
+from mage_ai.services.aws.emr.config import EmrConfig
 from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
 from mage_ai.services.aws.emr.launcher import create_cluster
 from mage_ai.settings.repo import get_repo_config, get_repo_path
@@ -35,11 +36,13 @@ class EmrClusterManager(ClusterManager):
         ) for c in valid_clusters]
 
     def create_cluster(self):
+        emr_config = EmrConfig.load(config=get_repo_config().emr_config or dict())
+
         return create_cluster(
             get_repo_path(),
             done_status=None,
             tags=dict(name=CLUSTER_NAME),
-            bootstrap_script_path=get_repo_config().emr_config.bootstrap_script_path,
+            bootstrap_script_path=emr_config.bootstrap_script_path,
         )
 
     def set_active_cluster(self, auto_selection=False, cluster_id=None):
