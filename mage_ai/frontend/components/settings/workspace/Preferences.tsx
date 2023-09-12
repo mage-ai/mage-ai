@@ -211,8 +211,9 @@ function Preferences({
                       <Tooltip
                         block
                         description="Display dates in local timezone. Please note that certain pages
-                          (e.g. Logs and Monitor) or components may still be in UTC time. Dates
-                          in local time will have a timezone offset in the timestamp (e.g. -07:00)."
+                          (e.g. Monitor page) or components (e.g. Pipeline run bar charts) may still
+                          be in UTC time. Dates in local time will have a timezone offset in the
+                          timestamp (e.g. -07:00)."
                         lightBackground
                         muted
                         size={ICON_SIZE_MEDIUM}
