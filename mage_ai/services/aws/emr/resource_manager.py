@@ -1,10 +1,16 @@
+import os
+
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.s3 import s3
-import os
 
 
 class EmrResourceManager:
-    def __init__(self, s3_bucket, s3_path_prefix):
+    def __init__(
+        self,
+        s3_bucket: str,
+        s3_path_prefix: str,
+        bootstrap_script_path: str = None,
+    ):
         self.s3_bucket = s3_bucket
         self.s3_path_prefix = s3_path_prefix or ''
         if self.s3_bucket is None:
@@ -12,6 +18,7 @@ class EmrResourceManager:
                             'Add "remote_variables_dir: s3://[bucket]/[path]" to'
                             ' project\'s metadata.yaml file.'
                             )
+        self.bootstrap_script_path = bootstrap_script_path
 
     @property
     def bootstrap_script_path(self) -> str:
@@ -26,7 +33,11 @@ class EmrResourceManager:
         return os.path.join('s3://', self.s3_bucket, self.s3_path_prefix, 'logs')
 
     def upload_bootstrap_script(self) -> None:
-        bootstrap_script_code = template_env.get_template(
-            'pipeline_execution/emr_bootstrap.sh',
-        ).render()
+        if self.bootstrap_script_path is None:
+            bootstrap_script_code = template_env.get_template(
+                'pipeline_execution/emr_bootstrap.sh',
+            ).render()
+        else:
+            with open(self.bootstrap_script_path, 'r', encoding='utf-8') as f:
+                bootstrap_script_code = f.read()
         s3.Client(self.s3_bucket).upload(self.bootstrap_script_path_key, bootstrap_script_code)

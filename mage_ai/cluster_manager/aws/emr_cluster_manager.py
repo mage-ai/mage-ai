@@ -5,7 +5,7 @@ from pathlib import Path
 from mage_ai.cluster_manager.cluster_manager import ClusterManager
 from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
 from mage_ai.services.aws.emr.launcher import create_cluster
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import get_repo_config, get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 
@@ -39,6 +39,7 @@ class EmrClusterManager(ClusterManager):
             get_repo_path(),
             done_status=None,
             tags=dict(name=CLUSTER_NAME),
+            bootstrap_script_path=get_repo_config().emr_config.bootstrap_script_path,
         )
 
     def set_active_cluster(self, auto_selection=False, cluster_id=None):
@@ -64,7 +65,7 @@ class EmrClusterManager(ClusterManager):
             fcontent = f.read()
 
         config = json.loads(fcontent)
-        for k, v in config.items():
+        for _, v in config.items():
             if type(v) is dict and 'url' in v:
                 v['url'] = f'http://{emr_dns}:8998'
 
