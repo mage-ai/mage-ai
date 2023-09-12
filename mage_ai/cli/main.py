@@ -225,6 +225,11 @@ def run(
 
     with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
          if enable_new_relic else nullcontext():
+        sync_config = get_sync_config()
+        if sync_config and sync_config.sync_on_executor_start:
+            result = run_git_sync(sync_config=sync_config)
+            log_git_sync(result, logger)
+
         runtime_variables = dict()
         if runtime_vars is not None:
             runtime_variables = parse_runtime_variables(runtime_vars)
@@ -233,11 +238,6 @@ def run(
         pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
         db_connection.start_session()
-
-        sync_config = get_sync_config()
-        if sync_config and sync_config.sync_on_start:
-            result = run_git_sync(sync_config=sync_config)
-            log_git_sync(result, logger)
 
         if pipeline_run_id is None:
             default_variables = get_global_variables(pipeline_uuid)
