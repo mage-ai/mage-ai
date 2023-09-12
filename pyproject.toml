@@ -4,14 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mage-ai"
-version = "0.9.21"
+version = "0.9.22"
 description = "Mage is a tool for building and deploying data pipelines."
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 authors = [
-  {email = "eng@mage.ai"},
-  {name = "Mage"}
+  {name = "Mage", email = "eng@mage.ai"}
 ]
 maintainers = [
   {name = "Mage", email = "eng@mage.ai"}
@@ -26,7 +25,6 @@ dependencies = [
   'aiofiles==22.1.0',
   'aiohttp',
   'alembic>=1.7.5',
-  'async_timeout',
   'bcrypt==4.0.1',
   'click',
   'croniter==1.3.7',
@@ -34,7 +32,7 @@ dependencies = [
   'dask>=2022.2.0',
   'Faker==4.14.0',
   'freezegun==1.2.2',
-  'GitPython==3.1.31',
+  'GitPython==3.1.34',
   'httpx==0.23.1',
   'inflection==0.5.1',
   'ipython==7.34.0',
@@ -50,7 +48,6 @@ dependencies = [
   'numpy>=1.21.0',
   'openai>=0.27.8',
   'pandas~=1.3',
-  'pika==1.3.1',
   'polars',
   'protobuf',
   'psutil',
@@ -78,7 +75,7 @@ dependencies = [
 [project.optional-dependencies]
 # cloud provider
 aws = [
-  'aws-secretsmanager-caching',
+  'aws-secretsmanager-caching==1.1.1.5',
   'boto3==1.26.60',
   'botocore==1.29.60',
   'requests_aws4auth==1.1.2',
@@ -96,12 +93,13 @@ google = [
   'google-cloud-iam==2.9.0',
   'google-cloud-pubsub==2.16.0',
   'google-cloud-run==0.5.0',
-  'google-cloud-storage==2.5.0',
+  'mage-ai[google-cloud-storage]',
 ]
 
 # sources/destinations
 bigquery = [
-  'google-cloud-bigquery[pandas]~=3.0',
+  'google-cloud-bigquery~=3.0',
+  'db-dtypes==1.0.5',
 ]
 clickhouse = [
   'clickhouse-connect==0.5.20',
@@ -140,18 +138,25 @@ opensearch = [
 oracle = [
   'oracledb==1.3.1',
 ]
+pika = [
+  'pika==1.3.1',
+]
 postgres = [
   'psycopg2-binary==2.9.3',
   'psycopg2==2.9.3',
 ]
 redshift = [
+  'mage-ai[aws]',
   'redshift-connector==2.0.909',
+]
+s3 = [
+  'mage-ai[aws]',
 ]
 snowflake = [
   'snowflake-connector-python==2.7.9',
 ]
 spark = [
-  'pyspark',
+  'mage-ai[aws]',
 ]
 trino = [
   'trino==0.321.0',
@@ -184,6 +189,26 @@ sentry = [
   'sentry-sdk==1.19.1',
 ]
 
+# misc
+ai = [
+  'langchain>=0.0.222',
+  'openai>=0.27.8',
+]
+google-cloud-storage = [
+  'google-cloud-storage==2.5.0'
+]
+hdf5 = [
+  'tables==3.7.0'
+]
+streaming = [
+  'mage-ai[kafka]',
+  'mage-ai[influxdb]',
+  'mage-ai[opensearch]',
+  'mage-ai[pika]',
+  'mage-ai[mongodb]',
+  'requests_aws4auth==1.1.2',
+]
+
 # groups
 cloud-providers = [
   'mage-ai[aws]',
@@ -212,8 +237,10 @@ sources-destinations = [
   'mage-ai[mysql]',
   'mage-ai[opensearch]',
   'mage-ai[oracle]',
+  'mage-ai[pika]',
   'mage-ai[postgres]',
   'mage-ai[redshift]',
+  'mage-ai[s3]',
   'mage-ai[snowflake]',
   'mage-ai[spark]',
   'mage-ai[trino]',
@@ -224,6 +251,7 @@ transformations = [
 ]
 
 all = [
+  'mage-ai[ai]',
   'mage-ai[cloud-providers]',
   'mage-ai[observability]',
   'mage-ai[sources-destinations]',
@@ -244,9 +272,9 @@ profile = "black"
 
 [tool.poetry]
 name = "mage-ai"
-version = "0.9.21"
+version = "0.9.22"
 description = "DevEx poetry configuration"
-authors = ["Mage"]
+authors = ["Mage <eng@mage.ai>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
