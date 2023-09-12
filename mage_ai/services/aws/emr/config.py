@@ -23,7 +23,7 @@ class EmrScalingPocliy(BaseConfig):
 
 @dataclass
 class EmrConfig(BaseConfig):
-    bootstrap_action_script_path: str = None
+    bootstrap_script_path: str = None
     ec2_key_name: str = None
     master_security_group: str = None
     slave_security_group: str = None
