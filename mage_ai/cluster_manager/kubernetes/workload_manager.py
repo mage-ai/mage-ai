@@ -147,6 +147,7 @@ class WorkloadManager:
 
         ingress_name = kwargs.get('ingress_name')
 
+        # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
@@ -312,9 +313,9 @@ class WorkloadManager:
         try:
             if ingress_name:
                 self.add_service_to_ingress_paths(ingress_name, service_name, name)
-        except Exception:
-            # TODO: aggregate errors and show them to the user
-            pass
+        except Exception as err:
+            self.delete_workload(name)
+            raise err
 
         return k8s_service
 
@@ -526,4 +527,8 @@ class WorkloadManager:
                 }
             }
         }
+        persistent_volumes = self.core_client.list_persistent_volume().items
+        for pv in persistent_volumes:
+            if pv.metadata.name == f'{name}-pv':
+                return
         self.core_client.create_persistent_volume(pv)
