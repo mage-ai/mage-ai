@@ -1,0 +1,150 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "createdDate": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "id": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "name": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "userId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "url": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "selected": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "displayOrder": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "screenAdjust": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "screenWidth": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "screenHeight": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "lastModDt": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "lastAccessDt": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "locked": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "accessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "categoryAccessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "autoShared": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "favorite": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "notDefaultFilter": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "excludeGridWidgetsFromPdfExport": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "excludeExpandedGridFromPdfExport": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "my": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "showWidgetList": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "dashNameAsValidFilename": {
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    }
+}
