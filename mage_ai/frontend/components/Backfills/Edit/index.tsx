@@ -49,7 +49,6 @@ import { onSuccess } from '@api/utils/response';
 import { parseVariables } from '@components/Sidekick/utils';
 import { selectKeys } from '@utils/hash';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
-import { display } from 'styled-system';
 
 type BackfillEditProps = {
   backfill: BackfillType;

@@ -67,17 +67,17 @@ import {
   convertSeconds,
   convertToSeconds,
   getDatetimeFromDateAndTime,
-  getTimeInUTC,
   getTriggerApiEndpoint,
   getTriggerTypes,
 } from '../utils';
+import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
-import { padTime, utcStringToLocalDate } from '@utils/date';
 
 type EditProps = {
   errors: ErrorsType;
@@ -184,22 +184,12 @@ function Edit({
   useEffect(
     () => {
       if (startTime) {
-        if (displayLocalTimezone) {
-          const localStartTimeDate = utcStringToLocalDate(startTime);
-          setDate(localStartTimeDate);
-          setTime({
-            hour: padTime(String(localStartTimeDate.getHours())),
-            minute: padTime(String(localStartTimeDate.getMinutes())),
-          });
-        } else {
-          const dateTimeSplit = startTime.split(' ');
-          const timePart = dateTimeSplit[1];
-          setDate(getTimeInUTC(startTime));
-          setTime({
-            hour: timePart.substring(0, 2),
-            minute: timePart.substring(3, 5),
-          });
-        }
+        const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
+          startTime,
+          { localTimezone: displayLocalTimezone },
+        );
+        setDate(startDatetimeObj?.date);
+        setTime(startDatetimeObj?.time);
 
         const mt = moment(startTime).utc();
         setLandingTimeData({
@@ -699,7 +689,7 @@ function Edit({
       }}
       placeholder="Description"
       value={description}
-    />
+    />,
   ]), [description]);
 
   const detailsMemo = useMemo(() => {
