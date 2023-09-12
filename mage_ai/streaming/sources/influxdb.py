@@ -23,10 +23,12 @@ def build_query(
     Args:
         bucket (str): Bucket to query from.
         stop_time (float): Time range stop timestamp.
-        time_delay (str): Flux duration. E.g. 3d12h4m25s for 3 days, 12 hours, 4 minutes, and 25 seconds.
-            For documentation, see https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/
-        filter_fn (str): Flux filter function. E.g. r._measurement == "cpu" and r._field == "usage_system".
-            For documentation, see https://docs.influxdata.com/flux/v0.x/stdlib/universe/filter/
+        time_delay (str): Flux duration.
+            E.g. 3d12h4m25s for 3 days, 12 hours, 4 minutes, and 25 seconds.
+            Documentation: https://docs.influxdata.com/flux/v0.x/data-types/basic/duration/.
+        filter_fn (str): Flux filter function.
+            E.g. r._measurement == "cpu" and r._field == "usage_system".
+            Documentation: https://docs.influxdata.com/flux/v0.x/stdlib/universe/filter/.
 
     Returns:
         str: Flux query.
@@ -50,29 +52,31 @@ def build_query(
 
 def batches(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
-        yield iterable[i : min(i + batch_size, len(iterable))]
+        yield iterable[i: min(i + batch_size, len(iterable))]
 
 
 class InfluxDbSourceTimer:
-    """Timer class wakes every update_interval_s seconds, returning the last and current wakeup time.
-    """    
+    """Timer class wakes every update_interval_s."""
+
     def __init__(self, update_interval_s: float = 1.0, print_intervals=False):
-        """ Initialize InfluxDbSourceTime.
-        
+        """Initialize InfluxDbSourceTime.
+
         Args:
-            update_interval_s (float, optional): Time wait() blocks before returning. Defaults to 1.0 second.
-            print_intervals (bool, optional): If True time intervals are printed on every time step. Defaults to False.
+            update_interval_s (float, optional): Time wait() blocks before returning.
+                Defaults to 1.0 second.
+            print_intervals (bool, optional): If True the time intervals are printed.
+                Defaults to False.
         """
         self.next_time_s = None
         self.update_interval_s = update_interval_s
         self.print_intervals = print_intervals
 
     def wait(self) -> Tuple[float, float]:
-        """ Wait one interval before returning.
+        """Wait one interval before returning.
 
         Returns:
-            Tuple[float, float]: Last and current timestamp
-        """        
+            Tuple[float, float]: Last and current timestamp.
+        """
         last_time_s = self.next_time_s
         current_time_s = time.time()
         if not self.next_time_s:
