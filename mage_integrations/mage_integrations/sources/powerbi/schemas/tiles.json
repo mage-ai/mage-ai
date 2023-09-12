@@ -1,0 +1,31 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "title": {
+            "type": ["string", "null"]
+        },
+        "embedUrl": {
+            "type": ["string", "null"],
+            "format": "uri"
+        },
+        "rowSpan": {
+            "type": ["integer", "null"]
+        },
+        "colSpan": {
+            "type": ["integer", "null"]
+        },
+        "reportId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "datasetId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        }
+    }
+}
