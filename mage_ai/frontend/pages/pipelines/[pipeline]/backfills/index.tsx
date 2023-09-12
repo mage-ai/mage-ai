@@ -86,7 +86,7 @@ function PipelineBackfills({
   // ]);
 
   const breadcrumbs = useMemo(() => {
-    let asLink = `/pipelines/${pipelineUUID}/backfills`;
+    const asLink = `/pipelines/${pipelineUUID}/backfills`;
 
     const arr = [
       {
@@ -107,6 +107,7 @@ function PipelineBackfills({
 
     return arr;
   }, [
+    pipelineUUID,
     selectedRow,
   ]);
 

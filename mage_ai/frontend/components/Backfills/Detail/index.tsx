@@ -48,6 +48,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { capitalize } from '@utils/string';
+import { datetimeInLocalTimezone } from '@utils/date';
 import {
   getFormattedVariable,
   getFormattedVariables,
@@ -59,6 +60,7 @@ import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 const LIMIT = 40;
 
@@ -80,6 +82,7 @@ function BackfillDetail({
   variables,
 }: BackfillDetailProps) {
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const router = useRouter();
   const {
     block_uuid: blockUUID,
@@ -189,6 +192,7 @@ function BackfillDetail({
     q,
     router,
     selectedRun,
+    setErrors,
     showPreviewRuns,
     totalRuns,
   ]);
@@ -294,7 +298,10 @@ function BackfillDetail({
             key="backfill_start_date"
             monospace
           >
-            {getTimeInUTCString(startDatetime)}
+            {displayLocalTimezone
+              ? datetimeInLocalTimezone(startDatetime, displayLocalTimezone)
+              : getTimeInUTCString(startDatetime)
+            }
           </Text>,
         ],
         [
@@ -312,7 +319,10 @@ function BackfillDetail({
             key="backfill_end_date"
             monospace
           >
-            {getTimeInUTCString(endDatetime)}
+            {displayLocalTimezone
+              ? datetimeInLocalTimezone(endDatetime, displayLocalTimezone)
+              : getTimeInUTCString(endDatetime)
+            }
           </Text>,
         ],
         [
@@ -380,6 +390,7 @@ function BackfillDetail({
     );
   }, [
     blockUUID,
+    displayLocalTimezone,
     endDatetime,
     intervalType,
     intervalUnits,
