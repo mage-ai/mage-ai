@@ -294,7 +294,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 <img
   alt="data pipeline overview"
-  src="media/data-pipeline-overview.jpg"
+  src="media/data-pipeline-overview.png"
 />
 
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
