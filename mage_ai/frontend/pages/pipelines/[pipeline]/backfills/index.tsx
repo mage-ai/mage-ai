@@ -36,7 +36,6 @@ function PipelineBackfills({
   const pipelineUUID = pipeline.uuid;
   const {
     data: dataPipelineRuns,
-    mutate: fetchPipelineRuns,
   } = api.backfills.list({
     _limit: 20,
     _offset: 0,

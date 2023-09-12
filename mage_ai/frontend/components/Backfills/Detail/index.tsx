@@ -297,6 +297,7 @@ function BackfillDetail({
           <Text
             key="backfill_start_date"
             monospace
+            small
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(startDatetime, displayLocalTimezone)
@@ -318,6 +319,7 @@ function BackfillDetail({
           <Text
             key="backfill_end_date"
             monospace
+            small
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(endDatetime, displayLocalTimezone)

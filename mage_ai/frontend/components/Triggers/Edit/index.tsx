@@ -383,7 +383,7 @@ function Edit({
       data.event_matchers = eventMatchers;
     } else {
       data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
-      data.start_time = date && time?.hour && time?.minute
+      data.start_time = (date && time?.hour && time?.minute)
         ? getDatetimeFromDateAndTime(
           date,
           time,
