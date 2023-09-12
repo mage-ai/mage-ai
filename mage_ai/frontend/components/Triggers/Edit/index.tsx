@@ -63,47 +63,21 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
+  TIME_UNIT_TO_SECONDS,
   convertSeconds,
   convertToSeconds,
+  getDatetimeFromDateAndTime,
   getTimeInUTC,
   getTriggerApiEndpoint,
-  TIME_UNIT_TO_SECONDS,
+  getTriggerTypes,
 } from '../utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-
-const getTriggerTypes = (
-  isStreamingPipeline?: boolean,
-): {
-  description: () => string;
-  label: () => string;
-  uuid: ScheduleTypeEnum;
-}[] => {
-  const triggerTypes = [
-    {
-      description: () => 'This pipeline will run continuously on an interval or just once.',
-      label: () => 'Schedule',
-      uuid: ScheduleTypeEnum.TIME,
-    },
-    {
-      description: () => 'This pipeline will run when a specific event occurs.',
-      label: () => 'Event',
-      uuid: ScheduleTypeEnum.EVENT,
-    },
-    {
-      description: () => 'Run this pipeline when you make an API call.',
-      label: () => 'API',
-      uuid: ScheduleTypeEnum.API,
-    },
-  ];
-
-  return isStreamingPipeline
-    ? triggerTypes.slice(0, 1)
-    : triggerTypes;
-};
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { padTime, utcStringToLocalDate } from '@utils/date';
 
 type EditProps = {
   errors: ErrorsType;
@@ -123,6 +97,7 @@ function Edit({
   variables,
 }: EditProps) {
   const router = useRouter();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
@@ -209,13 +184,22 @@ function Edit({
   useEffect(
     () => {
       if (startTime) {
-        const dateTimeSplit = startTime.split(' ');
-        const timePart = dateTimeSplit[1];
-        setDate(getTimeInUTC(startTime));
-        setTime({
-          hour: timePart.substring(0, 2),
-          minute: timePart.substring(3, 5),
-        });
+        if (displayLocalTimezone) {
+          const localStartTimeDate = utcStringToLocalDate(startTime);
+          setDate(localStartTimeDate);
+          setTime({
+            hour: padTime(String(localStartTimeDate.getHours())),
+            minute: padTime(String(localStartTimeDate.getMinutes())),
+          });
+        } else {
+          const dateTimeSplit = startTime.split(' ');
+          const timePart = dateTimeSplit[1];
+          setDate(getTimeInUTC(startTime));
+          setTime({
+            hour: timePart.substring(0, 2),
+            minute: timePart.substring(3, 5),
+          });
+        }
 
         const mt = moment(startTime).utc();
         setLandingTimeData({
@@ -228,13 +212,20 @@ function Edit({
       } else {
         const currentDatetime = new Date();
         setDate(currentDatetime);
-        setTime({
-          hour: String(currentDatetime.getUTCHours()).padStart(2, '0'),
-          minute: String(currentDatetime.getUTCMinutes()).padStart(2, '0'),
-        });
+        if (displayLocalTimezone) {
+          setTime({
+            hour: padTime(String(currentDatetime.getHours())),
+            minute: padTime(String(currentDatetime.getMinutes())),
+          });
+        } else {
+          setTime({
+            hour: padTime(String(currentDatetime.getUTCHours())),
+            minute: padTime(String(currentDatetime.getUTCMinutes())),
+          });
+        }
       }
     },
-    [startTime],
+    [displayLocalTimezone, startTime],
   );
 
   useEffect(
@@ -393,7 +384,14 @@ function Edit({
     } else {
       data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
       data.start_time = date && time?.hour && time?.minute
-        ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}:00`
+        ? getDatetimeFromDateAndTime(
+          date,
+          time,
+          {
+            convertToUtc: displayLocalTimezone,
+            includeSeconds: true,
+            localTimezone: displayLocalTimezone,
+          })
         : null;
     }
 
@@ -425,6 +423,7 @@ function Edit({
   }, [
     customInterval,
     date,
+    displayLocalTimezone,
     enableSLA,
     eventMatchers,
     isCustomInterval,
@@ -852,7 +851,10 @@ function Edit({
                 onClick={() => setShowCalendar(val => !val)}
                 placeholder="YYYY-MM-DD HH:MM"
                 value={date
-                  ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`
+                  ? getDatetimeFromDateAndTime(
+                    date,
+                    time,
+                    { localTimezone: displayLocalTimezone })
                   : ''
                 }
               />
@@ -865,6 +867,7 @@ function Edit({
                 style={{ position: 'relative' }}
               >
                 <Calendar
+                  localTime={displayLocalTimezone}
                   selectedDate={date}
                   selectedTime={time}
                   setSelectedDate={setDate}
@@ -955,6 +958,7 @@ function Edit({
     cronExpressionInvalid,
     customInterval,
     date,
+    displayLocalTimezone,
     isCustomInterval,
     isStreamingPipeline,
     landingTimeDisabled,

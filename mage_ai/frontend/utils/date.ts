@@ -20,6 +20,7 @@ export const TIME_PERIOD_INTERVAL_MAPPING = {
 
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
+export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
 
@@ -63,7 +64,7 @@ export function dateFormatLong(
 export function datetimeInLocalTimezone(
   datetime: string,
   enableLocalTimezoneConversion?: boolean,
-) {
+): string {
   if (enableLocalTimezoneConversion) {
     return moment
       .utc(datetime)
@@ -72,6 +73,15 @@ export function datetimeInLocalTimezone(
   }
 
   return datetime;
+}
+
+export function utcStringToLocalDate(
+  datetime: string,
+): Date {
+  return moment
+    .utc(datetime)
+    .local()
+    .toDate();
 }
 
 export function utcNowDate(opts?: { dateObj?: boolean }): any {

@@ -520,6 +520,7 @@ function TriggerDetail({
     );
   }, [
     description,
+    displayLocalTimezone,
     isActive,
     nextRunDate,
     pipelineSchedule,
