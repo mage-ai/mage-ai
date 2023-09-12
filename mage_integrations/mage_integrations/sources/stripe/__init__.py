@@ -153,7 +153,7 @@ def new_list(self, api_key=None, stripe_version=None, stripe_account=None, **par
             api_key=api_key,
             stripe_version=stripe_version,
             stripe_account=stripe_account,
-            **params
+            params=params,
         )
         stripe_object._retrieve_params = params  # pylint: disable=protected-access
         return stripe_object
