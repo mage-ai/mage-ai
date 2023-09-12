@@ -100,7 +100,7 @@ def check_scheduler_status(start_snapshot):
 
     current = tracemalloc.take_snapshot()
     stats = current.compare_to(start_snapshot, 'filename')
-    for i, stat in enumerate(stats[:5], 1):
+    for i, stat in enumerate(stats[:10], 1):
         logger.info(f'since_start, i={i}, stat={stat}')
 
     logger.info('Top Current')
