@@ -1,6 +1,7 @@
 import multiprocessing
 import time
 import traceback
+import tracemalloc
 from contextlib import nullcontext
 from enum import Enum
 
@@ -13,7 +14,7 @@ from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
-SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
+SCHEDULER_AUTO_RESTART_INTERVAL = 10_000    # in milliseconds
 
 logger = Logger().new_server_logger(__name__)
 
@@ -76,8 +77,10 @@ class SchedulerManager:
         self.scheduler_process = proc
         self.status = self.SchedulerStatus.RUNNING
         if foreground:
+            tracemalloc.start()
+            start_snapshot = tracemalloc.take_snapshot()
             while True:
-                check_scheduler_status()
+                check_scheduler_status(start_snapshot)
                 time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL / 1000)
 
     def stop_scheduler(self):
@@ -91,6 +94,22 @@ class SchedulerManager:
 scheduler_manager = SchedulerManager()
 
 
-def check_scheduler_status():
+def check_scheduler_status(start_snapshot):
     status = scheduler_manager.get_status(auto_restart=True)
     logger.info(f'Scheduler status: {status}.')
+
+    current = tracemalloc.take_snapshot()
+    stats = current.compare_to(start_snapshot, 'filename')
+    for i, stat in enumerate(stats[:5], 1):
+        logger.info(f'since_start, i={i}, stat={stat}')
+
+    logger.info('Top Current')
+    # Print top current stats
+    for i, stat in enumerate(current.statistics('filename')[:3], 1):
+        logger.info(f'top_current i={i}, stat={stat}')
+
+    traces = current.compare_to(start_snapshot, 'traceback')
+    for stat in traces[:5]:
+        logger.info(f'traceback, memory_blocks={stat.count}, size_kB={stat.size/1024}')
+        for line in stat.traceback.format():
+            logger.info(line)

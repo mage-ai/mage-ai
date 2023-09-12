@@ -4,6 +4,7 @@ import os
 import shutil
 import stat
 import traceback
+import tracemalloc
 import webbrowser
 from time import sleep
 from typing import Union
@@ -418,9 +419,12 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
+    tracemalloc.start()
+    start_snapshot = tracemalloc.take_snapshot()
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
-        check_scheduler_status,
+        lambda: check_scheduler_status(start_snapshot),
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
