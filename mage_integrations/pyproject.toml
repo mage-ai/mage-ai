@@ -81,3 +81,9 @@ changelog = "https://github.com/mage-ai/mage-ai/releases"
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mage_integrations"]
+exclude = []
+namespaces = false
