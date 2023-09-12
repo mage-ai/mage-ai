@@ -31,6 +31,7 @@ SOURCES = sorted([
     dict(name='Google Sheets'),
     dict(name='HubSpot'),
     dict(name='Intercom'),
+    dict(name='Knowi'),
     dict(name='LinkedIn Ads'),
     dict(name='Monday'),
     dict(name='MongoDB'),
