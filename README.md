@@ -21,7 +21,7 @@
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
   <a
-    href="https://www.youtube.com/watch?v=hrsErfPDits"
+    href="https://youtu.be/GswOdShLGmg"
     target="_blank"
   ><b>Watch 2 min demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
   <a
@@ -242,7 +242,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
 ### Demo video (2 min)
 
-[![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
+[![Mage quick start demo](media/mage-youtube-preview.jpg)](https://youtu.be/GswOdShLGmg "Mage quick start demo")
 
 <sub><i>Click the image to play video</i></sub>
 
