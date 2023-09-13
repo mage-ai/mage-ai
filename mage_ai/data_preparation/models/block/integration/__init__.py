@@ -156,7 +156,7 @@ class IntegrationBlock(Block):
 
                 outputs.append(proc)
 
-            proc.wait()
+            proc.communicate()
             if proc.returncode != 0 and proc.returncode is not None:
                 cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
                 raise subprocess.CalledProcessError(
@@ -365,7 +365,7 @@ class IntegrationBlock(Block):
                     tags=tags,
                 )
 
-            proc.wait()
+            proc.communicate()
             if proc.returncode != 0 and proc.returncode is not None:
                 cmd = proc.args if isinstance(proc.args, str) else str(proc.args)
                 raise subprocess.CalledProcessError(
