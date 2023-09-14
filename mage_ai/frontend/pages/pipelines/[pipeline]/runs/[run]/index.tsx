@@ -36,9 +36,11 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 const MAX_COLUMNS = 40;
 
@@ -51,6 +53,7 @@ function PipelineBlockRuns({
   pipeline: pipelineProp,
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const router = useRouter();
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
@@ -226,7 +229,10 @@ function PipelineBlockRuns({
           },
         },
         {
-          label: () => pipelineRunExecutionDate,
+          label: () => (displayLocalTimezone
+            ? datetimeInLocalTimezone(pipelineRunExecutionDate, displayLocalTimezone)
+            : pipelineRunExecutionDate
+          ),
         },
       ]}
       buildSidekick={props => buildTableSidekick({
