@@ -16,8 +16,9 @@ repos:
         types: [python]
     -   id: name-tests-test
         types: [python]
-        args:
-          - "--pytest-test-first"
+        files: 'tests/.*'
+        exclude: 'base_test'
+        args: ["--pytest-test-first"]
     -   id: requirements-txt-fixer
 - repo: local
   hooks:
