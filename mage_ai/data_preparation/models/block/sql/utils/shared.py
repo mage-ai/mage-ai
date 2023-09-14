@@ -274,21 +274,29 @@ def table_name_parts(
 
     if full_table_name:
         parts = full_table_name.split('.')
-        if len(parts) == 3:
-            database, schema, table = parts
-        elif len(parts) == 2:
-            schema, table = parts
-        elif len(parts) == 1:
-            table = parts[0]
+    else:
+        parts = upstream_block.table_name.split('.')
 
-    if not table:
-        table = upstream_block.table_name
+    if len(parts) == 3:
+        database, schema, table = parts
+    elif len(parts) == 2:
+        if no_schema:
+            database, table = parts
+        else:
+            schema, table = parts
+    elif len(parts) == 1:
+        table = parts[0]
 
     if not schema and not no_schema:
         upstream_configuration = upstream_block.configuration
-        if upstream_configuration and \
-            configuration.get('data_provider') == upstream_configuration.get('data_provider') and \
-                upstream_configuration.get('data_provider_schema'):
+        if (
+            upstream_configuration
+            and configuration.get('data_provider')
+            == upstream_configuration.get('data_provider')
+            and configuration.get('data_provider_profile')
+            == upstream_configuration.get('data_provider_profile')
+            and upstream_configuration.get('data_provider_schema')
+        ):
             schema = upstream_block.configuration.get('data_provider_schema')
         else:
             schema = configuration.get('data_provider_schema')
