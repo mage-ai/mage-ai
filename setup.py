@@ -131,6 +131,7 @@ setuptools.setup(
             'dbt-sqlserver==1.3.1',
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
+            'elasticsearch==8.9.0',
             'google-api-core==2.11.0',
             'google-api-python-client==2.70.0',
             'google-cloud-bigquery~=3.0',
