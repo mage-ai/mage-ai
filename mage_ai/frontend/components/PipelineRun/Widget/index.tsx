@@ -19,6 +19,7 @@ import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
   TimePeriodEnum,
+  dateFormatLong,
   datetimeInLocalTimezone,
 } from '@utils/date';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -131,7 +132,10 @@ function Widget({
                 passHref
               >
                 <Link danger monospace sameColorAsText small>
-                  Run created on {datetimeInLocalTimezone(createdAt, displayLocalTimezone)}
+                  Run created on&nbsp;
+                  {displayLocalTimezone
+                    ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+                    : dateFormatLong(createdAt, { includeSeconds: true, utcFormat: true })}
                 </Link>
               </NextLink>
             </FlexContainer>
