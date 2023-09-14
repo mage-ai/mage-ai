@@ -91,8 +91,7 @@
             "design/core-abstractions",
             "design/abstractions/project-structure"
           ]
-        },
-        "getting-started/updating-mage"
+        }
       ]
     },
     {
@@ -433,6 +432,7 @@
             "development/testing/unit-tests"
           ]
         },
+        "development/updating-mage",
         "development/ai/overview"
       ]
     },
