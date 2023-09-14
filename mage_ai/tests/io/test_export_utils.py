@@ -1,10 +1,12 @@
-from mage_ai.io.postgres import Postgres
-from mage_ai.io.export_utils import infer_dtypes
-from mage_ai.tests.base_test import TestCase
 import datetime
+
 import faker
 import numpy as np
 import pandas as pd
+
+from mage_ai.io.export_utils import infer_dtypes
+from mage_ai.io.postgres import Postgres
+from mage_ai.tests.base_test import TestCase
 
 
 class TypeConversionTests(TestCase):

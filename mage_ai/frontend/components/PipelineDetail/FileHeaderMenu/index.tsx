@@ -150,7 +150,7 @@ function FileHeaderMenu({
         onClick: () => cancelPipeline(),
         uuid: 'Cancel pipeline',
       });
-    } else {
+    } else if (pipeline?.type === PipelineTypeEnum.STREAMING) {
       items.push({
         label: () => 'Execute pipeline',
         onClick: () => executePipeline(),
@@ -164,6 +164,7 @@ function FileHeaderMenu({
     executePipeline,
     interruptKernel,
     isPipelineExecuting,
+    pipeline?.type,
     restartKernel,
     setMessages,
   ]);

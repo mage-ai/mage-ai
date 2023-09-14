@@ -1,19 +1,24 @@
+import os
+from typing import Dict
+
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.emr import emr
+from mage_ai.services.aws.emr.config import EmrConfig
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 from mage_ai.services.aws.s3 import s3
-from typing import Dict
-import os
 
 
 class PySparkPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline, **kwargs):
         super().__init__(pipeline, **kwargs)
+
+        emr_config = EmrConfig.load(config=self.pipeline.repo_config.emr_config or dict())
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,
             pipeline.repo_config.s3_path_prefix,
+            bootstrap_script_path=emr_config.bootstrap_script_path,
         )
         self.s3_bucket = pipeline.repo_config.s3_bucket
         self.s3_path_prefix = pipeline.repo_config.s3_path_prefix

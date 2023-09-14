@@ -18,6 +18,7 @@ GIT_AUTH_TYPE_VAR = 'GIT_AUTH_TYPE'
 GIT_BRANCH_VAR = 'GIT_BRANCH'
 GIT_SYNC_ON_PIPELINE_RUN_VAR = 'GIT_SYNC_ON_PIPELINE_RUN'
 GIT_SYNC_ON_START_VAR = 'GIT_SYNC_ON_START'
+GIT_SYNC_ON_EXECUTOR_START_VAR = 'GIT_SYNC_ON_EXECUTOR_START'
 
 
 class Preferences:
@@ -56,6 +57,7 @@ class Preferences:
                 branch=os.getenv(GIT_BRANCH_VAR),
                 sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_VAR) or 0)),
                 sync_on_start=bool(int(os.getenv(GIT_SYNC_ON_START_VAR) or 0)),
+                sync_on_executor_start=bool(int(os.getenv(GIT_SYNC_ON_EXECUTOR_START_VAR) or 0)),
             )
         project_sync_config = project_preferences.get('sync_config', dict())
         if user:

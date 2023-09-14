@@ -101,7 +101,7 @@ class RepoConfig:
             self.azure_container_instance_config = \
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
-            self.emr_config = repo_config.get('emr_config')
+            self.emr_config = repo_config.get('emr_config') or dict()
             self.features = repo_config.get('features', {})
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.k8s_executor_config = repo_config.get('k8s_executor_config')

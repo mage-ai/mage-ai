@@ -195,6 +195,19 @@ class PipelineSchedule(BaseModel):
             self.create(**kwargs)
 
     def current_execution_date(self) -> datetime:
+        """
+        Calculate the current execution date and time based on the schedule_interval and start_time.
+
+        Returns:
+            datetime: The calculated current execution date and time in the UTC timezone.
+
+        Note:
+            This method calculates the current execution date and time based on the
+            schedule_interval, and if landing_time is enabled, it takes the start_time into
+            account to adjust the execution time accordingly.
+
+            The returned datetime object is in the UTC timezone.
+        """
         now = datetime.now(timezone.utc)
         current_execution_date = None
 
@@ -274,6 +287,24 @@ class PipelineSchedule(BaseModel):
 
     @safe_db_query
     def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
+        """
+        Determine whether a pipeline schedule should be executed based on its configuration and
+        history.
+
+        Args:
+            previous_runtimes (List[int], optional): A list of previous execution runtimes,
+                in seconds, used for decision-making when scheduling based on landing time.
+                Defaults to None.
+
+        Returns:
+            bool: True if the schedule should be executed; False otherwise.
+
+        Note:
+            This method evaluates whether a pipeline schedule should be executed, taking into
+            account various factors such as the schedule's status, start time, landing time,
+            schedule interval, and previous runtimes. It returns True if the schedule should be
+            executed and False otherwise.
+        """
         now = datetime.now(tz=pytz.UTC)
 
         if self.status != ScheduleStatus.ACTIVE:
@@ -302,12 +333,15 @@ class PipelineSchedule(BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         else:
-            """
-            TODO: Implement other schedule interval checks
-            """
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
                 return False
+
+            # If the execution date is before start time, don't schedule it
+            if self.start_time is not None and \
+                    compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
+                return False
+
             # If there is a pipeline_run with an execution_date the same as the
             # current_execution_date, then don’t schedule
             if not find(
