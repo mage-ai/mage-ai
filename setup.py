@@ -106,6 +106,7 @@ setuptools.setup(
             'pika==1.3.1',
             'pymongo==4.3.3',
             'requests_aws4auth==1.1.2',
+            'elasticsearch==8.9.0',
         ],
         'all': [
             'PyGithub==1.59.0',
