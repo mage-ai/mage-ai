@@ -7,6 +7,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -19,12 +20,20 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 
 function RunListPage() {
   const router = useRouter();
   const [errors, setErrors] = useState<ErrorsType>(null);
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
+
+  const { data: dataProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: ROW_LIMIT,

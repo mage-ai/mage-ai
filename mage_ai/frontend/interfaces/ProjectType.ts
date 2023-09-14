@@ -1,5 +1,6 @@
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
+  LOCAL_TIMEZONE = 'display_local_timezone',
 }
 
 export enum ProjectTypeEnum {

@@ -16,10 +16,16 @@ import {
 } from '@interfaces/PipelineType';
 import { ImageStyle } from '@components/Dashboard/index.style';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
-import { TIME_PERIOD_DISPLAY_MAPPING, TimePeriodEnum } from '@utils/date';
+import {
+  TIME_PERIOD_DISPLAY_MAPPING,
+  TimePeriodEnum,
+  dateFormatLong,
+  datetimeInLocalTimezone,
+} from '@utils/date';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, lowercase } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 const MAX_HEIGHT = UNIT * 40;
 const MIN_HEIGHT = UNIT * 40;
@@ -36,6 +42,7 @@ function Widget({
   const router = useRouter();
   const q = queryFromUrl();
   const timePeriod = q?.[TAB_URL_PARAM] || TimePeriodEnum.TODAY;
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const isAllRuns = pipelineType === ALL_PIPELINE_RUNS_TYPE;
   const pipelineTypeLabel = isAllRuns
     ? ALL_PIPELINE_RUNS_TYPE
@@ -125,7 +132,10 @@ function Widget({
                 passHref
               >
                 <Link danger monospace sameColorAsText small>
-                  Run created on {createdAt}
+                  Run created on&nbsp;
+                  {displayLocalTimezone
+                    ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+                    : dateFormatLong(createdAt, { includeSeconds: true, utcFormat: true })}
                 </Link>
               </NextLink>
             </FlexContainer>

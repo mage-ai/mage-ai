@@ -14,6 +14,7 @@ export type TimeType = {
 };
 
 type CalendarProps = {
+  localTime?: boolean;
   selectedDate: Date;
   selectedTime: TimeType;
   setSelectedDate: (date: Date) => void;
@@ -22,6 +23,7 @@ type CalendarProps = {
 };
 
 function Calendar({
+  localTime,
   selectedDate,
   selectedTime,
   setSelectedDate,
@@ -40,7 +42,7 @@ function Calendar({
       <Spacing mb={2} />
       <FlexContainer alignItems="center">
         <Text default large>
-          Time (UTC):
+          Time ({localTime ? 'Local' : 'UTC'}):
         </Text>
         <Spacing pr={2} />
         <Select

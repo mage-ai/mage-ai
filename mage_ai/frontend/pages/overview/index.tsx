@@ -20,7 +20,7 @@ import Panel from '@oracle/components/Panel';
 import PipelineRunType from '@interfaces/PipelineRunType';
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -80,6 +80,7 @@ import { goToWithQuery } from '@utils/routing';
 import { groupBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 
 const SHARED_WIDGET_SPACING_PROPS = {
@@ -223,6 +224,10 @@ function OverviewPage() {
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
     <ErrorProvider>
