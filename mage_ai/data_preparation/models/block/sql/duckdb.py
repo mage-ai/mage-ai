@@ -28,6 +28,7 @@ def create_upstream_block_tables(
         cache_upstream_dbt_models,
         cache_keys=[
             ConfigKey.DUCKDB_DATABASE,
+            ConfigKey.DUCKDB_SCHEMA,
         ],
         no_schema=True,
         query=query,

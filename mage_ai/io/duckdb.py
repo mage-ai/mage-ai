@@ -17,6 +17,7 @@ class DuckDB(BaseSQL):
     def __init__(
             self,
             database: str,
+            schema: str = None,
             verbose: bool = True,
             **kwargs,) -> None:
         """
@@ -24,6 +25,7 @@ class DuckDB(BaseSQL):
         """
         super().__init__(
             database=database,
+            schema=schema,
             verbose=verbose,
             **kwargs
         )
@@ -37,7 +39,11 @@ class DuckDB(BaseSQL):
     def with_config(cls, config: BaseConfigLoader) -> 'DuckDB':
         return cls(
             database=config[ConfigKey.DUCKDB_DATABASE],
+            schema=config[ConfigKey.DUCKDB_SCHEMA],
         )
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema') or 'main'
 
     def close(self) -> None:
         """

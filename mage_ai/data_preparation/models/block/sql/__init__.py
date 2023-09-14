@@ -284,7 +284,7 @@ def execute_sql_code(
         from mage_ai.io.duckdb import DuckDB
 
         loader = DuckDB.with_config(config_file_loader)
-        schema = schema or 'main'
+        schema = schema or loader.default_schema()
         duckdb.create_upstream_block_tables(
             loader,
             block,
