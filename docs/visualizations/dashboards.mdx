@@ -348,14 +348,49 @@ def some_columns(data_from_data_source, **kwargs) -> List:
 
 ## Recommended charts
 
+Depending on which page you’re on, adding recommended charts will automatically configure
+and add a few charts to your dashboard with little effort.
+
+The added charts will show visualizations with different chart types and various data sources.
+
 ---
 
 ## Resize chart
+
+When you resize a chart on the dashboard, you can change the width and height.
+
+### Width
+
+Set the width to a number.
+This number is divided by the sum of the width numbers from all the charts in the same row.
+The resulting number is the percentage of the row the chart will expand horizontally to.
+
+For example, if you have a row with 5 charts and the 1st chart has a width of 6 and the other
+4 charts have a width of 1, then the 1st chart will take up 60% of the entire row’s width.
+
+### Max width percentage
+
+Even if a chart is to take up a large percentage of the row’s entire width,
+you can set a limit as to how wide the chart should be.
+
+For example, in the above example the 1st chart should be 60% of the entire row’s width.
+However, you can set that chart’s max width percentage to 50 and the 1st chart will only
+expand to 50% of the row’s entire width.
+
+### Height
+
+Set this value to the number of pixels you want your chart to have in height.
 
 ---
 
 ## Move chart
 
+Click and hold down on a chart to begin dragging it. Then, drag the chart to move it and
+then release the click while on top of another chart to insert the initial chart after the
+chart that you dropped it on.
+
 ---
 
 ## Remove chart
+
+This will remove the chart from the current dashboard.
