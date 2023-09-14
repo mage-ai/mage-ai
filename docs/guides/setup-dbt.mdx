@@ -1,24 +1,25 @@
 ---
-title: "Set up dbt models & orchestrate dbt runs"
+title: "Make dbt magical"
 sidebarTitle: "dbt quickstart"
-description: "Run dbt models in Mage in under a minute."
+description: "⏰ Run dbt models in Mage in under a minute."
 ---
 
 <Frame>
    <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
 </Frame>
 
-## Prerequisites
+## About
 
-<Warning>
-  dbt integration is currently only supported when using Mage in
-  [Docker](/getting-started/setup#using-docker).
-</Warning>
+Our demo dbt repo currently offers two quickstarts
+
+## Prerequisites
 
 1. [Docker](https://docs.docker.com/engine/install/)
 2. [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-The following command will clone the repo, copy `dev.env` to `.env` and run `docker compose up` to start Mage _and_ a Postgres database.
+## Configuration
+
+The following command will clone the [demo repo](https://github.com/mage-ai/dbt-quickstart), copy `dev.env` to `.env` and run `docker compose up` to start Mage _and_ a Postgres database.
 
 <CodeGroup>
 ```bash Mac/Linux
@@ -41,7 +42,7 @@ After running the above command, you'll see the Mage overview page. Click the pi
 
 ![Open Pipelines](/media/setup-dbt/go-to-pipelines.gif)
 
-## Quickstarts
+## Tutorial
 
 <AccordionGroup>
 <Accordion title="A simple dbt pipeline" icon="pipe-collar">
