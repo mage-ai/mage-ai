@@ -1,0 +1,191 @@
+---
+title: "Customizable dashboards"
+sidebarTitle: "Dashboards"
+description: "There are 2 dashboards: a dashboard for all your pipelines and a dashboard for each pipeline. You can add charts of various types with different sources of data. Use these dashboards for observability or for analytics."
+icon: "chart-tree-map"
+"og:image": "https://media.tenor.com/yybImiR2408AAAAd/iron-man-hologram.gif"
+---
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Customizable dashboards"
+        src="https://media.tenor.com/yybImiR2408AAAAd/iron-man-hologram.gif"
+    />
+    </p>
+</Frame>
+
+## Pages with customizable dashboards
+
+1. Project overview page (`/overview?tab=Dashboard`)
+1. Pipeline dashboard page (`/pipelines/[:id]/dashboard`)
+
+---
+
+## Adding charts
+
+1. In the top right corner of the dashboard, click the button labeled
+<b>+ Add content</b>.
+1. Click the dropdown option labeled <b>Create new chart</b>.
+
+---
+
+## Configuring chart
+
+### Chart name
+
+Human readable name for your chart.
+
+### Chart type
+
+Choose from a variety of visualizations.
+
+#### Bar chart
+<Frame>
+    <p align="center">
+    <img
+        alt="Bar chart"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/bar-chart.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Histogram
+<Frame>
+    <p align="center">
+    <img
+        alt="Histogram"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/histogram.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Line chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/line-chart.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Pie chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/pie-chart.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Table
+<Frame>
+    <p align="center">
+    <img
+        alt="Table"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/table.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Time series bar chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-bar-chart.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### Time series line chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-line-chart.png?raw=true"
+    />
+    </p>
+</Frame>
+
+
+### Data source
+
+A chart has at least 1 data source.
+In the near future, a chart can have more than 1 data source.
+
+#### Block data output (type)
+
+Get the output data from a block in a specific pipeline.
+
+#### Block runs (type)
+
+Get data from all block runs or
+all block runs from a specific pipeline.
+
+#### Custom code (type)
+
+Define a function using the `@data_source` decorator that returns the data
+for your chart.
+
+```python
+@data_source
+def d(*args, **kwargs):
+    return [[dict(id=1), dict(id=2)]]
+```
+
+#### Pipelines (type)
+
+Get data from all pipelines.
+
+#### Pipeline runs (type)
+
+Get data from all pipeline runs or
+all pipeline runs from a specific pipeline or
+all pipeline runs from a specific trigger.
+
+#### Triggers (type)
+
+Get data from all triggers or
+all triggers from a specific pipeline.
+
+
+#### Refresh interval
+
+### Chart display settings
+
+---
+
+## Custom code for chart
+
+### @data_source
+
+### @xy
+
+### @x
+
+### @y
+
+### @configuration
+
+### @render
+
+### @columns
+
+---
+
+## Recommended charts
+
+---
+
+## Resize chart
+
+---
+
+## Move chart
+
+---
+
+## Remove chart
