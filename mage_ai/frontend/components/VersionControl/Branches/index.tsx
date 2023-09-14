@@ -51,7 +51,7 @@ type BranchesProps = {
 function Branches({
   actionRemoteName,
   branch,
-  branches: branchesProp,
+  branches,
   fetchBranch,
   fetchBranches,
   remotes,
@@ -68,8 +68,8 @@ function Branches({
     actionRemoteName,
     remotes,
   ]);
-  const branches = useMemo(() => branchesProp?.concat(selectedRemote?.refs || []) || [], [
-    branchesProp,
+  const allBranches = useMemo(() => branches?.concat(selectedRemote?.refs || []) || [], [
+    branches,
     selectedRemote,
   ]);
 
@@ -275,7 +275,7 @@ function Branches({
                 placeholder="Choose a branch"
                 value={branchBase}
               >
-                {branches?.map(({ name }) => (
+                {allBranches?.map(({ name }) => (
                   <option key={name} value={name}>
                     {name}
                   </option>
