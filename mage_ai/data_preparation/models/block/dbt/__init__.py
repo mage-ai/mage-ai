@@ -292,7 +292,7 @@ class DBTBlock(Block):
 
             snapshot = dbt_command == 'snapshot'
 
-            if is_sql and from_notebook:
+            if from_notebook:
                 subprocess.run(
                     cmds,
                     preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
@@ -300,7 +300,7 @@ class DBTBlock(Block):
                     stderr=subprocess.STDOUT,
                 )
 
-                if not snapshot:
+                if is_sql and not snapshot:
                     df = query_from_compiled_sql(
                         self,
                         dbt_profile_target,
