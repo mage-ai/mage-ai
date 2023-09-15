@@ -176,7 +176,7 @@ class TableauClient(object):
         headers["Content-Type"] = "application/json"
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
-            url="{}/{}".format(self.base_url, "sites"),
+            url="{}/{}".format(self.base_url, "workbooks"),
             timeout=self.__request_timeout,  # Pass request timeout
             headers=headers,
         )

@@ -104,13 +104,12 @@ class FullTableStream(BaseStream):
     replication_method = "FULL_TABLE"
 
 
-# TODO Add the tableau streams
-class DashboardList(FullTableStream):
-    tap_stream_id = "dashboard_list"
+class WorkbookList(FullTableStream):
+    tap_stream_id = "workbook_list"
     key_properties = ["id"]
     to_replicate = False
-    path = "dashboards"
-    data_key = "dashboards"
+    path = "workbooks"
+    data_key = "workbooks"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
@@ -121,29 +120,30 @@ class DashboardList(FullTableStream):
 
         # Only yield records when called by child streams
         if is_parent:
+            # TODO Fix the way we fetch the workbooks from the response
             for record in response.get(self.default_data_key):
                 yield record.get("id")
 
 
-class Dashboards(FullTableStream):
-    tap_stream_id = "dashboards"
+class Workbooks(FullTableStream):
+    tap_stream_id = "workbooks"
     key_properties = ["id"]
-    path = "dashboards/{}"
-    parent = DashboardList
+    path = "workbooks/{}"
+    parent = WorkbookList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
-        dashboards = []
+        workbooks = []
 
         for dashboard_id in self.get_parent_data():
             call_path = self.path.format(dashboard_id)
             results = self.client.get(call_path)
 
-            dashboards.append(results)
+            workbooks.append(results)
 
-        yield from dashboards
+        yield from workbooks
 
-
+# TODO Change widgets to views and add the views schema
 class WidgetList(FullTableStream):
     tap_stream_id = "widget_list"
     key_properties = ["id"]
@@ -184,8 +184,6 @@ class Widgets(FullTableStream):
 
 
 STREAMS = {
-    "dashboard_list": DashboardList,
-    "dashboards": Dashboards,
-    "widget_list": WidgetList,
-    "widgets": Widgets,
+    "workbook_list": WorkbookList,
+    "workbooks": Workbooks,
 }
