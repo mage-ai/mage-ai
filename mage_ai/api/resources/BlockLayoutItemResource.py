@@ -21,6 +21,7 @@ from mage_ai.presenters.charts.data_sources.pipeline_schedules import (
 )
 from mage_ai.presenters.charts.data_sources.pipelines import ChartDataSourcePipelines
 from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class BlockLayoutItemResource(GenericResource):
@@ -155,6 +156,8 @@ class BlockLayoutItemResource(GenericResource):
             block_config_to_show['configuration'] = configuration_override
         if data_source_override:
             block_config_to_show['data_source'] = data_source_override
+
+        await UsageStatisticLogger().chart_impression(block_config_to_show)
 
         return self(merge_dict(block_config_to_show, dict(
             content=content,
