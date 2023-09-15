@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
 import BlockLayoutItemDetail from '../BlockLayoutItemDetail';
-import BlockLayoutItemType from '@interfaces/BlockLayoutItemType';
+import BlockLayoutItemType, { RenderTypeEnum } from '@interfaces/BlockLayoutItemType';
 import Button from '@oracle/elements/Button';
 import ChartController from '@components/ChartBlock/ChartController';
 import Flex from '@oracle/components/Flex';
@@ -142,6 +142,39 @@ function BlockLayoutItem({
   }) => {
     if (!data) {
       return null;
+    }
+
+    const renderData = data?.render;
+    if (renderData) {
+      const renderType = data?.render_type;
+
+      if (RenderTypeEnum.JPEG === renderType) {
+        return (
+          <img
+            height={heightArg}
+            src={`data:image/jpeg;base64,${renderData}`}
+            width={widthArg}
+          />
+        );
+      } else if (RenderTypeEnum.PNG === renderType) {
+        return (
+          <img
+            height={heightArg}
+            src={`data:image/png;base64,${renderData}`}
+            width={widthArg}
+          />
+        );
+      } else if (RenderTypeEnum.HTML === renderType) {
+        return (
+          <iframe
+            srcdoc={renderData}
+            style={{
+              height: heightArg,
+              width: widthArg,
+            }}
+          />
+        );
+      }
     }
 
     return (

@@ -273,7 +273,7 @@ class Widget(Block):
             columns=self._block_decorator(decorated_functions_columns),
             configuration=self._block_decorator(decorated_functions_configuration),
             data_source=self._block_decorator(decorated_functions_data_source),
-            render=self._block_decorator(decorated_functions_render),
+            render=self._block_decorator_render(decorated_functions_render),
             test=self._block_decorator(test_functions),
             x=self._block_decorator(decorated_functions_x),
             xy=self._block_decorator(decorated_functions_xy),
@@ -395,16 +395,25 @@ class Widget(Block):
 
         variables = self.get_variables_from_code_execution(results)
 
+        outputs = {}
         try:
-            outputs = self.post_process_variables(
-                variables,
-                chart_type=chart_type,
-                data_source_output=data_source_output,
-                group_by_columns=group_by_columns,
-                input_vars_from_data_source=input_vars_from_data_source,
-                metrics=metrics,
-                **options,
-            )
+            if len(decorated_functions_render) >= 1:
+                outputs = self.execute_block_function(
+                    decorated_functions_render[0],
+                    input_vars_from_data_source,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                )
+            else:
+                outputs = self.post_process_variables(
+                    variables,
+                    chart_type=chart_type,
+                    data_source_output=data_source_output,
+                    group_by_columns=group_by_columns,
+                    input_vars_from_data_source=input_vars_from_data_source,
+                    metrics=metrics,
+                    **options,
+                )
         except Exception as err:
             outputs = dict(
                 error=dict(
@@ -414,3 +423,16 @@ class Widget(Block):
             )
 
         return merge_dict(outputs or {}, dict(columns=columns))
+
+    def _block_decorator_render(self, decorated_functions):
+        def custom_code(*args, **kwargs):
+            def inner(function):
+                def func(*args_inner, **kwargs_inner):
+                    render = function(*args_inner, **kwargs_inner)
+
+                    return merge_dict(dict(render=render), kwargs or {})
+                decorated_functions.append(func)
+
+            return inner
+
+        return custom_code

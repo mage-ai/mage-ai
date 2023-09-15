@@ -1171,8 +1171,8 @@ function PipelineListPage() {
                   <Text
                     default
                     key={`pipeline_description_${idx}`}
+                    preWrap
                     title={description}
-                    width={UNIT * 90}
                   >
                     {description}
                   </Text>,

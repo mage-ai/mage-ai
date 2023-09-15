@@ -1050,10 +1050,12 @@ function BlockLayout({
               {
                 label: () => 'Back to dashboard',
                 onClick: () => setSelectedBlockItem(null),
+                uuid: 'Back to dashboard',
               },
               {
                 bold: true,
                 label: () => selectedBlockItem?.name || selectedBlockItem?.uuid,
+                uuid: 'Detail',
               },
             ]}
           />
