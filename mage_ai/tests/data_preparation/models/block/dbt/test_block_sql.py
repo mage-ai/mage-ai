@@ -1,6 +1,13 @@
+import sys
+
+if sys.version_info[:2] < (3, 8):
+    from mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
+
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
