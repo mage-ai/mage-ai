@@ -20,7 +20,11 @@ import api from '@api';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
 import { Save, Logs } from '@oracle/icons';
-import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -112,6 +116,7 @@ function BlockRunsTable({
     },
   );
 
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [1, 2, 2, 1, 1, null, null];
   const columns = [
     {
@@ -124,9 +129,11 @@ function BlockRunsTable({
       uuid: 'Trigger',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Created at',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
     },
     {
@@ -238,6 +245,7 @@ function BlockRunsTable({
             key={`${id}_created_at`}
             monospace
             small
+            title={createdAt ? `UTC: ${createdAt}` : null}
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
@@ -249,6 +257,7 @@ function BlockRunsTable({
             key={`${id}_completed_at`}
             monospace
             small
+            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
           >
             {completedAt
               ? (displayLocalTimezone
