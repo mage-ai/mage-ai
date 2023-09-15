@@ -89,6 +89,7 @@ const ASIDE_STYLE = css<{
 `;
 
 const ASIDE_INNER_STYLE = css<{
+  heightOffset?: number;
   verticalOffset?: number;
 }>`
   ${ScrollbarStyledCss}
@@ -99,7 +100,7 @@ const ASIDE_INNER_STYLE = css<{
   z-index: 2;
 
   ${props => typeof props.verticalOffset !== 'undefined' && props.verticalOffset !== null && `
-    height: calc(100% - ${props.verticalOffset}px);
+    height: calc(100% - ${props.verticalOffset + (props.heightOffset || 0)}px);
     top: ${props.verticalOffset}px;
   `}
 `;
@@ -323,5 +324,22 @@ export const NavigationContainerStyle = styled.div<{
 
   ${props => props.widthOffset && props.aligned === 'right' && `
     right: ${props.widthOffset}px;
+  `}
+`;
+
+export const AsideFooterStyle = styled.div`
+  border-top: 1px solid transparent;
+  bottom: 0;
+  position: fixed;
+  z-index: 3;
+
+  ${props => `
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+    border-top-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 `;

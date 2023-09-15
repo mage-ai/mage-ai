@@ -984,6 +984,17 @@ function BlockLayout({
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeFooter={!beforeHidden && (
+        <Spacing p={PADDING_UNITS}>
+          <Button
+            loading={isLoadingUpdateBlockLayoutItem}
+            onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+            primary
+          >
+            Save changes
+          </Button>
+        </Spacing>
+      )}
       beforeHeader={(
         <>
           <Breadcrumbs
@@ -1065,17 +1076,6 @@ function BlockLayout({
                 primary
               >
                 Create new chart
-              </Button>
-            </Spacing>
-          )}
-          {!beforeHidden && (
-            <Spacing p={PADDING_UNITS}>
-              <Button
-                loading={isLoadingUpdateBlockLayoutItem}
-                onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
-                primary
-              >
-                Save content
               </Button>
             </Spacing>
           )}
