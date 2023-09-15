@@ -66,9 +66,13 @@ class DBTBlockSQL(DBTBlock):
             }
         }
 
+        node_type = self.__node_type
+
         return {
             'dbt': {
-                'block': {},
+                'block': {
+                    'snapshot': node_type == 'snapshot'
+                },
                 'project': project_name,
                 'projects': projects
             }
@@ -82,7 +86,9 @@ class DBTBlockSQL(DBTBlock):
             List[str]: The list of tags.
         """
         arr = super().tags()
-        arr.append(self.__node_type)
+        node_type = self.__node_type
+        if node_type == 'snapshot':
+            arr.append(self.__node_type)
         return arr
 
     def _execute_block(
@@ -128,7 +134,6 @@ class DBTBlockSQL(DBTBlock):
         ).get('blocks', {}).get(self.uuid, {}).get('configuration', {})
         if runtime_configuration.get('flags'):
             flags = runtime_configuration['flags']
-            print(runtime_configuration)
             args += flags if isinstance(flags, list) else [flags]
 
         # Select the node
@@ -314,11 +319,14 @@ class DBTBlockSQL(DBTBlock):
 
         return compiled_sql
 
-    @property
-    def upstream_dbt_blocks(self) -> List['DBTBlockSQL']:
+    def upstream_dbt_blocks(self, read_only=False) -> List['DBTBlockSQL']:
         """
         Get an up to date list, which represents the upstream dbt graph.
         It is using `dbt list` to generate the list.
+
+        Args:
+            read_only (bool):
+                If True it does not read the Blocks from the model. Defaults to False
 
         Returns:
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
@@ -388,13 +396,14 @@ class DBTBlockSQL(DBTBlock):
         blocks = {}
         for uuid, node in nodes.items():
             block = None
-            if uuid == self.uuid:
-                block = self
-            else:
-                block = self.pipeline.get_block(
-                    uuid,
-                    self.type,
-                )
+            if not read_only:
+                if uuid == self.uuid:
+                    block = self
+                else:
+                    block = self.pipeline.get_block(
+                        uuid,
+                        self.type,
+                    )
             # if not found create the block
             block = block or DBTBlock(
                 name=uuid,
@@ -431,5 +440,4 @@ class DBTBlockSQL(DBTBlock):
 
         # transform into list
         blocks = [block for _, block in blocks.items()]
-
         return blocks

@@ -278,7 +278,7 @@ class PipelineResource(BaseResource):
             if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
-                    for block in block.upstream_dbt_blocks
+                    for block in block.upstream_dbt_blocks()
                 }
                 self.model.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                 self.model.validate('A cycle was formed while adding a block')

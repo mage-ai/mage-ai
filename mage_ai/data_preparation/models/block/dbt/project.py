@@ -1,5 +1,6 @@
 import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -52,7 +53,14 @@ class Project(object):
             Dict: the project as dictionary
         """
         if not self.__project:
-            self.__project = asyncio.run(Project.project_async(self.__project_dir))
+            try:
+                asyncio.get_running_loop()
+                with ThreadPoolExecutor(1) as pool:
+                    self.__project = pool.submit(lambda: asyncio.run(
+                        Project.project_async(self.__project_dir)
+                    )).result()
+            except Exception:
+                self.__project = asyncio.run(Project.project_async(self.__project_dir))
         return self.__project
 
     @property
@@ -67,7 +75,14 @@ class Project(object):
             Dict: the package as dictionary
         """
         if not self.__packages:
-            self.__packages = asyncio.run(Project.packages_async(self.__project_dir))
+            try:
+                asyncio.get_running_loop()
+                with ThreadPoolExecutor(1) as pool:
+                    self.__packages = pool.submit(lambda: asyncio.run(
+                        Project.packages_async(self.__project_dir)
+                    )).result()
+            except Exception:
+                self.__packages = asyncio.run(Project.packages_async(self.__project_dir))
         return self.__packages
 
     @classmethod
@@ -127,6 +142,8 @@ class Project(object):
             raise ProjectError(
                 f'Failed to read `{PACKAGE_FILE_NAME}` in `{project_dir}`: {e}'
             )
+        if not packages['packages']:
+            packages['packages'] = []
         return packages
 
     @classmethod

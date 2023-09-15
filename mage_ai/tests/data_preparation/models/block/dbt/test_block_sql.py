@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
 
 
-class DBTBlockTest(TestCase):
+class DBTBlockSQLTest(TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
@@ -78,7 +78,7 @@ class DBTBlockTest(TestCase):
             metadata,
             {
                 'dbt': {
-                    'block': {},
+                    'block': {'snapshot': False},
                     'project': 'test_project_name',
                     'projects': {
                         'test_project_name': {
@@ -97,7 +97,7 @@ class DBTBlockTest(TestCase):
         }
         self.assertEqual(
             self.dbt_block.tags(),
-            ['model']
+            []
         )
 
     def test_project_path(self):
@@ -176,7 +176,7 @@ class DBTBlockTest(TestCase):
             True
         )
 
-        blocks = [block.to_dict() for block in self.dbt_block.upstream_dbt_blocks].__iter__()
+        blocks = [block.to_dict() for block in self.dbt_block.upstream_dbt_blocks()].__iter__()
 
         block = next(blocks)
         self.assertDictContainsSubset(

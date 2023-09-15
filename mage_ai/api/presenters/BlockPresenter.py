@@ -57,7 +57,10 @@ class BlockPresenter(BasePresenter):
                 query_string = None
                 lineage = None
                 if self.model.language == BlockLanguage.SQL:
-                    lineage = [block.to_dict() for block in self.model.upstream_dbt_blocks]
+                    lineage = [
+                        block.to_dict()
+                        for block in self.model.upstream_dbt_blocks(read_only=True)
+                    ]
                     query_string = self.model.content_compiled
                 data['metadata'] = dict(dbt=dict(
                     lineage=lineage,

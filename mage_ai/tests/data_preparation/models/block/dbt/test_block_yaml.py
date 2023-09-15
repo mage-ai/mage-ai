@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
 
 
-class DBTBlockTest(TestCase):
+class DBTBlockYAMLTest(TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()

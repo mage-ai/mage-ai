@@ -3,6 +3,7 @@ import os
 import shutil
 import uuid
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -136,9 +137,16 @@ class Profiles(object):
             Dict: interpolated profiles.yml as dictionary
         """
         if not self.__profiles:
-            self.__profiles = asyncio.run(
-                Profiles.profiles_async(self.profiles_dir, self.__variables)
-            )
+            try:
+                asyncio.get_running_loop()
+                with ThreadPoolExecutor(1) as pool:
+                    self.__profiles = pool.submit(lambda: asyncio.run(
+                        Profiles.profiles_async(self.profiles_dir, self.__variables)
+                    )).result()
+            except Exception:
+                self.__profiles = asyncio.run(
+                    Profiles.profiles_async(self.profiles_dir, self.__variables)
+                )
         return self.__profiles
 
     def __del__(self) -> None:

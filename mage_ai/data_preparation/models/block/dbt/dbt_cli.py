@@ -11,7 +11,8 @@ import dbt.tracking
 import pandas as pd
 from dbt.contracts.graph.nodes import SeedNode
 from dbt.contracts.results import RunResult, RunStatus
-from dbt.exceptions import DbtRuntimeError
+from dbt.exceptions import DbtInternalError, DbtRuntimeError
+from dbt.graph import ResourceTypeSelector
 from dbt.main import (
     DBTArgumentParser,
     _add_common_arguments,
@@ -40,6 +41,7 @@ from dbt.main import (
     adapter_management,
     read_user_config,
 )
+from dbt.node_types import NodeType
 from dbt.task.compile import CompileRunner, CompileTask
 from dbt.task.seed import SeedRunner
 
@@ -105,6 +107,7 @@ class DBTCli:
                 and whether the call was successful
         """
         self.invoke()
+        df = None
         if len(self.__result.results) >= 1 and hasattr(self.__result.results[0], 'agate_table'):
             df = pd.DataFrame(
                 data=self.__result.results[0].agate_table.rows,
@@ -504,7 +507,7 @@ class DBTCli:
 
 class ShowRunner(CompileRunner):
     """
-    Backport of dbt-core==1.5.6 dbt.taks.show.ShowRunner with small changed
+    Backport of dbt-core==1.5.6 dbt.taks.show.ShowRunner with small changes
     """
     def __init__(self, config, adapter, node, node_index, num_nodes):
         super().__init__(config, adapter, node, node_index, num_nodes)
@@ -546,7 +549,7 @@ class ShowRunner(CompileRunner):
 
 class ShowTask(CompileTask):
     """
-    Backport of dbt-core==1.5.6 dbt.taks.show.ShowTask with small changed
+    Backport of dbt-core==1.5.6 dbt.taks.show.ShowTask with small changes
     """
     def _runtime_initialize(self):
         if not (self.args.select or getattr(self.args, "inline", None)):
@@ -585,3 +588,13 @@ class ShowTask(CompileTask):
             and (self.args.select or getattr(self.args, "inline", None))
         ):
             self.node_results.append(result)
+
+    def get_node_selector(self) -> ResourceTypeSelector:
+        if self.manifest is None or self.graph is None:
+            raise DbtInternalError("manifest and graph must be set to get perform node selection")
+        return ResourceTypeSelector(
+            graph=self.graph,
+            manifest=self.manifest,
+            previous_state=self.previous_state,
+            resource_types=[NodeType.Model, NodeType.Analysis],
+        )
