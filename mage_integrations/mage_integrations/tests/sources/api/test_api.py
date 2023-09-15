@@ -252,23 +252,23 @@ class ApiTest(unittest.TestCase):
             self.assertTrue(catalog.to_dict() == csv_catalog_example())
             mock_build_connection.assert_called()
 
-    # def test_api_xlsx(self):
-    #     source = Api(config=dict(
-    #         url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?output=xlsx', # noqa
-    #         has_header=True
-    #     ))
-    #     api_connection = MagicMock()
+    def test_api_xlsx(self):
+        source = Api(config=dict(
+            url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?output=xlsx', # noqa
+            has_header=True
+        ))
+        api_connection = MagicMock()
 
-    #     with patch.object(
-    #         source,
-    #         'test_connection',
-    #         return_value=api_connection
-    #     ) as mock_build_connection:
-    #         source.test_connection()
+        with patch.object(
+            source,
+            'test_connection',
+            return_value=api_connection
+        ) as mock_build_connection:
+            source.test_connection()
 
-    #         catalog = source.discover()
-    #         self.assertTrue(catalog.to_dict() == csv_catalog_example())
-    #         mock_build_connection.assert_called()
+            catalog = source.discover()
+            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            mock_build_connection.assert_called()
 
     def test_api_json(self):
         source = Api(config=dict(
