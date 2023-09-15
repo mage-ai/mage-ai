@@ -134,6 +134,7 @@ class TableauClient(object):
         self,
         logger,
         access_token,
+        base_url,
         config_request_timeout,  # request_timeout parameter
         user_agent=None,
     ):
@@ -142,8 +143,7 @@ class TableauClient(object):
         # Rate limit initial values, reset by check_access_token headers
         self.__session = requests.Session()
         self.__verified = False
-        # TODO Add the base url
-        self.base_url = ""
+        self.base_url = base_url
         self.logger = logger
 
         # Set request timeout to config param `request_timeout` value.
@@ -171,12 +171,12 @@ class TableauClient(object):
         if self.__user_agent:
             headers["User-Agent"] = self.__user_agent
 
-        # TODO Add the authentication for tableau
-        headers["Authorization"] = "Bearer {}".format(self.__access_token)
+        headers["X-Tableau-Auth"] = "{}".format(self.__access_token)
         headers["Accept"] = "application/json"
+        headers["Content-Type"] = "application/json"
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
-            url="{}/{}".format(self.base_url, "dashboards"),
+            url="{}/{}".format(self.base_url, "sites"),
             timeout=self.__request_timeout,  # Pass request timeout
             headers=headers,
         )
@@ -215,8 +215,7 @@ class TableauClient(object):
         if "headers" not in kwargs:
             kwargs["headers"] = {}
 
-        # TODO Add the authentication for tableau
-        kwargs["headers"]["Authorization"] = "Bearer {}".format(self.__access_token)
+        kwargs["headers"]["X-Tableau-Auth"] = "{}".format(self.__access_token)
         kwargs["headers"]["Accept"] = "application/json"
 
         if self.__user_agent:

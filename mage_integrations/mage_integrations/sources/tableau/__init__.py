@@ -20,11 +20,12 @@ class Tableau(Source):
         if query is None:
             query = {}
 
-        # TODO Add the things tableau require from the config
         access_token = self.config.get("access_token")
+        base_url = self.config.get("base_url")
         client = TableauClient(
             self.logger,
             access_token,
+            base_url,
             self.config.get("request_timeout"),
             self.config.get("user_agent"),
         )
@@ -56,10 +57,10 @@ class Tableau(Source):
         return STREAMS[stream_id].valid_replication_keys
 
     def test_connection(self) -> None:
-        # TODO Add the things tableau require from the config
         client = TableauClient(
             self.logger,
             self.config.get("access_token"),
+            self.config.get("base_url"),
             self.config.get("request_timeout"),
             self.config.get("user_agent"),
         )
