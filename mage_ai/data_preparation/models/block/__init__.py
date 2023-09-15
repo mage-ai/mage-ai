@@ -1134,6 +1134,8 @@ class Block:
             with open(self.file_path) as file:
                 exec(file.read(), results)
 
+        outputs = None
+
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
             if logger and 'logger' not in global_vars:

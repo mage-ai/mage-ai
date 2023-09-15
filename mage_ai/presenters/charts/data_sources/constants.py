@@ -1,5 +1,7 @@
 from enum import Enum
 
+DEFAULT_LIMIT = 10000
+
 
 class ChartDataSourceType(str, Enum):
     BLOCK = 'block'
