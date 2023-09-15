@@ -20,13 +20,19 @@ import api from '@api';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
 import { Save, Logs } from '@oracle/icons';
-import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
@@ -52,6 +58,7 @@ function BlockRunsTable({
   setErrors,
   sortableColumnIndexes,
 }: BlockRunsTableProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
@@ -109,6 +116,7 @@ function BlockRunsTable({
     },
   );
 
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [1, 2, 2, 1, 1, null, null];
   const columns = [
     {
@@ -121,9 +129,11 @@ function BlockRunsTable({
       uuid: 'Trigger',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Created at',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
     },
     {
@@ -235,16 +245,28 @@ function BlockRunsTable({
             key={`${id}_created_at`}
             monospace
             small
+            title={createdAt ? `UTC: ${createdAt}` : null}
           >
-            {createdAt}
+            {displayLocalTimezone
+              ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+              : dateFormatLong(createdAt, { includeSeconds: true })
+            }
           </Text>,
           <Text
             default
             key={`${id}_completed_at`}
             monospace
             small
+            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
           >
-            {completedAt?.slice(0, 19) || '-'}
+            {completedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                : dateFormatLong(completedAt, { includeSeconds: true })
+              ): (
+                <>&#8212;</>
+              )
+            }
           </Text>,
           <Button
             default

@@ -89,6 +89,7 @@ const ASIDE_STYLE = css<{
 `;
 
 const ASIDE_INNER_STYLE = css<{
+  heightOffset?: number;
   verticalOffset?: number;
 }>`
   ${ScrollbarStyledCss}
@@ -99,7 +100,7 @@ const ASIDE_INNER_STYLE = css<{
   z-index: 2;
 
   ${props => typeof props.verticalOffset !== 'undefined' && props.verticalOffset !== null && `
-    height: calc(100% - ${props.verticalOffset}px);
+    height: calc(100% - ${props.verticalOffset + (props.heightOffset || 0)}px);
     top: ${props.verticalOffset}px;
   `}
 `;
@@ -134,6 +135,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 `;
 
 export const AsideHeaderStyle = styled.div<{
+  contained?: boolean;
   top?: number;
   visible: boolean;
 }>`
@@ -153,6 +155,10 @@ export const AsideHeaderStyle = styled.div<{
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
     border-bottom-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => props.contained && `
+    border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 `;
 
@@ -197,6 +203,8 @@ export const BeforeStyle = styled.aside`
 `;
 
 export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
+  contained?: boolean;
+  heightOffset?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
@@ -205,6 +213,10 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   &:hover {
     overflow: auto;
   }
+
+  ${props => props.contained && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium} !important;
+  `}
 `;
 
 export const AfterStyle = styled.aside`
@@ -323,5 +335,25 @@ export const NavigationContainerStyle = styled.div<{
 
   ${props => props.widthOffset && props.aligned === 'right' && `
     right: ${props.widthOffset}px;
+  `}
+`;
+
+export const AsideFooterStyle = styled.div<{
+  contained?: boolean;
+}>`
+  border-left: 1px solid transparent;
+  border-right: 1px solid transparent;
+  border-top: 1px solid transparent;
+  bottom: 0;
+  position: fixed;
+  z-index: 3;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border-top-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => props.contained && `
+    border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 `;

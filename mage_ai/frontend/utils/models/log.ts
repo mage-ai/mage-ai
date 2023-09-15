@@ -52,6 +52,17 @@ export function initializeLogs(log: LogType) {
   }));
 }
 
-export function formatTimestamp(timestamp: number) {
-  return timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+export function formatTimestamp(
+  timestamp: number,
+  opts?: {
+    localTimezone?: boolean;
+  },
+): string {
+  if (!timestamp) {
+    return '';
+  }
+
+  return opts?.localTimezone
+    ? moment.unix(timestamp).local().format()
+    : moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
 }

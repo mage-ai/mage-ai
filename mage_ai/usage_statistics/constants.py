@@ -9,10 +9,12 @@ class EventNameType(str, enum.Enum):
 
 
 class EventActionType(str, enum.Enum):
+    CREATE = 'create'
     IMPRESSION = 'impression'
 
 
 class EventObjectType(str, enum.Enum):
+    CHART = 'chart'
     ERROR = 'error'
     FEATURE = 'feature'
     PIPELINE = 'pipeline'

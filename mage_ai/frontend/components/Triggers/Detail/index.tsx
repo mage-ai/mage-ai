@@ -64,7 +64,7 @@ import {
   getFormattedVariables,
 } from '@components/Sidekick/utils';
 import { convertSeconds, getTriggerApiEndpoint } from '../utils';
-import { dateFormatLong } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
@@ -73,6 +73,7 @@ import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type TriggerDetailProps = {
   errors: ErrorsType;
@@ -95,6 +96,7 @@ function TriggerDetail({
 }: TriggerDetailProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const {
     uuid: pipelineUUID,
@@ -371,12 +373,13 @@ function TriggerDetail({
             monospace
           >
             {nextRunDate
-              ?
-                dateFormatLong(
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(nextRunDate, displayLocalTimezone)
+                : dateFormatLong(
                   nextRunDate,
                   { includeSeconds: true, utcFormat: true },
                 )
-              : 'N/A'
+              ): 'N/A'
             }
           </Text>,
         ],
@@ -399,7 +402,10 @@ function TriggerDetail({
           key="trigger_start_date"
           monospace
         >
-          {startTime}
+          {displayLocalTimezone
+            ? datetimeInLocalTimezone(startTime, displayLocalTimezone)
+            : startTime
+          }
         </Text>,
       ]);
     }
@@ -514,6 +520,7 @@ function TriggerDetail({
     );
   }, [
     description,
+    displayLocalTimezone,
     isActive,
     nextRunDate,
     pipelineSchedule,

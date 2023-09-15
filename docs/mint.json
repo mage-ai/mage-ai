@@ -433,7 +433,14 @@
           ]
         },
         "development/updating-mage",
-        "development/ai/overview"
+        "development/ai/overview",
+        {
+          "group": "Visualizations",
+          "icon": "chart-line-up-down",
+          "pages": [
+            "visualizations/dashboards"
+          ]
+        }
       ]
     },
     {

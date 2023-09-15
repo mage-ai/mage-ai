@@ -105,10 +105,18 @@ function ChartController({
         }, {}),
       }));
 
-      if (SortOrderEnum.ASCENDING === ySortOrder) {
-        xy = sortByKey(xy, d => d[metricName], { ascending: false });
-      } else if (SortOrderEnum.DESCENDING === ySortOrder) {
-        xy = sortByKey(xy, d => d[metricName], { ascending: true });
+      if (ChartStyleEnum.HORIZONTAL === chartStyle) {
+        if (SortOrderEnum.ASCENDING === ySortOrder) {
+          xy = sortByKey(xy, d => d[metricName], { ascending: false });
+        } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+          xy = sortByKey(xy, d => d[metricName], { ascending: true });
+        }
+      } else if (ChartStyleEnum.VERTICAL === chartStyle) {
+        if (SortOrderEnum.ASCENDING === ySortOrder) {
+          xy = sortByKey(xy, d => d[metricName], { ascending: true });
+        } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+          xy = sortByKey(xy, d => d[metricName], { ascending: false });
+        }
       }
 
       const sharedProps = {

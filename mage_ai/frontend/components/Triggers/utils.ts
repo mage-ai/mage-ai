@@ -2,8 +2,14 @@ import moment from 'moment';
 
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date';
 import { DEFAULT_PORT } from '@api/utils/url';
-import { PipelineScheduleFilterQueryEnum } from '@interfaces/PipelineScheduleType';
+import {
+  PipelineScheduleFilterQueryEnum,
+  ScheduleTypeEnum,
+} from '@interfaces/PipelineScheduleType';
+import { TimeType } from '@oracle/components/Calendar';
+
 import { ignoreKeys } from '@utils/hash';
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
@@ -37,6 +43,36 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
   );
 }
 
+export const getTriggerTypes = (
+  isStreamingPipeline?: boolean,
+): {
+  description: () => string;
+  label: () => string;
+  uuid: ScheduleTypeEnum;
+}[] => {
+  const triggerTypes = [
+    {
+      description: () => 'This pipeline will run continuously on an interval or just once.',
+      label: () => 'Schedule',
+      uuid: ScheduleTypeEnum.TIME,
+    },
+    {
+      description: () => 'This pipeline will run when a specific event occurs.',
+      label: () => 'Event',
+      uuid: ScheduleTypeEnum.EVENT,
+    },
+    {
+      description: () => 'Run this pipeline when you make an API call.',
+      label: () => 'API',
+      uuid: ScheduleTypeEnum.API,
+    },
+  ];
+
+  return isStreamingPipeline
+    ? triggerTypes.slice(0, 1)
+    : triggerTypes;
+};
+
 export function getPipelineScheduleApiFilterQuery(
   query: any,
 ) {
@@ -59,7 +95,7 @@ export function getPipelineScheduleApiFilterQuery(
   return apiFilterQuery;
 }
 
-export function getTimeInUTC(dateTime: string) {
+export function getTimeInUTC(dateTime: string): Date {
   if (!dateTime) {
     return null;
   }
@@ -123,6 +159,37 @@ export function convertSeconds(seconds: number) {
 
 export function convertToSeconds(time: number, unit: TimeUnitEnum) {
   return time * TIME_UNIT_TO_SECONDS[unit];
+}
+
+export function getDatetimeFromDateAndTime(
+  date: Date,
+  time: TimeType,
+  opts?: {
+    convertToUtc?: boolean,
+    localTimezone?: boolean,
+    includeSeconds?: boolean,
+  },
+): string {
+  let datetimeString = `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`;
+
+  if (opts?.includeSeconds) {
+    datetimeString = datetimeString.concat(':00');
+  }
+  if (opts?.localTimezone) {
+    const momentObj = moment(date);
+    momentObj.set('hour', +time?.hour || 0);
+    momentObj.set('minute', +time?.minute || 0);
+    momentObj.set('second', 0);
+    datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+    if (opts?.convertToUtc) {
+      datetimeString = dateFormatLong(
+        datetimeString,
+        { includeSeconds: opts?.includeSeconds, utcFormat: true },
+      );
+    }
+  }
+
+  return datetimeString;
 }
 
 export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {

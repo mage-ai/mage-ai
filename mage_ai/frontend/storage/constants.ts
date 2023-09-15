@@ -12,3 +12,5 @@ export const LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS =
 export const LOCAL_STORAGE_KEY_SETUP_AI_LATER = 'setup_ai_later';
 
 export const LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS = 'auto_scroll_logs';
+
+export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_TIMEZONE = 'display_local_timezone';
