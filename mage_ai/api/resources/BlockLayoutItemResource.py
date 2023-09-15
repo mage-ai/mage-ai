@@ -148,7 +148,15 @@ class BlockLayoutItemResource(GenericResource):
                         error.errors = traceback.format_exc()
                         raise error
 
-        return self(merge_dict(block_config, dict(
+        block_config_to_show = {}
+        block_config_to_show.update(block_config)
+
+        if configuration_override:
+            block_config_to_show['configuration'] = configuration_override
+        if data_source_override:
+            block_config_to_show['data_source'] = data_source_override
+
+        return self(merge_dict(block_config_to_show, dict(
             content=content,
             data=data,
             uuid=uuid,

@@ -74,11 +74,11 @@ function BlockLayout({
   const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, 200));
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 40));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(Math.max(
     get(localStorageKeyBefore),
-    UNIT * 13,
+    UNIT * 50,
   ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
@@ -667,7 +667,6 @@ function BlockLayout({
           onChange={e => setObjectAttributes(prev => ({
             ...prev,
             configuration: {
-              ...prev?.configuration,
               chart_type: e.target.value,
             },
           }))}
