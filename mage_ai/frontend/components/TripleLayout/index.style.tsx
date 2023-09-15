@@ -204,6 +204,7 @@ export const BeforeStyle = styled.aside`
 
 export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   contained?: boolean;
+  heightOffset?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
