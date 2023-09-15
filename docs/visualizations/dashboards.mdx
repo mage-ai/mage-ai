@@ -342,7 +342,93 @@ def some_columns(data_from_data_source, **kwargs) -> List:
 
 ### `@render`
 
-*Coming soon...*
+Define a function that returns a Base64 string representation of a JPEG/JPG image,
+PNG image, or a complete HTML string (with html and body tags).
+
+#### Render JPEG or JPG
+
+```python
+import base64
+import io
+import matplotlib.pyplot as plt
+
+
+# render_type can be 'jpeg' or 'jpg'
+@render(render_type='jpeg')
+def r(*args, **kwargs):
+    # creating the dataset
+    data = {'C':20, 'C++':15, 'Java':30,
+            'Python':35}
+    courses = list(data.keys())
+    values = list(data.values())
+
+    fig = plt.figure(figsize = (10, 5))
+
+    # creating the bar plot
+    plt.bar(courses, values, color ='maroon',
+            width = 0.4)
+
+    plt.xlabel("Courses offered")
+    plt.ylabel("No. of students enrolled")
+    plt.title("Students enrolled in different courses")
+    plt.show()
+
+    my_stringIObytes = io.BytesIO()
+    plt.savefig(my_stringIObytes, format='jpg')
+    my_stringIObytes.seek(0)
+    my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+    plt.close()
+
+    return my_base64_jpgData
+```
+
+#### Render PNG
+
+```python
+import base64
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+@render(render_type='png')
+def r(*args, **kwargs):
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2*np.pi*t)
+    plt.plot(t, s)
+
+    plt.xlabel('time (s)')
+    plt.ylabel('voltage (mV)')
+    plt.title('About as simple as it gets, folks')
+    plt.grid(True)
+    plt.show()
+
+    my_stringIObytes = io.BytesIO()
+    plt.savefig(my_stringIObytes, format='png')
+    my_stringIObytes.seek(0)
+    my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+    plt.close()
+
+    return my_base64_jpgData
+```
+
+#### Render HTML
+
+```python
+import plotly.graph_objects as go
+
+
+@render(render_type='html')
+def r(*args, **kwargs):
+    fig = go.Figure(
+        data=[go.Bar(y=[2, 1, 3])],
+        layout_title_text="A Figure Displaying Itself"
+    )
+
+    return fig.to_html(full_html=False)
+```
 
 ---
 
