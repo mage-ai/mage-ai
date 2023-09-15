@@ -23,6 +23,7 @@ export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
+export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);

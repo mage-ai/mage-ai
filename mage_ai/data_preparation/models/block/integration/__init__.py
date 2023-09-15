@@ -1,8 +1,10 @@
 import json
 import os
 import subprocess
+import sys
+from contextlib import contextmanager, redirect_stdout
 from logging import Logger
-from typing import Dict, List
+from typing import Callable, Dict, Generator, List
 
 import pandas as pd
 
@@ -11,11 +13,30 @@ from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_config_values
 
 
 class IntegrationBlock(Block):
+    @contextmanager
+    def _redirect_streams(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        from_notebook: bool = False,
+        logger: Logger = None,
+        logging_tags: Dict = None,
+    ) -> Generator[None, None, None]:
+        if build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None and not from_notebook:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+
+        with redirect_stdout(stdout) as out:
+            yield out
+
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -145,7 +166,7 @@ class IntegrationBlock(Block):
 
             file_size = os.path.getsize(source_output_file_path)
             msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
-                  f'file {source_output_file_path}.'
+                f'file {source_output_file_path}.'
             if logger:
                 logger.info(msg, **updated_logging_tags)
             else:
@@ -305,7 +326,7 @@ class IntegrationBlock(Block):
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
             file_size = os.path.getsize(source_output_file_path)
             msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to '\
-                   f'output file {source_output_file_path}.'
+                f'output file {source_output_file_path}.'
             if logger:
                 logger.info(msg, **updated_logging_tags)
                 logger.info(msg2, **updated_logging_tags)

@@ -50,13 +50,17 @@ case user_tab.NULLABLE
 end as IS_NULLABLE,
 row_number() OVER(
     PARTITION BY user_tab.TABLE_NAME, user_tab.COLUMN_NAME ORDER BY user_tab.DATA_TYPE) AS row_id
-FROM user_tab_columns user_tab
+FROM all_tab_columns user_tab
 LEFT JOIN all_cons_columns cols
 ON cols.table_name = user_tab.table_name
 AND cols.column_name = user_tab.column_name
 LEFT JOIN all_constraints cons
 ON cons.table_name = user_tab.table_name
-AND cons.CONSTRAINT_NAME = cols.CONSTRAINT_NAME{where_table_clause}
+AND cons.CONSTRAINT_NAME = cols.CONSTRAINT_NAME
+WHERE user_tab.OWNER not in ('SYS', 'OLAPSYS', 'ORDSYS', 'DBSNMP',
+'OJVMSYS', 'CTXSYS', 'XDB', 'DBSFWUSER', 'WMSYS', 'OUTLN', 'APPQOSSYS',
+'DVSYS', 'GSMADMIN_INTERNAL', 'AUDSYS', 'MDSYS', 'SYSTEM', 'LBACSYS',
+'ORDDATA'){where_table_clause}
 )
 select TABLE_NAME,
 DATA_DEFAULT,
