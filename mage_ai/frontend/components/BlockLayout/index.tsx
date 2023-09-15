@@ -20,10 +20,12 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
 import LayoutDivider from './LayoutDivider';
+import Link from '@oracle/elements/Link';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
@@ -623,6 +625,20 @@ function BlockLayout({
     dataPipelineSchedules,
   ]);
 
+  const blockForChartConfigurations = useMemo(() => ({
+    ...selectedBlockItem,
+    ...objectAttributes,
+    data: {
+      ...selectedBlockItem?.data,
+      ...objectAttributes?.data,
+      ...blockLayoutItemServer?.data,
+    },
+  }), [
+    blockLayoutItemServer,
+    objectAttributes,
+    selectedBlockItem,
+  ]);
+
   const before = useMemo(() => (
     <div
       style={{
@@ -921,16 +937,18 @@ function BlockLayout({
       </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Text default>
+          Number of columns from data source: {typeof blockForChartConfigurations?.data?.columns !== 'undefined' ? (
+            <Text bold inline monospace>
+              {blockForChartConfigurations?.data?.columns?.length}
+            </Text>
+          ) : <Spacing mt={1}><Spinner inverted small /></Spacing>}
+        </Text>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
         <ChartConfigurations
-          block={{
-            ...selectedBlockItem,
-            ...objectAttributes,
-            data: {
-              ...selectedBlockItem?.data,
-              ...objectAttributes?.data,
-              ...blockLayoutItemServer?.data,
-            },
-          }}
+          block={blockForChartConfigurations}
           updateConfiguration={(configuration) => {
             setObjectAttributes(prev => ({
               ...prev,
@@ -944,18 +962,35 @@ function BlockLayout({
       </Spacing>
     </div>
   ), [
-    blockLayoutItemServer,
+    blockForChartConfigurations,
     blocksFromPipeline,
     objectAttributes,
     pipelineSchedules,
     pipelines,
-    selectedBlockItem,
     setObjectAttributes,
     topOffset,
   ]);
 
   const after = useMemo(() => selectedBlockItem && (
     <Spacing py={PADDING_UNITS}>
+      <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <Headline>
+            Custom code
+          </Headline>
+        </Spacing>
+
+        <Text default>
+          Write code for custom data sources, parsing, etc.
+          For more information on what is possible, please check out the <Link
+            href="https://docs.mage.ai/visualizations/dashboards#custom-code-for-chart"
+            openNewWindow
+          >
+            chart documentation
+          </Link>.
+        </Text>
+      </Spacing>
+
       <CodeEditor
         autoHeight
         block={selectedBlockItem}
@@ -986,13 +1021,26 @@ function BlockLayout({
       before={before}
       beforeFooter={!beforeHidden && (
         <Spacing p={PADDING_UNITS}>
-          <Button
-            loading={isLoadingUpdateBlockLayoutItem}
-            onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
-            primary
-          >
-            Save changes
-          </Button>
+          <FlexContainer>
+            <Button
+              fullWidth
+              loading={isLoadingUpdateBlockLayoutItem}
+              onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+              primary
+            >
+              Save changes
+            </Button>
+
+            <Spacing mr={1} />
+
+            <Button
+              fullWidth
+              onClick={() => setSelectedBlockItem(null)}
+              secondary
+            >
+              Back to dashboard
+            </Button>
+          </FlexContainer>
         </Spacing>
       )}
       beforeHeader={(
@@ -1000,7 +1048,7 @@ function BlockLayout({
           <Breadcrumbs
             breadcrumbs={[
               {
-                label: () => 'All content',
+                label: () => 'Back to dashboard',
                 onClick: () => setSelectedBlockItem(null),
               },
               {

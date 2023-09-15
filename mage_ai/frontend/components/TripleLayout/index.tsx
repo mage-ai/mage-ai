@@ -359,6 +359,7 @@ function TripleLayout({
     <>
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
+          contained={contained}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -422,6 +423,7 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
+        contained={contained}
         heightOffset={beforeFooter
           ? beforeFooterRef?.current?.getBoundingClientRect()?.height
           : null
@@ -438,6 +440,7 @@ function TripleLayout({
 
       {beforeFooter && (
         <AsideFooterStyle
+          contained={contained}
           ref={beforeFooterRef}
           style={{
             overflow: beforeHidden
