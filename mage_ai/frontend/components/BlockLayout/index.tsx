@@ -544,21 +544,21 @@ function BlockLayout({
     <FlexContainer
       justifyContent="center"
     >
-      <Spacing my={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+      <Spacing my={3 * UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
         <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Spacing mb={1}>
             <Headline center>
-              You currently have no content added
+              Create a custom dashboard
             </Headline>
           </Spacing>
 
           <Text center default>
-            To get started, you can create a new chart and customize it to your needs.
+            Build your own dashboard with customizable charts with the exact insights you need.
           </Text>
 
           {pageBlockLayoutTemplate && (
             <Text center default>
-              Or, you can add recommended charts with a click of a button.
+              Get started with a recommended set of freely define your own.
             </Text>
           )}
         </Spacing>
@@ -906,7 +906,7 @@ function BlockLayout({
           primary
           setContentOnMount
           type="number"
-          value={objectAttributes?.data_source?.refresh_interval || ''}
+          value={objectAttributes?.data_source?.refresh_interval || 60000}
         />
       </Spacing>
 
@@ -1024,9 +1024,10 @@ function BlockLayout({
           <Flex flex={1}>
           </Flex>
 
-          {beforeHidden && (
+          {beforeHidden && !isEmpty && (
             <Spacing p={PADDING_UNITS}>
-              <FlyoutMenuWrapper
+              {/* TODO (dangerous): uncomment below when there are more than 1 dropdown option */}
+              {/*<FlyoutMenuWrapper
                 items={[
                   // {
                   //   label: () => 'Existing chart',
@@ -1056,7 +1057,15 @@ function BlockLayout({
                 >
                   Add content
                 </Button>
-              </FlyoutMenuWrapper>
+              </FlyoutMenuWrapper>*/}
+
+              <Button
+                beforeIcon={<Add size={UNIT * 2} />}
+                onClick={() => createNewBlockItem()}
+                primary
+              >
+                Create new chart
+              </Button>
             </Spacing>
           )}
           {!beforeHidden && (
