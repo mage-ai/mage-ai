@@ -13,6 +13,7 @@ export enum DataSourceEnum {
 export enum RenderTypeEnum {
   HTML = 'html',
   JPEG = 'jpeg',
+  JPG = 'jpg',
   PNG = 'png',
 }
 

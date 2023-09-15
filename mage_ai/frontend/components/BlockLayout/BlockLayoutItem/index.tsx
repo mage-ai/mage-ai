@@ -148,7 +148,7 @@ function BlockLayoutItem({
     if (renderData) {
       const renderType = data?.render_type;
 
-      if (RenderTypeEnum.JPEG === renderType) {
+      if (RenderTypeEnum.JPEG === renderType || RenderTypeEnum.JPG === renderType) {
         return (
           <img
             height={heightArg}
@@ -167,6 +167,7 @@ function BlockLayoutItem({
       } else if (RenderTypeEnum.HTML === renderType) {
         return (
           <iframe
+            // @ts-ignore
             srcdoc={renderData}
             style={{
               height: heightArg,

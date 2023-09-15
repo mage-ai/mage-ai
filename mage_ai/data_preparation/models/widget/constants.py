@@ -1,6 +1,6 @@
 from enum import Enum
-from dateutil.relativedelta import relativedelta
 
+from dateutil.relativedelta import relativedelta
 
 VARIABLE_NAME_BUCKETS = 'buckets'
 VARIABLE_NAME_GROUP_BY = 'group_by'
@@ -36,6 +36,7 @@ class TimeInterval(str, Enum):
 
 class ChartType(str, Enum):
     BAR_CHART = 'bar chart'
+    CUSTOM = 'custom'
     HISTOGRAM = 'histogram'
     LINE_CHART = 'line chart'
     PIE_CHART = 'pie chart'
