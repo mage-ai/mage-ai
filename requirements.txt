@@ -14,13 +14,13 @@ freezegun==1.2.2
 great_expectations==0.15.50
 httpx==0.23.1
 inflection==0.5.1
-ipykernel==6.15.0
+ipykernel==6.25.2
 ipython==7.34.0
 itsdangerous~=1.1.0
 joblib>=1.1.0
 jupyter-server-proxy==3.2.1
 jupyter-server==1.23.5
-jupyter_client==7.3.4
+jupyter_client==7.4.9
 ldap3==2.9.1
 newrelic==8.8.0
 numpy>=1.21.0
@@ -41,7 +41,7 @@ six>=1.15.0
 sqlalchemy>=1.4.20, <2.0.0
 terminado==0.17.1
 thefuzz[speedup]==0.19.0
-tornado==6.1
+tornado==6.2
 typer[all]==0.7.0
 typing-extensions==4.5.0
 
