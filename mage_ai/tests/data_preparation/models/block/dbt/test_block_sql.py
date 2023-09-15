@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from mage_ai.data_preparation.models.block.dbt_new.block import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
 
@@ -43,8 +43,8 @@ class DBTBlockTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name/test_models/model.sql'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Profiles')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Project')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     def test_metadata_async(self, Project: MagicMock, Profiles: MagicMock):
         Project.local_package_dirs_async = AsyncMock()
         Project.local_package_dirs_async.return_value = ['test_project_name']
@@ -83,7 +83,7 @@ class DBTBlockTest(TestCase):
             }
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Project')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     def test_tags(self, Project: MagicMock):
         Project.return_value.project = {
             'model-paths': ['models', 'test_models']
@@ -99,9 +99,9 @@ class DBTBlockTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.DBTCli')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Project')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
     def test_execute_block(
         self,
         Profiles: MagicMock,
@@ -142,9 +142,9 @@ class DBTBlockTest(TestCase):
             '--profiles-dir', 'test_profiles_dir'
         ])
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Project')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Path.open')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.Path.exists')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.open')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.exists')
     def test_content_compiled(self, exists: MagicMock, open: MagicMock, Project: MagicMock):
         Project.return_value.project = {
             'model-paths': ['models', 'test_models']
@@ -157,7 +157,7 @@ class DBTBlockTest(TestCase):
             'SELECT * FROM test'
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_sql.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
     def test_upstream_dbt_blocks(self, DBTCli: MagicMock):
         DBTCli.return_value.invoke.return_value = (
             [

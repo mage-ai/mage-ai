@@ -1,6 +1,6 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage
 
 

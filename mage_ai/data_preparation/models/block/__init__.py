@@ -445,7 +445,7 @@ class Block:
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             DestinationBlock,
             SourceBlock,
@@ -1079,7 +1079,7 @@ class Block:
             )
 
             # If block has downstream dbt block, then materialize output
-            from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
             if (
                 not isinstance(self, DBTBlock) and
                 self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and

@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from mage_ai.data_preparation.models.block.dbt_new.project import Project
+from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.tests.base_test import TestCase
 
 

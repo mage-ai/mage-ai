@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dbt.include.starter_project import PACKAGE_PATH as starter_project_directory
 
-from mage_ai.data_preparation.models.block.dbt_new.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.tests.base_test import TestCase
 
 

@@ -8,8 +8,8 @@ import simplejson
 from agate import Table
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dbt_new.dbt_adapter import DBTAdapter
-from mage_ai.data_preparation.models.block.dbt_new.sources import Sources
+from mage_ai.data_preparation.models.block.dbt.dbt_adapter import DBTAdapter
+from mage_ai.data_preparation.models.block.dbt.sources import Sources
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.parsers import encode_complex
@@ -22,10 +22,8 @@ class DBTBlock(Block):
         Factory for the child blocks
         """
         # Import Child blocks here to prevent cycle import
-        from mage_ai.data_preparation.models.block.dbt_new.block_sql import DBTBlockSQL
-        from mage_ai.data_preparation.models.block.dbt_new.block_yaml import (
-            DBTBlockYAML,
-        )
+        from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
+        from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
         if cls is DBTBlock:
             if kwargs.get('language', BlockLanguage.SQL) == BlockLanguage.YAML:
                 return super(DBTBlock, cls).__new__(DBTBlockYAML)

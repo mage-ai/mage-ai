@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 import simplejson
 from jinja2 import Template
 
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
-from mage_ai.data_preparation.models.block.dbt_new.dbt_cli import DBTCli
-from mage_ai.data_preparation.models.block.dbt_new.profiles import Profiles
-from mage_ai.data_preparation.models.block.dbt_new.project import Project
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
+from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.hash import merge_dict

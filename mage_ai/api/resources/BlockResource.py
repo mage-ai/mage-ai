@@ -10,7 +10,7 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,

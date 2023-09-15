@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
-from mage_ai.data_preparation.models.block.dbt_new.block_sql import DBTBlockSQL
-from mage_ai.data_preparation.models.block.dbt_new.block_yaml import DBTBlockYAML
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
+from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
 
@@ -92,8 +92,8 @@ class DBTBlockTest(TestCase):
             '{"key1": 1, "key2": "foo", "key3": ["bar"]}'
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block.Sources')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block.DBTAdapter')
+    @patch('mage_ai.data_preparation.models.block.dbt.block.Sources')
+    @patch('mage_ai.data_preparation.models.block.dbt.block.DBTAdapter')
     def test_update_sources(self, DBTAdapter, Sources):
         DBTAdapter.return_value.__enter__.return_value.credentials.schema = 'public'
         DBTAdapter.return_value.__enter__.return_value.credentials.database = None
@@ -112,7 +112,7 @@ class DBTBlockTest(TestCase):
             database=None
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block.DBTAdapter')
+    @patch('mage_ai.data_preparation.models.block.dbt.block.DBTAdapter')
     def test_materialize_df(self, DBTAdapter):
         DBTAdapter.return_value.__enter__.return_value.credentials.schema = 'public'
         DBTAdapter.return_value.__enter__.return_value.credentials.database = None

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from mage_ai.data_preparation.models.block.dbt_new.profiles import Profiles
+from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.tests.base_test import TestCase
 
 

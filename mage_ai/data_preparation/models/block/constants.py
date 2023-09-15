@@ -4,7 +4,7 @@ from mage_ai.data_preparation.models.block import (
     ConditionalBlock,
     SensorBlock,
 )
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.extension.block import ExtensionBlock
 from mage_ai.data_preparation.models.block.global_data_product import (
     GlobalDataProductBlock,

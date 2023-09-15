@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
-from mage_ai.data_preparation.models.block.dbt_new.project import Project
+from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.errors.base import MageBaseException
 
 SOURCES_FILE_NAME = 'mage_sources.yml'

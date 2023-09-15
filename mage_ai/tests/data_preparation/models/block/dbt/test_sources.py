@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mage_ai.data_preparation.models.block.dbt_new.sources import Sources
+from mage_ai.data_preparation.models.block.dbt.sources import Sources
 from mage_ai.tests.base_test import TestCase
 
 

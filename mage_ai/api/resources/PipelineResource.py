@@ -10,7 +10,7 @@ from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-from mage_ai.data_preparation.models.block.dbt_new import DBTBlock
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,

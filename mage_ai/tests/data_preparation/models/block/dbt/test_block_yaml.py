@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from mage_ai.data_preparation.models.block.dbt_new.block import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
 
@@ -34,8 +34,8 @@ class DBTBlockTest(TestCase):
     def tearDownClass(self):
         super().tearDownClass()
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_yaml.Profiles')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_yaml.Project')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Project')
     def test_metadata_async(self, Project, Profiles):
         Project.local_package_dirs_async = AsyncMock()
         Project.local_package_dirs_async.return_value = ['test_project_name']
@@ -87,8 +87,8 @@ class DBTBlockTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_yaml.DBTCli')
-    @patch('mage_ai.data_preparation.models.block.dbt_new.block_yaml.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
     def test_execute_block(self, Profiles, DBTCli: MagicMock):
         DBTCli.return_value.invoke.return_value = (None, True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'

@@ -18,7 +18,7 @@ from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.relation import RelationType
 
-from mage_ai.data_preparation.models.block.dbt_new.profiles import Profiles
+from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 
 
 @dataclass
