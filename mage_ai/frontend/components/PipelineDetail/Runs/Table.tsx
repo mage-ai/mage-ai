@@ -35,6 +35,7 @@ import {
   DELETE_CONFIRM_LEFT_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
+  TIMEZONE_TOOLTIP_PROPS,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PopupContainerStyle } from './Table.style';
@@ -322,8 +323,7 @@ function PipelineRunsTable({
     },
   );
 
-  
-
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [null, 1];
   const columns: ColumnType[] = [
     {
@@ -344,9 +344,11 @@ function PipelineRunsTable({
   columnFlex.push(...[1, 1, null, null]);
   columns.push(...[
     {
+      ...timezoneTooltipProps,
       uuid: 'Execution date',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
     },
     {
@@ -481,6 +483,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_completed"
                     muted
+                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
@@ -557,6 +560,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_date"
+                    title={executionDate ? `UTC: ${executionDate}` : null}
                   >
                     {executionDate
                       ? (displayLocalTimezone
@@ -571,6 +575,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_completed"
+                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone

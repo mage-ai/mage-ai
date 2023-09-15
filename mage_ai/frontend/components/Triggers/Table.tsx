@@ -32,6 +32,7 @@ import {
   DELETE_CONFIRM_LEFT_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
+  TIMEZONE_TOOLTIP_PROPS,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
@@ -84,6 +85,7 @@ function TriggersTable({
   const [confirmDialogueLeftOffset, setConfirmDialogueLeftOffset] = useState<number>(0);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -165,6 +167,7 @@ function TriggersTable({
   columnFlex.push(...[1, 1,  null]);
   columns.push(...[
     {
+      ...timezoneTooltipProps,
       uuid: 'Next run date',
     },
     {
@@ -200,7 +203,7 @@ function TriggersTable({
     columnFlex.splice(2, 0, 1);
   }
   if (!disableActions && includeCreatedAtColumn) {
-    columns.splice(5, 0, { uuid: 'Created at' });
+    columns.splice(5, 0, { ...timezoneTooltipProps, uuid: 'Created at' });
     columnFlex.splice(5, 0, null);
   }
 
@@ -359,6 +362,7 @@ function TriggersTable({
                   key={`trigger_next_run_date_${idx}`}
                   monospace
                   small
+                  title={nextRunDate ? `UTC: ${nextRunDate.slice(0, 19)}` : null}
                 >
                   {nextRunDate
                     ? (displayLocalTimezone
@@ -483,6 +487,7 @@ function TriggersTable({
                     key={`created_at_${idx}`}
                     monospace
                     small
+                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
                   >
                     {datetimeInLocalTimezone(createdAt?.slice(0, 19), displayLocalTimezone)}
                   </Text>,

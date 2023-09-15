@@ -53,7 +53,11 @@ import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/c
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
 import { datetimeInLocalTimezone } from '@utils/date';
@@ -138,6 +142,7 @@ function PipelineListPage() {
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
@@ -975,9 +980,11 @@ function PipelineListPage() {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
                 },
                 {
+                  ...timezoneTooltipProps,
                   uuid: 'Updated at',
                 },
                 {
+                  ...timezoneTooltipProps,
                   uuid: 'Created at',
                 },
                 {
@@ -1178,7 +1185,7 @@ function PipelineListPage() {
                     key={`pipeline_updated_at_${idx}`}
                     monospace
                     small
-                    title={updatedAt}
+                    title={updatedAt ? `UTC: ${updatedAt}` : null}
                   >
                     {updatedAt
                       ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
@@ -1188,7 +1195,7 @@ function PipelineListPage() {
                     key={`pipeline_created_at_${idx}`}
                     monospace
                     small
-                    title={createdAt}
+                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
                   >
                     {createdAt
                       ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
