@@ -19,8 +19,9 @@ import {
   ASIDE_HEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
-  AsideHeaderStyle,
+  AsideFooterStyle,
   AsideHeaderInnerStyle,
+  AsideHeaderStyle,
   AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
@@ -56,6 +57,7 @@ import { useWindowSize } from '@utils/sizes';
 type TripleLayoutProps = {
   after?: any;
   afterHeader?: any;
+  afterHeaderOffset?: number;
   afterHeightOffset?: number;
   afterHidden: boolean;
   afterMousedownActive: boolean;
@@ -64,7 +66,9 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeFooter?: any;
   beforeHeader?: any;
+  beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
   beforeHidden: boolean;
   beforeMousedownActive: boolean;
@@ -92,6 +96,7 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   afterHeader,
+  afterHeaderOffset,
   afterHeightOffset,
   afterHidden,
   afterMousedownActive,
@@ -100,7 +105,9 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeFooter,
   beforeHeader,
+  beforeHeaderOffset,
   beforeHeightOffset,
   beforeHidden,
   beforeMousedownActive,
@@ -256,7 +263,7 @@ function TripleLayout({
   ]);
   const afterContent = useMemo(() => (
     <>
-      {setAfterHidden && (
+      {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
             style={{
@@ -265,7 +272,7 @@ function TripleLayout({
                 ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH - 1)
                 : afterWidthFinal,
             }}
-            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+            top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
             visible={afterHidden}
           >
             <FlexContainer alignItems="center" fullHeight fullWidth>
@@ -318,7 +325,7 @@ function TripleLayout({
         verticalOffset={afterHeader
           ? afterSubheader
             ? ASIDE_HEADER_HEIGHT + afterHeightOffset
-            : afterHeightOffset
+            : (afterHeaderOffset || afterHeightOffset)
           : null
         }
       >
@@ -328,6 +335,7 @@ function TripleLayout({
   ), [
     after,
     afterHeader,
+    afterHeaderOffset,
     afterHeightOffset,
     afterHidden,
     afterOverflow,
@@ -335,6 +343,7 @@ function TripleLayout({
     afterWidthFinal,
     contained,
     hasAfterNavigationItems,
+    headerOffset,
     refAfterInner,
     setAfterHidden,
     toggleAfter,
@@ -343,10 +352,14 @@ function TripleLayout({
   const hasBeforeNavigationItems = useMemo(() => beforeNavigationItems?.length >= 1, [
     beforeNavigationItems,
   ]);
+
+  const beforeFooterRef = useRef(null);
+
   const beforeContent = useMemo(() => (
     <>
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
+          contained={contained}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -356,7 +369,7 @@ function TripleLayout({
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
               : beforeWidthFinal,
           }}
-          top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+          top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
           visible={beforeHidden}
         >
           <FlexContainer
@@ -410,20 +423,47 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
+        contained={contained}
+        heightOffset={beforeFooter
+          ? beforeFooterRef?.current?.getBoundingClientRect()?.height
+          : null
+        }
         noScrollbarTrackBackground
         ref={refBeforeInner}
-        verticalOffset={beforeHeader ? beforeHeightOffset : null}
+        verticalOffset={beforeHeader
+          ? (beforeHeaderOffset || beforeHeightOffset)
+          : null
+        }
       >
         {!beforeHidden && before}
       </BeforeInnerStyle>
+
+      {beforeFooter && (
+        <AsideFooterStyle
+          contained={contained}
+          ref={beforeFooterRef}
+          style={{
+            overflow: beforeHidden
+              ? 'visible'
+              : 'hidden',
+            width: beforeWidthFinal,
+          }}
+        >
+          {beforeFooter}
+        </AsideFooterStyle>
+      )}
     </>
   ), [
     before,
+    beforeFooter,
+    beforeFooterRef,
     beforeHeader,
+    beforeHeaderOffset,
     beforeHeightOffset,
     beforeHidden,
     beforeWidthFinal,
     contained,
+    headerOffset,
     hasBeforeNavigationItems,
     refBeforeInner,
     setBeforeHidden,

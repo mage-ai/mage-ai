@@ -20,10 +20,12 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
 import LayoutDivider from './LayoutDivider';
+import Link from '@oracle/elements/Link';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
@@ -31,7 +33,12 @@ import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
 import { get, set } from '@storage/localStorage';
@@ -42,10 +49,16 @@ import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 type BlockLayoutProps = {
+  leftOffset?: number;
+  pageBlockLayoutTemplate?: PageBlockLayoutType;
+  topOffset?: number;
   uuid: string;
 };
 
 function BlockLayout({
+  leftOffset,
+  pageBlockLayoutTemplate,
+  topOffset,
   uuid,
 }: BlockLayoutProps) {
   const [showError] = useError(null, {}, [], {
@@ -63,14 +76,13 @@ function BlockLayout({
   const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, 200));
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 40));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(Math.max(
     get(localStorageKeyBefore),
-    UNIT * 13,
+    UNIT * 50,
   ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [layout, setLayout] = useState<ColumnType[][]>(null);
 
   const refHeader = useRef(null);
   const windowSize = useWindowSize();
@@ -129,13 +141,23 @@ function BlockLayout({
 
   const {
     data: dataPageBlockLayout,
-    mutate: fetchPageBlockLayout,
   } = api.page_block_layouts.detail(encodeURIComponent(uuid));
 
-  const pageBlockLayout: PageBlockLayoutType =
-    useMemo(() => dataPageBlockLayout?.page_block_layout, [
-      dataPageBlockLayout,
-    ]);
+  const [pageBlockLayout, setPageBlockLayout] = useState<PageBlockLayoutType>(null);
+
+  const layout: ColumnType[][] = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
+  const setLayout = useCallback((layoutNew) => {
+    setPageBlockLayout(prev => ({
+      ...prev,
+      layout: layoutNew,
+    }));
+  }, [setPageBlockLayout]);
+
+  useEffect(() => {
+    if (dataPageBlockLayout?.page_block_layout) {
+      setPageBlockLayout(dataPageBlockLayout?.page_block_layout);
+    }
+  }, [dataPageBlockLayout]);
 
   const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
     api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
@@ -143,12 +165,13 @@ function BlockLayout({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            page_block_layout: {
-              blocks: blocksNew,
-              layout: layoutNew,
-            },
+            page_block_layout: pbl,
           }) => {
-            fetchPageBlockLayout();
+            const {
+              blocks: blocksNew,
+            } = pbl;
+
+            setPageBlockLayout(pbl);
 
             const blockItemNew =
               Object.values(blocksNew).find(({ name }) => name === objectAttributes?.name_new);
@@ -158,7 +181,6 @@ function BlockLayout({
             }
 
             fetchBlockLayoutItem();
-            setLayout(layoutNew);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -187,10 +209,9 @@ function BlockLayout({
   const saveLayout = useCallback(() => updateBlockLayoutItem({
     page_block_layout: {
       blocks: pageBlockLayout?.blocks,
-      layout: layout || pageBlockLayout?.layout,
+      layout: pageBlockLayout?.layout,
     },
   }), [
-    layout,
     pageBlockLayout,
     updateBlockLayoutItem,
   ]);
@@ -206,15 +227,15 @@ function BlockLayout({
     setLayout,
   ]);
 
-  useEffect(() => {
-    if (!layout && pageBlockLayout?.layout) {
-      setLayout(pageBlockLayout?.layout);
-    }
-  }, [
-    layout,
-    pageBlockLayout,
-    setLayout,
-  ]);
+  // useEffect(() => {
+  //   if (!layout && pageBlockLayout?.layout) {
+  //     setLayout(pageBlockLayout?.layout);
+  //   }
+  // }, [
+  //   layout,
+  //   pageBlockLayout,
+  //   setLayout,
+  // ]);
 
   const [containerRect, setContainerRect] = useState(null);
   const [headerRect, setHeaderRect] = useState(null);
@@ -299,7 +320,7 @@ function BlockLayout({
     rowIndexNew: number,
     columnIndexNew: number,
   ) => {
-    let newLayout = [...layout];
+    let newLayout = [...(layout || [])];
     const row = newLayout[rowIndex] || [];
     const column = row[columnIndex];
 
@@ -358,7 +379,7 @@ function BlockLayout({
       uuid: cleanName(blockItemName),
     };
 
-    let layoutUpdated = [...layout];
+    let layoutUpdated = [...(layout || [])];
     const layoutItem = {
       block_uuid: blockItem.uuid,
       width: 1,
@@ -516,6 +537,70 @@ function BlockLayout({
     uuid,
   ]);
 
+  const isEmpty = useMemo(() => dataPageBlockLayout && layout?.length === 0, [
+    dataPageBlockLayout,
+    layout,
+  ]);
+
+  const emtpyState = useMemo(() => (
+    <FlexContainer
+      justifyContent="center"
+    >
+      <Spacing my={3 * UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Spacing mb={1}>
+            <Headline center>
+              Create a custom dashboard
+            </Headline>
+          </Spacing>
+
+          <Text center default>
+            Build your own dashboard with customizable charts with the exact insights you need.
+          </Text>
+
+          {pageBlockLayoutTemplate && (
+            <Text center default>
+              Get started with a recommended set of freely define your own.
+            </Text>
+          )}
+        </Spacing>
+
+        <FlexContainer
+          alignContent="center"
+          justifyContent="center"
+        >
+          {pageBlockLayoutTemplate && (
+            <>
+              <Button
+                // @ts-ignore
+                onClick={() => updateBlockLayoutItem({
+                  page_block_layout: pageBlockLayoutTemplate,
+                })}
+                primary
+              >
+                Add recommended charts
+              </Button>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <Button
+            onClick={() => createNewBlockItem()}
+            primary={!pageBlockLayoutTemplate}
+            secondary={!!pageBlockLayoutTemplate}
+          >
+            Create new chart
+          </Button>
+        </FlexContainer>
+      </Spacing>
+    </FlexContainer>
+  ), [
+    createNewBlockItem,
+    pageBlockLayoutTemplate,
+    updateBlockLayoutItem,
+  ]);
+
   const heightAdjusted =
     useMemo(() => containerRect?.height - headerRect?.height, [
       containerRect,
@@ -533,11 +618,32 @@ function BlockLayout({
   const pipelines: PipelineType[] =
     useMemo(() => sortByKey(dataPipelines?.pipelines || [], 'uuid'), [dataPipelines]);
 
+  const {
+    data: dataPipelineSchedules,
+  } = api.pipeline_schedules.pipelines.list(pipeline?.uuid);
+  const pipelineSchedules = useMemo(() => dataPipelineSchedules?.pipeline_schedules, [
+    dataPipelineSchedules,
+  ]);
+
+  const blockForChartConfigurations = useMemo(() => ({
+    ...selectedBlockItem,
+    ...objectAttributes,
+    data: {
+      ...selectedBlockItem?.data,
+      ...objectAttributes?.data,
+      ...blockLayoutItemServer?.data,
+    },
+  }), [
+    blockLayoutItemServer,
+    objectAttributes,
+    selectedBlockItem,
+  ]);
+
   const before = useMemo(() => (
     <div
       style={{
         paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
-        paddingTop: ASIDE_HEADER_HEIGHT,
+        paddingTop: typeof topOffset === 'undefined' ? ASIDE_HEADER_HEIGHT : 0,
       }}
     >
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
@@ -577,7 +683,6 @@ function BlockLayout({
           onChange={e => setObjectAttributes(prev => ({
             ...prev,
             configuration: {
-              ...prev?.configuration,
               chart_type: e.target.value,
             },
           }))}
@@ -633,7 +738,12 @@ function BlockLayout({
         </Select>
       </Spacing>
 
-      {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
+      {[
+        DataSourceEnum.BLOCK,
+        DataSourceEnum.BLOCK_RUNS,
+        DataSourceEnum.PIPELINE_RUNS,
+        DataSourceEnum.PIPELINE_SCHEDULES,
+      ].includes(objectAttributes?.data_source?.type) && (
         <>
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
             <Spacing mb={1}>
@@ -653,13 +763,15 @@ function BlockLayout({
                 data_source: {
                   ...prev?.data_source,
                   block_uuid: null,
+                  pipeline_schedule_id: null,
                   pipeline_uuid: e.target.value,
                 },
               }))}
-              placeholder="Select pipeline UUID"
               primary
               value={objectAttributes?.data_source?.pipeline_uuid || ''}
             >
+              <option value={null} />
+
               {pipelines?.map(({ uuid }) => (
                 <option key={uuid} value={uuid}>
                   {uuid}
@@ -667,7 +779,50 @@ function BlockLayout({
               ))}
             </Select>
           </Spacing>
+        </>
+      )}
 
+      {[
+        DataSourceEnum.PIPELINE_RUNS,
+      ].includes(objectAttributes?.data_source?.type) && (
+        <>
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+            <Spacing mb={1}>
+              <Text bold>
+                Trigger
+              </Text>
+              <Text muted small>
+                Select the trigger that the pipeline runs should belong to.
+              </Text>
+            </Spacing>
+
+            <Select
+              monospace
+              // @ts-ignore
+              onChange={e => setObjectAttributes(prev => ({
+                ...prev,
+                data_source: {
+                  ...prev?.data_source,
+                  pipeline_schedule_id: e.target.value,
+                },
+              }))}
+              primary
+              value={objectAttributes?.data_source?.pipeline_schedule_id || ''}
+            >
+              <option value={null} />
+
+              {pipelineSchedules?.map(({ id, name }) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+        </>
+      )}
+
+      {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
+        <>
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
             <Spacing mb={1}>
               <Text bold>
@@ -688,10 +843,11 @@ function BlockLayout({
                   block_uuid: e.target.value,
                 },
               }))}
-              placeholder="Select block UUID"
               primary
               value={objectAttributes?.data_source?.block_uuid || ''}
             >
+              <option value={null} />
+
               {blocksFromPipeline?.map(({ uuid }) => (
                 <option key={uuid} value={uuid}>
                   {uuid}
@@ -738,37 +894,37 @@ function BlockLayout({
               value={objectAttributes?.data_source?.partitions || ''}
             />
           </Spacing>
-
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-            <Spacing mb={1}>
-              <Text bold>
-                Refresh interval
-              </Text>
-              <Text muted small>
-                How frequent do you want this chart to automatically fetch new data from its
-                data source? Enter a number in milliseconds (e.g. 1000ms is 1 second).
-              </Text>
-            </Spacing>
-
-            <TextInput
-              monospace
-              // @ts-ignore
-              onChange={e => setObjectAttributes(prev => ({
-                ...prev,
-                data_source: {
-                  ...prev?.data_source,
-                  refresh_interval: e.target.value,
-                },
-              }))}
-              placeholder="Enter number for refresh interval"
-              primary
-              setContentOnMount
-              type="number"
-              value={objectAttributes?.data_source?.refresh_interval || ''}
-            />
-          </Spacing>
         </>
       )}
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <Text bold>
+            Refresh interval
+          </Text>
+          <Text muted small>
+            How frequent do you want this chart to automatically fetch new data from its
+            data source? Enter a number in milliseconds (e.g. 1000ms is 1 second).
+          </Text>
+        </Spacing>
+
+        <TextInput
+          monospace
+          // @ts-ignore
+          onChange={e => setObjectAttributes(prev => ({
+            ...prev,
+            data_source: {
+              ...prev?.data_source,
+              refresh_interval: e.target.value,
+            },
+          }))}
+          placeholder="Enter number for refresh interval"
+          primary
+          setContentOnMount
+          type="number"
+          value={objectAttributes?.data_source?.refresh_interval || 60000}
+        />
+      </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
         <Divider light />
@@ -781,16 +937,18 @@ function BlockLayout({
       </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Text default>
+          Number of columns from data source: {typeof blockForChartConfigurations?.data?.columns !== 'undefined' ? (
+            <Text bold inline monospace>
+              {blockForChartConfigurations?.data?.columns?.length}
+            </Text>
+          ) : <Spacing mt={1}><Spinner inverted small /></Spacing>}
+        </Text>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
         <ChartConfigurations
-          block={{
-            ...selectedBlockItem,
-            ...objectAttributes,
-            data: {
-              ...selectedBlockItem?.data,
-              ...objectAttributes?.data,
-              ...blockLayoutItemServer?.data,
-            },
-          }}
+          block={blockForChartConfigurations}
           updateConfiguration={(configuration) => {
             setObjectAttributes(prev => ({
               ...prev,
@@ -804,27 +962,48 @@ function BlockLayout({
       </Spacing>
     </div>
   ), [
-    blockLayoutItemServer,
+    blockForChartConfigurations,
     blocksFromPipeline,
     objectAttributes,
+    pipelineSchedules,
     pipelines,
-    selectedBlockItem,
     setObjectAttributes,
+    topOffset,
   ]);
 
   const after = useMemo(() => selectedBlockItem && (
-    <CodeEditor
-      autoHeight
-      block={selectedBlockItem}
-      onChange={(val: string) => {
-        setObjectAttributes(prev => ({
-          ...prev,
-          content: val,
-        }));
-      }}
-      value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
-      width="100%"
-    />
+    <Spacing py={PADDING_UNITS}>
+      <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <Headline>
+            Custom code
+          </Headline>
+        </Spacing>
+
+        <Text default>
+          Write code for custom data sources, parsing, etc.
+          For more information on what is possible, please check out the <Link
+            href="https://docs.mage.ai/visualizations/dashboards#custom-code-for-chart"
+            openNewWindow
+          >
+            chart documentation
+          </Link>.
+        </Text>
+      </Spacing>
+
+      <CodeEditor
+        autoHeight
+        block={selectedBlockItem}
+        onChange={(val: string) => {
+          setObjectAttributes(prev => ({
+            ...prev,
+            content: val,
+          }));
+        }}
+        value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
+        width="100%"
+      />
+    </Spacing>
   ), [
     blockLayoutItemServer,
     objectAttributes,
@@ -835,17 +1014,41 @@ function BlockLayout({
   return (
     <TripleLayout
       after={after}
-      afterHeightOffset={0}
+      afterHeightOffset={topOffset || 0}
       afterHidden={beforeHidden}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeFooter={!beforeHidden && (
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer>
+            <Button
+              fullWidth
+              loading={isLoadingUpdateBlockLayoutItem}
+              onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+              primary
+            >
+              Save changes
+            </Button>
+
+            <Spacing mr={1} />
+
+            <Button
+              fullWidth
+              onClick={() => setSelectedBlockItem(null)}
+              secondary
+            >
+              Back to dashboard
+            </Button>
+          </FlexContainer>
+        </Spacing>
+      )}
       beforeHeader={(
         <>
           <Breadcrumbs
             breadcrumbs={[
               {
-                label: () => 'All content',
+                label: () => 'Back to dashboard',
                 onClick: () => setSelectedBlockItem(null),
               },
               {
@@ -856,13 +1059,16 @@ function BlockLayout({
           />
         </>
       )}
-      beforeHeightOffset={0}
+      beforeHeaderOffset={6 * UNIT}
+      beforeHeightOffset={topOffset || 0}
       beforeHidden={beforeHidden}
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
+      headerOffset={topOffset || 0}
       hideAfterCompletely
       hideBeforeCompletely
+      leftOffset={leftOffset || 0}
       mainContainerRef={mainContainerRef}
       setAfterMousedownActive={setAfterMousedownActive}
       setAfterWidth={setAfterWidth}
@@ -877,9 +1083,10 @@ function BlockLayout({
           <Flex flex={1}>
           </Flex>
 
-          {beforeHidden && (
+          {beforeHidden && !isEmpty && (
             <Spacing p={PADDING_UNITS}>
-              <FlyoutMenuWrapper
+              {/* TODO (dangerous): uncomment below when there are more than 1 dropdown option */}
+              {/*<FlyoutMenuWrapper
                 items={[
                   // {
                   //   label: () => 'Existing chart',
@@ -909,17 +1116,14 @@ function BlockLayout({
                 >
                   Add content
                 </Button>
-              </FlyoutMenuWrapper>
-            </Spacing>
-          )}
-          {!beforeHidden && (
-            <Spacing p={PADDING_UNITS}>
+              </FlyoutMenuWrapper>*/}
+
               <Button
-                loading={isLoadingUpdateBlockLayoutItem}
-                onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+                beforeIcon={<Add size={UNIT * 2} />}
+                onClick={() => createNewBlockItem()}
                 primary
               >
-                Save content
+                Create new chart
               </Button>
             </Spacing>
           )}
@@ -951,7 +1155,8 @@ function BlockLayout({
           />
         )}
 
-        {!selectedBlockItem && rowsEl}
+        {!selectedBlockItem && !isEmpty && rowsEl}
+        {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
     </TripleLayout>
   );

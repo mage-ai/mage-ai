@@ -307,7 +307,8 @@ export const getMoreActionsItems = (
             });
           } else {
             goToWithQuery({
-              sideview: ViewKeyEnum.CALLBACKS,
+              addon: ViewKeyEnum.CALLBACKS,
+              sideview: ViewKeyEnum.ADDON_BLOCKS,
             });
           }
         },

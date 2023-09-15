@@ -115,6 +115,21 @@ function Remote({
     },
   );
 
+  const [updateOauth, { isLoading: isLoadingUpdateOauth }] = useMutation(
+    api.oauths.useUpdate('github'),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => window.location.href = window.location.href.split('?')[0],
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
     api.git_custom_branches.useUpdate(branch?.name),
     {
@@ -372,11 +387,24 @@ function Remote({
                 Successfully authenticated with GitHub
               </Button>
 
-              <Spacing mt={1}>
+              <Spacing my={1}>
                 <Text muted>
                   You can pull, push, and create pull requests on GitHub.
                 </Text>
               </Spacing>
+
+              <Button
+                loading={isLoadingUpdateOauth}
+                // @ts-ignore
+                onClick={() => updateOauth({
+                  oauth: {
+                    action_type: 'reset',
+                  },
+                })}
+                warning
+              >
+                Reset GitHub authentication
+              </Button>
             </>
           )}
           {!oauth?.authenticated && oauth?.url && (

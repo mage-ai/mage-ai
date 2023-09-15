@@ -89,7 +89,16 @@ function BlockLayoutItem({
     dataState,
   ]);
 
-  const refreshInterval = useMemo(() => blockLayoutItem?.data_source?.refresh_interval, [
+  // Minimum 1000ms refresh interval
+  const refreshInterval = useMemo(() => {
+    const ri = blockLayoutItem?.data_source?.refresh_interval;
+
+    if (ri) {
+      return Math.max(ri, 1000);
+    }
+
+    return ri;
+  }, [
     blockLayoutItem,
   ]);
 
@@ -271,66 +280,79 @@ function BlockLayoutItem({
                   alignItems="center"
                   fullWidth
                 >
-                  <TextInput
-                    compact
-                    fullWidth
-                    label="Width"
-                    // @ts-ignore
-                    onChange={e => updateLayout?.({
-                      ...columnLayoutSettings,
-                      width: typeof e.target.value !== 'undefined'
-                        ? Number(e.target.value)
-                        : e.target.value
-                      ,
-                    })}
-                    primary
-                    setContentOnMount
-                    small
-                    type="number"
-                    value={columnLayoutSettings?.width || ''}
-                  />
+                  <Flex flex={1} flexDirection="column">
+                    <Text bold muted small>
+                      Width (flex box)
+                    </Text>
+                    <TextInput
+                      compact
+                      fullWidth
+                      // @ts-ignore
+                      onChange={e => updateLayout?.({
+                        ...columnLayoutSettings,
+                        width: typeof e.target.value !== 'undefined'
+                          ? Number(e.target.value)
+                          : e.target.value
+                        ,
+                      })}
+                      primary
+                      setContentOnMount
+                      small
+                      type="number"
+                      value={columnLayoutSettings?.width || ''}
+                    />
+                  </Flex>
 
                   <Spacing mr={1} />
 
-                  <TextInput
-                    compact
-                    fullWidth
-                    label="Max width percentage"
-                    // @ts-ignore
-                    onChange={e => updateLayout?.({
-                      ...columnLayoutSettings,
-                      max_width_percentage: typeof e.target.value !== 'undefined'
-                        ? Number(e.target.value)
-                        : e.target.value
-                      ,
-                    })}
-                    primary
-                    setContentOnMount
-                    small
-                    type="number"
-                    value={columnLayoutSettings?.max_width_percentage || ''}
-                  />
+                  <Flex flex={1} flexDirection="column">
+                    <Text bold muted small>
+                      Max width (%)
+                    </Text>
+                    <TextInput
+                      compact
+                      fullWidth
+                      label="Max width percentage"
+                      // @ts-ignore
+                      onChange={e => updateLayout?.({
+                        ...columnLayoutSettings,
+                        max_width_percentage: typeof e.target.value !== 'undefined'
+                          ? Number(e.target.value)
+                          : e.target.value
+                        ,
+                      })}
+                      primary
+                      setContentOnMount
+                      small
+                      type="number"
+                      value={columnLayoutSettings?.max_width_percentage || ''}
+                    />
+                  </Flex>
 
                   <Spacing mr={1} />
 
-                  <TextInput
-                    compact
-                    fullWidth
-                    label="Height"
-                    // @ts-ignore
-                    onChange={e => updateLayout?.({
-                      ...columnLayoutSettings,
-                      height: typeof e.target.value !== 'undefined'
-                        ? Number(e.target.value)
-                        : e.target.value
-                      ,
-                    })}
-                    primary
-                    setContentOnMount
-                    small
-                    type="number"
-                    value={columnLayoutSettings?.height || ''}
-                  />
+                  <Flex flex={1} flexDirection="column">
+                    <Text bold muted small>
+                      Height (pixels)
+                    </Text>
+                    <TextInput
+                      compact
+                      fullWidth
+                      // @ts-ignore
+                      onChange={e => updateLayout?.({
+                        ...columnLayoutSettings,
+                        height: typeof e.target.value !== 'undefined'
+                          ? Number(e.target.value)
+                          : e.target.value
+                        ,
+                      })}
+                      primary
+                      setContentOnMount
+                      small
+                      type="number"
+                      value={columnLayoutSettings?.height || ''}
+                    />
+                  </Flex>
                 </FlexContainer>
 
                 <Spacing mt={PADDING_UNITS}>

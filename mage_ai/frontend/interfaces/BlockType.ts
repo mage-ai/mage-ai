@@ -124,6 +124,14 @@ export const BLOCK_TYPES_WITH_NO_PARENTS = [
   BlockTypeEnum.MARKDOWN,
 ];
 
+export const BLOCK_TYPES_WITH_VARIABLES = [
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export enum StatusTypeEnum {
   EXECUTED = 'executed',
   FAILED = 'failed',

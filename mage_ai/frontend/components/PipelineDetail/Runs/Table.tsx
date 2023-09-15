@@ -41,12 +41,14 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -284,6 +286,7 @@ function PipelineRunsTable({
 }: PipelineRunsTableProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -479,7 +482,14 @@ function PipelineRunsTable({
                     key="row_completed"
                     muted
                   >
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                    {completedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                        : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
                   </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
@@ -548,14 +558,28 @@ function PipelineRunsTable({
                     default
                     key="row_date"
                   >
-                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
+                    {executionDate
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(executionDate, displayLocalTimezone)
+                        : getTimeInUTCString(executionDate)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
                   </Text>,
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_completed"
                   >
-                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
+                    {completedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                        : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
                   </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}

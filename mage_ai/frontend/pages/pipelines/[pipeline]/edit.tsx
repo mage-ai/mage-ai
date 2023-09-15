@@ -57,7 +57,7 @@ import PipelineType, {
 import PopupMenu from '@oracle/components/PopupMenu';
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
@@ -74,7 +74,6 @@ import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
-  // LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
@@ -115,6 +114,7 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 import { utcNowDate } from '@utils/date';
@@ -157,6 +157,10 @@ function PipelineDetailPage({
 
   const { data: dataProject, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProject?.projects?.[0], [dataProject]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -2014,7 +2018,7 @@ function PipelineDetailPage({
         },
       }, {
         contentOnly: true,
-      }).then(() => runBlockOrig(payload));
+      })?.then(() => runBlockOrig(payload));
     }
   }, [
     disablePipelineEditAccess,

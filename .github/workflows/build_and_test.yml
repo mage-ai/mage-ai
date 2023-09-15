@@ -1,9 +1,24 @@
 name: Build and test
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "mage_ai/**"
+      - "mage_integrations/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "setup.py"
+  pull_request:
+    paths:
+      - "mage_ai/**"
+      - "mage_integrations/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "setup.py"
 
 jobs:
   check-code-quality:
+
     runs-on: ubuntu-latest
     name: Check Code Quality
     steps:
@@ -21,8 +36,13 @@ jobs:
         run: |
           poetry install --no-interaction --only dev
           poetry run pre-commit install
+      - id: changed-files
+        uses: tj-actions/changed-files@v36
+        with:
+          files_ignore: |
+            requirements.txt
       - name: Run pre-commit hooks
-        run: poetry run pre-commit run --show-diff-on-failure
+        run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
     runs-on: ubuntu-latest

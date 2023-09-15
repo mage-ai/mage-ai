@@ -45,11 +45,15 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineHeaderStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { dateFormatLongFromUnixTimestamp } from '@utils/date';
+import {
+  dateFormatLongFromUnixTimestamp,
+  datetimeInLocalTimezone,
+} from '@utils/date';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -91,6 +95,7 @@ function KernelStatus({
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const {
     alive,
     usage,
@@ -147,7 +152,11 @@ function KernelStatus({
   } else if (isPipelineUpdating) {
     saveStatus = 'Saving changes...';
   } else if (pipelineLastSaved) {
-    saveStatus = `Last saved ${dateFormatLongFromUnixTimestamp(Number(pipelineLastSaved) / 1000)}`;
+    let lastSavedDate = dateFormatLongFromUnixTimestamp(Number(pipelineLastSaved) / 1000);
+    if (pipeline?.updated_at) {
+      lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
+    }
+    saveStatus = `Last saved ${lastSavedDate}`;
   } else {
     saveStatus = 'All changes saved';
   }
@@ -310,7 +319,6 @@ function KernelStatus({
                         : () => updateCluster({
                             cluster: {
                               id,
-                              is_active: true,
                             },
                           }),
                       uuid: id,

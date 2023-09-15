@@ -4,7 +4,9 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
+import FlexContainer, {
+  JUSTIFY_SPACE_BETWEEN_PROPS,
+} from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
@@ -13,10 +15,14 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { ContainerStyle } from './index.style';
+import { Edit } from '@oracle/icons';
+import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
 
 type PreferencesProps = {
@@ -38,11 +44,13 @@ function Preferences({
     uuid: 'settings/workspace/preferences',
   });
   const [projectAttributes, setProjectAttributes] = useState<ProjectType>(null);
+  const [editingOpenAIKey, setEditingOpenAIKey] = useState<boolean>(false);
 
   const { data, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
   const {
     name: projectName,
+    openai_api_key: openaiApiKey,
     project_uuid: projectUUID,
   } = project || {};
 
@@ -60,6 +68,8 @@ function Preferences({
           callback: ({ project: p }) => {
             fetchProjects();
             setProjectAttributes(p);
+            setEditingOpenAIKey(false);
+            storeLocalTimezoneSetting(p?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]);
 
             if (onSaveSuccess) {
               onSaveSuccess?.(p);
@@ -175,7 +185,7 @@ function Preferences({
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />
 
-      <Panel noPadding>
+      <Panel noPadding overflowVisible>
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
             <Headline level={5}>
@@ -183,29 +193,49 @@ function Preferences({
             </Headline>
           </Spacing>
 
-          {Object.entries(projectAttributes?.features || {}).map(([k, v]) => (
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
+          {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
+            <Spacing
               key={k}
+              mt={idx === 0 ? 0 : '4px'}
             >
-              <Text default monospace>
-                {k}
-              </Text>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Flex>
+                  <Text default monospace>
+                    {k}
+                  </Text>
+                  {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
+                    <Spacing ml={1}>
+                      <Tooltip
+                        block
+                        description="Display dates in local timezone. Please note that certain pages
+                          (e.g. Monitor page) or components (e.g. Pipeline run bar charts) may still
+                          be in UTC time. Dates in local time will have a timezone offset in the
+                          timestamp (e.g. -07:00)."
+                        lightBackground
+                        muted
+                        size={ICON_SIZE_MEDIUM}
+                      />
+                    </Spacing>
+                  }
+                </Flex>
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <ToggleSwitch
-                checked={!!v}
-                onCheck={() => setProjectAttributes(prev => ({
-                  ...prev,
-                  features: {
-                    ...projectAttributes?.features,
-                    [k]: !v,
-                  },
-                }))}
-              />
-            </FlexContainer>
+                <ToggleSwitch
+                  checked={!!v}
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
           ))}
         </Spacing>
       </Panel>
@@ -220,17 +250,34 @@ function Preferences({
             </Headline>
           </Spacing>
 
-          <TextInput
-            label="API key"
-            monospace
-            onChange={e => setProjectAttributes(prev => ({
-              ...prev,
-              openai_api_key: e.target.value,
-            }))}
-            primary
-            setContentOnMount
-            value={projectAttributes?.openai_api_key || ''}
-          />
+          {(openaiApiKey && !editingOpenAIKey)
+            ?
+              <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS} >
+                <Text default monospace>
+                  API key: ********
+                </Text>
+                <Button
+                  iconOnly
+                  onClick={() => setEditingOpenAIKey(true)}
+                  secondary
+                  title="Edit"
+                >
+                  <Edit size={ICON_SIZE_SMALL} />
+                </Button>
+              </FlexContainer>
+            :
+              <TextInput
+                label="API key"
+                monospace
+                onChange={e => setProjectAttributes(prev => ({
+                  ...prev,
+                  openai_api_key: e.target.value,
+                }))}
+                primary
+                setContentOnMount
+                value={projectAttributes?.openai_api_key || ''}
+              />
+          }
         </Spacing>
       </Panel>
 

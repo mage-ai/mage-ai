@@ -34,13 +34,13 @@ Our ALB is configured to route traffic to the ECS cluster and provides a public 
 
 Amazon EFS provides a fully managed, scalable, and shared file storage service that can be used with AWS services and on-premises resources. 
 
-We use EFS to store a persistent volume where the `mage_data` for your project is stored. You can learn more about what is stored in `mage_data` [here](/design/core-abstractions#project-data). Without EFS, your project data would be lost when your ECS service is terminated. EFS allows us to persist data between containers within ECS.
+We use EFS to store a persistent volume where the `mage_data` for your project is stored. You can learn more about what is stored in `mage_data` [here](/design/abstractions/project-structure#project-data). Without EFS, your project data would be lost when your ECS service is terminated. EFS allows us to persist data between containers within ECS.
 
 ## Relational Database Service (RDS)
 
 The RDS Instance resource is used to define and configure a specific database instance within the Amazon RDS service. 
 
-We use a Postgres RDS to hold the the backend database for your Mage instance. This database contains the metadata that powers Mage. Read more [here](/design/core-abstractions#project-data).
+We use a Postgres RDS to hold the the backend database for your Mage instance. This database contains the metadata that powers Mage. Read more [here](/design/abstractions/project-structure#project-data).
 
 ## Virtual Private Cloud (VPC)
 

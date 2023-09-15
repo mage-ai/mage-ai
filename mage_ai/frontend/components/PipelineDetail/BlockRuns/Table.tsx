@@ -22,11 +22,13 @@ import { ResponseTypeEnum } from '@api/constants';
 import { Save, Logs } from '@oracle/icons';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
@@ -52,6 +54,7 @@ function BlockRunsTable({
   setErrors,
   sortableColumnIndexes,
 }: BlockRunsTableProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
@@ -236,7 +239,10 @@ function BlockRunsTable({
             monospace
             small
           >
-            {createdAt}
+            {displayLocalTimezone
+              ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+              : dateFormatLong(createdAt, { includeSeconds: true })
+            }
           </Text>,
           <Text
             default
@@ -244,7 +250,14 @@ function BlockRunsTable({
             monospace
             small
           >
-            {completedAt?.slice(0, 19) || '-'}
+            {completedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                : dateFormatLong(completedAt, { includeSeconds: true })
+              ): (
+                <>&#8212;</>
+              )
+            }
           </Text>,
           <Button
             default

@@ -24,7 +24,7 @@
     "prompt": "✨ Make magic..."
   },
   "metadata": {
-    "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
+    "og:image": "/media/og.png",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
@@ -272,6 +272,7 @@
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
+                "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
@@ -292,16 +293,23 @@
           "group": "Configuration",
           "icon": "gear",
           "pages": [
-            "custom-templates/overview",
             {
               "group": "Variables",
               "pages": [
-                "development/variables/environment-variables",
-                "getting-started/runtime-variable",
-                "development/variables/secrets",
-                "development/variables/referencing-variables"
+                "development/variables/overview",
+                "development/variables/referencing-variables",
+                {
+                  "group": "Variable Types",
+                  "pages": [
+                    "development/variables/environment-variables",
+                    "getting-started/runtime-variable",
+                    "development/variables/block-variables",
+                    "development/variables/secrets"
+                  ]
+                }
               ]
             },
+            "custom-templates/overview",
             {
               "group": "Dependencies",
               "pages": [
@@ -424,7 +432,14 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/ai/overview"
+        "development/ai/overview",
+        {
+          "group": "Visualizations",
+          "icon": "chart-line-up-down",
+          "pages": [
+            "visualizations/dashboards"
+          ]
+        }
       ]
     },
     {
@@ -472,6 +487,7 @@
           "icon": "pipe-section",
           "pages": [
             "guides/streaming-pipeline",
+            "guides/streaming/magic-devcontainer",
             "guides/streaming-pipeline-rabbitmq",
             "guides/train-model"
           ]

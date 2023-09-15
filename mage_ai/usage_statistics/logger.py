@@ -20,6 +20,7 @@ from mage_ai.usage_statistics.constants import (
     EventNameType,
     EventObjectType,
 )
+from mage_ai.usage_statistics.utils import build_event_data_for_chart
 
 
 class UsageStatisticLogger():
@@ -29,6 +30,15 @@ class UsageStatisticLogger():
     @property
     def help_improve_mage(self) -> bool:
         return self.project.help_improve_mage
+
+    async def chart_impression(self, chart_config: Dict) -> bool:
+        return await self.__send_message(
+            dict(
+                action=EventActionType.IMPRESSION,
+                chart=build_event_data_for_chart(chart_config),
+                object=EventObjectType.CHART,
+            ),
+        )
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -146,6 +156,9 @@ class UsageStatisticLogger():
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
     ) -> bool:
+        if not self.help_improve_mage:
+            return False
+
         if data is None:
             data = {}
 

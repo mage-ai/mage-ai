@@ -28,6 +28,7 @@ import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useWindowSize } from '@utils/sizes';
 
 export const LOG_UUID_PARAM = 'log_uuid';
@@ -57,6 +58,7 @@ function LogsTable({
   setSelectedLog,
   themeContext,
 }: LogsTableProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const { height: windowHeight } = useWindowSize();
   const tableRef = useRef(null);
   const isIntegration = useMemo(
@@ -109,7 +111,7 @@ function LogsTable({
     },
     {
       uuid: 'Date',
-      width: 214,
+      width: displayLocalTimezone ? 202 : 214,
     },
     {
       uuid: 'Block',
@@ -245,8 +247,9 @@ function LogsTable({
             key="log_timestamp"
             monospace
             noWrapping
+            small={displayLocalTimezone}
           >
-            {formatTimestamp(timestamp)}
+            {formatTimestamp(timestamp, { localTimezone: displayLocalTimezone })}
           </Text>
         </Flex>
         <Flex
@@ -283,6 +286,7 @@ function LogsTable({
     );
   }, [
     blockUUIDColWidth,
+    displayLocalTimezone,
     isIntegration,
     onRowClick,
     query,
