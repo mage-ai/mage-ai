@@ -22,7 +22,7 @@ DATA_PROVIDERS = [
 DATA_PROVIDERS_NAME = {
     DataSource.BIGQUERY: 'BigQuery',
     DataSource.CLICKHOUSE: 'ClickHouse',
-    DataSource.DUCKDB: 'Duck DB',
+    DataSource.DUCKDB: 'DuckDB',
     DataSource.DRUID: 'Druid',
     DataSource.MSSQL: 'Microsoft SQL Server',
     DataSource.MYSQL: 'MySQL',
