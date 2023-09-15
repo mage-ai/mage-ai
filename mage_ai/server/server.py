@@ -11,7 +11,6 @@ from typing import Union
 
 import tornado.ioloop
 import tornado.web
-from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 from tornado.options import options
@@ -277,10 +276,10 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     else:
         updated_routes = routes
 
-    autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
+    # autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
         updated_routes,
-        autoreload=True,
+        autoreload=False,
         template_path=template_dir,
     )
 
