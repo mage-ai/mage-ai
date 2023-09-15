@@ -47,21 +47,3 @@ jobs:
         with:
           dockerfile: ${{ matrix.image }}
           ignore: DL3002,DL3008,DL3013,DL3016
-      - name: Annotate Pull Request
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request' && failure()
-        with:
-          script: |
-            const output = `
-            #### Hadolint: \`${{ steps.hadolint.outcome }}\`
-            \`\`\`
-            ${process.env.HADOLINT_RESULTS}
-            \`\`\`
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })

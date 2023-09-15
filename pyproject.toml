@@ -48,7 +48,7 @@ dependencies = [
   'numpy>=1.21.0',
   'openai>=0.27.8',
   'pandas~=1.3',
-  'polars',
+  'polars==0.18.4',
   'protobuf',
   'psutil',
   'pyarrow==10.0.1',

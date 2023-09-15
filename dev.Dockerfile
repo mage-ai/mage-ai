@@ -1,6 +1,5 @@
 FROM python:3.10-bookworm
 LABEL description="Mage data management platform"
-ARG PIP=pip3
 USER root
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -43,7 +42,7 @@ RUN \
   mkdir ~/.sparkmagic && \
   curl https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json > ~/.sparkmagic/config.json && \
   sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json && \
-  jupyter-kernelspec install --user $(${PIP} show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
+  jupyter-kernelspec install --user "$(pip3 show sparkmagic | grep Location | cut -d' '' -f2)/sparkmagic/kernels/pysparkkernel"
 # Mage Integration and other related packages
 RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
