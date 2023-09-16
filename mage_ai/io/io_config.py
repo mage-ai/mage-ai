@@ -1,7 +1,8 @@
+import os
+import pathlib
 from enum import Enum
 from typing import Any, Mapping, Union
-import pathlib
-import os
+
 import yaml
 
 
@@ -10,6 +11,7 @@ class IOConfigKeys(str, Enum):
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'
     DRUID = 'Druid'
+    DUCKDB = 'DuckDB'
     FILE = 'File'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'

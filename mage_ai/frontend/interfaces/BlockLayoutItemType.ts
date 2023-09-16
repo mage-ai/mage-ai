@@ -10,6 +10,13 @@ export enum DataSourceEnum {
   PIPELINE_SCHEDULES = 'pipeline_schedules',
 }
 
+export enum RenderTypeEnum {
+  HTML = 'html',
+  JPEG = 'jpeg',
+  JPG = 'jpg',
+  PNG = 'png',
+}
+
 export const DATA_SOURCES = [
   DataSourceEnum.BLOCK,
   DataSourceEnum.BLOCK_RUNS,
@@ -41,6 +48,8 @@ export default interface BlockLayoutItemType {
   configuration?: ConfigurationType;
   data?: {
     columns?: string[];
+    render?: string;
+    render_type?: RenderTypeEnum;
     x?: string[];
     y?: number[][];
   };
