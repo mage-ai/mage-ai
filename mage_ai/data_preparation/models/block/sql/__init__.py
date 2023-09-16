@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     clickhouse,
     druid,
+    duckdb,
     mssql,
     mysql,
     postgres,
@@ -279,6 +280,50 @@ def execute_sql_code(
                             verbose=False,
                         ),
                     ]
+    elif DataSource.DUCKDB.value == data_provider:
+        from mage_ai.io.duckdb import DuckDB
+
+        loader = DuckDB.with_config(config_file_loader)
+        schema = schema or loader.default_schema()
+        duckdb.create_upstream_block_tables(
+            loader,
+            block,
+            **create_upstream_block_tables_kwargs,
+        )
+
+        query_string = duckdb.interpolate_input_data(
+            block,
+            query,
+            **interpolate_input_data_kwargs,
+        )
+
+        query_string = interpolate_vars(
+            query_string, global_vars=global_vars)
+
+        if use_raw_sql:
+            return execute_raw_sql(
+                loader,
+                block,
+                query_string,
+                configuration=configuration,
+                should_query=should_query,
+            )
+        else:
+            loader.export(
+                None,
+                schema,
+                table_name=table_name,
+                query_string=query_string,
+                **kwargs_shared,
+            )
+
+            if should_query:
+                return [
+                    loader.load(
+                        f'SELECT * FROM {table_name}',
+                        verbose=False,
+                    ),
+                ]
     elif DataSource.MSSQL.value == data_provider:
         from mage_ai.io.mssql import MSSQL
 

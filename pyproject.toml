@@ -107,6 +107,9 @@ clickhouse = [
 deltalake = [
   'deltalake',
 ]
+duckdb =[
+  'duckdb==0.8.1',
+]
 druid = [
   'pydruid==0.6.5',
 ]
@@ -227,6 +230,7 @@ sources-destinations = [
   'mage-ai[bigquery]',
   'mage-ai[clickhouse]',
   'mage-ai[deltalake]',
+  'mage-ai[duckdb]',
   'mage-ai[druid]',
   'mage-ai[elasticsearch]',
   'mage-ai[github]',
