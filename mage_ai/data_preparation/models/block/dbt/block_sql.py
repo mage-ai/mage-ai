@@ -47,17 +47,22 @@ class DBTBlockSQL(DBTBlock):
         projects = {}
 
         project_full_path = self.project_path
-        project = await Project.project_async(project_full_path)
+        project = Project(project_full_path).project
         project_name = project.get('name')
         project_profile = project.get('profile')
 
-        profiles = await Profiles.profiles_async(
-            project_full_path,
-            self.pipeline.variables if self.pipeline else None
-        )
-        profile = profiles.get(project_profile)
-        target = profile.get('target')
-        targets = sorted(list(profile.get('outputs').keys()))
+        # ignore exception if no profiles.yml is found.
+        # Just means that the targets have no option
+        try:
+            profiles = Profiles(
+                project_full_path,
+                self.pipeline.variables if self.pipeline else None
+            ).profiles
+        except FileNotFoundError:
+            pass
+        profile = profiles.get(project_profile) if profiles else None
+        target = profile.get('target') if profile else None
+        targets = sorted(list(profile.get('outputs', {}).keys())) if profile else None
 
         projects = {
             project_name: {
@@ -200,6 +205,7 @@ class DBTBlockSQL(DBTBlock):
                 df, _res, success = DBTCli(['show'] + args).to_pandas()
                 if not success:
                     raise Exception('DBT exited with a non 0 exit status.')
+
         # provide df for downstream usage or data preview
         self.store_variables(
             # key differes whether its executed from notebook or execcuted in the background

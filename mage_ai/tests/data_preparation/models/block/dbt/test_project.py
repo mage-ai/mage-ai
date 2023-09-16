@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 from mage_ai.data_preparation.models.block.dbt.project import Project
@@ -13,7 +12,8 @@ class ProjectTest(TestCase):
     def setUpClass(self):
         super().setUpClass()
 
-        self.test_project_path = str(Path(self.repo_path) / 'dbt_project.yml')
+        self.test_base_project_path = str(Path(self.repo_path) / 'dbt_project.yml')
+        self.test_demo_project_path = str(Path(self.repo_path) / 'demo' / 'dbt_project.yml')
         project_yaml = """name: 'base'
 version: '1.0.0'
 config-version: 2
@@ -23,7 +23,11 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 """
-        with Path(self.test_project_path).open('w') as f:
+        with Path(self.test_base_project_path).open('w') as f:
+            f.write(project_yaml)
+
+        Path(self.test_demo_project_path).parent.mkdir()
+        with Path(self.test_demo_project_path).open('w') as f:
             f.write(project_yaml)
 
         self.test_packages_path = str(Path(self.repo_path) / 'packages.yml')
@@ -35,7 +39,9 @@ clean-targets:         # directories to be removed by `dbt clean`
 
     @classmethod
     def tearDownClass(self):
-        Path(self.test_project_path).unlink()
+        Path(self.test_base_project_path).unlink()
+        Path(self.test_demo_project_path).unlink()
+        Path(self.test_demo_project_path).parent.rmdir()
         Path(self.test_packages_path).unlink()
         super().tearDownClass()
 
@@ -53,37 +59,8 @@ clean-targets:         # directories to be removed by `dbt clean`
             project.project
         )
 
-    def test_project_async(self):
-        project = asyncio.run(Project.project_async(self.repo_path))
-        self.assertEqual(
-            {
-                'clean-targets': ['target', 'dbt_packages'],
-                'config-version': 2,
-                'name': 'base',
-                'profile': 'base',
-                'target-path': 'target',
-                'version': '1.0.0'
-            },
-            project
-        )
-
-    def test_packages(self):
-        project = Project(self.repo_path)
-        self.assertEqual(
-            {'packages': [{'local': 'demo'}]},
-            project.packages
-        )
-
-    def test_packages_async(self):
-        packages = asyncio.run(Project.packages_async(self.repo_path))
-        self.assertEqual(
-            {'packages': [{'local': 'demo'}]},
-            packages
-        )
-
-    def test_local_package_dirs_async(self):
-        local_packages = asyncio.run(Project.local_package_dirs_async(self.repo_path))
+    def test_local_packages(self):
         self.assertEqual(
             ['demo'],
-            local_packages
+            Project(self.repo_path).local_packages
         )

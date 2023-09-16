@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 import yaml
@@ -84,11 +83,4 @@ target: dev
         self.assertEqual(
             self.interpolated_profiles,
             profiles.profiles
-        )
-
-    def test_profiles_async(self):
-        profiles = asyncio.run(Profiles.profiles_async(self.repo_path, self.variables))
-        self.assertEqual(
-            self.interpolated_profiles,
-            profiles
         )

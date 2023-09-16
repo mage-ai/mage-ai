@@ -39,15 +39,16 @@ class Project(object):
         """
         self.__project_dir: Union[str, os.PathLike] = project_dir
         self.__project: Optional[Dict[str, Any]] = None
-        self.__packages: Optional[Dict[str, Any]] = None
 
     @property
     def project(self) -> Dict[str, Any]:
         """
         Gets the dbt_project.yml as dictionary.
 
-        Raises:
-            ProjectError: Error while handling dbt_project.yml
+        This is a wrapper for the __project_async function.
+        This is needed, as sometimes Project is initiated in an event loop and the io operation
+        should be called async. If its not caleld inside an event loop, then it just wraps the
+        methods inside async.run
 
         Returns:
             Dict: the project as dictionary
@@ -57,38 +58,14 @@ class Project(object):
                 asyncio.get_running_loop()
                 with ThreadPoolExecutor(1) as pool:
                     self.__project = pool.submit(lambda: asyncio.run(
-                        Project.project_async(self.__project_dir)
+                        self.__project_async()
                     )).result()
             except Exception:
-                self.__project = asyncio.run(Project.project_async(self.__project_dir))
+                self.__project = asyncio.run(self.__project_async())
         return self.__project
 
-    @property
-    def packages(self) -> Dict[str, Any]:
-        """
-        Gets the packages.yml as dictionary.
-
-        Raises:
-            PackageError: Error while handling packages.yml
-
-        Returns:
-            Dict: the package as dictionary
-        """
-        if not self.__packages:
-            try:
-                asyncio.get_running_loop()
-                with ThreadPoolExecutor(1) as pool:
-                    self.__packages = pool.submit(lambda: asyncio.run(
-                        Project.packages_async(self.__project_dir)
-                    )).result()
-            except Exception:
-                self.__packages = asyncio.run(Project.packages_async(self.__project_dir))
-        return self.__packages
-
-    @classmethod
-    async def project_async(
-        cls,
-        project_dir: Union[str, os.PathLike]
+    async def __project_async(
+        self,
     ) -> Dict[str, Any]:
         """
         Gets the dbt_project.yml as dictionary.
@@ -99,10 +76,10 @@ class Project(object):
         Returns:
             Dict: the project as dictionary
         """
-        project_full_path = Path(project_dir) / PROJECT_FILE_NAME
+        project_full_path = Path(self.__project_dir) / PROJECT_FILE_NAME
         if not project_full_path.exists():
-            raise ProjectError(
-                f'`{PROJECT_FILE_NAME}` in `{project_dir}` does not exist.'
+            raise FileNotFoundError(
+                f'`{PROJECT_FILE_NAME}` in `{self.__project_dir}` does not exist.'
             )
         try:
             async with aiofiles.open(project_full_path, mode='r') as f:
@@ -110,50 +87,21 @@ class Project(object):
                 project = yaml.safe_load(content)
         except Exception as e:
             raise ProjectError(
-                f'Failed to read `{PROJECT_FILE_NAME}` in `{project_dir}`: {e}'
+                f'Failed to read `{PROJECT_FILE_NAME}` in `{self.__project_dir}`: {e}'
             )
         return project
 
-    @classmethod
-    async def packages_async(
-        cls,
-        project_dir: Union[str, os.PathLike]
-    ) -> Dict[str, Any]:
+    @property
+    def local_packages(
+        self
+    ) -> List[str]:
         """
-        Gets the packages.yml as dictionary.
+        Returns the local packages inside the project_dir
 
-        Raises:
-            PackageError: Error while handling packages.yml
+        Args:
+            project_dir (Union[str, os.PathLike]): dbt project which has local packages inside
 
         Returns:
-            Dict: the package as dictionary
+            List[str]: dir names of local packages
         """
-        package_full_path = Path(project_dir) / PACKAGE_FILE_NAME
-        if not package_full_path.exists():
-            raise ProjectError(
-                f'`{PACKAGE_FILE_NAME}` in `{project_dir}` does not exist.'
-            )
-
-        try:
-            async with aiofiles.open(package_full_path, mode='r') as f:
-                content = await f.read()
-                packages = yaml.safe_load(content)
-        except Exception as e:
-            raise ProjectError(
-                f'Failed to read `{PACKAGE_FILE_NAME}` in `{project_dir}`: {e}'
-            )
-        if not packages['packages']:
-            packages['packages'] = []
-        return packages
-
-    @classmethod
-    async def local_package_dirs_async(
-        cls,
-        project_dir: Union[str, os.PathLike]
-    ) -> List[str]:
-        packages = await cls.packages_async(project_dir)
-        return [
-            package.get('local')
-            for package in packages.get('packages', [])
-            if package.get('local')
-        ]
+        return [file.parent.stem for file in Path(self.__project_dir).glob('*/dbt_project.yml')]

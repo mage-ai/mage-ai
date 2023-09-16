@@ -128,20 +128,25 @@ class DBTBlock(Block):
                 )
             ))
 
-            for project_path in project_paths:
-                with DBTAdapter(str(project_path)) as dbt_adapter:
-                    credentials = dbt_adapter.credentials
-                    # some databases use other default schema names
-                    # e.g. duckdb uses main schema as default
-                    schema = getattr(credentials, 'schema', 'public')
-                    database = getattr(credentials, 'database', None)
+            if block_uuids:
+                for project_path in project_paths:
+                    try:
+                        with DBTAdapter(str(project_path)) as dbt_adapter:
+                            credentials = dbt_adapter.credentials
+                            # some databases use other default schema names
+                            # e.g. duckdb uses main schema as default
+                            schema = getattr(credentials, 'schema', 'public')
+                            database = getattr(credentials, 'database', None)
 
-                Sources(project_path).reset_pipeline(
-                    pipeline_uuid=pipeline_uuid,
-                    block_uuids=block_uuids,
-                    schema=schema,
-                    database=database
-                )
+                        Sources(project_path).reset_pipeline(
+                            pipeline_uuid=pipeline_uuid,
+                            block_uuids=block_uuids,
+                            schema=schema,
+                            database=database
+                        )
+                    # project not yet configured correctly, so just skip that step for now
+                    except FileNotFoundError:
+                        pass
 
     @classmethod
     def materialize_df(

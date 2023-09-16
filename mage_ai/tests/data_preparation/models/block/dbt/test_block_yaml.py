@@ -1,10 +1,3 @@
-import sys
-
-if sys.version_info[:2] < (3, 8):
-    from mock import AsyncMock
-else:
-    from unittest.mock import AsyncMock
-
 import asyncio
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -44,15 +37,12 @@ class DBTBlockYAMLTest(TestCase):
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Project')
     def test_metadata_async(self, Project, Profiles):
-        Project.local_package_dirs_async = AsyncMock()
-        Project.local_package_dirs_async.return_value = ['test_project_name']
-        Project.project_async = AsyncMock()
-        Project.project_async.return_value = {
+        Project.return_value.local_packages = ['test_project_name']
+        Project.return_value.project = {
             'name': 'test_project_name',
             'profile': 'test_project_name'
         }
-        Profiles.profiles_async = AsyncMock()
-        Profiles.profiles_async.return_value = {
+        Profiles.return_value.profiles = {
             'test_project_name': {
                 'target': 'test',
                 'outputs': {

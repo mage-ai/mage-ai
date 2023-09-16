@@ -88,8 +88,7 @@ class Profiles(object):
         # create dir for temporary interpolated profiles.yml
         interpolated_profiles_dir = (
             Path(self.__raw_profiles_dir) /
-            '.mage_temp_profiles' /
-            str(uuid.uuid4())
+            ('.mage_temp_profiles_' + str(uuid.uuid4()))
         )
         try:
             interpolated_profiles_dir.mkdir(parents=True, exist_ok=True)
@@ -130,8 +129,10 @@ class Profiles(object):
         """
         Gets the interpolated profiles.yml as dictionary.
 
-        Raises:
-            ProfilesError: Error while handling profiles.yml
+        This is a wrapper for the __profiles_async function.
+        This is needed, as sometimes Profiles is initiated in an event loop and the io operation
+        should be called async. If its not caleld inside an event loop, then it just wraps the
+        methods inside async.run
 
         Returns:
             Dict: interpolated profiles.yml as dictionary
@@ -141,12 +142,10 @@ class Profiles(object):
                 asyncio.get_running_loop()
                 with ThreadPoolExecutor(1) as pool:
                     self.__profiles = pool.submit(lambda: asyncio.run(
-                        Profiles.profiles_async(self.profiles_dir, self.__variables)
+                        self.__profiles_async()
                     )).result()
             except Exception:
-                self.__profiles = asyncio.run(
-                    Profiles.profiles_async(self.profiles_dir, self.__variables)
-                )
+                self.__profiles = asyncio.run(self.__profiles_async())
         return self.__profiles
 
     def __del__(self) -> None:
@@ -159,11 +158,8 @@ class Profiles(object):
     def __exit__(self, *args) -> None:
         self.clean()
 
-    @classmethod
-    async def profiles_async(
-        cls,
-        profiles_dir: Union[str, os.PathLike],
-        variables: Optional[Dict[str, Any]] = None
+    async def __profiles_async(
+        self,
     ) -> Dict[str, Any]:
         """
         Gets the interpolated profiles.yml as dictionary.
@@ -174,21 +170,21 @@ class Profiles(object):
         Returns:
             Dict: interpolated profiles.yml as dictionary
         """
-        raw_profiles_full_path = Path(profiles_dir) / PROFILES_FILE_NAME
+        raw_profiles_full_path = Path(self.__raw_profiles_dir) / PROFILES_FILE_NAME
         if not raw_profiles_full_path.exists():
-            raise ProfilesError(
-                f'`{PROFILES_FILE_NAME}` in `{profiles_dir}` does not exist.'
+            raise FileNotFoundError(
+                f'`{PROFILES_FILE_NAME}` in `{self.__raw_profiles_dir}` does not exist.'
             )
         try:
             async with aiofiles.open(raw_profiles_full_path, mode='r') as f:
                 content = await f.read()
                 profiles = Template(content).render(
-                    variables=lambda x: variables.get(x) if variables else None,
+                    variables=lambda x: self.__variables.get(x) if self.__variables else None,
                     **get_template_vars(),
                 )
                 interpolated_profiles = yaml.safe_load(profiles)
         except Exception as e:
             raise ProfilesError(
-                f'Failed to read `{PROFILES_FILE_NAME}` in `{profiles_dir}`: {e}'
+                f'Failed to read `{PROFILES_FILE_NAME}` in `{self.__raw_profiles_dir}`: {e}'
             )
         return interpolated_profiles

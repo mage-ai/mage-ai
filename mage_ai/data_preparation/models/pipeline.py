@@ -21,6 +21,7 @@ from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
+    BlockLanguage,
     BlockType,
     ExecutorType,
     PipelineType,
@@ -961,9 +962,19 @@ class Pipeline:
                         widget=widget,
                     )
 
-        # If there are any dbt block we need to update mage_sources.yml
-        # TODO: Only do this, if its really necessary
-        if any(isinstance(block, DBTBlock) for _uuid, block in self.blocks_by_uuid.items()):
+        # If there are any dbt blocks which could receive an upstream df
+        # we need to update mage_sources.yml
+        if any(
+            (
+                not isinstance(block, DBTBlock) and
+                block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(
+                    isinstance(downstream_block, DBTBlock)
+                    for downstream_block in block.downstream_blocks
+                )
+            )
+            for _uuid, block in self.blocks_by_uuid.items()
+        ):
             DBTBlock.update_sources(self.blocks_by_uuid)
 
         if should_update_block_cache:

@@ -27,22 +27,26 @@ class DBTBlockYAML(DBTBlock):
         """
         projects = {}
 
-        project_dirs = await Project.local_package_dirs_async(self.base_project_path)
+        project_dirs = Project(self.base_project_path).local_packages
         for project_dir in project_dirs:
             project_full_path = str(Path(self.base_project_path) / project_dir)
 
-            project = await Project.project_async(project_full_path)
+            project = Project(project_full_path).project
             project_name = project.get('name')
             project_profile = project.get('profile')
 
-            profiles = await Profiles.profiles_async(
-                project_full_path,
-                self.pipeline.variables if self.pipeline else None
-            )
-
-            profile = profiles.get(project_profile)
-            target = profile.get('target')
-            targets = sorted(list(profile.get('outputs').keys()))
+            # ignore exception if no profiles.yml is found.
+            # Just means that the targets have no option
+            try:
+                profiles = Profiles(
+                    project_full_path,
+                    self.pipeline.variables if self.pipeline else None
+                ).profiles
+            except FileNotFoundError:
+                pass
+            profile = profiles.get(project_profile) if profiles else None
+            target = profile.get('target') if profile else None
+            targets = sorted(list(profile.get('outputs').keys())) if profile else None
 
             projects[project_dir] = {
                 'project_name': project_name,
@@ -79,9 +83,9 @@ class DBTBlockYAML(DBTBlock):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
-        return str(
-            Path(self.base_project_path) / self.configuration.get('dbt_project_name')
-        )
+        project_name = self.configuration.get('dbt_project_name')
+        if project_name:
+            return str(Path(self.base_project_path) / project_name)
 
     def _execute_block(
         self,
