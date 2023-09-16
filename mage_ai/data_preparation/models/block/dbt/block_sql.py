@@ -59,7 +59,7 @@ class DBTBlockSQL(DBTBlock):
                 self.pipeline.variables if self.pipeline else None
             ).profiles
         except FileNotFoundError:
-            pass
+            profiles = None
         profile = profiles.get(project_profile) if profiles else None
         target = profile.get('target') if profile else None
         targets = sorted(list(profile.get('outputs', {}).keys())) if profile else None
@@ -369,9 +369,10 @@ class DBTBlockSQL(DBTBlock):
         # calculate downstream_nodes
         for unique_id, node in nodes.items():
             for upstream_node in node['upstream_nodes']:
-                downstream_nodes = nodes[upstream_node].get('downstream_nodes', set())
-                downstream_nodes.add(unique_id)
-                nodes[upstream_node]['downstream_nodes'] = downstream_nodes
+                if nodes.get(upstream_node):
+                    downstream_nodes = nodes[upstream_node].get('downstream_nodes', set())
+                    downstream_nodes.add(unique_id)
+                    nodes[upstream_node]['downstream_nodes'] = downstream_nodes
 
         # map dbt unique_id to mage uuid
         uuids = {
@@ -389,10 +390,12 @@ class DBTBlockSQL(DBTBlock):
                 'upstream_nodes': {
                     uuids[upstream_node]
                     for upstream_node in node.get('upstream_nodes', set())
+                    if uuids.get(upstream_node)
                 },
                 'downstream_nodes': {
                     uuids[downstream_node]
                     for downstream_node in node.get('downstream_nodes', set())
+                    if uuids.get(downstream_node)
                 }
             }
             for unique_id, node in nodes.items()

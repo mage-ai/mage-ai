@@ -43,7 +43,7 @@ class DBTBlockYAML(DBTBlock):
                     self.pipeline.variables if self.pipeline else None
                 ).profiles
             except FileNotFoundError:
-                pass
+                profiles = None
             profile = profiles.get(project_profile) if profiles else None
             target = profile.get('target') if profile else None
             targets = sorted(list(profile.get('outputs').keys())) if profile else None
