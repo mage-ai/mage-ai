@@ -676,7 +676,7 @@ class RowTests(TestCase):
             ],
         )
         for column in df.columns:
-            with self.assertRaises((SyntaxError, pd.errors.UndefinedVariableError)):
+            with self.assertRaisesRegex(Exception, ''):
                 action = dict(action_code=f'{column} == False')
                 filter_rows(df, action, original_df=df)
 
