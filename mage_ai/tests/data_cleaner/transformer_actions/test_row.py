@@ -1,15 +1,15 @@
-from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-from mage_ai.data_cleaner.transformer_actions.row import (
-    drop_duplicates,
-    # explode,
-    filter_rows,
-    sort_rows,
-    remove_row,
-)
-from mage_ai.tests.base_test import TestCase
-from pandas.testing import assert_frame_equal
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
+
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.row import (  # explode,
+    drop_duplicates,
+    filter_rows,
+    remove_row,
+    sort_rows,
+)
+from mage_ai.tests.base_test import TestCase
 
 
 class RowTests(TestCase):
@@ -325,7 +325,7 @@ class RowTests(TestCase):
         assert_frame_equal(df_new3, df_expected2)
         assert_frame_equal(df_new4, df_expected3)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(TypeError):
             _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
 
     def test_filter_rows_multi_condition(self):
@@ -395,11 +395,11 @@ class RowTests(TestCase):
         df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
         df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
         df_new5 = filter_rows(df, action5, original_df=df).reset_index(drop=True)
-        df_new['value'] = df_new['value'].astype(int)
-        df_new['inventory'] = df_new['inventory'].astype(int)
+        df_new['value'] = df_new['value'].astype(np.int64)
+        df_new['inventory'] = df_new['inventory'].astype(np.int64)
         df_new2['brand'] = df_new2['brand'].astype(str)
-        df_new2['inventory'] = df_new2['inventory'].astype(int)
-        df_new4['value'] = df_new4['value'].astype(int)
+        df_new2['inventory'] = df_new2['inventory'].astype(np.int64)
+        df_new4['value'] = df_new4['value'].astype(np.int64)
         df_new4['brand'] = df_new4['brand'].astype(str)
         df_new4['discounted'] = df_new4['discounted'].astype(bool)
         assert_frame_equal(df_expected, df_new)
@@ -447,7 +447,7 @@ class RowTests(TestCase):
             ],
             columns=['value', 'brand', 'discounted', 'inventory'],
         )
-        df_new['value'] = df_new['value'].astype(int)
+        df_new['value'] = df_new['value'].astype(np.int64)
         assert_frame_equal(df_expected, df_new)
 
     def test_filter_row_dirty_columns(self):
@@ -520,11 +520,11 @@ class RowTests(TestCase):
         df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
         df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
         df_new5 = filter_rows(df, action5, original_df=df).reset_index(drop=True)
-        df_new['Val ue'] = df_new['Val ue'].astype(int)
-        df_new['invVe nTory'] = df_new['invVe nTory'].astype(int)
+        df_new['Val ue'] = df_new['Val ue'].astype(np.int64)
+        df_new['invVe nTory'] = df_new['invVe nTory'].astype(np.int64)
         df_new2['bra  23423  nd'] = df_new2['bra  23423  nd'].astype(str)
-        df_new2['invVe nTory'] = df_new2['invVe nTory'].astype(int)
-        df_new4['Val ue'] = df_new4['Val ue'].astype(int)
+        df_new2['invVe nTory'] = df_new2['invVe nTory'].astype(np.int64)
+        df_new4['Val ue'] = df_new4['Val ue'].astype(np.int64)
         df_new4['bra  23423  nd'] = df_new4['bra  23423  nd'].astype(str)
         df_new4['dis>>> ??cou nted'] = df_new4['dis>>> ??cou nted'].astype(bool)
         assert_frame_equal(df_expected, df_new)
@@ -574,7 +574,7 @@ class RowTests(TestCase):
         df_new['e e e e e  e e e'] = df_new['e e e e e  e e e'].astype(float)
         df_new2['e e e e e  e e e'] = df_new2['e e e e e  e e e'].astype(float)
         df_new[' kas22d fe ($)'] = df_new[' kas22d fe ($)'].astype(float)
-        df_new2[' kas22d fe ($)'] = df_new2[' kas22d fe ($)'].astype(int)
+        df_new2[' kas22d fe ($)'] = df_new2[' kas22d fe ($)'].astype(np.int64)
         assert_frame_equal(df_expected, df_new)
         assert_frame_equal(df_expected2, df_new2)
 
@@ -635,7 +635,7 @@ class RowTests(TestCase):
         assert_frame_equal(df_new3, df_expected2)
         assert_frame_equal(df_new4, df_expected3)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(TypeError):
             _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
 
     def test_original_df_column_name_padding(self):
@@ -654,8 +654,8 @@ class RowTests(TestCase):
         )
         action = dict(action_code='(col != null) and (orig_col != null)')
         df_new = filter_rows(df, action, original_df=df)
-        df_new['col'] = df_new['col'].astype(int)
-        df_new['orig_col'] = df_new['orig_col'].astype(int)
+        df_new['col'] = df_new['col'].astype(np.int64)
+        df_new['orig_col'] = df_new['orig_col'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_valid_columns_names(self):
@@ -676,7 +676,7 @@ class RowTests(TestCase):
             ],
         )
         for column in df.columns:
-            with self.assertRaises(Exception):
+            with self.assertRaises((SyntaxError, pd.errors.UndefinedVariableError)):
                 action = dict(action_code=f'{column} == False')
                 filter_rows(df, action, original_df=df)
 
