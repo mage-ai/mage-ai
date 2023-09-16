@@ -2,7 +2,6 @@ import argparse
 import os
 import subprocess
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str)
@@ -13,8 +12,8 @@ if __name__ == '__main__':
 
     dirs = os.listdir(path)
     if 'dbt' in dirs:
-        for dir_path in os.listdir(f'{path}/dbt'):
-            dbt_dir = f'{path}/dbt/{dir_path}'
+        for dir_path in os.listdir(os.path.join(path, 'dbt')):
+            dbt_dir = os.path.join(path, 'dbt', dir_path)
             if os.path.isdir(dbt_dir):
                 dbt_dirs.append(dbt_dir)
 

@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
@@ -15,7 +16,7 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
-DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')
+DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser(os.path.join('~', '.ssh'))
 DEFAULT_KNOWN_HOSTS_FILE = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
 REMOTE_NAME = 'mage-repo'
 
@@ -546,7 +547,7 @@ class Git:
             self.repo.config_writer().set_value(
                 'user', 'email', self.git_config.email).release()
         self.repo.config_writer('global').set_value(
-            'safe', 'directory', self.repo_path).release()
+            'safe', 'directory', Path(self.repo_path).as_posix()).release()
 
     def __pip_install(self) -> None:
         requirements_file = os.path.join(
