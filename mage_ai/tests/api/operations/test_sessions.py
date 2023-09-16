@@ -13,7 +13,7 @@ from mage_ai.tests.factory import create_user
 
 
 class SessionOperationTests(BaseApiTestCase):
-    @freeze_time(datetime(3333, 12, 12))
+    @freeze_time(datetime(3000, 1, 1))
     async def test_execute_create(self):
         password = 'password'
         user = create_user(password=password)
@@ -35,7 +35,7 @@ class SessionOperationTests(BaseApiTestCase):
             encode_token(access_token.token, access_token.expires),
         )
 
-    @freeze_time(datetime(3333, 12, 12))
+    @freeze_time(datetime(3000, 1, 1))
     async def test_execute_create_with_disable_notebook_edits(self):
         password = 'password'
         user = create_user(password=password)
