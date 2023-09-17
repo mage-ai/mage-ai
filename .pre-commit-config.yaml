@@ -1,6 +1,11 @@
 # for when we add pre-push hooks, so users only need to run pre-commit install
 default_install_hook_types: [pre-commit, pre-push]
 exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions"
+
+# Force all unspecified python hooks to run python 3.8
+default_language_version:
+  python: python3
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -20,38 +25,55 @@ repos:
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer
-        files: 'mage_integrations/requirements.txt'
-        # excluded ./requirements.txt as it uses groups,
-        # which are not handled correctly by requirements-txt-fixer
-- repo: local
+        exclude: '^requirements.txt'
+
+- repo: https://github.com/PyCQA/isort
+  rev: 5.12.0
   hooks:
   - id: isort
-    name: isort
-    entry: isort
-    # assumes isort is installed in local virtual environment as dev dependency
-    language: system
-    types: [python]
+
+- repo: https://github.com/psf/black
+  rev: 23.9.1
+  hooks:
+  - id: black
+    stages: [manual]
+
+- repo: https://github.com/PyCQA/docformatter
+  rev: v1.7.5
+  hooks:
+  - id: docformatter
+    stages: [manual]
+
+- repo: https://github.com/pycqa/flake8
+  rev: 6.1.0
+  hooks:
   - id: flake8
-    name: flake8
-    entry: flake8
-    # assumes flake8 is installed in local virtual environment as dev dependency
-    language: system
-    types: [python]
-  # - id: black
-  #   name: black
-  #   entry: black
-  #   language: system
-  #   types: [python]
-# - repo: https://github.com/sourcery-ai/sourcery
-#   rev: v1.2.0
+    additional_dependencies:
+    - flake8-bugbear==23.9.16
+  - id: flake8
+    name: flake8-print
+    stages: [manual]
+    additional_dependencies:
+    - flake8-print==5.0.0
+# Theres a lot to do in order to make mage mypy compliant
+# e.g. we would have to load all stubs in the dev environment
+# this makes sense only after we have merged tool.poetry.group.dev.dependencies
+# with the remaining dependencies. Otherwise a wrong version of the stub might be installed
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: v1.5.1
 #   hooks:
-#     - id: sourcery
-#       # The best way to use Sourcery in a pre-commit hook:
-#       # * review only changed lines:
-#       # * omit the summary
-#       args: [--diff=git diff HEAD, --no-summary]
-#       # to automatically apply the changes
-#       # args: [--diff=git diff HEAD, --fix, --no-summary]
-#       name: sourcery
-#       types: [python]
-#       stages: [push]
+#   - id: mypy
+#     args: [--show-error-codes]
+#     language: system
+
+- repo: https://github.com/sourcery-ai/sourcery
+  rev: v1.9.0
+  hooks:
+    - id: sourcery
+      # The best way to use Sourcery in a pre-commit hook:
+      # * review only changed lines:
+      # * omit the summary
+      args: [--diff=git diff HEAD,  --fix, --no-summary]
+      # to automatically apply the changes
+      # args: [--diff=git diff HEAD, --fix, --no-summary]
+      stages: [manual]

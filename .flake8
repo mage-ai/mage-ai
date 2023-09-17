@@ -1,4 +1,5 @@
 [flake8]
-ignore = E121,E126,W503,W504
+extend-ignore = E203, E501
+select = C,E,F,W,B,B950,T
 exclude = mage_ai/data_preparation/templates,mage_ai/orchestration/db/migrations/versions
-max-line-length = 100
+max-line-length = 80
