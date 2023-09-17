@@ -10,7 +10,10 @@ from mage_integrations.sources.messages import write_schema
 import inspect
 import json
 import os
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import singer
 
 
@@ -135,7 +138,7 @@ class BaseChargebeeStream():
 
         # Convert bookmarked start date to POSIX.
         bookmark_date_posix = int(bookmark_date.timestamp())
-        to_date = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
+        to_date = datetime.now(ZoneInfo('UTC')) - timedelta(minutes=sync_interval_in_mins)
         to_date_posix = int(to_date.timestamp())
         sync_window = str([bookmark_date_posix, to_date_posix])
         LOGGER.info("Sync Window {} for schema {}".format(sync_window, table))

@@ -6,7 +6,10 @@ import shutil
 from typing import Callable, Dict, List
 
 import aiofiles
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import yaml
 from jinja2 import Template
 
@@ -70,7 +73,7 @@ class Pipeline:
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.now(tz=pytz.UTC)
+        self.updated_at = datetime.datetime.now(tz=ZoneInfo('UTC'))
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -164,7 +167,7 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
-                created_at=str(datetime.datetime.now(tz=pytz.UTC)),
+                created_at=str(datetime.datetime.now(tz=ZoneInfo('UTC'))),
                 name=name,
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),

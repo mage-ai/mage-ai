@@ -4,7 +4,10 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Set, Tuple
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import desc, func
 
@@ -159,7 +162,7 @@ class PipelineScheduler:
             return False
 
         self.pipeline_run.update(
-            started_at=datetime.now(tz=pytz.UTC),
+            started_at=datetime.now(tz=ZoneInfo('UTC')),
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         if should_schedule:
@@ -194,7 +197,7 @@ class PipelineScheduler:
                 if self.pipeline_run.any_blocks_failed():
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.FAILED,
-                        completed_at=datetime.now(tz=pytz.UTC),
+                        completed_at=datetime.now(tz=ZoneInfo('UTC')),
                     )
                     self.notification_sender.send_pipeline_run_failure_message(
                         pipeline=self.pipeline,
@@ -223,7 +226,7 @@ class PipelineScheduler:
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
                                 for pr in backfill.pipeline_runs]):
                             backfill.update(
-                                completed_at=datetime.now(tz=pytz.UTC),
+                                completed_at=datetime.now(tz=ZoneInfo('UTC')),
                                 status=Backfill.Status.COMPLETED,
                             )
                             schedule.update(
@@ -265,7 +268,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(tz=pytz.UTC),
+                completed_at=datetime.now(tz=ZoneInfo('UTC')),
             )
 
         update_status()
@@ -300,7 +303,7 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(tz=pytz.UTC),
+                completed_at=datetime.now(tz=ZoneInfo('UTC')),
             )
 
         update_status()
@@ -400,7 +403,7 @@ class PipelineScheduler:
             pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
 
             if self.pipeline_run.started_at and pipeline_run_timeout:
-                time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                time_difference = datetime.now(tz=ZoneInfo('UTC')).timestamp() - \
                     self.pipeline_run.started_at.timestamp()
                 if time_difference > int(pipeline_run_timeout):
                     self.logger.error(
@@ -430,7 +433,7 @@ class PipelineScheduler:
             try:
                 block = self.pipeline.get_block(block_run.block_uuid)
                 if block and block.timeout and block_run.started_at:
-                    time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
+                    time_difference = datetime.now(tz=ZoneInfo('UTC')).timestamp() - \
                         block_run.started_at.timestamp()
                     if time_difference > int(block.timeout):
                         # Get logger from block_executor so that the error log shows up in the
@@ -958,7 +961,7 @@ def run_integration_stream(
                 return
 
             block_run.update(
-                started_at=datetime.now(tz=pytz.UTC),
+                started_at=datetime.now(tz=ZoneInfo('UTC')),
                 status=BlockRun.BlockRunStatus.RUNNING,
             )
             pipeline_scheduler.logger.info(
@@ -1050,7 +1053,7 @@ def run_block(
         return {}
 
     block_run.update(
-        started_at=datetime.now(tz=pytz.UTC),
+        started_at=datetime.now(tz=ZoneInfo('UTC')),
         status=BlockRun.BlockRunStatus.RUNNING,
     )
 
@@ -1288,7 +1291,7 @@ def check_sla():
     pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
 
     if pipeline_runs:
-        current_time = datetime.now(tz=pytz.UTC)
+        current_time = datetime.now(tz=ZoneInfo('UTC'))
         # TODO: combine all SLA alerts in one notification
         for pipeline_run in pipeline_runs:
             sla = pipeline_run.pipeline_schedule.sla
@@ -1511,7 +1514,7 @@ def schedule_with_event(event: Dict = None):
 
         for p in matched_pipeline_schedules:
             payload = dict(
-                execution_date=datetime.now(tz=pytz.UTC),
+                execution_date=datetime.now(tz=ZoneInfo('UTC')),
                 pipeline_schedule_id=p.id,
                 pipeline_uuid=p.pipeline_uuid,
                 variables=merge_dict(p.variables or dict(), dict(event=event)),

@@ -5,7 +5,10 @@ from datetime import datetime
 from typing import Callable, Dict
 
 import aiohttp
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.project import Project
@@ -128,7 +131,7 @@ class UsageStatisticLogger():
         started_at = pipeline_run.started_at \
             if pipeline_run.started_at else pipeline_run.execution_date
         completed_at = pipeline_run.completed_at \
-            if pipeline_run.completed_at else datetime.now(tz=pytz.UTC)
+            if pipeline_run.completed_at else datetime.now(tz=ZoneInfo('UTC'))
         run_time_seconds = completed_at.timestamp() - started_at.timestamp()
 
         block_configs = pipeline.all_block_configs

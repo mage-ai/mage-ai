@@ -6,7 +6,10 @@ from datetime import datetime
 
 import backoff
 import paramiko
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import singer
 from paramiko.ssh_exception import AuthenticationException, SSHException
 from tap_sftp import decrypt
@@ -138,7 +141,7 @@ class SFTPConnection():
                 # NB: SFTP specifies path characters to be '/'
                 #     https://tools.ietf.org/html/draft-ietf-secsh-filexfer-13#section-6
                 files.append({"filepath": prefix + '/' + file_attr.filename,
-                              "last_modified": datetime.utcfromtimestamp(last_modified).replace(tzinfo=pytz.UTC)})  # noqa
+                              "last_modified": datetime.utcfromtimestamp(last_modified).replace(tzinfo=ZoneInfo('UTC'))})  # noqa
 
         return files
 

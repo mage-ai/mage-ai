@@ -1,6 +1,9 @@
 from datetime import datetime
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from sqlalchemy import desc
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
@@ -54,7 +57,7 @@ class BackfillResource(DatabaseResource):
             if Backfill.Status.INITIAL == payload['status']:
                 pipeline_runs += start_backfill(self.model)
                 return super().update(dict(
-                    started_at=datetime.now(tz=pytz.UTC),
+                    started_at=datetime.now(tz=ZoneInfo('UTC')),
                     status=payload['status'],
                 ))
             elif Backfill.Status.CANCELLED == payload['status']:

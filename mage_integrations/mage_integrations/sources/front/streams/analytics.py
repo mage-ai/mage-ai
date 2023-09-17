@@ -3,7 +3,10 @@ from mage_integrations.utils.schema_helpers import extract_selected_columns
 from typing import Dict, Generator, List
 import datetime
 import dateutil
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import time
 
 MAX_METRIC_JOB_TIME = 1800
@@ -33,12 +36,12 @@ class AnalyticsStream(BaseStream):
 
         end_date = None
         if self.config.get('end_date'):
-            end_date = dateutil.parser.parse(self.config.get('end_date')).replace(tzinfo=pytz.utc)
+            end_date = dateutil.parser.parse(self.config.get('end_date')).replace(tzinfo=ZoneInfo('UTC'))
         else:
             if incremental_range == 'daily':
-                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
+                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=ZoneInfo('UTC'))
             elif incremental_range == 'hourly':
-                end_date = now.replace(minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
+                end_date = now.replace(minute=0, second=0, microsecond=0).replace(tzinfo=ZoneInfo('UTC'))
         self.logger.info('end_date: {} '.format(end_date))
 
         # if the state file has a date_to_resume, we use it as it is.
@@ -49,7 +52,7 @@ class AnalyticsStream(BaseStream):
 
         # no real reason to assign this other than the naming
         # makes better sense once we go into the loop
-        current_date = last_date.replace(tzinfo=pytz.utc)
+        current_date = last_date.replace(tzinfo=ZoneInfo('UTC'))
 
         columns = extract_selected_columns(self.stream.metadata)
         metrics = [c for c in columns if c not in ['start_time', 'end_time']]

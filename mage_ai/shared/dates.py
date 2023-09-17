@@ -1,5 +1,8 @@
 import datetime
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from mage_ai.shared.array import find_index
 
@@ -8,8 +11,8 @@ def compare(date1: datetime, date2: datetime) -> int:
     if date1 is None or date2 is None:
         return None
 
-    date1_utc = date1.astimezone(pytz.UTC)
-    date2_utc = date2.astimezone(pytz.UTC)
+    date1_utc = date1.astimezone(ZoneInfo('UTC'))
+    date2_utc = date2.astimezone(ZoneInfo('UTC'))
 
     if date1_utc < date2_utc:
         return -1

@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
@@ -463,7 +466,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(
             status=ScheduleStatus.ACTIVE,
         )
-        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=ZoneInfo('UTC')).astimezone()
         pipeline_run = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=601),
             pipeline_uuid=pipeline_uuid,
@@ -541,7 +544,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(
             status=ScheduleStatus.ACTIVE,
         )
-        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=ZoneInfo('UTC')).astimezone()
         pipeline_run = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=601),
             started_at=now_time - timedelta(seconds=601),
@@ -591,7 +594,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(
             status=ScheduleStatus.ACTIVE,
         )
-        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=ZoneInfo('UTC')).astimezone()
         pipeline_run = create_pipeline_run_with_schedule(
             execution_date=now_time - timedelta(seconds=601),
             pipeline_uuid=pipeline_uuid,

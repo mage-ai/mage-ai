@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import logging
 import requests
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import sys
 import argparse
 from statistics import mean
@@ -42,7 +45,7 @@ import zenpy
 client = zenpy.Zenpy(oauth_token=args.oauth_token, subdomain=args.subdomain)
 bookmark = datetime.strptime(
    "2018-06-16T13:10:06+0000",
-   '%Y-%m-%dT%H:%M:%S%z').astimezone(pytz.UTC)
+   '%Y-%m-%dT%H:%M:%S%z').astimezone(ZoneInfo('UTC'))
 start_time = datetime.utcnow()
 rates = defaultdict(list)
 metrics_start_time = datetime.utcnow()
@@ -124,7 +127,7 @@ for comment in client.tickets.comments(ticket=ticket.id):
 
 # Both calls below appear to show that we could remove the nested code of Tickets and their Comments, Audits, and Metrics.
 
-# Needs a newer version of Zenpy, but this might yield an issue with pytz and singer-python. This spike used version 2.0.11
+# Needs a newer version of Zenpy, but this might yield an issue singer-python. This spike used version 2.0.11
 
 # Ticket Events Export appears to output Audits and if you sideload comment_events via include you also get comments.
 for ticket_event in client.tickets.events(start_time=1498775400, include=['comment_events']):

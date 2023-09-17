@@ -4,7 +4,10 @@ import backoff
 from datetime import datetime as dt
 from datetime import timedelta
 import dateutil.parser
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from tap_tester import connections
 from tap_tester import menagerie
@@ -396,5 +399,5 @@ class ZendeskTest(unittest.TestCase):
         in order to compare aginast json formatted datetime values
         """
         date_object = dateutil.parser.parse(date_str)
-        date_object_utc = date_object.astimezone(tz=pytz.UTC)
+        date_object_utc = date_object.astimezone(tz=ZoneInfo('UTC'))
         return dt.strftime(date_object_utc, "%Y-%m-%dT%H:%M:%SZ")

@@ -3,7 +3,10 @@ from dateutil.parser import parse
 from mage_integrations.sources.paystack.client import PaystackClient
 from typing import Dict, List
 import os
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import singer
 
 
@@ -74,11 +77,11 @@ class BasePaystackStream():
             if 'start_date' in self.config:
                 bookmark_datetime = parse(self.config.get('start_date'))
             else:
-                bookmark_datetime = datetime.now(pytz.utc) - timedelta(weeks=4)
+                bookmark_datetime = datetime.now(ZoneInfo('UTC')) - timedelta(weeks=4)
             bookmark_date = bookmark_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if to_date is None:
-            to_datetime = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
+            to_datetime = datetime.now(ZoneInfo('UTC')) - timedelta(minutes=sync_interval_in_mins)
             to_date = to_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
         sync_window = str([bookmark_date, to_date])
         self.logger.info(f'Sync Window {sync_window} for schema {table}')

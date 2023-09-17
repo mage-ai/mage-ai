@@ -1,6 +1,9 @@
 import re
 import os
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import time
 import dateutil.parser
 

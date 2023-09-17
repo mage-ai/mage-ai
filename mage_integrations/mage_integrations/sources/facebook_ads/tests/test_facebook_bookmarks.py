@@ -1,7 +1,10 @@
 import os
 import datetime
 import dateutil.parser
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from tap_tester import runner, menagerie, connections
 
@@ -24,7 +27,7 @@ class FacebookBookmarks(FacebookBaseTest):
         in order to compare aginast json formatted datetime values
         """
         date_object = dateutil.parser.parse(date_str)
-        date_object_utc = date_object.astimezone(tz=pytz.UTC)
+        date_object_utc = date_object.astimezone(tz=ZoneInfo('UTC'))
         return datetime.datetime.strftime(date_object_utc, "%Y-%m-%dT%H:%M:%SZ")
 
     def calculated_states_by_stream(self, current_state):

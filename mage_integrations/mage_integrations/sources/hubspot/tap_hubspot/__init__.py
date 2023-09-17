@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import datetime
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import itertools
 import os
 import re
@@ -925,7 +928,7 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, logge
     start = get_start(STATE, entity_name, bookmark_key)
     logger.info(f'sync_{entity_name} from {start}')
 
-    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    now = datetime.datetime.utcnow().replace(tzinfo=ZoneInfo('UTC'))
     now_ts = int(now.timestamp() * 1000)
 
     start_ts = int(utils.strptime_with_tz(start).timestamp() * 1000)

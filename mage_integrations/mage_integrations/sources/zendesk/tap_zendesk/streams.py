@@ -2,7 +2,10 @@ import os
 import json
 import datetime
 import time
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import zenpy
 import singer
 from singer import metadata
@@ -330,7 +333,7 @@ class Tickets(CursorBasedExportStream):
         for ticket in tickets:
             zendesk_metrics.capture('ticket')
 
-            generated_timestamp_dt = datetime.datetime.utcfromtimestamp(ticket.get('generated_timestamp')).replace(tzinfo=pytz.UTC)
+            generated_timestamp_dt = datetime.datetime.utcfromtimestamp(ticket.get('generated_timestamp')).replace(tzinfo=ZoneInfo('UTC'))
 
             self.update_bookmark(state, utils.strftime(generated_timestamp_dt))
 

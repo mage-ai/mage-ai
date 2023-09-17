@@ -3,7 +3,10 @@ import traceback
 from datetime import datetime
 from typing import Callable, Dict, List, Union
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import requests
 
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -576,7 +579,7 @@ class BlockExecutor:
                 status=status
             )
             if status == BlockRun.BlockRunStatus.COMPLETED:
-                update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+                update_kwargs['completed_at'] = datetime.now(tz=ZoneInfo('UTC'))
             block_run.update(**update_kwargs)
             return
         except Exception as err2:

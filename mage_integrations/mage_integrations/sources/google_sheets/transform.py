@@ -1,7 +1,10 @@
 import math
 import json
 from datetime import datetime, timedelta
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import singer
 from singer.utils import strftime
 
@@ -52,7 +55,7 @@ def transform_file_metadata(file_metadata):
 def excel_to_dttm_str(string_value, excel_date_sn, timezone_str=None):
     if not timezone_str:
         timezone_str = 'UTC'
-    tzn = pytz.timezone(timezone_str)
+    tzn = ZoneInfo(timezone_str)
     sec_per_day = 86400
     excel_epoch = 25569 # 1970-01-01T00:00:00Z, Lotus Notes Serial Number for Epoch Start Date
     epoch_sec = math.floor((excel_date_sn - excel_epoch) * sec_per_day)
@@ -63,7 +66,7 @@ def excel_to_dttm_str(string_value, excel_date_sn, timezone_str=None):
         excel_dttm = epoch_dttm + timedelta(seconds=epoch_sec)
     except OverflowError:
         return str(string_value), True
-    utc_dttm = tzn.localize(excel_dttm).astimezone(pytz.utc)
+    utc_dttm = tzn.localize(excel_dttm).astimezone(ZoneInfo('UTC'))
     utc_dttm_str = strftime(utc_dttm)
     return utc_dttm_str, False
 

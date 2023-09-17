@@ -10,7 +10,10 @@ import singer
 from singer import utils, metadata
 # from terminaltables import AsciiTable
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import tzlocal
 
 INCLUDE_SCHEMAS_IN_DESTINATION_STREAM_NAME = False
@@ -59,7 +62,7 @@ def class_to_string(bookmark_value, bookmark_type):
     if bookmark_type == 'datetime':
         timezone = tzlocal.get_localzone()
         local_datetime = timezone.localize(bookmark_value)
-        utc_datetime = local_datetime.astimezone(pytz.UTC)
+        utc_datetime = local_datetime.astimezone(ZoneInfo('UTC'))
         return utils.strftime(utc_datetime)
     if bookmark_type == 'Timestamp':
         return '{}.{}'.format(bookmark_value.time, bookmark_value.inc)
@@ -99,7 +102,7 @@ def safe_transform_datetime(value, path):
     timezone = tzlocal.get_localzone()
     try:
         local_datetime = timezone.localize(value)
-        utc_datetime = local_datetime.astimezone(pytz.UTC)
+        utc_datetime = local_datetime.astimezone(ZoneInfo('UTC'))
     except Exception as ex:
         if str(ex) == "year is out of range" and value.year == 0:
             # NB: Since datetimes are persisted as strings, it doesn't
@@ -141,7 +144,7 @@ def transform_value(value, path):
     if isinstance(value, datetime.datetime):
         timezone = tzlocal.get_localzone()
         local_datetime = timezone.localize(value)
-        utc_datetime = local_datetime.astimezone(pytz.UTC)
+        utc_datetime = local_datetime.astimezone(ZoneInfo('UTC'))
         return utils.strftime(utc_datetime)
     if isinstance(value, bson.decimal128.Decimal128):
         return value.to_decimal()

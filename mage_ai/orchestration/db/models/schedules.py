@@ -8,7 +8,10 @@ from statistics import stdev
 from typing import Dict, List
 
 import dateutil.parser
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from croniter import croniter
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
@@ -305,14 +308,14 @@ class PipelineSchedule(BaseModel):
             schedule interval, and previous runtimes. It returns True if the schedule should be
             executed and False otherwise.
         """
-        now = datetime.now(tz=pytz.UTC)
+        now = datetime.now(tz=ZoneInfo('UTC'))
 
         if self.status != ScheduleStatus.ACTIVE:
             return False
 
         if not self.landing_time_enabled() and \
                 self.start_time is not None and \
-                compare(now, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
+                compare(now, self.start_time.replace(tzinfo=ZoneInfo('UTC'))) == -1:
             return False
 
         try:
@@ -339,14 +342,14 @@ class PipelineSchedule(BaseModel):
 
             # If the execution date is before start time, don't schedule it
             if self.start_time is not None and \
-                    compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
+                    compare(current_execution_date, self.start_time.replace(tzinfo=ZoneInfo('UTC'))) == -1:
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
             # current_execution_date, then don’t schedule
             if not find(
                 lambda x: compare(
-                    x.execution_date.replace(tzinfo=pytz.UTC),
+                    x.execution_date.replace(tzinfo=ZoneInfo('UTC')),
                     current_execution_date,
                 ) == 0,
                 self.pipeline_runs
@@ -702,7 +705,7 @@ class PipelineRun(BaseModel):
     @safe_db_query
     def complete(self):
         self.update(
-            completed_at=datetime.now(tz=pytz.UTC),
+            completed_at=datetime.now(tz=ZoneInfo('UTC')),
             status=self.PipelineRunStatus.COMPLETED,
         )
 

@@ -17,7 +17,10 @@ import time
 import backoff
 from requests.exceptions import ConnectionError
 import functools
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from singer import metrics, metadata, Transformer, utils
 from urllib.parse import urlparse
 from twitter_ads import API_VERSION
@@ -656,7 +659,7 @@ class Reports(TwitterAds):
         # Initialize account and get account timezone
         account = client.accounts(account_id)
         tzone = account.timezone
-        timezone = pytz.timezone(tzone)
+        timezone = ZoneInfo(tzone)
         LOGGER.info('Account ID: {} - timezone: {}'.format(account_id, tzone))
 
         # Bookmark datetimes
