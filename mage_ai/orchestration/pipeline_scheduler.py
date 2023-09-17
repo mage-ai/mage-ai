@@ -79,9 +79,7 @@ class PipelineScheduler:
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
             self.streams = self.pipeline.streams(
-                self.pipeline_run.get_variables(
-                    extra_variables=get_extra_variables(self.pipeline)
-                )
+                self.pipeline_run.get_variables(extra_variables=get_extra_variables(self.pipeline))
             )
 
         # Initialize the logger
@@ -102,14 +100,13 @@ class PipelineScheduler:
             )
         )
 
-        self.concurrency_config = ConcurrencyConfig.load(
-            config=self.pipeline.concurrency_config
-        )
+        self.concurrency_config = ConcurrencyConfig.load(config=self.pipeline.concurrency_config)
 
         # Other pipeline scheduling settings
         self.allow_blocks_to_fail = (
             self.pipeline_schedule.get_settings().allow_blocks_to_fail
-            if self.pipeline_schedule else False
+            if self.pipeline_schedule
+            else False
         )
 
     @safe_db_query
@@ -136,7 +133,8 @@ class PipelineScheduler:
 
         try:
             block_runs = BlockRun.query.filter(
-                BlockRun.pipeline_run_id == self.pipeline_run.id).all()
+                BlockRun.pipeline_run_id == self.pipeline_run.id
+            ).all()
 
             if len(block_runs) == 0:
                 if is_integration:
@@ -153,16 +151,19 @@ class PipelineScheduler:
                     self.pipeline_run.create_block_runs()
         except Exception as e:
             self.logger.exception(
-                'Fail to initialize block runs',
-                **merge_dict(tags, dict(
-                    error=e,
-                )),
+                "Fail to initialize block runs",
+                **merge_dict(
+                    tags,
+                    dict(
+                        error=e,
+                    ),
+                ),
             )
             self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
             return False
 
         self.pipeline_run.update(
-            started_at=datetime.now(tz=ZoneInfo('UTC')),
+            started_at=datetime.now(tz=ZoneInfo("UTC")),
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         if should_schedule:
@@ -178,7 +179,7 @@ class PipelineScheduler:
 
     @safe_db_query
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
-        if not lock.try_acquire_lock(f'pipeline_run_{self.pipeline_run.id}', timeout=10):
+        if not lock.try_acquire_lock(f"pipeline_run_{self.pipeline_run.id}", timeout=10):
             return
 
         self.__run_heartbeat()
@@ -197,7 +198,7 @@ class PipelineScheduler:
                 if self.pipeline_run.any_blocks_failed():
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.FAILED,
-                        completed_at=datetime.now(tz=ZoneInfo('UTC')),
+                        completed_at=datetime.now(tz=ZoneInfo("UTC")),
                     )
                     self.notification_sender.send_pipeline_run_failure_message(
                         pipeline=self.pipeline,
@@ -223,26 +224,30 @@ class PipelineScheduler:
                     # When all pipeline runs that are associated with backfill is done
                     if len(backfills) >= 1:
                         backfill = backfills[0]
-                        if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
-                                for pr in backfill.pipeline_runs]):
+                        if all(
+                            [
+                                PipelineRun.PipelineRunStatus.COMPLETED == pr.status
+                                for pr in backfill.pipeline_runs
+                            ]
+                        ):
                             backfill.update(
-                                completed_at=datetime.now(tz=ZoneInfo('UTC')),
+                                completed_at=datetime.now(tz=ZoneInfo("UTC")),
                                 status=Backfill.Status.COMPLETED,
                             )
                             schedule.update(
                                 status=ScheduleStatus.INACTIVE,
                             )
                     # If running once, update the schedule to inactive when pipeline run is done
-                    elif schedule.status == ScheduleStatus.ACTIVE and \
-                            schedule.schedule_type == ScheduleType.TIME and \
-                            schedule.schedule_interval == ScheduleInterval.ONCE:
-
+                    elif (
+                        schedule.status == ScheduleStatus.ACTIVE
+                        and schedule.schedule_type == ScheduleType.TIME
+                        and schedule.schedule_interval == ScheduleInterval.ONCE
+                    ):
                         schedule.update(status=ScheduleStatus.INACTIVE)
-            elif self.__check_pipeline_run_timeout() or \
-                    (self.pipeline_run.any_blocks_failed() and
-                     not self.allow_blocks_to_fail):
-                self.pipeline_run.update(
-                    status=PipelineRun.PipelineRunStatus.FAILED)
+            elif self.__check_pipeline_run_timeout() or (
+                self.pipeline_run.any_blocks_failed() and not self.allow_blocks_to_fail
+            ):
+                self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
                 asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
 
@@ -268,13 +273,13 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(tz=ZoneInfo('UTC')),
+                completed_at=datetime.now(tz=ZoneInfo("UTC")),
             )
 
         update_status()
 
         self.logger.info(
-            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+            f"BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.",
             **self.build_tags(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
@@ -303,13 +308,13 @@ class PipelineScheduler:
         def update_status():
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(tz=ZoneInfo('UTC')),
+                completed_at=datetime.now(tz=ZoneInfo("UTC")),
             )
 
         update_status()
 
         self.logger.info(
-            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+            f"BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.",
             **self.build_tags(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
@@ -328,24 +333,22 @@ class PipelineScheduler:
                 status=BlockRun.BlockRunStatus.FAILED,
             )
 
-        error = kwargs.get('error', {})
+        error = kwargs.get("error", {})
         if error:
-            metrics['error'] = dict(
-                error=str(error.get('error')),
-                errors=error.get('errors'),
-                message=error.get('message')
+            metrics["error"] = dict(
+                error=str(error.get("error")),
+                errors=error.get("errors"),
+                message=error.get("message"),
             )
 
         update_status()
 
         tags = self.build_tags(
-            block_run_id=block_run.id,
-            block_uuid=block_run.block_uuid,
-            error=error.get('error')
+            block_run_id=block_run.id, block_uuid=block_run.block_uuid, error=error.get("error")
         )
 
         self.logger.exception(
-            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) failed.',
+            f"BlockRun {block_run.id} (block_uuid: {block_uuid}) failed.",
             **tags,
         )
 
@@ -355,8 +358,7 @@ class PipelineScheduler:
                 job_manager.kill_pipeline_run_job(self.pipeline_run.id)
                 for stream in self.streams:
                     job_manager.kill_integration_stream_job(
-                        self.pipeline_run.id,
-                        stream.get('tap_stream_id')
+                        self.pipeline_run.id, stream.get("tap_stream_id")
                     )
 
                 calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
@@ -364,8 +366,10 @@ class PipelineScheduler:
     def memory_usage_failure(self, tags: Dict = None) -> None:
         if tags is None:
             tags = dict()
-        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
-            f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
+        msg = (
+            "Memory usage across all pipeline runs has reached or exceeded the maximum "
+            f"limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%."
+        )
         self.logger.info(msg, tags=tags)
 
         self.stop()
@@ -386,15 +390,15 @@ class PipelineScheduler:
             pipeline_uuid=self.pipeline.uuid,
         )
         if HOSTNAME:
-            base_tags['hostname'] = HOSTNAME
+            base_tags["hostname"] = HOSTNAME
         return merge_dict(kwargs, base_tags)
 
     @safe_db_query
     def __check_pipeline_run_timeout(self) -> bool:
-        """
-        Check run timeout for pipeline run. The method checks if a pipeline run timeout is set
-        and compares to the pipeline run time. If the run time is greater than the timeout,
-        the run will be put into a failed state and the corresponding job is cancelled.
+        """Check run timeout for pipeline run. The method checks if a pipeline
+        run timeout is set and compares to the pipeline run time. If the run
+        time is greater than the timeout, the run will be put into a failed
+        state and the corresponding job is cancelled.
 
         Returns:
             bool: True if the pipeline run has timed out, False otherwise.
@@ -403,11 +407,13 @@ class PipelineScheduler:
             pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
 
             if self.pipeline_run.started_at and pipeline_run_timeout:
-                time_difference = datetime.now(tz=ZoneInfo('UTC')).timestamp() - \
-                    self.pipeline_run.started_at.timestamp()
+                time_difference = (
+                    datetime.now(tz=ZoneInfo("UTC")).timestamp()
+                    - self.pipeline_run.started_at.timestamp()
+                )
                 if time_difference > int(pipeline_run_timeout):
                     self.logger.error(
-                        f'Pipeline run timed out after {int(time_difference)} seconds',
+                        f"Pipeline run timed out after {int(time_difference)} seconds",
                         **self.build_tags(),
                     )
                     return True
@@ -418,10 +424,10 @@ class PipelineScheduler:
 
     @safe_db_query
     def __check_block_run_timeout(self) -> bool:
-        """
-        Check run timeout block runs. Currently only works for batch pipelines that are run
-        using the `__schedule_blocks` method. This method checks if a block run has exceeded
-        its timeout and puts the block run into a failed state and cancels the block run job.
+        """Check run timeout block runs. Currently only works for batch
+        pipelines that are run using the `__schedule_blocks` method. This
+        method checks if a block run has exceeded its timeout and puts the
+        block run into a failed state and cancels the block run job.
 
         Returns:
             bool: True if any block runs have timed out, False otherwise.
@@ -433,8 +439,10 @@ class PipelineScheduler:
             try:
                 block = self.pipeline.get_block(block_run.block_uuid)
                 if block and block.timeout and block_run.started_at:
-                    time_difference = datetime.now(tz=ZoneInfo('UTC')).timestamp() - \
-                        block_run.started_at.timestamp()
+                    time_difference = (
+                        datetime.now(tz=ZoneInfo("UTC")).timestamp()
+                        - block_run.started_at.timestamp()
+                    )
                     if time_difference > int(block.timeout):
                         # Get logger from block_executor so that the error log shows up in the
                         # block run log file and not the pipeline run log file.
@@ -444,8 +452,8 @@ class PipelineScheduler:
                             execution_partition=self.pipeline_run.execution_partition,
                         )
                         block_executor.logger.error(
-                            f'Block {block_run.block_uuid} timed out after ' +
-                            f'{int(time_difference)} seconds',
+                            f"Block {block_run.block_uuid} timed out after "
+                            + f"{int(time_difference)} seconds",
                             **block_executor.build_tags(
                                 block_run_id=block_run.id,
                                 pipeline_run_id=self.pipeline_run.id,
@@ -459,7 +467,8 @@ class PipelineScheduler:
         return any_block_run_timed_out
 
     def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
-        """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
+        """Update the statuses of the block runs to CONDITION_FAILED or
+        UPSTREAM_FAILED.
 
         This method updates the statuses of the block runs based on the pipeline run's block runs.
         It retrieves the block UUIDs for failed block runs and conditionally failed block runs.
@@ -480,15 +489,19 @@ class PipelineScheduler:
             None
         """
         failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
+            b.block_uuid
+            for b in self.pipeline_run.block_runs
+            if b.status
+            in [
                 BlockRun.BlockRunStatus.UPSTREAM_FAILED,
                 BlockRun.BlockRunStatus.FAILED,
             ]
         )
         condition_failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
+            b.block_uuid
+            for b in self.pipeline_run.block_runs
+            if b.status
+            in [
                 BlockRun.BlockRunStatus.CONDITION_FAILED,
             ]
         )
@@ -501,23 +514,17 @@ class PipelineScheduler:
         for block_run in block_runs:
             updated_status = False
             dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
-                'dynamic_upstream_block_uuids',
+                "dynamic_upstream_block_uuids",
             )
 
             for status, block_uuids in statuses.items():
                 if dynamic_upstream_block_uuids:
-                    if all(
-                        b in block_uuids
-                        for b in dynamic_upstream_block_uuids
-                    ):
+                    if all(b in block_uuids for b in dynamic_upstream_block_uuids):
                         block_run.update(status=status)
                         updated_status = True
                 else:
                     block = self.pipeline.get_block(block_run.block_uuid)
-                    if any(
-                        b in block_uuids
-                        for b in block.upstream_block_uuids
-                    ):
+                    if any(b in block_uuids for b in block.upstream_block_uuids):
                         block_run.update(status=status)
                         updated_status = True
 
@@ -552,14 +559,14 @@ class PipelineScheduler:
             )
         else:
             block_runs_to_schedule = block_runs
-        block_runs_to_schedule = \
-            self.__fetch_crashed_block_runs() + block_runs_to_schedule
+        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         block_run_quota = len(block_runs_to_schedule)
         if self.concurrency_config.block_run_limit is not None:
             queued_or_running_block_runs = self.pipeline_run.queued_or_running_block_runs
-            block_run_quota = self.concurrency_config.block_run_limit -\
-                len(queued_or_running_block_runs)
+            block_run_quota = self.concurrency_config.block_run_limit - len(
+                queued_or_running_block_runs
+            )
             if block_run_quota <= 0:
                 return
 
@@ -607,8 +614,10 @@ class PipelineScheduler:
         else:
             # Fetch all "in progress" blocks to handle crashed block runs
             block_runs_to_schedule = [
-                b for b in self.pipeline_run.block_runs
-                if b.status in [
+                b
+                for b in self.pipeline_run.block_runs
+                if b.status
+                in [
                     BlockRun.BlockRunStatus.INITIAL,
                     BlockRun.BlockRunStatus.QUEUED,
                     BlockRun.BlockRunStatus.RUNNING,
@@ -620,29 +629,33 @@ class PipelineScheduler:
 
             block_run_stream_ids = set()
             for br in block_runs_to_schedule:
-                stream_id = br.block_uuid.split(':')[-2]
+                stream_id = br.block_uuid.split(":")[-2]
                 if stream_id:
                     block_run_stream_ids.add(stream_id)
 
-            filtered_streams = \
-                [s for s in self.streams if s['tap_stream_id'] in block_run_stream_ids]
-            parallel_streams = list(filter(lambda s: s.get('run_in_parallel'), filtered_streams))
-            sequential_streams = list(filter(
-                lambda s: not s.get('run_in_parallel'),
-                filtered_streams,
-            ))
+            filtered_streams = [
+                s for s in self.streams if s["tap_stream_id"] in block_run_stream_ids
+            ]
+            parallel_streams = list(filter(lambda s: s.get("run_in_parallel"), filtered_streams))
+            sequential_streams = list(
+                filter(
+                    lambda s: not s.get("run_in_parallel"),
+                    filtered_streams,
+                )
+            )
 
             # Filter parallel streams so that we are only left with block runs for streams
             # that do not have a corresponding integration stream job.
             parallel_streams_to_schedule = []
             for stream in parallel_streams:
-                tap_stream_id = stream.get('tap_stream_id')
+                tap_stream_id = stream.get("tap_stream_id")
                 if not job_manager.has_integration_stream_job(self.pipeline_run.id, tap_stream_id):
                     parallel_streams_to_schedule.append(stream)
 
             # Stop scheduling if there are no streams to schedule.
-            if (not sequential_streams or job_manager.has_pipeline_run_job(self.pipeline_run.id)) \
-                    and len(parallel_streams_to_schedule) == 0:
+            if (
+                not sequential_streams or job_manager.has_pipeline_run_job(self.pipeline_run.id)
+            ) and len(parallel_streams_to_schedule) == 0:
                 return
 
             # Generate global variables and runtime arguments for pipeline execution.
@@ -663,8 +676,8 @@ class PipelineScheduler:
             date_diff = None
 
             if ScheduleInterval.ONCE == schedule_interval:
-                end_date = variables.get('_end_date')
-                start_date = variables.get('_start_date')
+                end_date = variables.get("_end_date")
+                start_date = variables.get("_start_date")
             elif ScheduleInterval.HOURLY == schedule_interval:
                 date_diff = timedelta(hours=1)
             elif ScheduleInterval.DAILY == schedule_interval:
@@ -690,16 +703,16 @@ class PipelineScheduler:
             executable_block_runs = [b.id for b in block_runs_to_schedule]
 
             self.logger.info(
-                f'Start executing PipelineRun {self.pipeline_run.id}: '
-                f'pipeline {self.pipeline.uuid}',
+                f"Start executing PipelineRun {self.pipeline_run.id}: "
+                f"pipeline {self.pipeline.uuid}",
                 **tags,
             )
 
             for stream in parallel_streams_to_schedule:
-                tap_stream_id = stream.get('tap_stream_id')
+                tap_stream_id = stream.get("tap_stream_id")
                 job_manager.add_job(
                     JobType.INTEGRATION_STREAM,
-                    f'{self.pipeline_run.id}_{tap_stream_id}',
+                    f"{self.pipeline_run.id}_{tap_stream_id}",
                     run_integration_stream,
                     # args
                     stream,
@@ -712,8 +725,10 @@ class PipelineScheduler:
                     variables,
                 )
 
-            if job_manager.has_pipeline_run_job(self.pipeline_run.id) or \
-                    len(sequential_streams) == 0:
+            if (
+                job_manager.has_pipeline_run_job(self.pipeline_run.id)
+                or len(sequential_streams) == 0
+            ):
                 return
 
             job_manager.add_job(
@@ -745,7 +760,7 @@ class PipelineScheduler:
         if job_manager.has_pipeline_run_job(self.pipeline_run.id):
             return
         self.logger.info(
-            f'Start a process for PipelineRun {self.pipeline_run.id}',
+            f"Start a process for PipelineRun {self.pipeline_run.id}",
             **self.build_tags(),
         )
         if PipelineType.STREAMING != self.pipeline.type:
@@ -772,10 +787,15 @@ class PipelineScheduler:
         Returns:
             List[BlockRun]: A list of crashed block runs.
         """
-        running_or_queued_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
-            BlockRun.BlockRunStatus.RUNNING,
-            BlockRun.BlockRunStatus.QUEUED,
-        ]]
+        running_or_queued_block_runs = [
+            b
+            for b in self.pipeline_run.block_runs
+            if b.status
+            in [
+                BlockRun.BlockRunStatus.RUNNING,
+                BlockRun.BlockRunStatus.QUEUED,
+            ]
+        ]
 
         crashed_runs = []
         for br in running_or_queued_block_runs:
@@ -802,8 +822,8 @@ class PipelineScheduler:
         )
 
         self.logger.info(
-            f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
-            f'in schedule {self.pipeline_run.pipeline_schedule_id} is alive.',
+            f"Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} "
+            f"in schedule {self.pipeline_run.pipeline_schedule_id} is alive.",
             **tags,
         )
 
@@ -848,8 +868,8 @@ def run_integration_stream(
     """
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
-    tap_stream_id = stream['tap_stream_id']
-    destination_table = stream.get('destination_table', tap_stream_id)
+    tap_stream_id = stream["tap_stream_id"]
+    destination_table = stream.get("destination_table", tap_stream_id)
 
     # all_block_runs is a list of all block runs for the pipeline run
     all_block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id)
@@ -863,19 +883,21 @@ def run_integration_stream(
 
     indexes = [0]
     for br in block_runs_for_stream:
-        parts = br.block_uuid.split(':')
+        parts = br.block_uuid.split(":")
         if len(parts) >= 3:
             indexes.append(int(parts[2]))
     max_index = max(indexes)
 
-    all_block_runs_for_stream = list(filter(
-        lambda br: tap_stream_id in br.block_uuid,
-        all_block_runs,
-    ))
+    all_block_runs_for_stream = list(
+        filter(
+            lambda br: tap_stream_id in br.block_uuid,
+            all_block_runs,
+        )
+    )
     all_indexes = [0]
     for br in all_block_runs_for_stream:
         # Block run block uuid foramt: "{block_uuid}:{stream_name}:{index}"
-        parts = br.block_uuid.split(':')
+        parts = br.block_uuid.split(":")
         if len(parts) >= 3:
             all_indexes.append(int(parts[2]))
     max_index_for_stream = max(all_indexes)
@@ -889,8 +911,8 @@ def run_integration_stream(
         while True:
             block_runs_in_order.append(
                 find(
-                    lambda b: b.block_uuid ==
-                    f'{current_block.uuid}:{tap_stream_id}:{idx}',  # noqa: B023
+                    lambda b: b.block_uuid
+                    == f"{current_block.uuid}:{tap_stream_id}:{idx}",  # noqa: B023
                     all_block_runs,
                 )
             )
@@ -899,8 +921,8 @@ def run_integration_stream(
                 break
             current_block = downstream_blocks[0]
 
-        data_loader_uuid = f'{data_loader_block.uuid}:{tap_stream_id}:{idx}'
-        data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}'
+        data_loader_uuid = f"{data_loader_block.uuid}:{tap_stream_id}:{idx}"
+        data_exporter_uuid = f"{data_exporter_block.uuid}:{tap_stream_id}:{idx}"
 
         data_loader_block_run = find(
             lambda b, u=data_loader_uuid: b.block_uuid == u,
@@ -913,12 +935,16 @@ def run_integration_stream(
         if not data_loader_block_run or not data_exporter_block_run:
             continue
 
-        transformer_block_runs = [br for br in block_runs_in_order if (
-            br.block_uuid not in [data_loader_uuid, data_exporter_uuid] and
-            br.id in executable_block_runs
-        )]
+        transformer_block_runs = [
+            br
+            for br in block_runs_in_order
+            if (
+                br.block_uuid not in [data_loader_uuid, data_exporter_uuid]
+                and br.id in executable_block_runs
+            )
+        ]
 
-        index = stream.get('index', idx)
+        index = stream.get("index", idx)
 
         # Create config for the block runs. This metadata will be passed into the
         # block before block execution.
@@ -930,13 +956,16 @@ def run_integration_stream(
                 tap_stream_id,
             ],
         )
-        block_runs_and_configs = [
-            (data_loader_block_run, shared_dict),
-        ] + [(br, shared_dict) for br in transformer_block_runs] + [
-            (data_exporter_block_run, shared_dict),
-        ]
-        if len(executable_block_runs) == 1 and \
-                data_exporter_block_run.id in executable_block_runs:
+        block_runs_and_configs = (
+            [
+                (data_loader_block_run, shared_dict),
+            ]
+            + [(br, shared_dict) for br in transformer_block_runs]
+            + [
+                (data_exporter_block_run, shared_dict),
+            ]
+        )
+        if len(executable_block_runs) == 1 and data_exporter_block_run.id in executable_block_runs:
             block_runs_and_configs = block_runs_and_configs[-1:]
         elif data_loader_block_run.id not in executable_block_runs:
             block_runs_and_configs = block_runs_and_configs[1:]
@@ -945,10 +974,13 @@ def run_integration_stream(
         for _, tup in enumerate(block_runs_and_configs):
             block_run, template_runtime_configuration = tup
 
-            tags_updated = merge_dict(tags, dict(
-                block_run_id=block_run.id,
-                block_uuid=block_run.block_uuid,
-            ))
+            tags_updated = merge_dict(
+                tags,
+                dict(
+                    block_run_id=block_run.id,
+                    block_uuid=block_run.block_uuid,
+                ),
+            )
 
             if block_failed:
                 block_run.update(
@@ -961,11 +993,11 @@ def run_integration_stream(
                 return
 
             block_run.update(
-                started_at=datetime.now(tz=ZoneInfo('UTC')),
+                started_at=datetime.now(tz=ZoneInfo("UTC")),
                 status=BlockRun.BlockRunStatus.RUNNING,
             )
             pipeline_scheduler.logger.info(
-                f'Start a process for BlockRun {block_run.id}',
+                f"Start a process for BlockRun {block_run.id}",
                 **tags_updated,
             )
 
@@ -989,14 +1021,18 @@ def run_integration_stream(
                 else:
                     raise e
             else:
-                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                        f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-
-                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                        destination_table=destination_table,
-                        index=index,
-                        stream=tap_stream_id,
-                    ))
+                if (
+                    f"{data_loader_block.uuid}:{tap_stream_id}" in block_run.block_uuid
+                    or f"{data_exporter_block.uuid}:{tap_stream_id}" in block_run.block_uuid
+                ):
+                    tags2 = merge_dict(
+                        tags_updated.get("tags", {}),
+                        dict(
+                            destination_table=destination_table,
+                            index=index,
+                            stream=tap_stream_id,
+                        ),
+                    )
                     calculate_metrics(
                         pipeline_run,
                         logger=pipeline_scheduler.logger,
@@ -1017,8 +1053,8 @@ def run_block(
     schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
 ) -> Any:
-    """Execute a block within a pipeline run.
-    Only run block that's with INITIAL or QUEUED status.
+    """Execute a block within a pipeline run. Only run block that's with
+    INITIAL or QUEUED status.
 
     Args:
         pipeline_run_id (int): The ID of the pipeline run.
@@ -1053,7 +1089,7 @@ def run_block(
         return {}
 
     block_run.update(
-        started_at=datetime.now(tz=ZoneInfo('UTC')),
+        started_at=datetime.now(tz=ZoneInfo("UTC")),
         status=BlockRun.BlockRunStatus.RUNNING,
     )
 
@@ -1061,9 +1097,10 @@ def run_block(
     pipeline = pipeline_scheduler.pipeline
 
     pipeline_scheduler.logger.info(
-        f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
-        f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
-        **tags)
+        f"Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: "
+        f"pipeline {pipeline.uuid} block {block_run.block_uuid}",
+        **tags,
+    )
 
     if schedule_after_complete:
         on_complete = pipeline_scheduler.on_block_complete
@@ -1108,9 +1145,9 @@ def run_pipeline(
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     pipeline = pipeline_scheduler.pipeline
-    pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
-                                   f'pipeline {pipeline.uuid}',
-                                   **tags)
+    pipeline_scheduler.logger.info(
+        f"Execute PipelineRun {pipeline_run.id}: pipeline {pipeline.uuid}", **tags
+    )
     executor_type = ExecutorFactory.get_pipeline_executor_type(pipeline)
     try:
         pipeline_run.update(executor_type=executor_type)
@@ -1136,27 +1173,28 @@ def configure_pipeline_run_payload(
     if payload is None:
         payload = dict()
 
-    if not payload.get('variables'):
-        payload['variables'] = {}
+    if not payload.get("variables"):
+        payload["variables"] = {}
 
-    payload['pipeline_schedule_id'] = pipeline_schedule.id
-    payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
-    execution_date = payload.get('execution_date')
+    payload["pipeline_schedule_id"] = pipeline_schedule.id
+    payload["pipeline_uuid"] = pipeline_schedule.pipeline_uuid
+    execution_date = payload.get("execution_date")
     if execution_date is None:
-        payload['execution_date'] = datetime.utcnow()
+        payload["execution_date"] = datetime.utcnow()
     elif not isinstance(execution_date, datetime):
-        payload['execution_date'] = datetime.fromisoformat(execution_date)
+        payload["execution_date"] = datetime.fromisoformat(execution_date)
 
     # Set execution_partition in variables
-    payload['variables']['execution_partition'] = \
-        os.sep.join([
+    payload["variables"]["execution_partition"] = os.sep.join(
+        [
             str(pipeline_schedule.id),
-            payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f'),
-        ])
+            payload["execution_date"].strftime(format="%Y%m%dT%H%M%S_%f"),
+        ]
+    )
 
     is_integration = PipelineType.INTEGRATION == pipeline_type
     if is_integration:
-        payload['create_block_runs'] = False
+        payload["create_block_runs"] = False
 
     return payload, is_integration
 
@@ -1164,27 +1202,27 @@ def configure_pipeline_run_payload(
 @safe_db_query
 def retry_pipeline_run(
     pipeline_run: Dict,
-) -> 'PipelineRun':
-    pipeline_uuid = pipeline_run['pipeline_uuid']
+) -> "PipelineRun":
+    pipeline_uuid = pipeline_run["pipeline_uuid"]
     pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True)
     if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
-        raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
+        raise Exception(f"Pipeline {pipeline_uuid} is not a valid pipeline.")
 
-    pipeline_schedule_id = pipeline_run['pipeline_schedule_id']
+    pipeline_schedule_id = pipeline_run["pipeline_schedule_id"]
     pipeline_run_model = PipelineRun(
-        id=pipeline_run['id'],
+        id=pipeline_run["id"],
         pipeline_schedule_id=pipeline_schedule_id,
         pipeline_uuid=pipeline_uuid,
     )
-    execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
+    execution_date = datetime.fromisoformat(pipeline_run["execution_date"])
     new_pipeline_run = pipeline_run_model.create(
-        backfill_id=pipeline_run.get('backfill_id'),
+        backfill_id=pipeline_run.get("backfill_id"),
         create_block_runs=False,
         execution_date=execution_date,
-        event_variables=pipeline_run.get('event_variables', {}),
+        event_variables=pipeline_run.get("event_variables", {}),
         pipeline_schedule_id=pipeline_schedule_id,
         pipeline_uuid=pipeline_run_model.pipeline_uuid,
-        variables=pipeline_run.get('variables', {}),
+        variables=pipeline_run.get("variables", {}),
     )
     return new_pipeline_run
 
@@ -1208,8 +1246,10 @@ def stop_pipeline_run(
     Returns:
         None
     """
-    if pipeline_run.status not in [PipelineRun.PipelineRunStatus.INITIAL,
-                                   PipelineRun.PipelineRunStatus.RUNNING]:
+    if pipeline_run.status not in [
+        PipelineRun.PipelineRunStatus.INITIAL,
+        PipelineRun.PipelineRunStatus.RUNNING,
+    ]:
         return
 
     # Update pipeline run status to cancelled
@@ -1264,8 +1304,7 @@ def cancel_block_runs_and_jobs(
         if pipeline.type == PipelineType.INTEGRATION:
             for stream in pipeline.streams():
                 job_manager.kill_integration_stream_job(
-                    pipeline_run.id,
-                    stream.get('tap_stream_id')
+                    pipeline_run.id, stream.get("tap_stream_id")
                 )
         if pipeline_run.executor_type == ExecutorType.K8S:
             """
@@ -1282,25 +1321,24 @@ def cancel_block_runs_and_jobs(
 
 def check_sla():
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
-    pipeline_schedules = \
-        set([
-            s.id
-            for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
-        ])
+    pipeline_schedules = set(
+        [s.id for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)]
+    )
 
     pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
 
     if pipeline_runs:
-        current_time = datetime.now(tz=ZoneInfo('UTC'))
+        current_time = datetime.now(tz=ZoneInfo("UTC"))
         # TODO: combine all SLA alerts in one notification
         for pipeline_run in pipeline_runs:
             sla = pipeline_run.pipeline_schedule.sla
             if not sla:
                 continue
-            start_date = \
-                pipeline_run.execution_date \
-                if pipeline_run.execution_date is not None \
+            start_date = (
+                pipeline_run.execution_date
+                if pipeline_run.execution_date is not None
                 else pipeline_run.created_at
+            )
             if compare(start_date + timedelta(seconds=sla), current_time) == -1:
                 # passed SLA for pipeline_run
                 pipeline = Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid)
@@ -1333,8 +1371,9 @@ def schedule_all():
     # Sync schedules from yaml file to DB
     sync_schedules(list(repo_pipelines))
 
-    active_pipeline_schedules = \
-        list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
+    active_pipeline_schedules = list(
+        PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
+    )
 
     backfills = Backfill.filter(pipeline_schedule_ids=[ps.id for ps in active_pipeline_schedules])
 
@@ -1351,13 +1390,12 @@ def schedule_all():
     previous_pipeline_run_by_pipeline_schedule_id = {}
     if len(active_pipeline_schedule_ids_with_landing_time_enabled) >= 1:
         row_number_column = (
-                func.
-                row_number().
-                over(
-                    order_by=desc(PipelineRun.execution_date),
-                    partition_by=PipelineRun.pipeline_schedule_id,
-                ).
-                label('row_number')
+            func.row_number()
+            .over(
+                order_by=desc(PipelineRun.execution_date),
+                partition_by=PipelineRun.pipeline_schedule_id,
+            )
+            .label("row_number")
         )
 
         query = PipelineRun.query.filter(
@@ -1378,7 +1416,7 @@ def schedule_all():
     git_sync_result = None
     sync_config = get_sync_config()
     for pipeline_schedule in active_pipeline_schedules:
-        lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
+        lock_key = f"pipeline_schedule_{pipeline_schedule.id}"
         if not lock.try_acquire_lock(lock_key):
             continue
 
@@ -1395,7 +1433,8 @@ def schedule_all():
         # Decide whether to schedule any pipeline runs
         should_schedule = pipeline_schedule.should_schedule(previous_runtimes=previous_runtimes)
         initial_pipeline_runs = [
-            r for r in pipeline_schedule.pipeline_runs
+            r
+            for r in pipeline_schedule.pipeline_runs
             if r.status == PipelineRun.PipelineRunStatus.INITIAL
         ]
 
@@ -1418,12 +1457,12 @@ def schedule_all():
             concurrency_config = concurrency_config_by_uuid[pipeline_uuid]
 
         running_pipeline_runs = [
-            r for r in pipeline_schedule.pipeline_runs
+            r
+            for r in pipeline_schedule.pipeline_runs
             if r.status == PipelineRun.PipelineRunStatus.RUNNING
         ]
 
-        if should_schedule and \
-                pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
+        if should_schedule and pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
             # Perform git sync if "sync_on_pipeline_run" is enabled and no other git sync has been
             # run for this scheduler loop.
             if not git_sync_result and sync_config and sync_config.sync_on_pipeline_run:
@@ -1437,15 +1476,16 @@ def schedule_all():
             )
 
             if len(previous_runtimes) >= 1:
-                payload['metrics'] = dict(previous_runtimes=previous_runtimes)
+                payload["metrics"] = dict(previous_runtimes=previous_runtimes)
 
             if PipelineType.INTEGRATION == pipeline.type:
-                payload['create_block_runs'] = False
+                payload["create_block_runs"] = False
 
-            if pipeline_schedule.get_settings().skip_if_previous_running and \
-                    (initial_pipeline_runs or running_pipeline_runs):
+            if pipeline_schedule.get_settings().skip_if_previous_running and (
+                initial_pipeline_runs or running_pipeline_runs
+            ):
                 # Cancel the current pipeline run if previous pipeline runs haven't completed
-                payload['create_block_runs'] = False
+                payload["create_block_runs"] = False
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
@@ -1463,8 +1503,7 @@ def schedule_all():
         # Enforce pipeline concurrency limit
         pipeline_run_quota = len(initial_pipeline_runs)
         if concurrency_config.pipeline_run_limit:
-            pipeline_run_quota = concurrency_config.pipeline_run_limit - \
-                len(running_pipeline_runs)
+            pipeline_run_quota = concurrency_config.pipeline_run_limit - len(running_pipeline_runs)
 
         if pipeline_run_quota > 0:
             initial_pipeline_runs.sort(key=lambda x: x.execution_date)
@@ -1478,14 +1517,14 @@ def schedule_all():
         pipeline_uuids=repo_pipelines,
         include_block_runs=True,
     )
-    logger.info(f'Active pipeline runs: {[p.id for p in active_pipeline_runs]}')
+    logger.info(f"Active pipeline runs: {[p.id for p in active_pipeline_runs]}")
 
     for r in active_pipeline_runs:
         try:
             r.refresh()
             PipelineScheduler(r).schedule()
         except Exception:
-            logger.exception(f'Failed to schedule {r}')
+            logger.exception(f"Failed to schedule {r}")
             traceback.print_exc()
             continue
     job_manager.clean_up_jobs()
@@ -1494,16 +1533,16 @@ def schedule_all():
 def schedule_with_event(event: Dict = None):
     if event is None:
         event = dict()
-    logger.info(f'Schedule with event {event}')
+    logger.info(f"Schedule with event {event}")
     all_event_matchers = EventMatcher.active_event_matchers()
 
     matched_pipeline_schedules = []
     for e in all_event_matchers:
         if e.match(event):
-            logger.info(f'Event matched with {e}')
+            logger.info(f"Event matched with {e}")
             matched_pipeline_schedules.extend(e.active_pipeline_schedules())
         else:
-            logger.info(f'Event not matched with {e}')
+            logger.info(f"Event not matched with {e}")
 
     if len(matched_pipeline_schedules) > 0:
         sync_config = get_sync_config()
@@ -1514,7 +1553,7 @@ def schedule_with_event(event: Dict = None):
 
         for p in matched_pipeline_schedules:
             payload = dict(
-                execution_date=datetime.now(tz=ZoneInfo('UTC')),
+                execution_date=datetime.now(tz=ZoneInfo("UTC")),
                 pipeline_schedule_id=p.id,
                 pipeline_uuid=p.pipeline_uuid,
                 variables=merge_dict(p.variables or dict(), dict(event=event)),
@@ -1536,7 +1575,7 @@ def sync_schedules(pipeline_uuids: List[str]):
     for pipeline_uuid in pipeline_uuids:
         pipeline_triggers = get_triggers_by_pipeline(pipeline_uuid)
 
-        logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.')
+        logger.debug(f"Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.")
         for pipeline_trigger in pipeline_triggers:
             if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
                 continue

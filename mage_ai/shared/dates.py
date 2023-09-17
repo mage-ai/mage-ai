@@ -1,4 +1,5 @@
 import datetime
+
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
@@ -11,8 +12,8 @@ def compare(date1: datetime, date2: datetime) -> int:
     if date1 is None or date2 is None:
         return None
 
-    date1_utc = date1.astimezone(ZoneInfo('UTC'))
-    date2_utc = date2.astimezone(ZoneInfo('UTC'))
+    date1_utc = date1.astimezone(ZoneInfo("UTC"))
+    date2_utc = date2.astimezone(ZoneInfo("UTC"))
 
     if date1_utc < date2_utc:
         return -1
@@ -24,19 +25,18 @@ def compare(date1: datetime, date2: datetime) -> int:
 
 def n_days_ago(n: int) -> str:
     day = datetime.datetime.now() - datetime.timedelta(days=n)
-    return day.strftime('%Y-%m-%d')
+    return day.strftime("%Y-%m-%d")
 
 
 def str_to_timedelta(period_str: str):
     unit = period_str[-1]
-    if unit not in ['d', 'h', 'w']:
-        raise Exception(
-            'Please provide a valid period unit ("d", "h", or "w")')
-    if unit == 'd':
+    if unit not in ["d", "h", "w"]:
+        raise Exception('Please provide a valid period unit ("d", "h", or "w")')
+    if unit == "d":
         return datetime.timedelta(days=int(period_str[:-1]))
-    elif unit == 'h':
+    elif unit == "h":
         return datetime.timedelta(hours=int(period_str[:-1]))
-    elif unit == 'w':
+    elif unit == "w":
         return datetime.timedelta(weeks=int(period_str[:-1]))
     return None
 

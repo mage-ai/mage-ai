@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Callable, Dict
 
 import aiohttp
+
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
@@ -26,7 +27,7 @@ from mage_ai.usage_statistics.constants import (
 from mage_ai.usage_statistics.utils import build_event_data_for_chart
 
 
-class UsageStatisticLogger():
+class UsageStatisticLogger:
     def __init__(self, project=None):
         self.project = project or Project()
 
@@ -52,12 +53,13 @@ class UsageStatisticLogger():
         for k, v in (self.project.features or {}).items():
             features[k] = 1 if v else 0
 
-        if self.project.repo_config.openai_api_key and \
-                len(self.project.repo_config.openai_api_key) >= 1:
-
-            features['openai'] = 1
+        if (
+            self.project.repo_config.openai_api_key
+            and len(self.project.repo_config.openai_api_key) >= 1
+        ):
+            features["openai"] = 1
         else:
-            features['openai'] = 0
+            features["openai"] = 0
 
         return await self.__send_message(
             dict(
@@ -107,8 +109,8 @@ class UsageStatisticLogger():
 
     @safe_db_query
     async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
-        """
-        Write "pipeline_run_ended" event to Amplitude for the given PipelineRun.
+        """Write "pipeline_run_ended" event to Amplitude for the given
+        PipelineRun.
 
         Args:
             pipeline_run (PipelineRun): pipeline run to use to populate the event
@@ -122,21 +124,25 @@ class UsageStatisticLogger():
         pipeline = pipeline_run.pipeline
 
         if pipeline.type == PipelineType.INTEGRATION:
-            pipeline_type = 'integration'
+            pipeline_type = "integration"
         elif pipeline.type == PipelineType.STREAMING:
-            pipeline_type = 'streaming'
+            pipeline_type = "streaming"
         else:
-            pipeline_type = 'batch'
+            pipeline_type = "batch"
 
-        started_at = pipeline_run.started_at \
-            if pipeline_run.started_at else pipeline_run.execution_date
-        completed_at = pipeline_run.completed_at \
-            if pipeline_run.completed_at else datetime.now(tz=ZoneInfo('UTC'))
+        started_at = (
+            pipeline_run.started_at if pipeline_run.started_at else pipeline_run.execution_date
+        )
+        completed_at = (
+            pipeline_run.completed_at
+            if pipeline_run.completed_at
+            else datetime.now(tz=ZoneInfo("UTC"))
+        )
         run_time_seconds = completed_at.timestamp() - started_at.timestamp()
 
         block_configs = pipeline.all_block_configs
 
-        encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
+        encoded_pipeline_uuid = pipeline.uuid.encode("utf-8")
         data = dict(
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
@@ -145,8 +151,8 @@ class UsageStatisticLogger():
             pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
             run_time_seconds=run_time_seconds,
             trigger_method=pipeline_run.pipeline_schedule.schedule_type,
-            unique_block_types=list(set([b.get('type') for b in block_configs])),
-            unique_languages=list(set([b.get('language') for b in block_configs])),
+            unique_block_types=list(set([b.get("type") for b in block_configs])),
+            unique_languages=list(set([b.get("language") for b in block_configs])),
         )
 
         return await self.__send_message(
@@ -175,18 +181,18 @@ class UsageStatisticLogger():
                 async with session.post(
                     API_ENDPOINT,
                     json=dict(
-                        api_key='KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY',
+                        api_key="KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY",
                         event_name=event_name,
                         usage_statistics=data_to_send,
                     ),
                     timeout=3,
                 ) as response:
                     response_json = await response.json()
-                    if response_json.get('success'):
+                    if response_json.get("success"):
                         print(json.dumps(data_to_send, indent=2))
                         return True
         except Exception as err:
-            print(f'Error: {err}')
+            print(f"Error: {err}")
 
         return False
 
