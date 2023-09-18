@@ -194,7 +194,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(template_dir, '_next/static')},
+            {'path': os.path.join(template_dir, '_next', 'static')},
         ),
         (
             r'/fonts/(.*)',

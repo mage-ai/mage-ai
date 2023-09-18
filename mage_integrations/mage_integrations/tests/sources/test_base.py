@@ -1,15 +1,16 @@
+import json
+import os
+import sys
+import unittest
+from unittest.mock import MagicMock, patch
+
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.intercom import Intercom
 from mage_integrations.sources.postgresql import PostgreSQL
 from mage_integrations.sources.stripe import Stripe
-from singer.schema import Schema
-from unittest.mock import MagicMock, patch
-import os
-import unittest
-import json
-import sys
-
 
 ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -29,12 +30,14 @@ def build_sample_streams_catalog_entries():
 
 def build_sample_streams_list():
     with open(os.path.join(
-            ABSOLUTE_PATH,
-            'samples/demo_table_stream.json',
-        ), 'r') as f1, open(os.path.join(
-            ABSOLUTE_PATH,
-            'samples/demo_users_stream.json',
-            ), 'r') as f2:
+        ABSOLUTE_PATH,
+        'samples',
+        'demo_table_stream.json',
+    ), 'r') as f1, open(os.path.join(
+        ABSOLUTE_PATH,
+        'samples',
+        'demo_users_stream.json',
+    ), 'r') as f2:
         demo_table_stream = json.load(f1)
         demo_users_stream = json.load(f2)
 
@@ -219,7 +222,7 @@ class BaseSourceTests(unittest.TestCase):
 
     def test_process_stream(self):
         source = Source()
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, ''):
             source.process_stream(
                 CatalogEntry(
                     replication_method='INVALID_METHOD',
@@ -252,7 +255,7 @@ class BaseSourceTests(unittest.TestCase):
             with patch.object(source, 'load_data') as mock_load_data:
                 source.sync_stream(stream)
                 mock_get_bookmark_props.assert_called_with(stream)
-                mock_load_data.assert_called_once() 
+                mock_load_data.assert_called_once()
 
     def test_write_records(self):
         source = Source(
@@ -371,7 +374,7 @@ class BaseSourceTests(unittest.TestCase):
                 'tap_stream_id': 'demo_users',
             },
         )
-    
+
     def test_load_schemas_from_folder(self):
         # Testing with Stripe source, since not all of the
         # integration sources have "schemas" folders.
