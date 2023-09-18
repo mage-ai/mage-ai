@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mage-ai"
-version = "0.9.24"
+version = "0.9.25"
 description = "Mage is a tool for building and deploying data pipelines."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -276,7 +276,7 @@ profile = "black"
 
 [tool.poetry]
 name = "mage-ai"
-version = "0.9.24"
+version = "0.9.25"
 description = "DevEx poetry configuration"
 authors = ["Mage <eng@mage.ai>"]
 readme = "README.md"

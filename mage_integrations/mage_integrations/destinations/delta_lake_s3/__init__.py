@@ -1,10 +1,16 @@
-from botocore.config import Config
-from mage_integrations.destinations.delta_lake.base import DeltaLake as BaseDeltaLake, main
-from mage_integrations.destinations.delta_lake.constants import MODE_OVERWRITE
-from mage_integrations.destinations.delta_lake_s3.utils import fix_overwritten_partitions
-from typing import Dict
-import boto3
 import os
+import posixpath
+from typing import Dict
+
+import boto3
+from botocore.config import Config
+
+from mage_integrations.destinations.delta_lake.base import DeltaLake as BaseDeltaLake
+from mage_integrations.destinations.delta_lake.base import main
+from mage_integrations.destinations.delta_lake.constants import MODE_OVERWRITE
+from mage_integrations.destinations.delta_lake_s3.utils import (
+    fix_overwritten_partitions,
+)
 
 
 class DeltaLakeS3(BaseDeltaLake):
@@ -84,7 +90,7 @@ class DeltaLakeS3(BaseDeltaLake):
         }
 
     def build_table_uri(self, stream: str) -> str:
-        return '/'.join([
+        return posixpath.join([
             f"s3://{self.config['bucket']}",
             self.config['object_key_path'],
             self.table_name,

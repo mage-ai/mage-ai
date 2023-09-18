@@ -23,6 +23,7 @@ from mage_ai.data_preparation.models.custom_templates.custom_block_template impo
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class BlockResource(GenericResource):
@@ -90,6 +91,7 @@ class BlockResource(GenericResource):
             upstream_block_uuids=payload.get('upstream_blocks', []),
         )
 
+        replicated_block = None
         replicated_block_uuid = payload.get('replicated_block')
         if replicated_block_uuid:
             replicated_block = pipeline.get_block(replicated_block_uuid)
@@ -105,6 +107,7 @@ class BlockResource(GenericResource):
                 )
                 raise ApiError(error)
 
+        custom_template = None
         if payload_config and payload_config.get('custom_template_uuid'):
             template_uuid = payload_config.get('custom_template_uuid')
             custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
@@ -136,6 +139,16 @@ class BlockResource(GenericResource):
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(block)
+
+        if block:
+            await UsageStatisticLogger().block_create(
+                block,
+                block_action_object=block_action_object,
+                custom_template=custom_template,
+                payload_config=payload_config,
+                pipeline=pipeline,
+                replicated_block=replicated_block,
+            )
 
         return self(block, user, **kwargs)
 
