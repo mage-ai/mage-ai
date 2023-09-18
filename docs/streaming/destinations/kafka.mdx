@@ -48,22 +48,17 @@ or dictionaries with a specific format as messages:
 
 ```
 message = {
-    'data': {
-      'key': <Any>,
-      'value': <Any>
-    }
+    'data': <Any>,
     'metadata': <Optional[Dict]>
 }
 ```
 
-If the data contains no dictionary it will be written to the database as value with the current time value and no key (list types will be written as seperate messages).
+If the data contains no dictionary it will be written to the database as value with the current time value and no key.
 Otherwise, every dictionary message contains at least some data in a `data` field. 
 The following messages are valid:
 
 ```python
-message_1 = {'data': {'bees': 23, 'ants': 30}}
-message_2 = {'data': 23}  # implicit for {None: 23}
-message_3 = {'data': [23, 30]}  # implicit for {None: 23} and {None: 30}
+message = {'data': {'bees': 23, 'ants': 30}}
 ```
 
 Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. 
@@ -71,7 +66,8 @@ The Kafka data exporter can create these elements if the messages received conta
 
 ```python
 message['metadata'] = {
-    'topic': str
+    'dest_topic': str
+    'key': str
     'time': int
 }
 ```
@@ -81,11 +77,12 @@ The following message shows the configuration of all possible elements data and 
 ```python
 message = {
     'data': {
-      'bees': 23, 
-      'ants': 30
+        'bees': 23,
+        'ants': 30,
     },
     'metadata': {
-        'topic': 'census',
+        'dest_topic': 'census',
+        'key': 'key',
         'time': 1693396630163,  # timestamp with ms precision
     }
 }
@@ -102,6 +99,3 @@ topic: topic_name
 ```
 
 - The default time timestamp is the current time of execution.
-
-If the `data` part of the message is a dictionary it taken for the keys and values. 
-Otherwise only the values are assigned with empty keys.

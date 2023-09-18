@@ -8,6 +8,7 @@ title: "Kafka"
 connector_type: kafka
 bootstrap_server: "localhost:9092"
 topic: topic_name
+topics: topic_name1, topic_name2  # Optional. Used for specifying multiple topics.
 consumer_group: unique_consumer_group
 include_metadata: false
 api_version: "0.10.2"
@@ -50,14 +51,13 @@ If `include_metadata` is set to true, the kafka data loader returns these elemen
 
 ```python
 message = {
-    "data": {
-      "bees": {"location": "klamath", "scientist": "anderson", "count": 23}
-    },
+    "data": {"location": "klamath", "scientist": "anderson", "count": 23},
     "metadata": {
-      "topic": "census",
+      "key": "bees",
       "partition": 0,
       "offset": 6,
-      "time": 1693396630163  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+      "time": 1693396630163,  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+      "topic": "census",
     }}
 ```
 

@@ -59,7 +59,7 @@ dependencies = [
   'simplejson==3.17.6',
   'singer_sdk==0.30.0',
   'singer-tap-tester',
-  'snowflake-connector-python==2.9.0',
+  'snowflake-connector-python==2.7.9',
   'sqlalchemy',
   'sshtunnel==0.4.0',
   'stripe==4.2.0',

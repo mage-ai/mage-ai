@@ -176,7 +176,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if template_dir is None:
         template_dir = os.path.join(os.path.dirname(__file__), EXPORTS_FOLDER)
     routes = [
-        (r'/', MainPageHandler),
+        (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
