@@ -171,8 +171,44 @@ def interpolate_input(
                 has_create_or_insert_statement(upstream_block_content):
 
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
+
+            match = 1
+            while match is not None:
+                match = None
+
+                for pattern in [
+                    r'{}[\n\r\s]+as[\n\r\s]+'.format(variable_pattern),
+                    r'{}[\n\r\s]+["|\'].+["|\']'.format(variable_pattern),
+                    r'{}[\n\r\s]+\S+[\n\r\s]+ON'.format(variable_pattern),
+                ]:
+                    if match:
+                        continue
+
+                    match = re.search(
+                        pattern,
+                        query,
+                        re.IGNORECASE,
+                    )
+
+                if not match:
+                    continue
+
+                si, ei = match.span()
+                substring = query[si:ei]
+
+                si, ei = match.span()
+                query = ''.join([
+                    query[:si],
+                    re.sub(
+                        variable_pattern,
+                        f'({upstream_query})',
+                        substring,
+                    ),
+                    query[ei:],
+                ])
+
             replace_with = f"""(
-    {upstream_query}
+{upstream_query.strip()}
 ) AS {table_name}"""
 
         query = re.sub(
@@ -213,7 +249,9 @@ def table_name_parts(
                 table_name: database.schema.table
         ```
     2. Use the upstream block's table name
-    3. Use the `data_provider_schema` from the upstream block's configuration if it exists
+    3. Use the `data_provider_schema` from the upstream block's configuration if it exists and
+       the current block's `data_provider` and `data_provider_profile` are the same as the upstream
+       block's `data_provider` and `data_provider_profile`.
     4. Use the `data_provider_schema` from the current block's configuration
 
     Args:
@@ -238,21 +276,29 @@ def table_name_parts(
 
     if full_table_name:
         parts = full_table_name.split('.')
-        if len(parts) == 3:
-            database, schema, table = parts
-        elif len(parts) == 2:
-            schema, table = parts
-        elif len(parts) == 1:
-            table = parts[0]
+    else:
+        parts = upstream_block.table_name.split('.')
 
-    if not table:
-        table = upstream_block.table_name
+    if len(parts) == 3:
+        database, schema, table = parts
+    elif len(parts) == 2:
+        if no_schema:
+            database, table = parts
+        else:
+            schema, table = parts
+    elif len(parts) == 1:
+        table = parts[0]
 
     if not schema and not no_schema:
         upstream_configuration = upstream_block.configuration
-        if upstream_configuration and \
-            configuration.get('data_provider') == upstream_configuration.get('data_provider') and \
-                upstream_configuration.get('data_provider_schema'):
+        if (
+            upstream_configuration
+            and configuration.get('data_provider')
+            == upstream_configuration.get('data_provider')
+            and configuration.get('data_provider_profile')
+            == upstream_configuration.get('data_provider_profile')
+            and upstream_configuration.get('data_provider_schema')
+        ):
             schema = upstream_block.configuration.get('data_provider_schema')
         else:
             schema = configuration.get('data_provider_schema')

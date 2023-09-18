@@ -74,7 +74,7 @@ PyJWT==2.6.0
 pymongo==4.3.3
 pyodbc==4.0.35
 python-dateutil==2.8.2
-pytz==2022.1
+pytz==2022.2.1
 pyyaml~=6.0
 redis
 redshift-connector==2.0.909
