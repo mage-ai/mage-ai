@@ -7,6 +7,7 @@ import requests
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 
+from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
@@ -14,12 +15,15 @@ from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
 API_ENDPOINT = 'https://api.github.com'
 
 
-def get_github_client_id() -> str:
-    return f'github_{get_project_uuid()}'
+def get_oauth_client_id(provider: str) -> str:
+    return f'{provider}_{get_project_uuid()}'
 
 
-def get_access_token_for_user(user: User) -> Oauth2AccessToken:
-    access_tokens = access_tokens_for_client(get_github_client_id(), user=user)
+def get_access_token_for_user(
+    user: User,
+    provider: str = OAUTH_PROVIDER_GITHUB
+) -> Oauth2AccessToken:
+    access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]
 
