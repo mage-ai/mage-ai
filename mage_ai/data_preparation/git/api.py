@@ -1,6 +1,5 @@
 import asyncio
 import subprocess
-from datetime import datetime
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
 
@@ -8,28 +7,21 @@ import requests
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
-from mage_ai.orchestration.db.models.oauth import (
-    Oauth2AccessToken,
-    Oauth2Application,
-    User,
-)
+from mage_ai.authentication.oauth.utils import access_tokens_for_client
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
 
 API_ENDPOINT = 'https://api.github.com'
 
 
+def get_github_client_id() -> str:
+    return f'github_{get_project_uuid()}'
+
+
 def get_access_token_for_user(user: User) -> Oauth2AccessToken:
-    oauth_client = Oauth2Application.query.filter(
-        Oauth2Application.client_id == OAUTH_PROVIDER_GITHUB,
-    ).first()
-
-    if oauth_client:
-        access_token = Oauth2AccessToken.query.filter(
-            Oauth2AccessToken.expires > datetime.utcnow(),
-            Oauth2AccessToken.oauth2_application_id == oauth_client.id,
-        ).first()
-
-        return access_token
+    access_tokens = access_tokens_for_client(get_github_client_id(), user=user)
+    if access_tokens:
+        return access_tokens[0]
 
 
 def fetch(remote_name: str, remote_url: str, token: str) -> RemoteProgress:
