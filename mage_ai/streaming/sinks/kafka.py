@@ -1,12 +1,10 @@
 import json
 import time
-from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List
 
 from kafka import KafkaProducer
-
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sinks.base import BaseSink
@@ -103,27 +101,12 @@ class KafkaSink(BaseSink):
             data = message
             metadata = {}
 
-        if isinstance(data, dict):
-            for key, value in data.items():
-                self.producer.send(
-                    topic=metadata.get('topic', self.config.topic),
-                    value=value,
-                    key=key,
-                    timestamp_ms=metadata.get('time'),
-                )
-        elif isinstance(data, Iterable):
-            for value in data:
-                self.producer.send(
-                    topic=metadata.get('topic', self.config.topic),
-                    value=value,
-                    timestamp_ms=metadata.get('time'),
-                )
-        else:  # data is scalar
-            self.producer.send(
-                topic=metadata.get('topic', self.config.topic),
-                value=data,
-                timestamp_ms=metadata.get('time'),
-            )
+        self.producer.send(
+            topic=metadata.get('dest_topic', self.config.topic),
+            value=data,
+            key=metadata.get('key'),
+            timestamp_ms=metadata.get('time'),
+        )
 
     def batch_write(self, messages: List[Dict]):
         if not messages:
