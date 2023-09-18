@@ -1,9 +1,9 @@
 import importlib
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer
 
@@ -38,7 +38,6 @@ class SSLConfig:
 class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
-    topic: str
     api_version: str = '0.10.2'
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
@@ -47,6 +46,8 @@ class KafkaConfig(BaseConfig):
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
     serde_config: SerDeConfig = None
+    topic: str = None
+    topics: List = field(default_factory=list)
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -66,6 +67,9 @@ class KafkaSource(BaseSource):
     config_class = KafkaConfig
 
     def init_client(self):
+        if not self.config.topic and not self.config.topics:
+            raise Exception('Please specify topic or topics in the Kafka config.')
+
         self._print('Start initializing consumer.')
         # Initialize kafka consumer
         consumer_kwargs = dict(
@@ -89,7 +93,12 @@ class KafkaSource(BaseSource):
             consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
             consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-        self.consumer = KafkaConsumer(self.config.topic, **consumer_kwargs)
+        if self.config.topic:
+            topics = [self.config.topic]
+        else:
+            topics = self.config.topics
+
+        self.consumer = KafkaConsumer(*topics, **consumer_kwargs)
         self._print('Finish initializing consumer.')
 
         self.schema_class = None
@@ -132,14 +141,13 @@ class KafkaSource(BaseSource):
     def _convert_message(self, message):
         if self.config.include_metadata:
             message = {
-                'data': {
-                    message.key.decode(): self.__deserialize_message(message.value)
-                },
+                'data': self.__deserialize_message(message.value),
                 'metadata': {
-                    'topic': message.topic,
+                    'key': message.key.decode() if message.key else None,
                     'partition': message.partition,
                     'offset': message.offset,
                     'time': int(message.timestamp),
+                    'topic': message.topic,
                 },
             }
         else:
@@ -227,5 +235,5 @@ class KafkaSource(BaseSource):
     def __print_message(self, message):
         self._print(
             f'Receive message {message.partition}:{message.offset}: '
-            f'v={message.value}, time={time.time()}'
+            f'key={message.key}, value={message.value}, time={time.time()}'
         )
