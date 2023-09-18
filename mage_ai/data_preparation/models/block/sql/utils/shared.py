@@ -174,11 +174,21 @@ def interpolate_input(
 
             match = 1
             while match is not None:
-                match = re.search(
+                match = None
+
+                for pattern in [
                     r'{}[\n\r\s]+as[\n\r\s]+'.format(variable_pattern),
-                    query,
-                    re.IGNORECASE,
-                )
+                    r'{}[\n\r\s]+["|\'].+["|\']'.format(variable_pattern),
+                    r'{}[\n\r\s]+\S+[\n\r\s]+ON'.format(variable_pattern),
+                ]:
+                    if match:
+                        continue
+
+                    match = re.search(
+                        pattern,
+                        query,
+                        re.IGNORECASE,
+                    )
 
                 if not match:
                     continue

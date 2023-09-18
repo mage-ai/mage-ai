@@ -433,6 +433,8 @@ def execute_sql_code(
             )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
+            print(query_string)
+
             schema = schema or loader.default_schema()
 
             if use_raw_sql:
