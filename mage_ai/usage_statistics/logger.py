@@ -7,6 +7,12 @@ from typing import Callable, Dict, Union
 import aiohttp
 import pytz
 
+from mage_ai.cache.block_action_object.constants import (
+    OBJECT_TYPE_BLOCK_FILE,
+    OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
+    OBJECT_TYPE_MAGE_TEMPLATE,
+)
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -33,6 +39,68 @@ from mage_ai.usage_statistics.utils import build_event_data_for_chart
 class UsageStatisticLogger():
     def __init__(self, project=None):
         self.project = project or Project()
+
+    async def block_create(
+        self,
+        block: Block,
+        block_action_object: Dict = None,
+        custom_template: CustomBlockTemplate = None,
+        payload_config: Dict = None,
+        pipeline: Pipeline = None,
+        replicated_block: Block = None,
+    ) -> bool:
+        event_properties = dict(
+            block=dict(
+                language=block.language,
+                type=block.type,
+            ),
+        )
+
+        created_from = None
+        if block_action_object and block_action_object.get('object_type'):
+            created_from = 'block_action_object'
+            object_type = block_action_object.get('object_type')
+
+            if OBJECT_TYPE_BLOCK_FILE == object_type:
+                created_from = 'existing_block'
+            elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
+                created_from = 'custom_template'
+            elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
+                created_from = 'mage_template'
+        elif custom_template:
+            created_from = 'custom_template'
+        elif replicated_block:
+            created_from = 'replicated_block'
+        elif payload_config and payload_config.get('template_path'):
+            created_from = 'mage_template'
+        elif block.already_exists:
+            created_from = 'existing_block'
+
+        if created_from:
+            event_properties['action_properties'] = dict(
+                created_from=created_from,
+            )
+
+            if block_action_object and block_action_object.get('object_type'):
+                event_properties['action_properties']['block_action_object_type'] = \
+                    block_action_object.get('object_type')
+
+            if payload_config and payload_config.get('template_path'):
+                event_properties['action_properties']['template_path'] = payload_config.get(
+                    'template_path',
+                )
+
+        if pipeline:
+            event_properties['pipeline'] = dict(
+                type=pipeline.type,
+            )
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.BLOCK,
+            ),
+            event_properties,
+        ))
 
     @property
     def help_improve_mage(self) -> bool:
@@ -130,7 +198,9 @@ class UsageStatisticLogger():
             created_from = 'custom_template'
 
         if created_from:
-            event_properties['pipeline']['created_from'] = created_from
+            event_properties['action_properties'] = dict(
+                created_from=created_from,
+            )
 
         return await self.__send_message(merge_dict(dict(
                 action=EventActionType.CREATE,
