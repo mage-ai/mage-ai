@@ -22,7 +22,7 @@ class GitApiTest(DBTestCase):
         email = self.faker.email()
         user = create_user(email=email, roles=1)
 
-        client_id = get_oauth_client_id(user)
+        client_id = get_oauth_client_id(OAUTH_PROVIDER_GITHUB)
 
         oauth_client = Oauth2Application.create(
             client_id=client_id,
