@@ -50,14 +50,13 @@ If `include_metadata` is set to true, the kafka data loader returns these elemen
 
 ```python
 message = {
-    "data": {
-      "bees": {"location": "klamath", "scientist": "anderson", "count": 23}
-    },
+    "data": {"location": "klamath", "scientist": "anderson", "count": 23},
     "metadata": {
-      "topic": "census",
+      "key": "bees",
       "partition": 0,
       "offset": 6,
-      "time": 1693396630163  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+      "time": 1693396630163,  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+      "topic": "census",
     }}
 ```
 
