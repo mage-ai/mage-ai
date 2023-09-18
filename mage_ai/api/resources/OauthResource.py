@@ -14,7 +14,7 @@ from mage_ai.authentication.oauth.constants import (
     VALID_OAUTH_PROVIDERS,
 )
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
-from mage_ai.data_preparation.git.api import get_github_client_id
+from mage_ai.data_preparation.git.api import get_oauth_client_id
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
 from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
@@ -166,7 +166,7 @@ class OauthResource(GenericResource):
     @classmethod
     def get_client_id(self, provider: str) -> str:
         return (
-            get_github_client_id()
+            get_oauth_client_id(OAUTH_PROVIDER_GITHUB)
             if provider == OAUTH_PROVIDER_GITHUB
             else provider
         )
