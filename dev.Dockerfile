@@ -48,8 +48,10 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
-COPY mage_integrations /home/src/mage_integrations
-RUN pip3 install --no-cache-dir -e /home/src/mage_integrations
+COPY mage_integrations /tmp/mage_integrations
+RUN \
+  pip3 install --no-cache-dir /tmp/mage_integrations && \
+  rm -rf /tmp/mage_integrations
 # Mage Dependencies
 COPY ./pyproject.toml /home/src/
 COPY ./mage_ai /home/src/mage_ai
