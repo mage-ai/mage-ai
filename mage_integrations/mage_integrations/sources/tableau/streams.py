@@ -31,9 +31,8 @@ class BaseStream:
     path = None
     params = {}
     parent = None
-    # TODO Add the default key for tableau
-    default_data_key = ""
     data_key = None
+    sub_data_key = None
 
     def __init__(self, client: TableauClient, logger=LOGGER):
         self.client = client
@@ -110,18 +109,18 @@ class WorkbookList(FullTableStream):
     to_replicate = False
     path = "workbooks"
     data_key = "workbooks"
+    sub_data_key = "workbook"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if response.get(self.default_data_key) is None:
+        if response.get(self.data_key).get(self.sub_data_key) is None:
             self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise TableauError
 
         # Only yield records when called by child streams
         if is_parent:
-            # TODO Fix the way we fetch the workbooks from the response
-            for record in response.get(self.default_data_key):
+            for record in response.get(self.data_key).get(self.sub_data_key):
                 yield record.get("id")
 
 
@@ -135,55 +134,59 @@ class Workbooks(FullTableStream):
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
         workbooks = []
 
-        for dashboard_id in self.get_parent_data():
-            call_path = self.path.format(dashboard_id)
-            results = self.client.get(call_path)
+        for workbook_id in self.get_parent_data():
+            call_path = self.path.format(workbook_id)
+            response = self.client.get(call_path)
+            results = response.get("workbook")
 
             workbooks.append(results)
 
         yield from workbooks
 
-# TODO Change widgets to views and add the views schema
-class WidgetList(FullTableStream):
-    tap_stream_id = "widget_list"
+class ViewList(FullTableStream):
+    tap_stream_id = "view_list"
     key_properties = ["id"]
     to_replicate = False
-    path = "widgets"
-    data_key = "widgets"
+    path = "views"
+    data_key = "views"
+    sub_data_key = "view"
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         response = self.client.get(self.path)
 
-        if response.get(self.default_data_key) is None:
+        if response.get(self.data_key).get(self.sub_data_key) is None:
             self.logger.critical(f"Response is empty for {self.tap_stream_id} stream")
             raise TableauError
 
         # Only yield records when called by child streams
         if is_parent:
-            for record in response.get(self.default_data_key):
+            for record in response.get(self.data_key).get(self.sub_data_key):
                 yield record.get("id")
 
 
-class Widgets(FullTableStream):
-    tap_stream_id = "widgets"
+class Views(FullTableStream):
+    tap_stream_id = "views"
     key_properties = ["id"]
-    path = "widgets/{}"
-    parent = WidgetList
+    path = "views/{}"
+    parent = ViewList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         self.logger.info("Syncing: {}".format(self.tap_stream_id))
-        widgets = []
+        views = []
 
-        for widget_id in self.get_parent_data():
-            call_path = self.path.format(widget_id)
-            results = self.client.get(call_path)
+        for view_id in self.get_parent_data():
+            call_path = self.path.format(view_id)
+            response = self.client.get(call_path)
+            results = response.get("view")
 
-            widgets.append(results)
+            views.append(results)
 
-        yield from widgets
+        yield from views
 
 
 STREAMS = {
     "workbook_list": WorkbookList,
     "workbooks": Workbooks,
+    "view_list": ViewList,
+    "views": Views
 }
