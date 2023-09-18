@@ -79,7 +79,7 @@ repository = "https://github.com/mage-ai/mage-ai"
 changelog = "https://github.com/mage-ai/mage-ai/releases"
 
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
