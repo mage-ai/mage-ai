@@ -208,7 +208,7 @@ def interpolate_input(
                 ])
 
             replace_with = f"""(
-    {upstream_query}
+{upstream_query.strip()}
 ) AS {table_name}"""
 
         query = re.sub(
