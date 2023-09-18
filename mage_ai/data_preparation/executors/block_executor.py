@@ -3,7 +3,10 @@ import traceback
 from datetime import datetime
 from typing import Callable, Dict, List, Union
 
-import pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 import requests
 
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -28,20 +31,12 @@ from mage_ai.shared.utils import clean_name
 
 
 class BlockExecutor:
-    """
-    Executor for a block in a pipeline.
-    """
+    """Executor for a block in a pipeline."""
 
     RETRYABLE = True
 
-    def __init__(
-        self,
-        pipeline,
-        block_uuid,
-        execution_partition=None
-    ):
-        """
-        Initialize the BlockExecutor.
+    def __init__(self, pipeline, block_uuid, execution_partition=None):
+        """Initialize the BlockExecutor.
 
         Args:
             pipeline: The pipeline object.
@@ -78,8 +73,7 @@ class BlockExecutor:
         verify_output: bool = True,
         **kwargs,
     ) -> Dict:
-        """
-        Execute the block.
+        """Execute the block.
 
         Args:
             analyze_outputs: Whether to analyze the outputs of the block.
@@ -108,13 +102,11 @@ class BlockExecutor:
             result = dict()
 
             tags = self.build_tags(
-                block_run_id=block_run_id,
-                pipeline_run_id=pipeline_run_id,
-                **kwargs
+                block_run_id=block_run_id, pipeline_run_id=pipeline_run_id, **kwargs
             )
 
             self.logger.logging_tags = tags
-            self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+            self.logger.info(f"Start executing block with {self.__class__.__name__}.", **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
 
@@ -123,9 +115,10 @@ class BlockExecutor:
 
             if block_run:
                 block_run_data = block_run.metrics or {}
-                dynamic_block_index = block_run_data.get('dynamic_block_index', None)
+                dynamic_block_index = block_run_data.get("dynamic_block_index", None)
                 dynamic_upstream_block_uuids = block_run_data.get(
-                    'dynamic_upstream_block_uuids', None)
+                    "dynamic_upstream_block_uuids", None
+                )
             else:
                 dynamic_block_index = None
                 dynamic_upstream_block_uuids = None
@@ -145,24 +138,25 @@ class BlockExecutor:
                         dynamic_upstream_block_uuids_no_reduce.append(upstream_block_uuid)
                         continue
 
-                    parts = upstream_block_uuid.split(':')
+                    parts = upstream_block_uuid.split(":")
                     suffix = None
                     if len(parts) >= 3:
                         # A block can have a UUID such as: some_uuid:0 or some_uuid:0:1
-                        suffix = ':'.join(parts[2:])
+                        suffix = ":".join(parts[2:])
 
                     # We currently limit a block to only have 1 direct dynamic parent.
                     # We are looping over the upstream blocks just in case we support having
                     # multiple direct dynamic parents.
-                    for block_grandparent in list(filter(
-                        lambda x: is_dynamic_block(x),
-                        upstream_block.upstream_blocks,
-                    )):
-
+                    for block_grandparent in list(
+                        filter(
+                            lambda x: is_dynamic_block(x),
+                            upstream_block.upstream_blocks,
+                        )
+                    ):
                         block_grandparent_uuid = block_grandparent.uuid
 
                         if suffix and is_dynamic_block_child(block_grandparent):
-                            block_grandparent_uuid = f'{block_grandparent_uuid}:{suffix}'
+                            block_grandparent_uuid = f"{block_grandparent_uuid}:{suffix}"
 
                         values, block_metadata = dynamic_block_values_and_metadata(
                             block_grandparent,
@@ -182,10 +176,12 @@ class BlockExecutor:
                                     metadata,
                                     idx,
                                     upstream_block_uuid=block_grandparent_uuid,
-                                ))
+                                )
+                            )
 
-                dynamic_upstream_block_uuids = dynamic_upstream_block_uuids_reduce + \
-                    dynamic_upstream_block_uuids_no_reduce
+                dynamic_upstream_block_uuids = (
+                    dynamic_upstream_block_uuids_reduce + dynamic_upstream_block_uuids_no_reduce
+                )
 
             conditional_result = self._execute_conditional(
                 dynamic_block_index=dynamic_block_index,
@@ -196,12 +192,15 @@ class BlockExecutor:
             )
             if not conditional_result:
                 self.logger.info(
-                    f'Conditional block(s) returned false for {self.block.uuid}. '
-                    'This block run and downstream blocks will be set as CONDITION_FAILED.',
-                    **merge_dict(tags, dict(
-                        block_type=self.block.type,
-                        block_uuid=self.block.uuid,
-                    )),
+                    f"Conditional block(s) returned false for {self.block.uuid}. "
+                    "This block run and downstream blocks will be set as CONDITION_FAILED.",
+                    **merge_dict(
+                        tags,
+                        dict(
+                            block_type=self.block.type,
+                            block_uuid=self.block.uuid,
+                        ),
+                    ),
                 )
                 self.__update_block_run_status(
                     BlockRun.BlockRunStatus.CONDITION_FAILED,
@@ -247,7 +246,8 @@ class BlockExecutor:
                         runtime_arguments=runtime_arguments,
                         template_runtime_configuration=template_runtime_configuration,
                         dynamic_block_index=dynamic_block_index,
-                        dynamic_block_uuid=None if dynamic_block_index is None
+                        dynamic_block_uuid=None
+                        if dynamic_block_index is None
                         else block_run.block_uuid,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         **kwargs,
@@ -256,10 +256,13 @@ class BlockExecutor:
                 result = __execute_with_retry()
             except Exception as error:
                 self.logger.exception(
-                    f'Failed to execute block {self.block.uuid}',
-                    **merge_dict(tags, dict(
-                        error=error,
-                    )),
+                    f"Failed to execute block {self.block.uuid}",
+                    **merge_dict(
+                        tags,
+                        dict(
+                            error=error,
+                        ),
+                    ),
                 )
                 if on_failure is not None:
                     on_failure(
@@ -278,7 +281,7 @@ class BlockExecutor:
                         tags=tags,
                     )
                 self._execute_callback(
-                    'on_failure',
+                    "on_failure",
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,
@@ -286,7 +289,7 @@ class BlockExecutor:
                     pipeline_run=pipeline_run,
                 )
                 raise error
-            self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
+            self.logger.info(f"Finish executing block with {self.__class__.__name__}.", **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
             else:
@@ -298,7 +301,7 @@ class BlockExecutor:
                     tags=tags,
                 )
             self._execute_callback(
-                'on_success',
+                "on_success",
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 global_vars=global_vars,
@@ -326,8 +329,7 @@ class BlockExecutor:
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
-        """
-        Execute the block.
+        """Execute the block.
 
         Args:
             analyze_outputs: Whether to analyze the outputs of the block.
@@ -391,8 +393,7 @@ class BlockExecutor:
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ) -> bool:
-        """
-        Execute the conditional blocks.
+        """Execute the conditional blocks.
 
         Args:
             global_vars: Global variables for the block execution.
@@ -419,18 +420,21 @@ class BlockExecutor:
                 )
                 if not block_result:
                     self.logger.info(
-                        f'Conditional block {conditional_block.uuid} evaluated as False '
-                        f'for block {self.block.uuid}',
+                        f"Conditional block {conditional_block.uuid} evaluated as False "
+                        f"for block {self.block.uuid}",
                         **logging_tags,
                     )
                 result = result and block_result
             except Exception as conditional_err:
                 self.logger.exception(
-                    f'Failed to execute conditional block {conditional_block.uuid} '
-                    f'for block {self.block.uuid}.',
-                    **merge_dict(logging_tags, dict(
-                        error=conditional_err,
-                    )),
+                    f"Failed to execute conditional block {conditional_block.uuid} "
+                    f"for block {self.block.uuid}.",
+                    **merge_dict(
+                        logging_tags,
+                        dict(
+                            error=conditional_err,
+                        ),
+                    ),
                 )
                 result = False
 
@@ -445,8 +449,7 @@ class BlockExecutor:
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
-        """
-        Execute the callback blocks.
+        """Execute the callback blocks.
 
         Args:
             callback: The callback type ('on_success' or 'on_failure').
@@ -478,11 +481,14 @@ class BlockExecutor:
                 )
             except Exception as callback_err:
                 self.logger.exception(
-                    f'Failed to execute {callback} callback block {callback_block.uuid} '
-                    f'for block {self.block.uuid}.',
-                    **merge_dict(logging_tags, dict(
-                        error=callback_err,
-                    )),
+                    f"Failed to execute {callback} callback block {callback_block.uuid} "
+                    f"for block {self.block.uuid}.",
+                    **merge_dict(
+                        logging_tags,
+                        dict(
+                            error=callback_err,
+                        ),
+                    ),
                 )
 
     def _run_commands(
@@ -492,8 +498,7 @@ class BlockExecutor:
         pipeline_run_id: int = None,
         **kwargs,
     ) -> List[str]:
-        """
-        Run the commands for the block.
+        """Run the commands for the block.
 
         Args:
             block_run_id: The ID of the block run.
@@ -503,30 +508,29 @@ class BlockExecutor:
         Returns:
             A list of command arguments.
         """
-        cmd = f'/app/run_app.sh ' \
-              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        cmd = f"/app/run_app.sh mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}"
         options = [
-            '--block-uuid',
+            "--block-uuid",
             self.block_uuid,
-            '--executor-type',
-            'local_python',
+            "--executor-type",
+            "local_python",
         ]
         if self.execution_partition is not None:
-            options += ['--execution-partition', self.execution_partition]
+            options += ["--execution-partition", self.execution_partition]
         if block_run_id is not None:
-            options += ['--block-run-id', f'{block_run_id}']
+            options += ["--block-run-id", f"{block_run_id}"]
         if pipeline_run_id:
             options += [
-                '--pipeline-run-id',
-                f'{pipeline_run_id}',
+                "--pipeline-run-id",
+                f"{pipeline_run_id}",
             ]
-        if kwargs.get('template_runtime_configuration'):
-            template_run_configuration = kwargs.get('template_runtime_configuration')
+        if kwargs.get("template_runtime_configuration"):
+            template_run_configuration = kwargs.get("template_runtime_configuration")
             options += [
-                '--template-runtime-configuration',
+                "--template-runtime-configuration",
                 json.dumps(template_run_configuration),
             ]
-        return cmd.split(' ') + options
+        return cmd.split(" ") + options
 
     def __update_block_run_status(
         self,
@@ -536,9 +540,8 @@ class BlockExecutor:
         pipeline_run: PipelineRun = None,
         tags: Dict = None,
     ):
-        """
-        Update the status of block run by either updating the BlockRun db object or making
-        API call
+        """Update the status of block run by either updating the BlockRun db
+        object or making API call.
 
         Args:
             status (str): 'completed' or 'failed'
@@ -552,61 +555,60 @@ class BlockExecutor:
             return
         try:
             if not block_run_id:
-                block_run_id = int(callback_url.split('/')[-1])
+                block_run_id = int(callback_url.split("/")[-1])
 
             try:
-                if status == BlockRun.BlockRunStatus.COMPLETED and \
-                        pipeline_run is not None and is_dynamic_block(self.block):
+                if (
+                    status == BlockRun.BlockRunStatus.COMPLETED
+                    and pipeline_run is not None
+                    and is_dynamic_block(self.block)
+                ):
                     create_block_runs_from_dynamic_block(
                         self.block,
                         pipeline_run,
-                        block_uuid=self.block.uuid if self.block.replicated_block
+                        block_uuid=self.block.uuid
+                        if self.block.replicated_block
                         else self.block_uuid,
                     )
             except Exception as err1:
                 self.logger.exception(
-                    f'Failed to create block runs for dynamic block {self.block.uuid}.',
-                    **merge_dict(tags, dict(
-                        error=err1
-                    )),
+                    f"Failed to create block runs for dynamic block {self.block.uuid}.",
+                    **merge_dict(tags, dict(error=err1)),
                 )
 
             block_run = BlockRun.query.get(block_run_id)
-            update_kwargs = dict(
-                status=status
-            )
+            update_kwargs = dict(status=status)
             if status == BlockRun.BlockRunStatus.COMPLETED:
-                update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+                update_kwargs["completed_at"] = datetime.now(tz=ZoneInfo("UTC"))
             block_run.update(**update_kwargs)
             return
         except Exception as err2:
             self.logger.exception(
-                f'Failed to update block run status to {status} for block {self.block.uuid}.',
-                **merge_dict(tags, dict(
-                    error=err2
-                )),
+                f"Failed to update block run status to {status} for block {self.block.uuid}.",
+                **merge_dict(tags, dict(error=err2)),
             )
 
         # Fall back to making API calls
         response = requests.put(
             callback_url,
-            data=json.dumps({
-                'block_run': {
-                    'status': status,
-                },
-            }),
+            data=json.dumps(
+                {
+                    "block_run": {
+                        "status": status,
+                    },
+                }
+            ),
             headers={
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         )
         self.logger.info(
-            f'Callback response: {response.text}',
+            f"Callback response: {response.text}",
             **tags,
         )
 
     def build_tags(self, **kwargs):
-        """
-        Build tags for logging.
+        """Build tags for logging.
 
         Args:
             **kwargs: Additional keyword arguments.
@@ -619,8 +621,8 @@ class BlockExecutor:
             block_uuid=self.block_uuid,
             pipeline_uuid=self.pipeline.uuid,
         )
-        if kwargs.get('block_run_id'):
-            default_tags['block_run_id'] = kwargs.get('block_run_id')
-        if kwargs.get('pipeline_run_id'):
-            default_tags['pipeline_run_id'] = kwargs.get('pipeline_run_id')
-        return merge_dict(kwargs.get('tags', {}), default_tags)
+        if kwargs.get("block_run_id"):
+            default_tags["block_run_id"] = kwargs.get("block_run_id")
+        if kwargs.get("pipeline_run_id"):
+            default_tags["pipeline_run_id"] = kwargs.get("pipeline_run_id")
+        return merge_dict(kwargs.get("tags", {}), default_tags)

@@ -19,6 +19,7 @@ repos:
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer
+        exclude: '^requirements.txt'
 - repo: local
   hooks:
   - id: isort
