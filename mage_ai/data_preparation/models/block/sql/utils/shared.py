@@ -249,7 +249,9 @@ def table_name_parts(
                 table_name: database.schema.table
         ```
     2. Use the upstream block's table name
-    3. Use the `data_provider_schema` from the upstream block's configuration if it exists
+    3. Use the `data_provider_schema` from the upstream block's configuration if it exists and
+       the current block's `data_provider` and `data_provider_profile` are the same as the upstream
+       block's `data_provider` and `data_provider_profile`.
     4. Use the `data_provider_schema` from the current block's configuration
 
     Args:
