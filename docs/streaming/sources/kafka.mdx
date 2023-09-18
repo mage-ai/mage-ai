@@ -9,8 +9,10 @@ connector_type: kafka
 bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
+include_metadata: false
 api_version: "0.10.2"
 batch_size: 100
+timeout_ms: 500
 ```
 
 
@@ -36,6 +38,28 @@ sasl_config:
   password: password
 ```
 
+## Data format
+
+By default, if `include_metadata` is false, the kafka data loader returns data from value field, e.g.
+```python
+{"location": "klamath", "scientist": "anderson", "count": 23}
+```
+
+Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. 
+If `include_metadata` is set to true, the kafka data loader returns these elements as messages with `data = {key: value}` and `metadata` with (topic, partition, offset and time), e.g.
+
+```python
+message = {
+    "data": {
+      "bees": {"location": "klamath", "scientist": "anderson", "count": 23}
+    },
+    "metadata": {
+      "topic": "census",
+      "partition": 0,
+      "offset": 6,
+      "time": 1693396630163  # timestamp with ms precision (Wed Aug 30 2023 11:57:10 GMT+0)
+    }}
+```
 
 ## Deserialize message with protobuf schema
 
