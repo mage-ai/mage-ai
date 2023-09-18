@@ -15,6 +15,7 @@ class EventActionType(str, enum.Enum):
 
 class EventObjectType(str, enum.Enum):
     CHART = 'chart'
+    CUSTOM_TEMPLATE = 'custom_template'
     ERROR = 'error'
     FEATURE = 'feature'
     PIPELINE = 'pipeline'

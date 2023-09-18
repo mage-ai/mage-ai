@@ -2,12 +2,19 @@ import hashlib
 import json
 import platform
 from datetime import datetime
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 import aiohttp
 import pytz
 
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
+    CustomBlockTemplate,
+)
+from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
+    CustomPipelineTemplate,
+)
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
@@ -39,6 +46,30 @@ class UsageStatisticLogger():
                 object=EventObjectType.CHART,
             ),
         )
+
+    async def custom_template_create(
+        self,
+        custom_template: Union[CustomBlockTemplate, CustomPipelineTemplate],
+    ) -> bool:
+        event_properties = {}
+
+        if isinstance(custom_template, CustomBlockTemplate):
+            event_properties['block'] = dict(
+                language=custom_template.language,
+                type=custom_template.block_type,
+            )
+        elif isinstance(custom_template, CustomPipelineTemplate):
+            if custom_template.pipeline:
+                event_properties['pipeline'] = dict(
+                    type=custom_template.pipeline.get('type'),
+                )
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.CUSTOM_TEMPLATE,
+            ),
+            event_properties,
+        ))
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -76,6 +107,37 @@ class UsageStatisticLogger():
                 pipeline_runs=count_func(),
             ),
         )
+
+    async def pipeline_create(
+        self,
+        pipeline: Pipeline,
+        clone_pipeline_uuid: str = None,
+        llm_payload: Dict = None,
+        template_uuid: str = None,
+    ) -> bool:
+        event_properties = dict(
+            pipeline=dict(
+                type=pipeline.type,
+            ),
+        )
+
+        created_from = None
+        if clone_pipeline_uuid:
+            created_from = 'clone'
+        elif llm_payload:
+            created_from = 'llm'
+        elif template_uuid:
+            created_from = 'custom_template'
+
+        if created_from:
+            event_properties['pipeline']['created_from'] = created_from
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.PIPELINE,
+            ),
+            event_properties,
+        ))
 
     async def pipelines_impression(self, count_func: Callable) -> bool:
         if not self.help_improve_mage:
