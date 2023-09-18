@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 import unittest
@@ -23,7 +24,7 @@ else:
         @classmethod
         def setUpClass(self):
             super().setUpClass()
-            self.repo_path = str(Path.cwd() / 'test')
+            self.repo_path = os.path.join(os.getcwd(), 'test')
             set_repo_path(self.repo_path)
             if not Path(self.repo_path).exists():
                 Path(self.repo_path).mkdir()
@@ -51,7 +52,7 @@ class DBTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = str(Path.cwd() / 'test')
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
@@ -83,7 +84,7 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = str(Path.cwd() / 'test')
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()

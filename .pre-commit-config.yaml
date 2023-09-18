@@ -16,9 +16,9 @@ repos:
         types: [python]
     -   id: name-tests-test
         types: [python]
-        files: 'tests/.*'
-        exclude: 'base_test'
-        args: ["--pytest-test-first"]
+        exclude: "base_test"
+        args:
+          - "--pytest-test-first"
     -   id: requirements-txt-fixer
         files: 'mage_integrations/requirements.txt'
         # excluded ./requirements.txt as it uses groups,

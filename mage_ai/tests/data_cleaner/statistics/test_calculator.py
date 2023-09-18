@@ -114,7 +114,7 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['zip_code/invalid_value_rate'], 1 / 6)
 
         self.assertEqual(data['id/invalid_values'], [])
-        self.assertTrue((data['id/invalid_indices'] == np.array([]).astype(int)).all())
+        self.assertTrue((data['id/invalid_indices'] == np.array([]).astype(np.int64)).all())
         self.assertEqual(data['id/invalid_value_count'], 0)
         self.assertEqual(data['id/invalid_value_rate'], 0 / 6)
 

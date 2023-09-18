@@ -84,7 +84,7 @@ class Variable:
 
     @property
     def variable_path(self):
-        return os.path.join(self.variable_dir_path, f'{self.uuid}')
+        return os.path.join(self.variable_dir_path, self.uuid)
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
