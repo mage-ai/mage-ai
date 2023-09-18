@@ -171,8 +171,44 @@ def interpolate_input(
                 has_create_or_insert_statement(upstream_block_content):
 
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
+
+            match = 1
+            while match is not None:
+                match = None
+
+                for pattern in [
+                    r'{}[\n\r\s]+as[\n\r\s]+'.format(variable_pattern),
+                    r'{}[\n\r\s]+["|\'].+["|\']'.format(variable_pattern),
+                    r'{}[\n\r\s]+\S+[\n\r\s]+ON'.format(variable_pattern),
+                ]:
+                    if match:
+                        continue
+
+                    match = re.search(
+                        pattern,
+                        query,
+                        re.IGNORECASE,
+                    )
+
+                if not match:
+                    continue
+
+                si, ei = match.span()
+                substring = query[si:ei]
+
+                si, ei = match.span()
+                query = ''.join([
+                    query[:si],
+                    re.sub(
+                        variable_pattern,
+                        f'({upstream_query})',
+                        substring,
+                    ),
+                    query[ei:],
+                ])
+
             replace_with = f"""(
-    {upstream_query}
+{upstream_query.strip()}
 ) AS {table_name}"""
 
         query = re.sub(
