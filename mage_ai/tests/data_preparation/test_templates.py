@@ -239,6 +239,7 @@ def test_output(output, *args) -> None:
 bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
+include_metadata: false
 
 # Uncomment the config below to use SSL config
 # security_protocol: "SSL"

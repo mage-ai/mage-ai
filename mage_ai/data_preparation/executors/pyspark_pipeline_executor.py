@@ -1,4 +1,4 @@
-import os
+import posixpath
 from typing import Dict
 
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
@@ -43,11 +43,11 @@ class PySparkPipelineExecutor(PipelineExecutor):
 
     @property
     def spark_script_path(self) -> str:
-        return os.path.join('s3://', self.s3_bucket, self.spark_script_path_key)
+        return posixpath.join('s3://', self.s3_bucket, self.spark_script_path_key)
 
     @property
     def spark_script_path_key(self) -> str:
-        return os.path.join(self.s3_path_prefix, f'scripts/{self.pipeline.uuid}.py')
+        return posixpath.join(self.s3_path_prefix, f'scripts/{self.pipeline.uuid}.py')
 
     def upload_pipeline_execution_script(self, global_vars: Dict = None) -> None:
         execution_script_code = template_env.get_template(

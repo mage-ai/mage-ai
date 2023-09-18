@@ -72,7 +72,7 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
       destination?: string;
       source?: string;
     } = {};
-    if (BlockLanguageEnum.YAML === block.language) {
+    if (BlockLanguageEnum.YAML === block.language && block?.content?.length >= 1) {
       contentParsed = parse(block.content);
     }
 

@@ -31,7 +31,10 @@ class BlockPresenter(BasePresenter):
         display_format = kwargs['format']
 
         if display_format in [constants.CREATE, constants.UPDATE]:
-            return self.model.to_dict(include_content=True)
+            return await self.model.to_dict_async(
+                include_block_catalog=True,
+                include_content=True,
+            )
         elif display_format in [constants.DETAIL, 'dbt']:
             query = kwargs.get('query', {})
 

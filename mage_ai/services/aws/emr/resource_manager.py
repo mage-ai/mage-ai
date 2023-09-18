@@ -1,4 +1,4 @@
-import os
+import posixpath
 
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.s3 import s3
@@ -22,15 +22,15 @@ class EmrResourceManager:
 
     @property
     def bootstrap_script_path(self) -> str:
-        return os.path.join('s3://', self.s3_bucket, self.bootstrap_script_path_key)
+        return posixpath.join('s3://', self.s3_bucket, self.bootstrap_script_path_key)
 
     @property
     def bootstrap_script_path_key(self) -> str:
-        return os.path.join(self.s3_path_prefix, 'scripts/emr_bootstrap.sh')
+        return posixpath.join(self.s3_path_prefix, 'scripts/emr_bootstrap.sh')
 
     @property
     def log_uri(self) -> str:
-        return os.path.join('s3://', self.s3_bucket, self.s3_path_prefix, 'logs')
+        return posixpath.join('s3://', self.s3_bucket, self.s3_path_prefix, 'logs')
 
     def upload_bootstrap_script(self) -> None:
         if self.local_bootstrap_script_path is None:
