@@ -235,7 +235,7 @@ class PipelineResource(BaseResource):
                             upstream_block_uuids=upstream_block_uuids,
                         )
 
-                    for block_number, config in blocks_mapping.items():
+                    for _block_number, config in blocks_mapping.items():
                         upstream_block_uuids = config['upstream_block_uuids']
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
