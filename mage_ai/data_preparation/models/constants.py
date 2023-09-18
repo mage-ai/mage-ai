@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 
+BLOCK_CATALOG_FILENAME = 'catalog.json'
 DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
 DATAFRAME_ANALYSIS_KEYS = frozenset(
     [

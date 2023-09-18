@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.block.errors import (
 )
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
+    BLOCK_CATALOG_FILENAME,
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
@@ -707,6 +708,7 @@ class Pipeline:
 
     async def to_dict_async(
         self,
+        include_block_catalog: bool = False,
         include_block_metadata: bool = False,
         include_block_pipelines: bool = False,
         include_block_tags: bool = False,
@@ -728,17 +730,10 @@ class Pipeline:
             sample_count=sample_count,
         )
         blocks_data = await asyncio.gather(
-            *[
-                b.to_dict_async(
-                    **merge_dict(
-                        shared_kwargs,
-                        dict(
-                            include_block_pipelines=include_block_pipelines,
-                        ),
-                    )
-                )
-                for b in self.blocks_by_uuid.values()
-            ]
+            *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
+                include_block_catalog=include_block_catalog,
+                include_block_pipelines=include_block_pipelines,
+            ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
@@ -1170,6 +1165,33 @@ class Pipeline:
             block = mapping.get(block_uuid.split(":")[0])
 
         return block
+
+    async def get_block_catalog(self, block_uuid: str) -> Dict:
+        catalog_full_path = os.path.join(
+            self.repo_path,
+            PIPELINES_FOLDER,
+            self.uuid,
+            block_uuid,
+            BLOCK_CATALOG_FILENAME,
+        )
+
+        if os.path.exists(catalog_full_path):
+            async with aiofiles.open(catalog_full_path, mode='r') as f:
+                return json.loads(await f.read() or '')
+
+    def set_block_catalog(self, block_uuid: str, catalog: Dict = None) -> Dict:
+        catalog_full_path = os.path.join(
+            self.repo_path,
+            PIPELINES_FOLDER,
+            self.uuid,
+            block_uuid,
+            BLOCK_CATALOG_FILENAME,
+        )
+
+        os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
+
+        with open(catalog_full_path, mode='w') as f:
+            f.write(json.dumps(catalog or {}))
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
