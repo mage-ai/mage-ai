@@ -1,7 +1,7 @@
 import os
-import pathlib
 from enum import Enum
-from typing import Any, Mapping, Union
+from pathlib import Path
+from typing import Any, Mapping, Optional, Union
 
 import yaml
 
@@ -26,7 +26,7 @@ class IOConfig:
 
     def __init__(
         self,
-        filepath: Union[os.PathLike, str] = './default_repo/io_config.yaml'
+        filepath: Optional[Union[os.PathLike, str]] = None
     ) -> None:
         """
         Initializes IO Configuration loader
@@ -34,7 +34,7 @@ class IOConfig:
         Args:
             filepath (os.PathLike): Path to IO configuration file.
         """
-        self.filepath = pathlib.Path(filepath)
+        self.filepath = Path(filepath) if filepath else Path('default_repo', 'io_config.yaml')
 
     def use(self, profile: str) -> Mapping[str, Any]:
         """

@@ -24,8 +24,10 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.uuid, 'test_pipeline')
         self.assertEqual(pipeline.name, 'test pipeline')
         self.assertEqual(pipeline.blocks_by_uuid, dict())
-        self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/__init__.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/metadata.yaml'))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'pipelines', 'test_pipeline', '__init__.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'pipelines', 'test_pipeline', 'metadata.yaml')))
 
     @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):

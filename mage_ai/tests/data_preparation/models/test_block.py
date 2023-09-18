@@ -19,10 +19,14 @@ class BlockTest(DBTestCase):
     def test_create(self):
         block1 = Block.create('test_transformer', 'transformer', self.repo_path)
         block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)
-        self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/test_transformer.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/__init__.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/data_loaders/test_data_loader.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/data_loaders/__init__.py'))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'transformers', 'test_transformer.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'transformers', '__init__.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'data_loaders', 'test_data_loader.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'data_loaders', '__init__.py')))
         self.assertEqual(block1.name, 'test_transformer')
         self.assertEqual(block1.uuid, 'test_transformer')
         self.assertEqual(block1.type, 'transformer')
@@ -276,12 +280,11 @@ def incorrect_function(df1):
             ''')
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
-
         with self.assertRaisesRegex(
             Exception,
-            'Block test_transformer may have too many upstream dependencies. ' +
-            'It expected to have 1 arguments, but received 2. ' +
-            'Confirm that the @transformer method declaration has the correct number of arguments.'
+            'Block test_transformer may have too many upstream dependencies. It expected to have' +
+            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
+            'the correct number of arguments.'
         ):
             asyncio.run(block3.execute())
 
@@ -293,9 +296,9 @@ def incorrect_function(df1, df2, df3):
             ''')
         with self.assertRaisesRegex(
             Exception,
-            'Block test_transformer may have too many upstream dependencies. ' +
-            'It expected to have 1 arguments, but received 2. ' +
-            'Confirm that the @transformer method declaration has the correct number of arguments.'
+            'Block test_transformer may have too many upstream dependencies. It expected to have' +
+            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
+            'the correct number of arguments.'
         ):
             asyncio.run(block3.execute())
 

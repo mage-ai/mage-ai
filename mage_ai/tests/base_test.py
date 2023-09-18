@@ -23,7 +23,7 @@ else:
         @classmethod
         def setUpClass(self):
             super().setUpClass()
-            self.repo_path = os.getcwd() + '/test'
+            self.repo_path = os.path.join(os.getcwd(), 'test')
             set_repo_path(self.repo_path)
             if not os.path.exists(self.repo_path):
                 os.mkdir(self.repo_path)
@@ -51,7 +51,7 @@ class DBTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.getcwd() + '/test'
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
         if not os.path.exists(self.repo_path):
             os.mkdir(self.repo_path)
@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.getcwd() + '/test'
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
         if not os.path.exists(self.repo_path):
             os.mkdir(self.repo_path)

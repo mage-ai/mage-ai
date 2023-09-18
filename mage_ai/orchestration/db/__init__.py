@@ -32,7 +32,7 @@ elif not db_connection_url:
     else:
         if is_test():
             db_connection_url = f'sqlite:///{TEST_DB}'
-        elif os.path.exists('mage_ai/orchestration/db/'):
+        elif os.path.exists(os.path.join('mage_ai', 'orchestration', 'db')):
             # For local dev environment
             db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
         elif os.path.exists('mage-ai.db'):
