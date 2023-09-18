@@ -173,6 +173,7 @@ class PipelineResource(BaseResource):
         name = payload.get('name')
         pipeline_type = payload.get('type')
         llm_payload = payload.get('llm')
+        pipeline = None
 
         if template_uuid:
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
@@ -234,13 +235,21 @@ class PipelineResource(BaseResource):
                             upstream_block_uuids=upstream_block_uuids,
                         )
 
-                    for block_number, config in blocks_mapping.items():
+                    for _block_number, config in blocks_mapping.items():
                         upstream_block_uuids = config['upstream_block_uuids']
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
                             block = config['block']
                             arr = [f'{pipeline.uuid}_block_{bn}' for bn in upstream_block_uuids]
                             block.update(dict(upstream_blocks=arr))
+
+        if pipeline:
+            await UsageStatisticLogger().pipeline_create(
+                pipeline,
+                clone_pipeline_uuid=clone_pipeline_uuid,
+                llm_payload=llm_payload,
+                template_uuid=template_uuid,
+            )
 
         return self(pipeline, user, **kwargs)
 

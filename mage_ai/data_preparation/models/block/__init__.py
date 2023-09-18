@@ -261,6 +261,7 @@ class Block:
         self.has_callback = has_callback
         self.timeout = timeout
         self.retry_config = retry_config
+        self.already_exists = None
 
         self._outputs = None
         self._outputs_loaded = False
@@ -517,6 +518,7 @@ class Block:
 
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
+        already_exists = False
 
         # Don’t create a file if block is replicated from another block.
 
@@ -537,6 +539,7 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
+                already_exists = True
                 if (pipeline is not None and pipeline.has_block(
                     uuid,
                     block_type=block_type,
@@ -570,6 +573,7 @@ class Block:
             pipeline=pipeline,
             replicated_block=replicated_block,
         )
+        block.already_exists = already_exists
 
         if BlockType.DBT == block.type:
             if block.file_path and not block.file.exists():

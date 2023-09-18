@@ -78,7 +78,6 @@ function BlockNode({
   hideStatus,
   pipeline,
   selected,
-
   hasFailed,
   isCancelled,
   isConditionFailed,
