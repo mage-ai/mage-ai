@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import pandas as pd
 import simplejson
+import yaml
 from jinja2 import Template
 
 import mage_ai.data_preparation.decorators
@@ -1626,6 +1627,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     async def to_dict_async(
         self,
+        include_block_catalog: bool = False,
         include_block_metadata: bool = False,
         include_block_pipelines: bool = False,
         include_block_tags: bool = False,
@@ -1645,6 +1647,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = await self.content_async()
             if self.callback_block is not None:
                 data['callback_content'] = await self.callback_block.content_async()
+
+        if include_block_catalog and \
+                self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
+                BlockLanguage.YAML == self.language and \
+                data.get('content') and \
+                self.pipeline:
+
+            content = data.get('content') or ''
+            if content:
+                config = yaml.safe_load(content)
+                if config.get('source') or config.get('destination'):
+                    data['catalog'] = await self.pipeline.get_block_catalog(self.uuid)
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1724,6 +1738,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if 'timeout' in data and data['timeout'] != self.timeout:
             self.timeout = data['timeout']
             self.__update_pipeline_block()
+
+        if 'catalog' in data and self.pipeline:
+            self.pipeline.set_block_catalog(self.uuid, data.get('catalog'))
 
         return self
 

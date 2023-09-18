@@ -1,6 +1,9 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    PipelineType,
+)
 
 
 class PipelinePresenter(BasePresenter):
@@ -52,6 +55,7 @@ class PipelinePresenter(BasePresenter):
                 include_block_metadata = include_block_metadata[0]
 
             return await self.model.to_dict_async(
+                include_block_catalog=PipelineType.PYTHON == self.model.type,
                 include_block_metadata=include_block_metadata,
                 include_block_pipelines=include_block_pipelines,
                 include_block_tags=True,
