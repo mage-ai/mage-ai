@@ -68,7 +68,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -1702,10 +1702,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if content:
                 config = yaml.safe_load(content)
                 if config.get('source') or config.get('destination'):
-                    # The catalog file contains the key for catalog already.
-                    # This is required by Singer
-                    d = await self.pipeline.get_block_catalog_async(self.uuid)
-                    data.update(extract(d, ['catalog']))
+                    data['catalog'] = await self.pipeline.get_block_catalog_async(self.uuid)
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()

@@ -126,7 +126,7 @@ def source_module_file_path(source_uuid: str) -> str:
 def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     return list(filter(
         lambda x: x['tap_stream_id'] in streams,
-        catalog.get('catalog', {}).get('streams', []),
+        catalog.get('streams', []),
     ))
 
 
@@ -136,7 +136,7 @@ def get_selected_streams(block) -> List[Dict]:
     catalog = block.pipeline.get_block_catalog(block.uuid)
 
     if catalog:
-        for stream in catalog.get('catalog', {}).get('streams', []):
+        for stream in catalog.get('streams', []):
             md = stream.get('metadata', [])
             md_find = find(
                 lambda x: len(x.get('breadcrumb') or []) == 0,
@@ -221,7 +221,7 @@ def execute_source(
     if not selected_streams:
         catalog = block.pipeline.get_block_catalog(block.uuid)
         selected_streams = \
-            [s.get('tap_stream_id') for s in catalog.get('catalog', {}).get('streams', [])]
+            [s.get('tap_stream_id') for s in catalog.get('streams', [])]
 
     stream = selected_streams[0] if len(selected_streams) >= 1 else None
     destination_table = block.template_runtime_configuration.get('destination_table', stream)
@@ -294,7 +294,7 @@ def execute_source(
         config_json,
         '--log_to_stdout',
         '1',
-        '--settings',
+        '--catalog',
         block.pipeline.get_block_catalog_file_path(block.uuid),
         '--query_json',
         json.dumps(query_data),

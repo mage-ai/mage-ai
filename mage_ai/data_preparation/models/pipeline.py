@@ -1192,11 +1192,9 @@ class Pipeline:
 
         os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
 
-        with open(catalog_full_path, mode='w') as f:
-            d_to_save = {}
-            if catalog:
-                d_to_save['catalog'] = catalog
-            f.write(json.dumps(d_to_save))
+        if catalog:
+            with open(catalog_full_path, mode='w') as f:
+                f.write(json.dumps(catalog))
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
