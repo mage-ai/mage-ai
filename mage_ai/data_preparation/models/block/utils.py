@@ -626,13 +626,13 @@ def fetch_input_variables(
                 for var in variables
             ]
 
-            def _check(x):
-                return upstream_block_uuid in x
-
-            upstream_in_dynamic_upstream = dynamic_upstream_block_uuids and find(
-                _check,
-                dynamic_upstream_block_uuids or [],
-            )
+            upstream_in_dynamic_upstream = False
+            if dynamic_upstream_block_uuids:
+                for uuids in dynamic_upstream_block_uuids:
+                    if upstream_in_dynamic_upstream:
+                        continue
+                    elif upstream_block_uuid in uuids:
+                        upstream_in_dynamic_upstream = True
 
             if dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
                 reduce_output_indexes.append((idx, upstream_block_uuid))
