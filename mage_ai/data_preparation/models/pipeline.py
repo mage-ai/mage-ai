@@ -1018,6 +1018,7 @@ class Pipeline:
             if block_uuid in block_configs_by_uuids:
                 block_config = block_configs_by_uuids[block_uuid]
 
+                # Sort upstream_blocks order based on new block order
                 upstream_blocks = block_config['upstream_blocks']
                 if len(upstream_blocks) > 1:
                     upstream_blocks_reordered = upstream_blocks.copy()
