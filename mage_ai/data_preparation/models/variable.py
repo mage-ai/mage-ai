@@ -1,6 +1,7 @@
 import json
 import os
 import traceback
+from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -192,6 +193,20 @@ class Variable:
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
         return await self.__read_json_async(sample=sample)
+
+    @contextmanager
+    def open_to_write(self, filename: str) -> None:
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+
+        with self.storage.open_to_write(self.full_path(filename)) as f:
+            yield f
+
+    def full_path(self, filename: str = None) -> str:
+        if filename:
+            return os.path.join(self.variable_path, filename)
+
+        return self.variable_path
 
     def write_data(self, data: Any) -> None:
         """
