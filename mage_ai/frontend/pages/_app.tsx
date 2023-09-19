@@ -12,12 +12,14 @@ import { ThemeProvider } from 'styled-components';
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
 import AuthToken from '@api/utils/AuthToken';
+import Banner from '@oracle/components/Banner';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
 import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ErrorProvider } from '@context/Error';
+import { LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING } from '@storage/constants';
 import { ModalProvider } from '@context/Modal';
 import { RED } from '@oracle/styles/colors/main';
 import {
@@ -117,6 +119,11 @@ function MyApp(props: MyAppProps & AppProps) {
     unregisterOnKeyUp,
   ]);
 
+  const windowIsDefined = typeof window !== 'undefined';
+  const isDemoApp = useMemo(() =>
+    windowIsDefined && window.location.hostname === 'demo.mage.ai',
+    [windowIsDefined],
+  );
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
     REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
@@ -141,7 +148,7 @@ function MyApp(props: MyAppProps & AppProps) {
 
     const loggedIn = AuthToken.isLoggedIn();
     if ((requireUserAuthentication && !loggedIn) || dataProjects?.error?.code === 401) {
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+      const currentPath = windowIsDefined ? window.location.pathname : null;
       if ('/sign-in' !== currentPath) {
         const query = {
           ...queryFromUrl(),
@@ -154,6 +161,7 @@ function MyApp(props: MyAppProps & AppProps) {
     dataProjects,
     noValue,
     requireUserAuthentication,
+    windowIsDefined,
   ]);
 
   return (
@@ -182,6 +190,20 @@ function MyApp(props: MyAppProps & AppProps) {
 
                 {/* @ts-ignore */}
                 <Component {...pageProps} />
+
+                {isDemoApp && (
+                  <Banner
+                    linkProps={{
+                      href: 'https://github.com/mage-ai/mage-ai',
+                      label: 'GET MAGE',
+                    }}
+                    localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
+                    textProps={{
+                      message: 'Public demo. Do not add private credentials.',
+                      warning: true,
+                    }}
+                  />
+                )}
               </ErrorProvider>
             </SheetProvider>
           </ModalProvider>

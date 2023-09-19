@@ -5,13 +5,19 @@ import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { PADDING_VERTICAL } from '@oracle/styles/units/spacing';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const BannerContainerStyle = styled.div`
+export const BannerContainerStyle = styled.div<{
+  hide?: boolean;
+}>`
   position: absolute;
   z-index: 5;
   left: 0;
   right: 0;
   margin: auto;
   width: fit-content;
+
+  ${({ hide }) => hide && `
+    display: none;
+  `}
 
   // Default position is at bottom of page
   bottom: ${PADDING_VERTICAL}px;

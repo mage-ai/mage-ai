@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+
 import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '../FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
@@ -5,6 +7,7 @@ import Text from '@oracle/elements/Text';
 import { BannerContainerStyle, BannerStyle } from './index.style';
 import { ChevronRight } from '@oracle/icons';
 import { ICON_SIZE_MEDIUM } from '@oracle/styles/units/icons';
+import { get, set } from '@storage/localStorage';
 
 type BannerProps = {
   children?: any;
@@ -12,7 +15,7 @@ type BannerProps = {
     href?: string;
     label?: string;
   }
-  onHideClick?: () => void;
+  localStorageHideKey?: string;
   textProps?: {
     message?: string;
     warning?: boolean;
@@ -22,14 +25,26 @@ type BannerProps = {
 function Banner({
   children,
   linkProps,
-  onHideClick,
+  localStorageHideKey,
   textProps,
 }: BannerProps) {
+  const localStorageHideValue = localStorageHideKey
+    ? get(localStorageHideKey, false)
+    : false;
+  const [hideBannerState, setHideBannerState] = useState<boolean>(localStorageHideValue);
+
+  const hideBanner = useCallback(() => {
+    setHideBannerState(true);
+    set(localStorageHideKey, true);
+  }, [localStorageHideKey]);
+
   const { message, warning } = textProps || {};
   const { href, label: linkLabel } = linkProps || {};
 
   return (
-    <BannerContainerStyle>
+    <BannerContainerStyle
+      hide={localStorageHideValue}
+    >
       <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
         <BannerStyle>
           {children
@@ -66,12 +81,12 @@ function Banner({
           }
         </BannerStyle>
 
-        {onHideClick && (
+        {(localStorageHideKey && !hideBannerState) && (
           <Spacing ml={2}>
             <Link
               bold
               large
-              onClick={onHideClick}
+              onClick={hideBanner}
             >
               Hide
             </Link>
