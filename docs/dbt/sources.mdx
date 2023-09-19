@@ -35,8 +35,8 @@ demo_project/
 |   dbt/
 |   |   demo/
 |   |   |   models/
+|   |   |   |   mage_sources.yml
 |   |   |   |   example/
-|   |   |   |   |   mage_sources.yml
 |   |   |   |   |   my_first_dbt_model.sql
 |   |   |   |   |   my_second_dbt_model.sql
 ```
@@ -47,16 +47,19 @@ The contents of the `mage_sources.yml` could look like this:
 
 ```yaml
 sources:
-  - name: mage_demo_project
-    tables:
-      - name: demo_pipeline_load_data
+- loader: mage
+  name: mage_green_sky
+  schema: public
+  tables:
+  - identifier: mage_green_sky_morning_wildflower
+    name: morning_wildflower
 version: 2
 ```
 
-The source name follows this convention: `mage_[Mage_project_name]`.
+The source name follows this convention: `mage_[pipeline_uuid]`.
 
 The table names under the source follow this convention:
-`[pipeline_uuid]_[block_uuid]`.
+`mage_[pipeline_uuid]_[block_uuid]`.
 
 For more information on sources, read
 [dbt’s documentation](https://docs.getdbt.com/docs/build/sources).
