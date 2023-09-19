@@ -65,7 +65,7 @@ blocks:
 ```
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
-There're two ways to customize the Kubernetes executor config:
+There're three ways to customize the Kubernetes executor config:
 
 1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
     ```yaml
@@ -130,9 +130,7 @@ metadata:
   namespace: "default"
 pod:
   service_account_name: ""
-  image_pull_secrets:
-  - name: "secret 1"
-  - name: "secret 2"
+  image_pull_secrets: "secret"
   volumes:
   - name: data-pvc
     persistent_volume_claim:
