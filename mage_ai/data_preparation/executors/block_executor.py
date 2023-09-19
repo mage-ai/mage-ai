@@ -357,31 +357,28 @@ class BlockExecutor:
 
         # This is required or else loading the module within the block execute method will
         # create very large log files that compound. Not sure why, so this is the temp fix.
-        source_uuid = self.block.get_source(
+        data_integration_settings = self.block.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-            fetch_input_variables=True,
+            from_notebook=False,
             global_vars=global_vars,
             partition=self.execution_partition,
         )
-        # destination_uuid = get_destination(self.block)
 
         try:
-            if source_uuid:
+            if data_integration_settings:
                 # The source or destination block will return a list of outputs that contain
                 # procs. Procs aren’t JSON serializable so we won’t store those variables.
                 # We’ll only store the variables if this block is ran from the notebook.
                 # The output of the source or destination block is handled separately than
                 # storing variables via the block.store_variables method.
-                store_variables = False
-                extra_options['data_integration_module_file_path'] = source_module_file_path(
-                    source_uuid,
-                )
-            # elif destination_uuid:
-            #     store_variables = False
-            #     extra_options['data_integration_module_file_path'] = destination_module_file_path(
-            #         destination_uuid,
-            #     )
+                source_uuid = data_integration_settings.get('source')
+
+                if source_uuid:
+                    extra_options['data_integration_module_file_path'] = source_module_file_path(
+                        source_uuid,
+                    )
+                    store_variables = False
         except Exception as err:
             print(f'[WARNING] BlockExecutor._execute: {err}')
 

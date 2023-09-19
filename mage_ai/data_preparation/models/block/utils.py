@@ -455,7 +455,6 @@ def output_variables(
     execution_partition: str = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
-    fetch_input_variables: bool = False,
     from_notebook: bool = False,
     global_vars: Dict = None,
     input_args: List[Any] = None,
@@ -481,17 +480,22 @@ def output_variables(
     Returns:
         List[str]: List of variable names.
     """
+
     block = pipeline.get_block(block_uuid)
-    if block and block.get_source(
-        dynamic_block_index=dynamic_block_index,
-        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-        fetch_input_variables=fetch_input_variables,
-        from_notebook=from_notebook,
-        global_vars=global_vars,
-        input_args=input_args,
-        partition=execution_partition,
-    ):
-        output_variables = [s.get('tap_stream_id') for s in get_selected_streams(block)]
+    data_integration_settings = None
+    if block:
+        data_integration_settings = block.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_args,
+            partition=execution_partition,
+        )
+
+    if block and data_integration_settings:
+        streams = get_selected_streams(data_integration_settings.get('catalog'))
+        output_variables = [s.get('tap_stream_id') for s in streams]
     else:
         all_variables = pipeline.variable_manager.get_variables_by_block(
             pipeline.uuid,
@@ -573,7 +577,7 @@ def input_variables(
     mapping = {}
 
     for block_uuid in upstream_block_uuids:
-        mapping[block_uuid] = output_variables(
+        out_vars = output_variables(
             pipeline,
             block_uuid,
             execution_partition,
@@ -583,6 +587,7 @@ def input_variables(
             global_vars=global_vars,
             input_args=input_args,
         )
+        mapping[block_uuid] = out_vars
 
     return mapping
 

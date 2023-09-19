@@ -9,7 +9,6 @@ import pandas as pd
 import yaml
 
 from mage_ai.data_integrations.logger.utils import print_log_from_line
-from mage_ai.data_integrations.utils.config import build_config
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
@@ -114,10 +113,8 @@ def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     ))
 
 
-def get_selected_streams(block) -> List[Dict]:
+def get_selected_streams(catalog: Dict) -> List[Dict]:
     streams = []
-
-    catalog = block.pipeline.get_block_catalog(block)
 
     if catalog:
         for stream in catalog.get('streams', []):
@@ -196,46 +193,28 @@ def execute_source(
     input_from_output: Dict = None,
     runtime_arguments: Dict = None,
     data_integration_module_file_path: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
     **kwargs,
 ) -> List:
     if logging_tags is None:
         logging_tags = dict()
 
-    variables_dictionary_for_config = merge_dict(global_vars, {
-        'pipeline.name': block.pipeline.name if block.pipeline else None,
-        'pipeline.uuid': block.pipeline.uuid if block.pipeline else None,
-    })
+    data_integration_settings = block.get_data_integration_settings(
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        from_notebook=from_notebook,
+        global_vars=global_vars,
+        input_vars=input_vars,
+        partition=execution_partition,
+        **kwargs,
+    )
 
-    use_custom_code = BlockLanguage.PYTHON == block.language
-    selected_streams = None
-    if use_custom_code:
-        results_from_block_code = block.execute_source_block_code(
-            outputs_from_input_vars=outputs_from_input_vars,
-            custom_code=custom_code,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            input_vars=input_vars,
-            **kwargs,
-        )
-
-        catalog = results_from_block_code.get('catalog')
-        config = results_from_block_code.get('config')
-        config_json = json.dumps(config)
-        selected_streams = results_from_block_code.get('selected_streams')
-        source_uuid = results_from_block_code.get('source')
-    else:
-        catalog = block.pipeline.get_block_catalog(block)
-        config, config_json = build_config(
-            None,
-            variables_dictionary_for_config,
-            content=block.content,
-        )
-        source_uuid = block.get_source(
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            input_args=input_vars,
-            partition=execution_partition,
-        )
+    catalog = data_integration_settings.get('catalog')
+    config = data_integration_settings.get('config')
+    config_json = json.dumps(config)
+    selected_streams = data_integration_settings.get('selected_streams')
+    source_uuid = data_integration_settings.get('source')
 
     index = block.template_runtime_configuration.get('index', 0)
     is_last_block_run = block.template_runtime_configuration.get('is_last_block_run', False)
@@ -296,7 +275,7 @@ def execute_source(
         json.dumps(query_data),
     ]
 
-    if use_custom_code:
+    if BlockLanguage.PYTHON == block.language:
         args += [
             '--catalog_json',
             json.dumps(catalog),
@@ -304,7 +283,7 @@ def execute_source(
     else:
         args += [
             '--catalog',
-            block.pipeline.get_block_catalog_file_path(block),
+            block.get_catalog_file_path(),
         ]
 
     if source_state_file_path:
@@ -368,8 +347,8 @@ def execute_source(
 
         if from_notebook:
             d = convert_outputs_to_data(
-                block=block,
-                catalog=catalog,
+                block,
+                catalog,
                 from_notebook=from_notebook,
                 index=index,
                 partition=execution_partition,
@@ -383,18 +362,14 @@ def execute_source(
 
 
 def convert_outputs_to_data(
-    block=None,
-    catalog: Dict = None,
+    block,
+    catalog: Dict,
     from_notebook: bool = False,
     index: int = None,
     partition: str = None,
     source_uuid: str = None,
     stream_id: str = None,
 ) -> Dict:
-    catalog_use = catalog
-    if not catalog_use and block:
-        catalog = block.pipeline.get_block_catalog(block)
-
     variable = build_variable(
         block,
         source_uuid,

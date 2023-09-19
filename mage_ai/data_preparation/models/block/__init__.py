@@ -298,6 +298,10 @@ class Block(SourceMixin):
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
 
+        # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
+        self._data_integration = None
+        self._data_integration_loaded = False
+
     @property
     def uuid(self) -> str:
         return self.dynamic_block_uuid or self._uuid
@@ -1169,12 +1173,12 @@ class Block(SourceMixin):
         if input_vars is None:
             input_vars = list()
 
-        if self.get_source(
+        if self.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
-            input_args=input_vars,
+            input_vars=input_vars,
             partition=execution_partition,
         ):
             return execute_source(
@@ -1236,6 +1240,62 @@ class Block(SourceMixin):
 
         return outputs
 
+    def initialize_decorator_modules(self, block_function: Callable) -> Callable:
+        # Initialize module
+        if self.language != BlockLanguage.PYTHON:
+            return
+
+        try:
+            block_uuid = self.uuid
+            block_file_path = self.file_path
+            if self.replicated_block:
+                block_uuid = self.replicated_block
+                block_file_path = self.replicated_block_object.file_path
+            spec = importlib.util.spec_from_file_location(
+                block_uuid,
+                block_file_path,
+            )
+            module = importlib.util.module_from_spec(spec)
+            # Set the decorators in the module in case they are not defined in the block code
+            setattr(
+                module,
+                self.type,
+                getattr(mage_ai.data_preparation.decorators, self.type),
+            )
+
+            # TODO (tommy dangerous): do we need this?
+            # if self.type in [
+            #     BlockType.DATA_LOADER,
+            #     BlockType.DATA_EXPORTER,
+            # ]:
+            #     decorator_names = [
+            #         'catalog',
+            #         'config',
+            #         'selected_streams',
+            #     ]
+
+            #     if BlockType.DATA_LOADER == self.type:
+            #         decorator_names.append('source')
+
+            #     for decorator_name in decorator_names:
+            #         setattr(
+            #             module,
+            #             decorator_name,
+            #             getattr(mage_ai.data_preparation.decorators, decorator_name),
+            #         )
+
+            module.test = mage_ai.data_preparation.decorators.test
+            spec.loader.exec_module(module)
+            block_function_updated = getattr(module, block_function.__name__)
+            self.module = module
+
+            return block_function_updated
+        except Exception as err:
+            print('Falling back to default block execution...')
+            print(f'[WARNING] Block.execute_block_function: {err}')
+
+        return block_function
+
     def execute_block_function(
         self,
         block_function: Callable,
@@ -1244,33 +1304,9 @@ class Block(SourceMixin):
         global_vars: Dict = None,
     ) -> Dict:
         block_function_updated = block_function
+
         if from_notebook:
-            # Initialize module
-            if self.language == BlockLanguage.PYTHON:
-                try:
-                    block_uuid = self.uuid
-                    block_file_path = self.file_path
-                    if self.replicated_block:
-                        block_uuid = self.replicated_block
-                        block_file_path = self.replicated_block_object.file_path
-                    spec = importlib.util.spec_from_file_location(
-                        block_uuid,
-                        block_file_path,
-                    )
-                    module = importlib.util.module_from_spec(spec)
-                    # Set the decorators in the module in case they are not defined in the block
-                    # code
-                    setattr(
-                        module,
-                        self.type,
-                        getattr(mage_ai.data_preparation.decorators, self.type),
-                    )
-                    module.test = mage_ai.data_preparation.decorators.test
-                    spec.loader.exec_module(module)
-                    block_function_updated = getattr(module, block_function.__name__)
-                    self.module = module
-                except Exception:
-                    print('Falling back to default block execution...')
+            block_function_updated = self.initialize_decorator_modules(block_function)
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
@@ -1709,7 +1745,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if content:
                 config = yaml.safe_load(content)
                 if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.pipeline.get_block_catalog_async(self)
+                    data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1791,7 +1827,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block()
 
         if 'catalog' in data and self.pipeline:
-            self.pipeline.set_block_catalog(self, data.get('catalog'))
+            self.update_catalog_file(data.get('catalog'))
 
         return self
 
@@ -1934,7 +1970,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             )
             for variable in self.output_variables(
                 execution_partition=execution_partition,
-                fetch_input_variables=True,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
@@ -2292,7 +2327,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         execution_partition: str = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
-        fetch_input_variables: bool = False,
         from_notebook: bool = False,
         global_vars: Dict = None,
         input_args: List[Any] = None,
@@ -2303,7 +2337,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             execution_partition,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-            fetch_input_variables=fetch_input_variables,
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
