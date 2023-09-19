@@ -14,6 +14,9 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     BLOCK_CATALOG_FILENAME,
 )
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    convert_outputs_to_data,
+)
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
@@ -1151,6 +1154,31 @@ class Pipeline:
         if os.path.exists(catalog_full_path):
             with open(catalog_full_path, mode='r') as f:
                 return json.loads(f.read() or '')
+
+    def get_block_variable(
+        self,
+        block_uuid: str,
+        variable_name: str,
+        from_notebook: bool = False,
+        partition: str = None,
+        spark=None,
+    ):
+        block = self.get_block(block_uuid)
+        if block.is_source():
+            return convert_outputs_to_data(
+                block=block,
+                from_notebook=from_notebook,
+                partition=partition,
+                stream_id=variable_name,
+            )
+
+        return self.variable_manager.get_variable(
+            self.uuid,
+            block_uuid,
+            variable_name,
+            partition=partition,
+            spark=spark,
+        )
 
     async def get_block_catalog_async(self, block_uuid: str) -> Dict:
         catalog_full_path = self.get_block_catalog_file_path(block_uuid)

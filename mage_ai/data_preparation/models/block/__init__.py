@@ -720,6 +720,7 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        from_notebook: bool = False,
         **kwargs
     ) -> Dict:
         """
@@ -764,6 +765,7 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 logging_tags=logging_tags,
+                from_notebook=from_notebook,
                 **kwargs
             )
         except Exception as e:
@@ -774,6 +776,7 @@ class Block:
                     logger=logger,
                     logging_tags=logging_tags,
                     parent_block=self,
+                    from_notebook=from_notebook,
                 )
             raise e
 
@@ -784,6 +787,7 @@ class Block:
                 logger=logger,
                 logging_tags=logging_tags,
                 parent_block=self,
+                from_notebook=from_notebook,
             )
 
         return output
@@ -1069,6 +1073,7 @@ class Block:
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
             )
 
             outputs_from_input_vars = {}
@@ -1160,7 +1165,7 @@ class Block:
         data_integration_module_file_path: str = None,
         **kwargs,
     ) -> List:
-        if is_source(self):
+        if self.is_source():
             return execute_source(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
@@ -1281,6 +1286,7 @@ class Block:
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
+        from_notebook: bool = False,
         upstream_block_uuids: List[str] = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
@@ -1291,6 +1297,7 @@ class Block:
             global_vars,
             dynamic_block_index,
             dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
         )
 
     def get_analyses(self) -> List:
@@ -1375,7 +1382,9 @@ class Block:
                         )
                     except Exception:
                         analysis = None
-                    if analysis is not None:
+                    if analysis is not None and \
+                            (analysis.get('statistics') or analysis.get('metadata')):
+
                         stats = analysis.get('statistics', {})
                         column_types = (analysis.get('metadata') or {}).get('column_types', {})
                         row_count = stats.get('original_row_count', stats.get('count'))
@@ -2237,6 +2246,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 uuid,
             )
 
+    def is_source(self, **kwargs) -> bool:
+        return is_source(self, **kwargs)
+
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
         """Get input variables from upstream blocks' output variables.
         Args:
@@ -2598,6 +2610,7 @@ class CallbackBlock(AddonBlock):
         logger: Logger = None,
         logging_tags: Dict = None,
         parent_block: Block = None,
+        from_notebook: bool = False,
         **kwargs
     ) -> None:
         with self._redirect_streams(
@@ -2638,6 +2651,7 @@ class CallbackBlock(AddonBlock):
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
                 upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 
