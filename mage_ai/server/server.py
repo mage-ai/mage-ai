@@ -268,11 +268,8 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if update_routes:
         updated_routes = []
         for route in routes:
-            if route[0] == r'/':
-                updated_routes.append((f'/{ROUTES_BASE_PATH}', *route[1:]))
-            else:
-                updated_routes.append(
-                    (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
+            updated_routes.append(
+                (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
     else:
         updated_routes = routes
 

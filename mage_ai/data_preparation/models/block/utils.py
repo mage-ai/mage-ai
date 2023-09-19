@@ -1,7 +1,11 @@
 import json
-import pandas as pd
 from typing import Any, Dict, List, Tuple
 
+import pandas as pd
+
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    get_selected_streams,
+)
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
@@ -115,15 +119,13 @@ def dynamic_block_values_and_metadata(
     output_vars = block.output_variables(execution_partition=execution_partition)
     for idx, output_name in enumerate(output_vars):
         if idx == 0:
-            values = block.pipeline.variable_manager.get_variable(
-                block.pipeline.uuid,
+            values = block.pipeline.get_block_variable(
                 block_uuid,
                 output_name,
                 partition=execution_partition,
             )
         elif idx == 1:
-            block_metadata = block.pipeline.variable_manager.get_variable(
-                block.pipeline.uuid,
+            block_metadata = block.pipeline.get_block_variable(
                 block_uuid,
                 output_name,
                 partition=execution_partition,
@@ -473,12 +475,17 @@ def output_variables(
     Returns:
         List[str]: List of variable names.
     """
-    all_variables = pipeline.variable_manager.get_variables_by_block(
-        pipeline.uuid,
-        block_uuid,
-        partition=execution_partition,
-    )
-    output_variables = [v for v in all_variables if is_output_variable(v)]
+    block = pipeline.get_block(block_uuid)
+    if block and block.is_source():
+        output_variables = [s.get('tap_stream_id') for s in get_selected_streams(block)]
+    else:
+        all_variables = pipeline.variable_manager.get_variables_by_block(
+            pipeline.uuid,
+            block_uuid,
+            partition=execution_partition,
+        )
+        output_variables = [v for v in all_variables if is_output_variable(v)]
+
     output_variables.sort()
 
     return output_variables
@@ -543,8 +550,13 @@ def input_variables(
     Returns:
         Dict[str, List[str]]: A mapping from upstream block UUID to a list of variable names.
     """
-    return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
-            for block_uuid in upstream_block_uuids}
+
+    mapping = {}
+
+    for block_uuid in upstream_block_uuids:
+        mapping[block_uuid] = output_variables(pipeline, block_uuid, execution_partition)
+
+    return mapping
 
 
 def fetch_input_variables(
@@ -555,6 +567,7 @@ def fetch_input_variables(
     global_vars: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -603,20 +616,23 @@ def fetch_input_variables(
 
             variables = input_variables_by_uuid[upstream_block_uuid]
             variable_values = [
-                pipeline.variable_manager.get_variable(
-                    pipeline.uuid,
+                pipeline.get_block_variable(
                     upstream_block_uuid,
                     var,
+                    from_notebook=from_notebook,
                     partition=execution_partition,
                     spark=spark,
                 )
                 for var in variables
             ]
 
-            upstream_in_dynamic_upstream = dynamic_upstream_block_uuids and find(
-                lambda x: upstream_block_uuid in x,
-                dynamic_upstream_block_uuids or [],
-            )
+            upstream_in_dynamic_upstream = False
+            if dynamic_upstream_block_uuids:
+                for uuids in dynamic_upstream_block_uuids:
+                    if upstream_in_dynamic_upstream:
+                        continue
+                    elif upstream_block_uuid in uuids:
+                        upstream_in_dynamic_upstream = True
 
             if dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
                 reduce_output_indexes.append((idx, upstream_block_uuid))
@@ -674,8 +690,7 @@ def fetch_input_variables(
                 for upstream_block_uuid, variables in input_variables_by_uuid.items():
                     end_idx = 1 if upstream_is_dynamic else len(variables)
                     for var in variables[:end_idx]:
-                        variable_values = pipeline.variable_manager.get_variable(
-                            pipeline.uuid,
+                        variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
                             partition=execution_partition,
@@ -698,8 +713,7 @@ def fetch_input_variables(
                             len(variables) >= 2:
 
                         var = variables[1]
-                        variable_values = pipeline.variable_manager.get_variable(
-                            pipeline.uuid,
+                        variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
                             partition=execution_partition,
@@ -709,7 +723,10 @@ def fetch_input_variables(
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)
 
-                if len(final_value) >= 1 and all([type(v) is pd.DataFrame for v in final_value]):
+                if ((upstream_is_dynamic and dynamic_block_index is not None)
+                    or should_reduce) and \
+                        len(final_value) >= 1 and \
+                        all([type(v) is pd.DataFrame for v in final_value]):
                     final_value = pd.concat(final_value)
 
                 if not should_reduce:
