@@ -47,14 +47,14 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def read_json_file(self, file_path: str, default_value={}) -> Dict:
+    def read_json_file(self, file_path: str, default_value: Dict = None) -> Dict:
         """
         Read json from a file with file path.
         """
         pass
 
     @abstractmethod
-    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+    async def read_json_file_async(self, file_path: str, default_value: Dict = None) -> Dict:
         """
         Read json from a file with file path asynchronously.
         """
