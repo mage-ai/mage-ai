@@ -223,7 +223,7 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 
     <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
 
-1. Create new project and launch tool (change `demo_project` to any other name if you want):
+1. Create a new project and launch tool (change `demo_project` to any other name if you want):
     ```bash
     mage start demo_project
     ```
@@ -337,7 +337,7 @@ These are the fundamental concepts that Mage uses to operate.
 Add features and instantly improve the experience for everyone.
 
 Check out the <b>[contributing guide](https://docs.mage.ai/community/contributing)</b>
-to setup your development environment and start building.
+to set up your development environment and start building.
 
 <br />
 
