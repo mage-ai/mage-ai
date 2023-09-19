@@ -436,17 +436,28 @@ class Block:
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority,
-                widget=widget,
-            )
+
+            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks()
+                }
+                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                pipeline.validate('A cycle was formed while adding a block')
+                pipeline.save()
+            else:
+                pipeline.add_block(
+                    block,
+                    upstream_block_uuids,
+                    priority=priority,
+                    widget=widget,
+                )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
