@@ -387,8 +387,6 @@ def convert_outputs_to_data(
         variable=variable,
     )
 
-    print('OMGGGGGGGGGGGGGGG', output_file_path)
-
     if index is None:
         if os.path.exists(output_file_path):
             for filename in os.listdir(output_file_path):

@@ -626,8 +626,11 @@ def fetch_input_variables(
                 for var in variables
             ]
 
+            def _check(x):
+                return upstream_block_uuid in x
+
             upstream_in_dynamic_upstream = dynamic_upstream_block_uuids and find(
-                lambda x: upstream_block_uuid in x,
+                _check,
                 dynamic_upstream_block_uuids or [],
             )
 
