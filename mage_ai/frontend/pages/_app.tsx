@@ -6,13 +6,13 @@ import React, {
 import App, { AppProps } from 'next/app';
 import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
+import dynamic from 'next/dynamic';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
 import AuthToken from '@api/utils/AuthToken';
-import Banner from '@oracle/components/Banner';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
@@ -35,6 +35,8 @@ import {
   theme as stylesTheme,
 } from '@styles/theme';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
+
+const Banner = dynamic(() => import('@oracle/components/Banner'), { ssr: false });
 
 type AppInternalProps = {
   defaultTitle?: string;
