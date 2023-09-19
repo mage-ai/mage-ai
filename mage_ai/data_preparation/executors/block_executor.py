@@ -360,21 +360,25 @@ class BlockExecutor:
         # create very large log files that compound. Not sure why, so this is the temp fix.
         source_uuid = get_source(self.block)
         # destination_uuid = get_destination(self.block)
-        if source_uuid:
-            # The source or destination block will return a list of outputs that contain
-            # procs. Procs aren’t JSON serializable so we won’t store those variables.
-            # We’ll only store the variables if this block is ran from the notebook.
-            # The output of the source or destination block is handled separately than
-            # storing variables via the block.store_variables method.
-            store_variables = False
-            extra_options['data_integration_module_file_path'] = source_module_file_path(
-                source_uuid,
-            )
-        # elif destination_uuid:
-        #     store_variables = False
-        #     extra_options['data_integration_module_file_path'] = destination_module_file_path(
-        #         destination_uuid,
-        #     )
+
+        try:
+            if source_uuid:
+                # The source or destination block will return a list of outputs that contain
+                # procs. Procs aren’t JSON serializable so we won’t store those variables.
+                # We’ll only store the variables if this block is ran from the notebook.
+                # The output of the source or destination block is handled separately than
+                # storing variables via the block.store_variables method.
+                store_variables = False
+                extra_options['data_integration_module_file_path'] = source_module_file_path(
+                    source_uuid,
+                )
+            # elif destination_uuid:
+            #     store_variables = False
+            #     extra_options['data_integration_module_file_path'] = destination_module_file_path(
+            #         destination_uuid,
+            #     )
+        except Exception as err:
+            print(f'[WARNING] BlockExecutor._execute: {err}')
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,

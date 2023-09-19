@@ -143,8 +143,6 @@ def execute_source(
     data_integration_module_file_path: str = None,
     **kwargs,
 ) -> List:
-    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
     if logging_tags is None:
         logging_tags = dict()
 
@@ -193,8 +191,11 @@ def execute_source(
             # How do we write to the state when the source syncs can run in parallel?
             pass
         else:
+            from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
             query_data['_offset'] = BATCH_FETCH_LIMIT * index
+
         if not is_last_block_run:
+            from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
             query_data['_limit'] = BATCH_FETCH_LIMIT
 
     source_uuid = get_source(block)
