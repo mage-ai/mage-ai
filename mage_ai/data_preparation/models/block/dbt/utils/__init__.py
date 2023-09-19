@@ -1046,8 +1046,8 @@ def build_command_line_arguments(
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
     variables = merge_dict(
-        variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
+        variables or {},
     )
     dbt_command = (block.configuration or {}).get('dbt', {}).get('command', 'run')
 
