@@ -15,8 +15,8 @@ KEY_PATTERNS = '_patterns'
 PATTERN_KEY_DESTINATION_TABLE = 'destination_table'
 
 
-def get_settings(block, variables: Dict = {}, pipeline=None) -> Dict:
-    return __get_settings(block.file_path, variables, pipeline=pipeline)
+def get_settings(block, variables: Dict = None, pipeline=None) -> Dict:
+    return __get_settings(block.file_path, variables or {}, pipeline=pipeline)
 
 
 def __get_settings(absolute_file_path, variables: Dict = None, pipeline=None) -> Dict:
