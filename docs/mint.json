@@ -262,6 +262,7 @@
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis"
               ]

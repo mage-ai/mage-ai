@@ -117,7 +117,7 @@ The following steps will create a PostgreSQL database container and connect it t
    docker network create mage-app
    ```
 </Step>
-<Step title="Start PostgreSQL Docker container">
+<Step title="Start MSSQL Docker container">
    ```bash
    docker run --network mage-app --network-alias mssql_db \
    -it -p 1433:1433 -e "ACCEPT_EULA=Y" \
