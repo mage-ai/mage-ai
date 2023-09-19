@@ -11,6 +11,7 @@ import yaml
 from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config
 from mage_ai.data_preparation.models.block.data_integration.constants import (
+    EXECUTION_PARTITION_FROM_NOTEBOOK,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
 )
@@ -21,7 +22,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
@@ -122,11 +123,77 @@ def source_module_file_path(source_uuid: str) -> str:
             return absolute_path
 
 
-def get_catalog_by_stream(catalog: Dict, stream: str) -> Dict:
-    return find(
-        lambda x: x['tap_stream_id'] == stream,
-        catalog.get('catalog', {}).get('streams', []),
+def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
+    return list(filter(
+        lambda x: x['tap_stream_id'] in streams,
+        catalog.get('streams', []),
+    ))
+
+
+def get_selected_streams(block) -> List[Dict]:
+    streams = []
+
+    catalog = block.pipeline.get_block_catalog(block.uuid)
+
+    if catalog:
+        for stream in catalog.get('streams', []):
+            md = stream.get('metadata', [])
+            md_find = find(
+                lambda x: len(x.get('breadcrumb') or []) == 0,
+                md,
+            )
+
+            if md_find.get('metadata', {}).get('selected'):
+                streams.append(stream)
+
+    return streams
+
+
+def build_variable(
+    block,
+    stream: str,
+    execution_partition: str = None,
+    from_notebook: bool = False,
+):
+    # The output file nested in the variables directory must contain the stream and the index
+    # because a single block can have multiple streams with multiple indexes each due to fan out.
+    if from_notebook:
+        partition = EXECUTION_PARTITION_FROM_NOTEBOOK
+    else:
+        partition = execution_partition
+
+    variable_uuid = variable_directory(block, stream)
+    variable = block.pipeline.variable_manager.build_variable(
+        block.pipeline.uuid,
+        block.uuid,
+        variable_uuid,
+        partition,
+        clean_variable_uuid=False,
     )
+
+    return variable
+
+
+def output_full_path(
+    block=None,
+    execution_partition: str = None,
+    from_notebook: bool = False,
+    index: int = None,
+    stream: str = None,
+    variable=None,
+) -> str:
+    variable_use = variable or build_variable(
+        block,
+        stream,
+        execution_partition=execution_partition,
+        from_notebook=from_notebook,
+    )
+
+    filename = output_filename(index) if index is not None else None
+    # Example:
+    # /root/.mage_data/default_repo/pipelines/unified_pipeline/.variables
+    # /_from_notebook/source_postgresql/postgresql/user_with_emails
+    return variable_use.full_path(filename)
 
 
 def execute_source(
@@ -149,11 +216,12 @@ def execute_source(
     index = block.template_runtime_configuration.get('index', 0)
     is_last_block_run = block.template_runtime_configuration.get('is_last_block_run', False)
     selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+
     # TESTING PURPOSES ONLY
     if not selected_streams:
         catalog = block.pipeline.get_block_catalog(block.uuid)
         selected_streams = \
-            [s.get('tap_stream_id') for s in catalog.get('catalog', {}).get('streams', [])]
+            [s.get('tap_stream_id') for s in catalog.get('streams', [])]
 
     stream = selected_streams[0] if len(selected_streams) >= 1 else None
     destination_table = block.template_runtime_configuration.get('destination_table', stream)
@@ -184,9 +252,10 @@ def execute_source(
     if index is not None:
         source_state_file_path = get_source_state_file_path(block, stream)
 
-        stream_catalog = get_catalog_by_stream(catalog, stream) or {}
+        stream_catalogs = get_streams_from_catalog(catalog, [stream]) or []
 
-        if REPLICATION_METHOD_INCREMENTAL == stream_catalog.get('replication_method'):
+        if len(stream_catalogs) == 1 and \
+                REPLICATION_METHOD_INCREMENTAL == stream_catalogs[0].get('replication_method'):
             # Use the state to adjust the query
             # How do we write to the state when the source syncs can run in parallel?
             pass
@@ -198,20 +267,16 @@ def execute_source(
             from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
             query_data['_limit'] = BATCH_FETCH_LIMIT
 
-    source_uuid = get_source(block)
-
-    # The output file nested in the variables directory must contain the stream and the index
-    # because a single block can have multiple streams with multiple indexes each due to fan out.
-    variable_uuid = variable_directory(block, stream)
-    variable = block.pipeline.variable_manager.build_variable(
-        block.pipeline.uuid,
-        block.uuid,
-        variable_uuid,
-        execution_partition,
+    variable = build_variable(
+        block,
+        stream,
+        execution_partition=execution_partition,
+        from_notebook=from_notebook,
     )
-
-    filename = output_filename(index)
-    output_file_path = variable.full_path(filename)
+    output_file_path = output_full_path(
+        index=index,
+        variable=variable,
+    )
 
     lines_in_file = 0
     outputs = []
@@ -221,6 +286,7 @@ def execute_source(
         content=block.content,
     )
 
+    source_uuid = get_source(block)
     args = [
         PYTHON_COMMAND,
         data_integration_module_file_path or source_module_file_path(source_uuid),
@@ -228,7 +294,7 @@ def execute_source(
         config_json,
         '--log_to_stdout',
         '1',
-        '--settings',
+        '--catalog',
         block.pipeline.get_block_catalog_file_path(block.uuid),
         '--query_json',
         json.dumps(query_data),
@@ -248,6 +314,7 @@ def execute_source(
 
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+    filename = output_filename(index) if index is not None else None
     with variable.open_to_write(filename) as f:
         for line in proc.stdout:
             f.write(line.decode()),
@@ -280,23 +347,55 @@ def execute_source(
             print(msg)
 
         if from_notebook:
-            df = convert_outputs_to_dataframe(
-                [output_file_path],
-                stream,
-                catalog,
+            d = convert_outputs_to_data(
+                block=block,
+                catalog=catalog,
+                from_notebook=from_notebook,
+                index=index,
+                partition=execution_partition,
+                stream_id=stream,
             )
 
-            return [df]
+            return [pd.DataFrame(d['rows'], columns=d['columns'])]
 
     return outputs
 
 
-def convert_outputs_to_dataframe(
-    output_file_paths: List[str],
-    stream: str,
-    catalog: Dict,
-) -> pd.DataFrame:
-    stream_settings = get_catalog_by_stream(catalog, stream)
+def convert_outputs_to_data(
+    block=None,
+    catalog: Dict = None,
+    from_notebook: bool = False,
+    index: int = None,
+    partition: str = None,
+    stream_id: str = None,
+) -> Dict:
+    catalog_use = catalog
+    if not catalog_use and block:
+        catalog = block.pipeline.get_block_catalog(block.uuid)
+
+    variable = build_variable(
+        block,
+        stream_id,
+        execution_partition=partition,
+        from_notebook=from_notebook,
+    )
+
+    output_file_paths = []
+
+    output_file_path = output_full_path(
+        index=index,
+        variable=variable,
+    )
+
+    if index is None:
+        if os.path.exists(output_file_path):
+            for filename in os.listdir(output_file_path):
+                output_file_paths.append(os.path.join(output_file_path, filename))
+    else:
+        output_file_paths.append(output_file_path)
+    output_file_paths.sort()
+
+    stream_settings = get_streams_from_catalog(catalog, [stream_id])[0]
     schema_properties = stream_settings.get('schema', {}).get('properties', {})
     columns = []
 
@@ -319,9 +418,13 @@ def convert_outputs_to_dataframe(
                 try:
                     row = json.loads(line)
                     record = row.get('record')
-                    if record and stream == row.get('stream'):
-                        rows.append(extract(record, columns_to_select))
+                    if record and stream_id == row.get('stream'):
+                        rows.append([record.get(col) for col in columns_to_select])
                 except json.JSONDecodeError:
                     pass
 
-    return pd.DataFrame(rows)
+    return dict(
+        columns=columns_to_select,
+        rows=rows,
+        stream=stream_settings,
+    )

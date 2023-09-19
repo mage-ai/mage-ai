@@ -202,8 +202,11 @@ class Variable:
         with self.storage.open_to_write(self.full_path(filename)) as f:
             yield f
 
-    def full_path(self, filename: str) -> str:
-        return os.path.join(self.variable_path, filename)
+    def full_path(self, filename: str = None) -> str:
+        if filename:
+            return os.path.join(self.variable_path, filename)
+
+        return self.variable_path
 
     def write_data(self, data: Any) -> None:
         """

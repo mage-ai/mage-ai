@@ -77,10 +77,11 @@ class VariableManager:
         block_uuid: str,
         variable_uuid: str,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_variable_uuid: bool = True,
     ) -> Variable:
         return Variable(
-            clean_name(variable_uuid),
+            clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,
