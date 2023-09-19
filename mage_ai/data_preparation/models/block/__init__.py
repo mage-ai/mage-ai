@@ -23,6 +23,10 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    execute_source,
+    is_source,
+)
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -64,7 +68,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -806,6 +810,7 @@ class Block:
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
         disable_json_serialization: bool = False,
+        data_integration_module_file_path: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -858,6 +863,7 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
+                data_integration_module_file_path=data_integration_module_file_path,
                 **kwargs,
             )
             block_output = self.post_process_output(output)
@@ -877,7 +883,10 @@ class Block:
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables and self.pipeline and self.pipeline.type != PipelineType.INTEGRATION:
+            if store_variables and \
+                    self.pipeline and \
+                    self.pipeline.type != PipelineType.INTEGRATION:
+
                 try:
                     self.store_variables(
                         variable_mapping,
@@ -1032,6 +1041,7 @@ class Block:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        data_integration_module_file_path: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1092,6 +1102,7 @@ class Block:
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
+                data_integration_module_file_path=data_integration_module_file_path,
                 **kwargs,
             )
 
@@ -1146,8 +1157,32 @@ class Block:
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        data_integration_module_file_path: str = None,
         **kwargs,
     ) -> List:
+        if is_source(self):
+            return execute_source(
+                self,
+                outputs_from_input_vars=outputs_from_input_vars,
+                custom_code=custom_code,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                input_vars=input_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                input_from_output=input_from_output,
+                runtime_arguments=runtime_arguments,
+                upstream_block_uuids=upstream_block_uuids,
+                run_settings=run_settings,
+                data_integration_module_file_path=data_integration_module_file_path,
+                **kwargs,
+            )
+        # elif is_destination(self):
+        #     return execute_destination(self)
+
         decorated_functions = []
         test_functions = []
 
@@ -1658,7 +1693,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if content:
                 config = yaml.safe_load(content)
                 if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.pipeline.get_block_catalog(self.uuid)
+                    # The catalog file contains the key for catalog already.
+                    # This is required by Singer
+                    d = await self.pipeline.get_block_catalog_async(self.uuid)
+                    data.update(extract(d, ['catalog']))
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()

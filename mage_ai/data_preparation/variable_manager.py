@@ -71,6 +71,23 @@ class VariableManager:
         variable.variable_type = variable_type
         variable.write_data(data)
 
+    def build_variable(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        partition: str = None,
+        variable_type: VariableType = None
+    ) -> Variable:
+        return Variable(
+            clean_name(variable_uuid),
+            self.__pipeline_path(pipeline_uuid),
+            block_uuid,
+            partition=partition,
+            storage=self.storage,
+            variable_type=variable_type,
+        )
+
     async def add_variable_async(
         self,
         pipeline_uuid: str,

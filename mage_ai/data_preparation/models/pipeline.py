@@ -11,6 +11,9 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.data_integration.constants import (
+    BLOCK_CATALOG_FILENAME,
+)
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
@@ -18,7 +21,6 @@ from mage_ai.data_preparation.models.block.errors import (
 )
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
-    BLOCK_CATALOG_FILENAME,
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
@@ -1134,32 +1136,39 @@ class Pipeline:
 
         return block
 
-    async def get_block_catalog(self, block_uuid: str) -> Dict:
-        catalog_full_path = os.path.join(
+    def get_block_catalog_file_path(self, block_uuid: str) -> str:
+        return os.path.join(
             self.repo_path,
             PIPELINES_FOLDER,
             self.uuid,
             block_uuid,
             BLOCK_CATALOG_FILENAME,
         )
+
+    def get_block_catalog(self, block_uuid: str) -> Dict:
+        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
+
+        if os.path.exists(catalog_full_path):
+            with open(catalog_full_path, mode='r') as f:
+                return json.loads(f.read() or '')
+
+    async def get_block_catalog_async(self, block_uuid: str) -> Dict:
+        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
 
         if os.path.exists(catalog_full_path):
             async with aiofiles.open(catalog_full_path, mode='r') as f:
                 return json.loads(await f.read() or '')
 
     def set_block_catalog(self, block_uuid: str, catalog: Dict = None) -> Dict:
-        catalog_full_path = os.path.join(
-            self.repo_path,
-            PIPELINES_FOLDER,
-            self.uuid,
-            block_uuid,
-            BLOCK_CATALOG_FILENAME,
-        )
+        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
 
         os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
 
         with open(catalog_full_path, mode='w') as f:
-            f.write(json.dumps(catalog or {}))
+            d_to_save = {}
+            if catalog:
+                d_to_save['catalog'] = catalog
+            f.write(json.dumps(d_to_save))
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

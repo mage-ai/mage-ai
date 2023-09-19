@@ -239,19 +239,33 @@ function PipelineDetailPage({
     ) || kernels?.[0];
 
   // Pipeline
+  let pipeline;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
     data,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID, {
-    include_block_pipelines: true,
-    includes_outputs: isEmptyObject(messages),
-  }, {
-    refreshInterval: 60000,
-  });
+  } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      include_block_pipelines: true,
+      includes_outputs: isEmptyObject(messages)
+        || typeof pipeline === 'undefined'
+        || pipeline === null
+        || typeof pipeline?.blocks === 'undefined'
+        || pipeline?.blocks === null
+        || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+    },
+    {
+      refreshInterval: 60000,
+    },
+    {
+      key: `/pipelines/${pipelineUUID}/edit`,
+    },
+  );
+
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
-  const pipeline = data?.pipeline;
+  pipeline = useMemo(() => data?.pipeline, [data]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -1663,6 +1677,7 @@ function PipelineDetailPage({
               blocksPrevious?.map(({ uuid }) => uuid).sort(),
               blocks?.map(({ uuid }) => uuid).sort(),
             )
+            || isEmptyObject(messages)
           )
     ) {
       const {
@@ -1671,14 +1686,17 @@ function PipelineDetailPage({
       } = initializeContentAndMessages(pipeline.blocks);
       contentByBlockUUID.current = contentByBlockUUIDResults;
 
-      setMessages((messagesPrev) => ({
-        ...messagesInit,
-        ...messagesPrev,
-      }));
+      if (!isEmptyObject(messagesInit)) {
+        setMessages((messagesPrev) => ({
+          ...messagesInit,
+          ...messagesPrev,
+        }));
+      }
     }
   }, [
     blocks,
     blocksPrevious,
+    messages,
     pipeline?.blocks,
     setMessages,
   ]);
