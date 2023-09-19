@@ -1,6 +1,5 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage
 
 
@@ -56,7 +55,7 @@ class BlockPresenter(BasePresenter):
                 state_stream=state_stream,
             )
 
-            if isinstance(self.model, DBTBlock):
+            if 'dbt' == display_format:
                 query_string = None
                 lineage = None
                 if self.model.language == BlockLanguage.SQL:

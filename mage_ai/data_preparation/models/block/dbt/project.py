@@ -41,9 +41,26 @@ class Project(object):
         self.__project: Optional[Dict[str, Any]] = None
 
     @property
+    def local_packages(
+        self
+    ) -> List[str]:
+        """
+        Returns the local packages inside the project_dir
+
+        Args:
+            project_dir (Union[str, os.PathLike]): dbt project which has local packages inside
+
+        Returns:
+            List[str]: dir names of local packages
+        """
+        return [file.parent.stem for file in Path(self.__project_dir).glob('*/dbt_project.yml')]
+
+    @property
     def project(self) -> Dict[str, Any]:
         """
         Gets the dbt_project.yml as dictionary.
+        The dictionary uses this schema:
+        https://github.com/dbt-labs/dbt-jsonschema/blob/main/schemas/dbt_project.json
 
         This is a wrapper for the __project_async function.
         This is needed, as sometimes Project is initiated in an event loop and the io operation
@@ -90,18 +107,3 @@ class Project(object):
                 f'Failed to read `{PROJECT_FILE_NAME}` in `{self.__project_dir}`: {e}'
             )
         return project
-
-    @property
-    def local_packages(
-        self
-    ) -> List[str]:
-        """
-        Returns the local packages inside the project_dir
-
-        Args:
-            project_dir (Union[str, os.PathLike]): dbt project which has local packages inside
-
-        Returns:
-            List[str]: dir names of local packages
-        """
-        return [file.parent.stem for file in Path(self.__project_dir).glob('*/dbt_project.yml')]

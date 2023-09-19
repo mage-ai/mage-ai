@@ -58,34 +58,15 @@ class DBTAdapter:
         self.__adapter: Optional[Adapter] = None
         self.__profiles: Optional[Profiles] = None
 
-    def open(self) -> 'DBTAdapter':
+    @property
+    def credentials(self) -> Credentials:
         """
-        Opens the connection to database configured by dbt
+        The credentials object, which has all database credentials.
 
         Returns:
-            DBTAdapter: DBTAdapter with opened connection
+            Credentials: Database credentials of the adapter
         """
-        # create interpolated profiles.yml
-        self.__profiles = Profiles(self.project_path, self.variables)
-        profiles_path = self.__profiles.interpolate()
-
-        # set dbt flags
-        user_config = read_user_config(profiles_path)
-        adapter_config = DBTAdapterConfig(
-            project_dir=self.project_path,
-            profiles_dir=profiles_path,
-            target=self.target
-        )
-        flags.set_from_args(adapter_config, user_config)
-        config = RuntimeConfig.from_args(adapter_config)
-        reset_adapters()
-        # register the correct adapter from config
-        register_adapter(config)
-        # load the adapter
-        self.__adapter = get_adapter(config)
-        # connect
-        self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
-        return self
+        return self.__adapter.connections.profile.credentials
 
     def close(self) -> None:
         """
@@ -96,42 +77,24 @@ class DBTAdapter:
         # remove interpolated profiles.yml
         self.__profiles.clean()
 
-    def __enter__(self):
-        return self.open()
-
-    def __exit__(self, *args):
-        self.close()
-
-    def get_relation(
-        self,
-        database: Optional[str] = None,
-        schema: Optional[str] = None,
-        identifier: Optional[str] = None,
-        type: Optional[RelationType] = RelationType.Table
-    ) -> BaseRelation:
+    def execute(self, sql: str, fetch: bool = False) -> Tuple[AdapterResponse, pd.DataFrame]:
         """
-        Gets a relation, which can be used in conjunction with dbt macros.
+        Executes any sql statement using the dbt adapter.
 
         Args:
-            database (Optional[str], optional):
-                The database to use. Defaults to None.
-            schema (Optional[str], optional):
-                The schema to use. Defaults to None.
-            identifier (Optional[str], optional):
-                The identifier to use. Defaults to None.
-            type (Optional[RelationType], optional):
-                Of which type the relation is (e.g. table/view). Defaults to RelationType.Table.
+            sql (str): The sql statement to execute.
+            fetch (bool, optional):
+                Whether to fetch results from the sql statement. Defaults to False.
 
         Returns:
-            BaseRelation: initialized dbt Relation
+            Tuple[AdapterResponse, pd.DataFrame]: Adapter Response and the result dataframe.
         """
-        return self.__adapter.Relation.create(
-            database=database,
-            schema=schema,
-            identifier=identifier,
-            quote_policy=self.__adapter.Relation.get_default_quote_policy().to_dict(omit_none=True),
-            type=type
+        res, table = self.__adapter.execute(sql, fetch=fetch)
+        df = pd.DataFrame(
+            table.rows,
+            table.column_names
         )
+        return res, df
 
     def execute_macro(
         self,
@@ -193,31 +156,68 @@ class DBTAdapter:
             self.__adapter.connections.commit()
         return result
 
-    def execute(self, sql: str, fetch: bool = False) -> Tuple[AdapterResponse, pd.DataFrame]:
+    def get_relation(
+        self,
+        database: Optional[str] = None,
+        schema: Optional[str] = None,
+        identifier: Optional[str] = None,
+        type: Optional[RelationType] = RelationType.Table
+    ) -> BaseRelation:
         """
-        Executes any sql statement using the dbt adapter.
+        Gets a relation, which can be used in conjunction with dbt macros.
 
         Args:
-            sql (str): The sql statement to execute.
-            fetch (bool, optional):
-                Whether to fetch results from the sql statement. Defaults to False.
+            database (Optional[str], optional):
+                The database to use. Defaults to None.
+            schema (Optional[str], optional):
+                The schema to use. Defaults to None.
+            identifier (Optional[str], optional):
+                The identifier to use. Defaults to None.
+            type (Optional[RelationType], optional):
+                Of which type the relation is (e.g. table/view). Defaults to RelationType.Table.
 
         Returns:
-            Tuple[AdapterResponse, pd.DataFrame]: Adapter Response and the result dataframe.
+            BaseRelation: initialized dbt Relation
         """
-        res, table = self.__adapter.execute(sql, fetch=fetch)
-        df = pd.DataFrame(
-            table.rows,
-            table.column_names
+        return self.__adapter.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+            quote_policy=self.__adapter.Relation.get_default_quote_policy().to_dict(omit_none=True),
+            type=type
         )
-        return res, df
 
-    @property
-    def credentials(self) -> Credentials:
+    def open(self) -> 'DBTAdapter':
         """
-        The credentials object, which has all database credentials.
+        Opens the connection to database configured by dbt
 
         Returns:
-            Credentials: Database credentials of the adapter
+            DBTAdapter: DBTAdapter with opened connection
         """
-        return self.__adapter.connections.profile.credentials
+        # create interpolated profiles.yml
+        self.__profiles = Profiles(self.project_path, self.variables)
+        profiles_path = self.__profiles.interpolate()
+
+        # set dbt flags
+        user_config = read_user_config(profiles_path)
+        adapter_config = DBTAdapterConfig(
+            project_dir=self.project_path,
+            profiles_dir=profiles_path,
+            target=self.target
+        )
+        flags.set_from_args(adapter_config, user_config)
+        config = RuntimeConfig.from_args(adapter_config)
+        reset_adapters()
+        # register the correct adapter from config
+        register_adapter(config)
+        # load the adapter
+        self.__adapter = get_adapter(config)
+        # connect
+        self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
+        return self
+
+    def __enter__(self):
+        return self.open()
+
+    def __exit__(self, *args):
+        self.close()

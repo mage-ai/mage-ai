@@ -16,6 +16,32 @@ from mage_ai.shared.hash import merge_dict
 
 
 class DBTBlockYAML(DBTBlock):
+
+    @property
+    def project_path(self) -> Union[str, os.PathLike]:
+        """
+        Gets the path of the dbt project in use.
+
+        Returns:
+            Union[str, os.PathLike]: Path of the dbt project, being used
+        """
+        project_name = self.configuration.get('dbt_project_name')
+        if project_name:
+            return str(Path(self.base_project_path) / project_name)
+
+    def tags(self) -> List[str]:
+        """
+        Get the tags associated with the DBT block.
+
+        Returns:
+            List[str]: The list of tags.
+        """
+        arr = super().tags()
+        command = self._dbt_configuration.get('command', 'run')
+        if command:
+            arr.append(command)
+        return arr
+
     async def metadata_async(self) -> Dict[str, Any]:
         """
         Retrieves metadata needed to configure the block.
@@ -61,31 +87,6 @@ class DBTBlockYAML(DBTBlock):
                 'projects': projects
             }
         }
-
-    def tags(self) -> List[str]:
-        """
-        Get the tags associated with the DBT block.
-
-        Returns:
-            List[str]: The list of tags.
-        """
-        arr = super().tags()
-        command = self._dbt_configuration.get('command', 'run')
-        if command:
-            arr.append(command)
-        return arr
-
-    @property
-    def project_path(self) -> Union[str, os.PathLike]:
-        """
-        Gets the path of the dbt project in use.
-
-        Returns:
-            Union[str, os.PathLike]: Path of the dbt project, being used
-        """
-        project_name = self.configuration.get('dbt_project_name')
-        if project_name:
-            return str(Path(self.base_project_path) / project_name)
 
     def _execute_block(
         self,

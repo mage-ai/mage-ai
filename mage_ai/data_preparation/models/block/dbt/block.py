@@ -32,10 +32,6 @@ class DBTBlock(Block):
             return super(DBTBlock, cls).__new__(cls, *args, **kwargs)
 
     @property
-    def project_path(self) -> Union[str, os.PathLike]:
-        pass
-
-    @property
     def base_project_path(self) -> Union[str, os.PathLike]:
         """
         Path to base dbt project of the mage repository
@@ -45,15 +41,9 @@ class DBTBlock(Block):
         """
         return str(Path(self.repo_path) / 'dbt')
 
-    def run_tests(
-        self,
-        **kwargs,
-    ):
-        """
-        DBT Handles tests internally by running dbt `run`, `test`, or `build` command.
-        Therefore we skip this step here.
-        """
-        return
+    @property
+    def project_path(self) -> Union[str, os.PathLike]:
+        pass
 
     @property
     def _dbt_configuration(self) -> Dict[str, Any]:
@@ -65,6 +55,16 @@ class DBTBlock(Block):
         """
         config = self.configuration or {}
         return config.get('dbt') or {}
+
+    def run_tests(
+        self,
+        **kwargs,
+    ):
+        """
+        DBT Handles tests internally by running dbt `run`, `test`, or `build` command.
+        Therefore we skip this step here.
+        """
+        return
 
     def _variables_json(self, variables: Dict[str, Any]) -> str:
         """
@@ -93,60 +93,6 @@ class DBTBlock(Block):
             default=encode_complex,
             ignore_nan=True,
         )
-
-    @classmethod
-    def update_sources(cls, blocks_by_uuid: Dict[str, Block]) -> None:
-        """
-        Update the mage_sources.yml for each dbt project in the pipeline based on the pipeline
-        blocks. Every non dbt block of langauge SQL, Python or R, which has a downstream
-        dbt block will be added.
-
-        Args:
-            blocks_by_uuid (Dict[str, Block]): Dictionary of blocks by uuid
-        """
-        # only run if blocks_by_uuid is not empty
-        if blocks_by_uuid:
-            # get all dbt project, which needs to be updated
-            project_paths = set(
-                block.project_path
-                for _uuid, block in blocks_by_uuid.items()
-                if isinstance(block, DBTBlock)
-            )
-            pipeline_uuid = list(blocks_by_uuid.values())[0].pipeline.uuid
-
-            # get all non dbt blocks, which have downstream dbt blocks
-            block_uuids = list(set(
-                uuid
-                for uuid, block in blocks_by_uuid.items()
-                if (
-                    not isinstance(block, DBTBlock) and
-                    block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
-                    any(
-                        isinstance(downstream_block, DBTBlock)
-                        for downstream_block in block.downstream_blocks
-                    )
-                )
-            ))
-
-            if block_uuids:
-                for project_path in project_paths:
-                    try:
-                        with DBTAdapter(str(project_path)) as dbt_adapter:
-                            credentials = dbt_adapter.credentials
-                            # some databases use other default schema names
-                            # e.g. duckdb uses main schema as default
-                            schema = getattr(credentials, 'schema', 'public')
-                            database = getattr(credentials, 'database', None)
-
-                        Sources(project_path).reset_pipeline(
-                            pipeline_uuid=pipeline_uuid,
-                            block_uuids=block_uuids,
-                            schema=schema,
-                            database=database
-                        )
-                    # project not yet configured correctly, so just skip that step for now
-                    except FileNotFoundError:
-                        pass
 
     @classmethod
     def materialize_df(
@@ -202,3 +148,57 @@ class DBTBlock(Block):
                     model={'config': {}},
                     agate_table=table
                 )
+
+    @classmethod
+    def update_sources(cls, blocks_by_uuid: Dict[str, Block]) -> None:
+        """
+        Update the mage_sources.yml for each dbt project in the pipeline based on the pipeline
+        blocks. Every non dbt block of langauge SQL, Python or R, which has a downstream
+        dbt block will be added.
+
+        Args:
+            blocks_by_uuid (Dict[str, Block]): Dictionary of blocks by uuid
+        """
+        # only run if blocks_by_uuid is not empty
+        if blocks_by_uuid:
+            # get all dbt project, which needs to be updated
+            project_paths = set(
+                block.project_path
+                for _uuid, block in blocks_by_uuid.items()
+                if isinstance(block, DBTBlock)
+            )
+            pipeline_uuid = list(blocks_by_uuid.values())[0].pipeline.uuid
+
+            # get all non dbt blocks, which have downstream dbt blocks
+            block_uuids = list(set(
+                uuid
+                for uuid, block in blocks_by_uuid.items()
+                if (
+                    not isinstance(block, DBTBlock) and
+                    block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                    any(
+                        isinstance(downstream_block, DBTBlock)
+                        for downstream_block in block.downstream_blocks
+                    )
+                )
+            ))
+
+            if block_uuids:
+                for project_path in project_paths:
+                    try:
+                        with DBTAdapter(str(project_path)) as dbt_adapter:
+                            credentials = dbt_adapter.credentials
+                            # some databases use other default schema names
+                            # e.g. duckdb uses main schema as default
+                            schema = getattr(credentials, 'schema', 'public')
+                            database = getattr(credentials, 'database', None)
+
+                        Sources(project_path).reset_pipeline(
+                            pipeline_uuid=pipeline_uuid,
+                            block_uuids=block_uuids,
+                            schema=schema,
+                            database=database
+                        )
+                    # project not yet configured correctly, so just skip that step for now
+                    except FileNotFoundError:
+                        pass

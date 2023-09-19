@@ -83,64 +83,6 @@ class Sources(object):
         self.__sources = sources
         return self.__sources
 
-    def reset_pipeline(
-        self,
-        pipeline_uuid: str,
-        block_uuids: List[str],
-        schema: Optional[str] = 'mage',
-        database: Optional[str] = None
-    ) -> None:
-        """
-        Resets the mage_sources.yml pipeline source to the given block_uuids.
-        Also upserts schema and database.
-
-        Args:
-            pipeline_uuid (str):
-                the uuid of the pipeline of which sources should be resetted
-            block_uuids (List[str]):
-                list of blocks to keep as sources in the pipeline
-            schema (Optional[str], optional):
-                the schema in which the table located. Defaults to 'mage'.
-            database (Optional[str], optional):
-                the database in which the table located. Defaults to None.
-        """
-        self.add_blocks(pipeline_uuid, block_uuids, schema, database)
-        self.cleanup_pipeline(pipeline_uuid, block_uuids)
-
-    def cleanup_pipeline(
-        self,
-        pipeline_uuid: str,
-        block_uuids: List[str]
-    ) -> None:
-        """
-        Remove all blocks that are not part of the passed block_uuids from the pipeline
-        source mage_sources.yml.
-
-        Args:
-            pipeline_uuid (str): the uuid of the pipeline of which sources should be resetted
-            block_uuids (List[str]): list of blocks to keep as sources in the pipeline
-        """
-        sources = self.sources
-
-        # get the sources defined for the pipeline
-        pipeline_sources = next(
-            (s for s in sources['sources'] if s.get('name') == f'mage_{pipeline_uuid}'),
-            None
-        )
-        if pipeline_sources:
-            pipeline_sources['tables'] = [
-                block
-                for block in pipeline_sources['tables']
-                if block['name'] in block_uuids
-            ]
-
-            # if tables list is empty, then remove the whole pipeline sources dict
-            # from mage_sources.yml
-            if not pipeline_sources['tables']:
-                sources['sources'].remove(pipeline_sources)
-
-        self.__write()
-
     def add_blocks(
         self,
         pipeline_uuid: str,
@@ -183,6 +125,64 @@ class Sources(object):
                 pipeline_sources['tables'].append(block_source_new)
 
         self.__write()
+
+    def cleanup_pipeline(
+        self,
+        pipeline_uuid: str,
+        block_uuids: List[str]
+    ) -> None:
+        """
+        Remove all blocks that are not part of the passed block_uuids from the pipeline
+        source mage_sources.yml.
+
+        Args:
+            pipeline_uuid (str): the uuid of the pipeline of which sources should be resetted
+            block_uuids (List[str]): list of blocks to keep as sources in the pipeline
+        """
+        sources = self.sources
+
+        # get the sources defined for the pipeline
+        pipeline_sources = next(
+            (s for s in sources['sources'] if s.get('name') == f'mage_{pipeline_uuid}'),
+            None
+        )
+        if pipeline_sources:
+            pipeline_sources['tables'] = [
+                block
+                for block in pipeline_sources['tables']
+                if block['name'] in block_uuids
+            ]
+
+            # if tables list is empty, then remove the whole pipeline sources dict
+            # from mage_sources.yml
+            if not pipeline_sources['tables']:
+                sources['sources'].remove(pipeline_sources)
+
+        self.__write()
+
+    def reset_pipeline(
+        self,
+        pipeline_uuid: str,
+        block_uuids: List[str],
+        schema: Optional[str] = 'mage',
+        database: Optional[str] = None
+    ) -> None:
+        """
+        Resets the mage_sources.yml pipeline source to the given block_uuids.
+        Also upserts schema and database.
+
+        Args:
+            pipeline_uuid (str):
+                the uuid of the pipeline of which sources should be resetted
+            block_uuids (List[str]):
+                list of blocks to keep as sources in the pipeline
+            schema (Optional[str], optional):
+                the schema in which the table located. Defaults to 'mage'.
+            database (Optional[str], optional):
+                the database in which the table located. Defaults to None.
+        """
+        self.add_blocks(pipeline_uuid, block_uuids, schema, database)
+        self.cleanup_pipeline(pipeline_uuid, block_uuids)
 
     def __get_pipeline(
         self,

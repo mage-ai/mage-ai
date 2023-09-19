@@ -51,6 +51,41 @@ class Profiles(object):
         self.__profiles: Optional[Dict[str, Any]] = None
         self.is_interpolated: bool = False
 
+    @property
+    def profiles(self) -> Dict[str, Any]:
+        """
+        Gets the interpolated profiles.yml as dictionary.
+
+        This is a wrapper for the __profiles_async function.
+        This is needed, as sometimes Profiles is initiated in an event loop and the io operation
+        should be called async. If its not caleld inside an event loop, then it just wraps the
+        methods inside async.run
+
+        Returns:
+            Dict: interpolated profiles.yml as dictionary
+        """
+        if not self.__profiles:
+            try:
+                asyncio.get_running_loop()
+                with ThreadPoolExecutor(1) as pool:
+                    self.__profiles = pool.submit(lambda: asyncio.run(
+                        self.__profiles_async()
+                    )).result()
+            except Exception:
+                self.__profiles = asyncio.run(self.__profiles_async())
+        return self.__profiles
+
+    @property
+    def profiles_dir(self) -> Union[str, os.PathLike]:
+        """
+        Returns the path of the profile.
+        If not interpolated then raw profile, else interpolated profile
+
+        Returns:
+            Path: profiles_dir to be used with dbt
+        """
+        return self.__interpolated_profiles_dir if self.is_interpolated else self.__raw_profiles_dir
+
     def clean(self) -> None:
         """
         Cleans up the temporary dir of the interpolated profiles.yml
@@ -112,41 +147,6 @@ class Profiles(object):
         self.__interpolated_profiles_dir = str(interpolated_profiles_dir)
         self.is_interpolated = True
         return self.__interpolated_profiles_dir
-
-    @property
-    def profiles_dir(self) -> Union[str, os.PathLike]:
-        """
-        Returns the path of the profile.
-        If not interpolated then raw profile, else interpolated profile
-
-        Returns:
-            Path: profiles_dir to be used with dbt
-        """
-        return self.__interpolated_profiles_dir if self.is_interpolated else self.__raw_profiles_dir
-
-    @property
-    def profiles(self) -> Dict[str, Any]:
-        """
-        Gets the interpolated profiles.yml as dictionary.
-
-        This is a wrapper for the __profiles_async function.
-        This is needed, as sometimes Profiles is initiated in an event loop and the io operation
-        should be called async. If its not caleld inside an event loop, then it just wraps the
-        methods inside async.run
-
-        Returns:
-            Dict: interpolated profiles.yml as dictionary
-        """
-        if not self.__profiles:
-            try:
-                asyncio.get_running_loop()
-                with ThreadPoolExecutor(1) as pool:
-                    self.__profiles = pool.submit(lambda: asyncio.run(
-                        self.__profiles_async()
-                    )).result()
-            except Exception:
-                self.__profiles = asyncio.run(self.__profiles_async())
-        return self.__profiles
 
     def __del__(self) -> None:
         self.clean()
