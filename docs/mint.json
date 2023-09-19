@@ -317,6 +317,7 @@
                 "development/dependencies/custom-files"
               ]
             },
+            "development/io_config",
             {
               "group": "Storage",
               "pages": [
