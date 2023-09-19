@@ -4,13 +4,19 @@ sidebarTitle: "Variable interpolation"
 ---
 ## Overview
 
-Mage allows users to reference variables
-specific to your [pipeline](/getting-started/runtime-variable) or [project](/development/variables/environment-variables). These variables are accessible throughout your dbt profiles, pipelines, and models, using the following syntax. 
+Mage allows users to reference variables specific to your
+[pipeline](/getting-started/runtime-variable) or
+[project](/development/variables/environment-variables).
+These variables are accessible throughout your dbt profiles, and pipelines by using the following syntax.
 
 | Syntax                   | Description                     | Example                             |
 | ------------------------ | ------------------------------- | ----------------------------------- |
 | `{{ env_var('...') }}`   | Get from environment variables. | `{{ env_var('ENV') }}`              |
 | `{{ variables('...') }}` | Get from runtime variables.     | `{{ variables('execution_date') }}` |
+
+DBT also comes with variable and environment variable support. By default we forward
+[pipeline](/getting-started/runtime-variable)
+variables as dbt [Project variables](https://docs.getdbt.com/docs/build/project-variables).
 
 ## Variable interpolation examples
 
@@ -23,7 +29,7 @@ specific to your [pipeline](/getting-started/runtime-variable) or [project](/dev
   FROM {{ env_var('ENV') }}_users.accounts
   WHERE
     # limit query based on the runtime variable, execution_date
-    created_at BETWEEN '2023-01-01' AND {{ variables('execution_date') }}
+    created_at BETWEEN '2023-01-01' AND {{ var('execution_date') }}
 ```
 
 ### dbt profiles

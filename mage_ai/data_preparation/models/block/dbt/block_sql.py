@@ -338,7 +338,7 @@ class DBTBlockSQL(DBTBlock):
         target = self.configuration.get('dbt_profile_target')
         if target:
             target = Template(target).render(
-                **variables,
+                variables=lambda x: variables.get(x) if variables else None,
                 **get_template_vars()
             )
             args += ['--target', target]
