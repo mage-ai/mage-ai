@@ -23,10 +23,8 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.data_integration.utils import (
-    execute_source,
-    is_source,
-)
+from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
+from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -229,7 +227,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block:
+class Block(SourceMixin):
     def __init__(
         self,
         name: str,
@@ -1165,7 +1163,20 @@ class Block:
         data_integration_module_file_path: str = None,
         **kwargs,
     ) -> List:
-        if self.is_source():
+        if logging_tags is None:
+            logging_tags = dict()
+
+        if input_vars is None:
+            input_vars = list()
+
+        if self.get_source(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_vars,
+            partition=execution_partition,
+        ):
             return execute_source(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
@@ -1185,8 +1196,6 @@ class Block:
                 data_integration_module_file_path=data_integration_module_file_path,
                 **kwargs,
             )
-        # elif is_destination(self):
-        #     return execute_destination(self)
 
         decorated_functions = []
         test_functions = []
@@ -1195,11 +1204,6 @@ class Block:
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
-
-        if logging_tags is None:
-            logging_tags = dict()
-        if input_vars is None:
-            input_vars = list()
 
         if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type:
@@ -1270,6 +1274,7 @@ class Block:
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
@@ -1346,7 +1351,9 @@ class Block:
             partition=execution_partition,
         )
         if not include_print_outputs:
-            all_variables = self.output_variables(execution_partition=execution_partition)
+            all_variables = self.output_variables(
+                execution_partition=execution_partition,
+            )
 
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
@@ -1702,7 +1709,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if content:
                 config = yaml.safe_load(content)
                 if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.pipeline.get_block_catalog_async(self.uuid)
+                    data['catalog'] = await self.pipeline.get_block_catalog_async(self)
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1784,7 +1791,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block()
 
         if 'catalog' in data and self.pipeline:
-            self.pipeline.set_block_catalog(self.uuid, data.get('catalog'))
+            self.pipeline.set_block_catalog(self, data.get('catalog'))
 
         return self
 
@@ -1925,7 +1932,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 partition=execution_partition,
                 spark=(global_vars or dict()).get('spark'),
             )
-            for variable in self.output_variables(execution_partition=execution_partition)
+            for variable in self.output_variables(
+                execution_partition=execution_partition,
+                fetch_input_variables=True,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
         ]
 
         with self._redirect_streams(
@@ -2243,9 +2255,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 uuid,
             )
 
-    def is_source(self, **kwargs) -> bool:
-        return is_source(self, **kwargs)
-
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
         """Get input variables from upstream blocks' output variables.
         Args:
@@ -2278,11 +2287,27 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 )
         return objs
 
-    def output_variables(self, execution_partition: str = None) -> List[str]:
+    def output_variables(
+        self,
+        execution_partition: str = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        fetch_input_variables: bool = False,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
+    ) -> List[str]:
         return output_variables(
             self.pipeline,
             self.uuid,
             execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            fetch_input_variables=fetch_input_variables,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+
         )
 
     def output_variable_objects(

@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import shutil
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import aiofiles
 import pytz
@@ -1139,36 +1139,62 @@ class Pipeline:
 
         return block
 
-    def get_block_catalog_file_path(self, block_uuid: str) -> str:
+    def get_block_catalog_file_path(self, block: Block) -> str:
         return os.path.join(
             self.repo_path,
             PIPELINES_FOLDER,
             self.uuid,
-            block_uuid,
+            block.uuid,
             BLOCK_CATALOG_FILENAME,
         )
 
-    def get_block_catalog(self, block_uuid: str) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
+    def get_block_catalog(self, block: Block) -> Dict:
+        catalog_full_path = self.get_block_catalog_file_path(block)
 
         if os.path.exists(catalog_full_path):
             with open(catalog_full_path, mode='r') as f:
                 return json.loads(f.read() or '')
+
+    async def get_block_catalog_async(self, block: Block) -> Dict:
+        catalog_full_path = self.get_block_catalog_file_path(block)
+
+        if os.path.exists(catalog_full_path):
+            async with aiofiles.open(catalog_full_path, mode='r') as f:
+                return json.loads(await f.read() or '')
+
+    def set_block_catalog(self, block: Block, catalog: Dict = None) -> Dict:
+        catalog_full_path = self.get_block_catalog_file_path(block)
+
+        os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
+
+        if catalog:
+            with open(catalog_full_path, mode='w') as f:
+                f.write(json.dumps(catalog))
 
     def get_block_variable(
         self,
         block_uuid: str,
         variable_name: str,
         from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
         partition: str = None,
         spark=None,
     ):
         block = self.get_block(block_uuid)
-        if block.is_source():
+        source_uuid = block.get_source(
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+            partition=partition,
+        )
+
+        if source_uuid:
             return convert_outputs_to_data(
                 block=block,
                 from_notebook=from_notebook,
                 partition=partition,
+                source_uuid=source_uuid,
                 stream_id=variable_name,
             )
 
@@ -1179,22 +1205,6 @@ class Pipeline:
             partition=partition,
             spark=spark,
         )
-
-    async def get_block_catalog_async(self, block_uuid: str) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
-
-        if os.path.exists(catalog_full_path):
-            async with aiofiles.open(catalog_full_path, mode='r') as f:
-                return json.loads(await f.read() or '')
-
-    def set_block_catalog(self, block_uuid: str, catalog: Dict = None) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
-
-        os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
-
-        if catalog:
-            with open(catalog_full_path, mode='w') as f:
-                f.write(json.dumps(catalog))
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

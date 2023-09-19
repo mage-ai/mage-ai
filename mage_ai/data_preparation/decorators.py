@@ -75,3 +75,19 @@ def render(function):
 
 def columns(function):
     return function
+
+
+def source(function):
+    return function
+
+
+def catalog(function):
+    return function
+
+
+def config(function):
+    return function
+
+
+def selected_streams(function):
+    return function

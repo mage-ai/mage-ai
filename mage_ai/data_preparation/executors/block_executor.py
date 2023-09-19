@@ -9,7 +9,6 @@ import requests
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
-    get_source,
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -358,7 +357,13 @@ class BlockExecutor:
 
         # This is required or else loading the module within the block execute method will
         # create very large log files that compound. Not sure why, so this is the temp fix.
-        source_uuid = get_source(self.block)
+        source_uuid = self.block.get_source(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            fetch_input_variables=True,
+            global_vars=global_vars,
+            partition=self.execution_partition,
+        )
         # destination_uuid = get_destination(self.block)
 
         try:
