@@ -54,7 +54,6 @@ repos:
     alias: flake8-extra
     stages: [manual]
     additional_dependencies:
-    - flake8-print
     - flake8-comprehensions
     - flake8-simplify
 # Theres a lot to do in order to make mage mypy compliant
