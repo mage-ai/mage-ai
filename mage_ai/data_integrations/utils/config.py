@@ -6,7 +6,6 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
@@ -16,11 +15,11 @@ KEY_PATTERNS = '_patterns'
 PATTERN_KEY_DESTINATION_TABLE = 'destination_table'
 
 
-def get_settings(block, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
+def get_settings(block, variables: Dict = {}, pipeline=None) -> Dict:
     return __get_settings(block.file_path, variables, pipeline=pipeline)
 
 
-def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
+def __get_settings(absolute_file_path, variables: Dict = {}, pipeline=None) -> Dict:
     settings = interpolate_variables_for_block_settings(absolute_file_path, variables)
     settings_raw = load_yaml_file(absolute_file_path)
 
@@ -56,7 +55,7 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
     return settings
 
 
-def get_catalog(block, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
+def get_catalog(block, variables: Dict = {}, pipeline=None) -> Dict:
     return get_settings(block, variables, pipeline=pipeline)['catalog']
 
 
@@ -64,7 +63,7 @@ def get_catalog_by_stream(
     absolute_file_path,
     stream_id: str,
     variables: Dict = {},
-    pipeline: 'Pipeline' = None,
+    pipeline=None,
 ) -> Dict:
     catalog = __get_settings(absolute_file_path, variables, pipeline=pipeline)['catalog']
     for stream in catalog['streams']:
@@ -78,7 +77,7 @@ def build_catalog_json(
     absolute_file_path: str,
     variables: Dict,
     selected_streams: List[str] = None,
-    pipeline: 'Pipeline' = None,
+    pipeline=None,
 ) -> str:
     streams = []
 
@@ -102,10 +101,12 @@ def build_config(
     absolute_file_path: str,
     variables: Dict,
     override: Dict = None,
+    content: str = None,
 ) -> Tuple[Dict, str]:
     config = interpolate_variables_for_block_settings(
         absolute_file_path,
         variables,
+        content=content,
     )['config']
 
     if override:
@@ -130,7 +131,11 @@ def load_yaml_file(absolute_file_path: str) -> Dict:
 def interpolate_variables_for_block_settings(
     absolute_file_path: str,
     variables: Dict,
+    content: str = None,
 ) -> Dict:
+    if content:
+        return interpolate_variables(content, variables)
+
     with open(absolute_file_path, 'r') as f:
         return interpolate_variables(f.read(), variables)
 

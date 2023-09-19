@@ -1,14 +1,17 @@
+import json
+import os
+import shutil
+from contextlib import contextmanager
+from typing import Dict, List
+
+import aiofiles
+import pandas as pd
+import polars as pl
+import simplejson
+
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.parsers import encode_complex
-from typing import Dict, List
-import aiofiles
-import json
-import os
-import pandas as pd
-import polars as pl
-import shutil
-import simplejson
 
 
 class LocalStorage(BaseStorage):
@@ -89,3 +92,15 @@ class LocalStorage(BaseStorage):
     def write_polars_dataframe(self, df: pl.DataFrame, file_path: str) -> None:
         File.create_parent_directories(file_path)
         df.write_parquet(file_path)
+
+    @contextmanager
+    def open_to_write(self, file_path: str) -> None:
+        dirname = os.path.dirname(file_path)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+
+        try:
+            file = open(file_path, 'w')
+            yield file
+        finally:
+            file.close()

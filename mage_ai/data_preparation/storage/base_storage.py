@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from typing import Dict, List
 
 
@@ -85,4 +86,9 @@ class BaseStorage(ABC):
         """
         Write Polars dataframe to a file in parquet format.
         """
+        pass
+
+    @abstractmethod
+    @contextmanager
+    def open_to_write(self, file_path: str) -> None:
         pass
