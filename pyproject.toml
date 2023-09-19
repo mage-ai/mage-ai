@@ -15,12 +15,9 @@ pytest-cov = "*"
 interrogate = "*"
 commitizen = "*"
 ipykernel = "^6.17.1"
-pandas-stubs = "*"
-sourcery = "*"
 
 [tool.isort]
 profile = "black"
-
 
 [build-system]
 requires = ["setuptools>=42"]
