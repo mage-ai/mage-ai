@@ -79,6 +79,13 @@ class SourceMixin:
 
             return
 
+        is_python = BlockLanguage.PYTHON == self.language
+
+        if is_python:
+            configuration = self.configuration or {}
+            if not configuration or 'data_integration' not in configuration:
+                return
+
         if self._data_integration or self._data_integration_loaded:
             return self._data_integration
 
@@ -102,7 +109,7 @@ class SourceMixin:
             config = settings.get('config')
             destination_uuid = settings.get('destination')
             source_uuid = settings.get('source')
-        elif BlockLanguage.PYTHON == self.language:
+        elif is_python:
             results_from_block_code = self.__execute_data_integration_block_code(
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
