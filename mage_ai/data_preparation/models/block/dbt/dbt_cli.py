@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 import time
+from logging import Logger
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
@@ -11,6 +12,8 @@ import dbt.tracking
 import pandas as pd
 from dbt.contracts.graph.nodes import SeedNode
 from dbt.contracts.results import RunResult, RunStatus
+from dbt.events.eventmgr import LoggerConfig
+from dbt.events.functions import EVENT_MANAGER
 from dbt.exceptions import DbtInternalError, DbtRuntimeError
 from dbt.graph import ResourceTypeSelector
 from dbt.main import (
@@ -55,7 +58,7 @@ class DBTCli:
     - providing a ShowTask
     """
 
-    def __init__(self, args: List[str]) -> None:
+    def __init__(self, args: List[str], logger: Logger = None) -> None:
         """
         Initiate a dbt cli interface.
 
@@ -63,6 +66,7 @@ class DBTCli:
             args (List[str]): cli args as parsed by a shell
         """
         self.__args = args
+        self.__logger = logger
         self.__parsed_args: Optional[Any] = None
         self.__result: Optional[Any] = None
         self.__success: Optional[bool] = None
@@ -88,6 +92,14 @@ class DBTCli:
         flags.set_from_args(self.__parsed_args, user_config)
 
         dbt.tracking.initialize_from_flags()
+
+        dbt_logger = LoggerConfig(
+            name='mage_dbt',
+            use_colors=True,
+            logger=self.__logger
+        )
+        EVENT_MANAGER.add_logger(dbt_logger)
+
         with adapter_management():
             task = self.__parsed_args.cls.from_args(args=self.__parsed_args)
             self.__result = task.run()

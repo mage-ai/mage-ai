@@ -1,5 +1,6 @@
 import os
 import shlex
+from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -92,6 +93,7 @@ class DBTBlockYAML(DBTBlock):
         self,
         outputs_from_input_vars,
         global_vars: Optional[Dict[str, Any]] = None,
+        logger: Logger = None,
         runtime_arguments: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> None:
@@ -160,6 +162,6 @@ class DBTBlockYAML(DBTBlock):
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
-            _res, success = DBTCli([task] + args).invoke()
+            _res, success = DBTCli([task] + args, logger).invoke()
             if not success:
                 raise Exception('DBT exited with a non 0 exit status.')

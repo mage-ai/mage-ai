@@ -1,4 +1,5 @@
 import os
+from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -283,6 +284,7 @@ class DBTBlockSQL(DBTBlock):
         execution_partition: Optional[str] = None,
         from_notebook: bool = False,
         global_vars: Optional[Dict[str, Any]] = None,
+        logger: Logger = None,
         runtime_arguments: Optional[Dict[str, Any]] = None,
         run_settings: Optional[Dict[str, bool]] = None,
         **kwargs,
@@ -373,7 +375,7 @@ class DBTBlockSQL(DBTBlock):
             ])
             # run primary task, except for show
             if task != 'show':
-                _res, success = DBTCli([task] + args).invoke()
+                _res, success = DBTCli([task] + args, logger).invoke()
                 if not success:
                     raise Exception('DBT exited with a non 0 exit status.')
             # run show task, to get data for preview or downstream usage
@@ -383,7 +385,7 @@ class DBTBlockSQL(DBTBlock):
             if needs_downstream_df or needs_preview_df:
                 # add limit to show task
                 args += (["--limit", str(limit)])
-                df, _res, success = DBTCli(['show'] + args).to_pandas()
+                df, _res, success = DBTCli(['show'] + args, logger).to_pandas()
                 if not success:
                     raise Exception('DBT exited with a non 0 exit status.')
 
