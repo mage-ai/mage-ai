@@ -816,7 +816,7 @@ class Block(SourceMixin):
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
         disable_json_serialization: bool = False,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: Dict = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -869,7 +869,7 @@ class Block(SourceMixin):
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
             block_output = self.post_process_output(output)
@@ -1047,7 +1047,7 @@ class Block(SourceMixin):
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1109,7 +1109,7 @@ class Block(SourceMixin):
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
 
@@ -1164,7 +1164,7 @@ class Block(SourceMixin):
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> List:
         if logging_tags is None:
@@ -1197,7 +1197,7 @@ class Block(SourceMixin):
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
 

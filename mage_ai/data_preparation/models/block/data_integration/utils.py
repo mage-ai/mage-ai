@@ -196,7 +196,7 @@ def execute_source(
     logging_tags: Dict = None,
     input_from_output: Dict = None,
     runtime_arguments: Dict = None,
-    data_integration_module_file_path: str = None,
+    data_integration_runtime_settings: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     **kwargs,
@@ -268,9 +268,17 @@ def execute_source(
     lines_in_file = 0
     outputs = []
 
+    module_file_path = None
+    if data_integration_runtime_settings:
+        module_file_paths = data_integration_runtime_settings.get('module_file_paths', {})
+        module_file_path = module_file_paths.get(source_uuid)
+
+    if not module_file_path:
+        module_file_path = source_module_file_path(source_uuid)
+
     args = [
         PYTHON_COMMAND,
-        data_integration_module_file_path or source_module_file_path(source_uuid),
+        module_file_path,
         '--config_json',
         config_json,
         '--log_to_stdout',
