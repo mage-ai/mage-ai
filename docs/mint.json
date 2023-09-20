@@ -340,7 +340,8 @@
                 "getting-started/setting-up-git",
                 "getting-started/file-versions"
               ]
-            }
+            },
+            "development/project/local-timezone"
           ]
         },
         {
