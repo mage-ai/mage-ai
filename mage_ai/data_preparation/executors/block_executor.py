@@ -112,6 +112,7 @@ class BlockExecutor:
         if template_runtime_configuration:
             # Used for data integration pipeline
             self.block.template_runtime_configuration = template_runtime_configuration
+
         try:
             result = dict()
 
@@ -226,6 +227,15 @@ class BlockExecutor:
             if block_run.metrics and self.block.is_data_integration():
                 data_integration_metadata = block_run.metrics
                 is_data_integration_controller = data_integration_metadata.get('controller', False)
+
+                stream = data_integration_metadata.get('stream')
+                if stream and data_integration_metadata.get('child'):
+                    if not self.block.template_runtime_configuration:
+                        self.block.template_runtime_configuration = {}
+
+                    self.block.template_runtime_configuration['selected_streams'] = [
+                        stream,
+                    ]
 
             if data_integration_metadata and is_original_block:
                 controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
@@ -456,6 +466,7 @@ class BlockExecutor:
 
             if di_settings and \
                     data_integration_metadata and \
+                    data_integration_metadata.get('controller') and \
                     data_integration_metadata.get('original_block_uuid'):
 
                 original_block_uuid = data_integration_metadata.get('original_block_uuid')
