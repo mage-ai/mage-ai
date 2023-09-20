@@ -274,7 +274,8 @@ def execute_source(
     module_file_path = None
     if data_integration_runtime_settings:
         module_file_paths = data_integration_runtime_settings.get('module_file_paths', {})
-        module_file_path = module_file_paths.get(source_uuid)
+        sources_file_paths = module_file_paths.get('sources', {})
+        module_file_path = sources_file_paths.get(source_uuid)
 
     if not module_file_path:
         module_file_path = source_module_file_path(source_uuid)

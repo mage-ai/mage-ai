@@ -629,9 +629,23 @@ class PipelineRun(BaseModel):
         completed_block_uuids = _build_block_uuids(self.completed_block_runs)
         finished_block_uuids = _build_block_uuids(self.block_runs)
 
+        data_integration_block_uuids_mapping = {}
+        for block_run in self.block_runs:
+            block = pipeline.get_block(block_run.block_uuid)
+            if block_run.metrics and block and block.is_source():
+                controller_block_uuid = block_run.metrics.get('controller_block_uuid')
+
+                if controller_block_uuid and block_run.metrics.get('child'):
+                    if controller_block_uuid not in data_integration_block_uuids_mapping:
+                        data_integration_block_uuids_mapping[controller_block_uuid] = []
+                    data_integration_block_uuids_mapping[controller_block_uuid].append(
+                        block_run.block_uuid,
+                    )
+
         executable_block_runs = list()
         for block_run in self.initial_block_runs:
             completed = False
+            upstream_block_uuids_override = None
 
             dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
                 'dynamic_upstream_block_uuids',
@@ -646,8 +660,30 @@ class PipelineRun(BaseModel):
                                     for uuid in dynamic_upstream_block_uuids)
             else:
                 block = pipeline.get_block(block_run.block_uuid)
+
+                if block and block.is_source():
+                    if block_run.metrics:
+                        controller_block_uuid = block_run.metrics.get('controller_block_uuid')
+                        # This block run is a child or the terminal
+                        if controller_block_uuid:
+                            # If this is the original block, it must depend on all the children
+                            if block_run.metrics.get('original'):
+                                child_block_uuids = data_integration_block_uuids_mapping.get(
+                                    controller_block_uuid,
+                                )
+
+                                if child_block_uuids:
+                                    upstream_block_uuids_override = child_block_uuids
+                                else:
+                                    upstream_block_uuids_override = [
+                                        controller_block_uuid,
+                                    ]
+
                 completed = block is not None and \
-                    block.all_upstream_blocks_completed(completed_block_uuids)
+                    block.all_upstream_blocks_completed(
+                        completed_block_uuids,
+                        upstream_block_uuids_override,
+                    )
 
             if completed:
                 executable_block_runs.append(block_run)
@@ -741,10 +777,12 @@ class PipelineRun(BaseModel):
             if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
                 arr.append(block)
 
-        block_uuids = []
+        block_arr = []
 
         for block in arr:
+            create_options = {}
             block_uuid = block.uuid
+
             if block.replicated_block:
                 replicated_block = pipeline.get_block(block.replicated_block)
                 if replicated_block:
@@ -754,10 +792,24 @@ class PipelineRun(BaseModel):
                         f'Replicated block {block.replicated_block} ' +
                         f'does not exist in pipeline {pipeline.uuid}.',
                     )
+            elif block.is_source():
+                controller_uuid = block.controller_uuid
+                create_options['metrics'] = dict(
+                    controller_block_uuid=controller_uuid,
+                    original=1,
+                )
 
-            block_uuids.append(block_uuid)
+                block_arr.append((
+                    controller_uuid,
+                    dict(metrics=dict(
+                        controller=1,
+                        original_block_uuid=block_uuid,
+                    )),
+                ))
 
-        return [self.create_block_run(block_uuid) for block_uuid in block_uuids]
+            block_arr.append((block_uuid, create_options))
+
+        return [self.create_block_run(block_uuid, **options) for block_uuid, options in block_arr]
 
     def any_blocks_failed(self) -> bool:
         return any(
