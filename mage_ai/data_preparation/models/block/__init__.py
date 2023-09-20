@@ -23,10 +23,8 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.data_integration.utils import (
-    execute_source,
-    is_source,
-)
+from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
+from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -229,7 +227,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block:
+class Block(SourceMixin):
     def __init__(
         self,
         name: str,
@@ -299,6 +297,10 @@ class Block:
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
+
+        # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
+        self._data_integration = None
+        self._data_integration_loaded = False
 
     @property
     def uuid(self) -> str:
@@ -814,7 +816,7 @@ class Block:
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
         disable_json_serialization: bool = False,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: Dict = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -867,7 +869,7 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
             block_output = self.post_process_output(output)
@@ -1045,7 +1047,7 @@ class Block:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1107,7 +1109,7 @@ class Block:
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
 
@@ -1162,10 +1164,23 @@ class Block:
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
-        data_integration_module_file_path: str = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> List:
-        if self.is_source():
+        if logging_tags is None:
+            logging_tags = dict()
+
+        if input_vars is None:
+            input_vars = list()
+
+        if self.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_vars,
+            partition=execution_partition,
+        ):
             return execute_source(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
@@ -1182,11 +1197,9 @@ class Block:
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
-                data_integration_module_file_path=data_integration_module_file_path,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
-        # elif is_destination(self):
-        #     return execute_destination(self)
 
         decorated_functions = []
         test_functions = []
@@ -1195,11 +1208,6 @@ class Block:
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
-
-        if logging_tags is None:
-            logging_tags = dict()
-        if input_vars is None:
-            input_vars = list()
 
         if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type:
@@ -1238,43 +1246,60 @@ class Block:
         input_vars: List,
         from_notebook: bool = False,
         global_vars: Dict = None,
+        initialize_decorator_modules: bool = True,
     ) -> Dict:
         block_function_updated = block_function
-        if from_notebook:
-            # Initialize module
-            if self.language == BlockLanguage.PYTHON:
-                try:
-                    block_uuid = self.uuid
-                    block_file_path = self.file_path
-                    if self.replicated_block:
-                        block_uuid = self.replicated_block
-                        block_file_path = self.replicated_block_object.file_path
-                    spec = importlib.util.spec_from_file_location(
-                        block_uuid,
-                        block_file_path,
-                    )
-                    module = importlib.util.module_from_spec(spec)
-                    # Set the decorators in the module in case they are not defined in the block
-                    # code
-                    setattr(
-                        module,
-                        self.type,
-                        getattr(mage_ai.data_preparation.decorators, self.type),
-                    )
-                    module.test = mage_ai.data_preparation.decorators.test
-                    spec.loader.exec_module(module)
-                    block_function_updated = getattr(module, block_function.__name__)
-                    self.module = module
-                except Exception:
-                    print('Falling back to default block execution...')
+
+        if from_notebook and initialize_decorator_modules:
+            block_function_updated = self.__initialize_decorator_modules(
+                block_function,
+                [self.type],
+            )
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
         return output
+
+    def __initialize_decorator_modules(
+        self,
+        block_function: Callable,
+        decorator_module_names: List[str],
+    ) -> Callable:
+        # Initialize module
+        block_uuid = self.uuid
+        block_file_path = self.file_path
+        if self.replicated_block:
+            block_uuid = self.replicated_block
+            block_file_path = self.replicated_block_object.file_path
+
+        spec = importlib.util.spec_from_file_location(block_uuid, block_file_path)
+        module = importlib.util.module_from_spec(spec)
+
+        for module_name in decorator_module_names:
+            # Set the decorators in the module in case they are not defined in the block code
+            setattr(
+                module,
+                module_name,
+                getattr(mage_ai.data_preparation.decorators, module_name),
+            )
+
+        module.test = mage_ai.data_preparation.decorators.test
+
+        try:
+            spec.loader.exec_module(module)
+            block_function_updated = getattr(module, block_function.__name__)
+            self.module = module
+
+            return block_function_updated
+        except Exception:
+            print('Falling back to default block execution...')
+
+        return block_function
 
     def exists(self) -> bool:
         return os.path.exists(self.file_path)
@@ -1346,7 +1371,9 @@ class Block:
             partition=execution_partition,
         )
         if not include_print_outputs:
-            all_variables = self.output_variables(execution_partition=execution_partition)
+            all_variables = self.output_variables(
+                execution_partition=execution_partition,
+            )
 
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
@@ -1702,7 +1729,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if content:
                 config = yaml.safe_load(content)
                 if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.pipeline.get_block_catalog_async(self.uuid)
+                    data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1784,7 +1811,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block()
 
         if 'catalog' in data and self.pipeline:
-            self.pipeline.set_block_catalog(self.uuid, data.get('catalog'))
+            self.update_catalog_file(data.get('catalog'))
 
         return self
 
@@ -1925,7 +1952,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 partition=execution_partition,
                 spark=(global_vars or dict()).get('spark'),
             )
-            for variable in self.output_variables(execution_partition=execution_partition)
+            for variable in self.output_variables(
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
         ]
 
         with self._redirect_streams(
@@ -2243,9 +2274,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 uuid,
             )
 
-    def is_source(self, **kwargs) -> bool:
-        return is_source(self, **kwargs)
-
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
         """Get input variables from upstream blocks' output variables.
         Args:
@@ -2278,11 +2306,25 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 )
         return objs
 
-    def output_variables(self, execution_partition: str = None) -> List[str]:
+    def output_variables(
+        self,
+        execution_partition: str = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
+    ) -> List[str]:
         return output_variables(
             self.pipeline,
             self.uuid,
             execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+
         )
 
     def output_variable_objects(
