@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.environments import is_debug
 
 
 class Project():
@@ -38,6 +39,14 @@ class Project():
             data[key] = features.get(key) if features else None
 
         return data
+
+    def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
+        feature_enabled = self.repo_config.features.get(feature_name.value, False)
+
+        if is_debug():
+            print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')
+
+        return feature_enabled
 
     async def latest_version(self) -> str:
         try:

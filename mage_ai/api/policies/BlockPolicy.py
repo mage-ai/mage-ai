@@ -86,6 +86,7 @@ BlockPolicy.allow_write([
     'all_upstream_blocks_executed',
     'bookmark_values',
     'callback_blocks',
+    'catalog',
     'color',
     'conditional_blocks',
     'configuration',

@@ -26,6 +26,8 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
 )
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
@@ -70,6 +72,13 @@ class SourceMixin:
         partition: str = None,
         **kwargs,
     ) -> Dict:
+        if not self.pipeline or not \
+                Project(self.pipeline.repo_config).is_feature_enabled(
+                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                ):
+
+            return
+
         if self._data_integration or self._data_integration_loaded:
             return self._data_integration
 
