@@ -106,6 +106,10 @@ def source_module_file_path(source_uuid: str) -> str:
             return absolute_path
 
 
+def extract_stream_ids_from_streams(streams: List[Dict]) -> List[str]:
+    return [x['tap_stream_id'] for x in streams]
+
+
 def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     return list(filter(
         lambda x: x['tap_stream_id'] in streams,
@@ -394,33 +398,38 @@ def convert_outputs_to_data(
         output_file_paths.append(output_file_path)
     output_file_paths.sort()
 
-    stream_settings = get_streams_from_catalog(catalog, [stream_id])[0]
-    schema_properties = stream_settings.get('schema', {}).get('properties', {})
-    columns = []
-
-    for md in stream_settings.get('metadata', []):
-        breadcrumb = md.get('breadcrumb', [])
-        if breadcrumb:
-            column = breadcrumb[-1]
-            if md.get('metadata', {}).get('selected', False):
-                columns.append(dict(
-                    column=column,
-                    properties=schema_properties.get(column),
-                ))
-
-    columns_to_select = [d.get('column') for d in columns]
-
+    columns_to_select = []
     rows = []
-    for output_file_path in output_file_paths:
-        with open(output_file_path) as f:
-            for line in f:
-                try:
-                    row = json.loads(line)
-                    record = row.get('record')
-                    if record and stream_id == row.get('stream'):
-                        rows.append([record.get(col) for col in columns_to_select])
-                except json.JSONDecodeError:
-                    pass
+    stream_settings = {}
+
+    streams = get_streams_from_catalog(catalog, [stream_id])
+    if streams:
+        stream_settings = streams[0]
+        schema_properties = stream_settings.get('schema', {}).get('properties', {})
+
+        columns = []
+        for md in stream_settings.get('metadata', []):
+            breadcrumb = md.get('breadcrumb', [])
+            if breadcrumb:
+                column = breadcrumb[-1]
+                if md.get('metadata', {}).get('selected', False):
+                    columns.append(dict(
+                        column=column,
+                        properties=schema_properties.get(column),
+                    ))
+
+        columns_to_select = [d.get('column') for d in columns]
+
+        for output_file_path in output_file_paths:
+            with open(output_file_path) as f:
+                for line in f:
+                    try:
+                        row = json.loads(line)
+                        record = row.get('record')
+                        if record and stream_id == row.get('stream'):
+                            rows.append([record.get(col) for col in columns_to_select])
+                    except json.JSONDecodeError:
+                        pass
 
     return dict(
         columns=columns_to_select,
@@ -466,6 +475,29 @@ def discover_streams(source_uuid: str, config: Dict) -> List[str]:
             config=config,
         )
     )
+
+
+def select_streams_in_catalog(catalog: Dict, selected_streams: List[str]) -> Dict:
+    if not selected_streams:
+        return catalog
+
+    catalog_copy = catalog.copy()
+
+    streams = []
+    for stream in catalog.get('streams', []):
+        if stream['tap_stream_id'] not in selected_streams:
+            continue
+
+        metadata = []
+        for md in stream['metadata']:
+            md['metadata']['selected'] = True
+            metadata.append(md)
+        stream['metadata'] = metadata
+        streams.append(stream)
+
+    catalog_copy['streams'] = streams
+
+    return catalog_copy
 
 
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:

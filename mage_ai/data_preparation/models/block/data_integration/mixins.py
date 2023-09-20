@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from inspect import Parameter, signature
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 import aiofiles
 import yaml
@@ -12,8 +12,14 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     BLOCK_CATALOG_FILENAME,
 )
 from mage_ai.data_preparation.models.block.data_integration.utils import (
-    discover,
-    discover_streams,
+    discover as discover_func,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    discover_streams as discover_streams_func,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    extract_stream_ids_from_streams,
+    select_streams_in_catalog,
 )
 from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
@@ -132,7 +138,6 @@ class SourceMixin:
         partition: str = None,
         **kwargs,
     ) -> Dict:
-        # How long does this take for blocks that don’t have this?
         now = datetime.utcnow().timestamp()
 
         decorated_functions = []
@@ -143,9 +148,11 @@ class SourceMixin:
         test_functions = []
 
         results = {
-            'catalog': self._block_decorator(decorated_functions_catalog),
+            'catalog': self.__block_decorator_catalog(decorated_functions_catalog),
             'config': self._block_decorator(decorated_functions_config),
-            'selected_streams': self._block_decorator(decorated_functions_selected_streams),
+            'selected_streams': self.__block_decorator_selected_streams(
+                decorated_functions_selected_streams,
+            ),
             'source': self._block_decorator(decorated_functions_source),
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
@@ -161,7 +168,8 @@ class SourceMixin:
             with open(self.file_path) as file:
                 exec(file.read(), results)
 
-        mapping = {}
+        if not self._data_integration:
+            self._data_integration = {}
 
         if len(decorated_functions_source) >= 1:
             block_function = decorated_functions_source[0]
@@ -186,7 +194,7 @@ class SourceMixin:
 
                 input_vars_use = input_vars_fetched
 
-            mapping['source'] = self.execute_block_function(
+            self._data_integration['source'] = self.execute_block_function(
                 block_function,
                 input_vars_use,
                 from_notebook=from_notebook,
@@ -195,61 +203,59 @@ class SourceMixin:
             )
 
         if decorated_functions_config:
-            mapping['config'] = self.execute_block_function(
+            self._data_integration['config'] = self.execute_block_function(
                 decorated_functions_config[0],
                 input_vars_use,
                 from_notebook=from_notebook,
                 global_vars=merge_dict(dict(
-                    source=mapping.get('source'),
+                    source=self._data_integration.get('source'),
                 ), global_vars),
                 initialize_decorator_modules=False,
             )
 
-        source = mapping.get('source')
-        config = mapping.get('config')
+        source = self._data_integration.get('source')
+        config = self._data_integration.get('config')
 
         if source and config:
-            # TODO: only do discover_streams if decorator configured to do so
-            selected_streams = discover_streams(source, config)
             if decorated_functions_selected_streams:
-                mapping['selected_streams'] = self.execute_block_function(
+                self._data_integration['selected_streams'] = self.execute_block_function(
                     decorated_functions_selected_streams[0],
                     input_vars_use,
                     from_notebook=from_notebook,
                     global_vars=merge_dict(dict(
                         config=config,
-                        selected_streams=selected_streams,
                         source=source,
                     ), global_vars),
                     initialize_decorator_modules=False,
                 )
             else:
-                mapping['selected_streams'] = selected_streams
+                self._data_integration['selected_streams'] = []
 
-            # TODO: only do discover if decorator configured to do so
-            catalog = discover(source, config, mapping['selected_streams'])
             if decorated_functions_catalog:
-                mapping['catalog'] = self.execute_block_function(
+                self._data_integration['catalog'] = self.execute_block_function(
                     decorated_functions_catalog[0],
                     input_vars_use,
                     from_notebook=from_notebook,
                     global_vars=merge_dict(dict(
-                        catalog=catalog,
                         config=config,
-                        selected_streams=mapping['selected_streams'],
+                        selected_streams=self._data_integration.get('selected_streams'),
                         source=source,
                     ), global_vars),
                     initialize_decorator_modules=False,
                 )
             else:
-                mapping['catalog'] = catalog
+                selected_streams = self._data_integration.get('selected_streams')
+                catalog = discover_func(source, config, selected_streams)
+                self._data_integration['catalog'] = select_streams_in_catalog(
+                    catalog,
+                    selected_streams,
+                )
 
-        seconds = datetime.utcnow().timestamp() - now
-
+        seconds = round((datetime.utcnow().timestamp() - now) * 10000) / 10000
         if is_debug():
-            print(f'[TIMER] Block.__execute_data_integration_block_code: {seconds}')
+            print(f'[Block.__execute_data_integration_block_code]: {seconds} | {self.uuid}')
 
-        return mapping
+        return self._data_integration
 
     def __get_catalog_from_file(self) -> Dict:
         catalog_full_path = self.get_catalog_file_path()
@@ -257,3 +263,67 @@ class SourceMixin:
         if os.path.exists(catalog_full_path):
             with open(catalog_full_path, mode='r') as f:
                 return json.loads(f.read() or '')
+
+    def __block_decorator_catalog(self, decorated_functions):
+        def custom_code(
+            function: Callable = None,
+            **kwargs,
+        ):
+            if function:
+                decorated_functions.append(function)
+                return function
+
+            def inner(function_inner: Callable):
+                def func(*args, **kwargs_inner):
+                    discover = False
+                    if kwargs and kwargs.get('discover'):
+                        discover = kwargs.get('discover')
+
+                    selected_streams = self._data_integration.get('selected_streams')
+                    catalog = None
+                    if discover:
+                        catalog = discover_func(
+                            self._data_integration.get('source'),
+                            self._data_integration.get('config'),
+                            selected_streams,
+                        )
+
+                        if catalog and (not kwargs or kwargs.get('select_all', True)):
+                            catalog = select_streams_in_catalog(catalog, selected_streams)
+
+                    return function_inner(*args, **kwargs_inner, catalog=catalog)
+                decorated_functions.append(func)
+
+            return inner
+
+        return custom_code
+
+    def __block_decorator_selected_streams(self, decorated_functions):
+        def custom_code(
+            function: Callable = None,
+            **kwargs,
+        ):
+            if function:
+                decorated_functions.append(function)
+                return function
+
+            def inner(function_inner: Callable):
+                def func(*args, **kwargs_inner):
+                    discover_streams = False
+                    if kwargs and kwargs.get('discover_streams'):
+                        discover_streams = kwargs.get('discover_streams')
+
+                    selected_streams = None
+                    if discover_streams:
+                        streams = discover_streams_func(
+                            self._data_integration.get('source'),
+                            self._data_integration.get('config'),
+                        )
+                        selected_streams = extract_stream_ids_from_streams(streams)
+
+                    return function_inner(*args, **kwargs_inner, selected_streams=selected_streams)
+                decorated_functions.append(func)
+
+            return inner
+
+        return custom_code
