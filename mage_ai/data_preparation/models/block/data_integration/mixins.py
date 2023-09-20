@@ -288,19 +288,39 @@ class SourceMixin:
                     if kwargs and kwargs.get('discover'):
                         discover = kwargs.get('discover')
 
+                    select_all = not kwargs or kwargs.get('select_all', True)
                     selected_streams = self._data_integration.get('selected_streams')
-                    catalog = None
-                    if discover:
+
+                    def __discover_func(
+                        source: str = None,
+                        config: Dict = None,
+                        streams: List[str] = None,
+                    ):
+                        selected_streams_use = streams or selected_streams
+
                         catalog = discover_func(
-                            self._data_integration.get('source'),
-                            self._data_integration.get('config'),
-                            selected_streams,
+                            source or self._data_integration.get('source'),
+                            config or self._data_integration.get('config'),
+                            selected_streams_use,
                         )
 
-                        if catalog and (not kwargs or kwargs.get('select_all', True)):
-                            catalog = select_streams_in_catalog(catalog, selected_streams)
+                        if catalog and select_all:
+                            catalog = select_streams_in_catalog(catalog, selected_streams_use)
 
-                    return function_inner(*args, **kwargs_inner, catalog=catalog)
+                        return catalog
+
+                    kwargs_extra = dict(
+                        discover_func=__discover_func,
+                    )
+
+                    if discover:
+                        kwargs_extra['catalog'] = __discover_func()
+
+                    return function_inner(
+                        *args,
+                        **kwargs_inner,
+                        **kwargs_extra,
+                    )
                 decorated_functions.append(func)
 
             return inner
@@ -322,15 +342,26 @@ class SourceMixin:
                     if kwargs and kwargs.get('discover_streams'):
                         discover_streams = kwargs.get('discover_streams')
 
-                    selected_streams = None
-                    if discover_streams:
+                    def __discover_streams_func(source: str = None, config: Dict = None):
                         streams = discover_streams_func(
-                            self._data_integration.get('source'),
-                            self._data_integration.get('config'),
+                            source or self._data_integration.get('source'),
+                            config or self._data_integration.get('config'),
                         )
-                        selected_streams = extract_stream_ids_from_streams(streams)
 
-                    return function_inner(*args, **kwargs_inner, selected_streams=selected_streams)
+                        return extract_stream_ids_from_streams(streams)
+
+                    kwargs_extra = dict(
+                        discover_streams_func=__discover_streams_func,
+                    )
+
+                    if discover_streams:
+                        kwargs_extra['selected_streams'] = __discover_streams_func()
+
+                    return function_inner(
+                        *args,
+                        **kwargs_inner,
+                        **kwargs_extra,
+                    )
                 decorated_functions.append(func)
 
             return inner
