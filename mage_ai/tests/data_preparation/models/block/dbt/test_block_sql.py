@@ -137,7 +137,7 @@ class DBTBlockSQLTest(TestCase):
             '--vars', '{}',
             '--target', 'test',
             '--profiles-dir', 'test_profiles_dir'
-        ])
+        ], None)
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.open')

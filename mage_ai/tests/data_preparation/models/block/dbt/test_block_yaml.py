@@ -115,4 +115,4 @@ class DBTBlockYAMLTest(TestCase):
             '--full-refresh',
             '--target', 'dev',
             '--profiles-dir', 'test_profiles_dir'
-        ])
+        ], None)

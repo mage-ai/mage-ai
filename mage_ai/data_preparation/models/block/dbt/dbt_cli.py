@@ -58,7 +58,7 @@ class DBTCli:
     - providing a ShowTask
     """
 
-    def __init__(self, args: List[str], logger: Logger = None) -> None:
+    def __init__(self, args: List[str], logger: Optional[Logger] = None) -> None:
         """
         Initiate a dbt cli interface.
 
