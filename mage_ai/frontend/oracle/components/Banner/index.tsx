@@ -87,6 +87,7 @@ function Banner({
               bold
               large
               onClick={hideBanner}
+              preventDefault
             >
               Hide
             </Link>
