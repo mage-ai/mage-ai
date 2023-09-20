@@ -286,6 +286,4 @@ python = ">=3.8,<3.11"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["mage_ai"]
-exclude = []
 namespaces = false
