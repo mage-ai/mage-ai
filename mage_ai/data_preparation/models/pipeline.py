@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import shutil
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import aiofiles
 import pytz
@@ -11,9 +11,6 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
-from mage_ai.data_preparation.models.block.data_integration.constants import (
-    BLOCK_CATALOG_FILENAME,
-)
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
@@ -1145,36 +1142,32 @@ class Pipeline:
 
         return block
 
-    def get_block_catalog_file_path(self, block_uuid: str) -> str:
-        return os.path.join(
-            self.repo_path,
-            PIPELINES_FOLDER,
-            self.uuid,
-            block_uuid,
-            BLOCK_CATALOG_FILENAME,
-        )
-
-    def get_block_catalog(self, block_uuid: str) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
-
-        if os.path.exists(catalog_full_path):
-            with open(catalog_full_path, mode='r') as f:
-                return json.loads(f.read() or '')
-
     def get_block_variable(
         self,
         block_uuid: str,
         variable_name: str,
         from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
         partition: str = None,
         spark=None,
     ):
         block = self.get_block(block_uuid)
-        if block.is_source():
+
+        data_integration_settings = block.get_data_integration_settings(
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_args,
+            partition=partition,
+        )
+
+        if data_integration_settings:
             return convert_outputs_to_data(
-                block=block,
+                block,
+                data_integration_settings.get('catalog'),
                 from_notebook=from_notebook,
                 partition=partition,
+                source_uuid=data_integration_settings.get('source'),
                 stream_id=variable_name,
             )
 
@@ -1185,22 +1178,6 @@ class Pipeline:
             partition=partition,
             spark=spark,
         )
-
-    async def get_block_catalog_async(self, block_uuid: str) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
-
-        if os.path.exists(catalog_full_path):
-            async with aiofiles.open(catalog_full_path, mode='r') as f:
-                return json.loads(await f.read() or '')
-
-    def set_block_catalog(self, block_uuid: str, catalog: Dict = None) -> Dict:
-        catalog_full_path = self.get_block_catalog_file_path(block_uuid)
-
-        os.makedirs(os.path.dirname(catalog_full_path), exist_ok=True)
-
-        if catalog:
-            with open(catalog_full_path, mode='w') as f:
-                f.write(json.dumps(catalog))
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

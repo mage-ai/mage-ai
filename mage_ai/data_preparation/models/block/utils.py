@@ -453,6 +453,11 @@ def output_variables(
     pipeline,
     block_uuid: str,
     execution_partition: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_args: List[Any] = None,
 ) -> List[str]:
     """
     Retrieves the output variables of a block.
@@ -475,9 +480,22 @@ def output_variables(
     Returns:
         List[str]: List of variable names.
     """
+
     block = pipeline.get_block(block_uuid)
-    if block and block.is_source():
-        output_variables = [s.get('tap_stream_id') for s in get_selected_streams(block)]
+    data_integration_settings = None
+    if block:
+        data_integration_settings = block.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_args,
+            partition=execution_partition,
+        )
+
+    if block and data_integration_settings:
+        streams = get_selected_streams(data_integration_settings.get('catalog'))
+        output_variables = [s.get('tap_stream_id') for s in streams]
     else:
         all_variables = pipeline.variable_manager.get_variables_by_block(
             pipeline.uuid,
@@ -538,6 +556,11 @@ def input_variables(
     pipeline,
     upstream_block_uuids: List[str],
     execution_partition: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_args: List[Any] = None,
 ) -> Dict[str, List[str]]:
     """
     Retrieves the input variables from the output variables of upstream blocks.
@@ -554,7 +577,17 @@ def input_variables(
     mapping = {}
 
     for block_uuid in upstream_block_uuids:
-        mapping[block_uuid] = output_variables(pipeline, block_uuid, execution_partition)
+        out_vars = output_variables(
+            pipeline,
+            block_uuid,
+            execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+        )
+        mapping[block_uuid] = out_vars
 
     return mapping
 
@@ -600,6 +633,11 @@ def fetch_input_variables(
             pipeline,
             upstream_block_uuids,
             execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
         )
         keys = input_variables_by_uuid.keys()
         reduce_output_indexes = []
@@ -620,6 +658,8 @@ def fetch_input_variables(
                     upstream_block_uuid,
                     var,
                     from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    input_args=input_args,
                     partition=execution_partition,
                     spark=spark,
                 )
@@ -684,6 +724,11 @@ def fetch_input_variables(
                     pipeline,
                     uuids,
                     execution_partition,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    input_args=input_args,
                 )
 
                 final_value = []
@@ -693,6 +738,9 @@ def fetch_input_variables(
                         variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
+                            from_notebook=from_notebook,
+                            global_vars=global_vars,
+                            input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
                         )
@@ -716,6 +764,9 @@ def fetch_input_variables(
                         variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
+                            from_notebook=from_notebook,
+                            global_vars=global_vars,
+                            input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
                         )
@@ -723,7 +774,10 @@ def fetch_input_variables(
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)
 
-                if len(final_value) >= 1 and all([type(v) is pd.DataFrame for v in final_value]):
+                if ((upstream_is_dynamic and dynamic_block_index is not None)
+                    or should_reduce) and \
+                        len(final_value) >= 1 and \
+                        all([type(v) is pd.DataFrame for v in final_value]):
                     final_value = pd.concat(final_value)
 
                 if not should_reduce:
