@@ -13,6 +13,7 @@ import inspect
 class BaseResource(Resource):
     collective_loader_attr = {}
     datetime_keys = []
+    cookie_names = []
     model_class = None
     parent_models_attr = {}
     parent_resource_attr = {}

@@ -11,6 +11,7 @@ from mage_ai.api.api_context import ApiContext
 from mage_ai.api.errors import ApiError
 from mage_ai.api.monitors.BaseMonitor import BaseMonitor
 from mage_ai.api.operations.constants import (
+    COOKIE_PREFIX,
     CREATE,
     DELETE,
     DETAIL,
@@ -283,6 +284,25 @@ class BaseOperation():
             if payload.get(key) is not None:
                 if type(payload[key]) is str:
                     payload[key] = dateutil.parser.parse(payload[key])
+
+        cookie_names = self.__resource_class().cookie_names
+        if len(cookie_names) > 0:
+            cookies = None
+            cookie_header = self.headers.get('Cookie')
+            if cookie_header is not None:
+                from http.cookies import SimpleCookie
+                cookies = SimpleCookie()
+                cookies.load(cookie_header)
+            for cookie_name in cookie_names:
+                payload_key = COOKIE_PREFIX + cookie_name
+                # remove cookie keys from original payload
+                # do not let these keys thru as part of the regular payload
+                payload.pop(payload_key, None)
+                cookie = None
+                if cookies is not None:
+                    cookie = cookies.get(cookie_name)
+                if cookie is not None:
+                    payload[payload_key] = cookie.value
 
         return payload
 
