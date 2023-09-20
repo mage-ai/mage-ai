@@ -226,11 +226,14 @@ def execute_source(
         selected_streams = block.template_runtime_configuration.get('selected_streams', [])
 
     # TESTING PURPOSES ONLY
-    if not selected_streams:
+    if not selected_streams and catalog:
         selected_streams = [s.get('tap_stream_id') for s in catalog.get('streams', [])]
 
     stream = selected_streams[0] if len(selected_streams) >= 1 else None
     query_data = (runtime_arguments or {}).copy()
+
+    if not stream:
+        return []
 
     # Handle incremental sync
     source_state_file_path = None

@@ -148,12 +148,12 @@ class SourceMixin:
         test_functions = []
 
         results = {
-            'catalog': self.__block_decorator_catalog(decorated_functions_catalog),
-            'config': self._block_decorator(decorated_functions_config),
-            'selected_streams': self.__block_decorator_selected_streams(
+            'data_integration_catalog': self.__block_decorator_catalog(decorated_functions_catalog),
+            'data_integration_config': self._block_decorator(decorated_functions_config),
+            'data_integration_selected_streams': self.__block_decorator_selected_streams(
                 decorated_functions_selected_streams,
             ),
-            'source': self._block_decorator(decorated_functions_source),
+            'data_integration_source': self._block_decorator(decorated_functions_source),
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }
