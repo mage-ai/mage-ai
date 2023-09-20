@@ -1240,73 +1240,21 @@ class Block(SourceMixin):
 
         return outputs
 
-    def initialize_decorator_modules(self, block_function: Callable) -> Callable:
-        # Initialize module
-        if self.language != BlockLanguage.PYTHON:
-            return
-
-        try:
-            block_uuid = self.uuid
-            block_file_path = self.file_path
-            if self.replicated_block:
-                block_uuid = self.replicated_block
-                block_file_path = self.replicated_block_object.file_path
-            spec = importlib.util.spec_from_file_location(
-                block_uuid,
-                block_file_path,
-            )
-            module = importlib.util.module_from_spec(spec)
-            # Set the decorators in the module in case they are not defined in the block code
-            setattr(
-                module,
-                self.type,
-                getattr(mage_ai.data_preparation.decorators, self.type),
-            )
-
-            # TODO (tommy dangerous): do we need this?
-            # if self.type in [
-            #     BlockType.DATA_LOADER,
-            #     BlockType.DATA_EXPORTER,
-            # ]:
-            #     decorator_names = [
-            #         'catalog',
-            #         'config',
-            #         'selected_streams',
-            #     ]
-
-            #     if BlockType.DATA_LOADER == self.type:
-            #         decorator_names.append('source')
-
-            #     for decorator_name in decorator_names:
-            #         setattr(
-            #             module,
-            #             decorator_name,
-            #             getattr(mage_ai.data_preparation.decorators, decorator_name),
-            #         )
-
-            module.test = mage_ai.data_preparation.decorators.test
-            spec.loader.exec_module(module)
-            block_function_updated = getattr(module, block_function.__name__)
-            self.module = module
-
-            return block_function_updated
-        except Exception as err:
-            print('Falling back to default block execution...')
-            print(f'[WARNING] Block.execute_block_function: {err}')
-
-        return block_function
-
     def execute_block_function(
         self,
         block_function: Callable,
         input_vars: List,
         from_notebook: bool = False,
         global_vars: Dict = None,
+        initialize_decorator_modules: bool = True,
     ) -> Dict:
         block_function_updated = block_function
 
-        if from_notebook:
-            block_function_updated = self.initialize_decorator_modules(block_function)
+        if from_notebook and initialize_decorator_modules:
+            block_function_updated = self.__initialize_decorator_modules(
+                block_function,
+                [self.type],
+            )
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
@@ -1316,6 +1264,42 @@ class Block(SourceMixin):
         else:
             output = block_function_updated(*input_vars)
         return output
+
+    def __initialize_decorator_modules(
+        self,
+        block_function: Callable,
+        decorator_module_names: List[str],
+    ) -> Callable:
+        # Initialize module
+        block_uuid = self.uuid
+        block_file_path = self.file_path
+        if self.replicated_block:
+            block_uuid = self.replicated_block
+            block_file_path = self.replicated_block_object.file_path
+
+        spec = importlib.util.spec_from_file_location(block_uuid, block_file_path)
+        module = importlib.util.module_from_spec(spec)
+
+        for module_name in decorator_module_names:
+            # Set the decorators in the module in case they are not defined in the block code
+            setattr(
+                module,
+                module_name,
+                getattr(mage_ai.data_preparation.decorators, module_name),
+            )
+
+        module.test = mage_ai.data_preparation.decorators.test
+
+        try:
+            spec.loader.exec_module(module)
+            block_function_updated = getattr(module, block_function.__name__)
+            self.module = module
+
+            return block_function_updated
+        except Exception:
+            print('Falling back to default block execution...')
+
+        return block_function
 
     def exists(self) -> bool:
         return os.path.exists(self.file_path)

@@ -21,6 +21,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
 )
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 
 
@@ -154,9 +155,6 @@ class SourceMixin:
         if input_vars is not None:
             input_vars_use = input_vars
 
-        if from_notebook:
-            self.initialize_decorator_modules
-
         if self.content is not None:
             exec(self.content, results)
         elif os.path.exists(self.file_path):
@@ -193,6 +191,7 @@ class SourceMixin:
                 input_vars_use,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                initialize_decorator_modules=False,
             )
 
         if decorated_functions_config:
@@ -203,6 +202,7 @@ class SourceMixin:
                 global_vars=merge_dict(dict(
                     source=mapping.get('source'),
                 ), global_vars),
+                initialize_decorator_modules=False,
             )
 
         source = mapping.get('source')
@@ -221,6 +221,7 @@ class SourceMixin:
                         selected_streams=selected_streams,
                         source=source,
                     ), global_vars),
+                    initialize_decorator_modules=False,
                 )
             else:
                 mapping['selected_streams'] = selected_streams
@@ -238,12 +239,15 @@ class SourceMixin:
                         selected_streams=mapping['selected_streams'],
                         source=source,
                     ), global_vars),
+                    initialize_decorator_modules=False,
                 )
             else:
                 mapping['catalog'] = catalog
 
         seconds = datetime.utcnow().timestamp() - now
-        print(f'[TIMER] Block.__execute_data_integration_block_code: {seconds}')
+
+        if is_debug():
+            print(f'[TIMER] Block.__execute_data_integration_block_code: {seconds}')
 
         return mapping
 
