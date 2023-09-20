@@ -43,7 +43,7 @@ function Banner({
 
   return (
     <BannerContainerStyle
-      hide={localStorageHideValue}
+      hide={hideBannerState}
     >
       <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
         <BannerStyle>
@@ -81,7 +81,7 @@ function Banner({
           }
         </BannerStyle>
 
-        {(localStorageHideKey && !hideBannerState) && (
+        {localStorageHideKey && (
           <Spacing ml={2}>
             <Link
               bold
