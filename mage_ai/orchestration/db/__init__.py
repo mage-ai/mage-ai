@@ -57,14 +57,15 @@ try:
 except SQLAlchemyError:
     engine.dispose()
     username, password = get_user_info_from_db_connection_url(db_connection_url)
-    db_connection_url = db_connection_url.replace(
-        password,
-        quote_plus(password),
-    )
-    engine = create_engine(
-        db_connection_url,
-        **db_kwargs,
-    )
+    if password:
+        db_connection_url = db_connection_url.replace(
+            password,
+            quote_plus(password),
+        )
+        engine = create_engine(
+            db_connection_url,
+            **db_kwargs,
+        )
 
 session_factory = sessionmaker(bind=engine)
 
