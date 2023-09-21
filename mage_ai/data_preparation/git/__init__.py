@@ -32,6 +32,7 @@ class Git:
         auth_type: AuthType = None,
         git_config: GitConfig = None,
         setup_repo: bool = True,
+        sync_submodules: bool = False,
     ) -> None:
         import git
         import git.exc
@@ -76,7 +77,7 @@ class Git:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             if setup_repo:
-                self.__setup_repo()
+                self.__setup_repo(sync_submodules=sync_submodules)
 
         if self.repo and self.git_config:
             self.__set_git_config()
@@ -256,6 +257,13 @@ class Git:
                 return func(self, *args, **kwargs)
 
         return wrapper
+
+    @_remote_command
+    def submodules_update(self) -> None:
+        self.repo.submodule_update(
+            init=True,
+            recursive=True,
+        )
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -616,10 +624,12 @@ class Git:
 
         return private_key_file
 
-    def __setup_repo(self):
+    def __setup_repo(self, sync_submodules: bool = False):
         import git
+        import git.cmd
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
+        repo_git = git.cmd.Git(self.repo_path)
         try:
             # Clone the remote repo and copy over the .git folder
             # to initialize the local repository.
@@ -629,7 +639,6 @@ class Git:
                 env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
                 if not self.__add_host_to_known_hosts():
                     raise Exception('Could not add host to known_hosts')
-            repo_git = git.cmd.Git(self.repo_path)
             repo_git.update_environment(**env)
             proc = repo_git.clone(
                 self.remote_repo_link,
@@ -656,6 +665,24 @@ class Git:
             self.commit('Initial commit')
         finally:
             shutil.rmtree(tmp_path)
+
+        if sync_submodules:
+            try:
+                proc = repo_git.submodule(
+                    'update',
+                    '--init',
+                    '--recursive',
+                    as_process=True,
+                )
+                asyncio.run(
+                    self.__poll_process_with_timeout(
+                        proc,
+                        error_message='Error initializing submodules.',
+                        timeout=60,
+                    )
+                )
+            except Exception:
+                print('Error initializing submodules.')
 
     def __add_host_to_known_hosts(self):
         url = f'ssh://{self.git_config.remote_repo_link}'
