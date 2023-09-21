@@ -31,7 +31,6 @@ export default interface BlockRunType {
   pipeline_run_id: number;
   pipeline_schedule_id?: number;
   pipeline_schedule_name?: string;
-  runtime?: number;
   started_at?: string;
   status: RunStatus;
   updated_at?: string;

@@ -268,13 +268,17 @@ class BlockResource(GenericResource):
                     controllers_not_parallel,
                 )
 
-                def _update_upstream_block_uuids(controller_child: Dict):
+                def _update_upstream_block_uuids(
+                    controller_child: Dict,
+                    controllers_inner,
+                    children_inner,
+                ):
                     uuid = controller_child.get('uuid')
                     metrics = controller_child.get('metrics') or {}
                     upstream_block_uuids = metrics.get('upstream_block_uuids') or []
 
                     for up_block_uuid in upstream_block_uuids:
-                        arr = children.get(up_block_uuid) or []
+                        arr = children_inner.get(up_block_uuid) or []
 
                         # Set the upstream controller’s children as upstream blocks for the
                         # current controller child.
@@ -291,12 +295,16 @@ class BlockResource(GenericResource):
                             ]
                             blocks_to_not_override[child_uuid] = True
 
-                        up_controller = controllers.get(up_block_uuid)
+                        up_controller = controllers_inner.get(up_block_uuid)
                         if up_controller:
-                            _update_upstream_block_uuids(up_controller)
+                            _update_upstream_block_uuids(
+                                up_controller,
+                                controllers_inner,
+                                children_inner,
+                            )
 
                 if controller_child_end:
-                    _update_upstream_block_uuids(controller_child_end)
+                    _update_upstream_block_uuids(controller_child_end, controllers, children)
 
                     controller_child_end_uuid = controller_child_end.get('uuid')
                     children_end = children.get(controller_child_end_uuid) or []
@@ -423,7 +431,7 @@ class BlockResource(GenericResource):
 
             # Adjust the runtime for these blocks because it has a start_at
             # but we don’t actually start running the block until later.
-            for original_block_uuid, set_dict in data_integration_sets_by_uuid.items():
+            for set_dict in data_integration_sets_by_uuid.values():
                 children = set_dict.get('children') or {}
                 controller = set_dict.get('controller') or {}
                 controllers = set_dict.get('controllers') or {}
