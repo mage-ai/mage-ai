@@ -637,18 +637,18 @@ class PipelineRun(BaseModel):
         data_integration_block_uuids_mapping = {}
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
-            if block_run.metrics and block and block.is_source():
-                original_block_uuid = block_run.metrics.get('original_block_uuid')
+            metrics = block_run.metrics
+            if metrics and block and block.is_source():
+                original_block_uuid = metrics.get('original_block_uuid')
 
-                if original_block_uuid and \
-                        block_run.metrics.get('child') and not \
-                        block_run.metrics.get('controller'):
+                if original_block_uuid and metrics.get('child'):
+                    if not metrics.get('controller') or not metrics.get('run_in_parallel'):
+                        if original_block_uuid not in data_integration_block_uuids_mapping:
+                            data_integration_block_uuids_mapping[original_block_uuid] = []
 
-                    if original_block_uuid not in data_integration_block_uuids_mapping:
-                        data_integration_block_uuids_mapping[original_block_uuid] = []
-                    data_integration_block_uuids_mapping[original_block_uuid].append(
-                        block_run.block_uuid,
-                    )
+                        data_integration_block_uuids_mapping[original_block_uuid].append(
+                            block_run.block_uuid,
+                        )
 
         executable_block_runs = list()
         for block_run in self.initial_block_runs:
@@ -669,15 +669,19 @@ class PipelineRun(BaseModel):
             else:
                 block = pipeline.get_block(block_run.block_uuid)
 
-                if block and block.is_source():
-                    if block_run.metrics and block_run.metrics.get('original'):
+                metrics = block_run.metrics
+
+                if metrics and block and block.is_source():
+                    if metrics.get('original'):
                         # If this is the original block, it must depend on all the children
                         # except the children that are controllers.
+                        # If a child controller has run_in_parallel False, then the original block
+                        # must depend on that as well.
 
                         child_block_uuids = data_integration_block_uuids_mapping.get(
                             block.uuid,
                         )
-                        controller_block_uuid = block_run.metrics.get('controller_block_uuid')
+                        controller_block_uuid = metrics.get('controller_block_uuid')
 
                         if child_block_uuids:
                             upstream_block_uuids_override = child_block_uuids
@@ -685,6 +689,12 @@ class PipelineRun(BaseModel):
                             upstream_block_uuids_override = [
                                 controller_block_uuid,
                             ]
+                    elif metrics.get('controller') and \
+                            metrics.get('child') and not \
+                            metrics.get('run_in_parallel') and \
+                            metrics.get('upstream_block_uuids'):
+
+                        upstream_block_uuids_override = metrics.get('upstream_block_uuids')
 
                 completed = block is not None and \
                     block.all_upstream_blocks_completed(

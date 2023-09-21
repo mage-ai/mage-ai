@@ -589,6 +589,7 @@ class PipelineScheduler:
                 [dict(
                     block_uuid=br.block_uuid,
                     id=br.id,
+                    metrics=br.metrics,
                     status=br.status,
                 ) for br in self.pipeline_run.block_runs],
             )

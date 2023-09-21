@@ -135,9 +135,14 @@ class BlockExecutor:
             is_data_integration_child = False
             is_data_integration_controller = False
             data_integration_metadata = None
+            run_in_parallel = False
+            upstream_block_uuids = None
+
             if block_run and block_run.metrics and self.block.is_data_integration():
                 data_integration_metadata = block_run.metrics
 
+                run_in_parallel = int(data_integration_metadata.get('run_in_parallel') or 0) == 1
+                upstream_block_uuids = data_integration_metadata.get('upstream_block_uuids')
                 is_data_integration_child = data_integration_metadata.get('child', False)
                 is_data_integration_controller = data_integration_metadata.get('controller', False)
 
@@ -249,6 +254,9 @@ class BlockExecutor:
                 )
                 return dict(output=[])
 
+            should_execute = True
+            should_finish = False
+
             # If the original block is running, it means all the child block runs are complete.
             # Update the primary controller to be complete.
             if data_integration_metadata and is_original_block:
@@ -263,7 +271,58 @@ class BlockExecutor:
                             controller_block_uuid=controller_block_uuid,
                         )),
                     )
-            else:
+                should_execute = False
+            elif is_data_integration_controller and \
+                    is_data_integration_child and not \
+                    run_in_parallel:
+
+                children = []
+                status_count = {}
+                block_run_dicts_mapping = {}
+
+                for block_run_dict in block_run_dicts:
+                    block_run_dicts_mapping[block_run_dict['block_uuid']] = block_run_dict
+
+                    metrics = block_run_dict.get('metrics') or {}
+                    controller_block_uuid = metrics.get(
+                        'controller_block_uuid',
+                    )
+
+                    if controller_block_uuid == self.block_uuid:
+                        children.append(block_run_dict)
+
+                    status = block_run_dict.get('status')
+                    if status not in status_count:
+                        status_count[status] = 0
+
+                    status_count[status] += 1
+
+                # Only update the child controller (for a specific stream) to complete
+                # if all its child block runs are complete.
+                children_length = len(children)
+                should_finish = children_length >= 1 and status_count.get(
+                    BlockRun.BlockRunStatus.COMPLETED.value,
+                    0,
+                ) >= children_length
+
+                if upstream_block_uuids:
+                    statuses_completed = []
+                    for up_block_uuid in upstream_block_uuids:
+                        block_run_dict = block_run_dicts_mapping.get(up_block_uuid)
+                        if block_run_dict:
+                            statuses_completed.append(
+                                BlockRun.BlockRunStatus.COMPLETED.value == block_run_dict.get(
+                                    'status',
+                                ),
+                            )
+                        else:
+                            statuses_completed.append(False)
+
+                    should_execute = all(statuses_completed)
+                else:
+                    should_execute = True
+
+            if should_execute:
                 try:
                     from mage_ai.shared.retry import retry
 
@@ -343,7 +402,11 @@ class BlockExecutor:
                     )
                     raise error
 
-            if not is_data_integration_controller or is_data_integration_child:
+            if not should_finish:
+                should_finish = not is_data_integration_controller or \
+                    (is_data_integration_child and run_in_parallel)
+
+            if should_finish:
                 self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
 
                 # This is passed in from the pipeline scheduler
@@ -549,36 +612,64 @@ class BlockExecutor:
 
                                 arr.append(br)
                     else:
+                        block_run_dicts = []
                         # Controller
                         for stream_dict in get_selected_streams(catalog):
                             # Create a child block run for every selected stream.
                             stream = stream_dict.get('tap_stream_id')
+                            run_in_parallel = stream_dict.get('run_in_parallel', False)
+
                             block_run_block_uuid = \
                                 f'{original_block_uuid}:{source}:{stream}:controller'
 
                             if block_run_block_uuid not in block_run_block_uuids:
-                                br = pipeline_run.create_block_run(
-                                    block_run_block_uuid,
+                                block_run_dicts.append(dict(
+                                    block_uuid=block_run_block_uuid,
                                     metrics=dict(
                                         child=1,
                                         controller=1,
                                         controller_block_uuid=self.block_uuid,
                                         original_block_uuid=original_block_uuid,
+                                        run_in_parallel=1 if run_in_parallel else 0,
                                         stream=stream,
                                     ),
-                                )
+                                ))
 
-                                self.logger.info(
-                                    f'Created block run {br.id} for block {br.block_uuid} '
-                                    f'for stream {stream}.',
-                                    **merge_dict(logging_tags, dict(
-                                        original_block_uuid=original_block_uuid,
-                                        source=source,
-                                        stream=stream,
-                                    )),
-                                )
+                        block_run_dicts_length = len(block_run_dicts)
+                        for idx, block_run_dict in enumerate(block_run_dicts):
+                            metrics = block_run_dict['metrics']
+                            stream = metrics['stream']
+                            run_in_parallel = metrics['run_in_parallel']
 
-                                arr.append(br)
+                            if not run_in_parallel or run_in_parallel == 0:
+                                if idx >= 1:
+                                    block_run_previous = block_run_dicts[idx - 1]
+                                    metrics['upstream_block_uuids'] = [
+                                        block_run_previous['block_uuid'],
+                                    ]
+
+                                if idx < block_run_dicts_length - 1:
+                                    block_run_next = block_run_dicts[idx + 1]
+                                    metrics['downstream_block_uuids'] = [
+                                        block_run_next['block_uuid'],
+                                    ]
+
+                            br = pipeline_run.create_block_run(
+                                block_run_dict['block_uuid'],
+                                metrics=metrics,
+                            )
+
+                            self.logger.info(
+                                f'Created block run {br.id} for block {br.block_uuid} '
+                                f'for stream {stream} {metrics}.',
+                                **merge_dict(logging_tags, dict(
+                                    original_block_uuid=original_block_uuid,
+                                    source=source,
+                                    stream=stream,
+                                )),
+                            )
+
+                            arr.append(br)
 
                     return arr
 
