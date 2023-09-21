@@ -66,6 +66,7 @@ import {
   TIME_UNIT_TO_SECONDS,
   convertSeconds,
   convertToSeconds,
+  convertUtcCronExpressionToLocalTimezone,
   getDatetimeFromDateAndTime,
   getTriggerApiEndpoint,
   getTriggerTypes,
@@ -270,7 +271,10 @@ function Edit({
           !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum);
 
         if (custom) {
-          setCustomInterval(pipelineSchedule?.schedule_interval);
+          const customIntervalInit = displayLocalTimezone
+            ? convertUtcCronExpressionToLocalTimezone(pipelineSchedule?.schedule_interval)
+            : pipelineSchedule?.schedule_interval;
+          setCustomInterval(customIntervalInit);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
@@ -301,6 +305,7 @@ function Edit({
       }
     },
     [
+      displayLocalTimezone,
       isStreamingPipeline,
       pipelineSchedule,
       schedule,
@@ -372,7 +377,12 @@ function Edit({
     } else if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
       data.event_matchers = eventMatchers;
     } else {
-      data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
+      data.schedule_interval = isCustomInterval
+        ? ((displayLocalTimezone && !cronExpressionInvalid && !!customInterval)
+          ? convertUtcCronExpressionToLocalTimezone(customInterval, true)
+          : customInterval
+        )
+        : schedule.schedule_interval;
       data.start_time = (date && time?.hour && time?.minute)
         ? getDatetimeFromDateAndTime(
           date,
@@ -411,6 +421,7 @@ function Edit({
       pipeline_schedule: data,
     });
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
     displayLocalTimezone,
@@ -1295,7 +1306,7 @@ function Edit({
           {!isStreamingPipeline && (
             <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <Text>
-                Set a timeout for each run of this trigger (optional) 
+                Set a timeout for each run of this trigger (optional)
               </Text>
               <Spacing mb={1} />
               <TextInput

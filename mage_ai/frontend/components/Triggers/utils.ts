@@ -9,8 +9,9 @@ import {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
-
+import { getDayRangeForCurrentMonth } from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
+import { rangeSequential } from '@utils/array';
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
@@ -214,4 +215,113 @@ export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
   }
 
   return url;
+}
+
+type CronValueWithOffsetType = {
+  additionalOffset: number;
+  cronValue: string;
+};
+function calculateCronValueWithOffset(
+  timeUnitValue: number,
+  timeOffset: number,
+  range: number[],
+): CronValueWithOffsetType {
+  let currentIndex = range.indexOf(timeUnitValue);
+  let additionalOffsetForGreaterTimeUnit = 0;
+  console.log('------------');
+  console.log('range:', range);
+  if (timeOffset < 0) {
+    for (let i = 0; i > timeOffset; i--) {
+      if (currentIndex === 0) {
+        currentIndex = range.length - 1;
+        additionalOffsetForGreaterTimeUnit -= 1;
+      } else {
+        currentIndex -= 1;
+      }
+    }
+  } else if (timeOffset > 0) {
+    for (let i = 0; i < timeOffset; i++) {
+      console.log('currentIndex:', currentIndex);
+      if (currentIndex === range.length - 1) {
+        currentIndex = 0;
+        additionalOffsetForGreaterTimeUnit += 1;
+      } else {
+        currentIndex += 1;
+      }
+    }
+  }
+  return {
+    additionalOffset: additionalOffsetForGreaterTimeUnit,
+    cronValue: String(range[currentIndex] || timeUnitValue),
+  };
+}
+
+function adjustSingleCronValueForTimeOffset(
+  cronValue: string,
+  timeOffset: number,
+  timeRange: number[],
+): CronValueWithOffsetType {
+  if (cronValue.match(/[*,-/]/)) {
+    return {
+      additionalOffset: 0,
+      cronValue,
+    };
+  } else {
+    return calculateCronValueWithOffset(
+      +cronValue,
+      timeOffset,
+      timeRange,
+    );
+  }
+}
+
+const minuteRange = rangeSequential(60);
+const hourRange = rangeSequential(24);
+const dayRange = getDayRangeForCurrentMonth();
+export function convertUtcCronExpressionToLocalTimezone(
+  cronExpression: string,
+  reverse?: boolean,
+) {
+  if (!cronExpression) {
+    return cronExpression;
+  }
+
+  const localTimezoneOffset = moment().local().format('Z');
+  const offsetParts = localTimezoneOffset.split(':');
+  const isNegativeOffset = localTimezoneOffset[0] === '-';
+  let hourOffset = offsetParts[0].length === 3
+    ? Number(offsetParts[0].slice(1))
+    : Number(offsetParts[0]);
+  let minuteOffset = Number(offsetParts[1]);
+  if ((isNegativeOffset && !reverse) || (!isNegativeOffset && reverse)) {
+    hourOffset = -hourOffset;
+    minuteOffset = -minuteOffset;
+  }
+
+  const cronParts = cronExpression.split(' ');
+  const minuteExpr = cronParts[0];
+  const hourExpr = cronParts[1];
+  const dayOfMonthExpr = cronParts[2];
+  const minuteCronValueWithHourOffset = adjustSingleCronValueForTimeOffset(
+    minuteExpr,
+    minuteOffset,
+    minuteRange,
+  );
+  const hourCronValueWithDayOffset = adjustSingleCronValueForTimeOffset(
+    hourExpr,
+    hourOffset + minuteCronValueWithHourOffset.additionalOffset,
+    hourRange,
+  );
+  cronParts[0] = minuteCronValueWithHourOffset.cronValue;
+  cronParts[1] = hourCronValueWithDayOffset.cronValue;
+  if (hourCronValueWithDayOffset?.additionalOffset !== 0) {
+    const dayOfMonthCronValue = adjustSingleCronValueForTimeOffset(
+      dayOfMonthExpr,
+      hourCronValueWithDayOffset.additionalOffset,
+      dayRange,
+    );
+    cronParts[2] = dayOfMonthCronValue.cronValue;
+  }
+
+  return cronParts.join(' ');
 }
