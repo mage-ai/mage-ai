@@ -50,6 +50,11 @@ class BlockResource(GenericResource):
             pipeline = parent_model.pipeline
             for block_run in parent_model.block_runs:
                 block_run_block_uuid = block_run.block_uuid
+                if block_run_block_uuid not in block_mapping:
+                    block_mapping[block_run_block_uuid] = dict(
+                        block_run=block_run,
+                        uuids=[],
+                    )
 
                 # Handle dynamic blocks and data integration blocks
                 block = pipeline.get_block(block_run_block_uuid)
@@ -57,10 +62,49 @@ class BlockResource(GenericResource):
                     continue
 
                 block_dict = block.to_dict()
+                block_dict['uuid'] = block_run_block_uuid
+
+                metrics = block_run.metrics
+                if metrics and block.is_data_integration():
+                    child = metrics.get('child')
+                    controller = metrics.get('controller')
+                    controller_block_uuid = metrics.get('controller_block_uuid')
+                    original = metrics.get('original')
+                    original_block_uuid = metrics.get('original_block_uuid')
+
+                    parts = block_run_block_uuid.split(':')
+                    tags = []
+
+                    if original:
+                        if BlockType.DATA_LOADER == block.type:
+                            block_dict['description'] = 'Source'
+                        elif BlockType.DATA_EXPORTER == block.type:
+                            block_dict['description'] = 'Destination'
+
+                    if not original:
+                        block_dict['name'] = original_block_uuid
+
+                    if controller:
+                        block_dict['description'] = 'Controller'
+
+                    if child:
+                        block_mapping[block_run_block_uuid]['uuids'].append(controller_block_uuid)
+
+                        for part in parts[1:-1]:
+                            tags.append(part)
+                        if not controller:
+                            block_dict['description'] = parts[-1]
+                            if original_block_uuid not in block_mapping:
+                                block_mapping[original_block_uuid] = dict(uuids=[])
+                            block_mapping[original_block_uuid]['uuids'].append(
+                                block_run_block_uuid,
+                            )
+
+                    if tags:
+                        block_dict['tags'] = tags
 
                 # If dynamic child, then it has many other blocks.
                 if is_dynamic_block_child(block):
-                    block_dict['uuid'] = block_run_block_uuid
                     parts = block_run_block_uuid.split(':')
 
                     # [block_uuid]:[index_1]:[index_2]...:[index_N]
@@ -69,43 +113,73 @@ class BlockResource(GenericResource):
                         e_i = parts_length - 1
                         parts_new = parts[1:e_i]
 
-                        if block_run_block_uuid not in block_mapping:
-                            block_mapping[block_run_block_uuid] = []
-
                         for upstream_block in block.upstream_blocks:
                             if is_dynamic_block_child(upstream_block):
                                 parts_new = [upstream_block.uuid] + parts_new
-                                block_mapping[block_run_block_uuid].append(':'.join(parts_new))
+                                block_mapping[block_run_block_uuid]['uuids'].append(
+                                    ':'.join(parts_new),
+                                )
 
                     # If it should reduce, then all the children have 1 downstream.
                     if should_reduce_output(block):
                         for db in block.downstream_blocks:
                             if db.uuid not in block_mapping:
-                                block_mapping[db.uuid] = []
+                                block_mapping[db.uuid] = dict(uuids=[])
 
-                            block_mapping[db.uuid].append(block_run_block_uuid)
+                            block_mapping[db.uuid]['uuids'].append(block_run_block_uuid)
                     else:
                         # If not reduce, then there will be multiple instances of
                         # its downstream blocks.
                         for db in block.downstream_blocks:
                             db_uuid = ':'.join([db.uuid] + parts[1:])
                             if db_uuid not in block_mapping:
-                                block_mapping[db_uuid] = []
-                            block_mapping[db_uuid].append(block_run_block_uuid)
+                                block_mapping[db_uuid] = dict(uuids=[])
+                            block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
 
                 block_dicts_by_uuid[block_run_block_uuid] = block_dict
 
-            for block_uuid, upstream_block_uuids in block_mapping.items():
+            for block_uuid, mapping in block_mapping.items():
+                block = pipeline.get_block(block_uuid)
+                if not block:
+                    continue
+
                 if block_uuid not in block_dicts_by_uuid:
                     continue
+
+                block_run = mapping.get('block_run')
+                metrics = block_run.metrics if block_run else None
+                upstream_block_uuids = mapping['uuids']
+
+                child = False
+                controller = False
+                original = False
+                is_data_integration = block.is_data_integration()
+                if metrics and is_data_integration:
+                    child = metrics.get('child')
+                    controller = metrics.get('controller')
+                    original = metrics.get('original')
+
+                    if original:
+                        # The original block should only have upstreams that are
+                        # child blocks and not controllers.
+                        block_dicts_by_uuid[block_uuid]['upstream_blocks'] = []
 
                 for ub_uuid in upstream_block_uuids:
                     if ub_uuid in block_dicts_by_uuid[block_uuid]['upstream_blocks']:
                         continue
-                    block_dicts_by_uuid[block_uuid]['upstream_blocks'].append(ub_uuid)
+
+                    if is_data_integration:
+                        # A child can only have 1 upstream: the controller that made it.
+                        if child:
+                            block_dicts_by_uuid[block_uuid]['upstream_blocks'] = [ub_uuid]
+                            continue
+                        elif original:
+                            block_dicts_by_uuid[block_uuid]['upstream_blocks'].append(ub_uuid)
 
                     ub_block = pipeline.get_block(ub_uuid)
-                    # Remove the original block UUID
+                    # If the upstream block is a dynamic child,
+                    # remove the dynamic child block’s original UUID from
+                    # the current block’s upstream blocks.
                     if ub_block and \
                             is_dynamic_block_child(ub_block) and \
                             ub_block.uuid in block_dicts_by_uuid[block_uuid]['upstream_blocks']:

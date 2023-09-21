@@ -61,11 +61,13 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   subtitle?: string;
 } {
   const {
+    description,
+    name,
     type,
   } = block;
 
   let displayText;
-  let subtitle = BLOCK_TYPE_NAME_MAPPING?.[type] || type;
+  let subtitle = description || BLOCK_TYPE_NAME_MAPPING?.[type] || type;
 
   if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
     let contentParsed: {
@@ -93,6 +95,13 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   if (block?.replicated_block) {
     displayText = block?.replicated_block;
     subtitle = block?.uuid;
+  }
+
+  // Dynamic blocks and data integration blocks
+  if (block?.uuid?.split(':')?.length >= 2) {
+    if (name) {
+      displayText = name;
+    }
   }
 
   if (!displayText) {

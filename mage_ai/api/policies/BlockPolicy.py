@@ -56,8 +56,10 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 BlockPolicy.allow_read([
     'bookmarks',
     'content',
+    'description',
     'outputs',
     'pipelines',
+    'tags',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
