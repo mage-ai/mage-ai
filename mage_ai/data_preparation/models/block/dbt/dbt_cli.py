@@ -101,9 +101,8 @@ class DBTCli:
             use_colors=True,
             logger=self.__logger
         )
-        # EVENT_MANAGER.loggers = []
+        EVENT_MANAGER.loggers = []
         EVENT_MANAGER.add_logger(dbt_logger)
-        # EVENT_MANAGER.loggers[0].
 
         with adapter_management():
             task = self.__parsed_args.cls.from_args(args=self.__parsed_args)
