@@ -385,6 +385,7 @@ def convert_outputs_to_data(
     partition: str = None,
     source_uuid: str = None,
     stream_id: str = None,
+    sample_count: int = None,
 ) -> Dict:
     variable = build_variable(
         block,
@@ -413,6 +414,7 @@ def convert_outputs_to_data(
     columns_to_select = []
     rows = []
     stream_settings = {}
+    row_count = 0
 
     streams = get_streams_from_catalog(catalog, [stream_id])
     if streams:
@@ -436,12 +438,19 @@ def convert_outputs_to_data(
             with open(output_file_path) as f:
                 for line in f:
                     try:
+                        if sample_count is not None and row_count >= sample_count:
+                            break
+
                         row = json.loads(line)
                         record = row.get('record')
                         if record and stream_id == row.get('stream'):
                             rows.append([record.get(col) for col in columns_to_select])
+                            row_count += 1
                     except json.JSONDecodeError:
                         pass
+
+    if sample_count is not None:
+        rows = rows[:sample_count]
 
     return dict(
         columns=columns_to_select,

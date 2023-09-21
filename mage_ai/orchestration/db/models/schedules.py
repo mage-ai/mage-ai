@@ -34,7 +34,11 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
 )
-from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_SAMPLE_COUNT,
+    ExecutorType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -47,6 +51,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
@@ -998,6 +1003,55 @@ class BlockRun(BaseModel):
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         block = pipeline.get_block(self.block_uuid)
         block_uuid = self.block_uuid
+
+        if self.metrics and block.is_data_integration():
+            # Data integration child block run
+            if self.metrics.get('child'):
+                # [block UUID]:[source UUID]:[stream]:[index]
+                parts = self.block_uuid.split(':')
+                if len(parts) >= 3:
+                    stream = parts[2]
+                    data = pipeline.get_block_variable(
+                        block_uuid=block.uuid,
+                        variable_name=stream,
+                        partition=self.pipeline_run.execution_partition,
+                        sample_count=sample_count or DATAFRAME_SAMPLE_COUNT,
+                    )
+                    if data:
+                        columns = data.get('columns')
+                        return [
+                            dict(
+                                sample_data=dict(
+                                    columns=columns,
+                                    rows=data.get('rows'),
+                                ),
+                                shape=[None, len(columns)],
+                                type=DataType.TABLE,
+                                variable_uuid=stream,
+                            ),
+                        ]
+            elif self.metrics.get('controller'):
+                return [
+                    dict(
+                        text_data='This block run controls all the child blocks '
+                        f'starting with {block.uuid}.\n'
+                        'To view the output of this block, click on the child block runs that '
+                        f'start with\n{block.uuid}:[source|destination]:[stream].',
+                        type=DataType.TEXT,
+                        variable_uuid='controller',
+                    ),
+                ]
+            elif self.metrics.get('original'):
+                return [
+                    dict(
+                        text_data='This block run is the last one in the set of block runs '
+                        f'starting with {block.uuid}.\n'
+                        'To view the output of this block, click on the child block runs that '
+                        f'start with\n{block.uuid}:[source|destination]:[stream].',
+                        type=DataType.TEXT,
+                        variable_uuid='original',
+                    ),
+                ]
 
         # The block_run’s block_uuid for replicated blocks will be in this format:
         # [block_uuid]:[replicated_block_uuid]
