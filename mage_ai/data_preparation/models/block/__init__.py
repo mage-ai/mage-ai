@@ -82,8 +82,8 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
+    from_notebook: bool = False,
     global_vars: Dict = None,
-    include_logger: bool = False,
     parallel: bool = True,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -103,15 +103,19 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
-                if include_logger:
-                    logger = logging.getLogger(f'execute_{block.uuid}')
+                variables = global_vars
+                if from_notebook:
+                    logger = logging.getLogger(f'{block.uuid}_test')
                     logger.setLevel('INFO')
-                    if 'logger' not in global_vars:
-                        global_vars['logger'] = logger
+                    if 'logger' not in variables:
+                        variables = {
+                            'logger': logger,
+                            **variables,
+                        }
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
-                    global_vars=global_vars,
+                    global_vars=variables,
                     run_all_blocks=True,
                     run_sensors=run_sensors,
                     update_status=update_status,
@@ -172,8 +176,8 @@ def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
+    from_notebook: bool = False,
     global_vars: Dict = None,
-    include_logger: bool = False,
     run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
@@ -217,11 +221,14 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
-            if include_logger:
-                logger = logging.getLogger(f'execute_{block.uuid}')
+            if from_notebook:
+                logger = logging.getLogger(f'{block.uuid}_test')
                 logger.setLevel('INFO')
                 if 'logger' not in global_vars:
-                    global_vars['logger'] = logger
+                    global_vars = {
+                        'logger': logger,
+                        **global_vars,
+                    }
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -1915,7 +1922,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def run_upstream_blocks(
         self,
-        include_logger: bool = False,
+        from_notebook: bool = False,
         incomplete_only: bool = False,
         **kwargs
     ) -> None:
@@ -1938,7 +1945,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         run_blocks_sync(
             root_blocks,
-            include_logger=include_logger,
+            from_notebook=from_notebook,
             selected_blocks=upstream_block_uuids,
             **kwargs,
         )
@@ -1996,6 +2003,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 global_vars=global_vars,
             )
         ]
+
+        if logger and 'logger' not in global_vars:
+            global_vars['logger'] = logger
 
         with self._redirect_streams(
             build_block_output_stdout=build_block_output_stdout,

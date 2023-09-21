@@ -313,14 +313,15 @@ def execute_custom_code():
 
     if run_incomplete_upstream or run_upstream:
         block.run_upstream_blocks(
+            from_notebook=True,
             global_vars=global_vars,
-            include_logger=True,
             incomplete_only=run_incomplete_upstream,
         )
 
     logger = logging.getLogger('{block_uuid}_test')
     logger.setLevel('INFO')
-    global_vars['logger'] = logger
+    if 'logger' not in global_vars:
+        global_vars['logger'] = logger
     block_output = block.execute_with_callback(
         custom_code=code,
         from_notebook=True,
