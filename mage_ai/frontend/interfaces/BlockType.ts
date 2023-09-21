@@ -255,6 +255,7 @@ export default interface BlockType {
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  description?: string;
   downstream_blocks?: string[];
   error?: {
     error: string;
