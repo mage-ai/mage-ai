@@ -1148,6 +1148,7 @@ class Pipeline:
         input_args: List[Any] = None,
         partition: str = None,
         spark=None,
+        index: int = None,
         sample_count: int = None,
     ):
         block = self.get_block(block_uuid)
@@ -1164,10 +1165,11 @@ class Pipeline:
                 block,
                 data_integration_settings.get('catalog'),
                 from_notebook=from_notebook,
+                index=index,
                 partition=partition,
+                sample_count=sample_count,
                 source_uuid=data_integration_settings.get('source'),
                 stream_id=variable_name,
-                sample_count=sample_count,
             )
 
         return self.variable_manager.get_variable(

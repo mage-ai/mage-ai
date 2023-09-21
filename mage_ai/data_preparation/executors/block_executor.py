@@ -6,6 +6,7 @@ from typing import Callable, Dict, List, Union
 import pytz
 import requests
 
+from mage_ai.data_integrations.utils.scheduler import build_block_run_metadata
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
@@ -222,24 +223,43 @@ class BlockExecutor:
 
             # Data integration block
             is_original_block = self.block.uuid == self.block_uuid
+            is_data_integration_child = False
             is_data_integration_controller = False
             data_integration_metadata = None
             if block_run.metrics and self.block.is_data_integration():
                 data_integration_metadata = block_run.metrics
+
+                is_data_integration_child = data_integration_metadata.get('child', False)
                 is_data_integration_controller = data_integration_metadata.get('controller', False)
 
                 stream = data_integration_metadata.get('stream')
-                if stream and data_integration_metadata.get('child'):
+
+                # If child and not controller
+                if stream and is_data_integration_child and not is_data_integration_controller:
                     if not self.block.template_runtime_configuration:
                         self.block.template_runtime_configuration = {}
 
                     self.block.template_runtime_configuration['selected_streams'] = [
                         stream,
                     ]
+                    self.block.template_runtime_configuration['index'] = \
+                        data_integration_metadata.get('index')
 
             if data_integration_metadata and is_original_block:
                 controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
-                if on_complete:
+                if on_complete and controller_block_uuid:
+                    data_integration_settings = self.block.get_data_integration_settings(
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        global_vars=global_vars,
+                        partition=self.execution_partition,
+                    )
+                    catalog = data_integration_settings.get('catalog')
+                    source_uuid = data_integration_settings.get('source')
+                    for stream_dict in catalog.get('streams', []):
+                        stream = stream_dict.get('tap_stream_id')
+                        on_complete(f'{self.block.uuid}:{source_uuid}:{stream}:controller')
+
                     on_complete(controller_block_uuid)
             else:
                 try:
@@ -477,28 +497,62 @@ class BlockExecutor:
 
                     source = di_settings.get('source')
                     catalog = di_settings.get('catalog', [])
-                    for stream in get_selected_streams(catalog):
-                        # Create a child block run for every selected stream.
-                        tap_stream_id = stream.get('tap_stream_id')
-                        block_run_block_uuid = f'{original_block_uuid}:{source}:{tap_stream_id}'
 
-                        block_run_block_uuids = []
-                        if block_run_dicts:
-                            block_run_block_uuids += [br.get(
-                                'block_uuid',
-                            ) for br in block_run_dicts]
+                    block_run_block_uuids = []
+                    if block_run_dicts:
+                        block_run_block_uuids += [br.get('block_uuid') for br in block_run_dicts]
 
-                        if block_run_block_uuid not in block_run_block_uuids:
-                            br = pipeline_run.create_block_run(
-                                block_run_block_uuid,
-                                metrics=dict(
-                                    child=1,
-                                    controller_block_uuid=self.block_uuid,
-                                    original_block_uuid=original_block_uuid,
-                                    stream=tap_stream_id,
-                                ),
-                            )
-                            arr.append(br)
+                    # Controller for child (single stream with batches.
+                    if data_integration_metadata.get('child'):
+                        # Create a block run for the stream for each batch in that stream.
+                        stream = data_integration_metadata.get('stream')
+                        block_run_metadata = build_block_run_metadata(
+                            self.block,
+                            self.logger,
+                            dynamic_block_index=dynamic_block_index,
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            global_vars=global_vars,
+                            partition=self.execution_partition,
+                            selected_streams=[stream],
+                        )
+                        for br_metadata in block_run_metadata:
+                            index = br_metadata.get('index') or 0
+                            number_of_batches = br_metadata.get('number_of_batches') or 0
+                            block_run_block_uuid = \
+                                f'{original_block_uuid}:{source}:{stream}:{index}'
+
+                            if block_run_block_uuid not in block_run_block_uuids:
+                                br = pipeline_run.create_block_run(
+                                    block_run_block_uuid,
+                                    metrics=merge_dict(dict(
+                                        child=1,
+                                        controller_block_uuid=self.block_uuid,
+                                        is_last_block_run=index == number_of_batches - 1,
+                                        original_block_uuid=original_block_uuid,
+                                        stream=stream,
+                                    ), br_metadata),
+                                )
+                                arr.append(br)
+                    else:
+                        # Controller
+                        for stream_dict in get_selected_streams(catalog):
+                            # Create a child block run for every selected stream.
+                            stream = stream_dict.get('tap_stream_id')
+                            block_run_block_uuid = \
+                                f'{original_block_uuid}:{source}:{stream}:controller'
+
+                            if block_run_block_uuid not in block_run_block_uuids:
+                                br = pipeline_run.create_block_run(
+                                    block_run_block_uuid,
+                                    metrics=dict(
+                                        child=1,
+                                        controller=1,
+                                        controller_block_uuid=self.block_uuid,
+                                        original_block_uuid=original_block_uuid,
+                                        stream=stream,
+                                    ),
+                                )
+                                arr.append(br)
 
                     return arr
 

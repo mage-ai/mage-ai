@@ -521,6 +521,42 @@ def select_streams_in_catalog(catalog: Dict, selected_streams: List[str]) -> Dic
     return catalog_copy
 
 
+def count_records(
+    config: Dict,
+    source_uuid: str,
+    streams: List[str],
+    catalog: Dict = None,
+    catalog_file_path: str = None,
+) -> List[Dict]:
+    arr = []
+
+    for stream in streams:
+        args = [
+            PYTHON_COMMAND,
+            source_module_file_path(source_uuid),
+            '--config_json',
+            json.dumps(config),
+            '--selected_streams_json',
+            json.dumps([stream]),
+            '--count_records',
+        ]
+
+        if catalog:
+            args += [
+                '--catalog_json',
+                json.dumps(catalog),
+            ]
+        elif catalog_file_path:
+            args += [
+                '--catalog',
+                catalog_file_path,
+            ]
+
+        arr += json.loads(__run_in_subprocess(args, config=config))
+
+    return arr
+
+
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:
     try:
         proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

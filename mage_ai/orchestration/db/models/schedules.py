@@ -638,12 +638,15 @@ class PipelineRun(BaseModel):
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
             if block_run.metrics and block and block.is_source():
-                controller_block_uuid = block_run.metrics.get('controller_block_uuid')
+                original_block_uuid = block_run.metrics.get('original_block_uuid')
 
-                if controller_block_uuid and block_run.metrics.get('child'):
-                    if controller_block_uuid not in data_integration_block_uuids_mapping:
-                        data_integration_block_uuids_mapping[controller_block_uuid] = []
-                    data_integration_block_uuids_mapping[controller_block_uuid].append(
+                if original_block_uuid and \
+                        block_run.metrics.get('child') and not \
+                        block_run.metrics.get('controller'):
+
+                    if original_block_uuid not in data_integration_block_uuids_mapping:
+                        data_integration_block_uuids_mapping[original_block_uuid] = []
+                    data_integration_block_uuids_mapping[original_block_uuid].append(
                         block_run.block_uuid,
                     )
 
@@ -667,22 +670,21 @@ class PipelineRun(BaseModel):
                 block = pipeline.get_block(block_run.block_uuid)
 
                 if block and block.is_source():
-                    if block_run.metrics:
-                        controller_block_uuid = block_run.metrics.get('controller_block_uuid')
-                        # This block run is a child or the terminal
-                        if controller_block_uuid:
-                            # If this is the original block, it must depend on all the children
-                            if block_run.metrics.get('original'):
-                                child_block_uuids = data_integration_block_uuids_mapping.get(
-                                    controller_block_uuid,
-                                )
+                    if block_run.metrics and block_run.metrics.get('original'):
+                        # If this is the original block, it must depend on all the children
+                        # except the children that are controllers.
 
-                                if child_block_uuids:
-                                    upstream_block_uuids_override = child_block_uuids
-                                else:
-                                    upstream_block_uuids_override = [
-                                        controller_block_uuid,
-                                    ]
+                        child_block_uuids = data_integration_block_uuids_mapping.get(
+                            block.uuid,
+                        )
+                        controller_block_uuid = block_run.metrics.get('controller_block_uuid')
+
+                        if child_block_uuids:
+                            upstream_block_uuids_override = child_block_uuids
+                        elif controller_block_uuid:
+                            upstream_block_uuids_override = [
+                                controller_block_uuid,
+                            ]
 
                 completed = block is not None and \
                     block.all_upstream_blocks_completed(
@@ -1005,32 +1007,52 @@ class BlockRun(BaseModel):
         block_uuid = self.block_uuid
 
         if self.metrics and block.is_data_integration():
+            child = self.metrics.get('child')
+            controller = self.metrics.get('controller')
+
             # Data integration child block run
-            if self.metrics.get('child'):
-                # [block UUID]:[source UUID]:[stream]:[index]
+            if child:
+                # [block UUID]:[source UUID]:[stream]:[controller|index]
                 parts = self.block_uuid.split(':')
-                if len(parts) >= 3:
+                if len(parts) >= 4:
+                    source_destination_uuid = parts[1]
                     stream = parts[2]
-                    data = pipeline.get_block_variable(
-                        block_uuid=block.uuid,
-                        variable_name=stream,
-                        partition=self.pipeline_run.execution_partition,
-                        sample_count=sample_count or DATAFRAME_SAMPLE_COUNT,
-                    )
-                    if data:
-                        columns = data.get('columns')
+                    index = parts[3]
+
+                    if controller:
                         return [
                             dict(
-                                sample_data=dict(
-                                    columns=columns,
-                                    rows=data.get('rows'),
-                                ),
-                                shape=[None, len(columns)],
-                                type=DataType.TABLE,
-                                variable_uuid=stream,
+                                text_data='This block run controls all the child blocks '
+                                f'starting with {block.uuid} for stream {stream}.\n'
+                                'To view the output of this block, click on the child block runs '
+                                'that start with\n'
+                                f'{block.uuid}:{source_destination_uuid}:{stream}:[index].',
+                                type=DataType.TEXT,
+                                variable_uuid='controller',
                             ),
                         ]
-            elif self.metrics.get('controller'):
+                    else:
+                        data = pipeline.get_block_variable(
+                            block_uuid=block.uuid,
+                            variable_name=stream,
+                            partition=self.pipeline_run.execution_partition,
+                            index=index,
+                            sample_count=sample_count or DATAFRAME_SAMPLE_COUNT,
+                        )
+                        if data:
+                            columns = data.get('columns')
+                            return [
+                                dict(
+                                    sample_data=dict(
+                                        columns=columns,
+                                        rows=data.get('rows'),
+                                    ),
+                                    shape=[None, len(columns)],
+                                    type=DataType.TABLE,
+                                    variable_uuid=stream,
+                                ),
+                            ]
+            elif controller and not child:
                 return [
                     dict(
                         text_data='This block run controls all the child blocks '
