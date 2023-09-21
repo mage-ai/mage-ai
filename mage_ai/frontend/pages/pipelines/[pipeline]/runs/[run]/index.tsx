@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -31,16 +31,15 @@ import buildTableSidekick, {
   TAB_TREE,
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
-import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
-
-const MAX_COLUMNS = 40;
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
@@ -51,6 +50,7 @@ function PipelineBlockRuns({
   pipeline: pipelineProp,
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const router = useRouter();
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
@@ -135,20 +135,11 @@ function PipelineBlockRuns({
     loading: loadingOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
 
-  const {
-    sample_data: blockSampleData,
-    text_data: textData,
-    type: dataType,
-  }: OutputType = dataOutput?.outputs?.[0] || {};
-
   useEffect(() => {
     if (!selectedRun && selectedTabSidekick?.uuid === TAB_OUTPUT.uuid) {
       setSelectedTabSidekick(TAB_TREE);
     }
   }, [selectedRun, selectedTabSidekick?.uuid]);
-
-  const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
-  const rows = blockSampleData?.rows || [];
 
   const tableBlockRuns = useMemo(() => (
     <BlockRunsTable
@@ -215,6 +206,24 @@ function PipelineBlockRuns({
     </Spacing>
   ), [page, pipelineRunId, pipelineUUID, q, router, totalBlockRuns]);
 
+  const buildSidekick = useCallback(props => buildTableSidekick({
+    ...props,
+    blockRuns,
+    loadingData: loadingOutput,
+    outputs: dataOutput?.outputs,
+    selectedRun,
+    selectedTab: selectedTabSidekick,
+    setSelectedTab: setSelectedTabSidekick,
+    showDynamicBlocks: true,
+  }), [
+    blockRuns,
+    dataOutput,
+    loadingOutput,
+    selectedRun,
+    selectedTabSidekick,
+    setSelectedTabSidekick,
+  ]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -226,22 +235,13 @@ function PipelineBlockRuns({
           },
         },
         {
-          label: () => pipelineRunExecutionDate,
+          label: () => (displayLocalTimezone
+            ? datetimeInLocalTimezone(pipelineRunExecutionDate, displayLocalTimezone)
+            : pipelineRunExecutionDate
+          ),
         },
       ]}
-      buildSidekick={props => buildTableSidekick({
-        ...props,
-        blockRuns,
-        columns,
-        dataType,
-        loadingData: loadingOutput,
-        rows,
-        selectedRun,
-        selectedTab: selectedTabSidekick,
-        setSelectedTab: setSelectedTabSidekick,
-        showDynamicBlocks: true,
-        textData,
-      })}
+      buildSidekick={buildSidekick}
       errors={errors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}

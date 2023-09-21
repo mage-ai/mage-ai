@@ -2,12 +2,25 @@ import hashlib
 import json
 import platform
 from datetime import datetime
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 import aiohttp
 import pytz
 
+from mage_ai.cache.block_action_object.constants import (
+    OBJECT_TYPE_BLOCK_FILE,
+    OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
+    OBJECT_TYPE_MAGE_TEMPLATE,
+)
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
+    CustomBlockTemplate,
+)
+from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
+    CustomPipelineTemplate,
+)
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
@@ -20,15 +33,111 @@ from mage_ai.usage_statistics.constants import (
     EventNameType,
     EventObjectType,
 )
+from mage_ai.usage_statistics.utils import build_event_data_for_chart
 
 
 class UsageStatisticLogger():
     def __init__(self, project=None):
         self.project = project or Project()
 
+    async def block_create(
+        self,
+        block: Block,
+        block_action_object: Dict = None,
+        custom_template: CustomBlockTemplate = None,
+        payload_config: Dict = None,
+        pipeline: Pipeline = None,
+        replicated_block: Block = None,
+    ) -> bool:
+        event_properties = dict(
+            block=dict(
+                language=block.language,
+                type=block.type,
+            ),
+        )
+
+        created_from = None
+        if block_action_object and block_action_object.get('object_type'):
+            created_from = 'block_action_object'
+            object_type = block_action_object.get('object_type')
+
+            if OBJECT_TYPE_BLOCK_FILE == object_type:
+                created_from = 'existing_block'
+            elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
+                created_from = 'custom_template'
+            elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
+                created_from = 'mage_template'
+        elif custom_template:
+            created_from = 'custom_template'
+        elif replicated_block:
+            created_from = 'replicated_block'
+        elif payload_config and payload_config.get('template_path'):
+            created_from = 'mage_template'
+        elif block.already_exists:
+            created_from = 'existing_block'
+
+        if created_from:
+            event_properties['action_properties'] = dict(
+                created_from=created_from,
+            )
+
+            if block_action_object and block_action_object.get('object_type'):
+                event_properties['action_properties']['block_action_object_type'] = \
+                    block_action_object.get('object_type')
+
+            if payload_config and payload_config.get('template_path'):
+                event_properties['action_properties']['template_path'] = payload_config.get(
+                    'template_path',
+                )
+
+        if pipeline:
+            event_properties['pipeline'] = dict(
+                type=pipeline.type,
+            )
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.BLOCK,
+            ),
+            event_properties,
+        ))
+
     @property
     def help_improve_mage(self) -> bool:
         return self.project.help_improve_mage
+
+    async def chart_impression(self, chart_config: Dict) -> bool:
+        return await self.__send_message(
+            dict(
+                action=EventActionType.IMPRESSION,
+                chart=build_event_data_for_chart(chart_config),
+                object=EventObjectType.CHART,
+            ),
+        )
+
+    async def custom_template_create(
+        self,
+        custom_template: Union[CustomBlockTemplate, CustomPipelineTemplate],
+    ) -> bool:
+        event_properties = {}
+
+        if isinstance(custom_template, CustomBlockTemplate):
+            event_properties['block'] = dict(
+                language=custom_template.language,
+                type=custom_template.block_type,
+            )
+        elif isinstance(custom_template, CustomPipelineTemplate):
+            if custom_template.pipeline:
+                event_properties['pipeline'] = dict(
+                    type=custom_template.pipeline.get('type'),
+                )
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.CUSTOM_TEMPLATE,
+            ),
+            event_properties,
+        ))
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -66,6 +175,39 @@ class UsageStatisticLogger():
                 pipeline_runs=count_func(),
             ),
         )
+
+    async def pipeline_create(
+        self,
+        pipeline: Pipeline,
+        clone_pipeline_uuid: str = None,
+        llm_payload: Dict = None,
+        template_uuid: str = None,
+    ) -> bool:
+        event_properties = dict(
+            pipeline=dict(
+                type=pipeline.type,
+            ),
+        )
+
+        created_from = None
+        if clone_pipeline_uuid:
+            created_from = 'clone'
+        elif llm_payload:
+            created_from = 'llm'
+        elif template_uuid:
+            created_from = 'custom_template'
+
+        if created_from:
+            event_properties['action_properties'] = dict(
+                created_from=created_from,
+            )
+
+        return await self.__send_message(merge_dict(dict(
+                action=EventActionType.CREATE,
+                object=EventObjectType.PIPELINE,
+            ),
+            event_properties,
+        ))
 
     async def pipelines_impression(self, count_func: Callable) -> bool:
         if not self.help_improve_mage:
@@ -146,6 +288,9 @@ class UsageStatisticLogger():
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
     ) -> bool:
+        if not self.help_improve_mage:
+            return False
+
         if data is None:
             data = {}
 

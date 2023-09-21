@@ -6,15 +6,16 @@ import os
 import sys
 import time
 import traceback
-from contextlib import redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
 from queue import Queue
-from typing import Any, Callable, Dict, List, Set, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import pandas as pd
 import simplejson
+import yaml
 from jinja2 import Template
 
 import mage_ai.data_preparation.decorators
@@ -22,6 +23,8 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
+from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -224,7 +227,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block:
+class Block(SourceMixin):
     def __init__(
         self,
         name: str,
@@ -261,6 +264,7 @@ class Block:
         self.has_callback = has_callback
         self.timeout = timeout
         self.retry_config = retry_config
+        self.already_exists = None
 
         self._outputs = None
         self._outputs_loaded = False
@@ -293,6 +297,10 @@ class Block:
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
+
+        # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
+        self._data_integration = None
+        self._data_integration_loaded = False
 
     @property
     def uuid(self) -> str:
@@ -517,6 +525,7 @@ class Block:
 
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
+        already_exists = False
 
         # Don’t create a file if block is replicated from another block.
 
@@ -537,6 +546,7 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
+                already_exists = True
                 if (pipeline is not None and pipeline.has_block(
                     uuid,
                     block_type=block_type,
@@ -570,6 +580,7 @@ class Block:
             pipeline=pipeline,
             replicated_block=replicated_block,
         )
+        block.already_exists = already_exists
 
         if BlockType.DBT == block.type:
             if block.file_path and not block.file.exists():
@@ -711,6 +722,7 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        from_notebook: bool = False,
         **kwargs
     ) -> Dict:
         """
@@ -755,6 +767,7 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 logging_tags=logging_tags,
+                from_notebook=from_notebook,
                 **kwargs
             )
         except Exception as e:
@@ -765,6 +778,7 @@ class Block:
                     logger=logger,
                     logging_tags=logging_tags,
                     parent_block=self,
+                    from_notebook=from_notebook,
                 )
             raise e
 
@@ -775,6 +789,7 @@ class Block:
                 logger=logger,
                 logging_tags=logging_tags,
                 parent_block=self,
+                from_notebook=from_notebook,
             )
 
         return output
@@ -801,6 +816,7 @@ class Block:
         run_settings: Dict = None,
         output_messages_to_logs: bool = False,
         disable_json_serialization: bool = False,
+        data_integration_runtime_settings: Dict = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -853,6 +869,7 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
             block_output = self.post_process_output(output)
@@ -872,7 +889,10 @@ class Block:
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables and self.pipeline and self.pipeline.type != PipelineType.INTEGRATION:
+            if store_variables and \
+                    self.pipeline and \
+                    self.pipeline.type != PipelineType.INTEGRATION:
+
                 try:
                     self.store_variables(
                         variable_mapping,
@@ -1027,6 +1047,7 @@ class Block:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1040,15 +1061,13 @@ class Block:
                 block_uuid=self.uuid,
             ),
         )
-        # Set up logger
-        if build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
 
-        with redirect_stdout(stdout):
+        with self._redirect_streams(
+            build_block_output_stdout=build_block_output_stdout,
+            from_notebook=from_notebook,
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 input_args,
@@ -1056,6 +1075,7 @@ class Block:
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
             )
 
             outputs_from_input_vars = {}
@@ -1089,10 +1109,44 @@ class Block:
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
+                data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
 
         return dict(output=outputs)
+
+    @contextmanager
+    def _redirect_streams(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        from_notebook: bool = False,
+        logger: Logger = None,
+        logging_tags: Dict = None,
+    ) -> Generator[None, None, None]:
+        """
+        Redirect stdout and stderr based on the input arguments. If no input arguments are
+        passed in, then stdout and stderr will be redirected to system stdout.
+
+        Args:
+            build_block_output_stdout (optional): A function that returns a file-like object.
+            from_notebook (optional): Whether the block is being executed from the notebook.
+                Defaults to False.
+            logger (optional): A logger object.
+            logging_tags (optional): A dictionary of logging tags.
+
+        Returns:
+            Generator: A contextmanager generator that yields the redirected stdout and stderr.
+                The return value is meant to be used in a with statement.
+        """
+        if build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None and not from_notebook:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+
+        with redirect_stdout(stdout) as out, redirect_stderr(stdout) as err:
+            yield (out, err)
 
     def _execute_block(
         self,
@@ -1110,8 +1164,43 @@ class Block:
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> List:
+        if logging_tags is None:
+            logging_tags = dict()
+
+        if input_vars is None:
+            input_vars = list()
+
+        if self.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_vars,
+            partition=execution_partition,
+        ):
+            return execute_source(
+                self,
+                outputs_from_input_vars=outputs_from_input_vars,
+                custom_code=custom_code,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                input_vars=input_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                input_from_output=input_from_output,
+                runtime_arguments=runtime_arguments,
+                upstream_block_uuids=upstream_block_uuids,
+                run_settings=run_settings,
+                data_integration_runtime_settings=data_integration_runtime_settings,
+                **kwargs,
+            )
+
         decorated_functions = []
         test_functions = []
 
@@ -1119,11 +1208,6 @@ class Block:
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
-
-        if logging_tags is None:
-            logging_tags = dict()
-        if input_vars is None:
-            input_vars = list()
 
         if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type:
@@ -1133,6 +1217,8 @@ class Block:
         elif os.path.exists(self.file_path):
             with open(self.file_path) as file:
                 exec(file.read(), results)
+
+        outputs = None
 
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
@@ -1160,43 +1246,60 @@ class Block:
         input_vars: List,
         from_notebook: bool = False,
         global_vars: Dict = None,
+        initialize_decorator_modules: bool = True,
     ) -> Dict:
         block_function_updated = block_function
-        if from_notebook:
-            # Initialize module
-            if self.language == BlockLanguage.PYTHON:
-                try:
-                    block_uuid = self.uuid
-                    block_file_path = self.file_path
-                    if self.replicated_block:
-                        block_uuid = self.replicated_block
-                        block_file_path = self.replicated_block_object.file_path
-                    spec = importlib.util.spec_from_file_location(
-                        block_uuid,
-                        block_file_path,
-                    )
-                    module = importlib.util.module_from_spec(spec)
-                    # Set the decorators in the module in case they are not defined in the block
-                    # code
-                    setattr(
-                        module,
-                        self.type,
-                        getattr(mage_ai.data_preparation.decorators, self.type),
-                    )
-                    module.test = mage_ai.data_preparation.decorators.test
-                    spec.loader.exec_module(module)
-                    block_function_updated = getattr(module, block_function.__name__)
-                    self.module = module
-                except Exception:
-                    print('Falling back to default block execution...')
+
+        if from_notebook and initialize_decorator_modules:
+            block_function_updated = self.__initialize_decorator_modules(
+                block_function,
+                [self.type],
+            )
 
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
         return output
+
+    def __initialize_decorator_modules(
+        self,
+        block_function: Callable,
+        decorator_module_names: List[str],
+    ) -> Callable:
+        # Initialize module
+        block_uuid = self.uuid
+        block_file_path = self.file_path
+        if self.replicated_block:
+            block_uuid = self.replicated_block
+            block_file_path = self.replicated_block_object.file_path
+
+        spec = importlib.util.spec_from_file_location(block_uuid, block_file_path)
+        module = importlib.util.module_from_spec(spec)
+
+        for module_name in decorator_module_names:
+            # Set the decorators in the module in case they are not defined in the block code
+            setattr(
+                module,
+                module_name,
+                getattr(mage_ai.data_preparation.decorators, module_name),
+            )
+
+        module.test = mage_ai.data_preparation.decorators.test
+
+        try:
+            spec.loader.exec_module(module)
+            block_function_updated = getattr(module, block_function.__name__)
+            self.module = module
+
+            return block_function_updated
+        except Exception:
+            print('Falling back to default block execution...')
+
+        return block_function
 
     def exists(self) -> bool:
         return os.path.exists(self.file_path)
@@ -1208,6 +1311,7 @@ class Block:
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
+        from_notebook: bool = False,
         upstream_block_uuids: List[str] = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
@@ -1218,6 +1322,7 @@ class Block:
             global_vars,
             dynamic_block_index,
             dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
         )
 
     def get_analyses(self) -> List:
@@ -1266,7 +1371,9 @@ class Block:
             partition=execution_partition,
         )
         if not include_print_outputs:
-            all_variables = self.output_variables(execution_partition=execution_partition)
+            all_variables = self.output_variables(
+                execution_partition=execution_partition,
+            )
 
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
@@ -1302,7 +1409,9 @@ class Block:
                         )
                     except Exception:
                         analysis = None
-                    if analysis is not None:
+                    if analysis is not None and \
+                            (analysis.get('statistics') or analysis.get('metadata')):
+
                         stats = analysis.get('statistics', {})
                         column_types = (analysis.get('metadata') or {}).get('column_types', {})
                         row_count = stats.get('original_row_count', stats.get('count'))
@@ -1589,6 +1698,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     async def to_dict_async(
         self,
+        include_block_catalog: bool = False,
         include_block_metadata: bool = False,
         include_block_pipelines: bool = False,
         include_block_tags: bool = False,
@@ -1608,6 +1718,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = await self.content_async()
             if self.callback_block is not None:
                 data['callback_content'] = await self.callback_block.content_async()
+
+        if include_block_catalog and \
+                self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
+                BlockLanguage.YAML == self.language and \
+                data.get('content') and \
+                self.pipeline:
+
+            content = data.get('content') or ''
+            if content:
+                config = yaml.safe_load(content)
+                if config.get('source') or config.get('destination'):
+                    data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1687,6 +1809,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if 'timeout' in data and data['timeout'] != self.timeout:
             self.timeout = data['timeout']
             self.__update_pipeline_block()
+
+        if 'catalog' in data and self.pipeline:
+            self.update_catalog_file(data.get('catalog'))
 
         return self
 
@@ -1805,13 +1930,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             return
 
-        if build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        elif logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
         test_functions = []
         if update_tests:
             results = {
@@ -1834,10 +1952,19 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 partition=execution_partition,
                 spark=(global_vars or dict()).get('spark'),
             )
-            for variable in self.output_variables(execution_partition=execution_partition)
+            for variable in self.output_variables(
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
         ]
 
-        with redirect_stdout(stdout):
+        with self._redirect_streams(
+            build_block_output_stdout=build_block_output_stdout,
+            from_notebook=from_notebook,
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             tests_passed = 0
             for func in test_functions:
                 test_function = func
@@ -1878,10 +2005,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             else:
                 print('--------------------------------------------------------------')
                 print(message)
-        if tests_passed != len(test_functions):
-            raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-        with redirect_stdout(stdout):
+            if tests_passed != len(test_functions):
+                raise Exception(f'Failed to pass tests for block {self.uuid}')
+
             handle_run_tests(
                 self,
                 dynamic_block_uuid=dynamic_block_uuid,
@@ -2179,11 +2306,25 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 )
         return objs
 
-    def output_variables(self, execution_partition: str = None) -> List[str]:
+    def output_variables(
+        self,
+        execution_partition: str = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
+    ) -> List[str]:
         return output_variables(
             self.pipeline,
             self.uuid,
             execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+
         )
 
     def output_variable_objects(
@@ -2449,12 +2590,10 @@ class ConditionalBlock(AddonBlock):
         logging_tags: Dict = None,
         **kwargs
     ) -> bool:
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
-        with redirect_stdout(stdout):
+        with self._redirect_streams(
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2510,14 +2649,13 @@ class CallbackBlock(AddonBlock):
         logger: Logger = None,
         logging_tags: Dict = None,
         parent_block: Block = None,
+        from_notebook: bool = False,
         **kwargs
     ) -> None:
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        else:
-            stdout = sys.stdout
-
-        with redirect_stdout(stdout):
+        with self._redirect_streams(
+            logger=logger,
+            logging_tags=logging_tags,
+        ):
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2552,6 +2690,7 @@ class CallbackBlock(AddonBlock):
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
                 upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 

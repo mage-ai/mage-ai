@@ -20,17 +20,19 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
 import LayoutDivider from './LayoutDivider';
+import Link from '@oracle/elements/Link';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
-import { CHART_TYPES } from '@interfaces/ChartBlockType';
+import { ChartTypeEnum, CHART_TYPES } from '@interfaces/ChartBlockType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -74,11 +76,11 @@ function BlockLayout({
   const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, 200));
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 40));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(Math.max(
     get(localStorageKeyBefore),
-    UNIT * 13,
+    UNIT * 50,
   ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
@@ -544,21 +546,21 @@ function BlockLayout({
     <FlexContainer
       justifyContent="center"
     >
-      <Spacing my={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+      <Spacing my={3 * UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
         <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Spacing mb={1}>
             <Headline center>
-              You currently have no content added
+              Create a custom dashboard
             </Headline>
           </Spacing>
 
           <Text center default>
-            To get started, you can create a new chart and customize it to your needs.
+            Build your own dashboard with customizable charts with the exact insights you need.
           </Text>
 
           {pageBlockLayoutTemplate && (
             <Text center default>
-              Or, you can add recommended charts with a click of a button.
+              Get started with a recommended set of freely define your own.
             </Text>
           )}
         </Spacing>
@@ -623,6 +625,20 @@ function BlockLayout({
     dataPipelineSchedules,
   ]);
 
+  const blockForChartConfigurations = useMemo(() => ({
+    ...selectedBlockItem,
+    ...objectAttributes,
+    data: {
+      ...selectedBlockItem?.data,
+      ...objectAttributes?.data,
+      ...blockLayoutItemServer?.data,
+    },
+  }), [
+    blockLayoutItemServer,
+    objectAttributes,
+    selectedBlockItem,
+  ]);
+
   const before = useMemo(() => (
     <div
       style={{
@@ -667,7 +683,6 @@ function BlockLayout({
           onChange={e => setObjectAttributes(prev => ({
             ...prev,
             configuration: {
-              ...prev?.configuration,
               chart_type: e.target.value,
             },
           }))}
@@ -675,7 +690,7 @@ function BlockLayout({
           primary
           value={objectAttributes?.configuration?.chart_type || ''}
         >
-          {CHART_TYPES.map(val => (
+          {CHART_TYPES.concat(ChartTypeEnum.CUSTOM).map(val => (
             <option key={val} value={val}>
               {capitalize(val)}
             </option>
@@ -907,7 +922,7 @@ function BlockLayout({
           primary
           setContentOnMount
           type="number"
-          value={objectAttributes?.data_source?.refresh_interval || ''}
+          value={objectAttributes?.data_source?.refresh_interval || 60000}
         />
       </Spacing>
 
@@ -922,16 +937,18 @@ function BlockLayout({
       </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Text default>
+          Number of columns from data source: {typeof blockForChartConfigurations?.data?.columns !== 'undefined' ? (
+            <Text bold inline monospace>
+              {blockForChartConfigurations?.data?.columns?.length}
+            </Text>
+          ) : <Spacing mt={1}><Spinner inverted small /></Spacing>}
+        </Text>
+      </Spacing>
+
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
         <ChartConfigurations
-          block={{
-            ...selectedBlockItem,
-            ...objectAttributes,
-            data: {
-              ...selectedBlockItem?.data,
-              ...objectAttributes?.data,
-              ...blockLayoutItemServer?.data,
-            },
-          }}
+          block={blockForChartConfigurations}
           updateConfiguration={(configuration) => {
             setObjectAttributes(prev => ({
               ...prev,
@@ -945,18 +962,35 @@ function BlockLayout({
       </Spacing>
     </div>
   ), [
-    blockLayoutItemServer,
+    blockForChartConfigurations,
     blocksFromPipeline,
     objectAttributes,
     pipelineSchedules,
     pipelines,
-    selectedBlockItem,
     setObjectAttributes,
     topOffset,
   ]);
 
   const after = useMemo(() => selectedBlockItem && (
     <Spacing py={PADDING_UNITS}>
+      <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <Headline>
+            Custom code
+          </Headline>
+        </Spacing>
+
+        <Text default>
+          Write code for custom data sources, parsing, etc.
+          For more information on what is possible, please check out the <Link
+            href="https://docs.mage.ai/visualizations/dashboards#custom-code-for-chart"
+            openNewWindow
+          >
+            chart documentation
+          </Link>.
+        </Text>
+      </Spacing>
+
       <CodeEditor
         autoHeight
         block={selectedBlockItem}
@@ -985,12 +1019,36 @@ function BlockLayout({
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeFooter={!beforeHidden && (
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer>
+            <Button
+              fullWidth
+              loading={isLoadingUpdateBlockLayoutItem}
+              onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+              primary
+            >
+              Save changes
+            </Button>
+
+            <Spacing mr={1} />
+
+            <Button
+              fullWidth
+              onClick={() => setSelectedBlockItem(null)}
+              secondary
+            >
+              Back to dashboard
+            </Button>
+          </FlexContainer>
+        </Spacing>
+      )}
       beforeHeader={(
         <>
           <Breadcrumbs
             breadcrumbs={[
               {
-                label: () => 'All content',
+                label: () => 'Back to dashboard',
                 onClick: () => setSelectedBlockItem(null),
               },
               {
@@ -1025,9 +1083,10 @@ function BlockLayout({
           <Flex flex={1}>
           </Flex>
 
-          {beforeHidden && (
+          {beforeHidden && !isEmpty && (
             <Spacing p={PADDING_UNITS}>
-              <FlyoutMenuWrapper
+              {/* TODO (dangerous): uncomment below when there are more than 1 dropdown option */}
+              {/*<FlyoutMenuWrapper
                 items={[
                   // {
                   //   label: () => 'Existing chart',
@@ -1057,17 +1116,14 @@ function BlockLayout({
                 >
                   Add content
                 </Button>
-              </FlyoutMenuWrapper>
-            </Spacing>
-          )}
-          {!beforeHidden && (
-            <Spacing p={PADDING_UNITS}>
+              </FlyoutMenuWrapper>*/}
+
               <Button
-                loading={isLoadingUpdateBlockLayoutItem}
-                onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+                beforeIcon={<Add size={UNIT * 2} />}
+                onClick={() => createNewBlockItem()}
                 primary
               >
-                Save content
+                Create new chart
               </Button>
             </Spacing>
           )}

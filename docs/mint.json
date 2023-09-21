@@ -340,7 +340,8 @@
                 "getting-started/setting-up-git",
                 "getting-started/file-versions"
               ]
-            }
+            },
+            "development/project/local-timezone"
           ]
         },
         {
@@ -430,6 +431,14 @@
             "development/data-validation",
             "development/testing/great-expectations",
             "development/testing/unit-tests"
+          ]
+        },
+        "development/ai/overview",
+        {
+          "group": "Visualizations",
+          "icon": "chart-line-up-down",
+          "pages": [
+            "visualizations/dashboards"
           ]
         },
         "development/updating-mage",

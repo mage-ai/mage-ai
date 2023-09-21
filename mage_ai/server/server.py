@@ -176,7 +176,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if template_dir is None:
         template_dir = os.path.join(os.path.dirname(__file__), EXPORTS_FOLDER)
     routes = [
-        (r'/', MainPageHandler),
+        (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
         (r'/pipelines', MainPageHandler),
@@ -194,7 +194,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
-            {'path': os.path.join(template_dir, '_next/static')},
+            {'path': os.path.join(template_dir, '_next', 'static')},
         ),
         (
             r'/fonts/(.*)',
@@ -268,11 +268,8 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if update_routes:
         updated_routes = []
         for route in routes:
-            if route[0] == r'/':
-                updated_routes.append((f'/{ROUTES_BASE_PATH}', *route[1:]))
-            else:
-                updated_routes.append(
-                    (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
+            updated_routes.append(
+                (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
     else:
         updated_routes = routes
 

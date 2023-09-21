@@ -5,6 +5,7 @@ import pandas as pd
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.presenters.charts.data_sources.base import ChartDataSourceBase
+from mage_ai.presenters.charts.data_sources.constants import DEFAULT_LIMIT
 from mage_ai.shared.hash import merge_dict
 
 
@@ -19,7 +20,7 @@ class ChartDataSourcePipelineSchedules(ChartDataSourceBase):
         response = await BaseOperation(
             action=constants.LIST,
             meta=merge_dict({
-                constants.META_KEY_LIMIT: 10000,
+                constants.META_KEY_LIMIT: DEFAULT_LIMIT,
             }, meta or {}),
             query=variables,
             resource='pipeline_schedules',

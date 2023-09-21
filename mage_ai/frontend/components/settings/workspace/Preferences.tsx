@@ -15,12 +15,14 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
-import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
 
 type PreferencesProps = {
@@ -67,6 +69,7 @@ function Preferences({
             fetchProjects();
             setProjectAttributes(p);
             setEditingOpenAIKey(false);
+            storeLocalTimezoneSetting(p?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]);
 
             if (onSaveSuccess) {
               onSaveSuccess?.(p);
@@ -182,7 +185,7 @@ function Preferences({
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />
 
-      <Panel noPadding>
+      <Panel noPadding overflowVisible>
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
             <Headline level={5}>
@@ -190,29 +193,49 @@ function Preferences({
             </Headline>
           </Spacing>
 
-          {Object.entries(projectAttributes?.features || {}).map(([k, v]) => (
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
+          {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
+            <Spacing
               key={k}
+              mt={idx === 0 ? 0 : '4px'}
             >
-              <Text default monospace>
-                {k}
-              </Text>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Flex>
+                  <Text default monospace>
+                    {k}
+                  </Text>
+                  {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
+                    <Spacing ml={1}>
+                      <Tooltip
+                        block
+                        description="Display dates in local timezone. Please note that certain pages
+                          (e.g. Monitor page) or components (e.g. Pipeline run bar charts) may still
+                          be in UTC time. Dates in local time will have a timezone offset in the
+                          timestamp (e.g. -07:00)."
+                        lightBackground
+                        muted
+                        size={ICON_SIZE_MEDIUM}
+                      />
+                    </Spacing>
+                  }
+                </Flex>
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <ToggleSwitch
-                checked={!!v}
-                onCheck={() => setProjectAttributes(prev => ({
-                  ...prev,
-                  features: {
-                    ...projectAttributes?.features,
-                    [k]: !v,
-                  },
-                }))}
-              />
-            </FlexContainer>
+                <ToggleSwitch
+                  checked={!!v}
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
           ))}
         </Spacing>
       </Panel>

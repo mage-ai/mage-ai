@@ -30,6 +30,7 @@ BlockPolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_read([
+    'catalog',
     'content',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -57,6 +58,7 @@ BlockPolicy.allow_read([
 
 BlockPolicy.allow_write([
     'block_action_object',
+    'catalog',
     'color',
     'config',
     'configuration',
@@ -84,6 +86,7 @@ BlockPolicy.allow_write([
     'all_upstream_blocks_executed',
     'bookmark_values',
     'callback_blocks',
+    'catalog',
     'color',
     'conditional_blocks',
     'configuration',

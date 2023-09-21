@@ -24,7 +24,7 @@ import PipelineType, {
 } from '@interfaces/PipelineType';
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { SortedColumnType } from '@components/shared/Table';
@@ -53,9 +53,14 @@ import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/c
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
@@ -64,6 +69,7 @@ import { goToWithQuery } from '@utils/routing';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 
@@ -132,6 +138,11 @@ function PipelineListPage() {
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const displayLocalTimezone = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
@@ -969,9 +980,11 @@ function PipelineListPage() {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
                 },
                 {
+                  ...timezoneTooltipProps,
                   uuid: 'Updated at',
                 },
                 {
+                  ...timezoneTooltipProps,
                   uuid: 'Created at',
                 },
                 {
@@ -1158,8 +1171,8 @@ function PipelineListPage() {
                   <Text
                     default
                     key={`pipeline_description_${idx}`}
+                    preWrap
                     title={description}
-                    width={UNIT * 90}
                   >
                     {description}
                   </Text>,
@@ -1172,17 +1185,21 @@ function PipelineListPage() {
                     key={`pipeline_updated_at_${idx}`}
                     monospace
                     small
-                    title={updatedAt}
+                    title={updatedAt ? `UTC: ${updatedAt}` : null}
                   >
-                    {updatedAt ? updatedAt.slice(0, -3) : <>&#8212;</>}
+                    {updatedAt
+                      ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
+                      : <>&#8212;</>}
                   </Text>,
                   <Text
                     key={`pipeline_created_at_${idx}`}
                     monospace
                     small
-                    title={createdAt}
+                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
                   >
-                    {createdAt ? createdAt.slice(0, 16) : <>&#8212;</>}
+                    {createdAt
+                      ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
+                      : <>&#8212;</>}
                   </Text>,
                   tagsEl,
                   <Text

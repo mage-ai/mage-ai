@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 import uuid
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from logging import Logger
 from typing import Callable, Dict, List, Tuple
@@ -1046,8 +1046,8 @@ def build_command_line_arguments(
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
     variables = merge_dict(
-        variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
+        variables or {},
     )
     dbt_command = (block.configuration or {}).get('dbt', {}).get('command', 'run')
 
@@ -1285,7 +1285,7 @@ def run_dbt_tests(
 
     number_of_errors = 0
 
-    with redirect_stdout(stdout):
+    with redirect_stdout(stdout), redirect_stderr(stdout):
         lines = proc1.stdout.decode().split('\n')
         for _, line in enumerate(lines):
             print(line)

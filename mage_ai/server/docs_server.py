@@ -6,7 +6,7 @@ from mage_ai.settings.repo import get_repo_path
 
 
 def get_dbt_target_path():
-    return os.path.join(get_repo_path(), 'dbt/target')
+    return os.path.join(get_repo_path(), 'dbt', 'target')
 
 
 def run_docs_server():

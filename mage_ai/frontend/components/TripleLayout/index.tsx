@@ -19,8 +19,9 @@ import {
   ASIDE_HEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
-  AsideHeaderStyle,
+  AsideFooterStyle,
   AsideHeaderInnerStyle,
+  AsideHeaderStyle,
   AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
@@ -65,6 +66,7 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeFooter?: any;
   beforeHeader?: any;
   beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
@@ -103,6 +105,7 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeFooter,
   beforeHeader,
   beforeHeaderOffset,
   beforeHeightOffset,
@@ -332,6 +335,7 @@ function TripleLayout({
   ), [
     after,
     afterHeader,
+    afterHeaderOffset,
     afterHeightOffset,
     afterHidden,
     afterOverflow,
@@ -348,10 +352,14 @@ function TripleLayout({
   const hasBeforeNavigationItems = useMemo(() => beforeNavigationItems?.length >= 1, [
     beforeNavigationItems,
   ]);
+
+  const beforeFooterRef = useRef(null);
+
   const beforeContent = useMemo(() => (
     <>
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
+          contained={contained}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -415,6 +423,11 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
+        contained={contained}
+        heightOffset={beforeFooter
+          ? beforeFooterRef?.current?.getBoundingClientRect()?.height
+          : null
+        }
         noScrollbarTrackBackground
         ref={refBeforeInner}
         verticalOffset={beforeHeader
@@ -424,10 +437,28 @@ function TripleLayout({
       >
         {!beforeHidden && before}
       </BeforeInnerStyle>
+
+      {beforeFooter && (
+        <AsideFooterStyle
+          contained={contained}
+          ref={beforeFooterRef}
+          style={{
+            overflow: beforeHidden
+              ? 'visible'
+              : 'hidden',
+            width: beforeWidthFinal,
+          }}
+        >
+          {beforeFooter}
+        </AsideFooterStyle>
+      )}
     </>
   ), [
     before,
+    beforeFooter,
+    beforeFooterRef,
     beforeHeader,
+    beforeHeaderOffset,
     beforeHeightOffset,
     beforeHidden,
     beforeWidthFinal,

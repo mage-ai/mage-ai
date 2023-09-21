@@ -133,10 +133,26 @@ function CodeOutput({
   setSelectedTab,
 }: CodeOutputProps) {
   const {
+    color: blockColor,
     status,
     type: blockType,
     uuid: blockUUID,
   } = block || {};
+  const borderColorShareProps = useMemo(() => ({
+    blockColor,
+    blockType,
+    dynamicBlock,
+    dynamicChildBlock,
+    hasError,
+    selected,
+  }), [
+    blockColor,
+    blockType,
+    dynamicBlock,
+    dynamicChildBlock,
+    hasError,
+    selected,
+  ]);
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const executedAndIdle = StatusTypeEnum.EXECUTED === status
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
@@ -582,6 +598,7 @@ function CodeOutput({
     <>
       {contained && (
         <ContainerStyle
+          {...borderColorShareProps}
           addBottomPadding={isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK}
           blockType={blockType}
           dynamicBlock={dynamicBlock}
@@ -631,6 +648,7 @@ function CodeOutput({
 
       {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle
+          {...borderColorShareProps}
           blockType={blockType}
           dynamicBlock={dynamicBlock}
           dynamicChildBlock={dynamicChildBlock}

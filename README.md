@@ -21,9 +21,9 @@
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
   <a
-    href="https://www.youtube.com/watch?v=hrsErfPDits"
+    href="https://youtu.be/GswOdShLGmg"
     target="_blank"
-  ><b>Watch 2 min demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
+  ><b>Get a 5 min overview</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
   <a
     href="https://demo.mage.ai"
     target="_blank"
@@ -223,7 +223,7 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 
     <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
 
-1. Create new project and launch tool (change `demo_project` to any other name if you want):
+1. Create a new project and launch tool (change `demo_project` to any other name if you want):
     ```bash
     mage start demo_project
     ```
@@ -240,9 +240,9 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > WARNING
 >
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
-### Demo video (2 min)
+### Demo video (5 min)
 
-[![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
+[![Mage quick start demo](https://github.com/mage-ai/mage-ai/assets/59450879/8e060f39-170f-4291-a8c2-0c2619188708)](https://youtu.be/GswOdShLGmg "Mage quick start demo")
 
 <sub><i>Click the image to play video</i></sub>
 
@@ -337,7 +337,7 @@ These are the fundamental concepts that Mage uses to operate.
 Add features and instantly improve the experience for everyone.
 
 Check out the <b>[contributing guide](https://docs.mage.ai/community/contributing)</b>
-to setup your development environment and start building.
+to set up your development environment and start building.
 
 <br />
 

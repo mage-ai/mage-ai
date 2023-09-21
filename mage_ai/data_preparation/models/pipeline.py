@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import shutil
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import aiofiles
 import pytz
@@ -11,6 +11,9 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    convert_outputs_to_data,
+)
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
@@ -685,6 +688,7 @@ class Pipeline:
 
     async def to_dict_async(
         self,
+        include_block_catalog: bool = False,
         include_block_metadata: bool = False,
         include_block_pipelines: bool = False,
         include_block_tags: bool = False,
@@ -707,6 +711,7 @@ class Pipeline:
         )
         blocks_data = await asyncio.gather(
             *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
+                include_block_catalog=include_block_catalog,
                 include_block_pipelines=include_block_pipelines,
             ))) for b in self.blocks_by_uuid.values()]
         )
@@ -1130,6 +1135,43 @@ class Pipeline:
             block = mapping.get(block_uuid.split(':')[0])
 
         return block
+
+    def get_block_variable(
+        self,
+        block_uuid: str,
+        variable_name: str,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        input_args: List[Any] = None,
+        partition: str = None,
+        spark=None,
+    ):
+        block = self.get_block(block_uuid)
+
+        data_integration_settings = block.get_data_integration_settings(
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_args,
+            partition=partition,
+        )
+
+        if data_integration_settings:
+            return convert_outputs_to_data(
+                block,
+                data_integration_settings.get('catalog'),
+                from_notebook=from_notebook,
+                partition=partition,
+                source_uuid=data_integration_settings.get('source'),
+                stream_id=variable_name,
+            )
+
+        return self.variable_manager.get_variable(
+            self.uuid,
+            block_uuid,
+            variable_name,
+            partition=partition,
+            spark=spark,
+        )
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

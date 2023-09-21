@@ -1,4 +1,5 @@
 from inspect import isawaitable
+
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 
@@ -32,6 +33,7 @@ class KernelPresenter(BasePresenter):
                     # depending on configured KernelManager class
                     res = await res
                 kernel_response['usage'] = res.get('content')
+                control_channel.stop()
             except Exception:
                 pass
 

@@ -75,7 +75,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: "14.19.1"
+          node-version: "18.18.0"
         if: matrix.python-version == '3.10'
       - name: Create Mage test project
         run: |

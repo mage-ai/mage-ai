@@ -120,6 +120,7 @@ Git sync settings (optional)
 * GIT_BRANCH: corresponds to `Branch name`
 * GIT_SYNC_ON_PIPELINE_RUN: corresponds to `Sync before each trigger run`, options: 0 or 1
 * GIT_SYNC_ON_START: corresponds to `Sync on server start up`, options: 0 or 1
+* GIT_SYNC_ON_EXECUTOR_START: If set to "1", Mage will attempt to run a git sync every time an executor is started, options: 0 or 1
 
 Authentication environment variables (optional). Mage will use your saved git secrets if they are available.
 * GIT_SSH_PUBLIC_KEY: SSH public key encoded in base64, used for ssh auth type
