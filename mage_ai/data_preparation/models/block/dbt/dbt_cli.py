@@ -84,11 +84,12 @@ class DBTCli:
         Returns:
             Tuple[Any, bool]: result of the dbt cli call and whether the call was successful
         """
-        self.__logger.info(
-            'Invoke dbt with the following aguments:\n' +
-            'dbt ' +
-            ' '.join(self.__args).replace(' --', ' \\\n  --')
-        )
+        if self.__logger:
+            self.__logger.info(
+                'Invoke dbt with the following aguments:\n' +
+                'dbt ' +
+                ' '.join(self.__args).replace(' --', ' \\\n  --')
+            )
 
         user_config = read_user_config(flags.PROFILES_DIR)
         flags.set_from_args(self.__parsed_args, user_config)
