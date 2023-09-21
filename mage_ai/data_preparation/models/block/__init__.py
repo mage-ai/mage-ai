@@ -1127,15 +1127,19 @@ class Block(SourceMixin):
                 self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
                 any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
             ):
+                # project_path and target sets
                 DBTBlock.materialize_df(
                     df=outputs[0],
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=self.uuid,
-                    project_paths=list(set(
-                        block.project_path
+                    targets=list(set(
+                        (block.project_path, block.target)
                         for _uuid, block in self.pipeline.blocks_by_uuid.items()
                         if isinstance(block, DBTBlock)
-                    ))
+                    )),
+                    logger=logger,
+                    global_vars=global_vars_copy,
+                    runtime_arguments=runtime_arguments,
                 )
 
         return dict(output=outputs)

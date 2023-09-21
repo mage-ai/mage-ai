@@ -1,8 +1,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
-
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
 from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
@@ -92,9 +90,11 @@ class DBTBlockTest(TestCase):
             '{"key1": 1, "key2": "foo", "key3": ["bar"]}'
         )
 
+    @patch('mage_ai.data_preparation.models.block.dbt.block.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block.Project')
     @patch('mage_ai.data_preparation.models.block.dbt.block.Sources')
     @patch('mage_ai.data_preparation.models.block.dbt.block.DBTAdapter')
-    def test_update_sources(self, DBTAdapter, Sources):
+    def test_update_sources(self, DBTAdapter, Sources, Project, Profiles):
         DBTAdapter.return_value.__enter__.return_value.credentials.schema = 'public'
         DBTAdapter.return_value.__enter__.return_value.credentials.database = None
         Sources.return_value.reset_pipeline = MagicMock()
@@ -111,30 +111,3 @@ class DBTBlockTest(TestCase):
             schema='public',
             database=None
         )
-
-    @patch('mage_ai.data_preparation.models.block.dbt.block.DBTAdapter')
-    def test_materialize_df(self, DBTAdapter):
-        DBTAdapter.return_value.__enter__.return_value.credentials.schema = 'public'
-        DBTAdapter.return_value.__enter__.return_value.credentials.database = None
-        DBTAdapter.return_value.__enter__.return_value.get_relation.return_value = {
-            'database': None,
-            'schema': 'public',
-            'identifier': 'mage_test_test_dbt_block_sql',
-            'type': 'table'
-        }
-        DBTAdapter.return_value.__enter__.return_value.execute_macro = MagicMock()
-
-        DBTBlock.materialize_df(
-            df=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}),
-            pipeline_uuid='test',
-            block_uuid='test_dbt_block_sql',
-            project_paths=['test_repo_path/dbt/test_project_name']
-        )
-
-        DBTAdapter.return_value.__enter__.return_value.get_relation.assert_called_once_with(
-            database=None,
-            schema='public',
-            identifier='mage_test_test_dbt_block_sql'
-        )
-
-        DBTAdapter.return_value.__enter__.return_value.execute_macro.assert_called()

@@ -1,18 +1,24 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime
+from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 import simplejson
-from agate import Table
+from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.dbt_adapter import DBTAdapter
+from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
+from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.models.block.dbt.sources import Sources
 from mage_ai.data_preparation.models.constants import BlockLanguage
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
 
@@ -45,6 +51,14 @@ class DBTBlock(Block):
     @property
     def project_path(self) -> Union[str, os.PathLike]:
         pass
+
+    @property
+    def target(self) -> str:
+        target = (self.configuration or {}).get('dbt_profile_target')
+        if target:
+            return target
+        profile_name = Project(self.project_path).project.get('profile')
+        return Profiles(self.project_path).profiles.get(profile_name).get('target')
 
     @property
     def _dbt_configuration(self) -> Dict[str, Any]:
@@ -101,7 +115,10 @@ class DBTBlock(Block):
         df: pd.DataFrame,
         pipeline_uuid: str,
         block_uuid: str,
-        project_paths: List[str]
+        targets: List[Tuple[Union[str, os.PathLike], str]],
+        logger: Logger = None,
+        global_vars: Optional[Dict[str, Any]] = None,
+        runtime_arguments: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Materialize a dataframe for use with a DBTBlock.
@@ -114,44 +131,44 @@ class DBTBlock(Block):
             block_uuid (str): block uuid of the block, which generated the df
             project_paths (List[str]): dbt projects, for which the block should be materialized
         """
-        df_dict = df.to_dict(orient='list')
-        # For each project materialize df
-        for project_path in project_paths:
-            with DBTAdapter(str(project_path)) as dbt_adapter:
-                credentials = dbt_adapter.credentials
-                schema = getattr(credentials, 'schema', 'public')
-                database = getattr(credentials, 'database', None)
+        # Get variables
+        variables = merge_dict(global_vars or {}, runtime_arguments or {})
 
-                relation = dbt_adapter.get_relation(
-                    database=database,
-                    schema=schema,
-                    identifier=f'mage_{pipeline_uuid}_{block_uuid}'
-                )
-                relation_context = dict(this=relation)
+        for (project_path, target) in targets:
+            seed_dir_name = Project(project_path).project.get('seed-paths', ['seeds'])[0]
+            seed_path = Path(
+                project_path,
+                seed_dir_name,
+                f'mage_{pipeline_uuid}',
+                f'mage_{pipeline_uuid}_{block_uuid}.csv'
+            )
+            seed_path.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(seed_path)
 
-                table = Table(
-                    rows=list(map(list, zip(*[v for _, v in df_dict.items()]))),
-                    column_names=df_dict.keys()
-                )
+            target = Template(target).render(
+                variables=lambda x: variables.get(x) if variables else None,
+                **get_template_vars(),
+            )
 
-                dbt_adapter.execute_macro(
-                    'reset_csv_table',
-                    context_overide=relation_context,
-                    model={'config': {}},
-                    old_relation=relation,
-                    full_refresh=True,
-                    agate_table=table
-                )
+            # Interpoalte profiles.yml and invoke dbt
+            with Profiles(project_path, variables) as profiles:
+                args = [
+                    'seed',
+                    '--project-dir', project_path,
+                    '--profiles-dir', profiles.profiles_dir,
+                    '--target', target,
+                    '--select', f'mage_{pipeline_uuid}_{block_uuid}'
+                ]
+                DBTCli(args, logger).invoke()
 
-                dbt_adapter.execute_macro(
-                    'load_csv_rows',
-                    context_overide=relation_context,
-                    model={'config': {}},
-                    agate_table=table
-                )
+            seed_path.unlink()
 
     @classmethod
-    def update_sources(cls, blocks_by_uuid: Dict[str, Block]) -> None:
+    def update_sources(
+        cls,
+        blocks_by_uuid: Dict[str, Block],
+        variables: Optional[Dict[str, str]] = None
+    ) -> None:
         """
         Update the mage_sources.yml for each dbt project in the pipeline based on the pipeline
         blocks. Every non dbt block of langauge SQL, Python or R, which has a downstream
@@ -163,8 +180,8 @@ class DBTBlock(Block):
         # only run if blocks_by_uuid is not empty
         if blocks_by_uuid:
             # get all dbt project, which needs to be updated
-            project_paths = set(
-                block.project_path
+            targets = set(
+                (block.project_path, block.target)
                 for _uuid, block in blocks_by_uuid.items()
                 if isinstance(block, DBTBlock)
             )
@@ -185,13 +202,17 @@ class DBTBlock(Block):
             ))
 
             if block_uuids:
-                for project_path in project_paths:
+                for (project_path, target) in targets:
                     try:
-                        with DBTAdapter(str(project_path)) as dbt_adapter:
+                        with DBTAdapter(
+                            project_path,
+                            variables=variables,
+                            target=target
+                        ) as dbt_adapter:
                             credentials = dbt_adapter.credentials
                             # some databases use other default schema names
                             # e.g. duckdb uses main schema as default
-                            schema = getattr(credentials, 'schema', 'public')
+                            schema = getattr(credentials, 'schema', None)
                             database = getattr(credentials, 'database', None)
 
                         Sources(project_path).reset_pipeline(

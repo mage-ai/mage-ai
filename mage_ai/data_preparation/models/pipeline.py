@@ -984,7 +984,7 @@ class Pipeline:
             )
             for _uuid, block in self.blocks_by_uuid.items()
         ):
-            DBTBlock.update_sources(self.blocks_by_uuid)
+            DBTBlock.update_sources(self.blocks_by_uuid, variables=self.variables)
 
         if should_update_block_cache:
             from mage_ai.cache.block import BlockCache
