@@ -93,8 +93,15 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   }
 
   if (block?.replicated_block) {
-    displayText = block?.replicated_block;
-    subtitle = block?.uuid;
+    if (name) {
+      displayText = name;
+    } else {
+      displayText = block?.replicated_block;
+    }
+
+    if (!description) {
+      subtitle = block?.uuid;
+    }
   }
 
   // Dynamic blocks and data integration blocks

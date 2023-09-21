@@ -39,6 +39,7 @@ class BlockResource(GenericResource):
     def collection(self, query_arg, meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
         block_dicts_by_uuid = {}
+        sources_destinations_by_block_uuid = {}
 
         if isinstance(parent_model, Pipeline):
             for block_uuid, block in parent_model.blocks_by_uuid.items():
@@ -62,6 +63,8 @@ class BlockResource(GenericResource):
                     continue
 
                 block_dict = block.to_dict()
+                if 'tags' not in block_dict:
+                    block_dict['tags'] = []
                 block_dict['uuid'] = block_run_block_uuid
 
                 metrics = block_run.metrics
@@ -72,7 +75,6 @@ class BlockResource(GenericResource):
                     original = metrics.get('original')
                     original_block_uuid = metrics.get('original_block_uuid')
 
-                    parts = block_run_block_uuid.split(':')
                     tags = []
 
                     if original:
@@ -80,25 +82,55 @@ class BlockResource(GenericResource):
                             block_dict['description'] = 'Source'
                         elif BlockType.DATA_EXPORTER == block.type:
                             block_dict['description'] = 'Destination'
-
-                    if not original:
+                    elif controller and not child:
+                        block_dict['description'] = 'Controller'
+                    else:
                         block_dict['name'] = original_block_uuid
 
-                    if controller:
-                        block_dict['description'] = 'Controller'
-
                     if child:
+                        parts = block_run_block_uuid.split(':')
+
+                        source_destination = None
+                        stream = None
+                        index = None
+
+                        if len(parts) >= 2:
+                            source_destination = parts[1]
+
+                            for b_uuid in [
+                                controller_block_uuid,
+                                original_block_uuid,
+                            ]:
+                                if b_uuid not in sources_destinations_by_block_uuid:
+                                    sources_destinations_by_block_uuid[b_uuid] = []
+
+                                if source_destination not in \
+                                        sources_destinations_by_block_uuid[b_uuid]:
+
+                                    sources_destinations_by_block_uuid[b_uuid].append(
+                                        source_destination,
+                                    )
+
+                        if len(parts) >= 3:
+                            stream = parts[2]
+
                         block_mapping[block_run_block_uuid]['uuids'].append(controller_block_uuid)
 
-                        for part in parts[1:-1]:
-                            tags.append(part)
-                        if not controller:
-                            block_dict['description'] = parts[-1]
+                        if controller:
+                            block_dict['description'] = 'Controller'
+                        else:
+                            if len(parts) >= 4:
+                                index = str(parts[3])
+
+                            block_dict['description'] = index
+
                             if original_block_uuid not in block_mapping:
                                 block_mapping[original_block_uuid] = dict(uuids=[])
                             block_mapping[original_block_uuid]['uuids'].append(
                                 block_run_block_uuid,
                             )
+
+                        tags.append(stream)
 
                     if tags:
                         block_dict['tags'] = tags
@@ -110,6 +142,8 @@ class BlockResource(GenericResource):
                     # [block_uuid]:[index_1]:[index_2]...:[index_N]
                     parts_length = len(parts)
                     if parts_length >= 2:
+                        block_dict['description'] = ':'.join(parts[1:])
+
                         e_i = parts_length - 1
                         parts_new = parts[1:e_i]
 
@@ -135,6 +169,12 @@ class BlockResource(GenericResource):
                             if db_uuid not in block_mapping:
                                 block_mapping[db_uuid] = dict(uuids=[])
                             block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
+
+                if block.replicated_block:
+                    block_dict['name'] = block.replicated_block
+                    block_dict['description'] = block.uuid
+
+                block_dict['tags'] += block.tags()
 
                 block_dicts_by_uuid[block_run_block_uuid] = block_dict
 
@@ -164,6 +204,14 @@ class BlockResource(GenericResource):
                         # child blocks and not controllers.
                         block_dicts_by_uuid[block_uuid]['upstream_blocks'] = []
 
+                    if original or (controller and not child):
+                        if block_uuid in sources_destinations_by_block_uuid:
+                            if 'tags' not in block_dicts_by_uuid[block_uuid]:
+                                block_dicts_by_uuid[block_uuid] = []
+                            block_dicts_by_uuid[block_uuid]['tags'].append(
+                                sources_destinations_by_block_uuid[block_uuid],
+                            )
+
                 for ub_uuid in upstream_block_uuids:
                     if ub_uuid in block_dicts_by_uuid[block_uuid]['upstream_blocks']:
                         continue
@@ -175,6 +223,8 @@ class BlockResource(GenericResource):
                             continue
                         elif original:
                             block_dicts_by_uuid[block_uuid]['upstream_blocks'].append(ub_uuid)
+                    else:
+                        block_dicts_by_uuid[block_uuid]['upstream_blocks'].append(ub_uuid)
 
                     ub_block = pipeline.get_block(ub_uuid)
                     # If the upstream block is a dynamic child,
