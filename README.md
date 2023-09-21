@@ -55,7 +55,7 @@
     <img alt="License" src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red" />
   </a>
   <a
-    href="https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A"
+    href="https://www.mage.ai/chat"
     target="_blank"
   >
     <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
@@ -370,7 +370,7 @@ For real-time news, fun memes, data engineering topics, and more, join us on ➝
 
 # 🤔 Frequently Asked Questions (FAQs)
 
-Check out our [FAQ page](https://www.notion.so/mageai/Mage-FAQs-33d93ee65f934ed39568f8a4bc823b39) to find answers to some of our most asked questions.
+Check out our [FAQ page](https://docs.mage.ai/about/frequently-asked-questions) to find answers to some of our most asked questions.
 
 <br />
 
