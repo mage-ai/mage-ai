@@ -1,4 +1,26 @@
 ---
 title: "Using Git in Mage"
 sidebarTitle: "Using Git in Mage"
+description: "There are a number of ways to enable version control, collaboration, and easy deployment using Git in Mage. Read on to learn more."
 ---
+
+## Choose your adventure
+
+There three different ways to use Git in Mage and _four_ ways to version control your files— we'll discussing each of them.
+
+First, if you're simply looking for version control, you're in luck! It ships out-of-the-box
+with Mage. That means you can _always_ restore previous versions of your files, even if you haven't configured
+any version control system. Check out [this page](/getting-started/file-versions) for more info.
+
+| Recommended | Use                                                 | Recommendation          | Ease of use | Functionality          |
+| ----------- | --------------------------------------------------- | ----------------------- | ----------- | ---------------------- |
+| ✅          | I want to see a history of my file edits            | [Mage version control](/getting-started/file-versions)    | Beginner    | File-level versioning  |
+| ✅          | I want to develop/deploy Mage using Git with GitHub | [GitHub version control](/production/data-sync/github)     | Moderate    | Full w/ OAuth          |
+| ✅          | I want to deploy Mage using Git with any provider   | [Git integration with Git Sync](/production/data-sync/git) | Advanced    | Full w/ SSH/HTTPS Auth |
+| 🚫          | I want to develop Mage using Git with any provider  | [Git integration _without_ Git Sync](/production/data-sync/git)  | Advanced    | Full w/ SSH/HTTPS Auth |
+
+## Unidirectional Git Sync
+
+To enable a one-way Git Sync in Mage, enter your git credentials
+
+## Bidirectional Git Sync
