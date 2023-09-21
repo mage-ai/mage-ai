@@ -115,6 +115,7 @@ class BlockExecutorTest(TestCase):
             dynamic_block_index=None,
             dynamic_block_uuid=None,
             dynamic_upstream_block_uuids=None,
+            block_run_dicts=None,
         )
         # self.block.run_tests.assert_called_once_with(
         #     execution_partition=self.execution_partition,
