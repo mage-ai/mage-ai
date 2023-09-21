@@ -64,6 +64,7 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
   TIME_UNIT_TO_SECONDS,
+  checkIfCustomInterval,
   convertSeconds,
   convertToSeconds,
   convertUtcCronExpressionToLocalTimezone,
@@ -247,8 +248,7 @@ function Edit({
   );
 
   const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    () => checkIfCustomInterval(scheduleInterval),
     [scheduleInterval],
   );
   const readableCronExpression = useMemo(() => (

@@ -6,12 +6,18 @@ import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date
 import { DEFAULT_PORT } from '@api/utils/url';
 import {
   PipelineScheduleFilterQueryEnum,
+  ScheduleIntervalEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
 import { getDayRangeForCurrentMonth } from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
 import { rangeSequential } from '@utils/array';
+
+export const checkIfCustomInterval = (
+  scheduleInterval: string,
+) => !!scheduleInterval &&
+  !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum);
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
