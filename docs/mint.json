@@ -342,6 +342,7 @@
           "pages": [
             "development/project/setup",
             "getting-started/setting-up-git",
+            "development/git/generate-an-ssh-token",
             "getting-started/file-versions",
             "development/text-editor"
           ]
@@ -427,7 +428,6 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/ai/overview",
         {
           "group": "Visualizations",
           "icon": "chart-line-up-down",
@@ -435,7 +435,6 @@
             "visualizations/dashboards"
           ]
         },
-        "development/updating-mage",
         "development/ai/overview"
       ]
     },
