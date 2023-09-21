@@ -93,14 +93,14 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   }
 
   if (block?.replicated_block) {
-    if (name) {
+    if (name && description) {
       displayText = name;
     } else {
-      displayText = block?.replicated_block;
+      displayText = block?.uuid;
     }
 
     if (!description) {
-      subtitle = block?.uuid;
+      subtitle = block?.replicated_block;
     }
   }
 

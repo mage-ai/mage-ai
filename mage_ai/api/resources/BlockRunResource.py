@@ -24,6 +24,7 @@ class BlockRunResource(DatabaseResource):
                 created_at,
                 id,
                 pipeline_run_id,
+                started_at,
                 status,
                 updated_at,
                 pipeline_schedule_id,
@@ -36,6 +37,7 @@ class BlockRunResource(DatabaseResource):
                 created_at=created_at,
                 id=id,
                 pipeline_run_id=pipeline_run_id,
+                started_at=started_at,
                 status=status,
                 updated_at=updated_at,
                 pipeline_schedule_id=pipeline_schedule_id,
@@ -72,6 +74,7 @@ class BlockRunResource(DatabaseResource):
             a.created_at,
             a.id,
             a.pipeline_run_id,
+            a.started_at,
             a.status,
             a.updated_at,
             c.id.label('pipeline_schedule_id'),
@@ -124,6 +127,10 @@ class BlockRunResource(DatabaseResource):
                                 'must be an attribute of the BlockRun model. The sort direction ' +
                                 'is either "asc" (ascending order) or "desc" (descending order).')
         else:
-            initial_results = query.order_by(a.created_at.desc(), a.completed_at.desc())
+            initial_results = query.order_by(
+                a.started_at.desc(),
+                a.created_at.desc(),
+                a.completed_at.desc(),
+            )
 
         return initial_results

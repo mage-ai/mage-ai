@@ -290,6 +290,7 @@ export default interface BlockType {
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;
+  runtime?: number;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   timeout?: number;
