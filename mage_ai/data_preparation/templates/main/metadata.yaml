@@ -1,7 +1,7 @@
 project_type: main
 
 variables_dir: ~/.mage_data
-remote_variables_dir: s3://bucket/path_prefix
+# remote_variables_dir: s3://bucket/path_prefix
 
 variables_retention_period: '90d'
 

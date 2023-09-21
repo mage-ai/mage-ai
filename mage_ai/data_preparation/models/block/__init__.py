@@ -656,15 +656,23 @@ class Block(SourceMixin):
             status=status,
         )
 
-    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]) -> bool:
+    def all_upstream_blocks_completed(
+        self,
+        completed_block_uuids: Set[str],
+        upstream_block_uuids: List[str] = None,
+    ) -> bool:
         arr = []
-        for b in self.upstream_blocks:
-            uuid = b.uuid
-            # Replicated block’s have a block_run block_uuid value with this convention:
-            # [block_uuid]:[replicated_block_uuid]
-            if b.replicated_block:
-                uuid = f'{uuid}:{b.replicated_block}'
-            arr.append(uuid)
+
+        if upstream_block_uuids:
+            arr += upstream_block_uuids
+        else:
+            for b in self.upstream_blocks:
+                uuid = b.uuid
+                # Replicated block’s have a block_run block_uuid value with this convention:
+                # [block_uuid]:[replicated_block_uuid]
+                if b.replicated_block:
+                    uuid = f'{uuid}:{b.replicated_block}'
+                arr.append(uuid)
 
         return all(uuid in completed_block_uuids for uuid in arr)
 
@@ -1790,10 +1798,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.color = data['color']
             self.__update_pipeline_block()
 
-        if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
-            self.upstream_block_uuids
+        check_upstream_block_order = kwargs.get('check_upstream_block_order', False)
+        if 'upstream_blocks' in data and (
+            (check_upstream_block_order and
+                data['upstream_blocks'] != self.upstream_block_uuids) or
+            set(data['upstream_blocks']) != set(self.upstream_block_uuids)
         ):
-            self.__update_upstream_blocks(data['upstream_blocks'])
+            self.__update_upstream_blocks(
+                data['upstream_blocks'],
+                check_upstream_block_order=check_upstream_block_order,
+            )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
             self.callback_block_uuids
@@ -2496,11 +2510,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             language=self.language,
         )
 
-    def __update_upstream_blocks(self, upstream_blocks) -> None:
+    def __update_upstream_blocks(
+        self,
+        upstream_blocks,
+        check_upstream_block_order: bool = False,
+    ) -> None:
         if self.pipeline is None:
             return
         self.pipeline.update_block(
             self,
+            check_upstream_block_order=check_upstream_block_order,
             upstream_block_uuids=upstream_blocks,
             widget=BlockType.CHART == self.type,
         )

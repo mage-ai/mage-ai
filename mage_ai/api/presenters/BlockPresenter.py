@@ -84,6 +84,8 @@ class BlockPresenter(BasePresenter):
             )
 
             return data
+        elif constants.LIST == display_format and isinstance(self.model, dict):
+            return self.model
 
         return self.model.to_dict()
 
