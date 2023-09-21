@@ -334,7 +334,6 @@
               ]
             },
             "getting-started/kernels"
-            "development/project/local-timezone"
           ]
         },
         {
@@ -435,7 +434,9 @@
           "pages": [
             "visualizations/dashboards"
           ]
-        }
+        },
+        "development/updating-mage",
+        "development/ai/overview"
       ]
     },
     {
@@ -449,17 +450,16 @@
     {
       "group": "Get Started",
       "pages": [
-        "guides/overview",
-        {
-          "group": "Quickstart",
-          "icon": "rocket",
-          "pages": [
-            "guides/load-api-data",
-            "guides/data-integration-pipeline",
-            "guides/setup-dbt",
-            "guides/integrate-mage-airflow"
-          ]
-        }
+        "guides/overview"
+      ]
+    },
+    {
+      "group": "Quickstarts",
+      "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        "guides/setup-dbt",
+        "guides/integrate-mage-airflow"
       ]
     },
     {
