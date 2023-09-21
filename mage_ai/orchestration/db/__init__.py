@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
 from mage_ai.orchestration.db.setup import get_postgres_connection_url
+from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
 from mage_ai.shared.environments import is_dev, is_test
 
 DB_RETRY_COUNT = 2
@@ -55,12 +56,11 @@ try:
     engine.connect()
 except SQLAlchemyError:
     engine.dispose()
-    url_parsed = urlparse(db_connection_url)
-    if url_parsed.password:
-        db_connection_url = db_connection_url.replace(
-            url_parsed.password,
-            quote_plus(url_parsed.password),
-        )
+    username, password = get_user_info_from_db_connection_url(db_connection_url)
+    db_connection_url = db_connection_url.replace(
+        password,
+        quote_plus(password),
+    )
     engine = create_engine(
         db_connection_url,
         **db_kwargs,
@@ -84,7 +84,10 @@ class DBConnection:
 
 
 def get_postgresql_schema(url):
-    parse_result = urlparse(url)
+    try:
+        parse_result = urlparse(url)
+    except ValueError:
+        return None
     if parse_result.scheme == 'postgresql+psycopg2':
         q = parse_qs(
             parse_result.query.replace('%%', '%')
@@ -109,8 +112,6 @@ if db_connection_url.startswith('postgresql'):
         db_connection.session.commit()
         db_connection.close_session()
         print(f'Set the default PostgreSQL schema for {db_current} to {db_schema}')
-    else:
-        print('No schema in PostgreSQL connection URL: use the default "public" schema')
 
 
 def safe_db_query(func):
