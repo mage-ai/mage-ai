@@ -55,7 +55,7 @@
     <img alt="License" src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red" />
   </a>
   <a
-    href="https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A"
+    href="https://www.mage.ai/chat"
     target="_blank"
   >
     <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
