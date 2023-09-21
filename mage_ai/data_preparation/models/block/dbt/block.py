@@ -1,7 +1,8 @@
 import os
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generator, List, Union
 
 import pandas as pd
 import simplejson
@@ -202,3 +203,10 @@ class DBTBlock(Block):
                     # project not yet configured correctly, so just skip that step for now
                     except FileNotFoundError:
                         pass
+
+    @contextmanager
+    def _redirect_streams(
+        self,
+        **kwargs
+    ) -> Generator[None, None, None]:
+        yield (None, None)

@@ -84,9 +84,11 @@ class DBTCli:
         Returns:
             Tuple[Any, bool]: result of the dbt cli call and whether the call was successful
         """
-        # print parsed_args for log
-        print('# Invoke dbt with the following aguments:')
-        print('dbt ' + ' '.join(self.__args).replace(' --', ' \\\n  --'))
+        self.__logger.info(
+            'Invoke dbt with the following aguments:\n' +
+            'dbt ' +
+            ' '.join(self.__args).replace(' --', ' \\\n  --')
+        )
 
         user_config = read_user_config(flags.PROFILES_DIR)
         flags.set_from_args(self.__parsed_args, user_config)
@@ -98,7 +100,9 @@ class DBTCli:
             use_colors=True,
             logger=self.__logger
         )
+        # EVENT_MANAGER.loggers = []
         EVENT_MANAGER.add_logger(dbt_logger)
+        # EVENT_MANAGER.loggers[0].
 
         with adapter_management():
             task = self.__parsed_args.cls.from_args(args=self.__parsed_args)
