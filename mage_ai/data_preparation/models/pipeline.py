@@ -89,7 +89,7 @@ class Pipeline:
             self.repo_config = repo_config
         self.variable_manager = VariableManager.get_manager(
             self.repo_path,
-            self.variables_dir,
+            self.remote_variables_dir or self.variables_dir,
         )
 
     @property
@@ -134,7 +134,11 @@ class Pipeline:
 
     @property
     def remote_variables_dir(self):
-        return self.repo_config.remote_variables_dir
+        remote_variables_dir = self.repo_config.remote_variables_dir
+        if remote_variables_dir == 's3://bucket/path_prefix':
+            # Filter out default value
+            return None
+        return remote_variables_dir
 
     @property
     def version(self):
