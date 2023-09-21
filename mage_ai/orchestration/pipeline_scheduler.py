@@ -1063,10 +1063,11 @@ def run_block(
     ]:
         return {}
 
-    block_run.update(
-        started_at=datetime.now(tz=pytz.UTC),
-        status=BlockRun.BlockRunStatus.RUNNING,
-    )
+    block_run_data = dict(status=BlockRun.BlockRunStatus.RUNNING)
+    if not block_run.started_at or (block_run.metrics and not block_run.metrics.get('controller')):
+        block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
+
+    block_run.update(**block_run_data)
 
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     pipeline = pipeline_scheduler.pipeline
