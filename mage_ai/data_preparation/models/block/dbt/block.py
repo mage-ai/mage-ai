@@ -1,3 +1,4 @@
+import csv
 import os
 from contextlib import contextmanager
 from datetime import datetime
@@ -143,7 +144,7 @@ class DBTBlock(Block):
                 f'mage_{pipeline_uuid}_{block_uuid}.csv'
             )
             seed_path.parent.mkdir(parents=True, exist_ok=True)
-            df.to_csv(seed_path)
+            df.to_csv(seed_path, quoting=csv.QUOTE_NONNUMERIC)
 
             target = Template(target).render(
                 variables=lambda x: variables.get(x) if variables else None,
@@ -213,14 +214,12 @@ class DBTBlock(Block):
                             # some databases use other default schema names
                             # e.g. duckdb uses main schema as default
                             schema = getattr(credentials, 'schema', None)
-                            database = getattr(credentials, 'database', None)
 
                         Sources(project_path).reset_pipeline(
                             project_name=Path(project_path).stem,
                             pipeline_uuid=pipeline_uuid,
                             block_uuids=block_uuids,
-                            schema=schema,
-                            database=database
+                            schema=schema
                         )
                     # project not yet configured correctly, so just skip that step for now
                     except FileNotFoundError:

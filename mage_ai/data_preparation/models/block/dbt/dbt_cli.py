@@ -557,7 +557,9 @@ class ShowRunner(CompileRunner):
             thread_id=threading.current_thread().name,
             execution_time=end_time - start_time,
             message=None,
-            adapter_response=adapter_response.to_dict(),
+            adapter_response=(
+                adapter_response.to_dict() if isinstance(adapter_response, dict) else {}
+            ),
             agate_table=execute_result,
             failures=None,
         )
