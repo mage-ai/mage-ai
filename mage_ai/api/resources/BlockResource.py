@@ -1,4 +1,5 @@
 import urllib.parse
+from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
@@ -30,6 +31,8 @@ from mage_ai.data_preparation.utils.block.convert_content import convert_to_bloc
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -38,7 +41,9 @@ class BlockResource(GenericResource):
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
+
         block_dicts_by_uuid = {}
+        data_integration_sets_by_uuid = {}
         sources_destinations_by_block_uuid = {}
 
         if isinstance(parent_model, Pipeline):
@@ -135,6 +140,37 @@ class BlockResource(GenericResource):
                     if tags:
                         block_dict['tags'] = tags
 
+                    if original_block_uuid:
+                        if original_block_uuid not in data_integration_sets_by_uuid:
+                            data_integration_sets_by_uuid[original_block_uuid] = dict(
+                                children={},
+                                controller=None,
+                                controllers={},
+                                original=None,
+                            )
+
+                        data = merge_dict(block_dict, dict(metrics=metrics))
+                        if original:
+                            data_integration_sets_by_uuid[original_block_uuid]['original'] = data
+                        elif child:
+                            if controller:
+                                data_integration_sets_by_uuid[original_block_uuid]['controllers'][
+                                    block_run_block_uuid
+                                ] = data
+                            elif controller_block_uuid:
+                                if controller_block_uuid not in \
+                                        data_integration_sets_by_uuid[original_block_uuid][
+                                            'children'
+                                        ]:
+                                    data_integration_sets_by_uuid[original_block_uuid][
+                                        'children'
+                                    ][controller_block_uuid] = []
+                                data_integration_sets_by_uuid[original_block_uuid][
+                                    'children'
+                                ][controller_block_uuid].append(data)
+                        elif controller:
+                            data_integration_sets_by_uuid[original_block_uuid]['controller'] = data
+
                 # If dynamic child, then it has many other blocks.
                 if is_dynamic_block_child(block):
                     parts = block_run_block_uuid.split(':')
@@ -178,6 +214,106 @@ class BlockResource(GenericResource):
 
                 block_dicts_by_uuid[block_run_block_uuid] = block_dict
 
+            # Replace upstream and downstream blocks that contain the base UUID
+            # of a replicated block (e.g. [block_uuid]) and replace it with the full
+            # replicated block UUID (e.g. [block_uuid]:[replicated_block_uuid])
+            for block_uuid, block_dict in block_dicts_by_uuid.items():
+                for key in [
+                    'downstream_blocks',
+                    'upstream_blocks',
+                ]:
+                    arr = block_dict.get(key) or []
+                    for block_uuid_base in arr:
+                        block = pipeline.get_block(block_uuid_base)
+                        if block.replicated_block and not is_dynamic_block_child(block):
+                            blocks_arr = block_dicts_by_uuid[block_uuid].get(key) or []
+                            block_dicts_by_uuid[block_uuid][key] = \
+                                [uuid for uuid in blocks_arr if uuid != block_uuid_base]
+                            block_dicts_by_uuid[block_uuid][key].append(block.uuid_replicated)
+
+            blocks_to_not_override = {}
+            # Reconstruct the upstream blocks for data integrations if the stream
+            # is not parallel.
+            for original_block_uuid, set_dict in data_integration_sets_by_uuid.items():
+                children = set_dict.get('children') or {}
+                controller = set_dict.get('controller') or {}
+                controllers = set_dict.get('controllers') or {}
+
+                controllers_not_parallel = list(filter(
+                    lambda x: not (x.get('metrics') or {}).get('run_in_parallel'),
+                    controllers.values(),
+                ))
+
+                # Start from the controller that has no downstream block uuids
+                controller_child_end = find(
+                    lambda x: not (x.get('metrics') or {}).get('downstream_block_uuids'),
+                    controllers_not_parallel,
+                )
+
+                def _update_upstream_block_uuids(controller_child: Dict):
+                    uuid = controller_child.get('uuid')
+                    metrics = controller_child.get('metrics') or {}
+                    upstream_block_uuids = metrics.get('upstream_block_uuids') or []
+
+                    for up_block_uuid in upstream_block_uuids:
+                        arr = children.get(up_block_uuid) or []
+
+                        # Set the upstream controller’s children as upstream blocks for the
+                        # current controller child.
+                        block_dicts_by_uuid[uuid]['upstream_blocks'] = [d['uuid'] for d in arr]
+                        blocks_to_not_override[uuid] = True
+
+                        for d_child in arr:
+                            child_uuid = d_child['uuid']
+                            block_dicts_by_uuid[child_uuid]['upstream_blocks'] = [
+                                up_block_uuid,
+                            ]
+                            block_dicts_by_uuid[child_uuid]['downstream_blocks'] = [
+                                uuid,
+                            ]
+                            blocks_to_not_override[child_uuid] = True
+
+                        up_controller = controllers.get(up_block_uuid)
+                        if up_controller:
+                            _update_upstream_block_uuids(up_controller)
+
+                if controller_child_end:
+                    _update_upstream_block_uuids(controller_child_end)
+
+                    controller_child_end_uuid = controller_child_end.get('uuid')
+                    children_end = children.get(controller_child_end_uuid) or []
+
+                    block_dicts_by_uuid[original_block_uuid]['upstream_blocks'] = \
+                        [d['uuid'] for d in children_end]
+                    blocks_to_not_override[original_block_uuid] = True
+
+                    downstream_blocks = block_dicts_by_uuid[original_block_uuid].get(
+                        'downstream_blocks',
+                    ) or []
+                    for down_uuid in downstream_blocks:
+                        blocks_to_not_override[down_uuid] = True
+
+                    for up_uuid in block_dicts_by_uuid[original_block_uuid]['upstream_blocks']:
+                        block_dicts_by_uuid[up_uuid]['upstream_blocks'] = [
+                            controller_child_end_uuid,
+                        ]
+                        block_dicts_by_uuid[up_uuid]['downstream_blocks'] = [
+                            original_block_uuid,
+                        ]
+                        blocks_to_not_override[up_uuid] = True
+
+                controller_child_start = find(
+                    lambda x: not (x.get('metrics') or {}).get('upstream_block_uuids'),
+                    controllers_not_parallel,
+                )
+
+                if controller_child_start:
+                    controller_child_start_uuid = controller_child_start['uuid']
+                    block_dicts_by_uuid[controller_child_start_uuid]['upstream_blocks'] = [
+                        controller.get('uuid'),
+                    ]
+                    blocks_to_not_override[controller_child_start_uuid] = True
+
             for block_uuid, mapping in block_mapping.items():
                 block = pipeline.get_block(block_uuid)
                 if not block:
@@ -199,18 +335,21 @@ class BlockResource(GenericResource):
                     controller = metrics.get('controller')
                     original = metrics.get('original')
 
-                    if original:
-                        # The original block should only have upstreams that are
-                        # child blocks and not controllers.
-                        block_dicts_by_uuid[block_uuid]['upstream_blocks'] = []
+                if original or (controller and not child):
+                    if block_uuid in sources_destinations_by_block_uuid:
+                        if 'tags' not in block_dicts_by_uuid[block_uuid]:
+                            block_dicts_by_uuid[block_uuid] = []
+                        block_dicts_by_uuid[block_uuid]['tags'].append(
+                            sources_destinations_by_block_uuid[block_uuid],
+                        )
 
-                    if original or (controller and not child):
-                        if block_uuid in sources_destinations_by_block_uuid:
-                            if 'tags' not in block_dicts_by_uuid[block_uuid]:
-                                block_dicts_by_uuid[block_uuid] = []
-                            block_dicts_by_uuid[block_uuid]['tags'].append(
-                                sources_destinations_by_block_uuid[block_uuid],
-                            )
+                if block_uuid in blocks_to_not_override:
+                    continue
+
+                if original:
+                    # The original block should only have upstreams that are
+                    # child blocks and not controllers.
+                    block_dicts_by_uuid[block_uuid]['upstream_blocks'] = []
 
                 for ub_uuid in upstream_block_uuids:
                     if ub_uuid in block_dicts_by_uuid[block_uuid]['upstream_blocks']:

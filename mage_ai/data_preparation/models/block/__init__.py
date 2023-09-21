@@ -306,6 +306,11 @@ class Block(SourceMixin):
     def uuid(self) -> str:
         return self.dynamic_block_uuid or self._uuid
 
+    @property
+    def uuid_replicated(self) -> str:
+        if self.replicated_block:
+            return f'{self.uuid}:{self.replicated_block}'
+
     @uuid.setter
     def uuid(self, x) -> None:
         self.dynamic_block_uuid = None
