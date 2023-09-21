@@ -267,8 +267,7 @@ function Edit({
     () => {
       if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        const custom = pipelineSchedule?.schedule_interval &&
-          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum);
+        const custom = checkIfCustomInterval(pipelineSchedule?.schedule_interval);
 
         if (custom) {
           const customIntervalInit = displayLocalTimezone
