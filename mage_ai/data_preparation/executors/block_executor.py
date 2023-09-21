@@ -124,12 +124,40 @@ class BlockExecutor:
             )
 
             self.logger.logging_tags = tags
-            self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+
             if on_start is not None:
                 on_start(self.block_uuid)
 
-            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+
+            # Data integration block
+            is_original_block = self.block.uuid == self.block_uuid
+            is_data_integration_child = False
+            is_data_integration_controller = False
+            data_integration_metadata = None
+            if block_run.metrics and self.block.is_data_integration():
+                data_integration_metadata = block_run.metrics
+
+                is_data_integration_child = data_integration_metadata.get('child', False)
+                is_data_integration_controller = data_integration_metadata.get('controller', False)
+
+                stream = data_integration_metadata.get('stream')
+
+                # If child and not controller
+                if stream and is_data_integration_child and not is_data_integration_controller:
+                    if not self.block.template_runtime_configuration:
+                        self.block.template_runtime_configuration = {}
+
+                    self.block.template_runtime_configuration['selected_streams'] = [
+                        stream,
+                    ]
+                    self.block.template_runtime_configuration['index'] = \
+                        data_integration_metadata.get('index')
+
+            if not is_data_integration_controller or is_data_integration_child:
+                self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+
+            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             if block_run:
                 block_run_data = block_run.metrics or {}
@@ -221,46 +249,20 @@ class BlockExecutor:
                 )
                 return dict(output=[])
 
-            # Data integration block
-            is_original_block = self.block.uuid == self.block_uuid
-            is_data_integration_child = False
-            is_data_integration_controller = False
-            data_integration_metadata = None
-            if block_run.metrics and self.block.is_data_integration():
-                data_integration_metadata = block_run.metrics
-
-                is_data_integration_child = data_integration_metadata.get('child', False)
-                is_data_integration_controller = data_integration_metadata.get('controller', False)
-
-                stream = data_integration_metadata.get('stream')
-
-                # If child and not controller
-                if stream and is_data_integration_child and not is_data_integration_controller:
-                    if not self.block.template_runtime_configuration:
-                        self.block.template_runtime_configuration = {}
-
-                    self.block.template_runtime_configuration['selected_streams'] = [
-                        stream,
-                    ]
-                    self.block.template_runtime_configuration['index'] = \
-                        data_integration_metadata.get('index')
-
+            # If the original block is running, it means all the child block runs are complete.
+            # Update the primary controller to be complete.
             if data_integration_metadata and is_original_block:
                 controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
                 if on_complete and controller_block_uuid:
-                    data_integration_settings = self.block.get_data_integration_settings(
-                        dynamic_block_index=dynamic_block_index,
-                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                        global_vars=global_vars,
-                        partition=self.execution_partition,
-                    )
-                    catalog = data_integration_settings.get('catalog')
-                    source_uuid = data_integration_settings.get('source')
-                    for stream_dict in catalog.get('streams', []):
-                        stream = stream_dict.get('tap_stream_id')
-                        on_complete(f'{self.block.uuid}:{source_uuid}:{stream}:controller')
-
                     on_complete(controller_block_uuid)
+                    self.logger.info(
+                        'All child block runs completed, updating controller block run '
+                        f'for block {controller_block_uuid} to complete.',
+                        **merge_dict(tags, dict(
+                            block_uuid=self.block.uuid,
+                            controller_block_uuid=controller_block_uuid,
+                        )),
+                    )
             else:
                 try:
                     from mage_ai.shared.retry import retry
@@ -341,9 +343,9 @@ class BlockExecutor:
                     )
                     raise error
 
-            self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
+            if not is_data_integration_controller or is_data_integration_child:
+                self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
 
-            if not is_data_integration_controller:
                 # This is passed in from the pipeline scheduler
                 if on_complete is not None:
                     on_complete(self.block_uuid)
@@ -502,7 +504,7 @@ class BlockExecutor:
                     if block_run_dicts:
                         block_run_block_uuids += [br.get('block_uuid') for br in block_run_dicts]
 
-                    # Controller for child (single stream with batches.
+                    # Controller for child (single stream with batches).
                     if data_integration_metadata.get('child'):
                         # Create a block run for the stream for each batch in that stream.
                         stream = data_integration_metadata.get('stream')
@@ -532,6 +534,19 @@ class BlockExecutor:
                                         stream=stream,
                                     ), br_metadata),
                                 )
+
+                                self.logger.info(
+                                    f'Created block run {br.id} for block {br.block_uuid} in batch '
+                                    f'index {index} ({index + 1} out of {number_of_batches}).',
+                                    **merge_dict(logging_tags, dict(
+                                        index=index,
+                                        number_of_batches=number_of_batches,
+                                        original_block_uuid=original_block_uuid,
+                                        source=source,
+                                        stream=stream,
+                                    )),
+                                )
+
                                 arr.append(br)
                     else:
                         # Controller
@@ -552,6 +567,17 @@ class BlockExecutor:
                                         stream=stream,
                                     ),
                                 )
+
+                                self.logger.info(
+                                    f'Created block run {br.id} for block {br.block_uuid} '
+                                    f'for stream {stream}.',
+                                    **merge_dict(logging_tags, dict(
+                                        original_block_uuid=original_block_uuid,
+                                        source=source,
+                                        stream=stream,
+                                    )),
+                                )
+
                                 arr.append(br)
 
                     return arr

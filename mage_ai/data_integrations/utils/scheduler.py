@@ -97,7 +97,7 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
     # that there is only 1 root block and 1 leaf block.
     current_block = integration_pipeline.data_loader
     while True:
-        block = find(lambda b: b.uuid == current_block.uuid, blocks)
+        block = find(lambda b, current_block=current_block: b.uuid == current_block.uuid, blocks)
         executable_blocks.append(block)
         downstream_blocks = current_block.downstream_blocks
         if len(downstream_blocks) == 0:
