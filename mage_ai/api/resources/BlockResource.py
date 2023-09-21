@@ -421,52 +421,78 @@ class BlockResource(GenericResource):
                                         block_dicts_by_uuid[up_block_uuid]['downstream_blocks']
                                         if uuid != db_block.uuid]
 
-        dynamic_blocks_beyond_1 = {}
-        for base_uuid, count in dynamic_block_count_by_base_uuid.items():
-            if count >= 2:
-                dynamic_blocks_beyond_1[base_uuid] = count
+            # Adjust the runtime for these blocks because it has a start_at
+            # but we don’t actually start running the block until later.
+            for original_block_uuid, set_dict in data_integration_sets_by_uuid.items():
+                children = set_dict.get('children') or {}
+                controller = set_dict.get('controller') or {}
+                controllers = set_dict.get('controllers') or {}
+                original = set_dict.get('original') or {}
 
-        # 200
-        total_blocks = sum(list(block_count_by_base_uuid.values()))
-        # 202
-        total_blocks_dynamic_beyond_1 = sum(list(dynamic_blocks_beyond_1.values()))
+                for controller_uuid in [
+                    controller.get('uuid'),
+                ] + list(controllers.keys()):
+                    if controller_uuid in block_dicts_by_uuid:
+                        block_run = block_mapping.get(controller_uuid, {}).get('block_run')
+                        if block_run and block_run.started_at:
+                            block_dict = block_dicts_by_uuid[controller_uuid]
+                            downstream_started_ats = []
+                            for db_uuid in (block_dict.get('downstream_blocks') or []):
+                                db_block_run = block_mapping.get(db_uuid, {}).get('block_run')
+                                if db_block_run and db_block_run.started_at:
+                                    downstream_started_ats.append(db_block_run.started_at)
 
-        if total_blocks > MAX_BLOCKS_FOR_TREE:
-            # 200 - 40 = 160
-            remove_this_much = total_blocks - MAX_BLOCKS_FOR_TREE
-            # 202 - 160 = 42
-            if total_blocks_dynamic_beyond_1 > remove_this_much:
-                # 42
-                keep_this_much = total_blocks_dynamic_beyond_1 - remove_this_much
-                # 42 / 202 = 0.2
-                percent_to_keep = keep_this_much / total_blocks_dynamic_beyond_1
+                            if downstream_started_ats:
+                                started_at_e = max(downstream_started_ats)
+                                block_dicts_by_uuid[controller_uuid]['runtime'] = \
+                                    started_at_e.timestamp() - block_run.started_at.timestamp()
 
-                for base_uuid, count in dynamic_blocks_beyond_1.items():
-                    uuids = dynamic_block_uuids_by_base_uuid.get(base_uuid) or []
-                    keep_count = max(math.floor(percent_to_keep * count), 1)
+            dynamic_blocks_beyond_1 = {}
+            for base_uuid, count in dynamic_block_count_by_base_uuid.items():
+                if count >= 2:
+                    dynamic_blocks_beyond_1[base_uuid] = count
 
-                    uuids_to_remove = uuids[keep_count:]
-                    # Remove this much
-                    for uuid in uuids_to_remove:
-                        if uuid not in block_dicts_by_uuid:
-                            continue
+            # 200
+            total_blocks = sum(list(block_count_by_base_uuid.values()))
+            # 202
+            total_blocks_dynamic_beyond_1 = sum(list(dynamic_blocks_beyond_1.values()))
 
-                        block_dict = block_dicts_by_uuid[uuid]
-                        # Remove this block UUID from everything that is
-                        # upstream and downstream to it.
-                        for uuids_to_loop, key_to_remove_from in [
-                            ('upstream_blocks', 'downstream_blocks'),
-                            ('downstream_blocks', 'upstream_blocks'),
-                        ]:
-                            for uuids_inner in block_dict[uuids_to_loop]:
-                                if uuids_inner not in block_dicts_by_uuid:
-                                    continue
+            if total_blocks > MAX_BLOCKS_FOR_TREE:
+                # 200 - 40 = 160
+                remove_this_much = total_blocks - MAX_BLOCKS_FOR_TREE
+                # 202 - 160 = 42
+                if total_blocks_dynamic_beyond_1 > remove_this_much:
+                    # 42
+                    keep_this_much = total_blocks_dynamic_beyond_1 - remove_this_much
+                    # 42 / 202 = 0.2
+                    percent_to_keep = keep_this_much / total_blocks_dynamic_beyond_1
 
-                                arr = block_dicts_by_uuid[uuids_inner][key_to_remove_from]
-                                block_dicts_by_uuid[uuids_inner][key_to_remove_from] = \
-                                    [i for i in arr if i != uuid]
+                    for base_uuid, count in dynamic_blocks_beyond_1.items():
+                        uuids = dynamic_block_uuids_by_base_uuid.get(base_uuid) or []
+                        keep_count = max(math.floor(percent_to_keep * count), 1)
 
-                        block_dicts_by_uuid.pop(uuid, None)
+                        uuids_to_remove = uuids[keep_count:]
+                        # Remove this much
+                        for uuid in uuids_to_remove:
+                            if uuid not in block_dicts_by_uuid:
+                                continue
+
+                            block_dict = block_dicts_by_uuid[uuid]
+                            # Remove this block UUID from everything that is
+                            # upstream and downstream to it.
+                            for uuids_to_loop, key_to_remove_from in [
+                                ('upstream_blocks', 'downstream_blocks'),
+                                ('downstream_blocks', 'upstream_blocks'),
+                            ]:
+                                for uuids_inner in block_dict[uuids_to_loop]:
+                                    if uuids_inner not in block_dicts_by_uuid:
+                                        continue
+
+                                    arr = block_dicts_by_uuid[uuids_inner][key_to_remove_from]
+                                    block_dicts_by_uuid[uuids_inner][key_to_remove_from] = \
+                                        [i for i in arr if i != uuid]
+
+                            block_dicts_by_uuid.pop(uuid, None)
 
         return self.build_result_set(
             block_dicts_by_uuid.values(),

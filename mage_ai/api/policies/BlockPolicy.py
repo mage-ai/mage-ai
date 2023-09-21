@@ -59,6 +59,7 @@ BlockPolicy.allow_read([
     'description',
     'outputs',
     'pipelines',
+    'runtime',
     'tags',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
