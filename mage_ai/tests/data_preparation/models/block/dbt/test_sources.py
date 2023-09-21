@@ -38,10 +38,11 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_add_block',
-            ['test_block1', 'test_block2'],
-            'test_schema',
-            'test_database'
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1', 'test_block2'],
+            schema='test_schema',
+            database='test_database'
         )
 
         self.assertEqual(
@@ -50,25 +51,28 @@ clean-targets:
                 'version': 2,
                 'sources': [
                     {
-                        'name': 'mage_test_add_block',
-                        'description': 'Dataframes of the `test_add_block` mage pipeline.',
+                        'name': 'mage_test_project',
+                        'description': 'Dataframes Mage upstream blocks',
                         'loader': 'mage',
                         'tables': [
                             {
-                                'name': 'test_block1',
-                                'identifier': 'mage_test_add_block_test_block1',
-                                'description': (
-                                    'Dataframe for block `test_block1` of the ' +
-                                    '`test_add_block` mage pipeline.'
-                                )
-                            },
-                            {
-                                'name': 'test_block2',
-                                'identifier': 'mage_test_add_block_test_block2',
-                                'description': (
-                                    'Dataframe for block `test_block2` of the ' +
-                                    '`test_add_block` mage pipeline.'
-                                )
+                                'name': 'test_pipeline_test_block1',
+                                'identifier': 'mage_test_pipeline_test_block1',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block1'
+                                },
+                                'description': 'Dataframe for block `test_block1` of ' +
+                                'the `test_pipeline` mage pipeline.'
+                            }, {
+                                'name': 'test_pipeline_test_block2',
+                                'identifier': 'mage_test_pipeline_test_block2',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block2'
+                                },
+                                'description': 'Dataframe for block `test_block2` of ' +
+                                'the `test_pipeline` mage pipeline.'
                             }
                         ],
                         'schema': 'test_schema',
@@ -86,15 +90,17 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_add_block_overlapping',
-            ['test_block1', 'test_block2'],
-            'test_schema_new'
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1', 'test_block2'],
+            schema='test_schema'
         )
 
         sources.add_blocks(
-            'test_add_block_overlapping',
-            ['test_block2', 'test_block3'],
-            'test_schema_new'
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block2', 'test_block3'],
+            schema='test_schema_new'
         )
 
         self.assertEqual(
@@ -103,36 +109,37 @@ clean-targets:
                 'version': 2,
                 'sources': [
                     {
-                        'name': 'mage_test_add_block_overlapping',
-                        'description': (
-                            'Dataframes of the `test_add_block_overlapping` ' +
-                            'mage pipeline.'
-                        ),
+                        'name': 'mage_test_project',
+                        'description': 'Dataframes Mage upstream blocks',
                         'loader': 'mage',
                         'tables': [
                             {
-                                'name': 'test_block1',
-                                'identifier': 'mage_test_add_block_overlapping_test_block1',
-                                'description': (
-                                    'Dataframe for block `test_block1` of the ' +
-                                    '`test_add_block_overlapping` mage pipeline.'
-                                )
-                            },
-                            {
-                                'name': 'test_block2',
-                                'identifier': 'mage_test_add_block_overlapping_test_block2',
-                                'description': (
-                                    'Dataframe for block `test_block2` of the ' +
-                                    '`test_add_block_overlapping` mage pipeline.'
-                                )
-                            },
-                            {
-                                'name': 'test_block3',
-                                'identifier': 'mage_test_add_block_overlapping_test_block3',
-                                'description': (
-                                    'Dataframe for block `test_block3` of the ' +
-                                    '`test_add_block_overlapping` mage pipeline.'
-                                )
+                                'name': 'test_pipeline_test_block1',
+                                'identifier': 'mage_test_pipeline_test_block1',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block1'
+                                },
+                                'description': 'Dataframe for block `test_block1` of ' +
+                                'the `test_pipeline` mage pipeline.'
+                            }, {
+                                'name': 'test_pipeline_test_block2',
+                                'identifier': 'mage_test_pipeline_test_block2',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block2'
+                                },
+                                'description': 'Dataframe for block `test_block2` of ' +
+                                'the `test_pipeline` mage pipeline.'
+                            }, {
+                                'name': 'test_pipeline_test_block3',
+                                'identifier': 'mage_test_pipeline_test_block3',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block3'
+                                },
+                                'description': 'Dataframe for block `test_block3` of ' +
+                                'the `test_pipeline` mage pipeline.'
                             }
                         ],
                         'schema': 'test_schema_new'
@@ -149,12 +156,17 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_cleanup_pipeline',
-            ['test_block1', 'test_block2'],
-            'test_schema',
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1', 'test_block2'],
+            schema='test_schema'
         )
 
-        sources.cleanup_pipeline('test_cleanup_pipeline', ['test_block1'])
+        sources.cleanup_pipeline(
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1']
+        )
 
         self.assertEqual(
             sources.sources,
@@ -162,17 +174,19 @@ clean-targets:
                 'version': 2,
                 'sources': [
                     {
-                        'name': 'mage_test_cleanup_pipeline',
-                        'description': 'Dataframes of the `test_cleanup_pipeline` mage pipeline.',
+                        'name': 'mage_test_project',
+                        'description': 'Dataframes Mage upstream blocks',
                         'loader': 'mage',
                         'tables': [
                             {
-                                'name': 'test_block1',
-                                'identifier': 'mage_test_cleanup_pipeline_test_block1',
-                                'description': (
-                                    'Dataframe for block `test_block1` of the ' +
-                                    '`test_cleanup_pipeline` mage pipeline.'
-                                )
+                                'name': 'test_pipeline_test_block1',
+                                'identifier': 'mage_test_pipeline_test_block1',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block1'
+                                },
+                                'description': 'Dataframe for block `test_block1` of ' +
+                                'the `test_pipeline` mage pipeline.'
                             }
                         ],
                         'schema': 'test_schema'
@@ -188,7 +202,11 @@ clean-targets:
         """
         sources = Sources(self.repo_path)
 
-        sources.cleanup_pipeline('test_cleanup_pipeline_empty', [])
+        sources.cleanup_pipeline(
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=[]
+        )
 
         self.assertEqual(
             sources.sources,
@@ -206,12 +224,17 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_cleanup_pipeline_full',
-            ['test_block1'],
-            'test_schema',
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1'],
+            schema='test_schema',
         )
 
-        sources.cleanup_pipeline('test_cleanup_pipeline_full', [])
+        sources.cleanup_pipeline(
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=[]
+        )
 
         self.assertEqual(
             sources.sources,
@@ -229,12 +252,17 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_cleanup_pipeline_non_overlapping',
-            ['test_block1'],
-            'test_schema',
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1'],
+            schema='test_schema',
         )
 
-        sources.cleanup_pipeline('test_cleanup_pipeline_non_overlapping', ['test_block2'])
+        sources.cleanup_pipeline(
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block2']
+        )
 
         self.assertEqual(
             sources.sources,
@@ -252,15 +280,17 @@ clean-targets:
         sources = Sources(self.repo_path)
 
         sources.add_blocks(
-            'test_reset_pipeline',
-            ['test_block1', 'test_block2'],
-            'test_schema',
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1', 'test_block2'],
+            schema='test_schema',
         )
 
         sources.reset_pipeline(
-            'test_reset_pipeline',
-            ['test_block1'],
-            'test_schema_new',
+            project_name='test_project',
+            pipeline_uuid='test_pipeline',
+            block_uuids=['test_block1'],
+            schema='test_schema_new',
         )
 
         self.assertEqual(
@@ -269,17 +299,19 @@ clean-targets:
                 'version': 2,
                 'sources': [
                     {
-                        'name': 'mage_test_reset_pipeline',
-                        'description': 'Dataframes of the `test_reset_pipeline` mage pipeline.',
+                        'name': 'mage_test_project',
+                        'description': 'Dataframes Mage upstream blocks',
                         'loader': 'mage',
                         'tables': [
                             {
-                                'name': 'test_block1',
-                                'identifier': 'mage_test_reset_pipeline_test_block1',
-                                'description': (
-                                    'Dataframe for block `test_block1` ' +
-                                    'of the `test_reset_pipeline` mage pipeline.'
-                                )
+                                'name': 'test_pipeline_test_block1',
+                                'identifier': 'mage_test_pipeline_test_block1',
+                                'meta': {
+                                    'pipeline_uuid': 'test_pipeline',
+                                    'block_uuid': 'test_block1'
+                                },
+                                'description': 'Dataframe for block `test_block1` of ' +
+                                'the `test_pipeline` mage pipeline.'
                             }
                         ],
                         'schema': 'test_schema_new'

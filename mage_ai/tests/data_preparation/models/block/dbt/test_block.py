@@ -106,6 +106,7 @@ class DBTBlockTest(TestCase):
         })
 
         Sources.return_value.reset_pipeline.assert_called_once_with(
+            project_name='test_project_name',
             pipeline_uuid='test',
             block_uuids=['test_block_sql'],
             schema='public',

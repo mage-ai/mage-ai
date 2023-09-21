@@ -161,7 +161,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
        , b.*
    FROM {{ ref('my_first_dbt_model') }} AS a
 
-   LEFT JOIN {{ source('mage_dbt_demo_pipeline', 'load_data') }} AS b
+   LEFT JOIN {{ source('mage_demo', 'dbt_demo_pipeline_load_data') }} AS b
    ON 1 = 1
 
    WHERE a.id = 1

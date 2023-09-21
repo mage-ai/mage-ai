@@ -216,6 +216,7 @@ class DBTBlock(Block):
                             database = getattr(credentials, 'database', None)
 
                         Sources(project_path).reset_pipeline(
+                            project_name=Path(project_path).stem,
                             pipeline_uuid=pipeline_uuid,
                             block_uuids=block_uuids,
                             schema=schema,

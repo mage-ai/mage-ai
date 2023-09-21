@@ -85,6 +85,7 @@ class Sources(object):
 
     def add_blocks(
         self,
+        project_name: str,
         pipeline_uuid: str,
         block_uuids: List[str],
         schema: Optional[str] = 'public',
@@ -105,29 +106,38 @@ class Sources(object):
                 the database in which the table located. Defaults to None.
         """
         # get the sources defined for the pipeline
-        pipeline_sources = self.__get_pipeline(pipeline_uuid, schema, database)
+        project_sources = self.__get_project(project_name, schema, database)
 
         # add each block_uuid
         for block_uuid in block_uuids:
             block_source_new = {
-                'name': block_uuid,
+                'name': f'{pipeline_uuid}_{block_uuid}',
                 'identifier': f'mage_{pipeline_uuid}_{block_uuid}',
+                'meta': {
+                    'pipeline_uuid': pipeline_uuid,
+                    'block_uuid': block_uuid
+                },
                 'description':
                     f'Dataframe for block `{block_uuid}` of the `{pipeline_uuid}` mage pipeline.',
             }
             block_source = next(
-                (s for s in pipeline_sources['tables'] if s.get('name') == block_uuid),
+                (
+                    s
+                    for s in project_sources['tables']
+                    if s.get('name') == f'{pipeline_uuid}_{block_uuid}'
+                ),
                 None
             )
             if block_source:
                 block_source.update(block_source_new)
             else:
-                pipeline_sources['tables'].append(block_source_new)
+                project_sources['tables'].append(block_source_new)
 
         self.__write()
 
     def cleanup_pipeline(
         self,
+        project_name: str,
         pipeline_uuid: str,
         block_uuids: List[str]
     ) -> None:
@@ -142,26 +152,30 @@ class Sources(object):
         sources = self.sources
 
         # get the sources defined for the pipeline
-        pipeline_sources = next(
-            (s for s in sources['sources'] if s.get('name') == f'mage_{pipeline_uuid}'),
+        project_sources = next(
+            (s for s in sources['sources'] if s.get('name') == f'mage_{project_name}'),
             None
         )
-        if pipeline_sources:
-            pipeline_sources['tables'] = [
+        if project_sources:
+            project_sources['tables'] = [
                 block
-                for block in pipeline_sources['tables']
-                if block['name'] in block_uuids
+                for block in project_sources['tables']
+                if block.get('meta', {}).get('pipeline_uuid') != pipeline_uuid or (
+                    block.get('meta', {}).get('pipeline_uuid') == pipeline_uuid and
+                    block.get('meta', {}).get('block_uuid') in block_uuids
+                )
             ]
 
             # if tables list is empty, then remove the whole pipeline sources dict
             # from mage_sources.yml
-            if not pipeline_sources['tables']:
-                sources['sources'].remove(pipeline_sources)
+            if not project_sources['tables']:
+                sources['sources'].remove(project_sources)
 
         self.__write()
 
     def reset_pipeline(
         self,
+        project_name: str,
         pipeline_uuid: str,
         block_uuids: List[str],
         schema: Optional[str] = 'mage',
@@ -181,12 +195,12 @@ class Sources(object):
             database (Optional[str], optional):
                 the database in which the table located. Defaults to None.
         """
-        self.add_blocks(pipeline_uuid, block_uuids, schema, database)
-        self.cleanup_pipeline(pipeline_uuid, block_uuids)
+        self.add_blocks(project_name, pipeline_uuid, block_uuids, schema, database)
+        self.cleanup_pipeline(project_name, pipeline_uuid, block_uuids)
 
-    def __get_pipeline(
+    def __get_project(
         self,
-        pipeline_uuid: str,
+        project_name: str,
         schema: Optional[str] = None,
         database: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -211,31 +225,31 @@ class Sources(object):
         sources = self.sources
 
         # get the sources defined for the pipeline
-        pipeline_sources = next(
-            (s for s in sources['sources'] if s.get('name') == f'mage_{pipeline_uuid}'),
+        project_sources = next(
+            (s for s in sources['sources'] if s.get('name') == f'mage_{project_name}'),
             None
         )
 
         # create pipeline source if not exists
-        pipeline_sources_exist = bool(pipeline_sources)
-        if not pipeline_sources_exist:
-            pipeline_sources = {
-                'name': f'mage_{pipeline_uuid}',
-                'description': f'Dataframes of the `{pipeline_uuid}` mage pipeline.',
+        project_sources_exist = bool(project_sources)
+        if not project_sources_exist:
+            project_sources = {
+                'name': f'mage_{project_name}',
+                'description': 'Dataframes Mage upstream blocks',
                 'loader': 'mage',
                 'tables': []
             }
         if schema:
-            pipeline_sources.update({'schema': schema})
+            project_sources.update({'schema': schema})
         if database:
-            pipeline_sources.update({'database': database})
+            project_sources.update({'database': database})
 
         # as we are using references only in the case of a newly generated dict we need to append it
         # otherwise the reference is already in place and there is nothing to do
-        if not pipeline_sources_exist:
-            sources['sources'].append(pipeline_sources)
+        if not project_sources_exist:
+            sources['sources'].append(project_sources)
 
-        return pipeline_sources
+        return project_sources
 
     def __write(self) -> None:
         """
