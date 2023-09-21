@@ -59,6 +59,8 @@ function PipelineBlockRuns({
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id);
+
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -209,6 +211,7 @@ function PipelineBlockRuns({
   const buildSidekick = useCallback(props => buildTableSidekick({
     ...props,
     blockRuns,
+    blocksOverride: dataBlocks?.blocks,
     loadingData: loadingOutput,
     outputs: dataOutput?.outputs,
     selectedRun,
@@ -217,6 +220,7 @@ function PipelineBlockRuns({
     showDynamicBlocks: true,
   }), [
     blockRuns,
+    dataBlocks,
     dataOutput,
     loadingOutput,
     selectedRun,
