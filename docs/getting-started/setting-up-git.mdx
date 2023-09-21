@@ -1,114 +1,26 @@
 ---
-title: "Setting up Git on cloud"
-sidebarTitle: "Git on cloud"
+title: "Using Git in Mage"
+sidebarTitle: "Using Git in Mage"
+description: "There are a number of ways to enable version control, collaboration, and easy deployment using Git in Mage. Read on to learn more."
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png)
+## Choose your adventure
 
-1. Open terminal
-2. Configure Git
-3. Set up SSH key
-4. Add SSH key to GitHub profiles settings
-5. Add github.com to known hosts
+There three different ways to use Git in Mage and _four_ ways to version control your files— we'll discussing each of them.
 
----
+First, if you're simply looking for version control, you're in luck! It ships out-of-the-box
+with Mage. That means you can _always_ restore previous versions of your files, even if you haven't configured
+any version control system. Check out [this page](/getting-started/file-versions) for more info.
 
-## 1. Open terminal
+| Recommended | Use                                                 | Recommendation          | Ease of use | Functionality          |
+| ----------- | --------------------------------------------------- | ----------------------- | ----------- | ---------------------- |
+| ✅          | I want to see a history of my file edits            | [Mage version control](/getting-started/file-versions)    | Beginner    | File-level versioning  |
+| ✅          | I want to develop/deploy Mage using Git with GitHub | [GitHub version control](/production/data-sync/github)     | Moderate    | Full w/ OAuth          |
+| ✅          | I want to deploy Mage using Git with any provider   | [Git integration with Git Sync](/production/data-sync/git) | Advanced    | Full w/ SSH/HTTPS Auth |
+| 🚫          | I want to develop Mage using Git with any provider  | [Git integration _without_ Git Sync](/production/data-sync/git)  | Advanced    | Full w/ SSH/HTTPS Auth |
 
-1. In the left navigation menu, click the Terminal icon.
-3. Click the terminal (large dark background area), and you should see a
-   yellow cursor. You can start typing once that cursor appears.
+## Unidirectional Git Sync
 
----
+To enable a one-way Git Sync in Mage, enter your git credentials
 
-## 2. Configure Git
-
-1. In the terminal, type the following command to set your user name:
-   ```bash
-   git config --global user.name "Your name here"
-   ```
-2. In the terminal, type the following command to set your email:
-   ```bash
-   git config --global user.email "your_email@example.com"
-   ```
-
-Optionally, you can configure Git further with these commands:
-
-```bash
-git config --global color.ui true
-git config --global core.editor emacs
-```
-
----
-
-## 3. Set up SSH key
-
-1. In the terminal, type the following command to create an SSH key on the
-   machine that’s running Mage:
-   ```
-   bash ssh-keygen -t rsa -C "your_email@example.com" -f ~/.ssh/id_rsa -N ""
-   ```
-
-   If you get the error `cannot execute binary file`, then re-run the command above without `bash`:
-   ```
-    ssh-keygen -t rsa -C "your_email@example.com" -f ~/.ssh/id_rsa -N ""
-   ```
-2. Run the following command and copy the public SSH key (it’ll be used
-
-   <ins></ins> the next section):{" "}
-
-   ```bash
-   cat ~/.ssh/id_rsa.pub
-   ```
-
-   It should look something like this:
-
-   ```
-   ssh-rsa alotofcharacters...morecharacters your_email@example.com
-   ```
-
----
-
-## 4. Add SSH key to your profiles settings
-
-### GitHub
-
-1. Open your [GitHub profiles settings](https://github.com/settings/profile).
-2. On the left hand side, click the section called **SSH and GPG keys**.
-3. In the top left corner, click a button labeled **New SSH key**. This will
-   open a new form to create a new SSH key.
-4. Enter in anything into the input field labeled **Title**. For example,
-   `mage-cloud-key`.
-5. Under the dropdown labeled **Key type**, select the `Authentication Key`
-   option.
-6. In the text area labeled **Key**, paste in the output text you copied after
-   running the command `cat ~/.ssh/id_rsa.pub` in your terminal.
-7. Click the button labeled **Add SSH key**.
-
-
-### GitLab
-
-1. Open your [GitLab profile settings](https://gitlab.com/-/profile).
-2. On the left hand side, click the section called **SSH keys**.
-3. In the text area labeled **Key**, paste in the output text you copied after
-   running the command `cat ~/.ssh/id_rsa.pub` in your terminal.
-4. Enter in anything into the input field labeled **Title**. For example,
-   `mage-cloud-key`.
-5. Under the dropdown labeled **Usage type**, select the `Authentication`
-   option.
-6. Click the button labeled **Add key**.
-
----
-
-## 5. Add your host to known hosts
-
-1. In your terminal, run the following command to add your host to known hosts:
-   ```bash
-   ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-   ```
-
-Change the host to `gitlab.com` if you are using GitLab.
-
----
-
-Now you can push your changes to a remote GitHub repository.
+## Bidirectional Git Sync
