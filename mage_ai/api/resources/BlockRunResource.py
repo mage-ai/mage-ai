@@ -7,6 +7,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.shared.strings import is_number
 
 
 class BlockRunResource(DatabaseResource):
@@ -87,7 +88,7 @@ class BlockRunResource(DatabaseResource):
         pipeline_run_id = query_arg.get('pipeline_run_id', [None])
         if pipeline_run_id:
             pipeline_run_id = pipeline_run_id[0]
-        if pipeline_run_id:
+        if pipeline_run_id and is_number(pipeline_run_id):
             query = (
                 query.
                 filter(a.pipeline_run_id == int(pipeline_run_id))

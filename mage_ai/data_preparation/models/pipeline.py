@@ -1130,6 +1130,9 @@ class Pipeline:
         block = mapping.get(block_uuid)
         if not block:
             # Dynamic blocks have the following block UUID convention: [block_uuid]:[index]
+            # Data integration blocks have:
+            #   [block UUID]:controller
+            #   [block UUID]:[source UUID]:[stream]:[index]
             # Replica blocks have the following block UUID convention:
             # [block_uuid]:[replicated_block_uuid]
             block = mapping.get(block_uuid.split(':')[0])
@@ -1145,6 +1148,8 @@ class Pipeline:
         input_args: List[Any] = None,
         partition: str = None,
         spark=None,
+        index: int = None,
+        sample_count: int = None,
     ):
         block = self.get_block(block_uuid)
 
@@ -1160,7 +1165,9 @@ class Pipeline:
                 block,
                 data_integration_settings.get('catalog'),
                 from_notebook=from_notebook,
+                index=index,
                 partition=partition,
+                sample_count=sample_count,
                 source_uuid=data_integration_settings.get('source'),
                 stream_id=variable_name,
             )
