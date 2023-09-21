@@ -1,3 +1,4 @@
+import math
 import urllib.parse
 from typing import Dict
 
@@ -35,6 +36,8 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
+MAX_BLOCKS_FOR_TREE = 40
+
 
 class BlockResource(GenericResource):
     @classmethod
@@ -42,8 +45,11 @@ class BlockResource(GenericResource):
     def collection(self, query_arg, meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
 
+        block_count_by_base_uuid = {}
         block_dicts_by_uuid = {}
         data_integration_sets_by_uuid = {}
+        dynamic_block_count_by_base_uuid = {}
+        dynamic_block_uuids_by_base_uuid = {}
         sources_destinations_by_block_uuid = {}
 
         if isinstance(parent_model, Pipeline):
@@ -66,6 +72,10 @@ class BlockResource(GenericResource):
                 block = pipeline.get_block(block_run_block_uuid)
                 if not block:
                     continue
+
+                if block.uuid not in block_count_by_base_uuid:
+                    block_count_by_base_uuid[block.uuid] = 0
+                block_count_by_base_uuid[block.uuid] += 1
 
                 block_dict = block.to_dict()
                 if 'tags' not in block_dict:
@@ -173,6 +183,14 @@ class BlockResource(GenericResource):
 
                 # If dynamic child, then it has many other blocks.
                 if is_dynamic_block_child(block):
+                    if block.uuid not in dynamic_block_count_by_base_uuid:
+                        dynamic_block_count_by_base_uuid[block.uuid] = 0
+                    dynamic_block_count_by_base_uuid[block.uuid] += 1
+
+                    if block.uuid not in dynamic_block_uuids_by_base_uuid:
+                        dynamic_block_uuids_by_base_uuid[block.uuid] = []
+                    dynamic_block_uuids_by_base_uuid[block.uuid].append(block_run_block_uuid)
+
                     parts = block_run_block_uuid.split(':')
 
                     # [block_uuid]:[index_1]:[index_2]...:[index_N]
@@ -402,6 +420,53 @@ class BlockResource(GenericResource):
                                     [uuid for uuid in
                                         block_dicts_by_uuid[up_block_uuid]['downstream_blocks']
                                         if uuid != db_block.uuid]
+
+        dynamic_blocks_beyond_1 = {}
+        for base_uuid, count in dynamic_block_count_by_base_uuid.items():
+            if count >= 2:
+                dynamic_blocks_beyond_1[base_uuid] = count
+
+        # 200
+        total_blocks = sum(list(block_count_by_base_uuid.values()))
+        # 202
+        total_blocks_dynamic_beyond_1 = sum(list(dynamic_blocks_beyond_1.values()))
+
+        if total_blocks > MAX_BLOCKS_FOR_TREE:
+            # 200 - 40 = 160
+            remove_this_much = total_blocks - MAX_BLOCKS_FOR_TREE
+            # 202 - 160 = 42
+            if total_blocks_dynamic_beyond_1 > remove_this_much:
+                # 42
+                keep_this_much = total_blocks_dynamic_beyond_1 - remove_this_much
+                # 42 / 202 = 0.2
+                percent_to_keep = keep_this_much / total_blocks_dynamic_beyond_1
+
+                for base_uuid, count in dynamic_blocks_beyond_1.items():
+                    uuids = dynamic_block_uuids_by_base_uuid.get(base_uuid) or []
+                    keep_count = max(math.floor(percent_to_keep * count), 1)
+
+                    uuids_to_remove = uuids[keep_count:]
+                    # Remove this much
+                    for uuid in uuids_to_remove:
+                        if uuid not in block_dicts_by_uuid:
+                            continue
+
+                        block_dict = block_dicts_by_uuid[uuid]
+                        # Remove this block UUID from everything that is
+                        # upstream and downstream to it.
+                        for uuids_to_loop, key_to_remove_from in [
+                            ('upstream_blocks', 'downstream_blocks'),
+                            ('downstream_blocks', 'upstream_blocks'),
+                        ]:
+                            for uuids_inner in block_dict[uuids_to_loop]:
+                                if uuids_inner not in block_dicts_by_uuid:
+                                    continue
+
+                                arr = block_dicts_by_uuid[uuids_inner][key_to_remove_from]
+                                block_dicts_by_uuid[uuids_inner][key_to_remove_from] = \
+                                    [i for i in arr if i != uuid]
+
+                        block_dicts_by_uuid.pop(uuid, None)
 
         return self.build_result_set(
             block_dicts_by_uuid.values(),
