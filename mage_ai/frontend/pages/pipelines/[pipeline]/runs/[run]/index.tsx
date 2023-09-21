@@ -59,7 +59,9 @@ function PipelineBlockRuns({
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
-  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id);
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
+    refreshInterval: 5000,
+  });
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
