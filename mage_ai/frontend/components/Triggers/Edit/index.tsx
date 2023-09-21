@@ -933,6 +933,20 @@ function Edit({
                   </Text>
                 )
               }
+
+              <Text bold inline small warning>
+                Note:&nbsp;
+              </Text>
+              <Text inline small>
+                If you have the display_local_timezone setting enabled, the local cron expression
+                above will match your local timezone only
+                <br />
+                if the minute and hour values are single
+                values without any special characters, such as the comma, hyphen, or slash.
+                <br />
+                You can still use cron expressions with special characters for the minute/hour
+                values, but it will be based in UTC time.
+              </Text>
             </Spacing>
           </div>,
         ],
