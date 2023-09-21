@@ -234,8 +234,6 @@ function calculateCronValueWithOffset(
 ): CronValueWithOffsetType {
   let currentIndex = range.indexOf(timeUnitValue);
   let additionalOffsetForGreaterTimeUnit = 0;
-  console.log('------------');
-  console.log('range:', range);
   if (timeOffset < 0) {
     for (let i = 0; i > timeOffset; i--) {
       if (currentIndex === 0) {
@@ -247,7 +245,6 @@ function calculateCronValueWithOffset(
     }
   } else if (timeOffset > 0) {
     for (let i = 0; i < timeOffset; i++) {
-      console.log('currentIndex:', currentIndex);
       if (currentIndex === range.length - 1) {
         currentIndex = 0;
         additionalOffsetForGreaterTimeUnit += 1;
