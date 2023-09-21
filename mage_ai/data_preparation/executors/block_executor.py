@@ -9,7 +9,6 @@ import requests
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
-    get_source,
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -25,6 +24,8 @@ from mage_ai.data_preparation.models.block.utils import (
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
@@ -63,6 +64,7 @@ class BlockExecutor:
             repo_config=self.pipeline.repo_config,
         )
         self.logger = DictLogger(self.logger_manager.logger)
+        self.project = Project(self.pipeline.repo_config)
 
     def execute(
         self,
@@ -356,29 +358,48 @@ class BlockExecutor:
         extra_options = {}
         store_variables = True
 
-        # This is required or else loading the module within the block execute method will
-        # create very large log files that compound. Not sure why, so this is the temp fix.
-        source_uuid = get_source(self.block)
-        # destination_uuid = get_destination(self.block)
+        if self.project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+            blocks = [self.block]
+            if self.block.upstream_blocks:
+                blocks += self.block.upstream_blocks
 
-        try:
-            if source_uuid:
-                # The source or destination block will return a list of outputs that contain
-                # procs. Procs aren’t JSON serializable so we won’t store those variables.
-                # We’ll only store the variables if this block is ran from the notebook.
-                # The output of the source or destination block is handled separately than
-                # storing variables via the block.store_variables method.
-                store_variables = False
-                extra_options['data_integration_module_file_path'] = source_module_file_path(
-                    source_uuid,
+            for block in blocks:
+                data_integration_settings = block.get_data_integration_settings(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=False,
+                    global_vars=global_vars,
+                    partition=self.execution_partition,
                 )
-            # elif destination_uuid:
-            #     store_variables = False
-            #     extra_options['data_integration_module_file_path'] = destination_module_file_path(
-            #         destination_uuid,
-            #     )
-        except Exception as err:
-            print(f'[WARNING] BlockExecutor._execute: {err}')
+
+                try:
+                    if data_integration_settings:
+                        # This is required or else loading the module within the block execute
+                        # method will create very large log files that compound. Not sure why,
+                        # so this is the temp fix.
+                        source_uuid = data_integration_settings.get('source')
+
+                        if source_uuid:
+                            if 'data_integration_runtime_settings' not in extra_options:
+                                extra_options['data_integration_runtime_settings'] = {}
+
+                            if source_uuid not in \
+                                    extra_options['data_integration_runtime_settings']:
+
+                                extra_options['data_integration_runtime_settings'] = {
+                                    source_uuid: source_module_file_path(source_uuid),
+                                }
+
+                            # The source or destination block will return a list of outputs that
+                            # contain procs. Procs aren’t JSON serializable so we won’t store those
+                            # variables. We’ll only store the variables if this block is ran from
+                            # the notebook. The output of the source or destination block is
+                            # handled separately than storing variables via the
+                            # block.store_variables method.
+                            if block.uuid == self.block.uuid:
+                                store_variables = False
+                except Exception as err:
+                    print(f'[WARNING] BlockExecutor._execute: {err}')
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
