@@ -2,6 +2,7 @@ import asyncio
 import functools
 import importlib.util
 import json
+import logging
 import os
 import sys
 import time
@@ -81,7 +82,8 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
-    global_vars=None,
+    global_vars: Dict = None,
+    include_logger: bool = False,
     parallel: bool = True,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -91,6 +93,8 @@ async def run_blocks(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+    if global_vars is None:
+        global_vars = dict()
 
     def create_block_task(block: 'Block') -> asyncio.Task:
         async def execute_and_run_tests() -> None:
@@ -99,6 +103,11 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
+                if include_logger:
+                    logger = logging.getLogger(f'execute_{block.uuid}')
+                    logger.setLevel('INFO')
+                    if 'logger' not in global_vars:
+                        global_vars['logger'] = logger
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
@@ -164,6 +173,7 @@ def run_blocks_sync(
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
+    include_logger: bool = False,
     run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
@@ -171,6 +181,9 @@ def run_blocks_sync(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+
+    if global_vars is None:
+        global_vars = dict()
 
     for block in root_blocks:
         blocks.put(block)
@@ -204,6 +217,11 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
+            if include_logger:
+                logger = logging.getLogger(f'execute_{block.uuid}')
+                logger.setLevel('INFO')
+                if 'logger' not in global_vars:
+                    global_vars['logger'] = logger
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -1895,7 +1913,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self, incomplete_only: bool = False, **kwargs) -> None:
+    def run_upstream_blocks(
+        self,
+        include_logger: bool = False,
+        incomplete_only: bool = False,
+        **kwargs
+    ) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1915,6 +1938,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         run_blocks_sync(
             root_blocks,
+            include_logger=include_logger,
             selected_blocks=upstream_block_uuids,
             **kwargs,
         )
