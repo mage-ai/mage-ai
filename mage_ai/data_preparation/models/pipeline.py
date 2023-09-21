@@ -1002,21 +1002,39 @@ class Pipeline:
 
         min_length = min(len(uuids_new), len(uuids_old))
 
-        # If there are no blocks or the order has changed
+        # If there are no blocks or the order has not changed
         if min_length == 0 or uuids_new[:min_length] == uuids_old[:min_length]:
             return False
 
         block_configs_by_uuids = index_by(lambda x: x['uuid'], self.block_configs)
+        new_indexes_by_uuid = {uuid: index for index, uuid in enumerate(uuids_new)}
 
         block_configs = []
         blocks_by_uuid = {}
 
         for block_uuid in uuids_new:
+            upstream_blocks = None
+            upstream_blocks_reordered = None
             if block_uuid in block_configs_by_uuids:
-                block_configs.append(block_configs_by_uuids[block_uuid])
+                block_config = block_configs_by_uuids[block_uuid]
+
+                # Sort upstream_blocks order based on new block order
+                upstream_blocks = block_config['upstream_blocks']
+                if len(upstream_blocks) > 1:
+                    upstream_blocks_reordered = upstream_blocks.copy()
+                    upstream_blocks_reordered.sort(key=lambda uuid: new_indexes_by_uuid[uuid])
+
+                block_configs.append(block_config)
 
             if block_uuid in self.blocks_by_uuid:
-                blocks_by_uuid[block_uuid] = self.blocks_by_uuid[block_uuid]
+                block = self.blocks_by_uuid[block_uuid]
+                if upstream_blocks_reordered is not None and \
+                        upstream_blocks != upstream_blocks_reordered:
+                    block.update(
+                        dict(upstream_blocks=upstream_blocks_reordered),
+                        check_upstream_block_order=True,
+                    )
+                blocks_by_uuid[block_uuid] = block
 
         self.block_configs = block_configs
         self.blocks_by_uuid = blocks_by_uuid
@@ -1209,6 +1227,7 @@ class Pipeline:
         self,
         block: Block,
         callback_block_uuids: List[str] = None,
+        check_upstream_block_order: bool = False,
         conditional_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
@@ -1249,7 +1268,9 @@ class Pipeline:
 
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
-            if curr_upstream_block_uuids != new_upstream_block_uuids:
+            if curr_upstream_block_uuids != new_upstream_block_uuids or \
+                (check_upstream_block_order and
+                    block.upstream_block_uuids != upstream_block_uuids):
                 # Only set upstream block’s downstream to the current block if current block
                 # is not an extension block and not a callback/conditional block
                 if not is_extension and not is_callback and not is_conditional:
