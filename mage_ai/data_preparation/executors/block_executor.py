@@ -135,7 +135,7 @@ class BlockExecutor:
             is_data_integration_child = False
             is_data_integration_controller = False
             data_integration_metadata = None
-            if block_run.metrics and self.block.is_data_integration():
+            if block_run and block_run.metrics and self.block.is_data_integration():
                 data_integration_metadata = block_run.metrics
 
                 is_data_integration_child = data_integration_metadata.get('child', False)
