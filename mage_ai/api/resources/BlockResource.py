@@ -207,8 +207,8 @@ class BlockResource(GenericResource):
                             block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
 
                 if block.replicated_block:
-                    block_dict['name'] = block.replicated_block
-                    block_dict['description'] = block.uuid
+                    block_dict['name'] = block.uuid
+                    block_dict['description'] = block.replicated_block
 
                 block_dict['tags'] += block.tags()
 
