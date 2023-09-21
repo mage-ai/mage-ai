@@ -657,15 +657,23 @@ class Block(SourceMixin):
             status=status,
         )
 
-    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]) -> bool:
+    def all_upstream_blocks_completed(
+        self,
+        completed_block_uuids: Set[str],
+        upstream_block_uuids: List[str] = None,
+    ) -> bool:
         arr = []
-        for b in self.upstream_blocks:
-            uuid = b.uuid
-            # Replicated block’s have a block_run block_uuid value with this convention:
-            # [block_uuid]:[replicated_block_uuid]
-            if b.replicated_block:
-                uuid = f'{uuid}:{b.replicated_block}'
-            arr.append(uuid)
+
+        if upstream_block_uuids:
+            arr += upstream_block_uuids
+        else:
+            for b in self.upstream_blocks:
+                uuid = b.uuid
+                # Replicated block’s have a block_run block_uuid value with this convention:
+                # [block_uuid]:[replicated_block_uuid]
+                if b.replicated_block:
+                    uuid = f'{uuid}:{b.replicated_block}'
+                arr.append(uuid)
 
         return all(uuid in completed_block_uuids for uuid in arr)
 

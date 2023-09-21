@@ -274,7 +274,8 @@ def execute_source(
     module_file_path = None
     if data_integration_runtime_settings:
         module_file_paths = data_integration_runtime_settings.get('module_file_paths', {})
-        module_file_path = module_file_paths.get(source_uuid)
+        sources_file_paths = module_file_paths.get('sources', {})
+        module_file_path = sources_file_paths.get(source_uuid)
 
     if not module_file_path:
         module_file_path = source_module_file_path(source_uuid)
@@ -384,6 +385,7 @@ def convert_outputs_to_data(
     partition: str = None,
     source_uuid: str = None,
     stream_id: str = None,
+    sample_count: int = None,
 ) -> Dict:
     variable = build_variable(
         block,
@@ -412,6 +414,7 @@ def convert_outputs_to_data(
     columns_to_select = []
     rows = []
     stream_settings = {}
+    row_count = 0
 
     streams = get_streams_from_catalog(catalog, [stream_id])
     if streams:
@@ -435,12 +438,19 @@ def convert_outputs_to_data(
             with open(output_file_path) as f:
                 for line in f:
                     try:
+                        if sample_count is not None and row_count >= sample_count:
+                            break
+
                         row = json.loads(line)
                         record = row.get('record')
                         if record and stream_id == row.get('stream'):
                             rows.append([record.get(col) for col in columns_to_select])
+                            row_count += 1
                     except json.JSONDecodeError:
                         pass
+
+    if sample_count is not None:
+        rows = rows[:sample_count]
 
     return dict(
         columns=columns_to_select,
@@ -509,6 +519,42 @@ def select_streams_in_catalog(catalog: Dict, selected_streams: List[str]) -> Dic
     catalog_copy['streams'] = streams
 
     return catalog_copy
+
+
+def count_records(
+    config: Dict,
+    source_uuid: str,
+    streams: List[str],
+    catalog: Dict = None,
+    catalog_file_path: str = None,
+) -> List[Dict]:
+    arr = []
+
+    for stream in streams:
+        args = [
+            PYTHON_COMMAND,
+            source_module_file_path(source_uuid),
+            '--config_json',
+            json.dumps(config),
+            '--selected_streams_json',
+            json.dumps([stream]),
+            '--count_records',
+        ]
+
+        if catalog:
+            args += [
+                '--catalog_json',
+                json.dumps(catalog),
+            ]
+        elif catalog_file_path:
+            args += [
+                '--catalog',
+                catalog_file_path,
+            ]
+
+        arr += json.loads(__run_in_subprocess(args, config=config))
+
+    return arr
 
 
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:
