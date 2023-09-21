@@ -448,7 +448,8 @@
       "icon": "info",
       "pages": [
         "about/code-of-conduct",
-        "about/statistics"
+        "about/statistics",
+        "about/frequently-asked-questions"
       ]
     },
     {

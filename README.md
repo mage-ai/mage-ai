@@ -370,7 +370,7 @@ For real-time news, fun memes, data engineering topics, and more, join us on ➝
 
 # 🤔 Frequently Asked Questions (FAQs)
 
-Check out our [FAQ page](https://www.notion.so/mageai/Mage-FAQs-33d93ee65f934ed39568f8a4bc823b39) to find answers to some of our most asked questions.
+Check out our [FAQ page](https://docs.mage.ai/about/frequently-asked-questions) to find answers to some of our most asked questions.
 
 <br />
 
