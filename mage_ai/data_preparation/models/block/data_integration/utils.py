@@ -217,13 +217,13 @@ def execute_source(
     catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config')
     config_json = json.dumps(config)
-    selected_streams = data_integration_settings.get('selected_streams')
     source_uuid = data_integration_settings.get('source')
 
     index = block.template_runtime_configuration.get('index', 0)
     is_last_block_run = block.template_runtime_configuration.get('is_last_block_run', False)
+    selected_streams = block.template_runtime_configuration.get('selected_streams', [])
     if not selected_streams:
-        selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+        selected_streams = data_integration_settings.get('selected_streams')
 
     # TESTING PURPOSES ONLY
     if not selected_streams and catalog:
