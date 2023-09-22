@@ -965,7 +965,7 @@ function SchemaTable({
                             });
                           }}
                           pill
-                          secondary
+                          primary
                         >
                           Save
                         </Button>
@@ -1004,7 +1004,7 @@ function SchemaTable({
                               ...prev,
                               [streamUUID]: {
                                 ...prev[streamUUID],
-                                [bookmarkProperty]: e.target.value,
+                                [bookmarkProperty]: e.target.value || null,
                               },
                             }));
                           }}
