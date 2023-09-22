@@ -8,7 +8,7 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `access_token` | The access token used to authenticate your Intercom account. | `abcdefg123456` |
+| `access_token` | The access token used to authenticate your Mode account. | `abcdefg123456` |
 | `password` | Your Mode Token password | `supersecurepassword` |
 | `workspace` | The workspace ID | `ws-12345` |
 | `user_agent` | The User Agent string to send in the request header | `my-app-v1.0`|

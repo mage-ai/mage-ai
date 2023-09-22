@@ -4,6 +4,9 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
     compiled_query_string,
 )
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 
 
 class BlockPresenter(BasePresenter):
@@ -33,7 +36,16 @@ class BlockPresenter(BasePresenter):
         display_format = kwargs['format']
 
         if display_format in [constants.CREATE, constants.UPDATE]:
-            return self.model.to_dict(include_content=True)
+            include_block_catalog = self.model.pipeline and \
+                    PipelineType.PYTHON == self.model.pipeline and \
+                    Project(self.model.pipeline.repo_config).is_feature_enabled(
+                        FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                    )
+
+            return await self.model.to_dict_async(
+                include_block_catalog=include_block_catalog,
+                include_content=True,
+            )
         elif display_format in [constants.DETAIL, 'dbt']:
             query = kwargs.get('query', {})
 
@@ -74,6 +86,8 @@ class BlockPresenter(BasePresenter):
             )
 
             return data
+        elif constants.LIST == display_format and isinstance(self.model, dict):
+            return self.model
 
         return self.model.to_dict()
 

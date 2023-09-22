@@ -63,47 +63,23 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
+  TIME_UNIT_TO_SECONDS,
+  checkIfCustomInterval,
   convertSeconds,
   convertToSeconds,
-  getTimeInUTC,
+  convertUtcCronExpressionToLocalTimezone,
+  getDatetimeFromDateAndTime,
   getTriggerApiEndpoint,
-  TIME_UNIT_TO_SECONDS,
+  getTriggerTypes,
 } from '../utils';
+import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-
-const getTriggerTypes = (
-  isStreamingPipeline?: boolean,
-): {
-  description: () => string;
-  label: () => string;
-  uuid: ScheduleTypeEnum;
-}[] => {
-  const triggerTypes = [
-    {
-      description: () => 'This pipeline will run continuously on an interval or just once.',
-      label: () => 'Schedule',
-      uuid: ScheduleTypeEnum.TIME,
-    },
-    {
-      description: () => 'This pipeline will run when a specific event occurs.',
-      label: () => 'Event',
-      uuid: ScheduleTypeEnum.EVENT,
-    },
-    {
-      description: () => 'Run this pipeline when you make an API call.',
-      label: () => 'API',
-      uuid: ScheduleTypeEnum.API,
-    },
-  ];
-
-  return isStreamingPipeline
-    ? triggerTypes.slice(0, 1)
-    : triggerTypes;
-};
+import { padTime } from '@utils/date';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
   errors: ErrorsType;
@@ -123,6 +99,7 @@ function Edit({
   variables,
 }: EditProps) {
   const router = useRouter();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
@@ -209,13 +186,12 @@ function Edit({
   useEffect(
     () => {
       if (startTime) {
-        const dateTimeSplit = startTime.split(' ');
-        const timePart = dateTimeSplit[1];
-        setDate(getTimeInUTC(startTime));
-        setTime({
-          hour: timePart.substring(0, 2),
-          minute: timePart.substring(3, 5),
-        });
+        const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
+          startTime,
+          { localTimezone: displayLocalTimezone },
+        );
+        setDate(startDatetimeObj?.date);
+        setTime(startDatetimeObj?.time);
 
         const mt = moment(startTime).utc();
         setLandingTimeData({
@@ -228,13 +204,20 @@ function Edit({
       } else {
         const currentDatetime = new Date();
         setDate(currentDatetime);
-        setTime({
-          hour: String(currentDatetime.getUTCHours()).padStart(2, '0'),
-          minute: String(currentDatetime.getUTCMinutes()).padStart(2, '0'),
-        });
+        if (displayLocalTimezone) {
+          setTime({
+            hour: padTime(String(currentDatetime.getHours())),
+            minute: padTime(String(currentDatetime.getMinutes())),
+          });
+        } else {
+          setTime({
+            hour: padTime(String(currentDatetime.getUTCHours())),
+            minute: padTime(String(currentDatetime.getUTCMinutes())),
+          });
+        }
       }
     },
-    [startTime],
+    [displayLocalTimezone, startTime],
   );
 
   useEffect(
@@ -265,8 +248,7 @@ function Edit({
   );
 
   const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    () => checkIfCustomInterval(scheduleInterval),
     [scheduleInterval],
   );
   const readableCronExpression = useMemo(() => (
@@ -285,11 +267,13 @@ function Edit({
     () => {
       if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        const custom = pipelineSchedule?.schedule_interval &&
-          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum);
+        const custom = checkIfCustomInterval(pipelineSchedule?.schedule_interval);
 
         if (custom) {
-          setCustomInterval(pipelineSchedule?.schedule_interval);
+          const customIntervalInit = displayLocalTimezone
+            ? convertUtcCronExpressionToLocalTimezone(pipelineSchedule?.schedule_interval)
+            : pipelineSchedule?.schedule_interval;
+          setCustomInterval(customIntervalInit);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
@@ -320,6 +304,7 @@ function Edit({
       }
     },
     [
+      displayLocalTimezone,
       isStreamingPipeline,
       pipelineSchedule,
       schedule,
@@ -391,9 +376,21 @@ function Edit({
     } else if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
       data.event_matchers = eventMatchers;
     } else {
-      data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
-      data.start_time = date && time?.hour && time?.minute
-        ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}:00`
+      data.schedule_interval = isCustomInterval
+        ? ((displayLocalTimezone && !cronExpressionInvalid && !!customInterval)
+          ? convertUtcCronExpressionToLocalTimezone(customInterval, true)
+          : customInterval
+        )
+        : schedule.schedule_interval;
+      data.start_time = (date && time?.hour && time?.minute)
+        ? getDatetimeFromDateAndTime(
+          date,
+          time,
+          {
+            convertToUtc: displayLocalTimezone,
+            includeSeconds: true,
+            localTimezone: displayLocalTimezone,
+          })
         : null;
     }
 
@@ -423,8 +420,10 @@ function Edit({
       pipeline_schedule: data,
     });
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
+    displayLocalTimezone,
     enableSLA,
     eventMatchers,
     isCustomInterval,
@@ -700,7 +699,7 @@ function Edit({
       }}
       placeholder="Description"
       value={description}
-    />
+    />,
   ]), [description]);
 
   const detailsMemo = useMemo(() => {
@@ -852,7 +851,10 @@ function Edit({
                 onClick={() => setShowCalendar(val => !val)}
                 placeholder="YYYY-MM-DD HH:MM"
                 value={date
-                  ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`
+                  ? getDatetimeFromDateAndTime(
+                    date,
+                    time,
+                    { localTimezone: displayLocalTimezone })
                   : ''
                 }
               />
@@ -865,6 +867,7 @@ function Edit({
                 style={{ position: 'relative' }}
               >
                 <Calendar
+                  localTime={displayLocalTimezone}
                   selectedDate={date}
                   selectedTime={time}
                   setSelectedDate={setDate}
@@ -929,6 +932,24 @@ function Edit({
                   </Text>
                 )
               }
+
+              {displayLocalTimezone && (
+                <>
+                  <Text bold inline small warning>
+                    Note:&nbsp;
+                  </Text>
+                  <Text inline small>
+                    If you have the display_local_timezone setting enabled, the local cron expression
+                    above will match your local timezone only
+                    <br />
+                    if the minute and hour values are single
+                    values without any special characters, such as the comma, hyphen, or slash.
+                    <br />
+                    You can still use cron expressions with special characters for the minute/hour
+                    values, but it will be based in UTC time.
+                  </Text>
+                </>
+              )}
             </Spacing>
           </div>,
         ],
@@ -955,6 +976,7 @@ function Edit({
     cronExpressionInvalid,
     customInterval,
     date,
+    displayLocalTimezone,
     isCustomInterval,
     isStreamingPipeline,
     landingTimeDisabled,
@@ -1301,7 +1323,7 @@ function Edit({
           {!isStreamingPipeline && (
             <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <Text>
-                Set a timeout for each run of this trigger (optional) 
+                Set a timeout for each run of this trigger (optional)
               </Text>
               <Spacing mb={1} />
               <TextInput

@@ -34,6 +34,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.AMAZON_SQS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
         DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
+        DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,

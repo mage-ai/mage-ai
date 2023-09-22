@@ -21,9 +21,9 @@
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
   <a
-    href="https://www.youtube.com/watch?v=hrsErfPDits"
+    href="https://youtu.be/GswOdShLGmg"
     target="_blank"
-  ><b>Watch 2 min demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
+  ><b>Get a 5 min overview</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
   <a
     href="https://demo.mage.ai"
     target="_blank"
@@ -55,7 +55,7 @@
     <img alt="License" src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red" />
   </a>
   <a
-    href="https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A"
+    href="https://www.mage.ai/chat"
     target="_blank"
   >
     <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
@@ -114,7 +114,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" /> |
+| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="docs/media/overview/mage-build.gif?raw=true" /> |
 
 <p align="center">
   ↓
@@ -130,7 +130,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/mage-preview2.gif?raw=true" /> |
+| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="docs/media/overview/mage-preview.gif?raw=True" /> |
 
 <p align="center">
   ↓
@@ -146,7 +146,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" /> |
+| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="docs/media/overview/observability.gif?raw=True" /> |
 
 <br />
 
@@ -223,7 +223,7 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 
     <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
 
-1. Create new project and launch tool (change `demo_project` to any other name if you want):
+1. Create a new project and launch tool (change `demo_project` to any other name if you want):
     ```bash
     mage start demo_project
     ```
@@ -240,9 +240,9 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > WARNING
 >
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
-### Demo video (2 min)
+### Demo video (5 min)
 
-[![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
+[![Mage quick start demo](https://github.com/mage-ai/mage-ai/assets/59450879/8e060f39-170f-4291-a8c2-0c2619188708)](https://youtu.be/GswOdShLGmg "Mage quick start demo")
 
 <sub><i>Click the image to play video</i></sub>
 
@@ -294,7 +294,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 <img
   alt="data pipeline overview"
-  src="media/data-pipeline-overview.jpg"
+  src="media/data-pipeline-overview.png"
 />
 
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
@@ -337,7 +337,7 @@ These are the fundamental concepts that Mage uses to operate.
 Add features and instantly improve the experience for everyone.
 
 Check out the <b>[contributing guide](https://docs.mage.ai/community/contributing)</b>
-to setup your development environment and start building.
+to set up your development environment and start building.
 
 <br />
 
@@ -370,7 +370,7 @@ For real-time news, fun memes, data engineering topics, and more, join us on ➝
 
 # 🤔 Frequently Asked Questions (FAQs)
 
-Check out our [FAQ page](https://www.notion.so/mageai/Mage-FAQs-33d93ee65f934ed39568f8a4bc823b39) to find answers to some of our most asked questions.
+Check out our [FAQ page](https://docs.mage.ai/about/frequently-asked-questions) to find answers to some of our most asked questions.
 
 <br />
 

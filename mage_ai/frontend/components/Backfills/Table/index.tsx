@@ -10,9 +10,12 @@ import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
+import { TIMEZONE_TOOLTIP_PROPS } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type BackfillsTableProps = {
   pipeline: {
@@ -30,7 +33,9 @@ function BackfillsTable({
   selectedRow,
 }: BackfillsTableProps) {
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [null, 1, null, null, null, 1, 1, null];
   const columns: ColumnType[] = [
     {
@@ -46,12 +51,15 @@ function BackfillsTable({
       uuid: 'Runs',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Backfill',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Started at',
     },
     {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
     },
   ];
@@ -95,21 +103,53 @@ function BackfillsTable({
             {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
           </Text>,
           <Text default key="runs" monospace>{totalRunCount || 0}</Text>,
-          <Text default key="backfill" monospace>
-            {startDatetime && endDatetime && (
+          <Text default key="backfill" monospace small>
+            {(startDatetime && endDatetime) && (
               <>
-                {getTimeInUTCString(startDatetime)}
+                {displayLocalTimezone
+                  ? datetimeInLocalTimezone(startDatetime, displayLocalTimezone)
+                  : getTimeInUTCString(startDatetime)
+                }
                 &nbsp;-&nbsp;
-                {getTimeInUTCString(endDatetime)}
+                {displayLocalTimezone
+                  ? datetimeInLocalTimezone(endDatetime, displayLocalTimezone)
+                  : getTimeInUTCString(endDatetime)
+                }
               </>
             )}
-            {!(startDatetime && endDatetime) && '-'}
+            {!(startDatetime && endDatetime) && <>&#8212;</>}
           </Text>,
-          <Text default key="started_at" monospace>
-            {startedAt ? getTimeInUTCString(startedAt) : '-'}
+          <Text
+            default
+            key="started_at"
+            monospace
+            small
+            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+          >
+            {startedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                : getTimeInUTCString(startedAt)
+              ): (
+                <>&#8212;</>
+              )
+            }
           </Text>,
-          <Text default key="completed_at" monospace>
-            {completedAt ? getTimeInUTCString(completedAt) : '-'}
+          <Text
+            default
+            key="completed_at"
+            monospace
+            small
+            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+          >
+            {completedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                : getTimeInUTCString(completedAt)
+              ): (
+                <>&#8212;</>
+              )
+            }
           </Text>,
         ];
         if (!isViewerRole) {

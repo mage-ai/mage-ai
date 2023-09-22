@@ -1,13 +1,15 @@
-from .constants import TimeInterval, TIME_INTERVAL_TO_TIME_DELTA
-from .utils import calculate_metric_for_series, clean_series
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from mage_ai.shared.strings import is_number
-import dateutil.parser
 import math
+from datetime import datetime, timedelta
+
+import dateutil.parser
 import numpy as np
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
+from mage_ai.shared.strings import is_number
+
+from .constants import TIME_INTERVAL_TO_TIME_DELTA, TimeInterval
+from .utils import calculate_metric_for_series, clean_series
 
 MAX_BUCKETS = 40
 TIME_SERIES_BUCKETS = 40
@@ -79,7 +81,13 @@ def build_histogram_data(arr, max_buckets):
     )
 
 
-def build_time_series_buckets(df, datetime_column, time_interval, metrics):
+def build_time_series_buckets(
+    df,
+    datetime_column,
+    time_interval,
+    metrics,
+    max_buckets: int = None,
+):
     time_values = df[datetime_column]
     datetimes = clean_series(time_values)
     if datetimes.size <= 1:
@@ -167,12 +175,33 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
     values = [[] for _ in metrics]
     buckets = []
 
-    while len(buckets) == 0 or buckets[-1] <= max_value_datetime.timestamp():
+    max_value_datetime_ts = max_value_datetime.timestamp()
+
+    now = datetime.utcnow()
+    interval_seconds = (
+        now + TIME_INTERVAL_TO_TIME_DELTA[time_interval]
+    ).timestamp() - now.timestamp()
+
+    number_of_buckets = math.ceil(
+        max_value_datetime_ts - min_value_datetime.timestamp()
+    ) / interval_seconds
+
+    max_buckets_to_use = max_buckets or MAX_BUCKETS
+
+    if number_of_buckets > max_buckets_to_use:
+        time_interval_factor = number_of_buckets / max_buckets_to_use
+    else:
+        time_interval_factor = 1
+
+    while len(buckets) == 0 or buckets[-1] <= max_value_datetime_ts:
         if len(buckets) == 0:
             min_date_ts = start_datetime.timestamp()
         else:
             min_date_ts = buckets[-1]
-        max_date = datetime.fromtimestamp(min_date_ts) + TIME_INTERVAL_TO_TIME_DELTA[time_interval]
+
+        max_date = datetime.fromtimestamp(min_date_ts) + timedelta(
+            seconds=interval_seconds * time_interval_factor,
+        )
         buckets.append(max_date.timestamp())
 
         df_in_range = df_copy[(

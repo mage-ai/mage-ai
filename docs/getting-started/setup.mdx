@@ -1,440 +1,169 @@
 ---
-title: "Setup and install"
+title: "Quickstart"
 sidebarTitle: "Quickstart"
 icon: "space-station-moon-construction"
-description: "You can install Mage using Docker, pip, or conda."
-"og:image": "https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
+description: "Go from zero to Mage hero in under a minute. We'll walk you through installing Mage and running your first pipeline. 🦸‍♀️"
 ---
+## ⛵️ Overview
 
-<Frame>
-<img
-  alt="mage start"
-  src="https://github.com/mage-ai/assets/blob/main/mage-getting-started.png?raw=true"
-  width="300"
-/>
-</Frame>
+We recommend using Docker to get started.
 
-## Using Docker
+Docker is a tool that allows you to run Mage in a containerized environment: you can run Mage on any operating system that supports Docker, including Windows, Mac, and Linux. Using Docker means that you don't have to worry about installing dependencies or configuring your environment. If you'd like to install Mage without Docker, you can use `pip` or `conda`.
 
-1. Create new project and launch tool
+If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or plan on adding or extending images (e.g. Postgres) in your project, we recommend starting from the _Docker compose template_. Otherwise, we recommend _Docker run_.
 
-   ```bash
-   docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     /app/run_app.sh mage start [project_name]
+## 🪄 Get Mage
+
+<AccordionGroup>
+   <Accordion title="Docker compose template" icon="Docker">
+   ### Get started
+
+   The following is useful if you plan on customizing your image or adding additional services to a Docker network with Mage. Read more about Docker compose [here](https://docs.docker.com/compose/).
+
+   Be sure that [Docker](https://docs.docker.com/engine/install/) and [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) are installed and run:
+   <CodeGroup>
+   ```bash Mac/Linux
+   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart \
+   && cd mage-quickstart \
+   && cp dev.env .env && rm dev.env \
+   && docker compose up
    ```
 
-    > Windows
-    >
-    > If you are running Mage in Docker on Windows OS, `$(pwd)` won’t work. Instead, use the following
-    > command:
-    <CodeGroup>
-        ```bash Windows Command Line
-        docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
-        ```
-
-        ```bash PowerShell
-        docker run -it -p 6789:6789 -v ${PWD}:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
-        ```
-    </CodeGroup>
-
-
-2. Open http://localhost:6789 in your browser and build a pipeline.
-
-3. Run pipeline after building it in the tool
-
-   ```bash
-   docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     /app/run_app.sh mage run [project_name] [pipeline]
+   ```bash Windows
+   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
+   cd mage-quickstart
+   cp dev.env .env
+   rm dev.env
+   docker compose up
    ```
-
-### Initialize new project
-
-If you want to create a different project with a different name, run the
-following:
-
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-  mage init [project_name]
-```
-
-### Connect to an external database
-
-<Note>
-
-Prior to Mage version 0.9.12, you may run into issues using database connection urls with special characters
-in the password such as "%" or "@" symbols. Please upgrade to a Mage version >= 0.9.12 to resolve these issues.
-
-</Note>
-
-Mage uses SQLite as the default database engine, but SQLite is not recommended for production use cases.
-The following databases are other alternatives that you can use with Mage.
-
-#### PostgreSQL
-
-To use PostgreSQL as the database engine, you'll need to run your Docker container slightly differently:
-
-1. Create Docker network
-
-   ```bash
-   docker network create mage-app
-   ```
-
-2. Start PostgreSQL Docker container in a separate window
-
-   ```bash
-   docker run --network mage-app --network-alias postgres_db \
-      -it -p 5432:5432 -v pgdata:/var/lib/postgresql/data \
-      -e POSTGRES_USER=<username> -e POSTGRES_PASSWORD=<password> \
-      -e POSTGRES_DB=<database> -e PG_DATA=/var/lib/postgresql/data/pgdata \
-      postgres:13-alpine3.17 postgres
-   ```
-
-3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
-
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
-      mageai/mageai \
-      /app/run_app.sh mage start [project_name]
-   ```
-
-To use a specific schema in the PostgreSQL database, the connection string could contain the schema name as a parameter:
-
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name>" \
-      mageai/mageai \
-      /app/run_app.sh mage start [project_name]
-   ```
-
-#### MSSQL
-
-MSSQL can also be used as the database engine, as shown in the following steps using Docker container:
-
-1. Create Docker network
-
-   ```bash
-   docker network create mage-app
-   ```
-
-2. Start MSSQL Docker container in a separate window
-
-   ```bash
-   docker run --network mage-app --network-alias mssql_db \
-   -it -p 1433:1433 -e "ACCEPT_EULA=Y" \
-   -e "MSSQL_SA_PASSWORD=test_Password123" \
-   mcr.microsoft.com/mssql/server:2022-latest
-   ```
-
-   More details about the MSSQL docker image are available at [Microsoft SQL Server - Ubuntu based images](https://hub.docker.com/_/microsoft-mssql-server)
-
-3. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
-
-   ```bash
-   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-   -e MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=mssql_db;DATABASE=master;UID=SA;PWD=test_Password123;ENCRYPT=yes;TrustServerCertificate=yes;" \
-   mageai/mageai \
-   /app/run_app.sh mage start [project_name]
-   ```
-
-   The parameters used in MAGE_DATABASE_CONNECTION_URL are explained below:
-
-   * `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
-   * `SERVER=database_server`: the name or IP address of the database server
-   * `DATABASE=database`: the name of the database
-   * `UID=user`: the user ID for the database
-   * `PWD=password`: the password for the user
-   * `ENCRYPT=yes`: whether to use encryption
-   * `TrustServerCertificate=yes`: whether to trust the server certificate
-
----
-
-## Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
-
-1. Install Mage
-
-    <CodeGroup>
-       ```bash pip
-       pip install mage-ai
-       ```
-
-       ```bash conda
-       conda install -c conda-forge mage-ai
-       ```
-    </CodeGroup>
-
-   <sub>If you run into errors, see the [errors section](#errors) below.</sub>
-   <br />
-   <sub>If you’re installing on Linux and need help, check out this [community provided video walkthrough](https://www.youtube.com/watch?v=WVH7LHqND1I).</sub>
-
-2. Create new project and launch tool
-
-   ```bash
-   mage start [project_name]
-   ```
-
-3. Open http://localhost:6789 in your browser and build a pipeline.
-4. Run pipeline after building it in the tool
-
-   ```bash
-   mage run [project_name] [pipeline]
-   ```
-
-### Initialize new project
-
-If you want to create a different project with a different name, run the
-following:
-
-```bash
-mage init [project_name]
-```
-
----
-
-## Using Kubernetes
-
-1. Start a Kubernetes cluster locally
-
-   [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
-
-   Other options for starting a Kubernetes cluster locally:
-   * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-   * [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-
-2. Download and update Kubernetes config file
-
-   * Download Mage Kubernetes config file. https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml
-   * Replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
-
-3. Run Mage app in Kubernetes cluster
-
-   * Install command line tool [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) if you haven't.
-   * Run command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod.
-   * You can check the pod status with command `kubectl get pods -o wide`.
-   * Set up port forwarding with command `kubectl port-forward mage-server 6789:6789`.
-
-3. Open http://localhost:6789 in your browser and build a pipeline.
-
-4. (Optional) Enable blocks to be executed in separate Kubernetes pods.
-
-   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
-
----
-
-## Download new version of Mage
-
-### Using Docker
-
-```bash
-docker pull mageai/mageai:latest
-```
-
-### Using `pip`
-
-```bash
-pip install -U mage-ai
-```
-
-### In cloud provider
-
-#### Using the cloud provider’s UI
-
-Use your cloud provider’s UI to deploy a new container (e.g. revision, task definition, etc).
-
-#### Using Mage terminal
-
-1. In Mage, go to `/terminal`.
-1. Type the following command in your terminal: `ps aux|grep mage`
-1. In the first row, under the 2nd column, note the process ID (e.g. `3`).
-1. Kill the Mage process by running this command in your terminal: `kill -9 [process_id]`.
-
-    An example command killing process ID `3` could look like this: `kill -9 3`.
-
----
-
-## Environment variables
-
-If you’re running Mage using `pip` or `conda`, your local machine’s environment variables
-are accessible within the running Mage app.
-
-If you’re running Mage using Docker, you must add the following command line flags:
-
-```bash
--e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2
-```
-
-The command to run Mage using Docker could look like this:
-
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-    -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    mageai/mageai /app/run_app.sh mage start [project_name]
-```
-
-See [here](/development/variables/environment-variables) for a list of environment variables you can configure.
-
-### Setting prefix for Mage url
-
-In some cases, you may need to add a prefix to the Mage url. You can configure the Mage server to start
-at a prefix to the url by setting the `MAGE_BASE_PATH` environment variable.
-
-Make sure to set the base path without the leading slash. For example, if you want to start Mage at
-`http://localhost:6789/base/url/path`, you would configure your environment
-variable like this:
-
-`export MAGE_BASE_PATH=base/url/path`
-
-You can also configure the base path separately for client requests and backend routes by setting
-the `MAGE_REQUESTS_BASE_PATH` and `MAGE_ROUTES_BASE_PATH` environment variables respectively.
-
-|   |   |
-| --- | --- |
-| `MAGE_BASE_PATH` | Set base path for the entire app. |
-| `MAGE_REQUESTS_BASE_PATH` | Set base path for frontend requests and urls, defaults to value of `MAGE_BASE_PATH` |
-| `MAGE_ROUTES_BASE_PATH` | Set base path for backend routes, defaults to value of `MAGE_BASE_PATH` |
-
----
-
-## Using secret credential files in Docker
-
-If you have files containing secret credentials (e.g. GCP credentials JSON files),
-you’ll need to mount them as a volume so that those files appear in your running Docker container.
-
-### macOS
-
-If you have a file at this location `/Users/dragon/secrets/credentials.json` on your local machine,
-then run the following Docker command to start Mage and add files in the `secrets/` folder into your Docker container:
-
-```bash
-docker run -it -p 6789:6789
-    -v /Users/dragon/secrets:/home/secrets \
-    -v $(pwd):/home/src mageai/mageai \
-    /app/run_app.sh mage start [project_name]
-```
-
-This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets`
-and puts them in the Docker container under the folder `/home/secrets`.
-
-Now inside Mage, you can load or refer to your `credentials.json` file using the absolute path:
-`/home/secrets/credentials.json`.
-
-### Windows
-
-Alter the Docker command slightly to work for Windows file path syntax:
-
-```bash
-docker run -it -p 6789:6789 ^
-    -v "C:\Some Path\dragon\secrets\credentials.json":/home/secrets ^
-    -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai ^
-    /app/run_app.sh mage start [project_name]
-```
-
----
-
-## Local Docker resources
-
-### Memory
-
-When running Mage locally using Docker, you may need to increase your Docker container’s
-memory limit. Add the following flag and value to your Docker run command:
-`-m 2048m` (this sets the memory limit to 2,048 megabytes).
-
-Your Docker run command could look like this:
-
-```bash
-docker run -it -p 6789:6789 \
-    -v $(pwd):/home/src mageai/mageai \
-    -m 2048m \
-    /app/run_app.sh mage start [project_name]
-```
-
----
-
-## Install
-
-### Installing extra packages
-
-Mage also has the following extras:
-- **azure**: to install Azure related packages
-- **bigquery**: to connect to BigQuery for data import or export
-- **clickhouse**: to connect to Clickhouse for data import or export
-- **dbt**: to install dbt packages
-- **google-cloud-storage**: to connect to Google Cloud Storage for data import or export
-- **hdf5**: to process HDF5 file format
-- **mysql**: to connect to MySQL for data import or export
-- **postgres**: to connect to PostgreSQL for data import or export
-- **redshift**: to connect to Redshift for data import or export
-- **s3**: to connect to S3 for data import or export
-- **snowflake**: to connect to Snowflake for data import or export
-- **spark**: to use Spark (EMR) in your Mage pipeline
-- **streaming**: to use Streaming pipelines
-- **all**: to install all of the above to use all functionalities
-
-Example:
+   </CodeGroup>
+
+   Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
+
+   ### What's happening?
+
+   We're cloning our Docker Compose [quickstart repo](https://github.com/mage-ai/compose-quickstart.git), copying `dev.env` to `.env`, which is ignored by git in our configuration (to avoid exposing secrets), then running `docker compose up` to start a Mage server.
+
+   </Accordion>
+   <Accordion title="Docker run" icon="docker">
+
+   ### Get started
+
+   First, be sure [Docker](https://docs.docker.com/engine/install/) is installed. Next, create a new folder for your project, change directory into that folder, and run the following from your terminal:
+
+   <CodeGroup>
+      ```bash Mac/Linux
+      docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      ```
+      ```bash Windows Command Line
+      docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      ```
+
+      ```bash PowerShell
+      docker run -it -p 6789:6789 -v ${PWD}:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      ```
+   </CodeGroup>
+
+   Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
+
+   ### What's happening?
+
+   We're executing `docker run`, which runs a Docker container from the Mage image. additionally, we're _mounting a volume_ (the `-v` command) to persist our project files on our container. This mounts the current folder to `/home/src` in the mage container. We're executing our docker image `mageai/mageai` and running a script to start up the container.
+
+   </Accordion>
+   <Accordion title="pip/conda" icon="python">
+   <Steps>
+      <Step title="Install Mage">
+         <CodeGroup>
+            ```bash pip
+            pip install mage-ai
+            ```
+
+            ```bash conda
+            conda install -c conda-forge mage-ai
+            ```
+         </CodeGroup>
+         
+         <sub>If you're installing on Linux and need help, check out this [community provided video walkthrough](https://www.youtube.com/watch?v=WVH7LHqND1I).</sub>
+
+      </Step>
+      <Step title="Create new project and launch tool">
+         ```bash
+         mage start [project_name]
+         ```
+      </Step>
+      <Step title="Open Mage">
+         Open http://localhost:6789 in your browser.
+      </Step>
+   </Steps>
+   </Accordion>
+   <Accordion title="Kubernetes" icon="network-wired">
+      <Steps>
+      <Step title="Start a Kubernetes cluster locally">
+         [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a Kubernetes cluster locally. Other options for starting a Kubernetes cluster locally are [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) and [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+      </Step>
+      <Step title="Download and update Kubernetes config file">
+         First, download the Mage Kubernetes config file [here](https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml).
+         Then, replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
+      </Step>
+      <Step title="Run Mage app in Kubernetes cluster">
+         Install the command line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl), if you haven't already. 
+         Run the command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod. You can check the pod status with command `kubectl get pods -o wide`.
+         Set up port forwarding with command `kubectl port-forward mage-server 6789:6789`.
+      </Step>
+      <Step title="Open Mage">
+         Open http://localhost:6789 in your browser.
+      </Step>
+   </Steps>
+   </Accordion>
+</AccordionGroup>
+
+## 🏃‍♂️ Run your first pipeline
+
+If you haven't already, open a browser to `http://localhost:6789`. From the pipelines page, select `example_pipeline` and open the notebook view by selecting `Edit pipeline` from the left side nav.
+
+<p align="center">
+<img src= "/media/quickstart/open-pipeline.gif"/>
+</p>
+
+Select the first cell by clicking it and select the "play" icon in the top right to run the cell. You've just ran your first Mage block & loaded data from a dataset!
+
+Do the same for the following cells in the pipeline to transform and export the data. Congrats, you're now a Mage ninja! 🥷
+
+## 🧙🏻‍♂️ Install Mage dependencies (optional)
+
+Mage also has the following add-on packages:
+
+| Package              | Install               | Description                                        |
+| -------------------- | --------------------- | -------------------------------------------------- |
+| all                  | `mage-ai[all]`        | install all add-ons                                |
+| azure                | `mage-ai[azure]`      | install Azure related packages                     |
+| clickhouse           | `mage-ai[clickhouse]` | use Clickhouse for data import or export           |
+| dbt                  | `mage-ai[dbt]`        | install dbt packages                               |
+| google-cloud-storage | `mage-ai[storage]`    | use Google Cloud Storage for data import or export |
+| hdf5                 | `mage-ai[hdf5]`       | process data in HDF5 file format                   |
+| mysql                | `mage-ai[mysql]`      | use MySQL for data import or export                |
+| postgres             | `mage-ai[postgres]`   | use PostgreSQL for data import or export           |
+| redshift             | `mage-ai[redshift]`   | use Redshift for data import or export             |
+| s3                   | `mage-ai[s3]`         | use S3 for data import or export                   |
+| snowflake            | `mage-ai[snowflake]`  | use Snowflake for data import or export            |
+| spark                | `mage-ai[spark]`      | use Spark (EMR) in your Mage pipeline              |
+| streaming            | `mage-ai[streaming]`  | use Streaming pipelines                            |
+
+To install these, run the following command from the Mage terminal:
 
 ```bash
 pip install "mage-ai[spark]"
 ```
 
----
+or add the following to your `requirements.txt` file:
 
-### Errors
-
-You may need to install development libraries for MIT Kerberos to use some Mage
-features.
-
-On Ubuntu, this can be installed as:
-
-```bash
-apt install libkrb5-dev
+```
+mage-ai[spark]
 ```
 
----
+read more about installing from `requirements.txt` [here](/development/dependencies/requirements).
 
-## Source code development
+## 🧭 Journey on
 
-To setup a development environment for editing source code, please check out
-this [document](/contributing/overview).
-
----
-
-## Building your own Docker image
-
-```bash
-docker build -t mage/dangerous .
-```
-
----
-
-## Testing from branch
-
-Install `mage-ai` library from your branch:
-
-```bash
-$ pip3 install git+https://github.com/mage-ai/mage-ai.git@branch_name#egg=mage-ai
-```
-
-Build the front-end code:
-
-```bash
-$ cd mage_ai/frontend
-$ yarn install
-$ yarn export_prod
-```
-
----
-
-## Testing
-
-### Backend
-
-```bash
-$ ./scripts/server/test.sh
-```
-
-### Front-end
-To check proper types in TypeScript, run:
-
-```bash
-$ ./scripts/test.sh
-```
+Navigate to our [tutorials](/guides/overview) to learn more about Mage and how to build your own pipelines or continue exploring our docs for advanced configuration and deployment options.

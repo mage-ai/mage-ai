@@ -1,8 +1,9 @@
+import numpy as np
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
 from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 from mage_ai.tests.base_test import TestCase
-from pandas.testing import assert_frame_equal
-import pandas as pd
-import numpy as np
 
 
 class CustomActionTests(TestCase):
@@ -69,7 +70,7 @@ if type(x) is str else x)
             series_cleaned = series_cleaned.str.replace(" ", "")
             if column_type == ColumnType.NUMBER:
                 try:
-                    series_cleaned = series_cleaned.astype(int)
+                    series_cleaned = series_cleaned.astype(np.int64)
                 except ValueError:
                     series_cleaned = series_cleaned.astype(float)
             else:
@@ -173,7 +174,7 @@ if type(x) is str else x)
             series_cleaned = series_cleaned.str.replace(" ", "")
             if column_type == ColumnType.NUMBER:
                 try:
-                    series_cleaned = series_cleaned.astype(int)
+                    series_cleaned = series_cleaned.astype(np.int64)
                 except ValueError:
                     series_cleaned = series_cleaned.astype(float)
             else:

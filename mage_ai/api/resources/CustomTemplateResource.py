@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.shared.hash import ignore_keys
 from mage_ai.shared.utils import clean_name
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 OBJECT_TYPE_KEY = 'object_type'
 
@@ -106,6 +107,8 @@ class CustomTemplateResource(GenericResource):
                 custom_template.save()
 
         if custom_template:
+            await UsageStatisticLogger().custom_template_create(custom_template)
+
             return self(custom_template, user, **kwargs)
 
     @classmethod

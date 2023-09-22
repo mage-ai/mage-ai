@@ -34,7 +34,7 @@ Sometimes, upstream data is out of our contol. If we're expecting a column in a 
 
 <Frame><img alt="Oh no" src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif" /></Frame>
 
-Thankfully, [Mage Community](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
+Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
 
 Say you have an upstream block that looks like:
 
@@ -79,3 +79,27 @@ This [Stack Overflow](https://stackoverflow.com/questions/54837248/an-error-occu
 When attempting to connect to Mage with a port _other_ than `6789`, the browser may not render the page correctly with `localhost:port`.
 
 Instead, use `127.0.0.1:port` to connect to Mage.
+
+## Using credential files in Docker
+
+If you have files containing secret credentials (e.g. GCP credentials JSON files), you’ll need to mount them as a volume so that those files appear in your running Docker container.
+
+Use the `-v` command in your `docker run` command to mount the directory containing your files:
+
+```bash
+docker run -it -p 6789:6789
+    -v /Users/dragon/secrets:/home/secrets \
+    -v $(pwd):/home/src mageai/mageai \
+    /app/run_app.sh mage start [project_name]
+```
+
+or, using `docker compose`, add a volume mount to your Mage service. The following is an example of mounting the `~/.aws` directory for authenticating via the AWS CLI:
+
+```yaml
+services:
+  mage:
+    image: mageai/mageai:latest
+    ...
+    volumes:
+      - ~/.aws:/root/.aws
+```

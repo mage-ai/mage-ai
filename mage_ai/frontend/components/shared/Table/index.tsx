@@ -224,7 +224,7 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((setRowsSorted && (sortedColumn || defaultSortColumnIndex))
+  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn)
     ?
       sortByKey(
         rows,
@@ -489,7 +489,7 @@ function Table({
                   )}
                   lightBackground
                   maxWidth={tooltipWidth}
-                  primary
+                  muted
                   widthFitContent={fitTooltipContentWidth}
                 />
               </Spacing>

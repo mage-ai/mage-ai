@@ -24,7 +24,7 @@
     "prompt": "✨ Make magic..."
   },
   "metadata": {
-    "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
+    "og:image": "/media/og.png",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
@@ -272,6 +272,7 @@
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
+                "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
@@ -292,17 +293,23 @@
           "group": "Configuration",
           "icon": "gear",
           "pages": [
-            "custom-templates/overview",
             {
               "group": "Variables",
               "pages": [
-                "development/variables/environment-variables",
-                "getting-started/runtime-variable",
-                "development/variables/block-variables",
-                "development/variables/secrets",
-                "development/variables/referencing-variables"
+                "development/variables/overview",
+                "development/variables/referencing-variables",
+                {
+                  "group": "Variable Types",
+                  "pages": [
+                    "development/variables/environment-variables",
+                    "getting-started/runtime-variable",
+                    "development/variables/block-variables",
+                    "development/variables/secrets"
+                  ]
+                }
               ]
             },
+            "custom-templates/overview",
             {
               "group": "Dependencies",
               "pages": [
@@ -326,14 +333,7 @@
                 "integrations/databases/trino"
               ]
             },
-            "getting-started/kernels",
-            {
-              "group": "Versioning",
-              "pages": [
-                "getting-started/setting-up-git",
-                "getting-started/file-versions"
-              ]
-            }
+            "getting-started/kernels"
           ]
         },
         {
@@ -341,6 +341,9 @@
           "icon": "flask",
           "pages": [
             "development/project/setup",
+            "getting-started/setting-up-git",
+            "development/git/generate-an-ssh-token",
+            "getting-started/file-versions",
             "development/text-editor"
           ]
         },
@@ -425,7 +428,15 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/ai/overview"
+        {
+          "group": "Visualizations",
+          "icon": "chart-line-up-down",
+          "pages": [
+            "visualizations/dashboards"
+          ]
+        },
+        "development/ai/overview",
+        "development/updating-mage"
       ]
     },
     {
@@ -433,23 +444,23 @@
       "icon": "info",
       "pages": [
         "about/code-of-conduct",
-        "about/statistics"
+        "about/statistics",
+        "about/frequently-asked-questions"
       ]
     },
     {
       "group": "Get Started",
       "pages": [
-        "guides/overview",
-        {
-          "group": "Quickstart",
-          "icon": "rocket",
-          "pages": [
-            "guides/load-api-data",
-            "guides/data-integration-pipeline",
-            "guides/setup-dbt",
-            "guides/integrate-mage-airflow"
-          ]
-        }
+        "guides/overview"
+      ]
+    },
+    {
+      "group": "Quickstarts",
+      "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        "guides/setup-dbt",
+        "guides/integrate-mage-airflow"
       ]
     },
     {
@@ -473,12 +484,14 @@
           "icon": "pipe-section",
           "pages": [
             "guides/streaming-pipeline",
+            "guides/streaming/magic-devcontainer",
             "guides/streaming-pipeline-rabbitmq",
             "guides/train-model"
           ]
         },
         "guides/ai/overview",
-        "guides/community-examples"
+        "guides/community-examples",
+        "guides/tips-and-tricks"
       ]
     },
     {

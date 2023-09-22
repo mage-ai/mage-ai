@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from mage_ai.data_preparation.models.errors import FileNotInProjectError
 from mage_ai.data_preparation.models.file import ensure_file_is_in_project
@@ -26,7 +27,7 @@ class FileTest(TestCase):
         self.assertIsNone(ensure_file_is_in_project(file_path))
 
     def test_ensure_file_is_in_project_absolute_file_path_not_in_project(self):
-        file_path = os.path.join('/other/path', 'file.txt')
+        file_path = str(Path(os.path.join('/', 'other', 'path', 'file.txt')).absolute())
         with self.assertRaises(FileNotInProjectError):
             ensure_file_is_in_project(file_path)
 

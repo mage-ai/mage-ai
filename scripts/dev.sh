@@ -77,6 +77,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --database_connection_url)
+    DATABASE_CONNECTION_URL="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --require-user-authentication)
     REQUIRE_USER_AUTHENTICATION=1
     shift # past argument

@@ -53,11 +53,16 @@ class ProjectResource(GenericResource):
 
         if 'features' in payload:
             for k, v in payload.get('features', {}).items():
-                feature = (repo_config.features or {}).get(k)
-                if (feature and not v) or (not feature and v):
+                if v is not None:
                     if 'features' not in data:
                         data['features'] = {}
                     data['features'][k] = v
+            features = data.get('features')
+            if features is not None:
+                data['features'] = merge_dict(
+                    repo_config.features or {},
+                    features,
+                )
 
         if 'help_improve_mage' in payload:
             if payload['help_improve_mage']:

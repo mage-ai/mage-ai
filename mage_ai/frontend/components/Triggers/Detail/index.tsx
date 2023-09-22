@@ -63,8 +63,13 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { convertSeconds, getTriggerApiEndpoint } from '../utils';
-import { dateFormatLong } from '@utils/date';
+import {
+  checkIfCustomInterval,
+  convertSeconds,
+  convertUtcCronExpressionToLocalTimezone,
+  getTriggerApiEndpoint,
+} from '../utils';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
@@ -73,6 +78,7 @@ import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type TriggerDetailProps = {
   errors: ErrorsType;
@@ -95,6 +101,7 @@ function TriggerDetail({
 }: TriggerDetailProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const {
     uuid: pipelineUUID,
@@ -114,6 +121,11 @@ function TriggerDetail({
     tags,
     variables: scheduleVariablesInit = {},
   } = pipelineSchedule || {};
+
+  const isCustomInterval = useMemo(
+    () => checkIfCustomInterval(scheduleInterval),
+    [scheduleInterval],
+  );
 
   const q = queryFromUrl();
 
@@ -352,7 +364,10 @@ function TriggerDetail({
             key="trigger_frequency"
             monospace
           >
-            {scheduleInterval.replace('@', '')}
+            {(displayLocalTimezone && isCustomInterval)
+              ? convertUtcCronExpressionToLocalTimezone(scheduleInterval)
+              : scheduleInterval.replace('@', '')
+            }
           </Text>,
         ],
         [
@@ -371,12 +386,13 @@ function TriggerDetail({
             monospace
           >
             {nextRunDate
-              ?
-                dateFormatLong(
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(nextRunDate, displayLocalTimezone)
+                : dateFormatLong(
                   nextRunDate,
                   { includeSeconds: true, utcFormat: true },
                 )
-              : 'N/A'
+              ): 'N/A'
             }
           </Text>,
         ],
@@ -399,7 +415,10 @@ function TriggerDetail({
           key="trigger_start_date"
           monospace
         >
-          {startTime}
+          {displayLocalTimezone
+            ? datetimeInLocalTimezone(startTime, displayLocalTimezone)
+            : startTime
+          }
         </Text>,
       ]);
     }
@@ -514,7 +533,9 @@ function TriggerDetail({
     );
   }, [
     description,
+    displayLocalTimezone,
     isActive,
+    isCustomInterval,
     nextRunDate,
     pipelineSchedule,
     scheduleInterval,

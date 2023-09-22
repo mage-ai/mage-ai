@@ -2,9 +2,22 @@ import moment from 'moment';
 
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date';
 import { DEFAULT_PORT } from '@api/utils/url';
-import { PipelineScheduleFilterQueryEnum } from '@interfaces/PipelineScheduleType';
+import {
+  PipelineScheduleFilterQueryEnum,
+  ScheduleIntervalEnum,
+  ScheduleTypeEnum,
+} from '@interfaces/PipelineScheduleType';
+import { TimeType } from '@oracle/components/Calendar';
+import { getDayRangeForCurrentMonth } from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
+import { rangeSequential } from '@utils/array';
+
+export const checkIfCustomInterval = (
+  scheduleInterval: string,
+) => !!scheduleInterval &&
+  !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum);
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
@@ -37,6 +50,36 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
   );
 }
 
+export const getTriggerTypes = (
+  isStreamingPipeline?: boolean,
+): {
+  description: () => string;
+  label: () => string;
+  uuid: ScheduleTypeEnum;
+}[] => {
+  const triggerTypes = [
+    {
+      description: () => 'This pipeline will run continuously on an interval or just once.',
+      label: () => 'Schedule',
+      uuid: ScheduleTypeEnum.TIME,
+    },
+    {
+      description: () => 'This pipeline will run when a specific event occurs.',
+      label: () => 'Event',
+      uuid: ScheduleTypeEnum.EVENT,
+    },
+    {
+      description: () => 'Run this pipeline when you make an API call.',
+      label: () => 'API',
+      uuid: ScheduleTypeEnum.API,
+    },
+  ];
+
+  return isStreamingPipeline
+    ? triggerTypes.slice(0, 1)
+    : triggerTypes;
+};
+
 export function getPipelineScheduleApiFilterQuery(
   query: any,
 ) {
@@ -59,7 +102,7 @@ export function getPipelineScheduleApiFilterQuery(
   return apiFilterQuery;
 }
 
-export function getTimeInUTC(dateTime: string) {
+export function getTimeInUTC(dateTime: string): Date {
   if (!dateTime) {
     return null;
   }
@@ -125,6 +168,37 @@ export function convertToSeconds(time: number, unit: TimeUnitEnum) {
   return time * TIME_UNIT_TO_SECONDS[unit];
 }
 
+export function getDatetimeFromDateAndTime(
+  date: Date,
+  time: TimeType,
+  opts?: {
+    convertToUtc?: boolean,
+    localTimezone?: boolean,
+    includeSeconds?: boolean,
+  },
+): string {
+  let datetimeString = `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`;
+
+  if (opts?.includeSeconds) {
+    datetimeString = datetimeString.concat(':00');
+  }
+  if (opts?.localTimezone) {
+    const momentObj = moment(date);
+    momentObj.set('hour', +time?.hour || 0);
+    momentObj.set('minute', +time?.minute || 0);
+    momentObj.set('second', 0);
+    datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+    if (opts?.convertToUtc) {
+      datetimeString = dateFormatLong(
+        datetimeString,
+        { includeSeconds: opts?.includeSeconds, utcFormat: true },
+      );
+    }
+  }
+
+  return datetimeString;
+}
+
 export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
   let url = '';
   let port: string;
@@ -147,4 +221,110 @@ export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
   }
 
   return url;
+}
+
+type CronValueWithOffsetType = {
+  additionalOffset: number;
+  cronValue: string;
+};
+function calculateCronValueWithOffset(
+  timeUnitValue: number,
+  timeOffset: number,
+  range: number[],
+): CronValueWithOffsetType {
+  let currentIndex = range.indexOf(timeUnitValue);
+  let additionalOffsetForGreaterTimeUnit = 0;
+  if (timeOffset < 0) {
+    for (let i = 0; i > timeOffset; i--) {
+      if (currentIndex === 0) {
+        currentIndex = range.length - 1;
+        additionalOffsetForGreaterTimeUnit -= 1;
+      } else {
+        currentIndex -= 1;
+      }
+    }
+  } else if (timeOffset > 0) {
+    for (let i = 0; i < timeOffset; i++) {
+      if (currentIndex === range.length - 1) {
+        currentIndex = 0;
+        additionalOffsetForGreaterTimeUnit += 1;
+      } else {
+        currentIndex += 1;
+      }
+    }
+  }
+  return {
+    additionalOffset: additionalOffsetForGreaterTimeUnit,
+    cronValue: String(range[currentIndex] || timeUnitValue),
+  };
+}
+
+function adjustSingleCronValueForTimeOffset(
+  cronValue: string,
+  timeOffset: number,
+  timeRange: number[],
+): CronValueWithOffsetType {
+  if (cronValue.match(/[*,-/]/)) {
+    return {
+      additionalOffset: 0,
+      cronValue,
+    };
+  } else {
+    return calculateCronValueWithOffset(
+      +cronValue,
+      timeOffset,
+      timeRange,
+    );
+  }
+}
+
+const minuteRange = rangeSequential(60);
+const hourRange = rangeSequential(24);
+const dayRange = getDayRangeForCurrentMonth();
+export function convertUtcCronExpressionToLocalTimezone(
+  cronExpression: string,
+  reverse?: boolean,
+) {
+  if (!cronExpression) {
+    return cronExpression;
+  }
+
+  const localTimezoneOffset = moment().local().format('Z');
+  const offsetParts = localTimezoneOffset.split(':');
+  const isNegativeOffset = localTimezoneOffset[0] === '-';
+  let hourOffset = offsetParts[0].length === 3
+    ? Number(offsetParts[0].slice(1))
+    : Number(offsetParts[0]);
+  let minuteOffset = Number(offsetParts[1]);
+  if ((isNegativeOffset && !reverse) || (!isNegativeOffset && reverse)) {
+    hourOffset = -hourOffset;
+    minuteOffset = -minuteOffset;
+  }
+
+  const cronParts = cronExpression.split(' ');
+  const minuteExpr = cronParts[0];
+  const hourExpr = cronParts[1];
+  const dayOfMonthExpr = cronParts[2];
+  const minuteCronValueWithHourOffset = adjustSingleCronValueForTimeOffset(
+    minuteExpr,
+    minuteOffset,
+    minuteRange,
+  );
+  const hourCronValueWithDayOffset = adjustSingleCronValueForTimeOffset(
+    hourExpr,
+    hourOffset + minuteCronValueWithHourOffset.additionalOffset,
+    hourRange,
+  );
+  cronParts[0] = minuteCronValueWithHourOffset.cronValue;
+  cronParts[1] = hourCronValueWithDayOffset.cronValue;
+  if (hourCronValueWithDayOffset?.additionalOffset !== 0) {
+    const dayOfMonthCronValue = adjustSingleCronValueForTimeOffset(
+      dayOfMonthExpr,
+      hourCronValueWithDayOffset.additionalOffset,
+      dayRange,
+    );
+    cronParts[2] = dayOfMonthCronValue.cronValue;
+  }
+
+  return cronParts.join(' ');
 }

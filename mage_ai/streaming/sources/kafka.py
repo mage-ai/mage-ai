@@ -1,9 +1,9 @@
 import importlib
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer
 
@@ -38,14 +38,16 @@ class SSLConfig:
 class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
-    topic: str
     api_version: str = '0.10.2'
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout_ms: int = DEFAULT_TIMEOUT_MS
+    include_metadata: bool = False
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
     serde_config: SerDeConfig = None
+    topic: str = None
+    topics: List = field(default_factory=list)
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -65,6 +67,9 @@ class KafkaSource(BaseSource):
     config_class = KafkaConfig
 
     def init_client(self):
+        if not self.config.topic and not self.config.topics:
+            raise Exception('Please specify topic or topics in the Kafka config.')
+
         self._print('Start initializing consumer.')
         # Initialize kafka consumer
         consumer_kwargs = dict(
@@ -79,22 +84,29 @@ class KafkaSource(BaseSource):
             consumer_kwargs['ssl_certfile'] = self.config.ssl_config.certfile
             consumer_kwargs['ssl_keyfile'] = self.config.ssl_config.keyfile
             consumer_kwargs['ssl_password'] = self.config.ssl_config.password
-            consumer_kwargs['ssl_check_hostname'] = self.config.ssl_config.check_hostname
+            consumer_kwargs[
+                'ssl_check_hostname'
+            ] = self.config.ssl_config.check_hostname
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
             consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
             consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-        self.consumer = KafkaConsumer(
-            self.config.topic,
-            **consumer_kwargs
-        )
+        if self.config.topic:
+            topics = [self.config.topic]
+        else:
+            topics = self.config.topics
+
+        self.consumer = KafkaConsumer(*topics, **consumer_kwargs)
         self._print('Finish initializing consumer.')
 
         self.schema_class = None
         if self.config.serde_config is not None:
-            if self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
+            if (
+                self.config.serde_config.serialization_method
+                == SerializationMethod.PROTOBUF
+            ):
                 schema_classpath = self.config.serde_config.schema_classpath
                 if schema_classpath is None:
                     return
@@ -107,7 +119,10 @@ class KafkaSource(BaseSource):
                         importlib.import_module(libpath),
                         class_name,
                     )
-            elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
+            elif (
+                self.config.serde_config.serialization_method
+                == SerializationMethod.AVRO
+            ):
                 from confluent_avro import AvroKeyValueSerde, SchemaRegistry
                 from confluent_avro.schema_registry import HTTPBasicAuth
 
@@ -119,24 +134,42 @@ class KafkaSource(BaseSource):
                     ),
                     headers={'Content-Type': 'application/vnd.schemaregistry.v1+json'},
                 )
-                self.avro_serde = AvroKeyValueSerde(self.registry_client, self.config.topic)
+                self.avro_serde = AvroKeyValueSerde(
+                    self.registry_client, self.config.topic
+                )
+
+    def _convert_message(self, message):
+        if self.config.include_metadata:
+            message = {
+                'data': self.__deserialize_message(message.value),
+                'metadata': {
+                    'key': message.key.decode() if message.key else None,
+                    'partition': message.partition,
+                    'offset': message.offset,
+                    'time': int(message.timestamp),
+                    'topic': message.topic,
+                },
+            }
+        else:
+            message = self.__deserialize_message(message.value)
+        return message
 
     def read(self, handler: Callable):
-        self._print('Start consuming messages.')
+        self._print('Start consuming single messages.')
         for message in self.consumer:
             self.__print_message(message)
-            data = self.__deserialize_message(message.value)
-            handler(data)
+            message = self._convert_message(message)
+            handler(message)
 
     async def read_async(self, handler: Callable):
         self._print('Start consuming messages asynchronously.')
         for message in self.consumer:
             self.__print_message(message)
-            data = self.__deserialize_message(message.value)
-            await handler(data)
+            message = self._convert_message(message)
+            await handler(message)
 
     def batch_read(self, handler: Callable):
-        self._print('Start consuming messages.')
+        self._print('Start consuming messages in batches.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
         else:
@@ -156,11 +189,17 @@ class KafkaSource(BaseSource):
             message_values = []
             msg_printed = False
             for _tp, messages in msg_pack.items():
+                self._print(
+                    f'Received {len(messages)} messages from topic="{_tp.topic}" '
+                    + f'partition={_tp.partition} at time={time.time()}'
+                )
                 for message in messages:
                     if not msg_printed:
                         self.__print_message(message)
                         msg_printed = True
-                    message_values.append(self.__deserialize_message(message.value))
+
+                    message = self._convert_message(message)
+                    message_values.append(message)
             if len(message_values) > 0:
                 handler(message_values)
 
@@ -170,15 +209,22 @@ class KafkaSource(BaseSource):
     def __deserialize_message(self, message):
         if self.config.serde_config is None:
             return self.__deserialize_json(message)
-        if self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF and \
-                self.schema_class is not None:
+        if (
+            self.config.serde_config.serialization_method
+            == SerializationMethod.PROTOBUF
+            and self.schema_class is not None
+        ):
             from google.protobuf.json_format import MessageToDict
+
             obj = self.schema_class()
             obj.ParseFromString(message)
             return MessageToDict(obj)
         elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
             return self.avro_serde.value.deserialize(message)
-        elif self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
+        elif (
+            self.config.serde_config.serialization_method
+            == SerializationMethod.RAW_VALUE
+        ):
             return message
         else:
             return json.loads(message.decode('utf-8'))
@@ -187,5 +233,7 @@ class KafkaSource(BaseSource):
         return json.loads(message.decode('utf-8'))
 
     def __print_message(self, message):
-        self._print(f'Receive message {message.partition}:{message.offset}: '
-                    f'v={message.value}, time={time.time()}')
+        self._print(
+            f'Receive message {message.partition}:{message.offset}: '
+            f'key={message.key}, value={message.value}, time={time.time()}'
+        )

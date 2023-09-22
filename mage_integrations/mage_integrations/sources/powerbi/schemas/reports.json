@@ -1,0 +1,25 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "name": {
+            "type": ["string", "null"]
+        },
+        "datasetId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "webUrl": {
+            "type": ["string", "null"],
+            "format": "uri"
+        },
+        "embedUrl": {
+            "type": ["string", "null"],
+            "format": "uri"
+        }
+    }
+}

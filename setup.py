@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.22',
+    version='0.9.26',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -106,6 +106,7 @@ setuptools.setup(
             'pika==1.3.1',
             'pymongo==4.3.3',
             'requests_aws4auth==1.1.2',
+            'elasticsearch==8.9.0',
         ],
         'all': [
             'PyGithub==1.59.0',
@@ -130,6 +131,8 @@ setuptools.setup(
             'dbt-sqlserver==1.3.1',
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
+            'duckdb==0.8.1',
+            'elasticsearch==8.9.0',
             'google-api-core==2.11.0',
             'google-api-python-client==2.70.0',
             'google-cloud-bigquery~=3.0',

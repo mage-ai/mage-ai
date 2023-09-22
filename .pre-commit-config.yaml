@@ -16,9 +16,13 @@ repos:
         types: [python]
     -   id: name-tests-test
         types: [python]
+        exclude: "base_test"
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer
+        files: 'mage_integrations/requirements.txt'
+        # excluded ./requirements.txt as it uses groups,
+        # which are not handled correctly by requirements-txt-fixer
 - repo: local
   hooks:
   - id: isort

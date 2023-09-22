@@ -41,6 +41,7 @@ export const VARIABLE_NAMES = [
 
 export enum ChartTypeEnum {
   BAR_CHART = 'bar chart',
+  CUSTOM = 'custom',
   HISTOGRAM = 'histogram',
   LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',

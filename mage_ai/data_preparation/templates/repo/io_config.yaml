@@ -26,6 +26,9 @@ default:
   DRUID_PORT: 8082
   DRUID_SCHEME: http
   DRUID_USER: user
+  # DuckDB
+  DUCKDB_DATABASE: database
+  DUCKDB_SCHEMA: main
   # Google
   GOOGLE_SERVICE_ACC_KEY:
     type: service_account

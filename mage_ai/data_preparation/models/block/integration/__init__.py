@@ -1,21 +1,42 @@
 import json
 import os
 import subprocess
+import sys
+from contextlib import contextmanager, redirect_stdout
 from logging import Logger
-from typing import Dict, List
+from typing import Callable, Dict, Generator, List
 
 import pandas as pd
 
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
-from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PYTHON_COMMAND, BlockType
+from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_config_values
 
 
 class IntegrationBlock(Block):
+    @contextmanager
+    def _redirect_streams(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        from_notebook: bool = False,
+        logger: Logger = None,
+        logging_tags: Dict = None,
+    ) -> Generator[None, None, None]:
+        if build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None and not from_notebook:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+
+        with redirect_stdout(stdout) as out:
+            yield out
+
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -145,7 +166,7 @@ class IntegrationBlock(Block):
 
             file_size = os.path.getsize(source_output_file_path)
             msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
-                  f'file {source_output_file_path}.'
+                f'file {source_output_file_path}.'
             if logger:
                 logger.info(msg, **updated_logging_tags)
             else:
@@ -177,6 +198,14 @@ class IntegrationBlock(Block):
             schema_original = None
             schema_updated = None
             schema_index = None
+            # Support an 'aliases' property for columns, which keeps types mapped correctly
+            # in case of transformer code using pandas.rename
+            output_col_aliases = {}
+            # We need to look at original stream_catalog schema props:
+            for _name, col_props in stream_catalog['schema']['properties'].items():
+                for alias in col_props.get('aliases', []):
+                    output_col_aliases[alias] = col_props
+
             output_arr = []
             records_transformed = 0
             df_sample = None
@@ -246,6 +275,13 @@ class IntegrationBlock(Block):
                                         if k in properties_original else v
                                         for k, v in properties_updated.items()
                                     }
+                                    # Separately, update schema types from alias map
+                                    if len(output_col_aliases.keys()):
+                                        for cname in schema_updated['schema']['properties'].keys():
+                                            if cname in output_col_aliases:
+                                                prop = output_col_aliases[cname]
+                                                schema_updated['schema']['properties'][cname] = prop
+
                                     # Update column names in unique_constraints and key_properties
                                     new_columns = schema_updated['schema']['properties'].keys()
                                     __update_col_names(
@@ -290,7 +326,7 @@ class IntegrationBlock(Block):
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
             file_size = os.path.getsize(source_output_file_path)
             msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to '\
-                   f'output file {source_output_file_path}.'
+                f'output file {source_output_file_path}.'
             if logger:
                 logger.info(msg, **updated_logging_tags)
                 logger.info(msg2, **updated_logging_tags)

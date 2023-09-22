@@ -57,7 +57,7 @@ import PipelineType, {
 import PopupMenu from '@oracle/components/PopupMenu';
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
@@ -74,7 +74,6 @@ import { Close } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
-  // LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
@@ -115,6 +114,7 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 import { utcNowDate } from '@utils/date';
@@ -157,6 +157,10 @@ function PipelineDetailPage({
 
   const { data: dataProject, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProject?.projects?.[0], [dataProject]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -235,19 +239,33 @@ function PipelineDetailPage({
     ) || kernels?.[0];
 
   // Pipeline
+  let pipeline;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
     data,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID, {
-    include_block_pipelines: true,
-    includes_outputs: isEmptyObject(messages),
-  }, {
-    refreshInterval: 60000,
-  });
+  } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      include_block_pipelines: true,
+      includes_outputs: isEmptyObject(messages)
+        || typeof pipeline === 'undefined'
+        || pipeline === null
+        || typeof pipeline?.blocks === 'undefined'
+        || pipeline?.blocks === null
+        || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+    },
+    {
+      refreshInterval: 60000,
+    },
+    {
+      key: `/pipelines/${pipelineUUID}/edit`,
+    },
+  );
+
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
-  const pipeline = data?.pipeline;
+  pipeline = useMemo(() => data?.pipeline, [data]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -1659,6 +1677,7 @@ function PipelineDetailPage({
               blocksPrevious?.map(({ uuid }) => uuid).sort(),
               blocks?.map(({ uuid }) => uuid).sort(),
             )
+            || isEmptyObject(messages)
           )
     ) {
       const {
@@ -1667,14 +1686,17 @@ function PipelineDetailPage({
       } = initializeContentAndMessages(pipeline.blocks);
       contentByBlockUUID.current = contentByBlockUUIDResults;
 
-      setMessages((messagesPrev) => ({
-        ...messagesInit,
-        ...messagesPrev,
-      }));
+      if (!isEmptyObject(messagesInit)) {
+        setMessages((messagesPrev) => ({
+          ...messagesInit,
+          ...messagesPrev,
+        }));
+      }
     }
   }, [
     blocks,
     blocksPrevious,
+    messages,
     pipeline?.blocks,
     setMessages,
   ]);
