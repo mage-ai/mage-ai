@@ -321,6 +321,47 @@ class BlockExecutor:
                     should_execute = all(statuses_completed)
                 else:
                     should_execute = True
+            elif is_data_integration_child and not is_data_integration_controller:
+                index = int(data_integration_metadata.get('index') or 0)
+                if index >= 1:
+                    controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
+                    block_run_dict_previous = None
+
+                    for block_run_dict in block_run_dicts:
+                        if block_run_dict_previous:
+                            break
+
+                        metrics = block_run_dict.get('metrics')
+
+                        if not metrics:
+                            continue
+
+                        # Same controller
+                        if controller_block_uuid == metrics.get('controller_block_uuid') and \
+                                index - 1 == int(metrics.get('index') or 0):
+
+                            block_run_dict_previous = block_run_dict
+
+                    if block_run_dict_previous:
+                        should_execute = BlockRun.BlockRunStatus.COMPLETED.value == \
+                            block_run_dict_previous.get('status')
+
+                        if not should_execute:
+                            stream = data_integration_metadata.get('stream')
+                            self.logger.info(
+                                f'Block run ({block_run_id}) {self.block_uuid} for stream {stream} '
+                                f'and batch {index} is waiting for batch {index - 1} to complete.',
+                                **merge_dict(tags, dict(
+                                    batch=index - 1,
+                                    block_uuid=self.block.uuid,
+                                    controller_block_uuid=controller_block_uuid,
+                                    index=index,
+                                )),
+                            )
+
+                            return
+                else:
+                    should_execute = True
 
             if should_execute:
                 try:
