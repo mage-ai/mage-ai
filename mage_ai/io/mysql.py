@@ -1,4 +1,4 @@
-from typing import IO, List, Mapping, Union
+from typing import IO, Dict, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
-from mage_ai.shared.utils import clean_name
+from mage_ai.shared.utils import clean_name, get_user_type
 
 QUERY_ROW_LIMIT = 10_000_000
 
@@ -51,12 +51,22 @@ class MySQL(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
+        user_types: Dict = None,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
         query = []
-        for cname in dtypes:
-            query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
+        if user_types is not None:
+            user_mod_columns, col_with_usr_types = get_user_type(user_types)
+
+            query = [f'`{clean_name(cname)}` {dtypes[cname]} NULL' for cname in dtypes
+                     if cname not in user_mod_columns]
+
+            query = query + col_with_usr_types
+
+        else:
+            for cname in dtypes:
+                query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
 
         return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
 

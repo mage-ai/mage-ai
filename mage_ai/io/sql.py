@@ -310,8 +310,6 @@ class BaseSQL(BaseSQLConnection):
                             unique_constraints=unique_constraints,
                             user_types=overwrite_type,
                         )
-                        with self.printer.print_msg(query):
-                            print('')
                         cur.execute(query)
 
                     self.upload_dataframe(

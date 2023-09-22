@@ -1,13 +1,16 @@
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
+from typing import Dict, List, Union
+
+import clickhouse_connect
+from pandas import DataFrame, Series
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_clickhouse_type,
+    get_user_type,
 )
-from pandas import DataFrame, Series
-from typing import Dict, List, Union
-import clickhouse_connect
 
 
 class ClickHouse(BaseSQLDatabase):
@@ -162,15 +165,27 @@ class ClickHouse(BaseSQLDatabase):
         df: DataFrame,
         table_name: str,
         database: str,
+        user_types: Dict = None,
     ):
+
         dtypes = infer_dtypes(df)
         db_dtypes = {
             col: self.get_type(df[col], dtypes[col])
             for col in dtypes
         }
         fields = []
-        for cname in db_dtypes:
-            fields.append(f'{cname} {db_dtypes[cname]}')
+        if user_types is not None:
+            user_mod_columns, col_with_usr_types = get_user_type(user_types)
+
+            for cname in db_dtypes:
+                if cname in user_mod_columns:
+                    pass
+                else:
+                    fields.append(f'{cname} {db_dtypes[cname]}')
+
+        else:
+            for cname in db_dtypes:
+                fields.append(f'{cname} {db_dtypes[cname]}')
 
         command = f'CREATE TABLE {database}.{table_name} (' + \
             ', '.join(fields) + ') ENGINE = Memory'
@@ -186,6 +201,7 @@ class ClickHouse(BaseSQLDatabase):
         query_string: Union[str, None] = None,
         create_table_statement: Union[str, None] = None,
         verbose: bool = True,
+        overwrite_type: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -255,6 +271,7 @@ INSERT INTO {database}.{table_name}
                             df=df,
                             table_name=table_name,
                             database=database,
+                            user_types=overwrite_type,
                         )
                     with self.printer.print_msg(
                            f'Creating a new table: {create_table_stmt}'):

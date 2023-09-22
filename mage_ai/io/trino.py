@@ -1,6 +1,6 @@
 from io import StringIO
 from time import sleep
-from typing import IO, List, Mapping, Union
+from typing import IO, Dict, List, Mapping, Union
 
 import numpy as np
 import simplejson
@@ -20,6 +20,7 @@ from mage_ai.shared.utils import (
     clean_name,
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
+    get_user_type,
 )
 
 
@@ -115,12 +116,22 @@ class Trino(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
+        user_types: Dict = None
     ):
         if unique_constraints is None:
             unique_constraints = []
         query = []
-        for cname in dtypes:
-            query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
+        if user_types is not None:
+            user_mod_columns, col_with_usr_types = get_user_type(user_types)
+
+            query = [f'"{clean_name(cname)}" {dtypes[cname]}' for cname in dtypes
+                     if cname not in user_mod_columns]
+
+            query = query + col_with_usr_types
+
+        else:
+            for cname in dtypes:
+                query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
 
         full_table_name = '.'.join(list(filter(lambda x: x, [
             schema_name,
@@ -263,6 +274,7 @@ class Trino(BaseSQL):
         query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
+        overwrite_type: Dict = None,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -345,6 +357,7 @@ class Trino(BaseSQL):
                             db_dtypes,
                             schema_name,
                             table_name,
+                            user_types=overwrite_type,
                         )
                         cur.execute(query)
 
