@@ -48,11 +48,14 @@ The contents of the `mage_sources.yml` could look like this:
 ```yaml
 sources:
 - loader: mage
-  name: mage_green_sky
+  name: mage_demo
   schema: public
   tables:
-  - identifier: mage_green_sky_morning_wildflower
-    name: morning_wildflower
+  - identifier: mage_dbt_demo_pipeline_load_data
+    meta:
+      block_uuid: load_data
+      pipeline_uuid: dbt_demo_pipeline
+    name: dbt_demo_pipeline_load_data
 version: 2
 ```
 
