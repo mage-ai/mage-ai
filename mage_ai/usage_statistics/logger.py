@@ -268,7 +268,7 @@ class UsageStatisticLogger():
         encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
         pipeline_schedule = pipeline_run.pipeline_schedule
         data = dict(
-            landing_time_enabled=pipeline_schedule.landing_time_enabled(),
+            landing_time_enabled=1 if pipeline_schedule.landing_time_enabled() else 0,
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
             pipeline_status=pipeline_run.status,
