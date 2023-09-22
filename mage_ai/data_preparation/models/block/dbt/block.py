@@ -158,7 +158,8 @@ class DBTBlock(Block):
                     '--project-dir', project_path,
                     '--profiles-dir', profiles.profiles_dir,
                     '--target', target,
-                    '--select', f'mage_{pipeline_uuid}_{block_uuid}'
+                    '--select', f'mage_{pipeline_uuid}_{block_uuid}',
+                    '--full-refresh'
                 ]
                 DBTCli(args, logger).invoke()
 
