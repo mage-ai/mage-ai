@@ -17,6 +17,22 @@ COLUMN_TYPE_NUMBER = 'number'
 COLUMN_TYPE_OBJECT = 'object'
 COLUMN_TYPE_STRING = 'string'
 
+COLUMN_SCHEMA_DATETIME = dict(
+    format=COLUMN_FORMAT_DATETIME,
+    type=[
+        COLUMN_TYPE_NULL,
+        COLUMN_TYPE_STRING,
+    ],
+)
+
+COLUMN_SCHEMA_UUID = dict(
+    format=COLUMN_FORMAT_UUID,
+    type=[
+        COLUMN_TYPE_NULL,
+        COLUMN_TYPE_STRING,
+    ],
+)
+
 COLUMN_TYPES = [
   COLUMN_TYPE_ARRAY,
   COLUMN_TYPE_BINARY,
@@ -29,6 +45,28 @@ COLUMN_TYPES = [
 ]
 
 EXECUTION_PARTITION_FROM_NOTEBOOK = '_from_notebook'
+
+OUTPUT_TYPE_RECORD = 'RECORD'
+OUTPUT_TYPE_SCHEMA = 'SCHEMA'
+TYPE_OBJECT = 'object'
+
+KEY_BOOKMARK_PROPERTIES = 'bookmark_properties'
+KEY_DISABLE_COLUMN_TYPE_CHECK = 'disable_column_type_check'
+KEY_KEY_PROPERTIES = 'key_properties'
+KEY_PARTITION_KEYS = 'partition_keys'
+KEY_RECORD = 'record'
+KEY_REPLICATION_METHOD = 'replication_method'
+KEY_SCHEMA = 'schema'
+KEY_STREAM = 'stream'
+KEY_TYPE = 'type'
+KEY_UNIQUE_CONFLICT_METHOD = 'unique_conflict_method'
+KEY_UNIQUE_CONSTRAINTS = 'unique_constraints'
+KEY_VALUE = 'value'
+KEY_VERSION = 'version'
+
+REPLICATION_METHOD_FULL_TABLE = 'FULL_TABLE'
+REPLICATION_METHOD_INCREMENTAL = 'INCREMENTAL'
+REPLICATION_METHOD_LOG_BASED = 'LOG_BASED'
 
 
 class IngestMode(str, Enum):

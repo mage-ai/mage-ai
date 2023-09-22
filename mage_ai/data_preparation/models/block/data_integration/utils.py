@@ -12,10 +12,16 @@ from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
+    KEY_REPLICATION_METHOD,
+    REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
     IngestMode,
 )
+from mage_ai.data_preparation.models.block.data_integration.data import (
+    convert_dataframe_to_output,
+)
+from mage_ai.data_preparation.models.block.data_integration.schema import build_schema
 from mage_ai.data_preparation.models.constants import (
     PYTHON_COMMAND,
     BlockLanguage,
@@ -357,20 +363,15 @@ def execute_data_integration(
 
         outputs.append(proc)
     else:
-        ingest_mode = None
-        if block.configuration_data_integration.get('ingest_mode'):
-            ingest_mode = block.configuration_data_integration.get('ingest_mode').get(stream)
 
         proc = __execute_destination(
             block,
-            stream,
             data_integration_settings,
             module_file_path,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars_more,
-            ingest_mode=ingest_mode,
             input_vars=input_vars,
             logger=logger,
             logging_tags=logging_tags,
@@ -425,14 +426,12 @@ def execute_data_integration(
 
 def __execute_destination(
     block,
-    stream: str,
     data_integration_settings: Dict,
     module_file_path: str,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
-    ingest_mode: IngestMode = None,
     input_vars: List = None,
     logger: Logger = None,
     logging_tags: Dict = None,
@@ -459,38 +458,58 @@ def __execute_destination(
     # 2. Convert to Singer Spec in memory
     # 3. Pipe Singer Spec text from memory into running destination process
 
-    catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config')
     config_json = json.dumps(config)
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
     index = block.template_runtime_configuration.get('index', 0)
     selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+
+    configuration_data_integration = block.configuration_data_integration
+    # TESTING PURPOSES ONLY
+    if not selected_streams:
+        inputs_only = configuration_data_integration.get('inputs_only') or []
+        uuids = [i for i in block.upstream_block_uuids if i not in inputs_only]
+        if uuids:
+            selected_streams = uuids
+
+    stream = None
+    if selected_streams:
+        stream = selected_streams[0] if len(selected_streams) >= 1 else None
+
+    if not stream:
+        logger.info('No stream selected, skipping execution.')
+        return
+
     # The parent_stream is typically the upstream source block UUID. However,
     # in case the upstream source block is dynamic, we’ll use the parent_stream
     # value which will be the block run’s block UUID, which contains extra information
     # in the UUID (e.g. [block_uuid]:[index]).
-    parent_stream = block.template_runtime_configuration.get('parent_stream', [])
+    parent_stream = block.template_runtime_configuration.get('parent_stream')
 
     # Check to see if the stream (aka block UUID) is a source block or a normal block
-    block_stream = block.pipeline.get_block(stream)
+    if parent_stream:
+        block_stream = block.pipeline.get_block(parent_stream)
+    else:
+        block_stream = block.pipeline.get_block(stream)
+
     block_stream_is_source = block_stream.is_source()
 
-    stream_use = stream
-    if block_stream_is_source:
-        stream_use = selected_streams[0] if len(selected_streams) >= 1 else None
+    ingest_mode = IngestMode.DISK
+    if configuration_data_integration.get('ingest_mode'):
+        ingest_mode = configuration_data_integration.get('ingest_mode').get(stream)
 
     tags = merge_dict(logging_tags, dict(block_tags=dict(
         index=index,
+        ingest_mode=ingest_mode,
         parent_stream=parent_stream,
-        stream=stream_use,
+        stream=stream,
         type=block.type,
         uuid=block.uuid,
     )))
 
     output_file_path = None
-    mode = ingest_mode or IngestMode.DISK
-    if IngestMode.DISK == mode:
+    if IngestMode.DISK == ingest_mode:
         if block_stream_is_source:
             di_settings = block_stream.get_data_integration_settings(
                 dynamic_block_index=dynamic_block_index,
@@ -507,7 +526,7 @@ def __execute_destination(
             variable = build_variable(
                 block_stream,
                 di_uuid,
-                stream_use,
+                stream,
                 execution_partition=partition,
                 from_notebook=from_notebook,
             )
@@ -527,9 +546,53 @@ def __execute_destination(
                     from_notebook=from_notebook,
                     upstream_block_uuids=[stream],
                 )
-            # Convert DataFrame to Singer Spec
-    elif IngestMode.memory == mode:
-        pass
+            data = input_vars_fetched[0] if input_vars_fetched else None
+            if data is None:
+                logger.info(
+                    f'No data for stream {stream}.',
+                    **logging_tags,
+                )
+
+                return
+
+            variable = build_variable(
+                block,
+                data_integration_uuid,
+                stream,
+                execution_partition=partition,
+                from_notebook=from_notebook,
+            )
+            output_file_path = output_full_path(
+                index=index,
+                data_integration_uuid=data_integration_uuid,
+                variable=variable,
+            )
+            os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+
+            if isinstance(data, pd.DataFrame):
+                # Build catalog at and merge upstream source catalog with destination catalog.
+                # No schema provided from upstream block (that isn’t a source block)
+                # or configured in destination block:
+                # Dynamically build schema if no stream setting for schema in catalog.
+
+                # We’re hardcoding the replication method for now until we fetch the catalog
+                # from the upstream block.
+                schema = merge_dict(build_schema(data, stream), {
+                    KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
+                })
+
+                logger.info(
+                    f'Writing {len(data.index)} records from {stream} to file {output_file_path}',
+                    **logging_tags,
+                )
+                convert_dataframe_to_output(
+                    data,
+                    stream,
+                    file_path=output_file_path,
+                    schema=schema,
+                )
+    elif IngestMode.MEMORY == ingest_mode:
+        print(f'[TODO] Ingesting using memory for {stream}')
 
     if output_file_path:
         file_size = os.path.getsize(output_file_path)
@@ -548,17 +611,6 @@ def __execute_destination(
         '1',
     ]
 
-    if BlockLanguage.PYTHON == block.language:
-        args += [
-            '--catalog_json',
-            json.dumps(catalog),
-        ]
-    else:
-        args += [
-            '--catalog',
-            block.get_catalog_file_path(),
-        ]
-
     if index is not None:
         state_file_path = get_state_file_path(block, data_integration_uuid, stream)
         if state_file_path:
@@ -573,16 +625,20 @@ def __execute_destination(
             output_file_path,
         ]
 
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    for line in proc.stdout:
-        print_log_from_line(
-            line,
-            config=config,
-            logger=logger,
-            logging_tags=logging_tags,
-            tags=tags,
-        )
+        for line in proc.stdout:
+            print_log_from_line(
+                line,
+                config=config,
+                logger=logger,
+                logging_tags=logging_tags,
+                tags=tags,
+            )
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise e
 
     return proc
 
