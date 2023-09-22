@@ -144,7 +144,7 @@ class DBTBlock(Block):
                 f'mage_{pipeline_uuid}_{block_uuid}.csv'
             )
             seed_path.parent.mkdir(parents=True, exist_ok=True)
-            df.to_csv(seed_path, quoting=csv.QUOTE_NONNUMERIC)
+            df.to_csv(seed_path, quoting=csv.QUOTE_NONNUMERIC, index=False)
 
             target = Template(target).render(
                 variables=lambda x: variables.get(x) if variables else None,
