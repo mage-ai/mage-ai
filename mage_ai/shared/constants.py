@@ -15,7 +15,7 @@ VALID_ENVS = frozenset([
 SAMPLE_SIZE = 1000
 
 S3_PREFIX = 's3://'
-
+GCS_PREFIX = 'gs://'
 
 class InstanceType(str, Enum):
     SERVER_AND_SCHEDULER = 'server_and_scheduler'
