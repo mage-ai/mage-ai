@@ -539,7 +539,10 @@ class ShowRunner(CompileRunner):
             )
 
         # really ugly workaround for backporting fetchmany by supplying LIMIT instead
-        if self.config.args.limit >= 0:
+        if (
+            self.config.args.limit >= 0 and
+            type(self.adapter).__name__ not in ['SQLServerAdapter', 'FabricAdapter']
+        ):
             compiled_node.compiled_code = (
                 compiled_node.compiled_code +
                 '\nLIMIT ' + str(self.config.args.limit)
