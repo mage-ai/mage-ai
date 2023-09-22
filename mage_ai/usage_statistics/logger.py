@@ -266,14 +266,16 @@ class UsageStatisticLogger():
         block_configs = pipeline.all_block_configs
 
         encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
+        pipeline_schedule = pipeline_run.pipeline_schedule
         data = dict(
+            landing_time_enabled=pipeline_schedule.landing_time_enabled(),
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
             pipeline_status=pipeline_run.status,
             pipeline_type=pipeline_type,
             pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
             run_time_seconds=run_time_seconds,
-            trigger_method=pipeline_run.pipeline_schedule.schedule_type,
+            trigger_method=pipeline_schedule.schedule_type,
             unique_block_types=list(set([b.get('type') for b in block_configs])),
             unique_languages=list(set([b.get('language') for b in block_configs])),
         )
