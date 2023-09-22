@@ -52,7 +52,7 @@ class BaseSQL(BaseSQLConnection):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
-        unique_constraints: List[str] = [],
+        unique_constraints: List[str],
         user_types: Dict = None,
     ) -> str:
         return gen_table_creation_query(
