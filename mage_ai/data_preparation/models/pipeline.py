@@ -765,7 +765,9 @@ class Pipeline:
         return merge_dict(self.to_dict_base(), data)
 
     async def update(self, data, update_content=False):
-        from mage_ai.orchestration.db.utils import transfer_related_models_for_pipeline
+        from mage_ai.orchestration.db.models.utils import (
+            transfer_related_models_for_pipeline,
+        )
 
         old_uuid = None
         should_update_block_cache = False
