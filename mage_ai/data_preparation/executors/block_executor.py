@@ -6,9 +6,11 @@ from typing import Callable, Dict, List, Union
 import pytz
 import requests
 
+from mage_ai.data_integrations.utils.scheduler import build_block_run_metadata
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
+    get_selected_streams,
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -82,6 +84,7 @@ class BlockExecutor:
         template_runtime_configuration: Union[Dict, None] = None,
         update_status: bool = False,
         verify_output: bool = True,
+        block_run_dicts: List[str] = None,
         **kwargs,
     ) -> Dict:
         """
@@ -110,6 +113,7 @@ class BlockExecutor:
         if template_runtime_configuration:
             # Used for data integration pipeline
             self.block.template_runtime_configuration = template_runtime_configuration
+
         try:
             result = dict()
 
@@ -120,12 +124,45 @@ class BlockExecutor:
             )
 
             self.logger.logging_tags = tags
-            self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+
             if on_start is not None:
                 on_start(self.block_uuid)
 
-            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+
+            # Data integration block
+            is_original_block = self.block.uuid == self.block_uuid
+            is_data_integration_child = False
+            is_data_integration_controller = False
+            data_integration_metadata = None
+            run_in_parallel = False
+            upstream_block_uuids = None
+
+            if block_run and block_run.metrics and self.block.is_data_integration():
+                data_integration_metadata = block_run.metrics
+
+                run_in_parallel = int(data_integration_metadata.get('run_in_parallel') or 0) == 1
+                upstream_block_uuids = data_integration_metadata.get('upstream_block_uuids')
+                is_data_integration_child = data_integration_metadata.get('child', False)
+                is_data_integration_controller = data_integration_metadata.get('controller', False)
+
+                stream = data_integration_metadata.get('stream')
+
+                # If child and not controller
+                if stream and is_data_integration_child and not is_data_integration_controller:
+                    if not self.block.template_runtime_configuration:
+                        self.block.template_runtime_configuration = {}
+
+                    self.block.template_runtime_configuration['selected_streams'] = [
+                        stream,
+                    ]
+                    self.block.template_runtime_configuration['index'] = \
+                        data_integration_metadata.get('index')
+
+            if not is_data_integration_controller or is_data_integration_child:
+                self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+
+            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             if block_run:
                 block_run_data = block_run.metrics or {}
@@ -217,100 +254,230 @@ class BlockExecutor:
                 )
                 return dict(output=[])
 
-            try:
-                from mage_ai.shared.retry import retry
+            should_execute = True
+            should_finish = False
 
-                if retry_config is None:
-                    if self.RETRYABLE:
-                        retry_config = merge_dict(
-                            self.pipeline.repo_config.retry_config or dict(),
-                            self.block.retry_config or dict(),
+            # If the original block is running, it means all the child block runs are complete.
+            # Update the primary controller to be complete.
+            if data_integration_metadata and is_original_block:
+                controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
+                if on_complete and controller_block_uuid:
+                    on_complete(controller_block_uuid)
+                    self.logger.info(
+                        'All child block runs completed, updating controller block run '
+                        f'for block {controller_block_uuid} to complete.',
+                        **merge_dict(tags, dict(
+                            block_uuid=self.block.uuid,
+                            controller_block_uuid=controller_block_uuid,
+                        )),
+                    )
+                should_execute = False
+            elif is_data_integration_controller and \
+                    is_data_integration_child and not \
+                    run_in_parallel:
+
+                children = []
+                status_count = {}
+                block_run_dicts_mapping = {}
+
+                for block_run_dict in block_run_dicts:
+                    block_run_dicts_mapping[block_run_dict['block_uuid']] = block_run_dict
+
+                    metrics = block_run_dict.get('metrics') or {}
+                    controller_block_uuid = metrics.get(
+                        'controller_block_uuid',
+                    )
+
+                    if controller_block_uuid == self.block_uuid:
+                        children.append(block_run_dict)
+
+                    status = block_run_dict.get('status')
+                    if status not in status_count:
+                        status_count[status] = 0
+
+                    status_count[status] += 1
+
+                # Only update the child controller (for a specific stream) to complete
+                # if all its child block runs are complete.
+                children_length = len(children)
+                should_finish = children_length >= 1 and status_count.get(
+                    BlockRun.BlockRunStatus.COMPLETED.value,
+                    0,
+                ) >= children_length
+
+                if upstream_block_uuids:
+                    statuses_completed = []
+                    for up_block_uuid in upstream_block_uuids:
+                        block_run_dict = block_run_dicts_mapping.get(up_block_uuid)
+                        if block_run_dict:
+                            statuses_completed.append(
+                                BlockRun.BlockRunStatus.COMPLETED.value == block_run_dict.get(
+                                    'status',
+                                ),
+                            )
+                        else:
+                            statuses_completed.append(False)
+
+                    should_execute = all(statuses_completed)
+                else:
+                    should_execute = True
+            elif is_data_integration_child and not is_data_integration_controller:
+                index = int(data_integration_metadata.get('index') or 0)
+                if index >= 1:
+                    controller_block_uuid = data_integration_metadata.get('controller_block_uuid')
+                    block_run_dict_previous = None
+
+                    for block_run_dict in block_run_dicts:
+                        if block_run_dict_previous:
+                            break
+
+                        metrics = block_run_dict.get('metrics')
+
+                        if not metrics:
+                            continue
+
+                        # Same controller
+                        if controller_block_uuid == metrics.get('controller_block_uuid') and \
+                                index - 1 == int(metrics.get('index') or 0):
+
+                            block_run_dict_previous = block_run_dict
+
+                    if block_run_dict_previous:
+                        should_execute = BlockRun.BlockRunStatus.COMPLETED.value == \
+                            block_run_dict_previous.get('status')
+
+                        if not should_execute:
+                            stream = data_integration_metadata.get('stream')
+                            self.logger.info(
+                                f'Block run ({block_run_id}) {self.block_uuid} for stream {stream} '
+                                f'and batch {index} is waiting for batch {index - 1} to complete.',
+                                **merge_dict(tags, dict(
+                                    batch=index - 1,
+                                    block_uuid=self.block.uuid,
+                                    controller_block_uuid=controller_block_uuid,
+                                    index=index,
+                                )),
+                            )
+
+                            return
+                else:
+                    should_execute = True
+
+            if should_execute:
+                try:
+                    from mage_ai.shared.retry import retry
+
+                    if retry_config is None:
+                        if self.RETRYABLE:
+                            retry_config = merge_dict(
+                                self.pipeline.repo_config.retry_config or dict(),
+                                self.block.retry_config or dict(),
+                            )
+                        else:
+                            retry_config = dict()
+                    if type(retry_config) is not RetryConfig:
+                        retry_config = RetryConfig.load(config=retry_config)
+
+                    @retry(
+                        retries=retry_config.retries if self.RETRYABLE else 0,
+                        delay=retry_config.delay,
+                        max_delay=retry_config.max_delay,
+                        exponential_backoff=retry_config.exponential_backoff,
+                        logger=self.logger,
+                        logging_tags=tags,
+                    )
+                    def __execute_with_retry():
+                        return self._execute(
+                            analyze_outputs=analyze_outputs,
+                            block_run_id=block_run_id,
+                            callback_url=callback_url,
+                            global_vars=global_vars,
+                            update_status=update_status,
+                            input_from_output=input_from_output,
+                            logging_tags=tags,
+                            pipeline_run_id=pipeline_run_id,
+                            verify_output=verify_output,
+                            runtime_arguments=runtime_arguments,
+                            template_runtime_configuration=template_runtime_configuration,
+                            dynamic_block_index=dynamic_block_index,
+                            dynamic_block_uuid=None if dynamic_block_index is None
+                            else block_run.block_uuid,
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            data_integration_metadata=data_integration_metadata,
+                            pipeline_run=pipeline_run,
+                            block_run_dicts=block_run_dicts,
+                            **kwargs,
+                        )
+
+                    result = __execute_with_retry()
+                except Exception as error:
+                    self.logger.exception(
+                        f'Failed to execute block {self.block.uuid}',
+                        **merge_dict(tags, dict(
+                            error=error,
+                        )),
+                    )
+                    if on_failure is not None:
+                        on_failure(
+                            self.block_uuid,
+                            error=dict(
+                                error=error,
+                                errors=traceback.format_stack(),
+                                message=traceback.format_exc(),
+                            ),
                         )
                     else:
-                        retry_config = dict()
-                if type(retry_config) is not RetryConfig:
-                    retry_config = RetryConfig.load(config=retry_config)
-
-                @retry(
-                    retries=retry_config.retries if self.RETRYABLE else 0,
-                    delay=retry_config.delay,
-                    max_delay=retry_config.max_delay,
-                    exponential_backoff=retry_config.exponential_backoff,
-                    logger=self.logger,
-                    logging_tags=tags,
-                )
-                def __execute_with_retry():
-                    return self._execute(
-                        analyze_outputs=analyze_outputs,
-                        block_run_id=block_run_id,
-                        callback_url=callback_url,
-                        global_vars=global_vars,
-                        update_status=update_status,
-                        input_from_output=input_from_output,
-                        logging_tags=tags,
-                        pipeline_run_id=pipeline_run_id,
-                        verify_output=verify_output,
-                        runtime_arguments=runtime_arguments,
-                        template_runtime_configuration=template_runtime_configuration,
+                        self.__update_block_run_status(
+                            BlockRun.BlockRunStatus.FAILED,
+                            block_run_id=block_run_id,
+                            callback_url=callback_url,
+                            tags=tags,
+                        )
+                    self._execute_callback(
+                        'on_failure',
                         dynamic_block_index=dynamic_block_index,
-                        dynamic_block_uuid=None if dynamic_block_index is None
-                        else block_run.block_uuid,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                        **kwargs,
+                        global_vars=global_vars,
+                        logging_tags=tags,
+                        pipeline_run=pipeline_run,
                     )
+                    raise error
 
-                result = __execute_with_retry()
-            except Exception as error:
-                self.logger.exception(
-                    f'Failed to execute block {self.block.uuid}',
-                    **merge_dict(tags, dict(
-                        error=error,
-                    )),
-                )
-                if on_failure is not None:
-                    on_failure(
-                        self.block_uuid,
-                        error=dict(
-                            error=error,
-                            errors=traceback.format_stack(),
-                            message=traceback.format_exc(),
-                        ),
-                    )
+            if not should_finish:
+                should_finish = not is_data_integration_controller or \
+                    (is_data_integration_child and run_in_parallel)
+
+            if should_finish:
+                self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
+
+                # This is passed in from the pipeline scheduler
+                if on_complete is not None:
+                    on_complete(self.block_uuid)
                 else:
+                    # If this block run is the data integration controller,
+                    # don’t update the block run status here.
+                    # Wait until all the spawned children are done running.
+                    # Then, update the controller block run status elsewhere.
                     self.__update_block_run_status(
-                        BlockRun.BlockRunStatus.FAILED,
+                        BlockRun.BlockRunStatus.COMPLETED,
                         block_run_id=block_run_id,
                         callback_url=callback_url,
+                        pipeline_run=pipeline_run,
                         tags=tags,
                     )
+
+            # If this block run is the data integration controller block, don’t execute the
+            # success callback because this isn’t the last data integration block that needs
+            # to run.
+            if not data_integration_metadata or is_original_block:
                 self._execute_callback(
-                    'on_failure',
+                    'on_success',
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,
                     logging_tags=tags,
                     pipeline_run=pipeline_run,
                 )
-                raise error
-            self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
-            if on_complete is not None:
-                on_complete(self.block_uuid)
-            else:
-                self.__update_block_run_status(
-                    BlockRun.BlockRunStatus.COMPLETED,
-                    block_run_id=block_run_id,
-                    callback_url=callback_url,
-                    pipeline_run=pipeline_run,
-                    tags=tags,
-                )
-            self._execute_callback(
-                'on_success',
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                global_vars=global_vars,
-                logging_tags=tags,
-                pipeline_run=pipeline_run,
-            )
 
             return result
         finally:
@@ -330,6 +497,9 @@ class BlockExecutor:
         dynamic_block_index: Union[int, None] = None,
         dynamic_block_uuid: Union[str, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
+        data_integration_metadata: Dict = None,
+        pipeline_run: PipelineRun = None,
+        block_run_dicts: List[str] = None,
         **kwargs,
     ) -> Dict:
         """
@@ -359,11 +529,15 @@ class BlockExecutor:
         store_variables = True
 
         if self.project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+            di_settings = None
+
             blocks = [self.block]
             if self.block.upstream_blocks:
                 blocks += self.block.upstream_blocks
 
             for block in blocks:
+                is_current_block_run_block = block.uuid == self.block.uuid
+
                 data_integration_settings = block.get_data_integration_settings(
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
@@ -374,6 +548,9 @@ class BlockExecutor:
 
                 try:
                     if data_integration_settings:
+                        if is_current_block_run_block:
+                            di_settings = data_integration_settings
+
                         # This is required or else loading the module within the block execute
                         # method will create very large log files that compound. Not sure why,
                         # so this is the temp fix.
@@ -383,12 +560,24 @@ class BlockExecutor:
                             if 'data_integration_runtime_settings' not in extra_options:
                                 extra_options['data_integration_runtime_settings'] = {}
 
-                            if source_uuid not in \
+                            if 'module_file_paths' not in \
                                     extra_options['data_integration_runtime_settings']:
 
-                                extra_options['data_integration_runtime_settings'] = {
-                                    source_uuid: source_module_file_path(source_uuid),
-                                }
+                                extra_options['data_integration_runtime_settings'][
+                                    'module_file_paths'
+                                ] = dict(
+                                    destinations={},
+                                    sources={},
+                                )
+
+                            if source_uuid not in \
+                                    extra_options['data_integration_runtime_settings'][
+                                        'module_file_paths'
+                                    ]['sources']:
+
+                                extra_options['data_integration_runtime_settings'][
+                                    'module_file_paths'
+                                ]['sources'][source_uuid] = source_module_file_path(source_uuid)
 
                             # The source or destination block will return a list of outputs that
                             # contain procs. Procs aren’t JSON serializable so we won’t store those
@@ -396,10 +585,134 @@ class BlockExecutor:
                             # the notebook. The output of the source or destination block is
                             # handled separately than storing variables via the
                             # block.store_variables method.
-                            if block.uuid == self.block.uuid:
+                            if is_current_block_run_block:
                                 store_variables = False
                 except Exception as err:
                     print(f'[WARNING] BlockExecutor._execute: {err}')
+
+            if di_settings and \
+                    data_integration_metadata and \
+                    data_integration_metadata.get('controller') and \
+                    data_integration_metadata.get('original_block_uuid'):
+
+                original_block_uuid = data_integration_metadata.get('original_block_uuid')
+
+                # This is the source controller block run
+                if self.block.is_source():
+                    arr = []
+
+                    source = di_settings.get('source')
+                    catalog = di_settings.get('catalog', [])
+
+                    block_run_block_uuids = []
+                    if block_run_dicts:
+                        block_run_block_uuids += [br.get('block_uuid') for br in block_run_dicts]
+
+                    # Controller for child (single stream with batches).
+                    if data_integration_metadata.get('child'):
+                        # Create a block run for the stream for each batch in that stream.
+                        stream = data_integration_metadata.get('stream')
+                        block_run_metadata = build_block_run_metadata(
+                            self.block,
+                            self.logger,
+                            dynamic_block_index=dynamic_block_index,
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            global_vars=global_vars,
+                            partition=self.execution_partition,
+                            selected_streams=[stream],
+                        )
+                        for br_metadata in block_run_metadata:
+                            index = br_metadata.get('index') or 0
+                            number_of_batches = br_metadata.get('number_of_batches') or 0
+                            block_run_block_uuid = \
+                                f'{original_block_uuid}:{source}:{stream}:{index}'
+
+                            if block_run_block_uuid not in block_run_block_uuids:
+                                br = pipeline_run.create_block_run(
+                                    block_run_block_uuid,
+                                    metrics=merge_dict(dict(
+                                        child=1,
+                                        controller_block_uuid=self.block_uuid,
+                                        is_last_block_run=index == number_of_batches - 1,
+                                        original_block_uuid=original_block_uuid,
+                                        stream=stream,
+                                    ), br_metadata),
+                                )
+
+                                self.logger.info(
+                                    f'Created block run {br.id} for block {br.block_uuid} in batch '
+                                    f'index {index} ({index + 1} out of {number_of_batches}).',
+                                    **merge_dict(logging_tags, dict(
+                                        index=index,
+                                        number_of_batches=number_of_batches,
+                                        original_block_uuid=original_block_uuid,
+                                        source=source,
+                                        stream=stream,
+                                    )),
+                                )
+
+                                arr.append(br)
+                    else:
+                        block_run_dicts = []
+                        # Controller
+                        for stream_dict in get_selected_streams(catalog):
+                            # Create a child block run for every selected stream.
+                            stream = stream_dict.get('tap_stream_id')
+                            run_in_parallel = stream_dict.get('run_in_parallel', False)
+
+                            block_run_block_uuid = \
+                                f'{original_block_uuid}:{source}:{stream}:controller'
+
+                            if block_run_block_uuid not in block_run_block_uuids:
+                                block_run_dicts.append(dict(
+                                    block_uuid=block_run_block_uuid,
+                                    metrics=dict(
+                                        child=1,
+                                        controller=1,
+                                        controller_block_uuid=self.block_uuid,
+                                        original_block_uuid=original_block_uuid,
+                                        run_in_parallel=1 if run_in_parallel else 0,
+                                        stream=stream,
+                                    ),
+                                ))
+
+                        block_run_dicts_length = len(block_run_dicts)
+                        for idx, block_run_dict in enumerate(block_run_dicts):
+                            metrics = block_run_dict['metrics']
+                            stream = metrics['stream']
+                            run_in_parallel = metrics['run_in_parallel']
+
+                            if not run_in_parallel or run_in_parallel == 0:
+                                if idx >= 1:
+                                    block_run_previous = block_run_dicts[idx - 1]
+                                    metrics['upstream_block_uuids'] = [
+                                        block_run_previous['block_uuid'],
+                                    ]
+
+                                if idx < block_run_dicts_length - 1:
+                                    block_run_next = block_run_dicts[idx + 1]
+                                    metrics['downstream_block_uuids'] = [
+                                        block_run_next['block_uuid'],
+                                    ]
+
+                            br = pipeline_run.create_block_run(
+                                block_run_dict['block_uuid'],
+                                metrics=metrics,
+                            )
+
+                            self.logger.info(
+                                f'Created block run {br.id} for block {br.block_uuid} '
+                                f'for stream {stream} {metrics}.',
+                                **merge_dict(logging_tags, dict(
+                                    original_block_uuid=original_block_uuid,
+                                    source=source,
+                                    stream=stream,
+                                )),
+                            )
+
+                            arr.append(br)
+
+                    return arr
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,

@@ -1,4 +1,5 @@
 import BlockRunType from '@interfaces/BlockRunType';
+import BlockType, { OutputType } from '@interfaces/BlockType';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -8,12 +9,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
-import { OutputType } from '@interfaces/BlockType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
 import { isJsonString } from '@utils/string';
+import { sortByKey } from '@utils/array';
 
 export const TAB_TREE = { uuid: 'Dependency tree' };
 export const TAB_OUTPUT = { uuid: 'Block output' };
@@ -27,6 +28,7 @@ const MAX_COLUMNS = 40;
 // eslint-disable-next-line import/no-anonymous-default-export
 export default function({
   blockRuns,
+  blocksOverride,
   columns,
   dataType,
   height,
@@ -43,6 +45,7 @@ export default function({
   ...props
 }: {
   blockRuns: BlockRunType[];
+  blocksOverride?: BlockType[];
   columns: string[],
   dataType: DataTypeEnum,
   height: number;
@@ -67,31 +70,52 @@ export default function({
   const tabsMoreInner = [];
 
   if (!loadingData) {
-    outputs?.forEach(({
-      sample_data: blockSampleData,
-      text_data: textData,
-      type: dataType,
-    }, idx: number) => {
-      const emptyOutputMessageEl = (
-        <Spacing key={`output-empty-${idx}`} ml={2}>
-          <Text>
-            This block run has no output.
-          </Text>
-        </Spacing>
-      );
+    const outputsByType = {};
 
-      tabsMoreInner.push({
-        uuid: `Block output ${idx + 1}`,
-      });
+    outputs?.forEach((output) => {
+      const dataType = output.type;
 
-      if (dataType === DataTypeEnum.TABLE) {
-        const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
-        const rows = blockSampleData?.rows || [];
+      if (!outputsByType[dataType]) {
+        outputsByType[dataType] = {
+          outputs: [],
+          priority: Object.keys(outputsByType).length,
+        }
+      }
 
+      outputsByType[dataType].outputs.push(output);
+    });
 
-        if (rows && rows?.length >= 1) {
-          arr.push(
-            <DataTable
+    sortByKey(
+      Object.entries(outputsByType),
+      ([_, d]) => d.priority,
+    )?.forEach(([dataTypeInit, d]) => {
+      const {
+        outputs: outputsInGroup,
+      } = d;
+
+      const arrGroup = [];
+
+      outputsInGroup?.forEach(({
+        sample_data: blockSampleData,
+        text_data: textData,
+        type: dataType,
+      }, idx: number) => {
+        const emptyOutputMessageEl = (
+          <Spacing key={`output-empty-${idx}`} ml={2}>
+            <Text>
+              This block run has no output.
+            </Text>
+          </Spacing>
+        );
+
+        let el;
+
+        if (dataType === DataTypeEnum.TABLE) {
+          const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
+          const rows = blockSampleData?.rows || [];
+
+          if (rows && rows?.length >= 1) {
+            el = <DataTable
               columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
               columns={columns}
               height={height - heightOffset - 90}
@@ -101,30 +125,50 @@ export default function({
               noBorderRight
               renderColumnHeader={renderColumnHeader}
               rows={rows}
-            />,
-          );
+            />;
+          } else {
+            el = emptyOutputMessageEl;
+          }
         } else {
-          arr.push(emptyOutputMessageEl);
+          const parsedText = isJsonString(textData)
+            ? JSON.stringify(JSON.parse(textData), null, 2)
+            : textData;
+
+          const blockOutputText = !!textData
+            ? (
+              <Spacing key={`output-text-${idx}`} ml={2}>
+                <Text monospace>
+                  <pre>
+                    {parsedText}
+                  </pre>
+                </Text>
+              </Spacing>
+            )
+            : emptyOutputMessageEl;
+
+          el = blockOutputText;
         }
 
-      } else {
-        const parsedText = isJsonString(textData)
-          ? JSON.stringify(JSON.parse(textData), null, 2)
-          : textData;
+        // If output is text, group them into 1 tab
+        if (DataTypeEnum.TEXT === dataTypeInit) {
+          arrGroup.push(el);
 
-        const blockOutputText = !!textData
-          ? (
-            <Spacing key={`output-text-${idx}`} ml={2}>
-              <Text monospace>
-                <pre>
-                  {parsedText}
-                </pre>
-              </Text>
-            </Spacing>
-          )
-          : emptyOutputMessageEl;
+          if (idx === 0) {
+            tabsMoreInner.push({
+              uuid: `Block output ${idx + 1}`,
+            });
+          }
+        } else {
+          arr.push(el);
 
-        arr.push(blockOutputText);
+          tabsMoreInner.push({
+            uuid: `Block output ${idx + 1}`,
+          });
+        }
+      });
+
+      if (DataTypeEnum.TEXT === dataTypeInit) {
+        arr.push(arrGroup)
       }
     });
   }
@@ -173,6 +217,7 @@ export default function({
         {(!selectedRun || TAB_TREE.uuid === selectedTab?.uuid) && (
           <DependencyGraph
             {...updatedProps}
+            blocksOverride={blocksOverride}
             height={height}
             heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
             pipeline={pipeline}

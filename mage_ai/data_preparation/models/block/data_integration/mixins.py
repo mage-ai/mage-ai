@@ -34,6 +34,10 @@ from mage_ai.shared.hash import merge_dict
 
 
 class SourceMixin:
+    @property
+    def controller_uuid(self) -> str:
+        return f'{self.uuid}:controller'
+
     def get_catalog_file_path(self) -> str:
         if not self.pipeline:
             return
@@ -62,6 +66,32 @@ class SourceMixin:
             with open(catalog_full_path, mode='w') as f:
                 f.write(json.dumps(catalog))
 
+    def is_data_integration(self) -> bool:
+        if not self.pipeline or not \
+                Project(self.pipeline.repo_config).is_feature_enabled(
+                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                ):
+
+            return False
+
+        if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
+                BlockLanguage.YAML == self.language:
+
+            return True
+
+        if BlockLanguage.PYTHON == self.language:
+            configuration = self.configuration or {}
+            if configuration and 'data_integration' in configuration:
+                return True
+
+        return False
+
+    def is_source(self) -> bool:
+        if not self.is_data_integration():
+            return False
+
+        return BlockType.DATA_LOADER == self.type
+
     def get_data_integration_settings(
         self,
         dynamic_block_index: Union[int, None] = None,
@@ -72,11 +102,7 @@ class SourceMixin:
         partition: str = None,
         **kwargs,
     ) -> Dict:
-        if not self.pipeline or not \
-                Project(self.pipeline.repo_config).is_feature_enabled(
-                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-                ):
-
+        if not self.is_data_integration():
             return
 
         if self._data_integration or self._data_integration_loaded:

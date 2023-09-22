@@ -606,3 +606,48 @@ def test_output(output, *args) -> None:
         output = block._execute_block(dict(), from_notebook=True)
         self.assertIsNotNone(block.module)
         self.assertEqual(len(output), 1)
+
+    def test_update_upstream_blocks_order(self):
+        pipeline = Pipeline.create(
+            'test pipeline 8',
+            repo_path=self.repo_path,
+        )
+        Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block3 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[0],
+            'test_data_loader_1',
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[1],
+            'test_data_loader_2',
+        )
+        block3.update(
+            dict(upstream_blocks=['test_data_loader_2', 'test_data_loader_1']),
+            check_upstream_block_order=True,
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[0],
+            'test_data_loader_2',
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[1],
+            'test_data_loader_1',
+        )

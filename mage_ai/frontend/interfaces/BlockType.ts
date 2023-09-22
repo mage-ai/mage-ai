@@ -255,6 +255,7 @@ export default interface BlockType {
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  description?: string;
   downstream_blocks?: string[];
   error?: {
     error: string;
@@ -289,6 +290,7 @@ export default interface BlockType {
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;
+  runtime?: number;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   timeout?: number;

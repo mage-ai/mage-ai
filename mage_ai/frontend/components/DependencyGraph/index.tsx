@@ -107,6 +107,7 @@ export type DependencyGraphProps = {
       runtime?: number,
     };
   };
+  blocksOverride?: BlockType[];
   blocks?: BlockType[];
   disabled?: boolean;
   editingBlock?: {
@@ -144,6 +145,7 @@ export type DependencyGraphProps = {
 function DependencyGraph({
   blockRefs,
   blockStatus,
+  blocksOverride,
   blocks: allBlocksProp,
   disabled: disabledProp,
   editingBlock,
@@ -182,9 +184,10 @@ function DependencyGraph({
     upstreamBlocksEditing,
   ]);
 
-  const blocksInit = useMemo(() => pipeline?.blocks?.filter(({
+  const blocksInit = useMemo(() => (blocksOverride || pipeline?.blocks)?.filter(({
     type,
   }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type)) || [], [
+    blocksOverride,
     pipeline?.blocks,
   ]);
   // const dynamicUpstreamBlocksData =
@@ -207,7 +210,9 @@ function DependencyGraph({
   const allBlocks = useMemo(() => {
     const arr = [];
 
-    if (allBlocksProp) {
+    if (blocksOverride) {
+      return blocksOverride;
+    } else if (allBlocksProp) {
       return allBlocksProp;
     } else if (pipeline) {
       const mapping = {};
@@ -233,9 +238,11 @@ function DependencyGraph({
     return arr;
   }, [
     allBlocksProp,
+    blocksOverride,
     pipeline,
   ]);
-  const blockUUIDMapping = useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
+  const blockUUIDMapping =
+    useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
 
   const callbackBlocksByBlockUUID = useMemo(() => {
     const mapping = {};

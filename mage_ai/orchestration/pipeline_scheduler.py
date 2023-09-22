@@ -579,6 +579,19 @@ class PipelineScheduler:
                 b.id,
                 self.pipeline_run.get_variables(),
                 self.build_tags(**tags),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                [dict(
+                    block_uuid=br.block_uuid,
+                    id=br.id,
+                    metrics=br.metrics,
+                    status=br.status,
+                ) for br in self.pipeline_run.block_runs],
             )
 
     def __schedule_integration_streams(self, block_runs: List[BlockRun] = None) -> None:
@@ -1013,6 +1026,7 @@ def run_block(
     runtime_arguments: Dict = None,
     schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
+    block_run_dicts: List[Dict] = None,
 ) -> Any:
     """Execute a block within a pipeline run.
     Only run block that's with INITIAL or QUEUED status.
@@ -1049,10 +1063,11 @@ def run_block(
     ]:
         return {}
 
-    block_run.update(
-        started_at=datetime.now(tz=pytz.UTC),
-        status=BlockRun.BlockRunStatus.RUNNING,
-    )
+    block_run_data = dict(status=BlockRun.BlockRunStatus.RUNNING)
+    if not block_run.started_at or (block_run.metrics and not block_run.metrics.get('controller')):
+        block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
+
+    block_run.update(**block_run_data)
 
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     pipeline = pipeline_scheduler.pipeline
@@ -1093,6 +1108,7 @@ def run_block(
         tags=tags,
         template_runtime_configuration=template_runtime_configuration,
         verify_output=verify_output,
+        block_run_dicts=block_run_dicts,
     )
 
 
