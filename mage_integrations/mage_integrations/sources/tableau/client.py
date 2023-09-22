@@ -185,7 +185,7 @@ class TableauClient(object):
             raise_for_error(response, self.logger)
         else:
             resp = response.json()
-            if "list" in resp:
+            if "workbooks" in resp:
                 return True
             return False
 
