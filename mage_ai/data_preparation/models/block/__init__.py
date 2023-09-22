@@ -2,6 +2,7 @@ import asyncio
 import functools
 import importlib.util
 import json
+import logging
 import os
 import sys
 import time
@@ -81,7 +82,8 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
-    global_vars=None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
     parallel: bool = True,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -91,6 +93,8 @@ async def run_blocks(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+    if global_vars is None:
+        global_vars = dict()
 
     def create_block_task(block: 'Block') -> asyncio.Task:
         async def execute_and_run_tests() -> None:
@@ -99,10 +103,19 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
+                variables = global_vars
+                if from_notebook:
+                    logger = logging.getLogger(f'{block.uuid}_test')
+                    logger.setLevel('INFO')
+                    if 'logger' not in variables:
+                        variables = {
+                            'logger': logger,
+                            **variables,
+                        }
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
-                    global_vars=global_vars,
+                    global_vars=variables,
                     run_all_blocks=True,
                     run_sensors=run_sensors,
                     update_status=update_status,
@@ -163,6 +176,7 @@ def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
+    from_notebook: bool = False,
     global_vars: Dict = None,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -171,6 +185,9 @@ def run_blocks_sync(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+
+    if global_vars is None:
+        global_vars = dict()
 
     for block in root_blocks:
         blocks.put(block)
@@ -204,6 +221,14 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
+            if from_notebook:
+                logger = logging.getLogger(f'{block.uuid}_test')
+                logger.setLevel('INFO')
+                if 'logger' not in global_vars:
+                    global_vars = {
+                        'logger': logger,
+                        **global_vars,
+                    }
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -1900,7 +1925,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self, incomplete_only: bool = False, **kwargs) -> None:
+    def run_upstream_blocks(
+        self,
+        from_notebook: bool = False,
+        incomplete_only: bool = False,
+        **kwargs
+    ) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1920,6 +1950,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         run_blocks_sync(
             root_blocks,
+            from_notebook=from_notebook,
             selected_blocks=upstream_block_uuids,
             **kwargs,
         )
@@ -1977,6 +2008,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 global_vars=global_vars,
             )
         ]
+
+        if logger and 'logger' not in global_vars:
+            global_vars['logger'] = logger
 
         with self._redirect_streams(
             build_block_output_stdout=build_block_output_stdout,
