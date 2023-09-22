@@ -58,7 +58,7 @@ def get_absolute_path(path: str) -> str:
     return str(Path(os.path.abspath(os.path.expanduser(os.path.expandvars(path)))).resolve())
 
 
-def get_user_type(usr_input: Dict | str):
+def get_user_type(usr_input: Dict):
     if type(usr_input) == dict:
         # First, we collect the list of modified columns
         # So that we can skip them on Mage's internal dtype assignment
