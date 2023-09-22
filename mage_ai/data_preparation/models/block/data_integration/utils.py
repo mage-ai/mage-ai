@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 import yaml
@@ -13,6 +13,7 @@ from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
     KEY_REPLICATION_METHOD,
+    MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
@@ -75,8 +76,11 @@ def get_state_file_path(block, data_integration_uuid: str, stream: str) -> str:
     return file_path
 
 
-def variable_directory(source_uuid: str, stream: str) -> str:
-    return os.path.join(source_uuid, clean_name(stream))
+def variable_directory(data_integration_uuid: str, stream: str = None) -> str:
+    arr = [data_integration_uuid]
+    if stream:
+        arr.append(clean_name(stream))
+    return os.path.join(*arr)
 
 
 def destination_module(data_integration_uuid: str) -> Any:
@@ -145,10 +149,10 @@ def get_selected_streams(catalog: Dict) -> List[Dict]:
 
 def build_variable(
     block,
-    data_integration_uuid: str,
-    stream: str,
+    data_integration_uuid: str = None,
     execution_partition: str = None,
     from_notebook: bool = False,
+    stream: str = None,
 ):
     # The output file nested in the variables directory must contain the stream and the index
     # because a single block can have multiple streams with multiple indexes each due to fan out.
@@ -157,7 +161,11 @@ def build_variable(
     else:
         partition = execution_partition
 
-    variable_uuid = variable_directory(data_integration_uuid, stream)
+    if data_integration_uuid:
+        variable_uuid = variable_directory(data_integration_uuid, stream)
+    else:
+        variable_uuid = ''
+
     variable = block.pipeline.variable_manager.build_variable(
         block.pipeline.uuid,
         block.uuid,
@@ -180,10 +188,10 @@ def output_full_path(
 ) -> str:
     variable_use = variable or build_variable(
         block,
-        data_integration_uuid,
-        stream,
+        data_integration_uuid=data_integration_uuid,
         execution_partition=execution_partition,
         from_notebook=from_notebook,
+        stream=stream,
     )
 
     filename = output_filename(index) if index is not None else None
@@ -191,6 +199,56 @@ def output_full_path(
     # /root/.mage_data/default_repo/pipelines/unified_pipeline/.variables
     # /_from_notebook/source_postgresql/postgresql/user_with_emails
     return variable_use.full_path(filename)
+
+
+def get_streams_from_output_directory(
+    block,
+    data_integration_uuid: str = None,
+    execution_partition: str = None,
+    from_notebook: bool = False,
+) -> Dict:
+    variable = build_variable(
+        block,
+        data_integration_uuid=data_integration_uuid,
+        execution_partition=execution_partition,
+        from_notebook=from_notebook,
+        stream=None,
+    )
+    # /root/.mage_data/default_repo/pipelines/unified_pipeline/.variables
+    # /_from_notebook/source_postgresql/postgresql
+    # or
+    # /root/.mage_data/default_repo/pipelines/unified_pipeline/.variables
+    # /_from_notebook/source_postgresql
+    output_directory_path = output_full_path(
+        data_integration_uuid=data_integration_uuid,
+        variable=variable,
+    )
+
+    mapping = {}
+    if os.path.exists(output_directory_path):
+        # dir_name could be the stream if data_integration_uuid is not None
+        for dir_name1 in os.listdir(output_directory_path):
+            if data_integration_uuid:
+                mapping[dir_name1] = []
+            # ../[block_uuid]/[data_integration_uuid]/[stream]
+            # or
+            # ../[block_uuid]/[data_integration_uuid]
+            dir_full_path1 = os.path.join(output_directory_path, dir_name1)
+            for dir_name2 in os.listdir(dir_full_path1):
+                if not data_integration_uuid:
+                    mapping[dir_name2] = []
+                # ../[block_uuid]/[data_integration_uuid]/[stream]/00000000000000000000
+                # or
+                # ../[block_uuid]/[data_integration_uuid]/[stream]
+                dir_full_path2 = os.path.join(dir_full_path1, dir_name2)
+                if data_integration_uuid:
+                    mapping[dir_name1].append(dir_full_path2)
+                else:
+                    for dir_name3 in os.listdir(dir_full_path2):
+                        dir_full_path3 = os.path.join(dir_full_path2, dir_name3)
+                        mapping[dir_name2].append(dir_full_path3)
+
+    return mapping
 
 
 def execute_data_integration(
@@ -336,10 +394,10 @@ def execute_data_integration(
 
         variable = build_variable(
             block,
-            data_integration_uuid,
-            stream,
+            data_integration_uuid=data_integration_uuid,
             execution_partition=execution_partition,
             from_notebook=from_notebook,
+            stream=stream,
         )
         output_file_path = output_full_path(
             index=index,
@@ -363,7 +421,6 @@ def execute_data_integration(
 
         outputs.append(proc)
     else:
-
         proc = __execute_destination(
             block,
             data_integration_settings,
@@ -424,6 +481,89 @@ def execute_data_integration(
     return outputs
 
 
+def convert_block_output_data_for_destination(
+    block,
+    data_integration_uuid: str,
+    stream: str,
+    chunk_size: float = None,
+    dynamic_block_index: Union[int, None] = None,
+    dynamic_upstream_block_uuids: Union[List[str], None] = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_vars: List = None,
+    logger: Logger = None,
+    logging_tags: Dict = None,
+    partition: str = None,
+) -> List[str]:
+    variable = build_variable(
+        block,
+        data_integration_uuid=data_integration_uuid,
+        execution_partition=partition,
+        from_notebook=from_notebook,
+        stream=stream,
+    )
+    output_dir_path = output_full_path(
+        data_integration_uuid=data_integration_uuid,
+        variable=variable,
+    )
+
+    # If not source, get the output data from upstream block,
+    # then convert it to Singer Spec format.
+    input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+        block.fetch_input_variables(
+            input_vars,
+            partition,
+            global_vars,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            upstream_block_uuids=[stream],
+        )
+    data = input_vars_fetched[0] if input_vars_fetched else None
+    if data is None:
+        logger.info(
+            f'No data for stream {stream}.',
+            **logging_tags,
+        )
+        return
+
+    os.makedirs(os.path.dirname(output_dir_path), exist_ok=True)
+
+    if isinstance(data, pd.DataFrame):
+        # Build catalog at and merge upstream source catalog with destination catalog.
+        # No schema provided from upstream block (that isn’t a source block)
+        # or configured in destination block:
+        # Dynamically build schema if no stream setting for schema in catalog.
+
+        # We’re hardcoding the replication method for now until we fetch the catalog
+        # from the upstream block.
+        schema = merge_dict(build_schema(data, stream), {
+            KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
+        })
+
+        logger.info(
+            f'Writing {len(data.index)} records from stream {stream} to directory '
+            f'{output_dir_path}.',
+            **logging_tags,
+        )
+
+        # Break up the output file into chunks based on data frame size: ~10mb chunks.
+
+        output_files_paths = convert_dataframe_to_output(
+            data,
+            stream,
+            chunk_size=chunk_size,
+            dir_path=output_dir_path,
+            log_message=lambda msg, logger=logger, logging_tags=logging_tags: logger.info(
+                msg,
+                **logging_tags,
+            ),
+            schema=schema,
+        )
+
+        return output_files_paths
+
+
 def __execute_destination(
     block,
     data_integration_settings: Dict,
@@ -458,8 +598,7 @@ def __execute_destination(
     # 2. Convert to Singer Spec in memory
     # 3. Pipe Singer Spec text from memory into running destination process
 
-    config = data_integration_settings.get('config')
-    config_json = json.dumps(config)
+    config = data_integration_settings.get('config') or {}
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
     index = block.template_runtime_configuration.get('index', 0)
@@ -510,6 +649,7 @@ def __execute_destination(
 
     output_file_path = None
     if IngestMode.DISK == ingest_mode:
+        # If source, then just pass the output file to the destination to read from.
         if block_stream_is_source:
             di_settings = block_stream.get_data_integration_settings(
                 dynamic_block_index=dynamic_block_index,
@@ -525,74 +665,38 @@ def __execute_destination(
 
             variable = build_variable(
                 block_stream,
-                di_uuid,
-                stream,
+                data_integration_uuid=di_uuid,
                 execution_partition=partition,
                 from_notebook=from_notebook,
+                stream=stream,
             )
             output_file_path = output_full_path(
                 index=index,
                 data_integration_uuid=di_uuid,
                 variable=variable,
             )
-        else:
-            input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
-                block.fetch_input_variables(
-                    input_vars,
-                    partition,
-                    global_vars,
-                    dynamic_block_index=dynamic_block_index,
-                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                    from_notebook=from_notebook,
-                    upstream_block_uuids=[stream],
-                )
-            data = input_vars_fetched[0] if input_vars_fetched else None
-            if data is None:
-                logger.info(
-                    f'No data for stream {stream}.',
-                    **logging_tags,
-                )
-
-                return
-
-            variable = build_variable(
+        elif from_notebook:
+            # Convert if running block from notebook.
+            # If block is running from scheduler, the conversion happens at the
+            # child controller block run for a stream.
+            output_file_paths = convert_block_output_data_for_destination(
                 block,
-                data_integration_uuid,
-                stream,
-                execution_partition=partition,
-                from_notebook=from_notebook,
-            )
-            output_file_path = output_full_path(
-                index=index,
+                chunk_size=MAX_QUERY_STRING_SIZE,
                 data_integration_uuid=data_integration_uuid,
-                variable=variable,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
+                input_vars=input_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                partition=partition,
+                stream=stream,
             )
-            os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-
-            if isinstance(data, pd.DataFrame):
-                # Build catalog at and merge upstream source catalog with destination catalog.
-                # No schema provided from upstream block (that isn’t a source block)
-                # or configured in destination block:
-                # Dynamically build schema if no stream setting for schema in catalog.
-
-                # We’re hardcoding the replication method for now until we fetch the catalog
-                # from the upstream block.
-                schema = merge_dict(build_schema(data, stream), {
-                    KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
-                })
-
-                logger.info(
-                    f'Writing {len(data.index)} records from {stream} to file {output_file_path}',
-                    **logging_tags,
-                )
-                convert_dataframe_to_output(
-                    data,
-                    stream,
-                    file_path=output_file_path,
-                    schema=schema,
-                )
+            if output_file_paths:
+                output_file_path = output_file_paths[0]
     elif IngestMode.MEMORY == ingest_mode:
         print(f'[TODO] Ingesting using memory for {stream}')
+        return
 
     if output_file_path:
         file_size = os.path.getsize(output_file_path)
@@ -602,11 +706,14 @@ def __execute_destination(
         else:
             print(msg)
 
+    # TODO (tommy dangerous): Refer to destination table value in the stream’s schema settings.
+    config['table'] = stream
+
     args = [
         PYTHON_COMMAND,
         module_file_path,
         '--config_json',
-        config_json,
+        json.dumps(config),
         '--log_to_stdout',
         '1',
     ]
@@ -625,20 +732,16 @@ def __execute_destination(
             output_file_path,
         ]
 
-    try:
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        for line in proc.stdout:
-            print_log_from_line(
-                line,
-                config=config,
-                logger=logger,
-                logging_tags=logging_tags,
-                tags=tags,
-            )
-    except subprocess.CalledProcessError as e:
-        print(e.output)
-        raise e
+    for line in proc.stdout:
+        print_log_from_line(
+            line,
+            config=config,
+            logger=logger,
+            logging_tags=logging_tags,
+            tags=tags,
+        )
 
     return proc
 
@@ -655,10 +758,10 @@ def convert_outputs_to_data(
 ) -> Dict:
     variable = build_variable(
         block,
-        data_integration_uuid,
-        stream_id,
+        data_integration_uuid=data_integration_uuid,
         execution_partition=partition,
         from_notebook=from_notebook,
+        stream=stream_id,
     )
 
     output_file_paths = []

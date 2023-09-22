@@ -106,10 +106,16 @@ def index_by(func, arr):
 
 
 def merge_dict(a, b):
-    c = a.copy()
+    if a:
+        c = a.copy()
+    else:
+        c = {}
+
     if not b:
         return c
+
     c.update(b)
+
     return c
 
 

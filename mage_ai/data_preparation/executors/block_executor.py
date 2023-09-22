@@ -12,6 +12,7 @@ from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManage
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     destination_module_file_path,
     get_selected_streams,
+    get_streams_from_output_directory,
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -555,11 +556,8 @@ class BlockExecutor:
                         # This is required or else loading the module within the block execute
                         # method will create very large log files that compound. Not sure why,
                         # so this is the temp fix.
-                        is_source = self.block.is_source()
-                        if is_source:
-                            data_integration_uuid = data_integration_settings.get('source')
-                        else:
-                            data_integration_uuid = data_integration_settings.get('destination')
+                        data_integration_uuid = \
+                            data_integration_settings.get('data_integration_uuid')
 
                         if data_integration_uuid:
                             if 'data_integration_runtime_settings' not in extra_options:
@@ -575,7 +573,7 @@ class BlockExecutor:
                                     sources={},
                                 )
 
-                            if is_source:
+                            if self.block.is_source():
                                 key = 'sources'
                                 file_path_func = source_module_file_path
                             else:
@@ -611,11 +609,12 @@ class BlockExecutor:
 
                 original_block_uuid = data_integration_metadata.get('original_block_uuid')
 
-                # This is the source controller block run
-                if self.block.is_source():
+                # This is the source/destination controller block run
+                if self.block.is_data_integration():
                     arr = []
 
-                    source = di_settings.get('source')
+                    is_source = self.block.is_source()
+                    data_integration_uuid = di_settings.get('data_integration_uuid')
                     catalog = di_settings.get('catalog', [])
 
                     block_run_block_uuids = []
@@ -623,15 +622,19 @@ class BlockExecutor:
                         block_run_block_uuids += [br.get('block_uuid') for br in block_run_dicts]
 
                     # Controller for child (single stream with batches).
+                    # The child controller is responsible for creating child block runs for a single
+                    # stream. The child controller also knows how to fan out and create batches.
                     if data_integration_metadata.get('child'):
                         # Create a block run for the stream for each batch in that stream.
                         stream = data_integration_metadata.get('stream')
                         block_run_metadata = build_block_run_metadata(
                             self.block,
                             self.logger,
+                            data_integration_settings=di_settings,
                             dynamic_block_index=dynamic_block_index,
                             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                             global_vars=global_vars,
+                            logging_tags=logging_tags,
                             partition=self.execution_partition,
                             selected_streams=[stream],
                         )
@@ -639,7 +642,7 @@ class BlockExecutor:
                             index = br_metadata.get('index') or 0
                             number_of_batches = br_metadata.get('number_of_batches') or 0
                             block_run_block_uuid = \
-                                f'{original_block_uuid}:{source}:{stream}:{index}'
+                                f'{original_block_uuid}:{data_integration_uuid}:{stream}:{index}'
 
                             if block_run_block_uuid not in block_run_block_uuids:
                                 br = pipeline_run.create_block_run(
@@ -657,44 +660,108 @@ class BlockExecutor:
                                     f'Created block run {br.id} for block {br.block_uuid} in batch '
                                     f'index {index} ({index + 1} out of {number_of_batches}).',
                                     **merge_dict(logging_tags, dict(
+                                        data_integration_uuid=data_integration_uuid,
                                         index=index,
                                         number_of_batches=number_of_batches,
                                         original_block_uuid=original_block_uuid,
-                                        source=source,
                                         stream=stream,
                                     )),
                                 )
 
                                 arr.append(br)
                     else:
+                        # Controller: main controller and not a child controller.
+                        # This controller is responsible for creating all the child controllers,
+                        # 1 for each stream.
                         block_run_dicts = []
-                        # Controller
-                        for stream_dict in get_selected_streams(catalog):
-                            # Create a child block run for every selected stream.
-                            stream = stream_dict.get('tap_stream_id')
-                            run_in_parallel = stream_dict.get('run_in_parallel', False)
 
-                            block_run_block_uuid = \
-                                f'{original_block_uuid}:{source}:{stream}:controller'
+                        def _build_controller_block_run_dict(
+                            stream,
+                            block_run_block_uuids=block_run_block_uuids,
+                            controller_block_uuid=self.block_uuid,
+                            data_integration_uuid=data_integration_uuid,
+                            metrics: Dict = None,
+                            original_block_uuid=original_block_uuid,
+                            run_in_parallel: bool = False,
+                        ):
+                            block_run_block_uuid = ':'.join([
+                                original_block_uuid,
+                                data_integration_uuid,
+                                stream,
+                                'controller',
+                            ])
 
                             if block_run_block_uuid not in block_run_block_uuids:
-                                block_run_dicts.append(dict(
+                                return dict(
                                     block_uuid=block_run_block_uuid,
-                                    metrics=dict(
+                                    metrics=merge_dict(dict(
                                         child=1,
                                         controller=1,
-                                        controller_block_uuid=self.block_uuid,
+                                        controller_block_uuid=controller_block_uuid,
                                         original_block_uuid=original_block_uuid,
                                         run_in_parallel=1 if run_in_parallel else 0,
                                         stream=stream,
-                                    ),
-                                ))
+                                    ), metrics or {}),
+                                )
+
+                        if is_source:
+                            for stream_dict in get_selected_streams(catalog):
+                                # Create a child block run for every selected stream.
+                                stream = stream_dict.get('tap_stream_id')
+                                run_in_parallel = stream_dict.get('run_in_parallel', False)
+
+                                block_dict = _build_controller_block_run_dict(
+                                    stream,
+                                    run_in_parallel=run_in_parallel,
+                                )
+                                if block_dict:
+                                    block_run_dicts.append(block_dict)
+                        else:
+                            uuids_to_remove = self.block.configuration_data_integration.get(
+                                'inputs_only',
+                            ) or []
+
+                            up_uuids = self.block.upstream_block_uuids
+                            if dynamic_upstream_block_uuids:
+                                up_uuids += dynamic_upstream_block_uuids
+
+                                # Remove the original block UUID if there is a dynamic block as
+                                # an upstream block.
+                                for up_uuid in dynamic_upstream_block_uuids:
+                                    up_block = self.pipeline.get_block(up_uuid)
+                                    if up_block:
+                                        uuids_to_remove.append(up_block.uuid)
+
+                            up_uuids = [i for i in up_uuids if i not in uuids_to_remove]
+                            for up_uuid in up_uuids:
+                                up_block = self.pipeline.get_block(up_uuid)
+                                # If upstream block is a source block with 1 or more streams,
+                                # create a child controller for each of those streams and
+                                # pass in parent_stream as the block run block UUID
+                                if up_block.is_source():
+                                    output_file_path_by_stream = get_streams_from_output_directory(
+                                        up_block,
+                                        execution_partition=self.execution_partition,
+                                    )
+                                    for stream_id in output_file_path_by_stream.keys():
+                                        block_dict = _build_controller_block_run_dict(
+                                            stream_id,
+                                            metrics=dict(
+                                                parent_stream=up_uuid,
+                                            ),
+                                        )
+                                        if block_dict:
+                                            block_run_dicts.append(block_dict)
+                                else:
+                                    block_dict = _build_controller_block_run_dict(up_uuid)
+                                    if block_dict:
+                                        block_run_dicts.append(block_dict)
 
                         block_run_dicts_length = len(block_run_dicts)
                         for idx, block_run_dict in enumerate(block_run_dicts):
                             metrics = block_run_dict['metrics']
                             stream = metrics['stream']
-                            run_in_parallel = metrics['run_in_parallel']
+                            run_in_parallel = metrics.get('run_in_parallel') or 0
 
                             if not run_in_parallel or run_in_parallel == 0:
                                 if idx >= 1:
@@ -718,8 +785,8 @@ class BlockExecutor:
                                 f'Created block run {br.id} for block {br.block_uuid} '
                                 f'for stream {stream} {metrics}.',
                                 **merge_dict(logging_tags, dict(
+                                    data_integration_uuid=data_integration_uuid,
                                     original_block_uuid=original_block_uuid,
-                                    source=source,
                                     stream=stream,
                                 )),
                             )
