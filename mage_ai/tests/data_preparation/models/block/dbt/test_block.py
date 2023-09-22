@@ -109,6 +109,5 @@ class DBTBlockTest(TestCase):
             project_name='test_project_name',
             pipeline_uuid='test',
             block_uuids=['test_block_sql'],
-            schema='public',
-            database=None
+            schema='public'
         )
