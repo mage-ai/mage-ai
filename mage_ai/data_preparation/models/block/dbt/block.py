@@ -54,14 +54,6 @@ class DBTBlock(Block):
         pass
 
     @property
-    def target(self) -> str:
-        target = (self.configuration or {}).get('dbt_profile_target')
-        if target:
-            return target
-        profile_name = Project(self.project_path).project.get('profile')
-        return Profiles(self.project_path).profiles.get(profile_name).get('target')
-
-    @property
     def _dbt_configuration(self) -> Dict[str, Any]:
         """
         The configuration of the dbt block
@@ -71,6 +63,16 @@ class DBTBlock(Block):
         """
         config = self.configuration or {}
         return config.get('dbt') or {}
+
+    def target(self, variables) -> str:
+        target = (self.configuration or {}).get('dbt_profile_target')
+        if target:
+            return Template(target).render(
+                variables=lambda x: variables.get(x) if variables else None,
+                **get_template_vars(),
+            )
+        profile_name = Project(self.project_path).project.get('profile')
+        return Profiles(self.project_path).profiles.get(profile_name).get('target')
 
     def run_tests(
         self,
@@ -183,7 +185,7 @@ class DBTBlock(Block):
         if blocks_by_uuid:
             # get all dbt project, which needs to be updated
             targets = set(
-                (block.project_path, block.target)
+                (block.project_path, block.target(variables))
                 for _uuid, block in blocks_by_uuid.items()
                 if isinstance(block, DBTBlock)
             )
