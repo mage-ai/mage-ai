@@ -8,6 +8,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   [AWS Redshift](#redshift)
 -   [AWS S3](#s3)
 -   [Azure Blob Storage](#azureblobstorage)
+-   [DuckDB](#duckdb)
 -   [Filesystem](#fileio)
 -   [Google BigQuery](#bigquery)
 -   [Google Cloud Storage](#googlecloudstorage)
@@ -897,7 +898,7 @@ Initializes the MySQL data loading client.
 
 <h3> Factory Methods </h3>
 
-**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Postgres`
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> MySQL`
 
 Creates MySQL data loading client from configuration settings.
 
@@ -972,6 +973,85 @@ Sample data from a table in the MySQL database. Sample is not guaranteed to be r
     -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## DuckDB
+
+`mage_ai.io.duckdb`
+
+Handles data transfer between DuckDB database and the Mage app.
+DuckDB client utilizes the following keys to connect:
+
+
+```yaml
+DUCKDB_DATABASE: database # Database name
+DUCKDB_SCHEMA: main # Schema name. Default is main.
+```
+
+
+<h3> Constructor </h3>
+
+```
+__init__(self,
+         database: str
+         schema: str = None,
+         verbose: bool = True,
+         **kwargs
+        )```
+
+Initializes the MySQL data loading client.
+
+-   **Args**:
+    -   `database (str)`: The name of the database to connect to.
+    -   `schema`: Schema to use.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating psycopg2 connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> DuckDB`
+
+Creates DuckDB data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`DuckDB`) The constructed dataloader using this method
+
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to DuckDB database.
+
+**_open_** - `open()`
+
+Opens a connection to DuckDB database.
+
+**_table_exists_** - `table_exists()`
+
+Build query to check if a table existing in the DB.
+
+-   **Args**:
+    -   `schema_name`: Name of the schema to use.
+    -   `table_name`: Name of the table.
+-   **Returns**: true or false.
+
+**_upload_dataframe_** - `upload_dataframe()`
+
+Build query to insert data into table.
+
+-   **Args**:
+    -   `df`: Data in dataframe type.
+
+**_get_type_** - `get_type()`
+
+Convert data from input type into DuckDB type.
+
+-   **Args**:
+    -   `column`: Metadata associated with the column.
+    -   `dtype`: Input data type.
+-   **Returns**: DuckDB data type in string format.
 
 ## Snowflake
 
