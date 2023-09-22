@@ -1,3 +1,5 @@
+from enum import Enum
+
 BLOCK_CATALOG_FILENAME = 'catalog.json'
 REPLICATION_METHOD_INCREMENTAL = 'INCREMENTAL'
 STATE_FILENAME = 'state.json'
@@ -27,3 +29,8 @@ COLUMN_TYPES = [
 ]
 
 EXECUTION_PARTITION_FROM_NOTEBOOK = '_from_notebook'
+
+
+class IngestMode(str, Enum):
+    DISK = 'disk'
+    MEMORY = 'memory'

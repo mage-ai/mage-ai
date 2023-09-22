@@ -1198,7 +1198,7 @@ class Pipeline:
                 index=index,
                 partition=partition,
                 sample_count=sample_count,
-                source_uuid=data_integration_settings.get('source'),
+                data_integration_uuid=data_integration_settings.get('data_integration_uuid'),
                 stream_id=variable_name,
             )
 

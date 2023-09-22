@@ -10,6 +10,7 @@ from mage_ai.data_integrations.utils.scheduler import build_block_run_metadata
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
+    destination_module_file_path,
     get_selected_streams,
     source_module_file_path,
 )
@@ -554,9 +555,13 @@ class BlockExecutor:
                         # This is required or else loading the module within the block execute
                         # method will create very large log files that compound. Not sure why,
                         # so this is the temp fix.
-                        source_uuid = data_integration_settings.get('source')
+                        is_source = self.block.is_source()
+                        if is_source:
+                            data_integration_uuid = data_integration_settings.get('source')
+                        else:
+                            data_integration_uuid = data_integration_settings.get('destination')
 
-                        if source_uuid:
+                        if data_integration_uuid:
                             if 'data_integration_runtime_settings' not in extra_options:
                                 extra_options['data_integration_runtime_settings'] = {}
 
@@ -570,14 +575,23 @@ class BlockExecutor:
                                     sources={},
                                 )
 
-                            if source_uuid not in \
+                            if is_source:
+                                key = 'sources'
+                                file_path_func = source_module_file_path
+                            else:
+                                key = 'destinations'
+                                file_path_func = destination_module_file_path
+
+                            if data_integration_uuid not in \
                                     extra_options['data_integration_runtime_settings'][
                                         'module_file_paths'
-                                    ]['sources']:
+                                    ][key]:
 
                                 extra_options['data_integration_runtime_settings'][
                                     'module_file_paths'
-                                ]['sources'][source_uuid] = source_module_file_path(source_uuid)
+                                ][key][data_integration_uuid] = file_path_func(
+                                    data_integration_uuid,
+                                )
 
                             # The source or destination block will return a list of outputs that
                             # contain procs. Procs aren’t JSON serializable so we won’t store those
