@@ -26,7 +26,6 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
     MAX_QUERY_STRING_SIZE,
-    REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
     IngestMode,
@@ -502,7 +501,6 @@ def convert_block_output_data_for_destination(
     dynamic_upstream_block_uuids: Union[List[str], None] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
-    input_vars: List = None,
     logger: Logger = None,
     logging_tags: Dict = None,
     partition: str = None,
@@ -522,16 +520,9 @@ def convert_block_output_data_for_destination(
     # If not source, get the output data from upstream block,
     # then convert it to Singer Spec format.
 
-    # Remove the input vars if the block specifies inputs because
-    # input_vars might exist and those values are for the inputs and
-    # those inputs might not be inputs that the block wants to ingest.
-    input_vars_use = input_vars
-    if stream not in block.upstream_block_uuids_for_inputs:
-        input_vars_use = None
-
     input_vars_fetched, _kwargs_vars, upstream_block_uuids = \
         block.fetch_input_variables(
-            input_vars_use,
+            None,
             partition,
             global_vars,
             dynamic_block_index=dynamic_block_index,
@@ -540,13 +531,7 @@ def convert_block_output_data_for_destination(
             upstream_block_uuids=[stream],
         )
 
-    index_to_get_input = 0
-    if input_vars_use is not None and stream in block.upstream_block_uuids_for_inputs:
-        index_to_get_input = block.upstream_block_uuids_for_inputs.index(stream)
-        if index_to_get_input >= len(input_vars_fetched):
-            index_to_get_input = 0
-
-    data = input_vars_fetched[index_to_get_input] if input_vars_fetched else None
+    data = input_vars_fetched[0] if input_vars_fetched else None
 
     if data is None:
         msg = f'No data for stream {stream}.',
@@ -567,9 +552,7 @@ def convert_block_output_data_for_destination(
 
         # We’re hardcoding the replication method for now until we fetch the catalog
         # from the upstream block.
-        schema = merge_dict(build_schema(data, stream), {
-            KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
-        })
+        schema = build_schema(data, stream)
 
         logger.info(
             f'Writing {len(data.index)} records from stream {stream} to directory '
@@ -639,7 +622,7 @@ def __execute_destination(
     configuration_data_integration = block.configuration_data_integration
     # TESTING PURPOSES ONLY
     if not selected_streams:
-        inputs_only = configuration_data_integration.get('inputs_only') or []
+        inputs_only = block.inputs_only_uuids
         uuids = [i for i in block.upstream_block_uuids if i not in inputs_only]
         if uuids:
             selected_streams = uuids
@@ -726,7 +709,6 @@ def __execute_destination(
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 from_notebook=from_notebook,
-                input_vars=input_vars,
                 logger=logger,
                 logging_tags=logging_tags,
                 partition=partition,

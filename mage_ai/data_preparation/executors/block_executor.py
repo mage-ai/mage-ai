@@ -796,9 +796,7 @@ class BlockExecutor:
                                 if block_dict:
                                     block_run_dicts.append(block_dict)
                         else:
-                            uuids_to_remove = self.block.configuration_data_integration.get(
-                                'inputs_only',
-                            ) or []
+                            uuids_to_remove = self.block.inputs_only_uuids
 
                             up_uuids = self.block.upstream_block_uuids
                             if dynamic_upstream_block_uuids:
