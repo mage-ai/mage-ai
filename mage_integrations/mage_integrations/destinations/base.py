@@ -206,9 +206,12 @@ class Destination():
         stream: str,
         schema: dict,
         record: dict,
-        tags: dict = {},
+        tags: dict = None,
         **kwargs,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.export_batch_data([dict(
             record=record,
             schema=schema,
@@ -224,8 +227,11 @@ class Destination():
         stream: str,
         schema: Dict,
         row: Dict,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.logger.info(f'{self.__class__.__name__} process record started.', tags=tags)
 
         self.export_data(
@@ -311,7 +317,10 @@ class Destination():
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)
 
-    def process_state(self, row: Dict, tags: Dict = dict()) -> None:
+    def process_state(self, row: Dict, tags: Dict = None) -> None:
+        if not tags:
+            tags = {}
+
         state = row.get(KEY_VALUE)
         if state:
             self._emit_state(state)
@@ -470,8 +479,8 @@ class Destination():
                     else:
                         arr = [stream]
 
-                    for s in arr:
-                        batches_by_stream[stream]['state_data'].append(state_data)
+                    for stream_inner in arr:
+                        batches_by_stream[stream_inner]['state_data'].append(state_data)
                 else:
                     self.process_state(**state_data)
                     final_state_data = state_data
@@ -512,8 +521,11 @@ class Destination():
         batches_by_stream: Dict,
         final_record_data: Dict = None,
         final_state_data: Dict = None,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.logger.info('Process batch set started.', tags=tags)
 
         errors = []
@@ -539,7 +551,7 @@ class Destination():
 
         if len(stream_states.values()) >= 1:
             bookmarks = {}
-            for stream, state in stream_states.items():
+            for state in stream_states.values():
                 bookmarks.update(state['row'][KEY_VALUE]['bookmarks'])
 
             state_data = dict(row={
@@ -582,8 +594,11 @@ class Destination():
         stream: str,
         schema: dict,
         row: dict,
-        tags: dict = {},
+        tags: dict = None,
     ) -> Dict:
+        if not tags:
+            tags = {}
+
         if not stream:
             message = f'Required key {KEY_STREAM} is missing from row.'
             self.logger.exception(message, tags=tags)
@@ -600,7 +615,7 @@ class Destination():
         if self.streams_from_catalog and stream in self.streams_from_catalog:
             record_adjusted = extract(record_adjusted, schema['properties'].keys())
 
-        for k, v in record.items():
+        for k in record.keys():
             if k not in schema['properties']:
                 continue
 
@@ -675,9 +690,9 @@ class Destination():
         stream: str,
         schema: dict,
         row: dict,
-        tags: dict = {},
+        tags: dict = None,
     ) -> Dict:
-        record_adjusted = self.__prepare_record(stream, schema, row, tags)
+        record_adjusted = self.__prepare_record(stream, schema, row, tags or {})
         schema_properties = schema['properties']
 
         if not self.disable_column_type_check.get(stream, False):
