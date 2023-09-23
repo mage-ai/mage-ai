@@ -86,6 +86,7 @@ class DBTBlock(Block):
         """
         return
 
+    @classmethod
     def _variables_json(self, variables: Dict[str, Any]) -> str:
         """
         Serializes dict into json
@@ -150,9 +151,10 @@ class DBTBlock(Block):
             seed_path.parent.mkdir(parents=True, exist_ok=True)
             df.to_csv(seed_path, quoting=csv.QUOTE_NONNUMERIC, index=False)
 
+            template_vars = get_template_vars()
             target = Template(target).render(
                 variables=lambda x: variables.get(x) if variables else None,
-                **get_template_vars(),
+                **template_vars,
             )
 
             # Interpoalte profiles.yml and invoke dbt
@@ -163,6 +165,7 @@ class DBTBlock(Block):
                     '--profiles-dir', profiles.profiles_dir,
                     '--target', target,
                     '--select', f'mage_{pipeline_uuid}_{block_uuid}',
+                    '--vars', cls._variables_json(merge_dict(variables, template_vars)),
                     '--full-refresh'
                 ]
                 DBTCli(args, logger).invoke()
