@@ -33,10 +33,17 @@ from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 
 
-class SourceMixin:
+class DataIntegrationMixin:
     @property
     def controller_uuid(self) -> str:
         return f'{self.uuid}:controller'
+
+    @property
+    def configuration_data_integration(self) -> Dict:
+        if self.configuration:
+            return self.configuration.get('data_integration') or {}
+
+        return {}
 
     def get_catalog_file_path(self) -> str:
         if not self.pipeline:
@@ -86,6 +93,12 @@ class SourceMixin:
 
         return False
 
+    def is_destination(self) -> bool:
+        if not self.is_data_integration():
+            return False
+
+        return BlockType.DATA_EXPORTER == self.type
+
     def is_source(self) -> bool:
         if not self.is_data_integration():
             return False
@@ -110,9 +123,10 @@ class SourceMixin:
 
         catalog = None
         config = None
-        destination_uuid = None
         selected_streams = None
-        source_uuid = None
+
+        key = 'source' if self.is_source() else 'destination'
+        data_integration_uuid = None
 
         if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
                 BlockLanguage.YAML == self.language and \
@@ -126,8 +140,7 @@ class SourceMixin:
 
             catalog = self.__get_catalog_from_file()
             config = settings.get('config')
-            destination_uuid = settings.get('destination')
-            source_uuid = settings.get('source')
+            data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(
                 dynamic_block_index=dynamic_block_index,
@@ -142,21 +155,16 @@ class SourceMixin:
             catalog = results_from_block_code.get('catalog')
             config = results_from_block_code.get('config')
             selected_streams = results_from_block_code.get('selected_streams')
-            source_uuid = results_from_block_code.get('source')
+            data_integration_uuid = results_from_block_code.get(key)
 
-        if destination_uuid or source_uuid:
-            settings = dict(
-                catalog=catalog,
-                config=config,
-                selected_streams=selected_streams,
-            )
-
-            if destination_uuid:
-                settings['destination'] = destination_uuid
-            if source_uuid:
-                settings['source'] = source_uuid
-
-            self._data_integration = settings
+        if data_integration_uuid:
+            self._data_integration = {
+                'catalog': catalog,
+                'config': config,
+                'data_integration_uuid': data_integration_uuid,
+                'selected_streams': selected_streams,
+                key: data_integration_uuid,
+            }
 
         # Only attempt this once
         self._data_integration_loaded = True
@@ -178,6 +186,7 @@ class SourceMixin:
         decorated_functions = []
         decorated_functions_catalog = []
         decorated_functions_config = []
+        decorated_functions_destination = []
         decorated_functions_selected_streams = []
         decorated_functions_source = []
         test_functions = []
@@ -185,6 +194,7 @@ class SourceMixin:
         results = {
             'data_integration_catalog': self.__block_decorator_catalog(decorated_functions_catalog),
             'data_integration_config': self._block_decorator(decorated_functions_config),
+            'data_integration_destination': self._block_decorator(decorated_functions_destination),
             'data_integration_selected_streams': self.__block_decorator_selected_streams(
                 decorated_functions_selected_streams,
             ),
@@ -206,8 +216,16 @@ class SourceMixin:
         if not self._data_integration:
             self._data_integration = {}
 
-        if len(decorated_functions_source) >= 1:
-            block_function = decorated_functions_source[0]
+        is_source = self.is_source()
+        if is_source:
+            key = 'source'
+            decorated_functions_arr = decorated_functions_source
+        else:
+            key = 'destination'
+            decorated_functions_arr = decorated_functions_destination
+
+        if len(decorated_functions_arr) >= 1:
+            block_function = decorated_functions_arr[0]
             sig = signature(block_function)
 
             num_args = sum(
@@ -217,19 +235,35 @@ class SourceMixin:
             num_inputs = len(input_vars_use or [])
 
             if num_args > num_inputs:
+                should_log = False
+                block_uuids_to_fetch = None
+                if self.is_destination():
+                    block_uuids_to_fetch = self.configuration_data_integration.get('inputs')
+                    if block_uuids_to_fetch and is_debug():
+                        should_log = True
+
                 input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
-                        self.fetch_input_variables(
-                            input_vars,
-                            partition,
-                            global_vars,
-                            dynamic_block_index=dynamic_block_index,
-                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                            from_notebook=from_notebook,
-                        )
+                    self.fetch_input_variables(
+                        input_vars,
+                        partition,
+                        global_vars,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        from_notebook=from_notebook,
+                        upstream_block_uuids=block_uuids_to_fetch,
+                    )
+
+                if should_log:
+                    uuids = ', '.join(block_uuids_to_fetch)
+                    inputs_count = len(input_vars_fetched) if input_vars_fetched else 0
+                    print(
+                        '[Block.__execute_data_integration_block_code] inputs fetched from '
+                        f'block UUIDS {uuids}: {inputs_count} inputs fetched.',
+                    )
 
                 input_vars_use = input_vars_fetched
 
-            self._data_integration['source'] = self.execute_block_function(
+            self._data_integration[key] = self.execute_block_function(
                 block_function,
                 input_vars_use,
                 from_notebook=from_notebook,
@@ -242,25 +276,25 @@ class SourceMixin:
                 decorated_functions_config[0],
                 input_vars_use,
                 from_notebook=from_notebook,
-                global_vars=merge_dict(dict(
-                    source=self._data_integration.get('source'),
-                ), global_vars),
+                global_vars=merge_dict({
+                    key: self._data_integration.get(key),
+                }, global_vars),
                 initialize_decorator_modules=False,
             )
 
-        source = self._data_integration.get('source')
+        data_integration_uuid = self._data_integration.get(key)
         config = self._data_integration.get('config')
 
-        if source and config:
+        if data_integration_uuid and config:
             if decorated_functions_selected_streams:
                 self._data_integration['selected_streams'] = self.execute_block_function(
                     decorated_functions_selected_streams[0],
                     input_vars_use,
                     from_notebook=from_notebook,
-                    global_vars=merge_dict(dict(
-                        config=config,
-                        source=source,
-                    ), global_vars),
+                    global_vars=merge_dict({
+                        'config': config,
+                        key: data_integration_uuid,
+                    }, global_vars),
                     initialize_decorator_modules=False,
                 )
             else:
@@ -271,16 +305,16 @@ class SourceMixin:
                     decorated_functions_catalog[0],
                     input_vars_use,
                     from_notebook=from_notebook,
-                    global_vars=merge_dict(dict(
-                        config=config,
-                        selected_streams=self._data_integration.get('selected_streams'),
-                        source=source,
-                    ), global_vars),
+                    global_vars=merge_dict({
+                        'config': config,
+                        'selected_streams': self._data_integration.get('selected_streams'),
+                        key: data_integration_uuid,
+                    }, global_vars),
                     initialize_decorator_modules=False,
                 )
             else:
                 selected_streams = self._data_integration.get('selected_streams')
-                catalog = discover_func(source, config, selected_streams)
+                catalog = discover_func(data_integration_uuid, config, selected_streams)
                 self._data_integration['catalog'] = select_streams_in_catalog(
                     catalog,
                     selected_streams,

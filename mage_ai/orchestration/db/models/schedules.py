@@ -638,7 +638,7 @@ class PipelineRun(BaseModel):
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
             metrics = block_run.metrics
-            if metrics and block and block.is_source():
+            if metrics and block and block.is_data_integration():
                 original_block_uuid = metrics.get('original_block_uuid')
 
                 if original_block_uuid and metrics.get('child'):
@@ -671,7 +671,7 @@ class PipelineRun(BaseModel):
 
                 metrics = block_run.metrics
 
-                if metrics and block and block.is_source():
+                if metrics and block and block.is_data_integration():
                     if metrics.get('original'):
                         # If this is the original block, it must depend on all the children
                         # except the children that are controllers.
@@ -809,7 +809,7 @@ class PipelineRun(BaseModel):
                         f'Replicated block {block.replicated_block} ' +
                         f'does not exist in pipeline {pipeline.uuid}.',
                     )
-            elif block.is_source():
+            elif block.is_data_integration():
                 controller_uuid = block.controller_uuid
                 create_options['metrics'] = dict(
                     controller_block_uuid=controller_uuid,
@@ -1022,7 +1022,7 @@ class BlockRun(BaseModel):
 
             # Data integration child block run
             if child:
-                # [block UUID]:[source UUID]:[stream]:[controller|index]
+                # [block UUID]:[source destination UUID]:[stream]:[controller|index]
                 parts = self.block_uuid.split(':')
                 if len(parts) >= 4:
                     source_destination_uuid = parts[1]

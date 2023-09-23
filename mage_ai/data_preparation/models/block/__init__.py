@@ -24,8 +24,12 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
-from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
+from mage_ai.data_preparation.models.block.data_integration.mixins import (
+    DataIntegrationMixin,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    execute_data_integration,
+)
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -252,7 +256,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(SourceMixin):
+class Block(DataIntegrationMixin):
     def __init__(
         self,
         name: str,
@@ -1240,7 +1244,7 @@ class Block(SourceMixin):
             input_vars=input_vars,
             partition=execution_partition,
         ):
-            return execute_source(
+            return execute_data_integration(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
                 custom_code=custom_code,

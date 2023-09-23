@@ -77,6 +77,10 @@ def columns(function):
     return function
 
 
+def data_integration_destination(function):
+    return function
+
+
 def data_integration_source(function):
     return function
 
