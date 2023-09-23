@@ -143,6 +143,7 @@ class Workbooks(FullTableStream):
 
         yield from workbooks
 
+
 class ViewList(FullTableStream):
     tap_stream_id = "view_list"
     key_properties = ["id"]
