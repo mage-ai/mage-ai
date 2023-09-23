@@ -216,6 +216,9 @@ function PipelineRuns({
   const hasRunningPipeline = useMemo(() => pipelineRuns.some(({ status }) => (
     status === RunStatusEnum.INITIAL || status === RunStatusEnum.RUNNING
   )), [pipelineRuns]);
+  const hasIncompletePipelineRun = useMemo(() => pipelineRuns.some(({ status }) => (
+    status !== RunStatusEnum.COMPLETED
+  )), [pipelineRuns]);
   const selectedRunsArr = useMemo(() => (
     Object.values(selectedRuns || {})
       .filter((val) => val !== null)
@@ -306,6 +309,17 @@ function PipelineRuns({
       uuid: 'retry_selected',
     },
     {
+      beforeIcon: <Refresh muted={!hasIncompletePipelineRun} />,
+      disabled: !hasIncompletePipelineRun,
+      label: () => 'Retry all incomplete block runs',
+      onClick: () => updatePipeline({
+        pipeline: {
+          status: PipelineStatusEnum.RETRY_INCOMPLETE_BLOCK_RUNS,
+        },
+      }),
+      uuid: 'retry_incomplete_block_runs',
+    },
+    {
       beforeIcon: <AlertTriangle muted={selectedRunningRunsCount === 0} />,
       disabled: selectedRunningRunsCount === 0,
       label: () => `Cancel selected running (${selectedRunningRunsCount})`,
@@ -330,6 +344,7 @@ function PipelineRuns({
       uuid: 'cancel_all_running',
     },
   ]), [
+    hasIncompletePipelineRun,
     hasRunningPipeline,
     isPipelineRunsTab,
     selectedRunningRunsArr,
