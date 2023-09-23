@@ -64,7 +64,9 @@ class DBTBlock(Block):
         config = self.configuration or {}
         return config.get('dbt') or {}
 
-    def target(self, variables) -> str:
+    def target(self, variables: Dict = None) -> str:
+        if variables is None:
+            variables = dict()
         target = (self.configuration or {}).get('dbt_profile_target')
         if target:
             return Template(target).render(
@@ -185,7 +187,7 @@ class DBTBlock(Block):
         if blocks_by_uuid:
             # get all dbt project, which needs to be updated
             targets = set(
-                (block.project_path, block.target(variables))
+                (block.project_path, block.target(variables=variables))
                 for _uuid, block in blocks_by_uuid.items()
                 if isinstance(block, DBTBlock)
             )
