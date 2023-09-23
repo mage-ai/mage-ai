@@ -42,7 +42,6 @@ class GCSStorage(BaseStorage):
         return [k[len(path):].rstrip('/') for k in keys]
 
     def makedirs(self, path: str, **kwargs) -> None:
-        print("makedirs", path)
         blob = self.bucket.blob(gcs_url_path(path)+'/')
         blob.upload_from_string('')
 
@@ -93,7 +92,6 @@ class GCSStorage(BaseStorage):
         return pd.read_parquet(buffer, **kwargs)
 
     def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
-        print("write_parquet", file_path)
         buffer = io.BytesIO()
         df.to_parquet(buffer)
         buffer.seek(0)
@@ -101,7 +99,6 @@ class GCSStorage(BaseStorage):
         blob.upload_from_string(buffer.getvalue())
 
     def write_polars_dataframe(self, df: pl.DataFrame, file_path: str) -> None:
-        print("write_polars_dataframe")
         buffer = io.BytesIO()
         df.write_parquet(buffer)
         buffer.seek(0)
@@ -110,7 +107,6 @@ class GCSStorage(BaseStorage):
 
     @contextmanager
     def open_to_write(self, file_path: str) -> None:
-        print("open_to_write")
         try:
             stream = io.StringIO()
             yield stream
