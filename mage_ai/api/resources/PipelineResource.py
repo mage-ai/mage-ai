@@ -26,7 +26,11 @@ from mage_ai.data_preparation.models.triggers import (
     update_triggers_for_pipeline_and_persist,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     retry_pipeline_run,
@@ -414,6 +418,40 @@ class PipelineResource(BaseResource):
             for run in pipeline_runs:
                 retry_pipeline_run(run)
 
+        @safe_db_query
+        def query_incomplete_block_runs(pipeline_uuid: str):
+            a = aliased(PipelineRun, name='a')
+            b = aliased(BlockRun, name='b')
+            columns = [
+                b.id,
+                b.status,
+                b.pipeline_run_id,
+                a.status,
+                a.pipeline_uuid,
+            ]
+            result = (
+                PipelineRun.
+                select(*columns).
+                join(b, a.id == b.pipeline_run_id).
+                filter(a.pipeline_uuid == pipeline_uuid).
+                filter(b.status != BlockRun.BlockRunStatus.COMPLETED)
+            ).all()
+
+            return result
+
+        def retry_incomplete_block_runs(pipeline_uuid: str):
+            incomplete_block_run_results = query_incomplete_block_runs(pipeline_uuid)
+            block_run_ids = [r[0] for r in incomplete_block_run_results]
+            pipeline_run_ids = list(set([r[2] for r in incomplete_block_run_results]))
+            BlockRun.batch_update_status(
+                block_run_ids,
+                BlockRun.BlockRunStatus.INITIAL,
+            )
+            PipelineRun.batch_update_status(
+                pipeline_run_ids,
+                PipelineRun.PipelineRunStatus.RUNNING,
+            )
+
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
 
@@ -432,6 +470,8 @@ class PipelineResource(BaseResource):
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
                 elif status == 'retry' and pipeline_runs:
                     retry_pipeline_runs(pipeline_runs)
+                elif status == 'retry_incomplete_block_runs':
+                    retry_incomplete_block_runs(pipeline_uuid)
 
         self.on_update_callback = _update_callback
 
