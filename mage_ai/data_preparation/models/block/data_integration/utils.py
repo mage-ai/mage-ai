@@ -649,6 +649,9 @@ def __execute_destination(
 
     output_file_path = None
     if IngestMode.DISK == ingest_mode:
+        block_for_variable = None
+        data_integration_uuid_for_variable = None
+
         # If source, then just pass the output file to the destination to read from.
         if block_stream_is_source:
             di_settings = block_stream.get_data_integration_settings(
@@ -661,20 +664,8 @@ def __execute_destination(
                 **kwargs,
             )
 
-            di_uuid = di_settings.get('data_integration_uuid')
-
-            variable = build_variable(
-                block_stream,
-                data_integration_uuid=di_uuid,
-                execution_partition=partition,
-                from_notebook=from_notebook,
-                stream=stream,
-            )
-            output_file_path = output_full_path(
-                index=index,
-                data_integration_uuid=di_uuid,
-                variable=variable,
-            )
+            block_for_variable = block_stream
+            data_integration_uuid_for_variable = di_settings.get('data_integration_uuid')
         elif from_notebook:
             # Convert if running block from notebook.
             # If block is running from scheduler, the conversion happens at the
@@ -692,8 +683,27 @@ def __execute_destination(
                 partition=partition,
                 stream=stream,
             )
+
             if output_file_paths:
                 output_file_path = output_file_paths[0]
+        else:
+            block_for_variable = block
+            data_integration_uuid_for_variable = data_integration_uuid
+
+        if block_for_variable and data_integration_uuid_for_variable:
+            variable = build_variable(
+                block_for_variable,
+                data_integration_uuid=data_integration_uuid_for_variable,
+                execution_partition=partition,
+                from_notebook=from_notebook,
+                stream=stream,
+
+            )
+            output_file_path = output_full_path(
+                index=index,
+                data_integration_uuid=data_integration_uuid_for_variable,
+                variable=variable,
+            )
     elif IngestMode.MEMORY == ingest_mode:
         print(f'[TODO] Ingesting using memory for {stream}')
         return
@@ -707,7 +717,8 @@ def __execute_destination(
             print(msg)
 
     # TODO (tommy dangerous): Refer to destination table value in the stream’s schema settings.
-    config['table'] = stream
+    if not from_notebook or 'table' not in config:
+        config['table'] = stream
 
     args = [
         PYTHON_COMMAND,
@@ -731,6 +742,12 @@ def __execute_destination(
             '--input_file_path',
             output_file_path,
         ]
+
+    if not output_file_path:
+        raise Exception(
+            f'No input file path exists for {data_integration_uuid} '
+            f'in stream {stream} and batch {index}.',
+        )
 
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 

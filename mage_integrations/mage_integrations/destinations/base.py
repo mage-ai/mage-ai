@@ -619,7 +619,10 @@ class Destination():
 
     def __text_input(self, input_buffer):
         if self.input_file_path:
-            self.logger.info(f'Reading input from file path {self.input_file_path}.')
+            file_size = os.path.getsize(self.input_file_path)
+            self.logger.info(
+                f'Reading {file_size} bytes from input file path {self.input_file_path}.',
+            )
 
             with open(self.input_file_path) as f:
                 for line in f:

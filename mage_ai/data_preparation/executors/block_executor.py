@@ -300,7 +300,7 @@ class BlockExecutor:
                     status_count[status] += 1
 
                 # Only update the child controller (for a specific stream) to complete
-                # if all its child block runs are complete.
+                # if all its child block runs are complete (only for source).
                 children_length = len(children)
                 should_finish = children_length >= 1 and status_count.get(
                     BlockRun.BlockRunStatus.COMPLETED.value,
@@ -448,6 +448,16 @@ class BlockExecutor:
             if not should_finish:
                 should_finish = not is_data_integration_controller or \
                     (is_data_integration_child and run_in_parallel)
+
+            # Destination must complete immediately or else it’ll keep trying to
+            # convert its upstream blocks’ (that aren’t sources) data to Singer Spec output.
+            # The child block run for a stream may already be ingesting the data.
+            # If this child controller continues to convert the data while the child block run
+            # is ingesting the data, there will be a mismatch of records.
+            if not should_finish:
+                should_finish = is_data_integration_controller and \
+                    is_data_integration_child and \
+                    self.block.is_destination()
 
             if should_finish:
                 self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)

@@ -1,3 +1,5 @@
+import re
+from datetime import datetime
 from typing import Dict
 
 import pandas as pd
@@ -23,6 +25,7 @@ from mage_ai.shared.column_type_detector import (
     NUMBER,
     NUMBER_WITH_DECIMALS,
     PHONE_NUMBER,
+    REGEX_DATETIME_PATTERN,
     TEXT,
     TRUE_OR_FALSE,
     ZIP_CODE,
@@ -44,30 +47,77 @@ COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING = {
     ZIP_CODE: COLUMN_TYPE_STRING,
 }
 
+COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING_PYTHON = {
+    'bool': COLUMN_TYPE_BOOLEAN,
+    'dict': COLUMN_TYPE_OBJECT,
+    'float': COLUMN_TYPE_NUMBER,
+    'int': COLUMN_TYPE_INTEGER,
+    'list': COLUMN_TYPE_ARRAY,
+    'str': COLUMN_TYPE_STRING,
+}
 
-def build_schema(df: pd.DataFrame, stream: str) -> Dict:
+
+def build_schema(df: pd.DataFrame, stream: str, strict: bool = False) -> Dict:
     column_types = infer_column_types(df)
 
     properties = {}
 
-    for column, column_type in column_types.items():
-        if DATETIME == column_type:
-            props = COLUMN_SCHEMA_DATETIME
-        elif EMAIL == column_type:
-            props = COLUMN_SCHEMA_UUID
-        else:
-            converted_type = COLUMN_TYPE_STRING
-            if column_type in COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING:
-                converted_type = COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING[column_type]
+    if strict:
+        for column, column_type in column_types.items():
+            if DATETIME == column_type:
+                props = COLUMN_SCHEMA_DATETIME
+            elif EMAIL == column_type:
+                props = COLUMN_SCHEMA_UUID
+            else:
+                converted_type = COLUMN_TYPE_STRING
+                if column_type in COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING:
+                    converted_type = COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING[column_type]
 
-            props = dict(
-                type=[
-                    COLUMN_TYPE_NULL,
-                    converted_type,
-                ],
-            )
+                props = dict(
+                    type=[
+                        COLUMN_TYPE_NULL,
+                        converted_type,
+                    ],
+                )
 
-        properties[column] = props
+                properties[column] = props
+    else:
+        rows = df.iloc[:100].to_numpy()
+        for idx, column in enumerate(df.columns):
+            column_values = rows[:, idx]
+            column_type_grouped = {}
+            for val in column_values:
+                col_type = type(val)
+                if val and col_type is str and re.match(REGEX_DATETIME_PATTERN, val):
+                    col_type = datetime
+
+                key = col_type.__name__
+                if key not in column_type_grouped:
+                    column_type_grouped[key] = 0
+
+                column_type_grouped[key] += 1
+
+            column_type, _column_type_count = sorted(
+                column_type_grouped.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )[0]
+
+            if 'datetime' == column_type:
+                props = COLUMN_SCHEMA_DATETIME
+            else:
+                converted_type = COLUMN_TYPE_STRING
+                if column_type in COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING_PYTHON:
+                    converted_type = COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING_PYTHON[column_type]
+
+                props = dict(
+                    type=[
+                        COLUMN_TYPE_NULL,
+                        converted_type,
+                    ],
+                )
+
+            properties[column] = props
 
     return dict(
         schema=dict(
