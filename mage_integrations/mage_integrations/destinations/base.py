@@ -34,7 +34,7 @@ from mage_integrations.destinations.constants import (
     STREAM_OVERRIDE_SETTINGS_KEY,
     STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY,
 )
-from mage_integrations.utils.dictionary import merge_dict
+from mage_integrations.utils.dictionary import extract, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.logger.constants import (
@@ -54,6 +54,7 @@ class Destination():
         self,
         argument_parser=None,
         batch_processing: bool = False,
+        catalog: Dict = None,
         config: Dict = None,
         config_file_path: str = None,
         debug: bool = False,
@@ -67,6 +68,7 @@ class Destination():
         test_connection: bool = False,
     ):
         if argument_parser:
+            argument_parser.add_argument('--catalog_json', type=str, default=None)
             argument_parser.add_argument('--config', type=str, default=None)
             argument_parser.add_argument('--config_json', type=str, default=None)
             argument_parser.add_argument('--debug', action='store_true')
@@ -78,6 +80,8 @@ class Destination():
             argument_parser.add_argument('--test_connection', action='store_true')
             args = argument_parser.parse_args()
 
+            if args.catalog_json:
+                catalog = json.loads(args.catalog_json)
             if args.config:
                 config_file_path = args.config
             if args.config_json:
@@ -97,6 +101,7 @@ class Destination():
             if args.test_connection:
                 test_connection = args.test_connection
 
+        self.catalog = catalog
         self.config = config
         self.settings = settings
         self.batch_processing = batch_processing
@@ -118,6 +123,8 @@ class Destination():
         self.unique_constraints = None
         self.validators = None
         self.versions = None
+
+        self._streams_from_catalog = None
 
     @classmethod
     def templates(self) -> List[Dict]:
@@ -163,6 +170,19 @@ class Destination():
                 return yaml.safe_load(f.read())
 
         return {}
+
+    @property
+    def streams_from_catalog(self) -> Dict:
+        if self._streams_from_catalog is not None:
+            return self._streams_from_catalog
+
+        self._streams_from_catalog = {}
+        if self.catalog and self.catalog.get('streams'):
+            for stream_dict in self.catalog.get('streams'):
+                stream_id = stream_dict.get('tap_stream_id') or stream_dict.get('stream')
+                self._streams_from_catalog[stream_id] = stream_dict
+
+        return self._streams_from_catalog
 
     @settings.setter
     def settings(self, settings):
@@ -256,11 +276,11 @@ class Destination():
         stream: str,
         schema: Dict,
         row: Dict,
-        tags: Dict = dict(),
+        tags: Dict = None,
     ) -> None:
         if not stream:
             message = f'Required key {KEY_STREAM} is missing from row.'
-            self.logger.exception(message, tags=tags)
+            self.logger.exception(message, tags=tags or {})
             raise Exception(message)
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
@@ -394,10 +414,19 @@ class Destination():
                 else:
                     continue
 
-            schema = self.schemas.get(stream)
-
             if stream:
                 tags.update(stream=stream)
+
+            schema = None
+            if stream not in self.schemas:
+                if self.streams_from_catalog and stream in self.streams_from_catalog:
+                    stream_settings = self.streams_from_catalog.get(stream)
+                    schema = stream_settings.get('schema')
+                    tags.update(schema=schema)
+                    self.process_schema(stream, schema, stream_settings, tags=tags)
+
+            if not schema:
+                schema = self.schemas.get(stream)
 
             if stream and not batches_by_stream.get(stream):
                 batches_by_stream[stream] = dict(
@@ -410,9 +439,15 @@ class Destination():
             elif TYPE_LOG == row_type:
                 continue
             elif TYPE_SCHEMA == row_type:
-                schema = row.get(KEY_SCHEMA)
-                tags.update(schema=schema)
-                self.process_schema(stream, schema, row, tags=tags)
+                if not self.streams_from_catalog or stream not in self.streams_from_catalog:
+                    schema = row.get(KEY_SCHEMA)
+                    tags.update(schema=schema)
+                    self.process_schema(stream, schema, row, tags=tags)
+                elif self.streams_from_catalog and stream in self.streams_from_catalog:
+                    self.logger.info(
+                        f'Schema for stream {stream} already exists from catalog JSON.',
+                        tags=tags,
+                    )
             elif TYPE_RECORD == row_type:
                 record_data = dict(
                     row=row,
@@ -560,7 +595,10 @@ class Destination():
             raise Exception(message)
 
         record = row.get(KEY_RECORD)
+
         record_adjusted = record.copy()
+        if self.streams_from_catalog and stream in self.streams_from_catalog:
+            record_adjusted = extract(record_adjusted, schema['properties'].keys())
 
         for k, v in record.items():
             if k not in schema['properties']:

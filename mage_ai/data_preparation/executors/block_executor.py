@@ -1,12 +1,16 @@
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Union
 
 import pytz
 import requests
+from dateutil.relativedelta import relativedelta
 
-from mage_ai.data_integrations.utils.scheduler import build_block_run_metadata
+from mage_ai.data_integrations.utils.scheduler import (
+    build_block_run_metadata,
+    get_extra_variables,
+)
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
@@ -27,9 +31,14 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block_child,
     should_reduce_output,
 )
-from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
@@ -131,6 +140,7 @@ class BlockExecutor:
                 on_start(self.block_uuid)
 
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             # Data integration block
             is_original_block = self.block.uuid == self.block_uuid
@@ -140,7 +150,60 @@ class BlockExecutor:
             run_in_parallel = False
             upstream_block_uuids = None
 
-            if block_run and block_run.metrics and self.block.is_data_integration():
+            is_data_integration = self.block.is_data_integration()
+
+            # Runtime arguments for data integration is used for querying data from
+            # the source.
+            if is_data_integration and pipeline_run:
+                if not runtime_arguments:
+                    runtime_arguments = {}
+
+                pipeline_schedule = pipeline_run.pipeline_schedule
+                schedule_interval = pipeline_schedule.schedule_interval
+                if ScheduleType.API == pipeline_schedule.schedule_type:
+                    execution_date = datetime.utcnow()
+                else:
+                    # This will be none if trigger is API type
+                    execution_date = pipeline_schedule.current_execution_date()
+
+                end_date = None
+                start_date = None
+                date_diff = None
+
+                variables = pipeline_run.get_variables(
+                    extra_variables=get_extra_variables(self.pipeline),
+                )
+
+                if variables:
+                    if global_vars:
+                        global_vars.update(variables)
+                    else:
+                        global_vars = variables
+
+                if ScheduleInterval.ONCE == schedule_interval:
+                    end_date = variables.get('_end_date')
+                    start_date = variables.get('_start_date')
+                elif ScheduleInterval.HOURLY == schedule_interval:
+                    date_diff = timedelta(hours=1)
+                elif ScheduleInterval.DAILY == schedule_interval:
+                    date_diff = timedelta(days=1)
+                elif ScheduleInterval.WEEKLY == schedule_interval:
+                    date_diff = timedelta(weeks=1)
+                elif ScheduleInterval.MONTHLY == schedule_interval:
+                    date_diff = relativedelta(months=1)
+
+                if date_diff is not None:
+                    end_date = (execution_date).isoformat()
+                    start_date = (execution_date - date_diff).isoformat()
+
+                runtime_arguments.update(dict(
+                    _end_date=end_date,
+                    _execution_date=execution_date.isoformat(),
+                    _execution_partition=pipeline_run.execution_partition,
+                    _start_date=start_date,
+                ))
+
+            if block_run and block_run.metrics and is_data_integration:
                 data_integration_metadata = block_run.metrics
 
                 run_in_parallel = int(data_integration_metadata.get('run_in_parallel') or 0) == 1
@@ -168,8 +231,6 @@ class BlockExecutor:
 
             if not is_data_integration_controller or is_data_integration_child:
                 self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
-
-            pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             if block_run:
                 block_run_data = block_run.metrics or {}
@@ -544,8 +605,10 @@ class BlockExecutor:
 
         extra_options = {}
         store_variables = True
+        is_data_integration = False
 
         if self.project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+            is_data_integration = self.block.is_data_integration()
             di_settings = None
 
             blocks = [self.block]
@@ -625,7 +688,7 @@ class BlockExecutor:
                 original_block_uuid = data_integration_metadata.get('original_block_uuid')
 
                 # This is the source/destination controller block run
-                if self.block.is_data_integration():
+                if is_data_integration:
                     arr = []
 
                     is_source = self.block.is_source()
@@ -836,7 +899,8 @@ class BlockExecutor:
                 logger=self.logger,
                 logging_tags=logging_tags,
             )
-        elif PipelineType.INTEGRATION != self.pipeline.type:
+        elif PipelineType.INTEGRATION != self.pipeline.type and \
+                (not is_data_integration or BlockLanguage.PYTHON == self.block.language):
             self.block.run_tests(
                 execution_partition=self.execution_partition,
                 global_vars=global_vars,

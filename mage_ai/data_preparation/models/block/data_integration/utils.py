@@ -12,7 +12,19 @@ from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
+    KEY_BOOKMARK_PROPERTIES,
+    KEY_DESTINATION_TABLE,
+    KEY_DISABLE_COLUMN_TYPE_CHECK,
+    KEY_KEY_PROPERTIES,
+    KEY_PARTITION_KEYS,
+    KEY_PROPERTIES,
     KEY_REPLICATION_METHOD,
+    KEY_SCHEMA,
+    KEY_STREAM,
+    KEY_TABLE,
+    KEY_TYPE,
+    KEY_UNIQUE_CONFLICT_METHOD,
+    KEY_UNIQUE_CONSTRAINTS,
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
@@ -30,7 +42,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
@@ -598,6 +610,7 @@ def __execute_destination(
     # 2. Convert to Singer Spec in memory
     # 3. Pipe Singer Spec text from memory into running destination process
 
+    catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config') or {}
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
@@ -635,6 +648,8 @@ def __execute_destination(
 
     block_stream_is_source = block_stream.is_source()
     block_stream_data_integration_settings = None
+    catalog_from_source = None
+
     if block_stream_is_source:
         block_stream_data_integration_settings = block_stream.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
@@ -648,10 +663,12 @@ def __execute_destination(
         if not parent_stream:
             parent_stream = block_stream.uuid
 
+        catalog_from_source = block_stream_data_integration_settings.get('catalog')
+
         # TESTING PURPOSES ONLY
-        if not selected_streams_init:
-            catalog = block_stream_data_integration_settings.get('catalog') or {}
-            selected_streams = [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
+        if not selected_streams_init and catalog_from_source:
+            selected_streams = \
+                [s.get('tap_stream_id') for s in get_selected_streams(catalog_from_source)]
             stream = selected_streams[0] if len(selected_streams) >= 1 else None
 
     ingest_mode = IngestMode.DISK
@@ -729,15 +746,13 @@ def __execute_destination(
         else:
             print(msg)
 
-    # TODO (tommy dangerous): Refer to destination table value in the stream’s schema settings.
-    if not from_notebook or 'table' not in config:
-        config['table'] = stream
+    # Refer to destination table value in the stream’s schema settings
+    if not from_notebook or KEY_TABLE not in config:
+        config[KEY_TABLE] = stream
 
     args = [
         PYTHON_COMMAND,
         module_file_path,
-        '--config_json',
-        json.dumps(config),
         '--log_to_stdout',
         '1',
     ]
@@ -761,6 +776,94 @@ def __execute_destination(
             f'No input file path exists for {data_integration_uuid} '
             f'in stream {stream} and batch {index}.',
         )
+
+    if catalog or catalog_from_source:
+        stream_settings = None
+        stream_settings_source = None
+        if catalog:
+            stream_dicts = get_streams_from_catalog(catalog, [stream])
+            if stream_dicts:
+                # If there is a stream in the data integration catalog that that matches
+                # more than 1 stream from an upstream block,
+                # then the destination block’s catalog stream settings must contain
+                # a key for parent_stream.
+                if len(stream_dicts) >= 2 and parent_stream:
+                    stream_dicts_for_parent_stream = find(
+                        lambda x, ps=parent_stream: x.get('parent_stream') == ps,
+                        stream_dicts,
+                    )
+                    if stream_dicts_for_parent_stream:
+                        stream_settings = stream_dicts_for_parent_stream
+                else:
+                    stream_settings = stream_dicts[0]
+
+        if catalog_from_source:
+            stream_dicts = get_streams_from_catalog(catalog_from_source, [stream])
+            if stream_dicts:
+                stream_settings_source = stream_dicts[0]
+
+        keys_to_override = [
+            KEY_BOOKMARK_PROPERTIES,
+            KEY_DESTINATION_TABLE,
+            KEY_DISABLE_COLUMN_TYPE_CHECK,
+            KEY_KEY_PROPERTIES,
+            KEY_PARTITION_KEYS,
+            KEY_REPLICATION_METHOD,
+            KEY_UNIQUE_CONFLICT_METHOD,
+            KEY_UNIQUE_CONSTRAINTS,
+            KEY_STREAM,
+        ]
+
+        # Merge destination schema with upstream catalog schema.
+        # Add parent stream for upstream block sources
+        stream_settings_final = merge_dict(
+            extract(stream_settings_source or {}, keys_to_override),
+            extract(stream_settings or {}, keys_to_override),
+        )
+
+        if KEY_DESTINATION_TABLE in stream_settings_final:
+            config[KEY_TABLE] = stream_settings_final.get(KEY_DESTINATION_TABLE)
+
+        schema_final = {}
+        schema_properties = {}
+
+        for stream_settings_inner in [
+            stream_settings_source,
+            stream_settings,
+        ]:
+            if not stream_settings_inner:
+                continue
+
+            schema_dict = stream_settings_inner.get(KEY_SCHEMA)
+            schema_final.update(extract(schema_dict or {}, [KEY_TYPE]))
+
+            if schema_dict.get(KEY_PROPERTIES):
+                schema_properties = schema_dict.get(KEY_PROPERTIES)
+
+        catalog_final = dict(streams=[
+            merge_dict(
+                stream_settings_final,
+                dict(
+                    schema=merge_dict(
+                        schema_final,
+                        {
+                            KEY_PROPERTIES: schema_properties,
+                        },
+                    ),
+                ),
+            ),
+        ])
+
+        args += [
+            '--catalog_json',
+            json.dumps(catalog_final),
+        ]
+
+    # This needs to go last because we add the table name at the end.
+    args += [
+        '--config_json',
+        json.dumps(config),
+    ]
 
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
