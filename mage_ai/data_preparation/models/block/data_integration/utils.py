@@ -541,8 +541,10 @@ def convert_block_output_data_for_destination(
         )
 
     index_to_get_input = 0
-    if stream in block.upstream_block_uuids_for_inputs:
+    if input_vars_use is not None and stream in block.upstream_block_uuids_for_inputs:
         index_to_get_input = block.upstream_block_uuids_for_inputs.index(stream)
+        if index_to_get_input >= len(input_vars_fetched):
+            index_to_get_input = 0
 
     data = input_vars_fetched[index_to_get_input] if input_vars_fetched else None
 
@@ -732,9 +734,8 @@ def __execute_destination(
             )
 
             if pair:
-                output_file_paths, schema = pair
+                output_file_paths = pair[0]
                 output_file_path = output_file_paths[0]
-                catalog_from_source = dict(streams=[schema])
         else:
             block_for_variable = block
             data_integration_uuid_for_variable = data_integration_uuid
