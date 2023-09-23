@@ -1163,7 +1163,7 @@ class Block(SourceMixin):
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=self.uuid,
                     targets=list(set(
-                        (block.project_path, block.target)
+                        (block.project_path, block.target(variables=global_vars))
                         for _uuid, block in self.pipeline.blocks_by_uuid.items()
                         if isinstance(block, DBTBlock)
                     )),
