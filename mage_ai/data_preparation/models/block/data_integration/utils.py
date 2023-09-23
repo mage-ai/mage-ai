@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import yaml
@@ -137,7 +137,7 @@ def extract_stream_ids_from_streams(streams: List[Dict]) -> List[str]:
 
 def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     return list(filter(
-        lambda x: x['tap_stream_id'] in streams,
+        lambda x: x.get('tap_stream_id') in streams or x.get('stream') in streams,
         catalog.get('streams', []),
     ))
 
@@ -333,7 +333,7 @@ def execute_data_integration(
 
         # TESTING PURPOSES ONLY
         if not selected_streams and catalog:
-            selected_streams = [s.get('tap_stream_id') for s in catalog.get('streams', [])]
+            selected_streams = [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
 
         stream = selected_streams[0] if len(selected_streams) >= 1 else None
         # destination_table = self.template_runtime_configuration.get('destination_table', stream)
@@ -506,7 +506,7 @@ def convert_block_output_data_for_destination(
     logger: Logger = None,
     logging_tags: Dict = None,
     partition: str = None,
-) -> List[str]:
+) -> Tuple[List[str], Dict]:
     variable = build_variable(
         block,
         data_integration_uuid=data_integration_uuid,
@@ -521,9 +521,17 @@ def convert_block_output_data_for_destination(
 
     # If not source, get the output data from upstream block,
     # then convert it to Singer Spec format.
-    input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+
+    # Remove the input vars if the block specifies inputs because
+    # input_vars might exist and those values are for the inputs and
+    # those inputs might not be inputs that the block wants to ingest.
+    input_vars_use = input_vars
+    if stream not in block.upstream_block_uuids_for_inputs:
+        input_vars_use = None
+
+    input_vars_fetched, _kwargs_vars, upstream_block_uuids = \
         block.fetch_input_variables(
-            input_vars,
+            input_vars_use,
             partition,
             global_vars,
             dynamic_block_index=dynamic_block_index,
@@ -531,12 +539,20 @@ def convert_block_output_data_for_destination(
             from_notebook=from_notebook,
             upstream_block_uuids=[stream],
         )
-    data = input_vars_fetched[0] if input_vars_fetched else None
+
+    index_to_get_input = 0
+    if stream in block.upstream_block_uuids_for_inputs:
+        index_to_get_input = block.upstream_block_uuids_for_inputs.index(stream)
+
+    data = input_vars_fetched[index_to_get_input] if input_vars_fetched else None
+
     if data is None:
-        logger.info(
-            f'No data for stream {stream}.',
-            **logging_tags,
-        )
+        msg = f'No data for stream {stream}.',
+        if logger:
+            logger.info(msg, **logging_tags)
+        else:
+            print(msg)
+
         return
 
     os.makedirs(os.path.dirname(output_dir_path), exist_ok=True)
@@ -573,7 +589,7 @@ def convert_block_output_data_for_destination(
             schema=schema,
         )
 
-        return output_files_paths
+        return output_files_paths, schema
 
 
 def __execute_destination(
@@ -686,6 +702,7 @@ def __execute_destination(
     )))
 
     output_file_path = None
+
     if IngestMode.DISK == ingest_mode:
         block_for_variable = None
         data_integration_uuid_for_variable = None
@@ -700,7 +717,7 @@ def __execute_destination(
             # Convert if running block from notebook.
             # If block is running from scheduler, the conversion happens at the
             # child controller block run for a stream.
-            output_file_paths = convert_block_output_data_for_destination(
+            pair = convert_block_output_data_for_destination(
                 block,
                 chunk_size=MAX_QUERY_STRING_SIZE,
                 data_integration_uuid=data_integration_uuid,
@@ -714,8 +731,10 @@ def __execute_destination(
                 stream=stream,
             )
 
-            if output_file_paths:
+            if pair:
+                output_file_paths, schema = pair
                 output_file_path = output_file_paths[0]
+                catalog_from_source = dict(streams=[schema])
         else:
             block_for_variable = block
             data_integration_uuid_for_variable = data_integration_uuid
@@ -770,8 +789,7 @@ def __execute_destination(
             '--input_file_path',
             output_file_path,
         ]
-
-    if not output_file_path:
+    else:
         raise Exception(
             f'No input file path exists for {data_integration_uuid} '
             f'in stream {stream} and batch {index}.',

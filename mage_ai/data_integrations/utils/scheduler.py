@@ -326,7 +326,7 @@ def __build_block_run_metadata_for_destination(
             ).get(stream_id)
         else:
             # If upstream not a source, convert first.
-            output_file_paths = convert_block_output_data_for_destination(
+            output_file_paths, _schema = convert_block_output_data_for_destination(
                 block,
                 chunk_size=MAX_QUERY_STRING_SIZE,
                 data_integration_uuid=data_integration_uuid,

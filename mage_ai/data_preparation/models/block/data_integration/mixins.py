@@ -45,6 +45,15 @@ class DataIntegrationMixin:
 
         return {}
 
+    @property
+    def upstream_block_uuids_for_inputs(self) -> List[str]:
+        if self.configuration_data_integration:
+            inputs = self.configuration_data_integration.get('inputs') or []
+            inputs_only = self.configuration_data_integration.get('inputs_only') or []
+            inputs_combined = inputs + inputs_only
+
+            return [up_uuid for up_uuid in self.upstream_block_uuids if up_uuid in inputs_combined]
+
     def get_catalog_file_path(self) -> str:
         if not self.pipeline:
             return
@@ -234,14 +243,11 @@ class DataIntegrationMixin:
             )
             num_inputs = len(input_vars_use or [])
 
-            if num_args > num_inputs:
-                should_log = False
-                block_uuids_to_fetch = None
-                if self.is_destination():
-                    block_uuids_to_fetch = self.configuration_data_integration.get('inputs')
-                    if block_uuids_to_fetch and is_debug():
-                        should_log = True
+            block_uuids_to_fetch = None
+            if self.is_destination():
+                block_uuids_to_fetch = self.upstream_block_uuids_for_inputs
 
+            if num_args > num_inputs:
                 input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
                     self.fetch_input_variables(
                         input_vars,
@@ -253,7 +259,7 @@ class DataIntegrationMixin:
                         upstream_block_uuids=block_uuids_to_fetch,
                     )
 
-                if should_log:
+                if block_uuids_to_fetch and is_debug():
                     uuids = ', '.join(block_uuids_to_fetch)
                     inputs_count = len(input_vars_fetched) if input_vars_fetched else 0
                     print(
@@ -312,7 +318,7 @@ class DataIntegrationMixin:
                     }, global_vars),
                     initialize_decorator_modules=False,
                 )
-            else:
+            elif is_source:
                 selected_streams = self._data_integration.get('selected_streams')
                 catalog = discover_func(data_integration_uuid, config, selected_streams)
                 self._data_integration['catalog'] = select_streams_in_catalog(

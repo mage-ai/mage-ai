@@ -1110,6 +1110,15 @@ class Block(DataIntegrationMixin):
             logging_tags=logging_tags,
         ):
             # Fetch input variables
+
+            # Only fetch the input variables that the destination block explicitly declares.
+            # If all the input variables are fetched, there is a chance that a lot of data from
+            # an upstream source block is loaded just to be used as inputs for the block’s
+            # decorated functions. Only do this for the notebook because
+            block_uuids_to_fetch = None
+            if from_notebook and self.is_data_integration():
+                block_uuids_to_fetch = self.upstream_block_uuids_for_inputs
+
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 input_args,
                 execution_partition,
@@ -1117,6 +1126,7 @@ class Block(DataIntegrationMixin):
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 from_notebook=from_notebook,
+                upstream_block_uuids=block_uuids_to_fetch,
             )
 
             outputs_from_input_vars = {}
@@ -2017,6 +2027,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     exec(file.read(), results)
         else:
             test_functions = self.test_functions
+
+        if not test_functions or len(test_functions) == 0:
+            return
 
         variable_manager = self.pipeline.variable_manager
         outputs = [
