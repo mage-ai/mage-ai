@@ -548,7 +548,7 @@ class BlockResource(GenericResource):
         New DBT models include "content" in its block create payload,
         whereas creating blocks from existing DBT model files do not.
         """
-        if payload.get('type') == BlockType.DBT and content and language == BlockLanguage.SQL:
+        if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
             dbt_block = DBTBlock(
                 name,
                 clean_name(name),

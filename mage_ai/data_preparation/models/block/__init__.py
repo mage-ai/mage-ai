@@ -468,29 +468,28 @@ class Block(SourceMixin):
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt.utils import (
-            add_blocks_upstream_from_refs,
-        )
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = add_blocks_upstream_from_refs(block)
-                upstream_block_uuids += [b.uuid for b in arr]
-                upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
-                priority_final = priority if len(upstream_block_uuids) == 0 else None
+            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks()
+                }
+                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                pipeline.validate('A cycle was formed while adding a block')
+                pipeline.save()
             else:
-                priority_final = priority
-
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority_final,
-                widget=widget,
-            )
+                pipeline.add_block(
+                    block,
+                    upstream_block_uuids,
+                    priority=priority,
+                    widget=widget,
+                )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
@@ -1150,6 +1149,28 @@ class Block(SourceMixin):
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
+
+            # If block has downstream dbt block, then materialize output
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+            if (
+                not isinstance(self, DBTBlock) and
+                self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
+            ):
+                # project_path and target sets
+                DBTBlock.materialize_df(
+                    df=outputs[0],
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=self.uuid,
+                    targets=list(set(
+                        (block.project_path, block.target)
+                        for _uuid, block in self.pipeline.blocks_by_uuid.items()
+                        if isinstance(block, DBTBlock)
+                    )),
+                    logger=logger,
+                    global_vars=global_vars_copy,
+                    runtime_arguments=runtime_arguments,
+                )
 
         return dict(output=outputs)
 
