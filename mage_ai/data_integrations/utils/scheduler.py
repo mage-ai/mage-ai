@@ -6,9 +6,14 @@ from typing import Dict, List, Union
 
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.models.block.data_integration.constants import (
+    MAX_QUERY_STRING_SIZE,
+)
 from mage_ai.data_preparation.models.block.data_integration.utils import (
+    convert_block_output_data_for_destination,
     count_records,
     get_selected_streams,
+    get_streams_from_output_directory,
 )
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
     IntegrationPipeline,
@@ -231,9 +236,12 @@ def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variable
 def build_block_run_metadata(
     block,
     logger: DictLogger,
+    data_integration_settings: Dict = None,
     dynamic_block_index: Union[int, None] = None,
     dynamic_upstream_block_uuids: Union[List[str], None] = None,
     global_vars: Union[Dict, None] = None,
+    logging_tags: Dict = None,
+    parent_stream: str = None,
     partition: str = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
@@ -242,9 +250,7 @@ def build_block_run_metadata(
     if not block.is_data_integration():
         return block_run_metadata
 
-    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
-    data_integration_settings = block.get_data_integration_settings(
+    data_integration_settings or block.get_data_integration_settings(
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         from_notebook=False,
@@ -252,31 +258,147 @@ def build_block_run_metadata(
         partition=partition,
     )
 
+    if block.is_source():
+        return __build_block_run_metadata_for_source(
+            data_integration_settings,
+            logger,
+            logging_tags=logging_tags,
+            selected_streams=selected_streams,
+        )
+
+    return __build_block_run_metadata_for_destination(
+        block,
+        data_integration_settings,
+        logger,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        global_vars=global_vars,
+        logging_tags=logging_tags,
+        parent_stream=parent_stream,
+        partition=partition,
+        selected_streams=selected_streams,
+    )
+
+
+def __build_block_run_metadata_for_destination(
+    block,
+    data_integration_settings: Dict,
+    logger: DictLogger,
+    dynamic_block_index: Union[int, None] = None,
+    dynamic_upstream_block_uuids: Union[List[str], None] = None,
+    global_vars: Union[Dict, None] = None,
+    logging_tags: Dict = None,
+    parent_stream: str = None,
+    partition: str = None,
+    selected_streams: List[str] = None,
+) -> List[Dict]:
+    block_run_metadata = []
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
+    pipeline = block.pipeline
+
+    # Convert the upstream input data to Singer Spec
+    for stream_id in (selected_streams or []):
+        tags = merge_dict(logging_tags, dict(
+            data_integration_uuid=data_integration_uuid,
+            stream=stream_id,
+        ))
+
+        if parent_stream:
+            block_stream = pipeline.get_block(parent_stream)
+        else:
+            block_stream = pipeline.get_block(stream_id)
+
+        if not block_stream:
+            logger.info(
+                f'Block for stream {stream_id} doesn’t exist in pipeline {pipeline.uuid}.',
+                **tags,
+            )
+            continue
+
+        output_file_paths = []
+
+        is_source = block_stream.is_source()
+        # If upstream is source, skip conversion.
+        if is_source:
+            output_file_paths = get_streams_from_output_directory(
+                block_stream,
+                execution_partition=partition,
+            ).get(stream_id)
+        else:
+            # If upstream not a source, convert first.
+            output_file_paths = convert_block_output_data_for_destination(
+                block,
+                chunk_size=MAX_QUERY_STRING_SIZE,
+                data_integration_uuid=data_integration_uuid,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                partition=partition,
+                stream=stream_id,
+            )
+
+        # Create a child block run in batches.
+        # Each batch will be based on number of output files in the output file path.
+        number_of_batches = len(output_file_paths)
+        tags2 = merge_dict(tags, dict(
+            number_of_batches=number_of_batches,
+        ))
+        logger.info(
+            f'Number of batches for loading data from stream {stream_id}: {number_of_batches}.',
+            **tags2,
+        )
+
+        for idx in range(number_of_batches):
+            md = dict(
+                index=idx,
+                number_of_batches=number_of_batches,
+                stream=stream_id,
+            )
+            if is_source:
+                md['parent_stream'] = parent_stream
+
+            block_run_metadata.append(md)
+
+    return block_run_metadata
+
+
+def __build_block_run_metadata_for_source(
+    data_integration_settings: Dict,
+    logger: DictLogger,
+    logging_tags: Dict = None,
+    selected_streams: List[str] = None,
+) -> List[Dict]:
+    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
+
+    block_run_metadata = []
+
     catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config')
 
     streams = selected_streams or \
         [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
-    source_uuid = data_integration_settings.get('source')
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
 
-    is_sql_source = source_uuid in SQL_SOURCES_UUID
+    is_sql_source = data_integration_uuid in SQL_SOURCES_UUID
     record_counts_by_stream = {}
     if is_sql_source:
         record_counts_by_stream = index_by(
             lambda x: x['id'],
             count_records(
                 config,
-                source_uuid,
+                data_integration_uuid,
                 streams,
                 catalog=catalog,
             ),
         )
 
     for tap_stream_id in streams:
-        tags = dict(
-            source=source_uuid,
+        tags = merge_dict(logging_tags, dict(
+            data_integration_uuid=data_integration_uuid,
             stream=tap_stream_id,
-        )
+        ))
 
         record_counts = None
         if is_sql_source:
@@ -290,11 +412,11 @@ def build_block_run_metadata(
         logger.info(
             f"Number of records for stream {tap_stream_id}: "
             f"{'N/A' if record_counts is None else record_counts}.",
-            tags=tags2,
+            **tags2,
         )
         logger.info(
             f"Number of batches for loading data from stream {tap_stream_id}: {number_of_batches}.",
-            tags=tags2,
+            **tags2,
         )
 
         for idx in range(number_of_batches):
