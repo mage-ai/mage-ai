@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
-from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
     NoMultipleDynamicUpstreamBlocks,
@@ -938,15 +938,6 @@ class Pipeline:
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
-                    if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                        update_model_settings(
-                            block,
-                            block.upstream_blocks,
-                            [],
-                            force_update=True,
-                            variables=self.variables,
-                        )
-
                     if widget:
                         keys_to_update = []
 
@@ -981,6 +972,21 @@ class Pipeline:
                         block_type=block.type,
                         widget=widget,
                     )
+
+        # If there are any dbt blocks which could receive an upstream df
+        # we need to update mage_sources.yml
+        if any(
+            (
+                not isinstance(block, DBTBlock) and
+                block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(
+                    isinstance(downstream_block, DBTBlock)
+                    for downstream_block in block.downstream_blocks
+                )
+            )
+            for _uuid, block in self.blocks_by_uuid.items()
+        ):
+            DBTBlock.update_sources(self.blocks_by_uuid, variables=self.variables)
 
         if should_update_block_cache:
             from mage_ai.cache.block import BlockCache
