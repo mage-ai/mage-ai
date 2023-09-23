@@ -158,8 +158,13 @@ class BlockExecutor:
                     self.block.template_runtime_configuration['selected_streams'] = [
                         stream,
                     ]
-                    self.block.template_runtime_configuration['index'] = \
-                        data_integration_metadata.get('index')
+                    for key in [
+                        'index',
+                        'parent_stream',
+                    ]:
+                        if key in data_integration_metadata:
+                            self.block.template_runtime_configuration[key] = \
+                                data_integration_metadata.get(key)
 
             if not is_data_integration_controller or is_data_integration_child:
                 self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
@@ -645,6 +650,7 @@ class BlockExecutor:
                             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                             global_vars=global_vars,
                             logging_tags=logging_tags,
+                            parent_stream=data_integration_metadata.get('parent_stream'),
                             partition=self.execution_partition,
                             selected_streams=[stream],
                         )

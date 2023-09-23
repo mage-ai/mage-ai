@@ -602,7 +602,8 @@ def __execute_destination(
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
     index = block.template_runtime_configuration.get('index', 0)
-    selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+    selected_streams_init = block.template_runtime_configuration.get('selected_streams', [])
+    selected_streams = selected_streams_init
 
     configuration_data_integration = block.configuration_data_integration
     # TESTING PURPOSES ONLY
@@ -633,10 +634,30 @@ def __execute_destination(
         block_stream = block.pipeline.get_block(stream)
 
     block_stream_is_source = block_stream.is_source()
+    block_stream_data_integration_settings = None
+    if block_stream_is_source:
+        block_stream_data_integration_settings = block_stream.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_vars,
+            partition=partition,
+            **kwargs,
+        )
+        if not parent_stream:
+            parent_stream = block_stream.uuid
+
+        # TESTING PURPOSES ONLY
+        if not selected_streams_init:
+            catalog = block_stream_data_integration_settings.get('catalog') or {}
+            selected_streams = [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
+            stream = selected_streams[0] if len(selected_streams) >= 1 else None
 
     ingest_mode = IngestMode.DISK
     if configuration_data_integration.get('ingest_mode'):
-        ingest_mode = configuration_data_integration.get('ingest_mode').get(stream)
+        if configuration_data_integration.get('ingest_mode').get(stream):
+            ingest_mode = configuration_data_integration.get('ingest_mode').get(stream)
 
     tags = merge_dict(logging_tags, dict(block_tags=dict(
         index=index,
@@ -654,18 +675,10 @@ def __execute_destination(
 
         # If source, then just pass the output file to the destination to read from.
         if block_stream_is_source:
-            di_settings = block_stream.get_data_integration_settings(
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                input_vars=input_vars,
-                partition=partition,
-                **kwargs,
-            )
-
             block_for_variable = block_stream
-            data_integration_uuid_for_variable = di_settings.get('data_integration_uuid')
+            data_integration_uuid_for_variable = block_stream_data_integration_settings.get(
+                'data_integration_uuid',
+            )
         elif from_notebook:
             # Convert if running block from notebook.
             # If block is running from scheduler, the conversion happens at the

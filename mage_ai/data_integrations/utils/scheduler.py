@@ -241,6 +241,7 @@ def build_block_run_metadata(
     dynamic_upstream_block_uuids: Union[List[str], None] = None,
     global_vars: Union[Dict, None] = None,
     logging_tags: Dict = None,
+    parent_stream: str = None,
     partition: str = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
@@ -273,6 +274,7 @@ def build_block_run_metadata(
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         global_vars=global_vars,
         logging_tags=logging_tags,
+        parent_stream=parent_stream,
         partition=partition,
         selected_streams=selected_streams,
     )
@@ -286,6 +288,7 @@ def __build_block_run_metadata_for_destination(
     dynamic_upstream_block_uuids: Union[List[str], None] = None,
     global_vars: Union[Dict, None] = None,
     logging_tags: Dict = None,
+    parent_stream: str = None,
     partition: str = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
@@ -300,7 +303,11 @@ def __build_block_run_metadata_for_destination(
             stream=stream_id,
         ))
 
-        block_stream = pipeline.get_block(stream_id)
+        if parent_stream:
+            block_stream = pipeline.get_block(parent_stream)
+        else:
+            block_stream = pipeline.get_block(stream_id)
+
         if not block_stream:
             logger.info(
                 f'Block for stream {stream_id} doesn’t exist in pipeline {pipeline.uuid}.',
@@ -314,7 +321,7 @@ def __build_block_run_metadata_for_destination(
         # If upstream is source, skip conversion.
         if is_source:
             output_file_paths = get_streams_from_output_directory(
-                block,
+                block_stream,
                 execution_partition=partition,
             ).get(stream_id)
         else:
@@ -344,11 +351,15 @@ def __build_block_run_metadata_for_destination(
         )
 
         for idx in range(number_of_batches):
-            block_run_metadata.append(dict(
+            md = dict(
                 index=idx,
                 number_of_batches=number_of_batches,
                 stream=stream_id,
-            ))
+            )
+            if is_source:
+                md['parent_stream'] = parent_stream
+
+            block_run_metadata.append(md)
 
     return block_run_metadata
 
