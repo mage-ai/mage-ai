@@ -2,6 +2,7 @@ from typing import Dict, List, Mapping, Union
 
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
+from mage_ai.data_integrations.utils.settings import get_uuid
 from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockLanguage,
@@ -18,8 +19,9 @@ from mage_ai.server.api.integration_sources import build_integration_module_info
 from mage_ai.shared.strings import is_number
 
 
-def get_templates() -> List[Dict]:
+def get_templates(group_templates: bool = False) -> Union[List[Dict], Dict]:
     arr = []
+    mapping = {}
 
     for items, block_type, di_type in [
         (SOURCES, BlockType.DATA_LOADER, DATA_INTEGRATION_TYPE_SOURCES),
@@ -28,7 +30,7 @@ def get_templates() -> List[Dict]:
         for data_dict in items:
             display_name = data_dict['name']
 
-            arr.append(dict(
+            template = dict(
                 block_type=block_type,
                 configuration=dict(data_integration={}),
                 language=di_type,
@@ -36,7 +38,16 @@ def get_templates() -> List[Dict]:
                 path=f'data_integrations/{di_type}/base',
                 template_type=TEMPLATE_TYPE_DATA_INTEGRATION,
                 template_variables=data_dict,
-            ))
+            )
+
+            arr.append(template)
+
+            if group_templates:
+                uuid = get_uuid(data_dict)
+                mapping[uuid] = template
+
+    if group_templates:
+        return mapping
 
     return arr
 

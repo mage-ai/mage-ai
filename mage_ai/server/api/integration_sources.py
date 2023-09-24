@@ -4,6 +4,7 @@ import subprocess
 import traceback
 from typing import Dict, List
 
+from mage_ai.data_integrations.utils.settings import get_uuid
 from mage_ai.data_preparation.models.constants import PYTHON_COMMAND
 from mage_ai.server.logger import Logger
 
@@ -12,10 +13,11 @@ logger = Logger().new_server_logger(__name__)
 
 def build_integration_module_info(key: str, option: Dict) -> Dict:
     d = option.copy()
-    if not d.get('uuid'):
-        d['uuid'] = d['name'].lower().replace(' ', '_')
+
     module_name = d.get('module_name', d['name'].replace(' ', ''))
-    uuid = d['uuid']
+    uuid = get_uuid(d)
+    d['uuid'] = uuid
+
     try:
         module = importlib.import_module(f"mage_integrations.{key}.{uuid}")
         absolute_file_path = '/'.join(module.__file__.split('/')[:-2])

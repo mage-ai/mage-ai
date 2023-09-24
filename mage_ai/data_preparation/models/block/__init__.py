@@ -64,6 +64,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
@@ -71,7 +72,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -379,6 +380,30 @@ class Block(DataIntegrationMixin):
         return self._content
 
     async def metadata_async(self) -> Dict:
+        if self.is_data_integration():
+            if BlockLanguage.YAML == self.language:
+                content = await self.content_async()
+                if content:
+                    variables = {}
+                    if self.pipeline and self.pipeline.variables:
+                        variables.update(self.pipeline.variables)
+
+                    text = Template(content).render(
+                        variables=lambda x: variables.get(x) if variables else None,
+                        **get_template_vars(),
+                    )
+
+                    settings = yaml.safe_load(text)
+                    uuid = settings.get('source') or settings.get('destination')
+                    mapping = get_templates(group_templates=True).get(uuid)
+
+                    return dict(
+                        data_integration=merge_dict(
+                            extract(mapping, ['name']),
+                            settings,
+                        ),
+                    )
+
         return {}
 
     @property
