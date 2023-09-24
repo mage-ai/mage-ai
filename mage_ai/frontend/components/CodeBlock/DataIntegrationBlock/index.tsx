@@ -87,7 +87,7 @@ function DataIntegrationBlock({
           run_in_parallel: runInParallel,
           stream,
           tap_stream_id: tapStreamID,
-        }: WorkspaceType) => {
+        }) => {
           const streamName = stream || tapStreamID;
           let columnsCount = 0;
           let columnsCountSelected = 0;
