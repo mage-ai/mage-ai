@@ -1416,7 +1416,7 @@ class Pipeline:
         if block.is_data_integration():
             dir_old = block.get_block_data_integration_settings_directory_path(old_uuid)
             if os.path.isdir(dir_old):
-                dir_new = block.get_block_data_integration_settings_directory_path()
+                dir_new = block.get_block_data_integration_settings_directory_path(new_uuid)
                 filenames = os.listdir(dir_old)
                 if filenames:
                     os.makedirs(dir_new, exist_ok=True)
