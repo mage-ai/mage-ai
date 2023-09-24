@@ -16,6 +16,7 @@ from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManage
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     destination_module_file_path,
     get_selected_streams,
+    get_streams_from_catalog,
     get_streams_from_output_directory,
     source_module_file_path,
 )
@@ -207,6 +208,7 @@ class BlockExecutor:
                 data_integration_metadata = block_run.metrics
 
                 run_in_parallel = int(data_integration_metadata.get('run_in_parallel') or 0) == 1
+
                 upstream_block_uuids = data_integration_metadata.get('upstream_block_uuids')
                 is_data_integration_child = data_integration_metadata.get('child', False)
                 is_data_integration_controller = data_integration_metadata.get('controller', False)
@@ -811,7 +813,9 @@ class BlockExecutor:
 
                             up_uuids = [i for i in up_uuids if i not in uuids_to_remove]
                             for up_uuid in up_uuids:
+                                run_in_parallel = False
                                 up_block = self.pipeline.get_block(up_uuid)
+
                                 # If upstream block is a source block with 1 or more streams,
                                 # create a child controller for each of those streams and
                                 # pass in parent_stream as the block run block UUID
@@ -821,16 +825,34 @@ class BlockExecutor:
                                         execution_partition=self.execution_partition,
                                     )
                                     for stream_id in output_file_path_by_stream.keys():
+                                        stream_dict = get_streams_from_catalog(catalog, [stream_id])
+                                        if stream_dict:
+                                            run_in_parallel = stream_dict[0].get(
+                                                'run_in_parallel',
+                                            ) or False
+
                                         block_dict = _build_controller_block_run_dict(
                                             stream_id,
                                             metrics=dict(
                                                 parent_stream=up_uuid,
+                                                run_in_parallel=run_in_parallel,
                                             ),
                                         )
                                         if block_dict:
                                             block_run_dicts.append(block_dict)
                                 else:
-                                    block_dict = _build_controller_block_run_dict(up_uuid)
+                                    stream_dict = get_streams_from_catalog(catalog, [up_uuid])
+                                    if stream_dict:
+                                        run_in_parallel = stream_dict[0].get(
+                                            'run_in_parallel',
+                                        ) or False
+
+                                    block_dict = _build_controller_block_run_dict(
+                                        up_uuid,
+                                        metrics=dict(
+                                            run_in_parallel=run_in_parallel,
+                                        )
+                                    )
                                     if block_dict:
                                         block_run_dicts.append(block_dict)
 
