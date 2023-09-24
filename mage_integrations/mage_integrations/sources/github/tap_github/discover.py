@@ -1,6 +1,7 @@
 import singer
 from singer.catalog import Catalog, CatalogEntry, Schema
-from tap_github.schema import get_schemas
+
+from mage_integrations.sources.github.tap_github.schema import get_schemas
 
 LOGGER = singer.get_logger()
 
