@@ -330,6 +330,8 @@ class Block(DataIntegrationMixin):
         # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
         self._data_integration = None
         self._data_integration_loaded = False
+        # Used when interpolating upstream block outputs in YAML files
+        self.fetched_inputs_from_blocks = None
 
     @property
     def uuid(self) -> str:
@@ -1808,9 +1810,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             content = data.get('content') or ''
             if content:
-                config = yaml.safe_load(content)
-                if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.get_catalog_from_file_async()
+                try:
+                    config = yaml.safe_load(content)
+                    if config.get('source') or config.get('destination'):
+                        data['catalog'] = await self.get_catalog_from_file_async()
+                except yaml.constructor.ConstructorError as err:
+                    print(f'[WARNING] Block.to_dict_async: {err}')
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
