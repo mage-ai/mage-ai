@@ -104,15 +104,15 @@ CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
 )
 
 CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SOURCES_FILE_DEFAULT = typer.Argument(
-    ..., help="path to the target dbt project sources.yml file"
+    ..., help='path to the target dbt project sources.yml file'
 )
 
 CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_CATALOG_FILE_DEFAULT = typer.Argument(
-    ..., help="path to the data_integration_catalog.json file"
+    ..., help='path to the data_integration_catalog.json file'
 )
 
 CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_TARGET_DIR_DEFAULT = typer.Argument(
-    ..., help="path to the target dbt project models directory"
+    ..., help='path to the target dbt project models directory'
 )
 
 CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SCHEMA_NAME_DEFAULT = typer.Argument(
