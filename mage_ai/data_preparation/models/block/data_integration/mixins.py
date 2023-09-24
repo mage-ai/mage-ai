@@ -88,7 +88,7 @@ class DataIntegrationMixin:
 
             return [up_uuid for up_uuid in self.upstream_block_uuids if up_uuid in inputs_combined]
 
-    def get_catalog_file_path(self) -> str:
+    def get_block_data_integration_settings_directory_path(self, block_uuid: str = None) -> str:
         if not self.pipeline:
             return
 
@@ -96,7 +96,12 @@ class DataIntegrationMixin:
             self.pipeline.repo_path,
             PIPELINES_FOLDER,
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid or self.uuid,
+        )
+
+    def get_catalog_file_path(self, block_uuid: str = None) -> str:
+        return os.path.join(
+            self.get_block_data_integration_settings_directory_path(block_uuid),
             BLOCK_CATALOG_FILENAME,
         )
 
@@ -175,10 +180,67 @@ class DataIntegrationMixin:
                 BlockLanguage.YAML == self.language and \
                 self.content:
 
+            def _block_output(
+                block_uuid: str,
+                parse: str = None,
+                current_block=self,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                input_vars=input_vars,
+                partition=partition,
+            ) -> Any:
+                data = None
+
+                if not self.fetched_inputs_from_blocks:
+                    input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+                        self.fetch_input_variables_and_catalog(
+                            input_vars,
+                            partition,
+                            global_vars,
+                            dynamic_block_index=dynamic_block_index,
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            from_notebook=from_notebook,
+                        )
+                    self.fetched_inputs_from_blocks = input_vars_fetched
+
+                if block_uuid in self.upstream_block_uuids and \
+                        self.data_integration_inputs and \
+                        block_uuid in self.data_integration_inputs:
+
+                    index = self.upstream_block_uuids.index(block_uuid)
+                    data = self.fetched_inputs_from_blocks[index]
+
+                if parse:
+                    results = {}
+                    exec(f'_parse_func = {parse}', results)
+                    return results['_parse_func'](data)
+
+                return data
+
+            def _get_variable(
+                var_name: str,
+                parse: str = None,
+                global_vars=global_vars,
+            ) -> Any:
+                if not global_vars:
+                    return None
+
+                val = global_vars.get(var_name)
+                if parse:
+                    results = {}
+                    exec(f'_parse_func = {parse}', results)
+                    return results['_parse_func'](val)
+
+                return val
+
             text = Template(self.content).render(
-                variables=lambda x: global_vars.get(x) if global_vars else None,
+                block_output=_block_output,
+                variables=_get_variable,
                 **get_template_vars(),
             )
+
             settings = yaml.safe_load(text)
 
             catalog = self.__get_catalog_from_file()
