@@ -1,4 +1,5 @@
 import json
+from typing import List, Tuple
 
 import ruamel.yaml
 
@@ -19,7 +20,7 @@ def load_json(json_file: str) -> dict:
     return json_data
 
 
-def generate_models_sql(catalog_data: dict, schema_name: str) -> list[tuple[str, str]]:
+def generate_models_sql(catalog_data: dict, schema_name: str) -> List[Tuple[str, str]]:
     """
     Generate the SQL statements for each stream in the catalog data.
 
@@ -41,7 +42,7 @@ def generate_models_sql(catalog_data: dict, schema_name: str) -> list[tuple[str,
     return sql_statements
 
 
-def generate_dbt_models(target_dir: str, sql_statements: list[tuple[str, str]]):
+def generate_dbt_models(target_dir: str, sql_statements: List[Tuple[str, str]]):
     """
     Generate the dbt models for each stream in the catalog data.
 
