@@ -103,6 +103,22 @@ CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the EMR config.'
 )
 
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SOURCES_FILE_DEFAULT = typer.Argument(
+    ..., help="path to the target dbt project sources.yml file"
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_CATALOG_FILE_DEFAULT = typer.Argument(
+    ..., help="path to the data_integration_catalog.json file"
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_TARGET_DIR_DEFAULT = typer.Argument(
+    ..., help="path to the target dbt project models directory"
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SCHEMA_NAME_DEFAULT = typer.Argument(
+    ..., help="the integration's pipeline destination db schema name"
+)
+
 
 @app.command()
 def init(
@@ -321,18 +337,10 @@ def create_spark_cluster(
 
 @app.command()
 def create_dbt_models_from_integration_pipeline(
-    sources_file: str = typer.Argument(
-        ..., help="path to the target dbt project sources.yml file"
-    ),
-    catalog_file: str = typer.Argument(
-        ..., help="path to the data_integration_catalog.json file"
-    ),
-    target_dir: str = typer.Argument(
-        ..., help="path to the target dbt project models directory"
-    ),
-    schema_name: str = typer.Argument(
-        ..., help="the integration's pipeline destination db schema name"
-    ),
+    sources_file: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SOURCES_FILE_DEFAULT,
+    catalog_file: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_CATALOG_FILE_DEFAULT,
+    target_dir: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_TARGET_DIR_DEFAULT,
+    schema_name: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SCHEMA_NAME_DEFAULT,
 ):
     """
     Create dbt models from a Mage integration pipeline catalog and update the
