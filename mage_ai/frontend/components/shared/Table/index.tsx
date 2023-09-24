@@ -14,21 +14,39 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import dark from '@oracle/styles/themes/dark';
+import usePrevious from '@utils/usePrevious';
 import {
+  MENU_WIDTH,
+  SortDirectionEnum,
+  SortQueryEnum,
+} from './constants';
+import { SortAscending, SortDescending } from '@oracle/icons';
+import {
+  SortIconContainerStyle,
   TableDataStyle,
   TableHeadStyle,
   TableRowStyle,
   TableStyle,
 } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-const MENU_WIDTH: number = UNIT * 20;
+import { goToWithQuery } from '@utils/routing';
+import { set } from '@storage/localStorage';
+import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
+  fitTooltipContentWidth?: boolean;
   label?: () => any | string;
+  tooltipAppearAfter?: boolean;
   tooltipMessage?: string
+  tooltipWidth?: number;
   uuid: string;
+};
+
+export type SortedColumnType = {
+  columnIndex: number;
+  sortDirection: SortDirectionEnum;
 };
 
 type TableProps = {
@@ -47,7 +65,12 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  defaultSortColumnIndex?: number;
+  getUUIDFromRow?: (row: React.ReactElement[]) => string;
+  getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
   highlightRowOnHover?: boolean;
+  localStorageKeySortColIdx?: string;
+  localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   noHeader?: boolean;
@@ -56,12 +79,17 @@ type TableProps = {
   onRightClickRow?: (index: number, event?: any) => void;
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
+  rightClickMenuWidth?: number;
   rowGroupHeaders?: string[];
   rowVerticalPadding?: number;
   rows: any[][];
   rowsGroupedByIndex?: string[][];
+  setRowsSorted?: (rows: React.ReactElement[][]) => void;
+  sortableColumnIndexes?: number[];
+  sortedColumn?: SortedColumnType;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
+  uuidColumnIndex?: number;
   uuid?: string;
   wrapColumns?: boolean;
 };
@@ -76,8 +104,13 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  defaultSortColumnIndex,
+  getUUIDFromRow,
+  getUniqueRowIdentifier,
   highlightRowOnHover,
   isSelectedRow,
+  localStorageKeySortColIdx,
+  localStorageKeySortDirection,
   noBorder,
   noHeader,
   onClickRow,
@@ -85,12 +118,17 @@ function Table({
   onRightClickRow,
   renderRightClickMenu,
   renderRightClickMenuItems,
+  rightClickMenuWidth = MENU_WIDTH,
   rowGroupHeaders,
   rowVerticalPadding,
   rows,
   rowsGroupedByIndex,
+  setRowsSorted,
+  sortableColumnIndexes,
+  sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
+  uuidColumnIndex,
   uuid,
   wrapColumns,
 }: TableProps, ref) {
@@ -99,6 +137,10 @@ function Table({
     y: number;
   }>(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(null);
+  const [hoveredColumnIdx, setHoveredColumnIdx] = useState<number>(null);
+  const [sortedColumn, setSortedColumn] = useState<SortedColumnType>(sortedColumnInit);
+  const sortedColumnIndex = useMemo(() => sortedColumn?.columnIndex, [sortedColumn]);
+  const sortedColumnDirection = useMemo(() => sortedColumn?.sortDirection, [sortedColumn]);
 
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), [
     columnFlex,
@@ -144,8 +186,8 @@ function Table({
       y = 0,
     } = coordinates || {};
     let xFinal = x;
-    if (x + MENU_WIDTH >= xContainer + width) {
-      xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
+    if (x + rightClickMenuWidth >= xContainer + width) {
+      xFinal = (xContainer + width) - (rightClickMenuWidth + UNIT);
     }
     if (xFinal < 0) {
       xFinal = 0;
@@ -167,7 +209,7 @@ function Table({
             open
             parentRef={undefined}
             uuid="FileBrowser/ContextMenu"
-            width={MENU_WIDTH}
+            width={rightClickMenuWidth}
           />
         )}
       </div>
@@ -179,9 +221,112 @@ function Table({
     ref,
     renderRightClickMenu,
     renderRightClickMenuItems,
+    rightClickMenuWidth,
   ]);
 
-  const rowEls = useMemo(() => rows?.map((cells, rowIndex) => {
+  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn)
+    ?
+      sortByKey(
+        rows,
+        (row) => {
+          const columnIndex = typeof sortedColumnIndex === 'number'
+            ? sortedColumnIndex
+            : defaultSortColumnIndex;
+          const sortColumn = row?.[columnIndex];
+          let sortValue = sortColumn?.props?.children;
+
+          if (getUUIDFromRow && columnIndex === uuidColumnIndex) {
+            sortValue = getUUIDFromRow?.(row);
+          } else {
+            const maxDepth = 10;
+            let currentDepth = 0;
+            while (typeof sortValue !== 'string' && typeof sortValue !== 'number'
+              && currentDepth < maxDepth
+            ) {
+              sortValue = sortValue?.props?.children;
+              currentDepth += 1;
+              if (typeof sortValue === 'undefined') {
+                sortValue = '';
+              }
+            }
+          }
+
+          return sortValue;
+        },
+        {
+          ascending: sortedColumnDirection !== SortDirectionEnum.DESC,
+        },
+      )
+    : rows
+  ), [
+    defaultSortColumnIndex,
+    getUUIDFromRow,
+    rows,
+    setRowsSorted,
+    sortedColumn,
+    sortedColumnDirection,
+    sortedColumnIndex,
+    uuidColumnIndex,
+  ]);
+
+  const sortedRowIds = useMemo(
+    () => (getUniqueRowIdentifier
+      ? rowsSorted?.map(row => getUniqueRowIdentifier?.(row))
+      : undefined
+    ),
+    [getUniqueRowIdentifier, rowsSorted],
+  );
+  const sortedColumnPrev = usePrevious(sortedColumn);
+  const sortedRowIdsPrev = usePrevious(sortedRowIds);
+  useEffect(() => {
+    /*
+     * The rows can change order without a change in sorting (e.g. due to a
+     * column value being updated). As a result, we need to check the row
+     * order and update the rowsSorted state in order to perform actions on
+     * the correct row.
+     */
+    if (sortableColumnIndexes
+      && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
+        || (sortedRowIdsPrev?.length > 0
+          && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+      )
+    ) {
+      setRowsSorted?.(rowsSorted);
+      const sortColIdx = typeof sortedColumnIndex === 'number'
+        ? sortedColumnIndex
+        : null;
+      const sortDirection = sortedColumnDirection || null;
+
+      if (localStorageKeySortColIdx) {
+        set(localStorageKeySortColIdx, sortColIdx);
+      }
+      if (localStorageKeySortDirection) {
+        set(localStorageKeySortDirection, sortDirection);
+      }
+
+      goToWithQuery({
+        [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
+        [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+      }, {
+        pushHistory: true,
+      });
+    }
+  }, [
+    defaultSortColumnIndex,
+    localStorageKeySortColIdx,
+    localStorageKeySortDirection,
+    rowsSorted,
+    setRowsSorted,
+    sortableColumnIndexes,
+    sortedColumn,
+    sortedColumnIndex,
+    sortedColumnDirection,
+    sortedColumnPrev,
+    sortedRowIds,
+    sortedRowIdsPrev,
+  ]);
+
+  const rowEls = useMemo(() => rowsSorted?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
     const rowProps = buildRowProps?.(rowIndex) || {
       renderCell: null,
@@ -284,6 +429,7 @@ function Table({
     }
 
     return rowEl;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [
     alignTop,
     buildLinkProps,
@@ -300,8 +446,9 @@ function Table({
     onDoubleClickRow,
     onRightClickRow,
     rowVerticalPadding,
-    rows,
+    rowsSorted,
     setFocusedRowIndex,
+    sortedColumn,   // Included in dep array so table rows re-render when sorting column changes
     stickyFirstColumn,
     uuid,
     wrapColumns,
@@ -309,41 +456,121 @@ function Table({
 
   const headerRowEl = useMemo(() => (
     <TableRowStyle noHover>
-      {columns?.map((col, idx) => (
-        <TableHeadStyle
-          columnBorders={columnBorders}
-          compact={compact}
-          key={`${uuid}-col-${col.uuid}-${idx}`}
-          last={idx === columns.length - 1}
-          noBorder={noBorder}
-          sticky={stickyHeader}
-        >
-          <FlexContainer
-            alignItems="center"
-            justifyContent={col.center ? 'center': 'flex-start'}
-          >
-            <Text bold leftAligned monospace muted>
-              {col.label ? col.label() : col.uuid}
+      {columns?.map((col, idx) => {
+        const {
+          center,
+          fitTooltipContentWidth,
+          label,
+          tooltipAppearAfter,
+          tooltipMessage,
+          tooltipWidth,
+          uuid: columnUUID,
+        } = col || {};
+        const isSortable = sortableColumnIndexes?.includes(idx);
+        const headerTextEl = (
+          <>
+            <Text
+              bold
+              cyan={sortedColumnIndex === idx}
+              leftAligned
+              monospace
+              muted
+            >
+              {label ? label() : columnUUID}
             </Text>
-            {col.tooltipMessage && (
+            {tooltipMessage && (
               <Spacing ml="4px">
                 <Tooltip
-                  appearBefore
+                  appearBefore={!tooltipAppearAfter}
                   label={(
                     <Text leftAligned>
-                      {col.tooltipMessage}
+                      {tooltipMessage}
                     </Text>
                   )}
                   lightBackground
-                  primary
+                  maxWidth={tooltipWidth}
+                  muted
+                  widthFitContent={fitTooltipContentWidth}
                 />
               </Spacing>
             )}
-          </FlexContainer>
-        </TableHeadStyle>
-      ))}
+          </>
+        );
+
+        return (
+          <TableHeadStyle
+            columnBorders={columnBorders}
+            compact={compact}
+            key={`${uuid}-col-${columnUUID}-${idx}`}
+            last={idx === columns.length - 1}
+            noBorder={noBorder}
+            onMouseEnter={isSortable ? () => setHoveredColumnIdx(idx) : null}
+            onMouseLeave={isSortable ? () => setHoveredColumnIdx(null) : null}
+            sticky={stickyHeader}
+          >
+            <FlexContainer
+              alignItems="center"
+              justifyContent={center ? 'center': 'flex-start'}
+            >
+              {isSortable
+                ? (
+                  <Link
+                    fullHeight
+                    fullWidth
+                    noHoverUnderline
+                    noOutline
+                    onClick={() => {
+                      setSortedColumn(prevState => {
+                        const { columnIndex, sortDirection } = prevState || {};
+                        let updatedSortedColumnState = {
+                          columnIndex: idx,
+                          sortDirection: SortDirectionEnum.ASC,
+                        };
+                        if (prevState && columnIndex === idx) {
+                          if (sortDirection === SortDirectionEnum.ASC) {
+                            updatedSortedColumnState.sortDirection = SortDirectionEnum.DESC;
+                          } else if (sortDirection === SortDirectionEnum.DESC) {
+                            updatedSortedColumnState = null;
+                          }
+                        }
+
+                        return updatedSortedColumnState;
+                      });
+                    }}
+                    preventDefault
+                  >
+                    <FlexContainer alignItems="center">
+                      {headerTextEl}
+                      <SortIconContainerStyle
+                        active={idx === hoveredColumnIdx || idx === sortedColumnIndex}
+                      >
+                        {(SortDirectionEnum.DESC === sortedColumnDirection
+                          && idx === sortedColumnIndex)
+                          ? <SortDescending fill={dark.accent.cyan} />
+                          : <SortAscending fill={dark.accent.cyan} />
+                        }
+                      </SortIconContainerStyle>
+                    </FlexContainer>
+                  </Link>
+                ) : headerTextEl
+              }
+            </FlexContainer>
+          </TableHeadStyle>
+        );
+      })}
     </TableRowStyle>
-  ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
+  ), [
+    columnBorders,
+    columns,
+    compact,
+    hoveredColumnIdx,
+    noBorder,
+    sortableColumnIndexes,
+    sortedColumnDirection,
+    sortedColumnIndex,
+    stickyHeader,
+    uuid,
+  ]);
 
   const tableEl = useMemo(() => {
     if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {

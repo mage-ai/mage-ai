@@ -116,7 +116,7 @@ function SchemaTable({
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
   const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
   const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
-  const [showBookmarkValuesTable, setShowBookmarkPropertyTable] = useState<boolean>(false);
+  const [showBookmarkValuesTable, setShowBookmarkPropertyTable] = useState<boolean>(!!destination);
   const [bookmarkValues, setBookmarkValues] = useState({ [streamUUID]: bookmarkValuesInit || {} });
 
   const streamUUIDPrev = usePrevious(streamUUID);
@@ -146,9 +146,11 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
+  // The bookmarkValues dependency is not included below in the dep array
+  // because it would cause an infinite rendering loop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bookmarkProperties?.length,
-    bookmarkValues,
     bookmarkValuesInit,
     streamUUID,
   ]);
@@ -531,12 +533,19 @@ function SchemaTable({
         uuid: 'Type',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to avoid adding duplicate records',
         uuid: 'Unique',
       },
       {
+        tooltipMessage: 'Used to keep track of sync progress and incrementally sync new \
+          records (e.g. a column indicating when a record was last updated)',
+        tooltipWidth: 305,
         uuid: 'Bookmark',
       },
       {
+        fitTooltipContentWidth: true,
+        tooltipMessage: 'Used to create primary key for destination table',
         uuid: 'Key prop',
       },
     ];
@@ -718,7 +727,7 @@ function SchemaTable({
                 label={(
                   <Text wordBreak>
                     If a new record has the same value as an existing record in
-                    the {pluralize('column', uniqueConstraints?.length)}
+                    the {pluralize('unique column', uniqueConstraints?.length)}
                     {uniqueConstraints?.length > 0 && <>&nbsp;</>}
                     {uniqueConstraints?.sort().map((col: string, idx: number) => (
                       <Text
@@ -864,15 +873,11 @@ function SchemaTable({
                 Bookmark properties
               </Text>
               <Text default>
-                After each integration pipeline run,
-                the last record that was successfully synchronized
-                will be used as the bookmark.
+                After each integration pipeline run, the last record that was successfully
+                synchronized will be used as the bookmark.
                 The properties listed below will be extracted from the last record and used
                 as the bookmark.
-
-                <br />
-
-                On the next run, the synchronization will start after the bookmarked record.
+                On the next run, the synchronization will start from the bookmarked record.
               </Text>
             </Spacing>
 
@@ -917,11 +922,20 @@ function SchemaTable({
                       <Text bold large>
                         Manually edit bookmark property values
                       </Text>
-                      <Text default>
-                        In order to override the bookmark values for the next sync, you must first select a destination.
-                        Then click the toggle to edit the values for the bookmark properties in the table below.
-                        Click the &#34;Save&#34; button to save your changes.
-                      </Text>
+                      {!destination && (
+                        <Text default>
+                          In order to overwrite the bookmark values for the next sync, you must first select a
+                          destination. Then you will be able to edit the bookmark property values in the
+                          table below. Click the &#34;Save&#34; button to save your changes.
+                        </Text>
+                      )}
+                      {destination && (
+                        <Text default>
+                          This will temporarily overwrite the bookmark value for the next pipeline run. After
+                          editing any bookmark values below, you must click the &#34;Save&#34; button in
+                          the table header in order to persist and save your changes.
+                        </Text>
+                      )}
                     </Spacing>
 
                     <ToggleSwitch
@@ -951,7 +965,7 @@ function SchemaTable({
                             });
                           }}
                           pill
-                          secondary
+                          primary
                         >
                           Save
                         </Button>
@@ -966,10 +980,10 @@ function SchemaTable({
                       columnFlex={[null, 1]}
                       columns={[
                         {
-                          uuid: 'Bookmark property',
+                          uuid: 'Feature',
                         },
                         {
-                          uuid: 'Value',
+                          uuid: 'Current bookmark value',
                         },
                       ]}
                       rows={bookmarkProperties.map(bookmarkProperty => [
@@ -990,12 +1004,12 @@ function SchemaTable({
                               ...prev,
                               [streamUUID]: {
                                 ...prev[streamUUID],
-                                [bookmarkProperty]: e.target.value,
+                                [bookmarkProperty]: e.target.value || null,
                               },
                             }));
                           }}
                           paddingHorizontal={0}
-                          placeholder="Enter value"
+                          placeholder="Enter value (optional)"
                           value={bookmarkValues?.[streamUUID]?.[bookmarkProperty]}
                         />,
                       ])}

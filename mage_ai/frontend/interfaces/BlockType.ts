@@ -81,6 +81,16 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
+export const DRAGGABLE_BLOCK_TYPES = [
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const YAML_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
@@ -112,6 +122,14 @@ export const BLOCK_TYPES_WITH_NO_PARENTS = [
   BlockTypeEnum.EXTENSION,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.MARKDOWN,
+];
+
+export const BLOCK_TYPES_WITH_VARIABLES = [
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.TRANSFORMER,
 ];
 
 export enum StatusTypeEnum {
@@ -202,7 +220,9 @@ export interface BlockRequestPayloadType {
   name?: string;
   priority?: number;
   replicated_block?: string;
+  require_unique_name?: boolean;
   type?: BlockTypeEnum;
+  uuid?: string;
   upstream_blocks?: string[];
 }
 
@@ -235,6 +255,7 @@ export default interface BlockType {
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  description?: string;
   downstream_blocks?: string[];
   error?: {
     error: string;
@@ -269,8 +290,10 @@ export default interface BlockType {
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;
+  runtime?: number;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
+  timeout?: number;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;

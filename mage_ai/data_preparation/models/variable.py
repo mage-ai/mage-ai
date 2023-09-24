@@ -1,6 +1,7 @@
 import json
 import os
 import traceback
+from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -84,7 +85,7 @@ class Variable:
 
     @property
     def variable_path(self):
-        return os.path.join(self.variable_dir_path, f'{self.uuid}')
+        return os.path.join(self.variable_dir_path, self.uuid)
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
@@ -192,6 +193,20 @@ class Variable:
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
         return await self.__read_json_async(sample=sample)
+
+    @contextmanager
+    def open_to_write(self, filename: str) -> None:
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+
+        with self.storage.open_to_write(self.full_path(filename)) as f:
+            yield f
+
+    def full_path(self, filename: str = None) -> str:
+        if filename:
+            return os.path.join(self.variable_path, filename)
+
+        return self.variable_path
 
     def write_data(self, data: Any) -> None:
         """
@@ -378,13 +393,16 @@ class Variable:
             except Exception as e:
                 if raise_exception:
                     raise e
-                pass
+                else:
+                    traceback.print_exc()
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
             except Exception as e:
                 if raise_exception:
                     raise e
+                else:
+                    traceback.print_exc()
                 df = pd.DataFrame()
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
@@ -430,11 +448,14 @@ class Variable:
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
-            c_dtype = df_output[c].dtype
+            df_col = df_output[c]
+            if type(df_col) is pd.DataFrame:
+                raise Exception(f'Please do not use duplicate column name: "{c}"')
+            c_dtype = df_col.dtype
             if not is_object_dtype(c_dtype):
                 column_types[c] = str(c_dtype)
             else:
-                series_non_null = df_output[c].dropna()
+                series_non_null = df_col.dropna()
                 if len(series_non_null) > 0:
                     coltype = type(series_non_null.iloc[0])
                     if is_object_dtype(series_non_null.dtype):

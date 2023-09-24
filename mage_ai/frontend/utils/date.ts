@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+import { rangeSequential } from '@utils/array';
+
 export enum TimePeriodEnum {
   TODAY = 'today',
   WEEK = 'week',
@@ -20,8 +22,10 @@ export const TIME_PERIOD_INTERVAL_MAPPING = {
 
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
+export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
+export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);
@@ -43,7 +47,7 @@ export function dateFormatLong(
     dayAgo,
     includeSeconds,
     utcFormat,
-  } = opts;
+  } = opts || {};
   let momentObj = moment(text);
   let dateFormat = DATE_FORMAT_LONG_NO_SEC;
 
@@ -58,6 +62,29 @@ export function dateFormatLong(
   }
 
   return momentObj.format(dateFormat);
+}
+
+export function datetimeInLocalTimezone(
+  datetime: string,
+  enableLocalTimezoneConversion?: boolean,
+): string {
+  if (enableLocalTimezoneConversion) {
+    return moment
+      .utc(datetime)
+      .local()
+      .format();
+  }
+
+  return datetime;
+}
+
+export function utcStringToLocalDate(
+  datetime: string,
+): Date {
+  return moment
+    .utc(datetime)
+    .local()
+    .toDate();
 }
 
 export function utcNowDate(opts?: { dateObj?: boolean }): any {
@@ -178,6 +205,15 @@ export function getDateRange(
   }
 
   return dateRange;
+}
+
+export function getDayRangeForCurrentMonth() {
+  const currentDate = new Date();
+  const monthNumber = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  const daysInMonth = moment(`${year}-${monthNumber}`, 'YYYY-MM').daysInMonth();
+
+  return rangeSequential(daysInMonth, 1);
 }
 
 export function padTime(time: string) {

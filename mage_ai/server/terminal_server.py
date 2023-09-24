@@ -1,10 +1,13 @@
 import json
+import os
 import re
 
 import terminado
 from tornado import gen
 
 from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
+from mage_ai.data_preparation.models.errors import FileNotInProjectError
+from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
@@ -69,34 +72,26 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # Jupyter has a mixin to ping websockets and keep connections through
         # proxies alive. Call super() to allow that to set up:
         super(terminado.TermSocket, self).open(url_component)
-        api_key = self.get_argument('api_key', None, True)
-        token = self.get_argument('token', None, True)
 
         cwd = self.get_argument('cwd', None, True)
+        if cwd:
+            try:
+                ensure_file_is_in_project(cwd)
+                if not os.path.exists(cwd):
+                    self._logger.warning(
+                        f'The specified path {cwd} does not exist in the project directory.')
+                    cwd = None
+            except FileNotInProjectError:
+                self._logger.warning(f'The specified path {cwd} is not in the project directory.')
+                cwd = None
+            if cwd is None:
+                self._logger.warning('Using default path for terminal cwd...')
+
         term_name = self.get_argument('term_name', None, True)
+        term_name = term_name if term_name else 'tty'
+        self._logger.info("TermSocket.open: %s", term_name)
 
-        user = None
-        if REQUIRE_USER_AUTHENTICATION and api_key and token:
-            oauth_client = Oauth2Application.query.filter(
-                Oauth2Application.client_id == api_key,
-            ).first()
-            if oauth_client:
-                oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                valid = valid and \
-                    oauth_token and \
-                    oauth_token.user
-                if valid:
-                    user = oauth_token.user
-
-        self.term_name = term_name if term_name else 'tty'
-        if user:
-            self.term_name = f'{self.term_name}_{user.id}'
-
-        self._logger.info("TermSocket.open: %s", self.term_name)
-
-        self.terminal = self.term_manager.get_terminal(self.term_name, cwd=cwd)
-        self.terminal.clients.append(self)
-        self.__initiate_terminal(self.terminal)
+        self.__initialize_terminal(term_name, cwd=cwd)
 
     @gen.coroutine
     def on_message(self, raw_message):
@@ -131,12 +126,15 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         return terminado.TermSocket.on_message(self, json.dumps(command))
 
-    def __initiate_terminal(self, terminal):
+    def __initialize_terminal(self, term_name: str, cwd: str = None):
+        self.terminal = self.term_manager.get_terminal(term_name, cwd=cwd)
+        self.terminal.clients.append(self)
+
         self.send_json_message(["setup", {}])
-        self._logger.info("TermSocket.open: Opened %s", self.term_name)
+        self._logger.info("TermSocket.open: Opened %s", term_name)
         # Now drain the preopen buffer, if reconnect.
         buffered = ""
-        preopen_buffer = terminal.read_buffer.copy()
+        preopen_buffer = self.terminal.read_buffer.copy()
         while True:
             if not preopen_buffer:
                 break
@@ -147,6 +145,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         # Turn enable-bracketed-paste off since it can mess up the output.
         if self.term_command == 'bash':
-            terminal.ptyproc.write(
+            self.terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
-        terminal.read_buffer.clear()
+        self.terminal.read_buffer.clear()

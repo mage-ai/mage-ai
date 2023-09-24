@@ -20,6 +20,12 @@ def get_collection(key: str, available_options: List[Dict]):
         uuid = d['uuid']
         try:
             module = importlib.import_module(f"mage_integrations.{key}.{uuid}")
+            absolute_file_path = '/'.join(module.__file__.split('/')[:-2])
+            # have the source README available to front-end for inline documentation
+            readme_file_path = f'{absolute_file_path}/{uuid}/README.md'
+            d['docs'] = f"{uuid} documentation"
+            with open(readme_file_path, encoding='utf8') as f:
+                d['docs'] = f.read()
             mod = getattr(module, module_name)
             d['templates'] = mod.templates()
         except FileNotFoundError:
@@ -27,7 +33,12 @@ def get_collection(key: str, available_options: List[Dict]):
         except Exception:
             try:
                 absolute_file_path = '/'.join(module.__file__.split('/')[:-2])
+                # have the source README available to front-end for inline documentation
+                readme_file_path = f'{absolute_file_path}/{uuid}/README.md'
                 absolute_file_path = f'{absolute_file_path}/{uuid}/__init__.py'
+                d['docs'] = f"{uuid} documentation"
+                with open(readme_file_path, encoding='utf8') as f:
+                    d['docs'] = f.read()
                 proc = subprocess.run([
                     PYTHON_COMMAND,
                     absolute_file_path,

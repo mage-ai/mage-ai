@@ -1,12 +1,14 @@
+import os
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import IO, Any, Callable, Union
+
+import pandas as pd
+from pandas import DataFrame
+
 from mage_ai.io.constants import SQL_RESERVED_WORDS
 from mage_ai.shared.logger import VerbosePrintHandler
-from pandas import DataFrame
-from typing import IO, Any, Callable, Union
-import os
-import pandas as pd
-import re
 
 QUERY_ROW_LIMIT = 10_000_000
 
@@ -16,6 +18,7 @@ class DataSource(str, Enum):
     BIGQUERY = 'bigquery'
     CLICKHOUSE = 'clickhouse'
     DRUID = 'druid'
+    DUCKDB = 'duckdb'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     KAFKA = 'kafka'
@@ -35,6 +38,7 @@ class FileFormat(str, Enum):
     JSON = 'json'
     PARQUET = 'parquet'
     HDF5 = 'hdf5'
+    XML = 'xml'
 
 
 class ExportWritePolicy(str, Enum):
@@ -137,6 +141,8 @@ class BaseFile(BaseIO):
             return pd.read_parquet
         elif format == FileFormat.HDF5:
             return pd.read_hdf
+        elif format == FileFormat.XML:
+            return pd.read_xml
         else:
             raise ValueError(f'Invalid format \'{format}\' specified.')
 
@@ -226,6 +232,8 @@ class BaseFile(BaseIO):
             return df.to_json
         elif format == FileFormat.HDF5:
             return df.to_hdf
+        elif format == FileFormat.XML:
+            return df.to_xml
         return df.to_parquet
 
     def __del__(self):

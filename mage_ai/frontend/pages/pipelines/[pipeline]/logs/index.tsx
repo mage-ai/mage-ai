@@ -12,11 +12,13 @@ import {
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
-import Filter, { FilterQueryType } from '@components/Logs/Filter';
+import Filter, { FilterQueryType, FilterQueryParamEnum } from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LogDetail, { TAB_DETAILS } from '@components/Logs/Detail';
+import LogsTable, { LOG_UUID_PARAM } from '@components/Logs/Table';
+import LogToolbar, { SHARED_BUTTON_PROPS } from '@components/Logs/Toolbar';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -24,13 +26,10 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
-import LogsTable, { LOG_UUID_PARAM } from '@components/Logs/Table';
-import LogToolbar, { SHARED_BUTTON_PROPS } from '@components/Logs/Toolbar';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,
@@ -120,6 +119,14 @@ function PipelineLogsPage({
   }, [blocks, isIntegrationPipeline]);
 
   const q = queryFromUrl();
+  // Currently only supporting saving the log scroll position for trigger logs without filters
+  const saveScrollPosition = useMemo(() => (
+    q?.hasOwnProperty(FilterQueryParamEnum.PIPELINE_SCHEDULE_ID)
+      && !q?.hasOwnProperty(FilterQueryParamEnum.LEVEL)
+      && !q?.hasOwnProperty(FilterQueryParamEnum.BLOCK_TYPE)
+      && !q?.hasOwnProperty(FilterQueryParamEnum.BLOCK_UUID)
+  ), [q]);
+
   const onlyLoadPastDayLogs = !q?.start_timestamp
     && !(q?.hasOwnProperty(PIPELINE_RUN_ID_PARAM) || q?.hasOwnProperty(BLOCK_RUN_ID_PARAM));
   const dayAgoTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]);
@@ -230,6 +237,7 @@ function PipelineLogsPage({
         start_timestamp: dayAgoTimestamp,
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onlyLoadPastDayLogs]);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
@@ -303,11 +311,20 @@ function PipelineLogsPage({
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
+      saveScrollPosition={saveScrollPosition}
       setSelectedLog={setSelectedLog}
       tableInnerRef={tableInnerRef}
       themeContext={themeContext}
     />
-  ), [autoScrollLogs, blocksByUUID, logsFiltered, pipeline, query, themeContext]);
+  ), [
+    autoScrollLogs,
+    blocksByUUID,
+    logsFiltered,
+    pipeline,
+    query,
+    saveScrollPosition,
+    themeContext,
+  ]);
 
   return (
     <PipelineDetailPage
@@ -353,6 +370,7 @@ function PipelineLogsPage({
                 allPastLogsLoaded={allPastLogsLoaded}
                 loadNewerLogInterval={loadNewerLogInterval}
                 loadPastLogInterval={loadPastLogInterval}
+                saveScrollPosition={saveScrollPosition}
                 selectedRange={selectedRange}
                 setSelectedRange={setSelectedRange}
               />
@@ -411,7 +429,7 @@ function PipelineLogsPage({
           <Spacing mr={1} />
 
           <Flex>
-            <Text>
+            <Text noWrapping>
               Auto-scroll to new logs
             </Text>
             <Spacing mr={1} />

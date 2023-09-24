@@ -449,7 +449,6 @@ function GitFiles({
                 updateGitBranchCommit({
                   git_custom_branch: {
                     action_type: 'commit',
-                    files: stagedFilePaths,
                     message: commitMessage,
                   },
                 });

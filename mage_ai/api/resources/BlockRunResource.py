@@ -1,7 +1,13 @@
-from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
-from mage_ai.orchestration.db import safe_db_query
 from sqlalchemy.orm import aliased
+
+from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
+from mage_ai.shared.strings import is_number
 
 
 class BlockRunResource(DatabaseResource):
@@ -18,22 +24,25 @@ class BlockRunResource(DatabaseResource):
                 created_at,
                 id,
                 pipeline_run_id,
+                started_at,
                 status,
                 updated_at,
                 pipeline_schedule_id,
                 pipeline_schedule_name,
             ) = tup
 
-            block_run = BlockRun()
-            block_run.block_uuid = block_uuid
-            block_run.completed_at = completed_at
-            block_run.created_at = created_at
-            block_run.id = id
-            block_run.pipeline_run_id = pipeline_run_id
-            block_run.status = status
-            block_run.updated_at = updated_at
-            block_run.pipeline_schedule_id = pipeline_schedule_id
-            block_run.pipeline_schedule_name = pipeline_schedule_name
+            block_run = dict(
+                block_uuid=block_uuid,
+                completed_at=completed_at,
+                created_at=created_at,
+                id=id,
+                pipeline_run_id=pipeline_run_id,
+                started_at=started_at,
+                status=status,
+                updated_at=updated_at,
+                pipeline_schedule_id=pipeline_schedule_id,
+                pipeline_schedule_name=pipeline_schedule_name,
+            )
 
             block_runs.append(block_run)
 
@@ -65,6 +74,7 @@ class BlockRunResource(DatabaseResource):
             a.created_at,
             a.id,
             a.pipeline_run_id,
+            a.started_at,
             a.status,
             a.updated_at,
             c.id.label('pipeline_schedule_id'),
@@ -81,7 +91,7 @@ class BlockRunResource(DatabaseResource):
         pipeline_run_id = query_arg.get('pipeline_run_id', [None])
         if pipeline_run_id:
             pipeline_run_id = pipeline_run_id[0]
-        if pipeline_run_id:
+        if pipeline_run_id and is_number(pipeline_run_id):
             query = (
                 query.
                 filter(a.pipeline_run_id == int(pipeline_run_id))
@@ -96,4 +106,31 @@ class BlockRunResource(DatabaseResource):
                 filter(c.pipeline_uuid == pipeline_uuid)
             )
 
-        return query.order_by(a.created_at.desc(), a.completed_at.desc())
+        # The order_by value should be an attribute on the BlockRun model.
+        order_by_arg = query_arg.get('order_by', [None])
+        if order_by_arg:
+            order_by_arg = order_by_arg[0]
+        if order_by_arg:
+            order_by_parts = order_by_arg.split(' ')
+            if len(order_by_parts) >= 2:
+                order_by = (order_by_parts[0], order_by_parts[1])
+            else:
+                order_by = (order_by_parts[0], 'asc')
+
+            col, asc_desc = order_by
+            asc_desc = asc_desc.lower()
+            try:
+                br_col = getattr(a, col)
+                initial_results = query.order_by(getattr(br_col, asc_desc)())
+            except (AttributeError):
+                raise Exception('Block run sort column/query is invalid. The sort column ' +
+                                'must be an attribute of the BlockRun model. The sort direction ' +
+                                'is either "asc" (ascending order) or "desc" (descending order).')
+        else:
+            initial_results = query.order_by(
+                a.started_at.desc(),
+                a.created_at.desc(),
+                a.completed_at.desc(),
+            )
+
+        return initial_results

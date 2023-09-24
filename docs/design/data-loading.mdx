@@ -8,6 +8,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   [AWS Redshift](#redshift)
 -   [AWS S3](#s3)
 -   [Azure Blob Storage](#azureblobstorage)
+-   [DuckDB](#duckdb)
 -   [Filesystem](#fileio)
 -   [Google BigQuery](#bigquery)
 -   [Google Cloud Storage](#googlecloudstorage)
@@ -260,6 +261,7 @@ Handles data transfer between an S3 bucket and the Mage app. The `S3` client sup
 -   JSON
 -   Parquet
 -   HDF5
+-   XML
 
 If an IAM profile is not set up using `aws configure`, then AWS credentials for accesses the S3 bucket can be manually specified through either Mage's [configuration loader](#configuration-settings) system or through keyword arguments in the constructor (see constructor).
 
@@ -317,6 +319,7 @@ If the format is HDF5, the default key under which the data frame is stored is t
         | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
 
 **_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
@@ -336,6 +339,7 @@ Loads data from object in S3 bucket into a Pandas data frame. This function will
         | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -349,6 +353,7 @@ Handles data transfer between the filesystem and the Mage app. The `FileIO` clie
 -   JSON
 -   Parquet
 -   HDF5
+-   XML
 
 <h3> Constructor </h3>
 
@@ -380,6 +385,7 @@ If the format is HDF5, the default key under which the data frame is stored is t
         | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
 
 **_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
@@ -398,6 +404,7 @@ Loads the data frame from the filepath specified. This function will load at max
         | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -411,6 +418,7 @@ Handles data transfer between a Google Cloud Storage bucket and the Mage app. Su
 -   JSON
 -   Parquet
 -   HDF5
+-   XML
 
 If `GOOGLE_APPLICATION_CREDENTIALS` environment is set, no further arguments are needed other than those specified below. Otherwise, use the factory method `with_config` to construct the data loader using manually specified credentials.
 
@@ -466,6 +474,7 @@ Exports data frame to a GoogleCloudStorage bucket.
         | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
 
 **_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
 
@@ -485,6 +494,7 @@ Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. Th
         | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -498,6 +508,7 @@ Handles data transfer between an Azure Blob Storage conatiner and Mage. Supports
 -   JSON
 -   Parquet
 -   HDF5
+-   XML
 
 To authenticate access to Azure Blob Storage, the following environment variables must be set:
 
@@ -547,6 +558,7 @@ Exports data frame to an Azure Blob Storage container.
         | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
 
 **_load_** - `load(container_name: str, blob_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
 
@@ -886,7 +898,7 @@ Initializes the MySQL data loading client.
 
 <h3> Factory Methods </h3>
 
-**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Postgres`
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> MySQL`
 
 Creates MySQL data loading client from configuration settings.
 
@@ -961,6 +973,85 @@ Sample data from a table in the MySQL database. Sample is not guaranteed to be r
     -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## DuckDB
+
+`mage_ai.io.duckdb`
+
+Handles data transfer between DuckDB database and the Mage app.
+DuckDB client utilizes the following keys to connect:
+
+
+```yaml
+DUCKDB_DATABASE: database # Database name
+DUCKDB_SCHEMA: main # Schema name. Default is main.
+```
+
+
+<h3> Constructor </h3>
+
+```
+__init__(self,
+         database: str
+         schema: str = None,
+         verbose: bool = True,
+         **kwargs
+        )```
+
+Initializes the MySQL data loading client.
+
+-   **Args**:
+    -   `database (str)`: The name of the database to connect to.
+    -   `schema`: Schema to use.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating psycopg2 connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> DuckDB`
+
+Creates DuckDB data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`DuckDB`) The constructed dataloader using this method
+
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to DuckDB database.
+
+**_open_** - `open()`
+
+Opens a connection to DuckDB database.
+
+**_table_exists_** - `table_exists()`
+
+Build query to check if a table existing in the DB.
+
+-   **Args**:
+    -   `schema_name`: Name of the schema to use.
+    -   `table_name`: Name of the table.
+-   **Returns**: true or false.
+
+**_upload_dataframe_** - `upload_dataframe()`
+
+Build query to insert data into table.
+
+-   **Args**:
+    -   `df`: Data in dataframe type.
+
+**_get_type_** - `get_type()`
+
+Convert data from input type into DuckDB type.
+
+-   **Args**:
+    -   `column`: Metadata associated with the column.
+    -   `dtype`: Input data type.
+-   **Returns**: DuckDB data type in string format.
 
 ## Snowflake
 
@@ -1095,6 +1186,13 @@ Sample data from a table in the Snowflake warehouse. Sample is not guaranteed to
 Connections to third-party data storage require you to specify confidential information such as login information or access keys. While you can manually specify this information code while constructing data loading clients, it is recommended to not store the secrets directly in code.
 
 Instead, Mage provides **configuration loaders** which allow data loading clients to use your secrets without explicitly writing them in code.
+
+<Warning>
+  Currently Mage only supports AWS Secrets Manager as a configuration loader. If you need to use secrets from Azure Key Vault
+  or GCP Secret Manager, you can reference the following docs:
+    - [Azure Key Vault](https://docs.mage.ai/production/deploying-to-cloud/secrets/Azure)
+    - [GCP Secret Manager](https://docs.mage.ai/production/deploying-to-cloud/secrets/GCP)
+</Warning>
 
 Currently, the following sources (and their corresponding configuration loader) can be used to load configuration settings:
 

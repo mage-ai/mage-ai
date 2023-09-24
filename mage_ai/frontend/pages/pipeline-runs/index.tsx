@@ -4,9 +4,10 @@ import { useRouter } from 'next/router';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -19,6 +20,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 
 function RunListPage() {
   const router = useRouter();
@@ -26,9 +28,17 @@ function RunListPage() {
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
 
+  const { data: dataProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const _ = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
+
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
+    disable_retries_grouping: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
@@ -98,7 +108,7 @@ function RunListPage() {
       />
       <Spacing p={2}>
         <Paginate
-          maxPages={9}
+          maxPages={MAX_PAGES}
           onUpdate={(p) => {
             const newPage = Number(p);
             const updatedQuery = {

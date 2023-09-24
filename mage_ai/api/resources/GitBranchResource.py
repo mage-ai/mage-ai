@@ -23,8 +23,8 @@ def build_file_object(obj):
 
 class GitBranchResource(GenericResource):
     @classmethod
-    def get_git_manager(self, user) -> Git:
-        return Git.get_manager(setup_repo=True, user=user)
+    def get_git_manager(self, user, setup_repo: bool = True) -> Git:
+        return Git.get_manager(setup_repo=setup_repo, user=user)
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
@@ -70,12 +70,17 @@ class GitBranchResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        git_manager = self.get_git_manager(user=user)
+        preferences = get_preferences(user=user)
+        setup_repo = False
+        if preferences.is_git_integration_enabled():
+            setup_repo = True
+        git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
             return self(dict(
                 files={},
+                is_git_integration_enabled=preferences.is_git_integration_enabled(),
                 modified_files=[],
                 name=git_manager.current_branch,
                 staged_files=[],
@@ -89,6 +94,7 @@ class GitBranchResource(GenericResource):
 
         return self(dict(
             files={},
+            is_git_integration_enabled=preferences.is_git_integration_enabled(),
             modified_files=modified_files,
             name=git_manager.current_branch,
             staged_files=staged_files,
@@ -157,7 +163,7 @@ class GitBranchResource(GenericResource):
                 try:
                     access_token = api.get_access_token_for_user(self.current_user)
                     if access_token:
-                        branch_name = payload.get('branch')
+                        branch_name = pull.get('branch')
                         remote = git_manager.repo.remotes[pull['remote']]
                         url = list(remote.urls)[0]
 
@@ -188,12 +194,62 @@ class GitBranchResource(GenericResource):
                     self.model['error'] = str(err)
             else:
                 git_manager.pull()
+        elif action_type == 'fetch':
+            fetch = payload.get('fetch', None)
+            if fetch and 'remote' in fetch:
+                from git.exc import GitCommandError
+
+                try:
+                    access_token = api.get_access_token_for_user(self.current_user)
+                    if access_token:
+                        remote = git_manager.repo.remotes[fetch['remote']]
+                        url = list(remote.urls)[0]
+
+                        custom_progress = api.fetch(
+                            remote.name,
+                            url,
+                            access_token.token,
+                        )
+
+                        if custom_progress and custom_progress.other_lines:
+                            lines = custom_progress.other_lines
+                            if type(lines) is list:
+                                lines = '\n'.join(lines)
+                            self.model['progress'] = lines
+                    else:
+                        self.model['error'] = \
+                            'Please authenticate with GitHub before trying to pull.'
+                except GitCommandError as err:
+                    self.model['error'] = str(err)
+            else:
+                self.model['error'] = 'Please specify a remote for the fetch command'
         elif action_type == 'reset':
             if files and len(files) >= 1:
                 for file_path in files:
                     git_manager.reset_file(file_path)
             else:
-                git_manager.reset()
+                reset = payload.get('reset', {})
+                if reset and 'remote' in reset:
+                    from git.exc import GitCommandError
+
+                    try:
+                        access_token = api.get_access_token_for_user(self.current_user)
+                        if access_token:
+                            branch_name = reset.get('branch')
+                            remote = git_manager.repo.remotes[reset['remote']]
+                            url = list(remote.urls)[0]
+
+                            api.reset_hard(
+                                remote.name,
+                                url,
+                                branch_name,
+                                access_token.token,
+                            )
+                        else:
+                            self.model['error'] = \
+                                'Please authenticate with GitHub before trying to pull.'
+                    except GitCommandError as err:
+                        self.model['error'] = str(err)
         elif action_type == 'clone':
             git_manager.clone()
         elif action_type == 'add':
@@ -265,7 +321,14 @@ class GitBranchResource(GenericResource):
         untracked_files: List[str],
         limit: int = None
     ) -> Dict:
-        arr = modified_files + staged_files + untracked_files
+        arr = []
+
+        if modified_files and isinstance(modified_files, list):
+            arr += modified_files
+        if staged_files and isinstance(staged_files, list):
+            arr += staged_files
+        if untracked_files and isinstance(untracked_files, list):
+            arr += untracked_files
 
         if limit:
             arr = arr[:limit]

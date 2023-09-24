@@ -15,19 +15,58 @@ class KafkaTests(TestCase):
             ))
             mock_init_client.assert_called_once()
 
-    def test_init_invalid_config(self):
-        with patch.object(KafkaSource, 'init_client') as mock_init_client:
-            with self.assertRaises(Exception) as context:
-                KafkaSource(dict(
-                    connector_type='kafka',
-                    bootstrap_server='test_server',
-                    consumer_group='test_group',
-                ))
-            self.assertTrue(
-                '__init__() missing 1 required positional argument: \'topic\''
-                in str(context.exception),
-            )
-            self.assertEqual(mock_init_client.call_count, 0)
+    def test_init_client_with_topic(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topic='test_topic',
+        )
+
+        with patch('mage_ai.streaming.sources.kafka.KafkaConsumer') as mock_consumer:
+            KafkaSource(kafka_config)
+
+        mock_consumer.assert_called_once_with(
+            'test_topic',
+            group_id='test_group',
+            bootstrap_servers='test_server',
+            api_version='0.10.2',
+            enable_auto_commit=True,
+        )
+
+    def test_init_client_with_topics(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topics=['test_topic', 'test_topic2'],
+        )
+
+        # Mock the KafkaConsumer initialization
+        with patch('mage_ai.streaming.sources.kafka.KafkaConsumer') as mock_consumer:
+            KafkaSource(kafka_config)
+
+        mock_consumer.assert_called_once_with(
+            'test_topic',
+            'test_topic2',
+            group_id='test_group',
+            bootstrap_servers='test_server',
+            api_version='0.10.2',
+            enable_auto_commit=True,
+        )
+
+    def test_init_client_with_missing_topic_or_topics(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+        )
+
+        with self.assertRaises(Exception) as context:
+            KafkaSource(kafka_config)
+
+        self.assertEqual(
+            str(context.exception), 'Please specify topic or topics in the Kafka config.')
 
     def test_init_with_sasl_config(self):
         with patch.object(KafkaSource, 'init_client') as mock_init_client:

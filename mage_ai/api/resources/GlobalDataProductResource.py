@@ -35,9 +35,12 @@ class GlobalDataProductResource(GenericResource):
 
     def update(self, payload, **kwargs):
         uuid = payload.get('uuid')
-        if self.model.uuid != uuid and GlobalDataProduct.get(uuid):
+        if self.model and self.model.uuid != uuid and GlobalDataProduct.get(uuid):
             error = ApiError.RESOURCE_INVALID.copy()
             error.update(dict(message=f'A global data product with UUID {uuid} already exists.'))
             raise ApiError(error)
 
-        self.model.update(payload)
+        if self.model:
+            self.model.update(payload)
+        else:
+            self.model = self.create(payload, self.current_user, **kwargs).model

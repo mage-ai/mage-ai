@@ -1,11 +1,9 @@
-from .constants import (
-    AggregationFunction,
-    VARIABLE_NAME_X,
-    VARIABLE_NAME_Y,
-)
-from mage_ai.shared.parsers import encode_complex
 import numpy as np
 import pandas as pd
+
+from mage_ai.shared.parsers import encode_complex
+
+from .constants import VARIABLE_NAME_X, VARIABLE_NAME_Y, AggregationFunction
 
 
 def clean_series(series, column_type=None, dropna=True):
@@ -17,7 +15,7 @@ def clean_series(series, column_type=None, dropna=True):
 
     if column_type is int:
         try:
-            series_cleaned = series_cleaned.astype(float).astype(int)
+            series_cleaned = series_cleaned.astype(float).astype(np.int64)
         except ValueError:
             series_cleaned = series_cleaned.astype(float)
     elif column_type is float:
@@ -94,6 +92,15 @@ def calculate_metrics_for_group(metrics, group):
 
 def build_x_y(df, group_by_columns, metrics):
     data = {}
+
+    if not hasattr(df, 'groupby') or not hasattr(df, 'columns'):
+        return data
+
+    columns = df.columns
+
+    if not all([col in columns for col in group_by_columns]):
+        return data
+
     groups = df.groupby(group_by_columns)
     data[VARIABLE_NAME_X] = list(groups.groups.keys())
 
@@ -102,7 +109,7 @@ def build_x_y(df, group_by_columns, metrics):
     ).values
 
     y_values = []
-    for idx, metric in enumerate(metrics):
+    for _idx, metric in enumerate(metrics):
         y_values.append([g[build_metric_name(metric)] for g in metrics_per_group])
 
     data[VARIABLE_NAME_Y] = y_values

@@ -52,6 +52,14 @@ TEMPLATES = [
         path='data_loaders/mongodb.py',
     ),
     dict(
+        block_type=BlockType.DATA_LOADER,
+        description='Load data from MSSQL.',
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='MSSQL',
+        path='data_loaders/mssql.py',
+    ),
+    dict(
         block_type=BlockType.DATA_EXPORTER,
         description='Export data to a Delta Table in Amazon S3.',
         groups=[GROUP_DELTA_LAKE],
@@ -81,6 +89,14 @@ TEMPLATES = [
         language=BlockLanguage.PYTHON,
         name='MongoDB',
         path='data_exporters/mongodb.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        description='Export data to MSSQL.',
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='MSSQL',
+        path='data_exporters/mssql.py',
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
@@ -176,6 +192,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_loaders/snowflake.py',
     ),
     #   Databases
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='DuckDB',
+        path='data_loaders/duckdb.py',
+    ),
     dict(
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
@@ -516,6 +539,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_exporters/snowflake.py',
     ),
     #   Databases
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='DuckDB',
+        path='data_exporters/duckdb.py',
+    ),
     dict(
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATABASES],

@@ -36,7 +36,6 @@ function PipelineBackfills({
   const pipelineUUID = pipeline.uuid;
   const {
     data: dataPipelineRuns,
-    mutate: fetchPipelineRuns,
   } = api.backfills.list({
     _limit: 20,
     _offset: 0,
@@ -86,7 +85,7 @@ function PipelineBackfills({
   // ]);
 
   const breadcrumbs = useMemo(() => {
-    let asLink = `/pipelines/${pipelineUUID}/backfills`;
+    const asLink = `/pipelines/${pipelineUUID}/backfills`;
 
     const arr = [
       {
@@ -107,6 +106,7 @@ function PipelineBackfills({
 
     return arr;
   }, [
+    pipelineUUID,
     selectedRow,
   ]);
 

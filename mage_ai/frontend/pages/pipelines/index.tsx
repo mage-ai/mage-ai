@@ -1,8 +1,9 @@
 import NextLink from 'next/link';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MutateFunction, useMutation } from 'react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
@@ -21,11 +22,12 @@ import PipelineType, {
   PipelineTypeEnum,
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
+import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
-import Table from '@components/shared/Table';
+import Table, { SortedColumnType } from '@components/shared/Table';
 import TagType from '@interfaces/TagType';
 import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
@@ -37,26 +39,37 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Circle, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
+import { GlobalDataProductObjectTypeEnum } from '@interfaces/GlobalDataProductType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
-import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import { TableContainerStyle } from '@components/shared/Table/index.style';
-import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
-import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
-import { filterQuery, queryFromUrl } from '@utils/url';
 import {
+  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX,
+  LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION,
   getFilters,
   getGroupBys,
   setFilters,
   setGroupBys,
 } from '@storage/pipelines';
+import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
+import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
+import { TableContainerStyle } from '@components/shared/Table/index.style';
+import { capitalize, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
+import { datetimeInLocalTimezone } from '@utils/date';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
+import { filterQuery, queryFromUrl } from '@utils/url';
+import { get, set } from '@storage/localStorage';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
+import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
-import { sortByKey } from '@utils/array';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 
@@ -74,6 +87,7 @@ function PipelineListPage() {
   const refTable = useRef(null);
 
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
+  const [pipelineRowsSorted, setPipelineRowsSorted] = useState<React.ReactElement[][]>(null);
   const [searchText, setSearchText] = useState<string>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
@@ -103,14 +117,61 @@ function PipelineListPage() {
 
     return pipelinesFinal;
   }, [data?.pipelines, searchText]);
+  const uuidToPipelineMapping = useMemo(() => indexBy(
+    pipelines,
+    ({ uuid }) => uuid,
+  ), [pipelines]);
+  const getUniqueRowIdentifier = useCallback(
+    row => row?.[2]?.props?.children?.props?.children,
+    [],
+  );
+  const pipelinesSorted = useMemo(() => (pipelineRowsSorted?.length > 0
+    ? (
+      pipelineRowsSorted?.map(row => {
+        // Get pipeline UUID from the third column of the table.
+        const pipelineUUIDFromRow = getUniqueRowIdentifier(row);
+        return uuidToPipelineMapping?.[pipelineUUIDFromRow];
+      })
+    ) : pipelines
+  ), [getUniqueRowIdentifier, pipelineRowsSorted, pipelines, uuidToPipelineMapping]);
+  const sortableColumnIndexes = useMemo(() => [1, 2, 3, 4, 5, 6, 8, 9], []);
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const displayLocalTimezone = useMemo(
+    () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
+    [project?.features],
+  );
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
+      ?
+        {
+          columnIndex: +sortColumnIndexQuery,
+          sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
+        }
+      : undefined
+  ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
   useEffect(() => {
     let queryFinal = {};
+
+    if (sortColumnIndexQuery && sortableColumnIndexes.includes(+sortColumnIndexQuery)) {
+      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColumnIndexQuery);
+      if (sortDirectionQuery) {
+        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirectionQuery);
+      }
+    } else {
+      const sortColumnIndexFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, null);
+      const sortDirectionFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, SortDirectionEnum.ASC);
+      if (sortColumnIndexFromStorage !== null) {
+        queryFinal[SortQueryEnum.SORT_COL_IDX] = sortColumnIndexFromStorage;
+        queryFinal[SortQueryEnum.SORT_DIRECTION] = sortDirectionFromStorage;
+      }
+    }
 
     if (groupByQuery) {
       setGroupBys({
@@ -182,6 +243,9 @@ function PipelineListPage() {
   }, [
     groupByQuery,
     query,
+    sortableColumnIndexes,
+    sortColumnIndexQuery,
+    sortDirectionQuery,
   ]);
 
   useEffect(() => {
@@ -310,7 +374,7 @@ function PipelineListPage() {
       textArea={!pipelineName}
       title={pipelineName
         ? 'Rename pipeline'
-        : 'Edit description'
+        : `Edit description for ${pipeline?.uuid}`
       }
       value={pipelineName ? pipelineName : pipelineDescription}
     />
@@ -342,19 +406,108 @@ function PipelineListPage() {
     </ErrorProvider>
   ), {
   }, [
+    createPipeline,
   ], {
     background: true,
     uuid: 'browse_templates',
   });
 
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
+    cancelButtonText,
+    header,
+    onCancel,
+    onSaveSuccess,
+  }: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => (
+    <ErrorProvider>
+      <Preferences
+        cancelButtonText={cancelButtonText}
+        contained
+        header={(
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Panel>
+              <Text warning>
+                You need to add an OpenAI API key to your project before you can
+                generate pipelines using AI.
+              </Text>
+
+              <Spacing mt={1}>
+                <Text warning>
+                  Read <Link
+                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                    openNewWindow
+                  >
+                    OpenAI’s documentation
+                  </Link> to get your API key.
+                </Text>
+              </Spacing>
+            </Panel>
+          </Spacing>
+        )}
+        onCancel={() => {
+          onCancel?.();
+          hideConfigureProjectModal();
+        }}
+        onSaveSuccess={(project: ProjectType) => {
+          fetchProjects();
+          hideConfigureProjectModal();
+          onSaveSuccess?.(project);
+        }}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    fetchProjects,
+  ], {
+    background: true,
+    uuid: 'configure_project',
+  });
+
+  const [showAIModal, hideAIModal] = useModal(() => (
+    <ErrorProvider>
+      <AIControlPanel
+        createPipeline={createPipeline}
+        isLoading={isLoadingCreate}
+        onClose={hideAIModal}
+      />
+    </ErrorProvider>
+  ), {
+  }, [
+    createPipeline,
+    isLoadingCreate,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    disableCloseButton: true,
+    uuid: 'AI_modal',
+  });
+
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showAIModal: () => {
+        if (!project?.openai_api_key) {
+          showConfigureProjectModal({
+            onSaveSuccess: () => {
+              showAIModal();
+            },
+          });
+        } else {
+          showAIModal();
+        }
+      },
       showBrowseTemplates,
     },
   ), [
     createPipeline,
+    project,
+    showAIModal,
     showBrowseTemplates,
+    showConfigureProjectModal,
   ]);
 
   const { data: dataTags } = api.tags.list();
@@ -383,6 +536,19 @@ function PipelineListPage() {
             deletePipeline(selectedPipeline?.uuid);
           }
         },
+      }}
+      extraActionButtonProps={{
+        Icon: Clone,
+        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+          configuration and code blocks. The blocks use the same block files as the original pipeline. \
+          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+        isLoading: isLoadingClone,
+        onClick: () => clonePipeline({
+          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+        }),
+        openConfirmationDialogue: true,
+        tooltip: 'Clone pipeline',
       }}
       filterOptions={{
         status: Object.values(PipelineStatusEnum),
@@ -487,10 +653,17 @@ function PipelineListPage() {
         },
         {
           label: () => 'Edit description',
-          onClick: () => showInputModal({ pipelineDescription: selectedPipeline?.description }),
+          onClick: () => showInputModal({
+            pipeline: selectedPipeline,
+            pipelineDescription: selectedPipeline?.description,
+          }),
           uuid: 'Pipelines/MoreActionsMenu/EditDescription',
         },
       ]}
+      onClickFilterDefaults={() => {
+        setFilters({});
+        router.push('/pipelines');
+      }}
       onFilterApply={(query, updatedQuery) => {
         // @ts-ignore
         if (Object.values(updatedQuery).every(arr => !arr?.length)) {
@@ -501,19 +674,6 @@ function PipelineListPage() {
       searchProps={{
         onChange: setSearchText,
         value: searchText,
-      }}
-      secondaryActionButtonProps={{
-        Icon: Clone,
-        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
-          configuration and code blocks. The blocks use the same block files as the original pipeline. \
-          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
-        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
-        isLoading: isLoadingClone,
-        onClick: () => clonePipeline({
-          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
-        }),
-        openConfirmationDialogue: true,
-        tooltip: 'Clone pipeline',
       }}
       selectedRowId={selectedPipeline?.uuid}
       setSelectedRow={setSelectedPipeline}
@@ -527,10 +687,9 @@ function PipelineListPage() {
     isLoadingDelete,
     newPipelineButtonMenuItems,
     query,
+    router,
     searchText,
-    selectedPipeline?.description,
-    selectedPipeline?.name,
-    selectedPipeline?.uuid,
+    selectedPipeline,
     showInputModal,
     tags,
   ]);
@@ -700,11 +859,11 @@ function PipelineListPage() {
   } = useMemo(() => {
     const mapping = {};
 
-    pipelines?.forEach((pipeline, idx: number) => {
-      let value = pipeline[groupByQuery];
+    pipelinesSorted?.forEach((pipeline, idx: number) => {
+      let value = pipeline?.[groupByQuery];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
-        const { schedules = [] } = pipeline;
+        const { schedules = [] } = pipeline || {};
         // TODO (tommy dang): when is the pipeline status RETRY?
         const schedulesCount = schedules.length;
         const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
@@ -772,7 +931,7 @@ function PipelineListPage() {
     };
   }, [
     groupByQuery,
-    pipelines,
+    pipelinesSorted,
   ]);
 
   return (
@@ -802,7 +961,7 @@ function PipelineListPage() {
             maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
           >
             <Table
-              columnFlex={[null, null, null, 2, null, null, 1, null, null, null]}
+              columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
               columns={[
                 {
                   label: () => '',
@@ -821,7 +980,12 @@ function PipelineListPage() {
                   uuid: capitalize(PipelineGroupingEnum.TYPE),
                 },
                 {
+                  ...timezoneTooltipProps,
                   uuid: 'Updated at',
+                },
+                {
+                  ...timezoneTooltipProps,
+                  uuid: 'Created at',
                 },
                 {
                   uuid: 'Tags',
@@ -838,21 +1002,25 @@ function PipelineListPage() {
                   uuid: 'Actions',
                 },
               ]}
-              isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
+              defaultSortColumnIndex={2}
+              getUniqueRowIdentifier={getUniqueRowIdentifier}
+              isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
+              localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
+              localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
               onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-                const pipeline = pipelines[rowIndex];
+                const pipeline = pipelinesSorted[rowIndex];
 
                 return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
               })}
               onDoubleClickRow={(rowIndex: number) => {
                 router.push(
                     '/pipelines/[pipeline]/edit',
-                    `/pipelines/${pipelines[rowIndex].uuid}/edit`,
+                    `/pipelines/${pipelinesSorted[rowIndex].uuid}/edit`,
                 );
               }}
               ref={refTable}
               renderRightClickMenuItems={(rowIndex: number) => {
-                const selectedPipeline = pipelines[rowIndex];
+                const selectedPipeline = pipelinesSorted[rowIndex];
 
                 return [
                   {
@@ -900,6 +1068,15 @@ function PipelineListPage() {
                     uuid: 'create_custom_template',
                   },
                   {
+                    label: () => 'Create global data product',
+                    onClick: () => {
+                      router.push(
+                        `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
+                      );
+                    },
+                    uuid: 'create_global_data_product',
+                  },
+                  {
                     label: () => 'Delete',
                     onClick: () => {
                       if (typeof window !== 'undefined'
@@ -914,10 +1091,12 @@ function PipelineListPage() {
                   },
                 ];
               }}
+              rightClickMenuWidth={UNIT * 25}
               rowGroupHeaders={rowGroupHeaders}
               rows={pipelines.map((pipeline, idx) => {
                 const {
                   blocks,
+                  created_at: createdAt,
                   description,
                   schedules,
                   tags,
@@ -992,8 +1171,8 @@ function PipelineListPage() {
                   <Text
                     default
                     key={`pipeline_description_${idx}`}
+                    preWrap
                     title={description}
-                    width={UNIT * 90}
                   >
                     {description}
                   </Text>,
@@ -1006,9 +1185,21 @@ function PipelineListPage() {
                     key={`pipeline_updated_at_${idx}`}
                     monospace
                     small
-                    title={updatedAt}
+                    title={updatedAt ? `UTC: ${updatedAt}` : null}
                   >
-                    {updatedAt ? updatedAt.slice(0, -3) : <>&#8212;</>}
+                    {updatedAt
+                      ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
+                      : <>&#8212;</>}
+                  </Text>,
+                  <Text
+                    key={`pipeline_created_at_${idx}`}
+                    monospace
+                    small
+                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
+                  >
+                    {createdAt
+                      ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
+                      : <>&#8212;</>}
                   </Text>,
                   tagsEl,
                   <Text
@@ -1058,6 +1249,9 @@ function PipelineListPage() {
                 ];
               })}
               rowsGroupedByIndex={rowsGroupedByIndex}
+              setRowsSorted={setPipelineRowsSorted}
+              sortableColumnIndexes={sortableColumnIndexes}
+              sortedColumn={sortedColumnInit}
               stickyHeader
             />
           </TableContainerStyle>

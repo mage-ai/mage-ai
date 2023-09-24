@@ -128,6 +128,19 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
   `}
 `;
 
+export const SortIconContainerStyle = styled.div<{
+  active?: boolean;
+}>`
+  opacity: 0;
+  padding-left: ${UNIT}px;
+  position: relative;
+  top: 1px;
+
+  ${({ active }) => active && `
+    opacity: 1;
+  `}
+`;
+
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;

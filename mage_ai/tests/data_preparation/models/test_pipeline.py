@@ -5,6 +5,7 @@ import uuid
 from unittest.mock import patch
 
 import yaml
+from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -23,9 +24,12 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.uuid, 'test_pipeline')
         self.assertEqual(pipeline.name, 'test pipeline')
         self.assertEqual(pipeline.blocks_by_uuid, dict())
-        self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/__init__.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/metadata.yaml'))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'pipelines', 'test_pipeline', '__init__.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'pipelines', 'test_pipeline', 'metadata.yaml')))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):
         self.__create_pipeline_with_blocks('test pipeline 2')
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
@@ -42,6 +46,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_2',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -60,6 +65,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -76,6 +82,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -92,6 +99,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -108,10 +116,12 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=['widget1'],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[
                 dict(
@@ -129,9 +139,23 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block4'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
             ],
         ))
+
+    def test_add_block_with_duplicate_uuid(self):
+        self.__create_pipeline_with_blocks('test_pipeline_duplicate_blocks')
+        pipeline = Pipeline('test_pipeline_duplicate_blocks', self.repo_path)
+
+        block = Block.create(
+            'block1',
+            'data_exporter',
+            self.repo_path
+        )
+
+        with self.assertRaises(InvalidPipelineError):
+            pipeline.add_block(block)
 
     def test_update_name_existing_pipeline(self):
         pipeline1 = Pipeline.create(
@@ -164,6 +188,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline_run.pipeline_uuid, 'test_pipeline_c2')
         self.assertEqual(pipeline_schedule.pipeline_uuid, 'test_pipeline_c2')
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_delete_block(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
         block = pipeline.blocks_by_uuid['block4']
@@ -183,6 +208,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_3',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -201,6 +227,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -217,6 +244,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -233,14 +261,17 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
+                    timeout=None,
                 )
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_execute(self):
         pipeline = Pipeline.create(
             'test pipeline 4',
@@ -267,6 +298,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_4',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -285,6 +317,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -301,6 +334,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -317,6 +351,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -333,14 +368,17 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 )
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_execute_multiple_paths(self):
         pipeline = Pipeline.create(
             'test pipeline 5',
@@ -373,6 +411,7 @@ class PipelineTest(DBTestCase):
             uuid='test_pipeline_5',
             tags=[],
             retry_config={},
+            run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
             blocks=[
@@ -391,6 +430,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -407,6 +447,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -423,6 +464,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -439,6 +481,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=[],
                     downstream_blocks=['block5'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -455,6 +498,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block4'],
                     downstream_blocks=['block6'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -471,6 +515,7 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block5'],
                     downstream_blocks=['block7'],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 ),
                 dict(
                     language='python',
@@ -487,10 +532,12 @@ class PipelineTest(DBTestCase):
                     upstream_blocks=['block2', 'block3', 'block6'],
                     downstream_blocks=[],
                     all_upstream_blocks_executed=True,
+                    timeout=None,
                 )
             ],
             callbacks=[],
             conditionals=[],
+            created_at='2023-08-01 08:08:24+00:00',
             updated_at=None,
             widgets=[],
         ))
@@ -537,7 +584,10 @@ class PipelineTest(DBTestCase):
             self.assertEqual(original.name, duplicate.name)
             self.assertEqual(original.uuid, duplicate.uuid)
             self.assertEqual(original.type, duplicate.type)
-            self.assertEqual(original.chart_type, duplicate.chart_type)
+            self.assertEqual(
+                original.get_chart_configuration_settings(),
+                duplicate.get_chart_configuration_settings(),
+            )
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
 
     def test_duplicate_integration_pipeline(self):
@@ -570,6 +620,7 @@ class PipelineTest(DBTestCase):
         with self.assertRaises(InvalidPipelineError):
             pipeline.update_block(block4)
 
+    @freeze_time('2023-08-01 08:08:24')
     def test_save_and_get_data_integration_catalog(self):
         pipeline = self.__create_pipeline_with_integration('test_pipeline_9')
         pipeline.save()
@@ -599,6 +650,7 @@ class PipelineTest(DBTestCase):
                 config_json,
                 dict(
                     concurrency_config=dict(),
+                    created_at='2023-08-01 08:08:24+00:00',
                     data_integration=None,
                     description=None,
                     executor_config={},
@@ -609,6 +661,7 @@ class PipelineTest(DBTestCase):
                     notification_config={},
                     tags=[],
                     retry_config={},
+                    run_pipeline_in_one_process=False,
                     spark_config={},
                     type='integration',
                     updated_at=None,
@@ -629,6 +682,7 @@ class PipelineTest(DBTestCase):
                             type='data_loader',
                             upstream_blocks=[],
                             uuid='source_block',
+                            timeout=None,
                         ),
                         dict(
                             all_upstream_blocks_executed=False,
@@ -645,6 +699,7 @@ class PipelineTest(DBTestCase):
                             type='transformer',
                             upstream_blocks=['source_block'],
                             uuid='destination_block',
+                            timeout=None,
                         ),
                     ],
                     callbacks=[],

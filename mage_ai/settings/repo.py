@@ -9,9 +9,9 @@ which can cause circular import errors.
 """
 
 if is_test():
-    DEFAULT_MAGE_DATA_DIR = './'
+    DEFAULT_MAGE_DATA_DIR = '.'
 else:
-    DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
+    DEFAULT_MAGE_DATA_DIR = os.path.join('~', '.mage_data')
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
 REPO_PATH_ENV_VAR = 'MAGE_REPO_PATH'
 

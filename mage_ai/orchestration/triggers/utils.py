@@ -70,16 +70,28 @@ def create_and_start_pipeline_run(
     pipeline_run = PipelineRun.create(**configured_payload)
 
     # Do not start the pipeline run immediately due to concurrency control
-    # from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-    # pipeline_scheduler = PipelineScheduler(pipeline_run)
+    if should_schedule:
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 
-    # if is_integration:
-    #     initialize_state_and_runs(
-    #         pipeline_run,
-    #         pipeline_scheduler.logger,
-    #         pipeline_run.get_variables(),
-    #     )
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
 
-    # pipeline_scheduler.start(should_schedule=should_schedule)
+        # if is_integration:
+        #     initialize_state_and_runs(
+        #         pipeline_run,
+        #         pipeline_scheduler.logger,
+        #         pipeline_run.get_variables(),
+        #     )
+
+        try:
+            pipeline_scheduler.start(should_schedule=should_schedule)
+        except AssertionError as err:
+            if 'can only test a child process' in str(err):
+                print(
+                    '[WARNING] triggers.utils.create_and_start_pipeline_run '
+                    f'({pipeline.uuid} {pipeline_schedule.id}): '
+                    f'{err}'
+                )
+            else:
+                raise err
 
     return pipeline_run

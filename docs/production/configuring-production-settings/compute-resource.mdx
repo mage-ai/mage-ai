@@ -23,18 +23,26 @@ service by updating the Terraform variables and then running `terraform apply`
 ## 2. Set executor type and customize the compute resource of the Mage executor
 
 Mage provides multiple executors to execute blocks. Here are the available executor types:
-* `local_python`
-* `ecs`
-* `gcp_cloud_run`
-* `azure_container_instance`
-* `k8s`
+* Block executor
+  * `local_python`
+  * `ecs`
+  * `gcp_cloud_run`
+  * `azure_container_instance`
+  * `k8s`
+* Pipeline executor
+  * `local_python`
+  * `ecs`
+  * `k8s`
 
 Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
 you can set the environment variable `DEFAULT_EXECUTOR_TYPE` to one executor type mentioned above.
 
+If you want to use `local_python` executor when `DEFAULT_EXECUTOR_TYPE` is set to another executor type, you can set the `executor_type` to 
+`local_python_force`.
+
 ### Local python executor
 
-Local python exeuctors are running within the same container of Mage web
+Local python exeuctors are running within the same container of Mage scheduler
 service. You can customize the compute resource with the same way mentioned in
 the
 [Customize the compute resource of the Mage web service](#customize-the-compute-resource-of-the-mage-web-service)
@@ -68,6 +76,7 @@ There're two ways to customize the Kubernetes executor config:
       downstream_blocks: []
       executor_type: k8s
       executor_config:
+        namespace: default
         resource_limits:
           cpu: 1000m
           memory: 2048Mi
@@ -80,6 +89,7 @@ in this project. Example config:
     ```yaml
     k8s_executor_config:
       job_name_prefix: data-prep
+      namespace: default
       resource_limits:
         cpu: 1000m
         memory: 2048Mi
@@ -132,6 +142,18 @@ There're 2 ways to customize the compute resource of ECS executor,
         memory: 2048
     ```
 
+To run the whole pipeline in one ECS executor, you can set the `executor_type` at pipeline level and set `run_pipeline_in_one_process` to true.
+`executor_config` can also be set at pipeline level. Here is the example pipeline metadata.yaml:
+```yaml
+blocks:
+- ...
+- ...
+executor_type: ecs
+run_pipeline_in_one_process: true
+name: example_pipeline
+...
+```
+
 The default wait timeout for the ECS task is 10 minutes. To customize the timeout, you can specify the `wait_timeout` (in seconds) field in `ecs_config`. Here is one example:
 ```yaml
 ecs_config:
@@ -139,6 +161,16 @@ ecs_config:
   memory: 2048
   wait_timeout: 1200
 ```
+
+Required IAM permissions for using ECS executor:
+```
+[
+  "ecs:DescribeTasks",
+  "ecs:ListTasks",
+  "ecs:RunTask"
+]
+```
+
 
 ### GCP Cloud Run executor
 

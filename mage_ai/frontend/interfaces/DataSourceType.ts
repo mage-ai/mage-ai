@@ -13,6 +13,7 @@ export enum DataSourceTypeEnum {
   GENERIC = 'generic',
   GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub',
   GOOGLE_CLOUD_STORAGE = 'google_cloud_storage',
+  INFLUXDB = 'influxdb',
   KAFKA = 'kafka',
   KINESIS = 'kinesis',
   MONGODB = 'mongodb',
@@ -24,6 +25,7 @@ export enum DataSourceTypeEnum {
   REDSHIFT = 'redshift',
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
+  ELASTICSEARCH = 'elasticsearch',
 }
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
@@ -39,6 +41,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
   [DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB]: 'Google Cloud PubSub',
   [DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE]: 'Google Cloud Storage',
+  [DataSourceTypeEnum.INFLUXDB]: 'InfluxDB',
   [DataSourceTypeEnum.KAFKA]: 'Kafka',
   [DataSourceTypeEnum.KINESIS]: 'Kinesis',
   [DataSourceTypeEnum.MONGODB]: 'MongoDB',
@@ -50,6 +53,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.REDSHIFT]: 'Amazon Redshift',
   [DataSourceTypeEnum.S3]: 'Amazon S3',
   [DataSourceTypeEnum.SNOWFLAKE]: 'Snowflake',
+  [DataSourceTypeEnum.ELASTICSEARCH]: 'ElasticSearch',
 };
 
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {

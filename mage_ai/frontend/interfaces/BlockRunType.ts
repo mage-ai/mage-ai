@@ -8,6 +8,14 @@ export enum RunStatus {
   CONDITION_FAILED = 'condition_failed',
 }
 
+export interface BlockRunReqQueryParamsType {
+  _limit?: number;
+  _offset?: number;
+  order_by?: string;
+  pipeline_run_id?: number;
+  pipeline_uuid?: string;
+}
+
 export default interface BlockRunType {
   block_uuid: string;
   completed_at?: string;

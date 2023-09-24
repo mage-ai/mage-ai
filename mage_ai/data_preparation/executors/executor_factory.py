@@ -55,7 +55,7 @@ class ExecutorFactory:
             b. If the pipeline type is STREAMING, use StreamingPipelineExecutor.
             c. Otherwise, use default PipelineExecutor.
 
-        TODO: Add pipeline executor for ECS, GCP_CLOUD_RUN executor_type
+        TODO: Add pipeline executor for GCP_CLOUD_RUN executor_type
 
         Args:
             pipeline (Pipeline): The pipeline to be executed.
@@ -72,6 +72,11 @@ class ExecutorFactory:
 
             # Run pipeline on EMR cluster
             return PySparkPipelineExecutor(pipeline)
+        elif executor_type == ExecutorType.ECS:
+            from mage_ai.data_preparation.executors.ecs_pipeline_executor import (
+                EcsPipelineExecutor,
+            )
+            return EcsPipelineExecutor(pipeline, execution_partition=execution_partition)
         elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_pipeline_executor import (
                 K8sPipelineExecutor,
@@ -83,7 +88,8 @@ class ExecutorFactory:
             )
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
-            return PipelineExecutor(pipeline)
+            # Used for local_python or local_python_force
+            return PipelineExecutor(pipeline, execution_partition=execution_partition)
 
     @classmethod
     def get_block_executor(
@@ -153,4 +159,5 @@ class ExecutorFactory:
             )
             return K8sBlockExecutor(**executor_kwargs)
         else:
+            # Used for local_python or local_python_force
             return BlockExecutor(**executor_kwargs)

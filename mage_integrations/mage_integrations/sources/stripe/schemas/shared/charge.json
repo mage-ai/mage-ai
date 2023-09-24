@@ -851,36 +851,6 @@
                 }
               }
             },
-            "country": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "exp_month": {
-              "type": [
-                "null",
-                "integer"
-              ]
-            },
-            "exp_year": {
-              "type": [
-                "null",
-                "integer"
-              ]
-            },
-            "fingerprint": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "funding": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
             "installments": {
               "type": [
                 "null",
@@ -914,12 +884,6 @@
                   }
                 }
               }
-            },
-            "last4": {
-              "type": [
-                "null",
-                "string"
-              ]
             },
             "network": {
               "type": [
@@ -1671,12 +1635,6 @@
                 "string"
               ]
             },
-            "brand": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
             "country": {
               "type": [
                 "null",
@@ -1714,12 +1672,6 @@
               ]
             },
             "cvc_check": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "type": {
               "type": [
                 "null",
                 "string"

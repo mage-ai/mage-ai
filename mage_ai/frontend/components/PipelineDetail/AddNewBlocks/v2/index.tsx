@@ -413,19 +413,19 @@ function AddNewBlocksV2({
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
       uuid: BlockTypeEnum.DBT,
     },
-    // {
-    //   beforeIcon: (
-    //     <HexagonAll
-    //       size={ICON_SIZE}
-    //     />
-    //   ),
-    //   label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
-    //   onClick: () => showGlobalDataProducts({
-    //     // @ts-ignore
-    //     addNewBlock,
-    //   }),
-    //   uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-    // },
+    {
+      beforeIcon: (
+        <HexagonAll
+          size={ICON_SIZE}
+        />
+      ),
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
+      onClick: () => showGlobalDataProducts({
+        // @ts-ignore
+        addNewBlock,
+      }),
+      uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+    },
     {
       isGroupingTitle: true,
       label: () => 'Custom templates',
@@ -875,7 +875,6 @@ function AddNewBlocksV2({
                   } = blockActionObject;
 
                   if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
-
                     showConfigureProjectModal?.({
                       cancelButtonText: 'Set this up later',
                       header: (
@@ -915,6 +914,7 @@ function AddNewBlocksV2({
                   } else {
                     addNewBlock({
                       block_action_object: blockActionObject,
+                      require_unique_name: false,
                     });
                     setInputValue(null);
                     setSearchResult(null);

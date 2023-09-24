@@ -1,14 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
-import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
-import BlockRunType from '@interfaces/BlockRunType';
+import BlockRunsTable, {
+  COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING,
+  DEFAULT_SORTABLE_BR_COL_INDEXES,
+} from '@components/PipelineDetail/BlockRuns/Table';
+import BlockRunType, { BlockRunReqQueryParamsType } from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
   COMPLETED_STATUSES,
@@ -26,14 +31,15 @@ import buildTableSidekick, {
   TAB_TREE,
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
-import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-
-const MAX_COLUMNS = 40;
+import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
@@ -44,9 +50,18 @@ function PipelineBlockRuns({
   pipeline: pipelineProp,
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const router = useRouter();
+  const q = queryFromUrl();
+  const page = q?.page ? q.page : 0;
+
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
+
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
+    refreshInterval: 5000,
+  });
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -65,7 +80,9 @@ function PipelineBlockRuns({
 
   const { data: dataPipelineRun } = api.pipeline_runs.detail(
     pipelineRunProp.id,
-    {},
+    {
+      _format: 'with_basic_details',
+    },
     {
       refreshInterval: 3000,
       revalidateOnFocus: true,
@@ -76,11 +93,28 @@ function PipelineBlockRuns({
     [dataPipelineRun],
   );
   const {
-    block_runs: pipelineRunBlockRuns,
     execution_date: pipelineRunExecutionDate,
     id: pipelineRunId,
     status: pipelineRunStatus,
   } = pipelineRun;
+
+  const blockRunsRequestQuery: BlockRunReqQueryParamsType = {
+    _limit: ROW_LIMIT,
+    _offset: page * ROW_LIMIT,
+    pipeline_run_id: pipelineRunId,
+  };
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  if (sortColumnIndexQuery) {
+    const blockRunSortColumn = COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING[sortColumnIndexQuery];
+    const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
+    blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
+  }
+  const { data: dataBlockRuns, mutate: fetchBlockRuns } = api.block_runs.list(
+    blockRunsRequestQuery,
+    { refreshInterval: 5000 },
+  );
+  const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRunId),
@@ -89,6 +123,7 @@ function PipelineBlockRuns({
         response, {
           callback: () => {
             setSelectedRun(null);
+            fetchBlockRuns?.();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -104,22 +139,11 @@ function PipelineBlockRuns({
     loading: loadingOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
 
-  const {
-    sample_data: blockSampleData,
-    text_data: textData,
-    type: dataType,
-  }: OutputType = dataOutput?.outputs?.[0] || {};
-
   useEffect(() => {
     if (!selectedRun && selectedTabSidekick?.uuid === TAB_OUTPUT.uuid) {
       setSelectedTabSidekick(TAB_TREE);
     }
   }, [selectedRun, selectedTabSidekick?.uuid]);
-
-  const blockRuns = useMemo(() => pipelineRunBlockRuns || [], [pipelineRun]);
-
-  const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
-  const rows = blockSampleData?.rows || [];
 
   const tableBlockRuns = useMemo(() => (
     <BlockRunsTable
@@ -145,6 +169,7 @@ function PipelineBlockRuns({
       pipeline={pipeline}
       selectedRun={selectedRun}
       setErrors={setErrors}
+      sortableColumnIndexes={DEFAULT_SORTABLE_BR_COL_INDEXES}
     />
   ), [
     blockRuns,
@@ -162,6 +187,49 @@ function PipelineBlockRuns({
     && COMPLETED_STATUSES.includes(pipelineRunStatus)
   );
 
+  const totalBlockRuns = useMemo(() => dataBlockRuns?.metadata?.count || [], [dataBlockRuns]);
+  const paginationEl = useMemo(() => (
+    <Spacing p={2}>
+      <Paginate
+        maxPages={MAX_PAGES}
+        onUpdate={(p) => {
+          const newPage = Number(p);
+          const updatedQuery = {
+            ...q,
+            page: newPage >= 0 ? newPage : 0,
+          };
+          setSelectedRun(null);
+          router.push(
+            '/pipelines/[pipeline]/runs/[run]',
+            `/pipelines/${pipelineUUID}/runs/${pipelineRunId}?${queryString(updatedQuery)}`,
+          );
+        }}
+        page={Number(page)}
+        totalPages={Math.ceil(totalBlockRuns / ROW_LIMIT)}
+      />
+    </Spacing>
+  ), [page, pipelineRunId, pipelineUUID, q, router, totalBlockRuns]);
+
+  const buildSidekick = useCallback(props => buildTableSidekick({
+    ...props,
+    blockRuns,
+    blocksOverride: dataBlocks?.blocks,
+    loadingData: loadingOutput,
+    outputs: dataOutput?.outputs,
+    selectedRun,
+    selectedTab: selectedTabSidekick,
+    setSelectedTab: setSelectedTabSidekick,
+    showDynamicBlocks: true,
+  }), [
+    blockRuns,
+    dataBlocks,
+    dataOutput,
+    loadingOutput,
+    selectedRun,
+    selectedTabSidekick,
+    setSelectedTabSidekick,
+  ]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -173,22 +241,13 @@ function PipelineBlockRuns({
           },
         },
         {
-          label: () => pipelineRunExecutionDate,
+          label: () => (displayLocalTimezone
+            ? datetimeInLocalTimezone(pipelineRunExecutionDate, displayLocalTimezone)
+            : pipelineRunExecutionDate
+          ),
         },
       ]}
-      buildSidekick={props => buildTableSidekick({
-        ...props,
-        blockRuns,
-        columns,
-        dataType,
-        loadingData: loadingOutput,
-        rows,
-        selectedRun,
-        selectedTab: selectedTabSidekick,
-        setSelectedTab: setSelectedTabSidekick,
-        showDynamicBlocks: true,
-        textData,
-      })}
+      buildSidekick={buildSidekick}
       errors={errors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
@@ -257,6 +316,7 @@ function PipelineBlockRuns({
 
       <Divider light mt={PADDING_UNITS} short />
       {tableBlockRuns}
+      {paginationEl}
     </PipelineDetailPage>
   );
 }

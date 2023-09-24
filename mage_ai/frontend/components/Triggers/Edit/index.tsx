@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import cronstrue from 'cronstrue';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
@@ -36,6 +37,8 @@ import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/Pipelin
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
+import TagType from '@interfaces/TagType';
+import TagsAutocompleteInputField from '@components/Tags/TagsAutocompleteInputField';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
@@ -59,42 +62,24 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { convertSeconds, convertToSeconds, getTimeInUTC, TIME_UNIT_TO_SECONDS } from '../utils';
+import {
+  TIME_UNIT_TO_SECONDS,
+  checkIfCustomInterval,
+  convertSeconds,
+  convertToSeconds,
+  convertUtcCronExpressionToLocalTimezone,
+  getDatetimeFromDateAndTime,
+  getTriggerApiEndpoint,
+  getTriggerTypes,
+} from '../utils';
+import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
-import { indexBy, range, removeAtIndex } from '@utils/array';
+import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-
-const getTriggerTypes = (
-  isStreamingPipeline?: boolean,
-): {
-  description: () => string;
-  label: () => string;
-  uuid: ScheduleTypeEnum;
-}[] => {
-  const triggerTypes = [
-    {
-      description: () => 'This pipeline will run continuously on an interval or just once.',
-      label: () => 'Schedule',
-      uuid: ScheduleTypeEnum.TIME,
-    },
-    {
-      description: () => 'This pipeline will run when a specific event occurs.',
-      label: () => 'Event',
-      uuid: ScheduleTypeEnum.EVENT,
-    },
-    {
-      description: () => 'Run this pipeline when you make an API call.',
-      label: () => 'API',
-      uuid: ScheduleTypeEnum.API,
-    },
-  ];
-
-  return isStreamingPipeline
-    ? triggerTypes.slice(0, 1)
-    : triggerTypes;
-};
+import { padTime } from '@utils/date';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
   errors: ErrorsType;
@@ -114,6 +99,7 @@ function Edit({
   variables,
 }: EditProps) {
   const router = useRouter();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
@@ -136,12 +122,14 @@ function Edit({
   ]);
 
   const {
+    description,
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
     settings: settingsInit = {},
     sla,
     start_time: startTime,
+    tags,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
 
@@ -198,13 +186,12 @@ function Edit({
   useEffect(
     () => {
       if (startTime) {
-        const dateTimeSplit = startTime.split(' ');
-        const timePart = dateTimeSplit[1];
-        setDate(getTimeInUTC(startTime));
-        setTime({
-          hour: timePart.substring(0, 2),
-          minute: timePart.substring(3, 5),
-        });
+        const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
+          startTime,
+          { localTimezone: displayLocalTimezone },
+        );
+        setDate(startDatetimeObj?.date);
+        setTime(startDatetimeObj?.time);
 
         const mt = moment(startTime).utc();
         setLandingTimeData({
@@ -217,13 +204,20 @@ function Edit({
       } else {
         const currentDatetime = new Date();
         setDate(currentDatetime);
-        setTime({
-          hour: String(currentDatetime.getUTCHours()).padStart(2, '0'),
-          minute: String(currentDatetime.getUTCMinutes()).padStart(2, '0'),
-        });
+        if (displayLocalTimezone) {
+          setTime({
+            hour: padTime(String(currentDatetime.getHours())),
+            minute: padTime(String(currentDatetime.getMinutes())),
+          });
+        } else {
+          setTime({
+            hour: padTime(String(currentDatetime.getUTCHours())),
+            minute: padTime(String(currentDatetime.getUTCMinutes())),
+          });
+        }
       }
     },
-    [startTime],
+    [displayLocalTimezone, startTime],
   );
 
   useEffect(
@@ -254,20 +248,32 @@ function Edit({
   );
 
   const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    () => checkIfCustomInterval(scheduleInterval),
     [scheduleInterval],
+  );
+  const readableCronExpression = useMemo(() => (
+    (isCustomInterval && customInterval)
+      ? cronstrue.toString(customInterval, { throwExceptionOnParseError: false })
+      : ''
+    ),
+    [customInterval, isCustomInterval],
+  );
+  const cronExpressionInvalid = useMemo(
+    () => readableCronExpression?.toLowerCase().includes('error'),
+    [readableCronExpression],
   );
 
   useEffect(
     () => {
       if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        const custom = pipelineSchedule?.schedule_interval &&
-          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum)
+        const custom = checkIfCustomInterval(pipelineSchedule?.schedule_interval);
 
         if (custom) {
-          setCustomInterval(pipelineSchedule?.schedule_interval);
+          const customIntervalInit = displayLocalTimezone
+            ? convertUtcCronExpressionToLocalTimezone(pipelineSchedule?.schedule_interval)
+            : pipelineSchedule?.schedule_interval;
+          setCustomInterval(customIntervalInit);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
@@ -298,6 +304,7 @@ function Edit({
       }
     },
     [
+      displayLocalTimezone,
       isStreamingPipeline,
       pipelineSchedule,
       schedule,
@@ -327,7 +334,9 @@ function Edit({
     const data = {
       ...selectKeys(schedule, [
         'name',
+        'description',
         'schedule_type',
+        'tags',
       ]),
       event_matchers: [],
       schedule_interval: null,
@@ -367,9 +376,21 @@ function Edit({
     } else if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
       data.event_matchers = eventMatchers;
     } else {
-      data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
-      data.start_time = date && time?.hour && time?.minute
-        ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}:00`
+      data.schedule_interval = isCustomInterval
+        ? ((displayLocalTimezone && !cronExpressionInvalid && !!customInterval)
+          ? convertUtcCronExpressionToLocalTimezone(customInterval, true)
+          : customInterval
+        )
+        : schedule.schedule_interval;
+      data.start_time = (date && time?.hour && time?.minute)
+        ? getDatetimeFromDateAndTime(
+          date,
+          time,
+          {
+            convertToUtc: displayLocalTimezone,
+            includeSeconds: true,
+            localTimezone: displayLocalTimezone,
+          })
         : null;
     }
 
@@ -399,8 +420,10 @@ function Edit({
       pipeline_schedule: data,
     });
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
+    displayLocalTimezone,
     enableSLA,
     eventMatchers,
     isCustomInterval,
@@ -628,33 +651,61 @@ function Edit({
     showLandingTime,
   ]);
 
+  const triggerNameRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_name"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger name
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_name_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          name: e.target.value,
+        }));
+      }}
+      placeholder="Name this trigger"
+      value={name}
+    />,
+  ]), [name]);
+  const triggerDescriptionRowEl = useMemo(() => ([
+    <FlexContainer
+      alignItems="center"
+      key="trigger_description"
+    >
+      <Alphabet default />
+      <Spacing mr={1} />
+      <Text default>
+        Trigger description
+      </Text>
+    </FlexContainer>,
+    <TextInput
+      key="trigger_description_input"
+      monospace
+      onChange={(e) => {
+        e.preventDefault();
+        setSchedule(s => ({
+          ...s,
+          description: e.target.value,
+        }));
+      }}
+      placeholder="Description"
+      value={description}
+    />,
+  ]), [description]);
+
   const detailsMemo = useMemo(() => {
     const rows = [
-      [
-        <FlexContainer
-          alignItems="center"
-          key="trigger_name_detail"
-        >
-          <Alphabet default size={1.5 * UNIT} />
-          <Spacing mr={1} />
-          <Text default>
-            Trigger name
-          </Text>
-        </FlexContainer>,
-        <TextInput
-          key="trigger_name_input_detail"
-          monospace
-          onChange={(e) => {
-            e.preventDefault();
-            setSchedule(s => ({
-              ...s,
-              name: e.target.value,
-            }));
-          }}
-          placeholder="Name this trigger"
-          value={name}
-        />,
-      ],
+      triggerNameRowEl,
+      triggerDescriptionRowEl,
       [
         <FlexContainer
           alignItems="center"
@@ -701,49 +752,56 @@ function Edit({
       ],
     ];
 
+    rows.push([
+      <FlexContainer
+        alignItems="center"
+        key="frequency"
+      >
+        <Switch default size={1.5 * UNIT} />
+        <Spacing mr={1} />
+        <Text default>
+          Enable landing time
+        </Text>
+      </FlexContainer>,
+
+      <div key="frequency_input">
+        <ToggleSwitch
+          checked={landingTimeEnabled}
+          disabled={landingTimeDisabled}
+          onCheck={() => {
+            setSettings(prev => ({
+              ...prev,
+              landing_time_enabled: !landingTimeEnabled,
+            }));
+          }}
+        />
+
+        <Spacing mt={1} p={1}>
+          {landingTimeDisabled && (
+            <Text muted small>
+              In order to enable landing time, the trigger’s frequency must
+              be <Text inline monospace small>{ScheduleIntervalEnum.HOURLY}
+              </Text>, <Text inline monospace small>
+                {ScheduleIntervalEnum.DAILY}
+              </Text>, <Text inline monospace small>
+                {ScheduleIntervalEnum.WEEKLY}
+              </Text>, or <Text inline monospace small>
+                {ScheduleIntervalEnum.MONTHLY}
+              </Text>.
+            </Text>
+          )}
+          {!landingTimeDisabled && (
+            <Text muted small>
+              Instead of starting at a specific time,
+              this trigger will schedule pipeline runs at a time where it will finish
+              by the specified time below.
+            </Text>
+          )}
+        </Spacing>
+      </div>,
+    ]);
+
     if (showLandingTime) {
-      rows.push([
-        <FlexContainer
-          alignItems="center"
-          key="frequency"
-        >
-          <Switch default size={1.5 * UNIT} />
-          <Spacing mr={1} />
-          <Text default>
-            Enable landing time
-          </Text>
-        </FlexContainer>,
-
-        <div key="frequency_input">
-          <ToggleSwitch
-            checked={landingTimeEnabled}
-            disabled={landingTimeDisabled}
-            onCheck={() => {
-              setSettings(prev => ({
-                ...prev,
-                landing_time_enabled: !landingTimeEnabled,
-              }));
-            }}
-          />
-
-          <Spacing mt={1} p={1}>
-            {landingTimeDisabled && (
-              <Text muted small>
-                In order to enable landing time, the trigger’s frequency must
-                be {ScheduleIntervalEnum.HOURLY}, {ScheduleIntervalEnum.DAILY}, {ScheduleIntervalEnum.WEEKLY}, or {ScheduleIntervalEnum.MONTHLY}.
-              </Text>
-            )}
-            {!landingTimeDisabled && (
-              <Text muted small>
-                Instead of starting at a specific time,
-                this trigger will schedule pipeline runs at a time where it will finish
-                by the specified time below.
-              </Text>
-            )}
-          </Spacing>
-        </div>,
-      ]);
-
       rows.push([
         <FlexContainer
           alignItems="center"
@@ -793,7 +851,10 @@ function Edit({
                 onClick={() => setShowCalendar(val => !val)}
                 placeholder="YYYY-MM-DD HH:MM"
                 value={date
-                  ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`
+                  ? getDatetimeFromDateAndTime(
+                    date,
+                    time,
+                    { localTimezone: displayLocalTimezone })
                   : ''
                 }
               />
@@ -806,6 +867,7 @@ function Edit({
                 style={{ position: 'relative' }}
               >
                 <Calendar
+                  localTime={displayLocalTimezone}
                   selectedDate={date}
                   selectedTime={time}
                   setSelectedDate={setDate}
@@ -819,7 +881,9 @@ function Edit({
     ]);
 
     if (isStreamingPipeline) {
-      rows.splice(1, 1);
+      // Remove frequency and landing time rows since they are not
+      // relevant for streaming pipelines.
+      rows.splice(2, 2);
     }
 
     if (isCustomInterval) {
@@ -849,22 +913,43 @@ function Edit({
             />
 
             <Spacing mt={1} p={1}>
-              <Text muted small>
-                If you want this pipeline to trigger every 1 minute,
-                the CRON syntax is <Text inline monospace small>
-                  */1 * * * *
-                </Text>.
+              <Text monospace xsmall>
+                [minute] [hour] [day(month)] [month] [day(week)]
               </Text>
 
-              <Text muted small>
-                For more CRON syntax examples, check out this <Link
-                  href="https://crontab.guru/"
-                  openNewWindow
-                  small
-                >
-                  resource
-                </Link>.
-              </Text>
+              {!customInterval
+                ? null
+                : (
+                  <Text
+                    danger={cronExpressionInvalid}
+                    muted
+                    small
+                  >
+                    {cronExpressionInvalid
+                      ? 'Invalid cron expression. Please check the cron syntax.'
+                      : <>&#34;{readableCronExpression}&#34;</>
+                    }
+                  </Text>
+                )
+              }
+
+              {displayLocalTimezone && (
+                <>
+                  <Text bold inline small warning>
+                    Note:&nbsp;
+                  </Text>
+                  <Text inline small>
+                    If you have the display_local_timezone setting enabled, the local cron expression
+                    above will match your local timezone only
+                    <br />
+                    if the minute and hour values are single
+                    values without any special characters, such as the comma, hyphen, or slash.
+                    <br />
+                    You can still use cron expressions with special characters for the minute/hour
+                    values, but it will be based in UTC time.
+                  </Text>
+                </>
+              )}
             </Spacing>
           </div>,
         ],
@@ -888,19 +973,23 @@ function Edit({
       </>
     );
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
+    displayLocalTimezone,
     isCustomInterval,
     isStreamingPipeline,
     landingTimeDisabled,
     landingTimeEnabled,
     landingTimeInputs,
-    name,
+    readableCronExpression,
     runtimeAverage,
     scheduleInterval,
     showCalendar,
     showLandingTime,
     time,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
   ]);
 
   const updateEventMatcher = useCallback((idx, data: {
@@ -928,31 +1017,8 @@ function Edit({
       <Table
         columnFlex={[null, 1]}
         rows={[
-          [
-            <FlexContainer
-              alignItems="center"
-              key="trigger_name_event"
-            >
-              <Alphabet default size={1.5 * UNIT} />
-              <Spacing mr={1} />
-              <Text default>
-                Trigger name
-              </Text>
-            </FlexContainer>,
-            <TextInput
-              key="trigger_name_input_event"
-              monospace
-              onChange={(e) => {
-                e.preventDefault();
-                setSchedule(s => ({
-                  ...s,
-                  name: e.target.value,
-                }));
-              }}
-              placeholder="Name this trigger"
-              value={name}
-            />,
-          ],
+          triggerNameRowEl,
+          triggerDescriptionRowEl,
         ]}
       />
 
@@ -1113,30 +1179,13 @@ function Edit({
     eventMatchers,
     eventRules,
     eventRulesByName,
-    name,
+    triggerNameRowEl,
+    triggerDescriptionRowEl,
     updateEventMatcher,
   ]);
 
-  const windowIsDefined = typeof window !== 'undefined';
-
   const apiMemo = useMemo(() => {
-    let url = '';
-    if (windowIsDefined) {
-      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
-
-      if (pipelineSchedule?.token) {
-        url = `${url}/${pipelineSchedule.token}`;
-      }
-    }
-
-    let port;
-    if (windowIsDefined) {
-      port = window.location.port;
-
-      if (port) {
-        url = url.replace(port, '6789');
-      }
-    }
+    const url = getTriggerApiEndpoint(pipelineSchedule);
 
     return (
       <>
@@ -1151,31 +1200,8 @@ function Edit({
         <Table
           columnFlex={[null, 1]}
           rows={[
-            [
-              <FlexContainer
-                alignItems="center"
-                key="trigger_name_api"
-              >
-                <Alphabet default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Trigger name
-                </Text>
-              </FlexContainer>,
-              <TextInput
-                key="trigger_name_input_api"
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
-                placeholder="Name this trigger"
-                value={name}
-              />,
-            ],
+            triggerNameRowEl,
+            triggerDescriptionRowEl,
           ]}
         />
 
@@ -1212,7 +1238,6 @@ function Edit({
 
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             <CopyToClipboard
-              withCopyIcon
               copiedText={`{
   "pipeline_run": {
     "variables": {
@@ -1222,6 +1247,7 @@ function Edit({
   }
 }
 `}
+              withCopyIcon
             >
               <CodeBlock
                 language="json"
@@ -1268,11 +1294,7 @@ function Edit({
         </Spacing>
       </>
     );
-  }, [
-    name,
-    pipelineSchedule,
-    windowIsDefined,
-  ]);
+  }, [pipelineSchedule, triggerDescriptionRowEl, triggerNameRowEl]);
 
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType
@@ -1294,38 +1316,29 @@ function Edit({
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
-          Pipeline run settings
+          Run settings
         </Headline>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
-            <Checkbox
-              checked={settings?.allow_blocks_to_fail}
-              label="Keep running pipeline even if blocks fail"
-              onClick={() => setSettings(prev => ({
-                ...prev,
-                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
-              }))}
-            />
-          </FlexContainer>
-        </Spacing>
-
-        {ScheduleTypeEnum.TIME === scheduleType && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.skip_if_previous_running}
-                label="Skip run if previous run still in progress"
-                onClick={() => setSettings(prev => ({
+          {!isStreamingPipeline && (
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Text>
+                Set a timeout for each run of this trigger (optional)
+              </Text>
+              <Spacing mb={1} />
+              <TextInput
+                label="Timeout (in seconds)"
+                onChange={e => setSettings(prev => ({
                   ...prev,
-                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                  timeout: e.target.value,
                 }))}
+                primary
+                setContentOnMount
+                type="number"
+                value={settings?.timeout}
               />
-            </FlexContainer>
-          </Spacing>
-        )}
-
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            </Spacing>
+          )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
               <ToggleSwitch
@@ -1405,6 +1418,34 @@ function Edit({
             />
           )}
         </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Checkbox
+              checked={settings?.allow_blocks_to_fail}
+              label="Keep running pipeline even if blocks fail"
+              onClick={() => setSettings(prev => ({
+                ...prev,
+                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+
+        {ScheduleTypeEnum.TIME === scheduleType && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Checkbox
+                checked={settings?.skip_if_previous_running}
+                label="Skip run if previous run still in progress"
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                }))}
+              />
+            </FlexContainer>
+          </Spacing>
+        )}
       </Spacing>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -1496,6 +1537,7 @@ function Edit({
     dbtBlocks,
     enableSLA,
     formattedVariables,
+    isStreamingPipeline,
     overwriteVariables,
     runtimeVariables,
     schedule,
@@ -1506,6 +1548,13 @@ function Edit({
     setRuntimeVariables,
     settings,
   ]);
+
+  const { data: dataTags } = api.tags.list();
+  const unselectedTags =
+    useMemo(() => (dataTags?.tags || []).filter(({ uuid }) => !tags?.includes(uuid)), [
+      dataTags,
+      tags,
+    ]);
 
   return (
     <>
@@ -1547,8 +1596,8 @@ function Edit({
 
             <Button
               linkProps={{
-                href: '/pipelines/[pipeline]/triggers/[...slug]',
                 as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+                href: '/pipelines/[pipeline]/triggers/[...slug]',
               }}
               noHoverUnderline
               outline
@@ -1636,12 +1685,41 @@ function Edit({
           </FlexContainer>
         </Spacing>
 
-        <Spacing mt={5}>
+        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
           {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
           {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
           {ScheduleTypeEnum.API === scheduleType && apiMemo}
         </Spacing>
 
+        <Spacing mt={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={2}>
+            <Headline>
+              Tags
+            </Headline>
+
+            <Text muted>
+              Add or remove tags from this trigger.
+            </Text>
+          </Spacing>
+
+          <TagsAutocompleteInputField
+            removeTag={(tag: TagType) => {
+              setSchedule(prev => ({
+                ...prev,
+                tags: tags?.filter(uuid => uuid !== tag.uuid),
+              }));
+            }}
+            selectTag={(tag: TagType) => {
+              setSchedule(prev => ({
+                ...prev,
+                tags: pushUnique(tag.uuid, tags, uuid => uuid === tag.uuid),
+              }));
+            }}
+            selectedTags={tags?.map(tag => ({ uuid: tag }))}
+            tags={unselectedTags}
+            uuid={`TagsAutocompleteInputField-trigger-${pipelineScheduleID}`}
+          />
+        </Spacing>
       </PipelineDetailPage>
     </>
   );

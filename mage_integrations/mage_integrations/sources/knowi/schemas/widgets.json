@@ -1,0 +1,688 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "createdDate": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "lastModDate": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "id": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "name": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "userId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "customerId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "datasetId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "type": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "description": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "urlString": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "access": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "refreshChartMillis": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "jsonConfig": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "shareUrl": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "accessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "dashboardAccessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "categoryAccessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "autoShared": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "urlShareWhitelistDomain": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "filterSettings": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "chartType": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "alertCount": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "queryId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "queryStr": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "adhocQuery": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "categories": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": "string"
+            }
+        },
+        "userExternalAuthId": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "userSso": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "drilldown": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "dataset": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "createdDate": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "lastModDate": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "metadataConfig": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "lastUpdateDate": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "mongoConnectUri": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "customerId": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "datasetName": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "identifier": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "userId": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "refreshMeta": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "injectStreamTime": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "nlpEnabled": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "nlpBotEnabled": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "recordCount": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "accessLevel": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "categoryAccessLevel": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "autoShared": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "bypassOverrideLimit": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "external": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "metaData": {
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "properties": {
+                        "fields": {
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "fieldName": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "fieldType": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "dataTypes": {
+                            "type": [
+                                "object",
+                                "null"
+                            ],
+                            "additionalProperties": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "fieldNames": {
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "fields",
+                        "dataTypes",
+                        "fieldNames"
+                    ]
+                },
+                "direct": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "hidden": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "position": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "chartId": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "width": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "height": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "originalScreenWidth": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "originalScreenHeight": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "col": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "row": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "xpos": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "ypos": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "size_x": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "size_y": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "associations": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "queryModified": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "updateFilters": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "dataFields": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "dataFieldsTypes": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "typeModified": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "lastSyncDate": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "viewOnly": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "processedName": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "notDefaultFilter": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "excludeData": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "chartProperties": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "statusIndColumns": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "text": {
+            "type": [
+                    "string",
+                    "null"
+                ]
+        },
+        "filters": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "widgetAccessLevel": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "chartPropertiesNullOrEmpty": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "widgetType": {
+            "type": [
+                    "string",
+                    "null"
+                ]
+        },
+        "live": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "allFilters": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "processedFilters": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "dataDisplayTypes": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "dbFields": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "ignoreVals": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "filterFieldDataTypesIncludingNested": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "filterFieldDataTypes": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        }
+    }
+}

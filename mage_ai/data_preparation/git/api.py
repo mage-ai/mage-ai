@@ -1,30 +1,31 @@
 import asyncio
-import requests
 import subprocess
-from datetime import datetime
-from git.remote import RemoteProgress
-from git.repo.base import Repo
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
-from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application, User
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
 
+import requests
+from git.remote import RemoteProgress
+from git.repo.base import Repo
+
+from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
+from mage_ai.authentication.oauth.utils import access_tokens_for_client
+from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
 
 API_ENDPOINT = 'https://api.github.com'
 
 
-def get_access_token_for_user(user: User) -> Oauth2AccessToken:
-    oauth_client = Oauth2Application.query.filter(
-        Oauth2Application.client_id == OAUTH_PROVIDER_GITHUB,
-    ).first()
+def get_oauth_client_id(provider: str) -> str:
+    return f'{provider}_{get_project_uuid()}'
 
-    if oauth_client:
-        access_token = Oauth2AccessToken.query.filter(
-            Oauth2AccessToken.expires > datetime.utcnow(),
-            Oauth2AccessToken.oauth2_application_id == oauth_client.id,
-        ).first()
 
-        return access_token
+def get_access_token_for_user(
+    user: User,
+    provider: str = OAUTH_PROVIDER_GITHUB
+) -> Oauth2AccessToken:
+    access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
+    if access_tokens:
+        return access_tokens[0]
 
 
 def fetch(remote_name: str, remote_url: str, token: str) -> RemoteProgress:
@@ -106,6 +107,31 @@ def push(remote_name: str, remote_url: str, branch_name: str, token: str) -> Rem
             print(err)
 
     return custom_progress
+
+
+def reset_hard(remote_name: str, remote_url: str, branch_name: str, token: str) -> None:
+    from mage_ai.data_preparation.git import Git
+
+    username = get_username(token)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager()
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    try:
+        remote.fetch()
+        git_manager.repo.git.reset('--hard', f'{remote_name}/{branch_name}')
+    except Exception as err:
+        raise err
+    finally:
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
 
 
 def build_authenticated_remote_url(remote_url: str, username: str, token: str) -> str:

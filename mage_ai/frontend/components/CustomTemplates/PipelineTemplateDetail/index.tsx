@@ -90,7 +90,11 @@ function PipelineTemplateDetail({
     }
   }, [template, templatePrev]);
 
-  const pipeline = useMemo(() => template?.pipeline, [template]);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const pipeline = useMemo(() => template?.pipeline || dataPipeline?.pipeline, [
+    dataPipeline,
+    template,
+  ]);
   const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
 
   const isNewCustomTemplate: boolean = useMemo(() => !template && !templateUUID, [
@@ -222,13 +226,6 @@ function PipelineTemplateDetail({
     templateAttributes,
     updateCustomTemplate,
   ]);
-
-  const after = useMemo(() => {
-    return (
-      <>
-      </>
-    );
-  }, []);
 
   const before = useMemo(() => (
     <FlexContainer
@@ -381,7 +378,6 @@ function PipelineTemplateDetail({
   return (
     // @ts-ignore
     <TripleLayout
-      after={after}
       before={before}
       beforeHidden={beforeHidden}
       beforeWidth={beforeWidth}

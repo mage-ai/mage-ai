@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from mage_ai.shared.config import BaseConfig
-from typing import Dict
 import os
+from dataclasses import dataclass
+from typing import Dict
+
+from mage_ai.shared.config import BaseConfig
 
 DEFAULT_DRIVER_MEMORY = '32000M'
 DEFAULT_INSTANCE_TYPE = 'r5.4xlarge'
@@ -12,12 +13,23 @@ INSTANCE_DRIVER_MEMORY_MAPPING = {
 
 
 @dataclass
+class EmrScalingPocliy(BaseConfig):
+    unit_type: str = 'Instances'    # 'InstanceFleetUnits'|'Instances'|'VCPU'
+    minimum_capacity_units: int = 1
+    maximum_capacity_units: int = 2
+    maximum_on_demand_capacity_units: int = 2
+    maximum_core_capacity_units: int = 2
+
+
+@dataclass
 class EmrConfig(BaseConfig):
+    bootstrap_script_path: str = None
     ec2_key_name: str = None
     master_security_group: str = None
     slave_security_group: str = None
     master_instance_type: str = DEFAULT_INSTANCE_TYPE
     slave_instance_type: str = DEFAULT_INSTANCE_TYPE
+    scaling_policy: EmrScalingPocliy = None
 
     def get_instances_config(
         self,
@@ -82,6 +94,20 @@ class EmrConfig(BaseConfig):
         if self.slave_security_group is not None:
             instances_config['EmrManagedSlaveSecurityGroup'] = self.slave_security_group
         return instances_config
+
+    def get_managed_scaling_policy(self):
+        if self.scaling_policy is not None:
+            return {
+                'ComputeLimits': {
+                    'UnitType': self.scaling_policy.unit_type,
+                    'MinimumCapacityUnits': self.scaling_policy.minimum_capacity_units,
+                    'MaximumCapacityUnits': self.scaling_policy.maximum_capacity_units,
+                    'MaximumOnDemandCapacityUnits':
+                        self.scaling_policy.maximum_on_demand_capacity_units,
+                    'MaximumCoreCapacityUnits': self.scaling_policy.maximum_core_capacity_units,
+                },
+            }
+        return None
 
     def __driver_memory(self, instance_size: str) -> str:
         return INSTANCE_DRIVER_MEMORY_MAPPING.get(instance_size, DEFAULT_DRIVER_MEMORY)

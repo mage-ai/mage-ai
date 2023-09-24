@@ -1,6 +1,7 @@
 export enum PageNameEnum {
   BACKFILLS = 'backfills',
   BLOCK_RUNS = 'block_runs',
+  DASHBOARD = 'dashboard',
   EDIT = 'edit',
   MONITOR = 'monitor',
   PIPELINE_LOGS = 'pipeline_logs',

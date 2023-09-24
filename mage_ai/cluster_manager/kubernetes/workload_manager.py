@@ -19,9 +19,9 @@ from mage_ai.cluster_manager.constants import (
 from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
-    DB_NAME,
-    DB_PASS,
-    DB_USER,
+    PG_DB_NAME,
+    PG_DB_PASS,
+    PG_DB_USER,
 )
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
@@ -38,6 +38,7 @@ class WorkloadManager:
         self.load_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
+        self.networking_client = client.NetworkingV1Api()
 
         self.namespace = namespace
         if not self.namespace:
@@ -144,11 +145,15 @@ class WorkloadManager:
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
+        ingress_name = kwargs.get('ingress_name')
+
+        # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
             project_uuid=project_uuid,
             container_config=container_config,
+            set_base_path=ingress_name is not None,
         )
         container_config['env'] = env_vars
 
@@ -303,18 +308,59 @@ class WorkloadManager:
             }
         }
 
-        return self.core_client.create_namespaced_service(self.namespace, service)
+        k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
+
+        try:
+            if ingress_name:
+                self.add_service_to_ingress_paths(ingress_name, service_name, name)
+        except Exception as err:
+            self.delete_workload(name)
+            raise err
+
+        return k8s_service
+
+    def add_service_to_ingress_paths(
+        self,
+        ingress_name: str,
+        service_name: str,
+        workspace_name: str,
+    ) -> None:
+        ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
+        rule = ingress.spec.rules[0]
+        paths = rule.http.paths
+        paths.insert(
+            0,
+            client.V1HTTPIngressPath(
+                backend=client.V1IngressBackend(
+                    service=client.V1IngressServiceBackend(
+                        name=service_name,
+                        port=client.V1ServiceBackendPort(
+                            number=6789
+                        )
+                    )
+                ),
+                path=f'/{workspace_name}',
+                path_type='Prefix',
+            )
+        )
+        ingress.spec.rules[0] = client.V1IngressRule(
+            host=rule.host,
+            http=client.V1HTTPIngressRuleValue(paths=paths),
+        )
+        self.networking_client.patch_namespaced_ingress(ingress_name, self.namespace, ingress)
 
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
+        # TODO: remove service from ingress paths
 
     def __populate_env_vars(
         self,
         name,
         project_type: str = 'standalone',
         project_uuid: str = None,
-        container_config: Dict = None
+        container_config: Dict = None,
+        set_base_path: bool = False,
     ) -> List:
         env_vars = [
             {
@@ -322,6 +368,11 @@ class WorkloadManager:
                 'value': name,
             }
         ]
+        if set_base_path:
+            env_vars.append({
+                'name': 'MAGE_BASE_PATH',
+                'value': name,
+            })
         if project_type:
             env_vars.append({
                 'name': 'PROJECT_TYPE',
@@ -362,7 +413,7 @@ class WorkloadManager:
         if db_secrets_name:
             env_vars.extend([
                 {
-                    'name': DB_USER,
+                    'name': PG_DB_USER,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,
@@ -371,7 +422,7 @@ class WorkloadManager:
                     }
                 },
                 {
-                    'name': DB_PASS,
+                    'name': PG_DB_PASS,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,
@@ -380,7 +431,7 @@ class WorkloadManager:
                     }
                 },
                 {
-                    'name': DB_NAME,
+                    'name': PG_DB_NAME,
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': db_secrets_name,
@@ -434,7 +485,7 @@ class WorkloadManager:
 
     def __create_persistent_volume(
         self,
-        name,
+        name: str,
         volume_host_path=None,
         storage_request_size='2Gi',
         access_mode=None,
@@ -476,4 +527,8 @@ class WorkloadManager:
                 }
             }
         }
+        persistent_volumes = self.core_client.list_persistent_volume().items
+        for pv in persistent_volumes:
+            if pv.metadata.name == f'{name}-pv':
+                return
         self.core_client.create_persistent_volume(pv)

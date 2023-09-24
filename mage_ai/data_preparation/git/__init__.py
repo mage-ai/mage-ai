@@ -5,7 +5,8 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.data_preparation.preferences import get_preferences
@@ -15,7 +16,7 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
-DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')
+DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser(os.path.join('~', '.ssh'))
 DEFAULT_KNOWN_HOSTS_FILE = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
 REMOTE_NAME = 'mage-repo'
 
@@ -26,10 +27,16 @@ GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig = None, setup_repo: bool = True) -> None:
+    def __init__(
+        self,
+        auth_type: AuthType = None,
+        git_config: GitConfig = None,
+        setup_repo: bool = True,
+    ) -> None:
         import git
+        import git.exc
 
-        self.auth_type = AuthType.SSH
+        self.auth_type = auth_type if auth_type else AuthType.SSH
         self.git_config = git_config
         self.origin = None
         self.remote_repo_link = None
@@ -48,6 +55,7 @@ class Git:
         os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
+            url = None
             if self.remote_repo_link:
                 url = urlsplit(self.remote_repo_link)
 
@@ -59,7 +67,7 @@ class Git:
                     repo_name=get_repo_path(),
                 )
 
-            if self.git_config:
+            if self.git_config and url:
                 user = self.git_config.username
                 url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                 self.remote_repo_link = urlunsplit(url)
@@ -86,12 +94,21 @@ class Git:
                 self.origin.set_url(self.remote_repo_link)
 
     @classmethod
-    def get_manager(self, user: User = None, setup_repo: bool = True) -> 'Git':
+    def get_manager(
+        self,
+        user: User = None,
+        setup_repo: bool = True,
+        auth_type: str = None,
+    ) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
         if preferences and preferences.sync_config:
             git_config = GitConfig.load(config=preferences.sync_config)
-        return Git(git_config, setup_repo=setup_repo)
+        return Git(
+            auth_type=auth_type,
+            git_config=git_config,
+            setup_repo=setup_repo,
+        )
 
     @property
     def current_branch(self) -> Any:
@@ -198,7 +215,7 @@ class Git:
         proc = subprocess.Popen(args=command, shell=True)
         proc.wait()
 
-    def _remote_command(func) -> None:
+    def _remote_command(func: Callable) -> None:
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
@@ -241,11 +258,15 @@ class Git:
         return wrapper
 
     @_remote_command
-    def reset(self, branch: str = None) -> None:
-        self.origin.fetch()
+    def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
         if branch is None:
             branch = self.current_branch
-        self.repo.git.reset('--hard', f'{self.origin.name}/{branch}')
+        if remote_name is None:
+            remote = self.origin
+        else:
+            remote = self.repo.remotes[remote_name]
+        remote.fetch()
+        self.repo.git.reset('--hard', f'{remote.name}/{branch}')
         self.__pip_install()
 
     @_remote_command
@@ -434,6 +455,24 @@ class Git:
                 for url in remote.urls:
                     if url.lower().startswith('https'):
                         repository_names.append('/'.join(url.split('/')[-2:]).replace('.git', ''))
+
+                        # Remove the token from the URL
+                        # e.g. https://[user]:[token]@[netloc]
+                        parts = url.split('@')
+
+                        parts_arr = []
+                        if len(parts) >= 2:
+                            # https://[user]:[token]
+                            parts2 = parts[0].split(':')
+                            # ['https', '', 'user', 'token']
+                            parts2[len(parts2) - 1] = '[token]'
+                            parts_arr.append(':'.join(parts2))
+                            parts_arr += parts[1:]
+                        else:
+                            parts_arr += parts
+
+                        url = '@'.join(parts_arr)
+
                     urls.append(url)
             except GitCommandError as err:
                 print('WARNING (mage_ai.data_preparation.git.remotes):')
@@ -458,10 +497,7 @@ class Git:
         if files:
             for file in files:
                 self.repo.git.add(file)
-            self.repo.index.commit(message)
-        elif self.repo.index.diff(None) or self.repo.untracked_files:
-            self.repo.git.add('.')
-            self.repo.index.commit(message)
+        self.repo.index.commit(message)
 
     def commit_message(self, message: str) -> None:
         self.repo.index.commit(message)
@@ -511,7 +547,7 @@ class Git:
             self.repo.config_writer().set_value(
                 'user', 'email', self.git_config.email).release()
         self.repo.config_writer('global').set_value(
-            'safe', 'directory', self.repo_path).release()
+            'safe', 'directory', Path(self.repo_path).as_posix()).release()
 
     def __pip_install(self) -> None:
         requirements_file = os.path.join(

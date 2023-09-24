@@ -34,6 +34,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.AMAZON_SQS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
         DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
+        DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
@@ -41,11 +42,14 @@ const getDataSourceTypes = (
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.DUMMY,
+        DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.MONGODB,
         DataSourceTypeEnum.OPENSEARCH,
+        DataSourceTypeEnum.POSTGRES,
+        DataSourceTypeEnum.ELASTICSEARCH,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,

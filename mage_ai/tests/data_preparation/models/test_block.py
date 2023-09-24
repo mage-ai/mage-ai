@@ -19,10 +19,14 @@ class BlockTest(DBTestCase):
     def test_create(self):
         block1 = Block.create('test_transformer', 'transformer', self.repo_path)
         block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)
-        self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/test_transformer.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/__init__.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/data_loaders/test_data_loader.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/data_loaders/__init__.py'))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'transformers', 'test_transformer.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'transformers', '__init__.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'data_loaders', 'test_data_loader.py')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path, 'data_loaders', '__init__.py')))
         self.assertEqual(block1.name, 'test_transformer')
         self.assertEqual(block1.uuid, 'test_transformer')
         self.assertEqual(block1.type, 'transformer')
@@ -277,7 +281,12 @@ def incorrect_function(df1):
             ''')
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(
+            Exception,
+            'Block test_transformer may have too many upstream dependencies. It expected to have' +
+            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
+            'the correct number of arguments.'
+        ):
             asyncio.run(block3.execute())
 
         with open(block3.file_path, 'w') as file:
@@ -286,7 +295,12 @@ def incorrect_function(df1):
 def incorrect_function(df1, df2, df3):
     return df1
             ''')
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(
+            Exception,
+            'Block test_transformer may have too many upstream dependencies. It expected to have' +
+            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
+            'the correct number of arguments.'
+        ):
             asyncio.run(block3.execute())
 
     def test_sensor_block_args_execution(self):
@@ -383,7 +397,7 @@ def on_failure_callback(**kwargs):
     print('FAILED')
             ''')
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'failed'):
             block1.execute_with_callback()
             mock_print.assert_called_with('FAILED')
 
@@ -414,6 +428,7 @@ def on_failure_callback(**kwargs):
             name='test_transformer_2',
             retry_config=None,
             status='not_executed',
+            timeout=None,
             type='transformer',
             upstream_blocks=[],
             uuid='test_transformer_2',
@@ -430,6 +445,7 @@ def on_failure_callback(**kwargs):
             name='test_data_exporter',
             retry_config=None,
             status='not_executed',
+            timeout=None,
             type='data_exporter',
             upstream_blocks=['test_transformer_2'],
             uuid='test_data_exporter',
@@ -542,3 +558,96 @@ SELECT 1 AS id;
 
         block2 = pipeline.get_block('test_transformer')
         self.assertEqual([], block2.upstream_block_uuids)
+
+    def test_execute_block_from_notebook(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_execute_block_function_from_notebook',
+            repo_path=self.repo_path,
+        )
+        block = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+
+        with open(block.file_path, 'w') as file:
+            file.write("""import pandas as pd
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return df
+""")
+
+        output = block._execute_block(dict(), from_notebook=True)
+        self.assertIsNotNone(block.module)
+        self.assertEqual(len(output), 1)
+
+    def test_execute_block_from_notebook_no_decorator_definition(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_execute_block_function_from_notebook_no_decorator_definition',
+            repo_path=self.repo_path,
+        )
+        block = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+
+        with open(block.file_path, 'w') as file:
+            file.write("""import pandas as pd
+
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return df
+
+@test
+def test_output(output, *args) -> None:
+    assert output is not None, 'The output is undefined'
+""")
+
+        output = block._execute_block(dict(), from_notebook=True)
+        self.assertIsNotNone(block.module)
+        self.assertEqual(len(output), 1)
+
+    def test_update_upstream_blocks_order(self):
+        pipeline = Pipeline.create(
+            'test pipeline 8',
+            repo_path=self.repo_path,
+        )
+        Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block3 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[0],
+            'test_data_loader_1',
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[1],
+            'test_data_loader_2',
+        )
+        block3.update(
+            dict(upstream_blocks=['test_data_loader_2', 'test_data_loader_1']),
+            check_upstream_block_order=True,
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[0],
+            'test_data_loader_2',
+        )
+        self.assertEqual(
+            block3.upstream_block_uuids[1],
+            'test_data_loader_1',
+        )

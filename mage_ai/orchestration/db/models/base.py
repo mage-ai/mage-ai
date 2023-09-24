@@ -1,15 +1,13 @@
 from datetime import datetime
-from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.shared.strings import camel_to_snake_case
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Integer,
-)
-from sqlalchemy.ext.declarative import declared_attr, declarative_base
+from typing import Dict
+
+from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
-from typing import Dict
+
+from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.shared.strings import camel_to_snake_case
 
 Base = declarative_base()
 
@@ -76,14 +74,16 @@ class BaseModel(Base):
                 raise e
 
     def update(self, **kwargs) -> None:
+        commit = kwargs.pop('commit', True)
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        try:
-            self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
+        if commit:
+            try:
+                self.session.commit()
+            except Exception as e:
+                self.session.rollback()
+                raise e
 
     def delete(self, commit: bool = True) -> None:
         self.session.delete(self)
@@ -97,7 +97,7 @@ class BaseModel(Base):
     def refresh(self):
         self.session.refresh(self)
 
-    def to_dict(self, include_attributes=[]) -> Dict:
+    def to_dict(self, include_attributes=None) -> Dict:
         def __format_value(value):
             if type(value) is datetime:
                 return str(value)

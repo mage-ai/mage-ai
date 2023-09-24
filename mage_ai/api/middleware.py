@@ -1,22 +1,26 @@
+import json
 from json.decoder import JSONDecodeError
+
+from tornado.web import RequestHandler
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.utils import authenticate_client_and_token, parse_cookie_header
 from mage_ai.authentication.oauth2 import decode_token
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
-from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.server.api.constants import (
     COOKIE_OAUTH_TOKEN,
-    ENDPOINTS_BYPASS_OAUTH_CHECK,
     HEADER_API_KEY,
     HEADER_OAUTH_TOKEN,
     URL_PARAMETER_API_KEY,
 )
+from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.array import find
-from tornado.web import RequestHandler
-import json
 
 
 class OAuthMiddleware(RequestHandler):
+    def initialize(self, bypass_oauth_check: bool = False) -> None:
+        self.bypass_oauth_check = bypass_oauth_check
+
     def prepare(self):
         self.request.__setattr__('current_user', None)
         self.request.__setattr__('error', None)
@@ -26,8 +30,7 @@ class OAuthMiddleware(RequestHandler):
         if not REQUIRE_USER_AUTHENTICATION:
             return
 
-        paths = [path for path in self.request.uri.split('/') if path]
-        if any(p in ENDPOINTS_BYPASS_OAUTH_CHECK for p in paths):
+        if self.bypass_oauth_check:
             return
 
         api_key = self.request.headers.get(HEADER_API_KEY, None)
@@ -76,8 +79,10 @@ class OAuthMiddleware(RequestHandler):
             self.request.__setattr__('oauth_client', oauth_client)
             if not oauth_client:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+                self.set_status(ApiError.INVALID_API_KEY['code'])
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+                self.set_status(ApiError.INVALID_API_KEY['code'])
             else:
                 should_check = False
                 oauth_token = None
@@ -105,8 +110,11 @@ class OAuthMiddleware(RequestHandler):
                         else:
                             self.request.__setattr__(
                                 'error', ApiError.EXPIRED_OAUTH_TOKEN)
+                            self.set_status(ApiError.EXPIRED_OAUTH_TOKEN['code'])
                     else:
                         self.request.__setattr__(
                             'error', ApiError.INVALID_OAUTH_TOKEN)
+                        self.set_status(ApiError.INVALID_OAUTH_TOKEN['code'])
         else:
             self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+            self.set_status(ApiError.INVALID_API_KEY['code'])

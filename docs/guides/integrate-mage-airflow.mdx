@@ -1,6 +1,7 @@
 ---
 title: "Integrate Mage into an existing Airflow project"
-sidebarTitle: "Integrate Mage guide"
+sidebarTitle: "Trigger Mage from Airflow"
+icon: "arrows-spin"
 description:
   "In this tutorial, we’ll create a DAG in Airflow for scheduling and running a
   data pipeline; all from the Mage UI."
@@ -15,8 +16,8 @@ description:
   This tutorial requires that you already have Airflow setup and running
   locally.
 </Note>
-
-## 1. Add `mage-ai` as a dependency in Airflow
+<Steps titleSize="h2">
+<Step title="Add `mage-ai` as a dependency in Airflow">
 
 Open the `requirements.txt` file in the root directory of your Airflow project,
 and add the `mage-ai` library:
@@ -24,8 +25,8 @@ and add the `mage-ai` library:
 ```
 mage-ai
 ```
-
-## 2. Install Mage tool
+</Step>
+<Step title=" Install Mage">
 
 You can install and run Mage using Docker or using pip.
 
@@ -40,8 +41,8 @@ docker pull mageai/mageai:latest
 ```bash
 pip install mage-ai
 ```
-
-## 3. Initialize Mage project
+</Step>
+<Step title="Initialize Mage project">
 
 Change directory into your Airflow’s DAGs folder. This is typically in the
 folder `dags/`.
@@ -76,8 +77,8 @@ airflow_root_directory/
 | -- dags/
 | -- | -- demo_project/
 ```
-
-## 4. Create one-time DAG for pipelines
+</Step>
+<Step title="Create one-time DAG for pipelines">
 
 In the `dags/` folder, create a new file named `create_mage_pipelines.py`.
 
@@ -104,10 +105,11 @@ create_dags(
     globals_dict=globals(),
 )
 ```
+</Step>
 
-## 5. Create pipeline
+<Step title="Create pipeline">
 
-### 5a. Start Mage
+### Start Mage
 
 In the `dags/` folder, start the Mage tool.
 
@@ -127,12 +129,14 @@ mage start demo_project
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
 
-### 5b. Create a pipeline and add a block
 
-Follow steps 1, 2, and 4 in this [tutorial](/tutorials/load-api-data) to create
+
+</Step>
+<Step title="Add a block">
+Follow steps 1, 2, and 4 in this [tutorial](/guides/load-api-data) to create
 a new pipeline, add 1 data loader block, and add 1 transformer block.
-
-### 6. Run DAG in Airflow for pipeline
+</Step>
+<Step title="Run DAG in Airflow for pipeline">
 
 1. Open the Airflow webserver UI at
    [http://localhost:8080](http://localhost:8080) in your browser.
@@ -147,3 +151,5 @@ a new pipeline, add 1 data loader block, and add 1 transformer block.
    Mage.
 
 <img alt="Mage in Airflow" src="/media/mage-airflow.jpg" />
+</Step>
+</Steps>

@@ -42,6 +42,7 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
             job_name='mage-data-prep-block-1',
             logger=self.executor.logger,
             logging_tags={},
+            namespace='default',
         )
         job_manager_instance_mock.run_job.assert_called_once_with(
             'mocked_cmd',
@@ -70,6 +71,7 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
             job_name='mage-custom-prefix-block-1',
             logger=self.executor.logger,
             logging_tags={},
+            namespace='default',
         )
         job_manager_instance_mock.run_job.assert_called_once_with(
             'mocked_cmd',

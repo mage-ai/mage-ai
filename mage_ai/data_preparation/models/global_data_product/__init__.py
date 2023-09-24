@@ -40,13 +40,14 @@ class GlobalDataProduct:
         return os.path.join(get_repo_path(), 'global_data_products.yaml')
 
     @classmethod
-    def load_all(self) -> List['GlobalDataProduct']:
+    def load_all(self, file_path: str = None) -> List['GlobalDataProduct']:
+        file_path_to_use = file_path or self.file_path()
         arr = []
 
-        if not os.path.exists(self.file_path()):
+        if not os.path.exists(file_path_to_use):
             return []
 
-        with open(self.file_path()) as fp:
+        with open(file_path_to_use) as fp:
             content = fp.read()
             if content:
                 yaml_config = yaml.safe_load(content) or {}
@@ -59,8 +60,8 @@ class GlobalDataProduct:
         return arr
 
     @classmethod
-    def get(self, uuid: str):
-        return find(lambda x: x.uuid == uuid, self.load_all())
+    def get(self, uuid: str, file_path: str = None):
+        return find(lambda x: x.uuid == uuid, self.load_all(file_path=file_path))
 
     @property
     def pipeline(self) -> Pipeline:
@@ -128,9 +129,11 @@ class GlobalDataProduct:
             if in_seconds:
                 now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
-                return ((now + d) - now).timestamp()
+                return ((now + d) - now).total_seconds()
             else:
                 return d
+
+        return None
 
     def is_outdated_after(self, now: datetime = None, return_values: bool = False) -> bool:
         values = {}
@@ -145,14 +148,14 @@ class GlobalDataProduct:
 
         for key, extract_value_from_datetime in [
             ('day_of_month', lambda x: x.day),
-            ('day_of_week', lambda x: (x.weekday + 1) % 7),
+            ('day_of_week', lambda x: (x.weekday() + 1) % 7),
             ('day_of_year', lambda x: x.timetuple().tm_yday),
             ('hour_of_day', lambda x: x.hour),
             ('minute_of_hour', lambda x: x.minute),
             ('month_of_year', lambda x: x.month),
             ('second_of_minute', lambda x: x.second),
             ('week_of_month', lambda x: week_of_month(x)),
-            ('week_of_year', lambda x: x.isocalendar().week),
+            ('week_of_year', lambda x: x.isocalendar()[1]),
         ]:
             value = outdated_starting_at.get(key, None)
             if value is not None:
@@ -173,8 +176,15 @@ class GlobalDataProduct:
     def next_run_at(self, pipeline_run: 'PipelineRun') -> datetime:
         execution_date = pipeline_run.execution_date
         outdated_at_delta = self.get_outdated_at_delta()
+
+        if not outdated_at_delta:
+            return None
+
         if execution_date and outdated_at_delta:
             execution_date += outdated_at_delta
+
+        if not execution_date.tzinfo:
+            execution_date = execution_date.replace(tzinfo=timezone.utc)
 
         return execution_date
 
@@ -185,6 +195,8 @@ class GlobalDataProduct:
         now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
         execution_date = self.next_run_at(pipeline_run)
+        if not execution_date:
+            return [False, False]
 
         outdated = execution_date and now >= execution_date
 
@@ -237,7 +249,23 @@ class GlobalDataProduct:
         if limit is not None:
             pipeline_runs = pipeline_runs.limit(limit)
 
-        return pipeline_runs.all()
+        return [PipelineRun(
+            backfill_id=row.backfill_id,
+            completed_at=row.completed_at,
+            created_at=row.created_at,
+            event_variables=row.event_variables,
+            execution_date=row.execution_date,
+            executor_type=row.executor_type,
+            global_data_product_uuid=row.global_data_product_uuid,
+            id=row.id,
+            metrics=row.metrics,
+            passed_sla=row.passed_sla,
+            pipeline_schedule_id=row.pipeline_schedule_id,
+            pipeline_uuid=row.pipeline_uuid,
+            status=row.status,
+            updated_at=row.updated_at,
+            variables=row.variables,
+        ) for row in pipeline_runs.all()]
 
     def to_dict(self, include_uuid: bool = False) -> Dict:
         data = dict(
@@ -256,7 +284,7 @@ class GlobalDataProduct:
     def delete(self) -> None:
         self.save(delete=True)
 
-    def save(self, delete: bool = False) -> None:
+    def save(self, delete: bool = False, file_path: str = None) -> None:
         mapping = index_by(lambda x: x.uuid, self.load_all())
 
         if delete:
@@ -275,7 +303,7 @@ class GlobalDataProduct:
                     mapping_new[uuid][k] = v
 
         content = yaml.safe_dump(mapping_new)
-        safe_write(self.file_path(), content)
+        safe_write(file_path or self.file_path(), content)
 
     def update(self, payload: Dict) -> None:
         for key in [

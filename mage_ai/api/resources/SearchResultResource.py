@@ -11,6 +11,8 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
 )
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.services.search.constants import SEARCH_TYPE_BLOCK_ACTION_OBJECTS
 
 
@@ -31,11 +33,17 @@ def filter_results(result: Dict) -> bool:
         block_type = block_action_object.get('block_type')
         language = block_action_object.get('language')
 
-    if BlockLanguage.YAML == language and BlockType.DBT != block_type:
+    if BlockLanguage.YAML == language and \
+            BlockType.DBT != block_type and \
+            not Project().is_feature_enabled(
+                FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+            ):
+
         return False
 
     if block_type in [
         BlockType.CALLBACK,
+        BlockType.CHART,
         BlockType.CONDITIONAL,
         BlockType.EXTENSION,
     ]:

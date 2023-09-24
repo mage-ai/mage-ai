@@ -47,8 +47,10 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
     # Create job
     containers_with_cmd = service_template.containers
     for c in containers_with_cmd:
-        c.command = command.split(' ')
+        c.command = command.split(' ') if isinstance(command, str) else command
+        # Not pass startup_probe and liveness_probe to cloud run jobs
         c.startup_probe = None
+        c.liveness_probe = None
     execution_template = run_v2.ExecutionTemplate(
         task_count=1,
         template=run_v2.TaskTemplate(

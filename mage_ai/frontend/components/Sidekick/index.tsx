@@ -18,6 +18,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
+import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
@@ -31,7 +32,6 @@ import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
-
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import {
   Charts as ChartsIcon,
@@ -97,6 +97,7 @@ export type SidekickProps = {
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
+  onUpdateFileSuccess?: (fileContent: FileType) => void;
   pipeline: PipelineType;
   pipelineMessages: KernelOutputType[];
   runningBlocks: BlockType[];
@@ -116,6 +117,11 @@ export type SidekickProps = {
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
@@ -149,6 +155,7 @@ function Sidekick({
   onChangeChartBlock,
   onChangeCodeBlock,
   onSelectBlockFile,
+  onUpdateFileSuccess,
   pipeline,
   pipelineMessages,
   runBlock,
@@ -169,6 +176,7 @@ function Sidekick({
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showUpdateBlockModal,
   statistics,
   textareaFocused,
   treeRef,
@@ -245,6 +253,7 @@ function Sidekick({
 
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
+      onActionCallback={onUpdateFileSuccess}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       setErrors={setErrors}
@@ -252,6 +261,7 @@ function Sidekick({
     />
   ), [
     afterWidth,
+    onUpdateFileSuccess,
     selectedBlock,
     selectedFilePath,
     setErrors,
@@ -449,6 +459,7 @@ function Sidekick({
       globalDataProducts={globalDataProducts}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
+      showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
     fetchFileTree,
@@ -457,6 +468,7 @@ function Sidekick({
     pipeline,
     selectedBlock,
     setSelectedBlock,
+    showUpdateBlockModal,
   ]);
 
   return (

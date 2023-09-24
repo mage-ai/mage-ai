@@ -94,6 +94,9 @@ type PipelineDetailProps = {
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
+  blocksThatNeedToRefresh?: {
+    [uuid: string]: number;
+  };
   dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
   disableShortcuts: boolean;
@@ -162,6 +165,10 @@ type PipelineDetailProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType;
@@ -175,6 +182,7 @@ function PipelineDetail({
   autocompleteItems,
   blockRefs,
   blocks = [],
+  blocksThatNeedToRefresh,
   dataProviders,
   deleteBlock,
   disableShortcuts,
@@ -215,6 +223,7 @@ function PipelineDetail({
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
+  showUpdateBlockModal,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
@@ -524,12 +533,20 @@ function PipelineDetail({
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockRef = blockRefs.current[path];
 
+      let key = uuid;
+      const refreshTimestamp = blocksThatNeedToRefresh?.[type]?.[uuid];
+      if (refreshTimestamp) {
+        key = `${key}:${refreshTimestamp}`;
+      }
+
+      // console.log(key)
+
       if (isHidden) {
         el = (
           <HiddenBlock
             block={block}
             blocks={blocks}
-            key={uuid}
+            key={key}
             // @ts-ignore
             onClick={() => setHiddenBlocks(prev => ({
               ...prev,
@@ -588,7 +605,7 @@ function PipelineDetail({
             globalDataProducts={globalDataProducts}
             hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
             interruptKernel={interruptKernel}
-            key={uuid}
+            key={key}
             mainContainerRef={mainContainerRef}
             mainContainerWidth={mainContainerWidth}
             messages={messages[uuid]}
@@ -618,6 +635,7 @@ function PipelineDetail({
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
             showGlobalDataProducts={showGlobalDataProducts}
+            showUpdateBlockModal={showUpdateBlockModal}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
           />
@@ -638,6 +656,7 @@ function PipelineDetail({
     autocompleteItems,
     blockRefs,
     blockTemplates,
+    blocksThatNeedToRefresh,
     blocks,
     dataProviders,
     deleteBlock,
@@ -677,6 +696,7 @@ function PipelineDetail({
     showBrowseTemplates,
     showConfigureProjectModal,
     showGlobalDataProducts,
+    showUpdateBlockModal,
     textareaFocused,
     updateBlock,
     widgets,

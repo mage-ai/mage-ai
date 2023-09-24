@@ -51,7 +51,6 @@ import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
-import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -69,6 +68,7 @@ import {
   ArrowDown,
   ChevronDown,
   ChevronUp,
+  DiamondShared,
   FileFill,
   Info,
   ParentEmpty,
@@ -214,6 +214,10 @@ type CodeBlockProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -273,6 +277,7 @@ function CodeBlock({
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
+  showUpdateBlockModal,
   textareaFocused,
   widgets,
 }: CodeBlockProps, ref) {
@@ -285,6 +290,7 @@ function CodeBlock({
     error: blockError,
     has_callback: hasCallback,
     language: blockLanguage,
+    name: blockName,
     pipelines,
     replicated_block: replicatedBlockUUID,
     type: blockType,
@@ -341,8 +347,6 @@ function CodeBlock({
 
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState<boolean>(isMarkdown);
-  const [isEditingBlockName, setIsEditingBlockName] = useState<boolean>(false);
-  const [newBlockUuid, setNewBlockUuid] = useState(blockUUID);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
@@ -674,7 +678,6 @@ function CodeBlock({
         response,
         {
           callback: (resp) => {
-            setIsEditingBlockName(false);
             fetchPipeline();
             fetchFileTree();
             setContent(content);
@@ -704,27 +707,12 @@ function CodeBlock({
 
   registerOnKeyDown(
     uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
+    (event, keyMapping) => {
       if (disableShortcuts && !allowCodeBlockShortcuts) {
         return;
       }
 
-      if (isEditingBlockName
-        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
-        && String(keyHistory[1]) !== String(KEY_CODE_META)
-      ) {
-        if (blockUUID === newBlockUuid) {
-          event.target.blur();
-        } else {
-          // @ts-ignore
-          updateBlock({
-            block: {
-              ...block,
-              name: newBlockUuid,
-            },
-          });
-        }
-      } else if (selected && !hideRunButton) {
+      if (selected && !hideRunButton) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
@@ -744,8 +732,6 @@ function CodeBlock({
       addNewBlock,
       block,
       hideRunButton,
-      isEditingBlockName,
-      newBlockUuid,
       runBlockAndTrack,
       selected,
       updateBlock,
@@ -1282,55 +1268,16 @@ function CodeBlock({
                       )}
 
                       {(!isDBT || BlockLanguageEnum.YAML === blockLanguage) && (
-                        <LabelWithValueClicker
-                          bold={false}
-                          inputValue={newBlockUuid}
+                        <Link
+                          default
                           monospace
-                          muted
-                          notRequired
-                          onBlur={() => setTimeout(() => {
-                            setAnyInputFocused(false);
-                            setIsEditingBlockName(false);
-                          }, 300)}
-                          onChange={(e) => {
-                            setNewBlockUuid(e.target.value);
-                            e.preventDefault();
-                          }}
-                          onClick={() => {
-                            setAnyInputFocused(true);
-                            setIsEditingBlockName(true);
-                          }}
-                          onFocus={() => {
-                            setAnyInputFocused(true);
-                            setIsEditingBlockName(true);
-                          }}
-                          stacked
-                          value={!isEditingBlockName && blockUUID}
-                        />
-                      )}
-
-                      {isEditingBlockName && !isDBT && (
-                        <>
-                          <Spacing ml={1} />
-                          <Link
-                            // @ts-ignore
-                            onClick={() => savePipelineContent({
-                              block: {
-                                name: newBlockUuid,
-                                uuid: blockUUID,
-                              },
-                            }).then(() => {
-                              setIsEditingBlockName(false);
-                              fetchPipeline();
-                              fetchFileTree();
-                            })}
-                            preventDefault
-                            sameColorAsText
-                            small
-                          >
-                            Update name
-                          </Link>
-                        </>
+                          noWrapping
+                          onClick={() => showUpdateBlockModal(block, blockName)}
+                          preventDefault
+                          sameColorAsText
+                        >
+                          {blockUUID}
+                        </Link>
                       )}
                     </FlexContainer>
 
@@ -1365,45 +1312,51 @@ function CodeBlock({
                           }}
                           >
                           <FlexContainer alignItems="center">
+                            {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
+                            {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+
+                            <Spacing mr={1} />
+
                             <Text
+                              default
                               monospace={numberOfParentBlocks >= 1}
                               noWrapping
                               small
                               underline={numberOfParentBlocks === 0}
                             >
-                              {numberOfParentBlocks === 0 && 'Edit parent blocks'}
-                              {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
+                              {numberOfParentBlocks === 0 && 'Edit parents'}
+                              {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
                             </Text>
-
-                            <Spacing mr={1} />
-
-                            {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
-                            {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
                           </FlexContainer>
                         </Button>
                       </Tooltip>
                     )}
 
                     {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
-                      <Spacing ml={2}>
+                      <>
+                        <Spacing ml={2} />
                         <Tooltip
                           block
                           label={`This block is used in ${blockPipelinesLength} pipelines.`}
                           size={null}
                           widthFitContent
                         >
-                          <Link
-                            default
-                            monospace
-                            noWrapping
-                            onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
-                            preventDefault
-                            small
-                          >
-                            {blockPipelinesLength} pipelines
-                          </Link>
+                          <FlexContainer alignItems="center">
+                            <DiamondShared size={14} />
+                            <Spacing ml={1} />
+                            <Link
+                              default
+                              monospace
+                              noWrapping
+                              onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+                              preventDefault
+                              small
+                            >
+                              {blockPipelinesLength} pipelines
+                            </Link>
+                          </FlexContainer>
                         </Tooltip>
-                      </Spacing>
+                      </>
                     )}
                   </>
                 )}
@@ -1414,6 +1367,7 @@ function CodeBlock({
                   addNewBlock={addNewBlock}
                   addWidget={addWidget}
                   block={block}
+                  blockContent={content}
                   blocks={blocks}
                   deleteBlock={deleteBlock}
                   executionState={executionState}
@@ -1427,6 +1381,10 @@ function CodeBlock({
                   project={project}
                   runBlock={hideRunButton ? null : runBlockAndTrack}
                   savePipelineContent={savePipelineContent}
+                  setBlockContent={(val: string) => {
+                    setContent(val);
+                    onChange?.(val);
+                  }}
                   setErrors={setErrors}
                   setIsEditingBlock={setIsEditingBlock}
                   setOutputCollapsed={setOutputCollapsed}
@@ -1473,6 +1431,7 @@ function CodeBlock({
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
               lightBackground={isMarkdown && !isEditingBlock}
+              onClick={onClickSelectBlock}
               onDoubleClick={() => {
                 if (isMarkdown && !isEditingBlock) {
                   setIsEditingBlock(true);

@@ -81,9 +81,11 @@ class RepoConfig:
             # from the config_dict. Otherwise, we will set the variables_dir with
             # `get_variables_dir`.
             if config_dict and config_dict.get('variables_dir'):
-                self.variables_dir = os.path.abspath(
-                    os.path.join(self.repo_path, config_dict.get('variables_dir'))
-                )
+                self.variables_dir = config_dict.get('variables_dir')
+                if not self.variables_dir.startswith('s3'):
+                    self.variables_dir = os.path.abspath(
+                        os.path.join(self.repo_path, self.variables_dir)
+                    )
             else:
                 self.variables_dir = get_variables_dir(
                     repo_path=self.repo_path,
@@ -99,7 +101,7 @@ class RepoConfig:
             self.azure_container_instance_config = \
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
-            self.emr_config = repo_config.get('emr_config')
+            self.emr_config = repo_config.get('emr_config') or dict()
             self.features = repo_config.get('features', {})
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.k8s_executor_config = repo_config.get('k8s_executor_config')
@@ -164,7 +166,7 @@ class RepoConfig:
     def save(self, **kwargs) -> None:
         if os.path.exists(self.metadata_path):
             with open(self.metadata_path) as f:
-                data = yml.load(f)
+                data = yml.load(f) or {}
         else:
             data = {}
 
@@ -259,20 +261,22 @@ def get_variables_dir(
     variables_dir = None
     if os.getenv(MAGE_DATA_DIR_ENV_VAR):
         variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
-    elif repo_config is not None:
-        variables_dir = repo_config.get('variables_dir')
     else:
-        from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-        if os.path.exists(get_metadata_path()):
-            with open(get_metadata_path(), 'r', encoding='utf-8') as f:
-                config_file = Template(f.read()).render(
-                    **get_template_vars_no_db()
-                )
-                repo_config = yaml.full_load(config_file) or {}
-                if repo_config.get('variables_dir'):
-                    variables_dir = os.path.expanduser(repo_config.get('variables_dir'))
-    if variables_dir is None:
-        variables_dir = DEFAULT_MAGE_DATA_DIR
+        if repo_config is not None:
+            variables_dir = repo_config.get('variables_dir')
+        else:
+            from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+            if os.path.exists(get_metadata_path()):
+                with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+                    config_file = Template(f.read()).render(
+                        **get_template_vars_no_db()
+                    )
+                    repo_config = yaml.full_load(config_file) or {}
+                    if repo_config.get('variables_dir'):
+                        variables_dir = repo_config.get('variables_dir')
+        if variables_dir is None:
+            variables_dir = DEFAULT_MAGE_DATA_DIR
+        variables_dir = os.path.expanduser(variables_dir)
 
     if not variables_dir.startswith('s3'):
         if os.path.isabs(variables_dir) and variables_dir != repo_path:
@@ -282,25 +286,49 @@ def get_variables_dir(
             variables_dir = os.path.abspath(
                 os.path.join(repo_path, variables_dir),
             )
-        os.makedirs(variables_dir, exist_ok=True)
+        try:
+            os.makedirs(variables_dir, exist_ok=True)
+        except Exception:
+            traceback.print_exc()
     return variables_dir
 
 
-project_uuid = None
-try:
-    with get_metadata_path() as f:
-        config = yml.load(f) or {}
-        project_uuid = config.get('project_uuid')
-except Exception:
-    pass
-
-
-def update_project_uuid():
+def set_project_uuid_from_metadata() -> None:
     global project_uuid
+    if os.path.exists(get_metadata_path()):
+        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+            config = yml.load(f) or {}
+            project_uuid = config.get('project_uuid')
+
+
+def init_project_uuid(overwrite_uuid: str = None) -> None:
+    """
+    Initialize the project_uuid constant. The project_uuid constant is used throughout
+    the server as an identifier for the project.
+
+    Args:
+        overwrite_uuid (str): If not null, the overwrite_uuid will overwrite the current
+            value of project_uuid.
+    """
+    global project_uuid
+    repo_config = get_repo_config()
+    if overwrite_uuid:
+        if repo_config.project_uuid != overwrite_uuid:
+            repo_config.save(project_uuid=overwrite_uuid)
+        project_uuid = overwrite_uuid
+        return
+
     if not project_uuid:
-        puuid = uuid.uuid4().hex
-        get_repo_config().save(project_uuid=puuid)
-        project_uuid = puuid
+        if repo_config.project_uuid:
+            project_uuid = repo_config.project_uuid
+        else:
+            puuid = uuid.uuid4().hex
+            repo_config.save(project_uuid=puuid)
+            project_uuid = puuid
+
+
+project_uuid = None
+set_project_uuid_from_metadata()
 
 
 def get_project_uuid() -> str:

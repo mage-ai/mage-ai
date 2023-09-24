@@ -93,7 +93,7 @@ function FileVersions({
             }));
 
             setSelectedFileVersionIndex(prev => prev + 1);
-            onActionCallback?.(resp);
+            onActionCallback?.(resp?.file_content);
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,

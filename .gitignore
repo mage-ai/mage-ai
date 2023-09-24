@@ -171,3 +171,14 @@ scratch*
 
 # Playwright test automation
 playwright-report/
+
+# Testing files
+**/TEST_CATALOG.json
+**/TEST_CONFIG_D.json
+**/TEST_CONFIG_S.json
+**/TEST_OUTPUT
+**/TEST_STATE.json
+
+package-lock.json
+package.json
+yarn.lock

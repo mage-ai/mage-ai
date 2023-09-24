@@ -41,6 +41,7 @@ export const VARIABLE_NAMES = [
 
 export enum ChartTypeEnum {
   BAR_CHART = 'bar chart',
+  CUSTOM = 'custom',
   HISTOGRAM = 'histogram',
   LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',
@@ -64,7 +65,7 @@ export enum ChartStyleEnum {
   VERTICAL = 'vertical',
 }
 
-enum AggregationFunctionEnum {
+export enum AggregationFunctionEnum {
   AVERAGE = 'average',
   COUNT = 'count',
   COUNT_DISTINCT = 'count_distinct',
@@ -106,6 +107,7 @@ export interface ConfigurationType {
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
   [VARIABLE_NAME_GROUP_BY]?: string[];
+  [VARIABLE_NAME_HEIGHT]?: number;
   [VARIABLE_NAME_INDEX]?: string;
   [VARIABLE_NAME_LEGEND_LABELS]?: string;
   [VARIABLE_NAME_LIMIT]?: number;
@@ -117,6 +119,7 @@ export interface ConfigurationType {
   chart_type?: ChartTypeEnum;
   dbt?: {
     command?: string;
+    disable_tests?: boolean;
   };
   dynamic?: boolean;
   file_path?: string;
@@ -131,6 +134,7 @@ export interface ConfigurationType {
     uuid: string;
   };
   reduce_output?: boolean;
+  x_axis_label?: string;
 }
 
 export function buildMetricName(metric: MetricType) {

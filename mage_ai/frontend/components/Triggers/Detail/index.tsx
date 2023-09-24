@@ -3,6 +3,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,8 +13,9 @@ import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineRunType, {
-  PipelineRunReqQueryParamsType,
+  PIPELINE_RUN_STATUSES,
   RUN_STATUS_TO_LABEL,
+  PipelineRunReqQueryParamsType,
  } from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
@@ -27,6 +29,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
@@ -34,6 +37,7 @@ import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTa
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
+  Alphabet,
   CalendarDate,
   Info,
   Lightning,
@@ -41,6 +45,7 @@ import {
   MusicNotes,
   Pause,
   PlayButtonFilled,
+  PlugAPI,
   Schedule,
   Sun,
   Switch,
@@ -53,13 +58,18 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
-import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import {
   addTriggerVariables,
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { convertSeconds } from '../utils';
+import {
+  checkIfCustomInterval,
+  convertSeconds,
+  convertUtcCronExpressionToLocalTimezone,
+  getTriggerApiEndpoint,
+} from '../utils';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
@@ -68,6 +78,7 @@ import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type TriggerDetailProps = {
   errors: ErrorsType;
@@ -90,22 +101,31 @@ function TriggerDetail({
 }: TriggerDetailProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const {
     uuid: pipelineUUID,
   } = pipeline || {};
   const {
+    description,
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
     name: pipelineScheduleName,
+    next_pipeline_run_date: nextRunDate,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
     settings,
     sla,
     start_time: startTime,
     status,
+    tags,
     variables: scheduleVariablesInit = {},
   } = pipelineSchedule || {};
+
+  const isCustomInterval = useMemo(
+    () => checkIfCustomInterval(scheduleInterval),
+    [scheduleInterval],
+  );
 
   const q = queryFromUrl();
 
@@ -282,6 +302,26 @@ function TriggerDetail({
       ],
     ];
 
+    if (description) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_description_label"
+        >
+          <Alphabet {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            Description
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_description"
+        >
+          {description}
+        </Text>,
+      ]);
+    }
+
     if (sla) {
       const { time, unit } = convertSeconds(sla);
       const finalUnit = time === 1 ? unit : `${unit}s`;
@@ -308,24 +348,55 @@ function TriggerDetail({
     }
 
     if (scheduleInterval) {
-      rows.push([
-        <FlexContainer
-          alignItems="center"
-          key="trigger_frequency_label"
-        >
-          <Schedule {...iconProps} />
-          <Spacing mr={1} />
-          <Text default>
-            Frequency
-          </Text>
-        </FlexContainer>,
-        <Text
-          key="trigger_frequency"
-          monospace
-        >
-          {scheduleInterval.replace('@', '')}
-        </Text>,
-      ]);
+      rows.push(
+        [
+          <FlexContainer
+            alignItems="center"
+            key="trigger_frequency_label"
+          >
+            <Schedule {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Frequency
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="trigger_frequency"
+            monospace
+          >
+            {(displayLocalTimezone && isCustomInterval)
+              ? convertUtcCronExpressionToLocalTimezone(scheduleInterval)
+              : scheduleInterval.replace('@', '')
+            }
+          </Text>,
+        ],
+        [
+          <FlexContainer
+            alignItems="center"
+            key="trigger_next_run_date_label"
+          >
+            <CalendarDate {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Next run date
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="trigger_next_run_date"
+            monospace
+          >
+            {nextRunDate
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(nextRunDate, displayLocalTimezone)
+                : dateFormatLong(
+                  nextRunDate,
+                  { includeSeconds: true, utcFormat: true },
+                )
+              ): 'N/A'
+            }
+          </Text>,
+        ],
+      );
     }
 
     if (startTime) {
@@ -344,11 +415,65 @@ function TriggerDetail({
           key="trigger_start_date"
           monospace
         >
-          {startTime}
+          {displayLocalTimezone
+            ? datetimeInLocalTimezone(startTime, displayLocalTimezone)
+            : startTime
+          }
         </Text>,
       ]);
     }
 
+    if (ScheduleTypeEnum.API === scheduleType) {
+      const url = getTriggerApiEndpoint(pipelineSchedule);
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_api_endpoint_label"
+        >
+          <PlugAPI {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            API endpoint
+          </Text>
+        </FlexContainer>,
+        <CopyToClipboard
+          copiedText={url}
+          key="trigger_api_endpoint"
+        >
+          <Text monospace small>
+            {url}
+          </Text>
+        </CopyToClipboard>,
+      ]);
+    }
+    
+    if (settings?.timeout) {
+      const { time, unit } = convertSeconds(settings?.timeout);
+      const finalUnit = time === 1 ? unit : `${unit}s`;
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_timeout"
+        >
+          <Tooltip
+            default
+            label="Timeout set for runs of this trigger"
+            size={UNIT*1.5}
+            widthFitContent
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Timeout
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_timeout_label"
+          monospace
+        >
+          {`${time} ${finalUnit}`}
+        </Text>,
+      ]);
+    }
     if (settings?.skip_if_previous_running) {
       rows.push([
         <FlexContainer
@@ -407,7 +532,12 @@ function TriggerDetail({
       />
     );
   }, [
+    description,
+    displayLocalTimezone,
     isActive,
+    isCustomInterval,
+    nextRunDate,
+    pipelineSchedule,
     scheduleInterval,
     scheduleType,
     settings,
@@ -450,14 +580,12 @@ function TriggerDetail({
             default
             key={`settings_variable_label_${uuid}`}
             monospace
-            small
           >
             {uuid}
           </Text>,
           <Text
             key={`settings_variable_${uuid}`}
             monospace
-            small
           >
             {value}
           </Text>,
@@ -661,6 +789,24 @@ function TriggerDetail({
             </Spacing>
           )}
 
+          {tags?.length >= 1 && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  Tags
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                <TagsContainer
+                  tags={tags?.map(tag => ({ uuid: tag }))}
+                />
+              </Spacing>
+            </Spacing>
+          )}
+
           <Spacing my={UNITS_BETWEEN_SECTIONS}>
             <Spacing px={PADDING_UNITS}>
               <Headline level={5}>
@@ -812,7 +958,7 @@ function TriggerDetail({
             <option key="all_statuses" value="all">
               All statuses
             </option>
-            {Object.values(RunStatusEnum).map(status => (
+            {PIPELINE_RUN_STATUSES.map(status => (
               <option key={status} value={status}>
                 {RUN_STATUS_TO_LABEL[status]}
               </option>

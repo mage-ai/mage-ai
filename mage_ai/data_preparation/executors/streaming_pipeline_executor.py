@@ -73,7 +73,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # 1. Support multiple sources and sinks
         # 2. Support flink pipeline
 
-        tags = self._build_tags(**kwargs)
+        tags = self.build_tags(**kwargs)
         if build_block_output_stdout:
             stdout_logger = logging.getLogger('streaming_pipeline_executor')
             self.logger = DictLogger(stdout_logger)
@@ -173,14 +173,19 @@ class StreamingPipelineExecutor(PipelineExecutor):
             handle_batch_events_recursively(self.source_block, outputs_by_block, **kwargs)
 
         # Long running method
-        if source.consume_method == SourceConsumeMethod.BATCH_READ:
-            source.batch_read(handler=handle_batch_events)
-        elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
-            loop = asyncio.get_event_loop()
-            if loop is not None:
-                loop.run_until_complete(source.read_async(handler=handle_event_async))
-            else:
-                asyncio.run(source.read_async(handler=handle_event_async))
+        try:
+            if source.consume_method == SourceConsumeMethod.BATCH_READ:
+                source.batch_read(handler=handle_batch_events)
+            elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
+                loop = asyncio.get_event_loop()
+                if loop is not None:
+                    loop.run_until_complete(source.read_async(handler=handle_event_async))
+                else:
+                    asyncio.run(source.read_async(handler=handle_event_async))
+        finally:
+            source.destroy()
+            for sink in sinks_by_uuid.values():
+                sink.destroy()
 
     def __execute_in_flink(self):
         """

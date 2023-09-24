@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import List, Union
+from typing import Union
 
 import typer
 from click import Context
@@ -62,7 +62,7 @@ START_CLUSTER_TYPE_DEFAULT = typer.Option(
 )
 START_PROJECT_UUID_DEFAULT = typer.Option(
     None,
-    help="set project uuid if it has not been set for the project already",
+    help='set project uuid for the repo that is being started',
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
@@ -173,7 +173,7 @@ def run(
     callback_url: Union[str, None] = RUN_CALLBACK_URL_DEFAULT,
     block_run_id: Union[int, None] = RUN_BLOCK_RUN_ID_DEFAULT,
     pipeline_run_id: Union[int, None] = RUN_PIPELINE_RUN_ID_DEFAULT,
-    runtime_vars: Union[List[str], None] = RUN_RUNTIME_VARS_DEFAULT,
+    runtime_vars: Union[str, None] = RUN_RUNTIME_VARS_DEFAULT,
     skip_sensors: bool = RUN_SKIP_SENSORS_DEFAULT,
     template_runtime_configuration: Union[
         str, None
@@ -195,11 +195,16 @@ def run(
 
     from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
     from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.data_preparation.sync.git_sync import get_sync_config
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
     from mage_ai.orchestration.db.models.schedules import PipelineRun
+    from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
+    from mage_ai.server.logger import Logger
     from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
     from mage_ai.shared.hash import merge_dict
+
+    logger = Logger().new_server_logger(__name__)
 
     sentry_dsn = SENTRY_DSN
     if sentry_dsn:
@@ -209,9 +214,13 @@ def run(
         )
     (enable_new_relic, application) = initialize_new_relic()
 
-    with newrelic.agent.BackgroundTask(
-        application, name="mage-run", group="Task"
-    ) if enable_new_relic else nullcontext():
+    with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
+         if enable_new_relic else nullcontext():
+        sync_config = get_sync_config()
+        if sync_config and sync_config.sync_on_executor_start:
+            result = run_git_sync(sync_config=sync_config)
+            log_git_sync(result, logger)
+
         runtime_variables = dict()
         if runtime_vars is not None:
             runtime_variables = parse_runtime_variables(runtime_vars)

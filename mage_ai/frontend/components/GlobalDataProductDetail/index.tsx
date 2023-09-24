@@ -31,14 +31,17 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { capitalize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { sortByKey } from '@utils/array';
 import { useError } from '@context/Error';
 
 type GlobalDataProductDetailProps = {
   globalDataProduct: GlobalDataProductType;
+  isNew?: boolean;
 };
 
 function GlobalDataProductDetail({
   globalDataProduct,
+  isNew,
 }: GlobalDataProductDetailProps) {
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
@@ -57,7 +60,7 @@ function GlobalDataProductDetail({
 
   const objectPrev = usePrevious(globalDataProduct);
   useEffect(() => {
-    if (objectPrev?.uuid !== globalDataProduct?.uuid) {
+    if (!globalDataProduct?.uuid || objectPrev?.uuid !== globalDataProduct?.uuid) {
       setObjectAttributesState(globalDataProduct);
     }
   }, [globalDataProduct, objectPrev]);
@@ -67,14 +70,17 @@ function GlobalDataProductDetail({
   ]);
 
   const [updateObject, { isLoading: isLoadingUpdateObject }] = useMutation(
-    api.global_data_products.useUpdate(globalDataProduct?.uuid),
+    api.global_data_products.useUpdate(isNew
+      ? objectAttributes?.uuid
+      : globalDataProduct?.uuid,
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
             global_data_product: gdp,
           }) => {
-            if (globalDataProduct?.uuid && gdp?.uuid !== globalDataProduct?.uuid) {
+            if (isNew || (globalDataProduct?.uuid && gdp?.uuid !== globalDataProduct?.uuid)) {
               router.replace(
                 '/global-data-products/[...slug]',
                 `/global-data-products/${gdp?.uuid}`,
@@ -108,6 +114,10 @@ function GlobalDataProductDetail({
   );
   const pipeline: PipelineType = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
   const blocks: BlockType[] = useMemo(() => pipeline?.blocks || [], [pipeline]);
+
+  const { data: dataPipelines } = api.pipelines.list();
+  const pipelines: PipelineType[] =
+    useMemo(() => sortByKey(dataPipelines?.pipelines || [], 'uuid'), [dataPipelines]);
 
   const before = useMemo(() => (
     <FlexContainer
@@ -155,6 +165,7 @@ function GlobalDataProductDetail({
               ...prev,
               object_type: e.target.value,
             }))}
+            placeholder="Only pipeline is currently supported"
             primary
             value={objectAttributes?.object_type || ''}
           >
@@ -179,17 +190,23 @@ function GlobalDataProductDetail({
             </Text>
           </Spacing>
 
-          <TextInput
+          <Select
             monospace
             // @ts-ignore
             onChange={e => setObjectAttributes(prev => ({
               ...prev,
               object_uuid: e.target.value,
             }))}
+            placeholder="Select object UUID"
             primary
-            setContentOnMount
             value={objectAttributes?.object_uuid || ''}
-          />
+          >
+            {pipelines?.map(({ uuid }) => (
+              <option key={uuid} value={uuid}>
+                {uuid}
+              </option>
+            ))}
+          </Select>
 
           {GlobalDataProductObjectTypeEnum.PIPELINE === objectAttributes?.object_type
             && objectAttributes?.object_uuid
@@ -216,28 +233,32 @@ function GlobalDataProductDetail({
           )}
         </Spacing>
 
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <OutdatedAfterField
-            objectAttributes={objectAttributes}
-            setObjectAttributes={setObjectAttributes}
-          />
-        </Spacing>
+        {!isNew && (
+          <>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <OutdatedAfterField
+                objectAttributes={objectAttributes}
+                setObjectAttributes={setObjectAttributes}
+              />
+            </Spacing>
 
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <OutdatedStartingAtField
-            objectAttributes={objectAttributes}
-            setObjectAttributes={setObjectAttributes}
-          />
-        </Spacing>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <OutdatedStartingAtField
+                objectAttributes={objectAttributes}
+                setObjectAttributes={setObjectAttributes}
+              />
+            </Spacing>
 
-        {blocks?.length >= 1 && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <SettingsField
-              blocks={blocks}
-              objectAttributes={objectAttributes}
-              setObjectAttributes={setObjectAttributes}
-            />
-          </Spacing>
+            {blocks?.length >= 1 && (
+              <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <SettingsField
+                  blocks={blocks}
+                  objectAttributes={objectAttributes}
+                  setObjectAttributes={setObjectAttributes}
+                />
+              </Spacing>
+            )}
+          </>
         )}
       </Flex>
 
@@ -254,7 +275,8 @@ function GlobalDataProductDetail({
               })}
               primary
             >
-              Save global data product
+              {isNew && 'Create global data product'}
+              {!isNew && 'Save global data product'}
             </Button>
           </FlexContainer>
         </Spacing>
@@ -264,7 +286,9 @@ function GlobalDataProductDetail({
     blocks,
     buttonDisabled,
     isLoadingUpdateObject,
+    isNew,
     objectAttributes,
+    pipelines,
     setObjectAttributes,
     updateObject,
   ]);
@@ -313,32 +337,36 @@ function GlobalDataProductDetail({
       setBeforeHidden={setBeforeHidden}
       setBeforeWidth={setBeforeWidth}
     >
-      <Spacing p={PADDING_UNITS}>
-        <Headline>
-          Triggers
-        </Headline>
-      </Spacing>
+      {!isNew && (
+        <>
+          <Spacing p={PADDING_UNITS}>
+            <Headline>
+              Triggers
+            </Headline>
+          </Spacing>
 
-      <Divider light />
+          <Divider light />
 
-      <TriggersTable
-        disableActions
-        pipeline={pipeline}
-        pipelineSchedules={pipelineSchedules}
-      />
+          <TriggersTable
+            disableActions
+            pipeline={pipeline}
+            pipelineSchedules={pipelineSchedules}
+          />
 
-      <Spacing p={PADDING_UNITS}>
-        <Headline>
-          Runs
-        </Headline>
-      </Spacing>
+          <Spacing p={PADDING_UNITS}>
+            <Headline>
+              Runs
+            </Headline>
+          </Spacing>
 
-      <Divider light />
+          <Divider light />
 
-      <PipelineRunsTable
-        hideTriggerColumn
-        pipelineRuns={pipelineRuns}
-      />
+          <PipelineRunsTable
+            hideTriggerColumn
+            pipelineRuns={pipelineRuns}
+          />
+        </>
+      )}
     </TripleLayout>
   );
 }

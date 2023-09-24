@@ -31,6 +31,7 @@ PipelineRunPolicy.allow_actions([
 
 PipelineRunPolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -47,6 +48,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
 PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'block_runs',
     'block_runs_count',
+    'completed_block_runs_count',
     'pipeline_schedule_name',
     'pipeline_schedule_token',
     'pipeline_schedule_type',
@@ -63,6 +65,12 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scope
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DELETE,
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineRunPolicy.allow_write([
     'backfill_id',
@@ -89,6 +97,7 @@ PipelineRunPolicy.allow_write([
 
 PipelineRunPolicy.allow_query([
     'backfill_id',
+    'disable_retries_grouping',
     'end_timestamp',
     'global_data_product_uuid',
     'include_pipeline_type',

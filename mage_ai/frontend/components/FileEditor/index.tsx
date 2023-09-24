@@ -42,7 +42,7 @@ import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { isJsonString } from '@utils/string';
-import { onSuccess } from '@api/utils/response';
+import { errorOrSuccess, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -55,6 +55,7 @@ type FileEditorProps = {
   filePath: string;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
+  onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
   pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
@@ -77,6 +78,7 @@ function FileEditor({
   filePath,
   hideHeaderButtons,
   onContentChange,
+  onUpdateFileSuccess,
   openSidekickView,
   pipeline,
   saveFile: saveFileProp,
@@ -106,8 +108,15 @@ function FileEditor({
   useEffect(() => {
     if (data?.file_content) {
       setFile(data.file_content);
+    } else if (data?.error) {
+      errorOrSuccess(data, {
+        onErrorCallback: (response, errors) => setErrors({
+          errors,
+          response,
+        }),
+      });
     }
-  }, [data]);
+  }, [data, setErrors]);
 
   const [content, setContentState] = useState<string>(file?.content);
   const setContent = useCallback((content: string) => {
@@ -135,11 +144,17 @@ function FileEditor({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({
+            file_content: fc,
+          }) => {
             setApiReloads(prev => ({
               ...prev,
               [`FileVersions/${file?.path}`]: Number(new Date()),
             }));
+
+            if (onUpdateFileSuccess) {
+              onUpdateFileSuccess?.(fc);
+            }
           },
           onErrorCallback: (response, errors) => setErrors?.({
             errors,

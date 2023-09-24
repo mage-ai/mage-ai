@@ -12,7 +12,7 @@ export default {
 } as Meta;
 
 const TemplateWithTheme = ({ buttons, ...props }) => buttons ? (
-  <ThemeBlock>
+  <ThemeBlock sideBySide>
     {React.Children.map(buttons, child => (
       <Spacing mb={3}>
         {React.cloneElement(child, {

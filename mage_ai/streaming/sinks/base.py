@@ -17,7 +17,11 @@ class BaseSink(ABC):
         self.buffer_path = kwargs.get('buffer_path')
         self.buffer = self.read_buffer() or []
         self.buffer_start_time = None
-        self.init_client()
+        try:
+            self.init_client()
+        except Exception:
+            self.destroy()
+            raise
 
     def init_client(self):
         pass
@@ -36,6 +40,12 @@ class BaseSink(ABC):
             return
         with open(self.buffer_path, 'w'):
             pass
+
+    def destroy(self):
+        """
+        Close connections and destroy threads
+        """
+        pass
 
     def has_buffer_timed_out(self, buffer_timeout_seconds):
         if self.buffer_start_time is None:

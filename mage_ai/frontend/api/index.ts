@@ -28,9 +28,10 @@ export const ANALYSES = 'analyses';
 export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
 export const BACKFILLS: 'backfills' = 'backfills';
 export const BLOCKS: 'blocks' = 'blocks';
+export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
+export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
-export const BLOCK_OUTPUTS = 'block_outputs';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
@@ -61,6 +62,7 @@ export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
 export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
+export const PAGE_BLOCK_LAYOUTS: 'page_block_layouts' = 'page_block_layouts';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
@@ -85,16 +87,18 @@ export const WORKSPACES: 'workspaces' = 'workspaces';
 const RESOURCES: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
   [AUTOCOMPLETE_ITEMS],
-  [BACKFILLS],
   [BACKFILLS, PIPELINES],
+  [BACKFILLS],
+  [BLOCKS, PIPELINES, ANALYSES],
+  [BLOCKS, PIPELINES],
+  [BLOCKS, PIPELINE_RUNS],
+  [BLOCKS],
+  [BLOCK_LAYOUT_ITEMS, PAGE_BLOCK_LAYOUTS],
+  [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
+  [BLOCK_OUTPUTS, PIPELINES],
+  [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
-  [BLOCKS],
-  [BLOCKS, PIPELINES],
-  [BLOCKS, PIPELINES, ANALYSES],
-  [BLOCK_OUTPUTS],
-  [BLOCK_OUTPUTS, PIPELINES],
-  [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [CUSTOM_TEMPLATES],
@@ -124,6 +128,7 @@ const RESOURCES: any[][] = [
   [MONITOR_STATS],
   [OAUTHS],
   [OUTPUTS, BLOCK_RUNS],
+  [PAGE_BLOCK_LAYOUTS],
   [PIPELINES],
   [PIPELINE_RUNS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
@@ -160,6 +165,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         id: string,
         query: any = {},
         swrOptionsRuntime?: any,
+        customOptions?: {
+          key?: string;
+        },
       ) => useDetail(
         resource,
         id,
@@ -168,6 +176,7 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
           ...swrOptions,
           ...swrOptionsRuntime,
         },
+        customOptions,
       ),
       detailAsync: async (ctx: any, id: string, query: any = {}) => {
         const response = await fetchDetailAsync(ctx, resource, id, query);
@@ -184,12 +193,19 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
   }
 
   if (grandchildResource) {
+    if (!apis[resource][parentResource]) {
+      apis[resource][parentResource] = {};
+    }
+
     apis[resource][parentResource][grandchildResource] = {};
     apis[resource][parentResource][grandchildResource].detail = (
       parentId: string,
       id: string,
       query?: any,
       swrOptionsRuntime?: any,
+      customOptions?: {
+        key?: string;
+      },
     ) => useDetailWithParent(
       resource,
       id,
@@ -201,6 +217,7 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         ...swrOptionsRuntime,
       },
       grandchildResource,
+      customOptions,
     );
     apis[resource][parentResource][grandchildResource].detailAsync = async (
       parentId: string,
@@ -221,7 +238,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       return await handle(response);
     };
   } else if (parentResource) {
-    apis[resource][parentResource] = {};
+    if (!apis[resource][parentResource]) {
+      apis[resource][parentResource] = {};
+    }
 
     apis[resource][parentResource].useCreate = (parentId, opts?: any) => async (body: any) =>
       fetchCreateWithParent(resource, parentResource, parentId, body, opts);
@@ -267,6 +286,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       id: string,
       query?: any,
       swrOptionsRuntime?: any,
+      customOptions?: {
+        key?: string;
+      },
     ) => useDetailWithParent(
       resource,
       id,
@@ -277,6 +299,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         ...swrOptions,
         ...swrOptionsRuntime,
       },
+      null,
+      customOptions,
     );
   } else {
     apis[resource].create = async (body: any, opts?: any) => {

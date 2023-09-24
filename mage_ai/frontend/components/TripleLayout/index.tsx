@@ -19,8 +19,9 @@ import {
   ASIDE_HEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
-  AsideHeaderStyle,
+  AsideFooterStyle,
   AsideHeaderInnerStyle,
+  AsideHeaderStyle,
   AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
@@ -56,6 +57,7 @@ import { useWindowSize } from '@utils/sizes';
 type TripleLayoutProps = {
   after?: any;
   afterHeader?: any;
+  afterHeaderOffset?: number;
   afterHeightOffset?: number;
   afterHidden: boolean;
   afterMousedownActive: boolean;
@@ -64,16 +66,20 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeFooter?: any;
   beforeHeader?: any;
+  beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
   beforeHidden: boolean;
   beforeMousedownActive: boolean;
   beforeNavigationItems?: NavigationItem[];
   beforeWidth?: number;
   children: any;
+  contained?: boolean;
   header?: any;
   headerOffset?: number;
   hideAfterCompletely?: boolean;
+  hideBeforeCompletely?: boolean;
   leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
@@ -81,7 +87,7 @@ type TripleLayoutProps = {
   setAfterHidden?: (value: boolean) => void;
   setAfterMousedownActive?: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
-  setBeforeHidden: (value: boolean) => void;
+  setBeforeHidden?: (value: boolean) => void;
   setBeforeMousedownActive?: (value: boolean) => void;
   setBeforeWidth: (width: number) => void;
   uuid?: string;
@@ -90,6 +96,7 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   afterHeader,
+  afterHeaderOffset,
   afterHeightOffset,
   afterHidden,
   afterMousedownActive,
@@ -98,16 +105,20 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeFooter,
   beforeHeader,
+  beforeHeaderOffset,
   beforeHeightOffset,
   beforeHidden,
   beforeMousedownActive,
   beforeNavigationItems,
   beforeWidth = 0,
   children,
+  contained,
   header,
   headerOffset = 0,
   hideAfterCompletely,
+  hideBeforeCompletely,
   leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
@@ -136,7 +147,7 @@ function TripleLayout({
   ]);
   const toggleBefore = useCallback(() => {
     const val = !beforeHidden;
-    setBeforeHidden(val);
+    setBeforeHidden?.(val);
     set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
   }, [
     beforeHidden,
@@ -239,7 +250,11 @@ function TripleLayout({
   const afterWidthFinal = shouldHideAfterWrapper
     ? 0
     : (afterHidden ? UNIT * 4 : afterWidth);
-  const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
+
+  const shouldHideBeforeWrapper = hideBeforeCompletely && beforeHidden;
+  const beforeWidthFinal = shouldHideBeforeWrapper
+    ? 0
+    : (beforeHidden ? UNIT * 4 : beforeWidth);
   const mainWidth =
     `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
@@ -248,7 +263,7 @@ function TripleLayout({
   ]);
   const afterContent = useMemo(() => (
     <>
-      {setAfterHidden && (
+      {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
             style={{
@@ -257,6 +272,7 @@ function TripleLayout({
                 ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH - 1)
                 : afterWidthFinal,
             }}
+            top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
             visible={afterHidden}
           >
             <FlexContainer alignItems="center" fullHeight fullWidth>
@@ -309,7 +325,7 @@ function TripleLayout({
         verticalOffset={afterHeader
           ? afterSubheader
             ? ASIDE_HEADER_HEIGHT + afterHeightOffset
-            : afterHeightOffset
+            : (afterHeaderOffset || afterHeightOffset)
           : null
         }
       >
@@ -319,12 +335,15 @@ function TripleLayout({
   ), [
     after,
     afterHeader,
+    afterHeaderOffset,
     afterHeightOffset,
     afterHidden,
     afterOverflow,
     afterSubheader,
     afterWidthFinal,
+    contained,
     hasAfterNavigationItems,
+    headerOffset,
     refAfterInner,
     setAfterHidden,
     toggleAfter,
@@ -333,10 +352,14 @@ function TripleLayout({
   const hasBeforeNavigationItems = useMemo(() => beforeNavigationItems?.length >= 1, [
     beforeNavigationItems,
   ]);
+
+  const beforeFooterRef = useRef(null);
+
   const beforeContent = useMemo(() => (
     <>
-      {setBeforeHidden && (
+      {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
+          contained={contained}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -346,6 +369,7 @@ function TripleLayout({
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
               : beforeWidthFinal,
           }}
+          top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
           visible={beforeHidden}
         >
           <FlexContainer
@@ -360,35 +384,37 @@ function TripleLayout({
             </AsideHeaderInnerStyle>
 
             <Flex>
-              <Tooltip
-                appearAbove={!beforeHidden}
-                appearBefore={!beforeHidden}
-                block
-                key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
-                label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
-                size={null}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => toggleBefore()}
+              {setBeforeHidden && (
+                <Tooltip
+                  appearAbove={!beforeHidden}
+                  appearBefore={!beforeHidden}
+                  block
+                  key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
+                  label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
+                  size={null}
+                  widthFitContent
                 >
-                  {beforeHidden && (
-                    <ChevronRight
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                  {!beforeHidden && (
-                    <ChevronLeft
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                </Button>
-              </Tooltip>
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => toggleBefore()}
+                  >
+                    {beforeHidden && (
+                      <ChevronRight
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                    {!beforeHidden && (
+                      <ChevronLeft
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                  </Button>
+                </Tooltip>
+              )}
 
               <Spacing pr={beforeHidden ? 1 : 2} />
             </Flex>
@@ -397,19 +423,47 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
+        contained={contained}
+        heightOffset={beforeFooter
+          ? beforeFooterRef?.current?.getBoundingClientRect()?.height
+          : null
+        }
         noScrollbarTrackBackground
         ref={refBeforeInner}
-        verticalOffset={beforeHeader ? beforeHeightOffset : null}
+        verticalOffset={beforeHeader
+          ? (beforeHeaderOffset || beforeHeightOffset)
+          : null
+        }
       >
         {!beforeHidden && before}
       </BeforeInnerStyle>
+
+      {beforeFooter && (
+        <AsideFooterStyle
+          contained={contained}
+          ref={beforeFooterRef}
+          style={{
+            overflow: beforeHidden
+              ? 'visible'
+              : 'hidden',
+            width: beforeWidthFinal,
+          }}
+        >
+          {beforeFooter}
+        </AsideFooterStyle>
+      )}
     </>
   ), [
     before,
+    beforeFooter,
+    beforeFooterRef,
     beforeHeader,
+    beforeHeaderOffset,
     beforeHeightOffset,
     beforeHidden,
     beforeWidthFinal,
+    contained,
+    headerOffset,
     hasBeforeNavigationItems,
     refBeforeInner,
     setBeforeHidden,
@@ -451,6 +505,7 @@ function TripleLayout({
             disabled={beforeHidden}
             ref={refBeforeInnerDraggable}
             right={0}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           />
 
           {hasBeforeNavigationItems && (
@@ -499,7 +554,10 @@ function TripleLayout({
         {mainContainerHeader}
 
         <MainContentStyle
-          headerOffset={(mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset}
+          headerOffset={contained
+            ? headerOffset
+            : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
+          }
           style={{
             width: mainWidth,
           }}
@@ -525,6 +583,7 @@ function TripleLayout({
             disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           />
 
           {hasAfterNavigationItems && (

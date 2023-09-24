@@ -13,19 +13,33 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
+import Table, { SortedColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { ResponseTypeEnum } from '@api/constants';
-import { Save, TodoList } from '@oracle/icons';
+import { Save, Logs } from '@oracle/icons';
+import {
+  SortDirectionEnum,
+  SortQueryEnum,
+  TIMEZONE_TOOLTIP_PROPS,
+} from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
+import { queryFromUrl } from '@utils/url';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+
+export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
+export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
+  0: 'status',
+  1: 'block_uuid',
+  5: 'completed_at',
+};
 
 type BlockRunsTableProps = {
   blockRuns: BlockRunType[];
@@ -33,6 +47,7 @@ type BlockRunsTableProps = {
   pipeline: PipelineType;
   selectedRun?: BlockRunType;
   setErrors?: (errors: ErrorsType) => void;
+  sortableColumnIndexes?: number[];
 };
 
 function BlockRunsTable({
@@ -41,7 +56,9 @@ function BlockRunsTable({
   pipeline,
   selectedRun,
   setErrors,
+  sortableColumnIndexes,
 }: BlockRunsTableProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
@@ -54,6 +71,17 @@ function BlockRunsTable({
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipelineType, [pipelineType]);
   const isStandardPipeline = useMemo(() => PipelineTypeEnum.PYTHON === pipelineType, [pipelineType]);
+
+  const q = queryFromUrl();
+  const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
+  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
+      ?
+        {
+          columnIndex: +sortColumnIndexQuery,
+          sortDirection: q?.[SortQueryEnum.SORT_DIRECTION] || SortDirectionEnum.ASC,
+        }
+      : undefined
+  ), [q, sortColumnIndexQuery]);
 
   const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
   const [
@@ -88,22 +116,29 @@ function BlockRunsTable({
     },
   );
 
-  const columnFlex = [null, 1, 3, 2, null, null, null];
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
+  const columnFlex = [1, 2, 2, 1, 1, 1, null, null];
   const columns = [
     {
-      uuid: 'Date',
-    },
-    {
       uuid: 'Status',
-    },
-    {
-      uuid: 'Trigger',
     },
     {
       uuid: 'Block',
     },
     {
-      uuid: 'Completed',
+      uuid: 'Trigger',
+    },
+    {
+      ...timezoneTooltipProps,
+      uuid: 'Created at',
+    },
+    {
+      ...timezoneTooltipProps,
+      uuid: 'Started at',
+    },
+    {
+      ...timezoneTooltipProps,
+      uuid: 'Completed at',
     },
     {
       uuid: 'Logs',
@@ -133,6 +168,7 @@ function BlockRunsTable({
           pipeline_run_id: pipelineRunId,
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
+          started_at: startedAt,
           status,
         } = blockRun || {};
         let blockUUID = blockUUIDOrig;
@@ -156,13 +192,6 @@ function BlockRunsTable({
 
         const rows = [
           <Text
-            default
-            key={`${id}_created_at`}
-            monospace
-          >
-            {createdAt}
-          </Text>,
-          <Text
             danger={RunStatus.FAILED === status}
             default={RunStatus.CANCELLED === status}
             info={RunStatus.INITIAL === status}
@@ -174,16 +203,6 @@ function BlockRunsTable({
             {status}
           </Text>,
           <NextLink
-            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-            href={'/pipelines/[pipeline]/triggers/[...slug]'}
-            key={`${id}_trigger`}
-            passHref
-          >
-            <Link bold sameColorAsText>
-              {pipelineScheduleName}
-            </Link>
-          </NextLink>,
-          <NextLink
             as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
             href={'/pipelines/[pipeline]/edit'}
             key={`${id}_block_uuid`}
@@ -191,7 +210,7 @@ function BlockRunsTable({
           >
             <Link
               bold
-              sameColorAsText
+              fitContentWidth
               verticalAlignContent
             >
               <Circle
@@ -203,12 +222,12 @@ function BlockRunsTable({
                 square
               />
               <Spacing mr={1} />
-              <Text monospace>
-                {blockUUID}{streamID && ': '}{streamID && (
+              <Text monospace sky>
+                {blockUUID}{streamID && ':'}{streamID && (
                   <Text default inline monospace>
                     {streamID}
                   </Text>
-                )}{index >= 0 && ': '}{index >= 0 && (
+                )}{index >= 0 && ':'}{index >= 0 && (
                   <Text default inline monospace>
                     {index}
                   </Text>
@@ -216,12 +235,59 @@ function BlockRunsTable({
               </Text>
             </Link>
           </NextLink>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+            href={'/pipelines/[pipeline]/triggers/[...slug]'}
+            key={`${id}_trigger`}
+            passHref
+          >
+            <Link bold sky>
+              {pipelineScheduleName}
+            </Link>
+          </NextLink>,
+          <Text
+            default
+            key={`${id}_created_at`}
+            monospace
+            small
+            title={createdAt ? `UTC: ${createdAt}` : null}
+          >
+            {displayLocalTimezone
+              ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+              : dateFormatLong(createdAt, { includeSeconds: true })
+            }
+          </Text>,
+          <Text
+            default
+            key={`${id}_started_at`}
+            monospace
+            small
+            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+          >
+            {startedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                : dateFormatLong(startedAt, { includeSeconds: true })
+              ): (
+                <>&#8212;</>
+              )
+            }
+          </Text>,
           <Text
             default
             key={`${id}_completed_at`}
             monospace
+            small
+            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
           >
-            {completedAt || '-'}
+            {completedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                : dateFormatLong(completedAt, { includeSeconds: true })
+              ): (
+                <>&#8212;</>
+              )
+            }
           </Text>,
           <Button
             default
@@ -232,7 +298,7 @@ function BlockRunsTable({
               `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
             )}
           >
-            <TodoList default size={2 * UNIT} />
+            <Logs default size={2 * UNIT} />
           </Button>,
         ];
 
@@ -250,10 +316,9 @@ function BlockRunsTable({
                 forceVisible={downloadingOutput}
                 label={downloadingOutput
                   ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                  : 'Save block run output as CSV file'
+                  : 'Save block run output as CSV file (not supported for dynamic blocks)'
                 }
                 size={null}
-                widthFitContent
               >
                 <Button
                   default
@@ -278,6 +343,8 @@ function BlockRunsTable({
 
         return rows;
       })}
+      sortableColumnIndexes={sortableColumnIndexes}
+      sortedColumn={sortedColumnInit}
       uuid="block-runs"
     />
   );

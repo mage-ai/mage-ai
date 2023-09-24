@@ -172,6 +172,24 @@ function PipelineSettings({
         value={pipelineAttributes?.name || ''}
       />
 
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Checkbox
+          checked={!!pipelineAttributes?.run_pipeline_in_one_process}
+          label="Run pipeline in a single process"
+          onClick={() => setPipelineAttributes(prev => ({
+            ...prev,
+            run_pipeline_in_one_process: !prev?.run_pipeline_in_one_process,
+          }))}
+        />
+
+        <Spacing mt={1}>
+          <Text muted small>
+            When enabled, this setting allows sharing of objects and memory space across blocks
+            within a single pipeline.
+          </Text>
+        </Spacing>
+      </Spacing>
+
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Headline>
           Executor type
@@ -371,6 +389,7 @@ function PipelineSettings({
               executor_type: pipelineAttributes?.executor_type,
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,
+              run_pipeline_in_one_process: pipelineAttributes?.run_pipeline_in_one_process,
               tags: pipelineAttributes?.tags,
               // @ts-ignore
             }).then(() => setPipelineAttributesTouched(false))}

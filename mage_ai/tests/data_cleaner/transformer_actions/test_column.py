@@ -1,11 +1,16 @@
 from datetime import datetime as dt
-from mage_ai.data_cleaner.transformer_actions.column import (
+from random import seed
+
+import numpy as np
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
+from mage_ai.data_cleaner.transformer_actions.column import (  # expand_column,
     add_column,
+    clean_column_names,
     count,
     count_distinct,
-    clean_column_names,
     diff,
-    # expand_column,
     first,
     fix_syntax_errors,
     last,
@@ -15,10 +20,6 @@ from mage_ai.data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from mage_ai.tests.base_test import TestCase
-from pandas.testing import assert_frame_equal
-from random import seed
-import numpy as np
-import pandas as pd
 
 TEST_DATAFRAME = pd.DataFrame(
     [
@@ -933,7 +934,7 @@ class ColumnTests(TestCase):
             ],
             columns=['group_id', 'amount', 'average_amount'],
         )
-        df_new['average_amount'] = df_new['average_amount'].astype(int)
+        df_new['average_amount'] = df_new['average_amount'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_count(self):
@@ -1859,20 +1860,20 @@ class ColumnTests(TestCase):
             ],
         )
 
-        df_new1['sold'] = df_new1['sold'].astype(int)
-        df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
-        df_new2['sold'] = df_new2['sold'].astype(int)
-        df_new3['sold'] = df_new3['sold'].astype(int)
-        df_new3['curr_profit'] = df_new3['curr_profit'].astype(int)
-        df_new4['sold'] = df_new4['sold'].astype(int)
-        df_new4['curr_profit'] = df_new4['curr_profit'].astype(int)
-        df_new5['sold'] = df_new5['sold'].astype(int)
-        df_new5['curr_profit'] = df_new5['curr_profit'].astype(int)
-        df_new6['sold'] = df_new6['sold'].astype(int)
-        df_new7['sold'] = df_new7['sold'].astype(int)
-        df_new7['curr_profit'] = df_new7['curr_profit'].astype(int)
-        df_new8['sold'] = df_new8['sold'].astype(int)
-        df_new8['curr_profit'] = df_new8['curr_profit'].astype(int)
+        df_new1['sold'] = df_new1['sold'].astype(np.int64)
+        df_new1['curr_profit'] = df_new1['curr_profit'].astype(np.int64)
+        df_new2['sold'] = df_new2['sold'].astype(np.int64)
+        df_new3['sold'] = df_new3['sold'].astype(np.int64)
+        df_new3['curr_profit'] = df_new3['curr_profit'].astype(np.int64)
+        df_new4['sold'] = df_new4['sold'].astype(np.int64)
+        df_new4['curr_profit'] = df_new4['curr_profit'].astype(np.int64)
+        df_new5['sold'] = df_new5['sold'].astype(np.int64)
+        df_new5['curr_profit'] = df_new5['curr_profit'].astype(np.int64)
+        df_new6['sold'] = df_new6['sold'].astype(np.int64)
+        df_new7['sold'] = df_new7['sold'].astype(np.int64)
+        df_new7['curr_profit'] = df_new7['curr_profit'].astype(np.int64)
+        df_new8['sold'] = df_new8['sold'].astype(np.int64)
+        df_new8['curr_profit'] = df_new8['curr_profit'].astype(np.int64)
 
         assert_frame_equal(df_new1, df_expected1)
         assert_frame_equal(df_new2, df_expected2)
@@ -1883,7 +1884,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new7, df_new7.dropna(axis=0))
         assert_frame_equal(df_new8, df_expected8)
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Require a valid strategy or value'):
             _ = impute(df.copy(), action_invalid)
 
     def test_impute_random_edge(self):
@@ -1908,7 +1909,7 @@ class ColumnTests(TestCase):
             action_arguments=['sold', 'curr_profit'],
             action_options={'strategy': 'random'},
         )
-        with self.assertRaises(Exception):
+        with self.assertRaises(KeyError):
             _ = impute(df.copy(), action)
 
     def test_impute_constant(self):
@@ -1992,7 +1993,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['group_id'] = df_new['group_id'].astype(int)
+        df_new['group_id'] = df_new['group_id'].astype(np.int64)
         df_new['price'] = df_new['price'].astype(float)
         df_new['group_churned_at'] = df_new['group_churned_at'].astype(np.datetime64)
         assert_frame_equal(df_new, df_expected)
@@ -2061,7 +2062,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['zip_code'] = df_new['zip_code'].astype(int)
+        df_new['zip_code'] = df_new['zip_code'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_sequential_two_idx(self):
@@ -2146,8 +2147,8 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['group_id'] = df_new['group_id'].astype(int)
-        df_new['order_count'] = df_new['order_count'].astype(int)
+        df_new['group_id'] = df_new['group_id'].astype(np.int64)
+        df_new['order_count'] = df_new['order_count'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_lists(self):
@@ -2569,7 +2570,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = median(df, action)
-        df_new['median_amount'] = df_new['median_amount'].astype(int)
+        df_new['median_amount'] = df_new['median_amount'].astype(np.int64)
         df_expected = pd.DataFrame(
             [
                 [1, 1000, 1050],
