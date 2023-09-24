@@ -36,7 +36,7 @@ import {
   HeaderStyle,
   RowStyle,
 } from './index.style';
-import { TemplateTypeEnum } from '@interfaces/BlockTemplateType';
+import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import {
@@ -100,10 +100,6 @@ function ConfigureBlock({
   ]);
 
   const isCustomBlock = useMemo(() => BlockTypeEnum.CUSTOM === block?.type, [block]);
-  const isDataIntegration =
-    useMemo(() => TemplateTypeEnum.DATA_INTEGRATION === block?.config?.template_type, [
-      block,
-    ]);
   const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
 
   // @ts-ignore
@@ -114,6 +110,26 @@ function ConfigureBlock({
     blockActionObject,
     isGenerateBlock,
   ]);
+
+  const isDataIntegration: boolean = useMemo(() => {
+    if (TemplateTypeEnum.DATA_INTEGRATION === block?.config?.template_type) {
+      return true;
+    }
+
+    if (
+      [
+        DataIntegrationTypeEnum.DESTINATIONS,
+        DataIntegrationTypeEnum.SOURCES,
+      ].includes(blockActionObject?.language)
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [
+      block,
+      blockActionObject,
+    ]);
 
   const [llm, setLLM] = useState<LLMType>(null);
   const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
@@ -370,7 +386,7 @@ function ConfigureBlock({
                     disabled={!isCustomBlock && !selected && !isDataIntegration}
                     noBackground
                     notClickable={(!isCustomBlock || isUpdatingBlock || !isDataIntegration) && selected}
-                    onClick={customTemplate
+                    onClick={(customTemplate && !isDataIntegration)
                       ? null
                       // @ts-ignore
                       : () => setBlockAttributes(prev => ({

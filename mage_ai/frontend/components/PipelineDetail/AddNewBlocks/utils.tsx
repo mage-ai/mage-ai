@@ -131,6 +131,7 @@ export function groupBlockTemplates(
 
   blockTemplates?.forEach(({
     block_type: blockType,
+    configuration,
     description,
     groups,
     language,
@@ -159,6 +160,7 @@ export function groupBlockTemplates(
           template_type: templateType,
           template_variables: templateVariables,
         },
+        configuration,
         language,
         type: blockType,
       }),

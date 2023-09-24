@@ -8,14 +8,14 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
 )
+from mage_ai.data_preparation.templates.data_integrations.constants import (
+    DATA_INTEGRATION_TYPE_DESTINATIONS,
+    DATA_INTEGRATION_TYPE_SOURCES,
+    TEMPLATE_TYPE_DATA_INTEGRATION,
+)
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.server.api.integration_sources import build_integration_module_info
 from mage_ai.shared.strings import is_number
-
-DATA_INTEGRATION_TYPE_DESTINATIONS = 'destinations'
-DATA_INTEGRATION_TYPE_SOURCES = 'sources'
-
-TEMPLATE_TYPE_DATA_INTEGRATION = 'data_integration'
 
 
 def get_templates() -> List[Dict]:
@@ -30,6 +30,7 @@ def get_templates() -> List[Dict]:
 
             arr.append(dict(
                 block_type=block_type,
+                configuration=dict(data_integration={}),
                 language=di_type,
                 name=display_name,
                 path=f'data_integrations/{di_type}/base',
