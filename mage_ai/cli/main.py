@@ -27,38 +27,38 @@ app = typer.Typer(
 # Defaults
 
 INIT_PROJECT_PATH_DEFAULT = typer.Argument(
-    ..., help="path of the Mage project to be created."
+    ..., help='path of the Mage project to be created.'
 )
 INIT_PROJECT_TYPE_DEFAULT = typer.Option(
     ProjectType.STANDALONE.value,
-    help="type of project to create, options are main, sub, or standalone",
+    help='type of project to create, options are main, sub, or standalone',
 )
 INIT_CLUSTER_TYPE_DEFAULT = typer.Option(
     None,
-    help="type of instance to create for workspace management",
+    help='type of instance to create for workspace management',
 )
 INIT_PROJECT_UUID_DEFAULT = typer.Option(
     None,
-    help="project uuid for the new project",
+    help='project uuid for the new project',
 )
 
 START_PROJECT_PATH_DEFAULT = typer.Argument(
-    os.getcwd(), help="path of the Mage project to be loaded."
+    os.getcwd(), help='path of the Mage project to be loaded.'
 )
-START_HOST_DEFAULT = typer.Option("localhost", help="specify the host.")
-START_PORT_DEFAULT = typer.Option("6789", help="specify the port.")
-START_MANAGE_INSTANCE_DEFAULT = typer.Option("0", help="")
-START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option("0", help="")
+START_HOST_DEFAULT = typer.Option('localhost', help='specify the host.')
+START_PORT_DEFAULT = typer.Option('6789', help='specify the port.')
+START_MANAGE_INSTANCE_DEFAULT = typer.Option('0', help='')
+START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_INSTANCE_TYPE_DEFAULT = typer.Option(
-    InstanceType.SERVER_AND_SCHEDULER.value, help="specify the instance type."
+    InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.'
 )
 START_PROJECT_TYPE_DEFAULT = typer.Option(
     ProjectType.STANDALONE.value,
-    help="create project of this type if does not exist, options are main, sub, or standalone",
+    help='create project of this type if does not exist, options are main, sub, or standalone',
 )
 START_CLUSTER_TYPE_DEFAULT = typer.Option(
     None,
-    help="type of instance to create for workspace management",
+    help='type of instance to create for workspace management',
 )
 START_PROJECT_UUID_DEFAULT = typer.Option(
     None,
@@ -66,41 +66,41 @@ START_PROJECT_UUID_DEFAULT = typer.Option(
 )
 
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
-    ..., help="path of the Mage project that contains the pipeline."
+    ..., help='path of the Mage project that contains the pipeline.'
 )
-RUN_PIPELINE_UUID_DEFAULT = typer.Argument(..., help="uuid of the pipeline to be run.")
-RUN_TEST_DEFAULT = typer.Option(False, help="specify if tests should be run.")
-RUN_BLOCK_UUID_DEFAULT = typer.Option(None, help="uuid of the block to be run.")
-RUN_EXECUTION_PARTITION_DEFAULT = typer.Option(None, help="")
-RUN_EXECUTOR_TYPE_DEFAULT = typer.Option(None, help="")
-RUN_CALLBACK_URL_DEFAULT = typer.Option(None, help="")
-RUN_BLOCK_RUN_ID_DEFAULT = typer.Option(None, help="")
-RUN_PIPELINE_RUN_ID_DEFAULT = typer.Option(None, help="")
+RUN_PIPELINE_UUID_DEFAULT = typer.Argument(..., help='uuid of the pipeline to be run.')
+RUN_TEST_DEFAULT = typer.Option(False, help='specify if tests should be run.')
+RUN_BLOCK_UUID_DEFAULT = typer.Option(None, help='uuid of the block to be run.')
+RUN_EXECUTION_PARTITION_DEFAULT = typer.Option(None, help='')
+RUN_EXECUTOR_TYPE_DEFAULT = typer.Option(None, help='')
+RUN_CALLBACK_URL_DEFAULT = typer.Option(None, help='')
+RUN_BLOCK_RUN_ID_DEFAULT = typer.Option(None, help='')
+RUN_PIPELINE_RUN_ID_DEFAULT = typer.Option(None, help='')
 RUN_RUNTIME_VARS_DEFAULT = typer.Option(
     None,
-    help="specify runtime variables. These will overwrite the pipeline global variables.",
+    help='specify runtime variables. These will overwrite the pipeline global variables.',
 )
 RUN_SKIP_SENSORS_DEFAULT = typer.Option(
-    False, help="specify if the sensors should be skipped."
+    False, help='specify if the sensors should be skipped.'
 )
 RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT = typer.Option(
-    None, help="runtime configuration of data integration block runs."
+    None, help='runtime configuration of data integration block runs.'
 )
 CLEAN_LOGS_PROJECT_PATH_DEFAULT = typer.Argument(
-    ..., help="path of the Mage project to clean old logs."
+    ..., help='path of the Mage project to clean old logs.'
 )
 CLEAN_LOGS_PIPELINE_UUID_DEFAULT = typer.Option(
-    None, help="uuid of the pipeline to clean."
+    None, help='uuid of the pipeline to clean.'
 )
 CLEAN_VARIABLES_PROJECT_PATH_DEFAULT = typer.Argument(
-    ..., help="path of the Mage project to clean variables."
+    ..., help='path of the Mage project to clean variables.'
 )
 CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT = typer.Option(
-    None, help="uuid of the pipeline to clean."
+    None, help='uuid of the pipeline to clean.'
 )
 
 CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
-    ..., help="path of the Mage project that contains the EMR config."
+    ..., help='path of the Mage project that contains the EMR config.'
 )
 
 
@@ -123,7 +123,7 @@ def init(
         cluster_type=cluster_type,
         project_uuid=project_uuid,
     )
-    print(f"Initialized Mage project at {repo_path}")
+    print(f'Initialized Mage project at {repo_path}')
 
 
 @app.command()
@@ -214,8 +214,9 @@ def run(
         )
     (enable_new_relic, application) = initialize_new_relic()
 
-    with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
-         if enable_new_relic else nullcontext():
+    with newrelic.agent.BackgroundTask(
+        application, name="mage-run", group='Task'
+    ) if enable_new_relic else nullcontext():
         sync_config = get_sync_config()
         if sync_config and sync_config.sync_on_executor_start:
             result = run_git_sync(sync_config=sync_config)
@@ -268,7 +269,7 @@ def run(
                 template_runtime_configuration=template_runtime_configuration,
                 update_status=False,
             )
-        print("Pipeline run completed.")
+        print('Pipeline run completed.')
 
 
 @app.command()
@@ -337,11 +338,11 @@ def create_dbt_models_from_integration_pipeline(
     Create dbt models from a Mage integration pipeline catalog and update the
     dbt's sources.yaml file.
     """
-    from mage_ai.cli.utils import (
-        generate_models_sql,
+    from mage_ai.data_preparation.models.block.dbt.utils import (
         generate_dbt_models,
-        update_dbt_sources,
+        generate_models_sql,
         load_json,
+        update_dbt_sources,
     )
 
     catalog_data = load_json(catalog_file)
@@ -350,5 +351,5 @@ def create_dbt_models_from_integration_pipeline(
     update_dbt_sources(catalog_data, sources_file, schema_name)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app()
