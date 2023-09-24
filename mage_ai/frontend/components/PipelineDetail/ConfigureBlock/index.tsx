@@ -112,6 +112,7 @@ function ConfigureBlock({
   ]);
 
   const isDataIntegration: boolean = useMemo(() => {
+    // @ts-ignore
     if (TemplateTypeEnum.DATA_INTEGRATION === block?.config?.template_type) {
       return true;
     }

@@ -403,6 +403,7 @@ function AddNewBlocksV2({
           uuid: `${BlockTypeEnum.DATA_EXPORTER}/Data integrations/group`,
         },
         {
+          // @ts-ignore
           items: itemsDataExporterDestination,
           label: () => capitalize(DataIntegrationTypeEnum.DESTINATIONS),
           uuid: `${BlockTypeEnum.DATA_EXPORTER}/Data integrations/${DataIntegrationTypeEnum.DESTINATIONS}`,
