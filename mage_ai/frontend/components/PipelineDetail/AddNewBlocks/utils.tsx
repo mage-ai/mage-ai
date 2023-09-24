@@ -254,7 +254,6 @@ export const getdataSourceMenuItems = (
     languages,
     onlyCustomTemplate,
     showBrowseTemplates,
-    templateType,
   } = opts || {};
 
   let dataSourceMenuItemsMapping = {};

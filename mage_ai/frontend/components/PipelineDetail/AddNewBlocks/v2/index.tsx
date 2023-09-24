@@ -366,6 +366,7 @@ function AddNewBlocksV2({
     ].concat(
       itemsDataLoader,
     ).concat(
+      // @ts-ignore
       buildNonPythonItems(BlockTypeEnum.DATA_LOADER),
     );
 
