@@ -266,17 +266,18 @@ def execute_data_integration(
     block,
     outputs_from_input_vars,
     custom_code: str = None,
-    execution_partition: str = None,
-    from_notebook: bool = False,
-    global_vars: Dict = None,
-    input_vars: List = None,
-    logger: Logger = None,
-    logging_tags: Dict = None,
-    input_from_output: Dict = None,
-    runtime_arguments: Dict = None,
     data_integration_runtime_settings: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    execution_partition: str = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_from_output: Dict = None,
+    input_vars: List = None,
+    logger: Logger = None,
+    logging_tags: Dict = None,
+    run_settings: Dict = None,
+    runtime_arguments: Dict = None,
     **kwargs,
 ) -> List:
     if logging_tags is None:
@@ -302,9 +303,11 @@ def execute_data_integration(
     config_json = json.dumps(config)
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
-    index = block.template_runtime_configuration.get('index', 0)
-    is_last_block_run = block.template_runtime_configuration.get('is_last_block_run', False)
-    selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+
+    runtime_settings = run_settings or block.template_runtime_configuration or {}
+    index = runtime_settings.get('index', 0)
+    is_last_block_run = runtime_settings.get('is_last_block_run', False)
+    selected_streams = runtime_settings.get('selected_streams', [])
 
     is_source = block.is_source()
 
@@ -444,6 +447,7 @@ def execute_data_integration(
             logger=logger,
             logging_tags=logging_tags,
             partition=execution_partition,
+            run_settings=run_settings,
         )
 
     if proc:
@@ -589,6 +593,7 @@ def __execute_destination(
     logger: Logger = None,
     logging_tags: Dict = None,
     partition: str = None,
+    run_settings: Dict = None,
     **kwargs,
 ) -> List:
     # Parameters
@@ -615,8 +620,10 @@ def __execute_destination(
     config = data_integration_settings.get('config') or {}
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
-    index = block.template_runtime_configuration.get('index', 0)
-    selected_streams_init = block.template_runtime_configuration.get('selected_streams', [])
+
+    runtime_settings = run_settings or block.template_runtime_configuration or {}
+    index = runtime_settings.get('index', 0)
+    selected_streams_init = runtime_settings.get('selected_streams', [])
     selected_streams = selected_streams_init
 
     configuration_data_integration = block.configuration_data_integration
@@ -639,7 +646,7 @@ def __execute_destination(
     # in case the upstream source block is dynamic, we’ll use the parent_stream
     # value which will be the block run’s block UUID, which contains extra information
     # in the UUID (e.g. [block_uuid]:[index]).
-    parent_stream = block.template_runtime_configuration.get('parent_stream')
+    parent_stream = runtime_settings.get('parent_stream')
 
     # Check to see if the stream (aka block UUID) is a source block or a normal block
     if parent_stream:

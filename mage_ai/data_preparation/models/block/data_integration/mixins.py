@@ -327,7 +327,7 @@ class DataIntegrationMixin:
                         if kwargs_vars_inner and not kwargs_var_to_add:
                             kwargs_var_to_add = kwargs_vars_inner[0]
 
-                    if input_data is not None:
+                    if not catalog and input_data is not None:
                         catalog = build_schema(input_data, up_uuid)
 
                     input_var_to_add.append(catalog)
