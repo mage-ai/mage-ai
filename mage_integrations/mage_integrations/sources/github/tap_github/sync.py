@@ -2,8 +2,8 @@ import collections
 
 import singer
 from singer import bookmarks
-from tap_github.streams import STREAMS
 
+from mage_integrations.sources.github.tap_github.streams import STREAMS
 from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
@@ -101,10 +101,13 @@ def translate_state(state, catalog, repositories):
       }
     }
     """
-    nested_dict = lambda: collections.defaultdict(nested_dict)
-    new_state = nested_dict()
+    def _nested_dict(nested_dict):
+        return collections.defaultdict(nested_dict)
+    nested_dict = _nested_dict
+    new_state = nested_dict(nested_dict)
 
-    # Collect keys(repo_name for update state or stream_name for older state) from state available in the `bookmarks``
+    # Collect keys(repo_name for update state or stream_name for older state) from state available
+    # in the `bookmarks``
     previous_state_keys = state.get("bookmarks", {}).keys()
     # Collect stream names from the catalog
     stream_names = [stream["tap_stream_id"] for stream in catalog["streams"]]
@@ -113,19 +116,27 @@ def translate_state(state, catalog, repositories):
         # Loop through each key of `bookmarks` available in the previous state.
 
         # Case 1:
-        # Older connections `bookmarks` contain stream names so check if it is the stream name or not.
-        # If the previous state's key is found in the stream name list then continue to check other keys. Because we want
+        # Older connections `bookmarks` contain stream names so check if it is the stream name
+        # or not.
+        # If the previous state's key is found in the stream name list then continue to check
+        # other keys. Because we want
         # to migrate each stream's bookmark into the repo name as mentioned below:
-        # Example: {`bookmarks`: {`stream_a`: `bookmark_a`}} to {`bookmarks`: {`repo_a`: {`stream_a`: `bookmark_a`}}}
+        # Example: {`bookmarks`: {`stream_a`: `bookmark_a`}} to {`bookmarks`: {`repo_a`:
+        # {`stream_a`: `bookmark_a`}}}
 
         # Case 2:
-        # Check if the key is available in the list of currently selected repo's list or not. Newer format `bookmarks` contain repo names.
-        # Return the state if the previous state's key is not found in the repo name list or stream name list.
+        # Check if the key is available in the list of currently selected repo's list or not.
+        # Newer format `bookmarks` contain repo names.
+        # Return the state if the previous state's key is not found in the repo name list or
+        # stream name list.
 
-        # If the state contains a bookmark for `repo_a` and `repo_b` and the user deselects these both repos and adds another repo
-        # then in that case this function was returning an empty state. Now this change will return the existing state instead of the empty state.
+        # If the state contains a bookmark for `repo_a` and `repo_b` and the user deselects
+        # these both repos and adds another repo
+        # then in that case this function was returning an empty state. Now this change will
+        # return the existing state instead of the empty state.
         if key not in stream_names and key not in repositories:
-            # Return the existing state if all repos from the previous state are deselected(not found) in the current sync.
+            # Return the existing state if all repos from the previous state are deselected(not
+            # found) in the current sync.
             return state
 
     for stream in catalog["streams"]:
@@ -143,7 +154,8 @@ def translate_state(state, catalog, repositories):
 
 def get_stream_to_sync(catalog):
     """
-    Get the streams for which the sync function should be called(the parent in case of selected child streams).
+    Get the streams for which the sync function should be called(the parent in case of selected
+    child streams).
     """
     streams_to_sync = []
     selected_streams = get_selected_streams(catalog)
@@ -151,7 +163,8 @@ def get_stream_to_sync(catalog):
         if stream_name in selected_streams or is_any_child_selected(
             stream_obj, selected_streams
         ):
-            # Append the selected stream or deselected parent stream into the list, if its child or nested child is selected.
+            # Append the selected stream or deselected parent stream into the list, if its child or
+            # nested child is selected.
             streams_to_sync.append(stream_name)
     return streams_to_sync
 
@@ -217,7 +230,8 @@ def sync(client, config, state, catalog, logger=None):
     state = translate_state(state, catalog, repositories)
     singer.write_state(state)
 
-    # Sync `teams`, `team_members`and `team_memberships` streams just single time for any organization.
+    # Sync `teams`, `team_members`and `team_memberships` streams just single time for any
+    # organization.
     streams_to_sync_for_orgs = set(streams_to_sync).intersection(
         STREAM_TO_SYNC_FOR_ORGS
     )
@@ -254,9 +268,10 @@ def sync(client, config, state, catalog, logger=None):
 
             if client.not_accessible_repos:
                 # Give warning messages for a repo that is not accessible by a stream or is invalid.
-                message = "Please check the repository name '{}' or you do not have sufficient permissions to access this repository for following streams {}.".format(
-                    repo, ", ".join(client.not_accessible_repos)
-                )
+                message = \
+                    f"Please check the repository name '{repo}' or you do not have sufficient " \
+                    "permissions to access this repository for following streams " \
+                    f"{', '.join(client.not_accessible_repos)}."
                 logger_to_use.warning(message)
                 client.not_accessible_repos = set()
         update_currently_syncing_repo(state, None)

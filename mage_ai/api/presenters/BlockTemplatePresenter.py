@@ -9,5 +9,6 @@ class BlockTemplatePresenter(BasePresenter):
         'language',
         'name',
         'path',
+        'template_type',
         'template_variables',
     ]
