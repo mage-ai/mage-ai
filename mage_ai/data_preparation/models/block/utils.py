@@ -636,6 +636,8 @@ def fetch_input_variables(
     input_vars = []
     if input_args is not None:
         input_vars = input_args
+        if upstream_block_uuids:
+            upstream_block_uuids_final = upstream_block_uuids
     elif pipeline is not None:
         input_vars = [None for i in range(len(upstream_block_uuids))]
         input_variables_by_uuid = input_variables(

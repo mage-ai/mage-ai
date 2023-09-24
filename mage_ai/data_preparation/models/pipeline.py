@@ -1410,6 +1410,23 @@ class Pipeline:
             if block.replicated_block == old_uuid:
                 block.replicated_block = new_uuid
 
+        # Update the block directory name that is under the pipeline directory.
+        # This block directory contains the catalog.json. For example:
+        # pipelines/[pipeline_uuid]/[block_uuid]/catalog.json
+        if block.is_data_integration():
+            dir_old = block.get_block_data_integration_settings_directory_path(old_uuid)
+            if os.path.isdir(dir_old):
+                dir_new = block.get_block_data_integration_settings_directory_path()
+                filenames = os.listdir(dir_old)
+                if filenames:
+                    os.makedirs(dir_new, exist_ok=True)
+
+                for filename in filenames:
+                    path_old = os.path.join(dir_old, filename)
+                    path_new = os.path.join(dir_new, filename)
+                    shutil.move(path_old, path_new)
+                shutil.rmtree(dir_old)
+
         self.save()
         return block
 
