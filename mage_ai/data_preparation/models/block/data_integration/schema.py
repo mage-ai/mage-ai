@@ -14,7 +14,9 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
+    KEY_REPLICATION_METHOD,
     OUTPUT_TYPE_SCHEMA,
+    REPLICATION_METHOD_FULL_TABLE,
     TYPE_OBJECT,
 )
 from mage_ai.shared.column_type_detector import (
@@ -31,6 +33,7 @@ from mage_ai.shared.column_type_detector import (
     ZIP_CODE,
     infer_column_types,
 )
+from mage_ai.shared.hash import merge_dict
 
 COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING = {
     # Array is not yet detected
@@ -57,7 +60,12 @@ COLUMN_TYPE_TO_CONVERTED_TYPE_MAPPING_PYTHON = {
 }
 
 
-def build_schema(df: pd.DataFrame, stream: str, strict: bool = False) -> Dict:
+def build_schema(
+    df: pd.DataFrame,
+    stream: str,
+    strict: bool = False,
+    schema_override: Dict = None,
+) -> Dict:
     column_types = infer_column_types(df)
 
     properties = {}
@@ -119,11 +127,12 @@ def build_schema(df: pd.DataFrame, stream: str, strict: bool = False) -> Dict:
 
             properties[column] = props
 
-    return dict(
-        schema=dict(
+    return merge_dict({
+        'schema': dict(
             properties=properties,
             type=TYPE_OBJECT,
         ),
-        stream=stream,
-        type=OUTPUT_TYPE_SCHEMA,
-    )
+        'stream': stream,
+        'type': OUTPUT_TYPE_SCHEMA,
+        KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
+    }, schema_override)

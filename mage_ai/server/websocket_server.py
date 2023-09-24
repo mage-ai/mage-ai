@@ -428,6 +428,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
+                    # The UI can execute a block and send run_settings to control the behavior
+                    # of the block run while executing it from the notebook.
+                    # E.G.
+                    # run_settings = dict(selected_streams=[
+                    #     'account_v2',
+                    #     'user_with_emails',
+                    # ])
                     run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
