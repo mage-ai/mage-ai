@@ -378,6 +378,7 @@ function AddNewBlocksV2({
           uuid: `${BlockTypeEnum.DATA_LOADER}/Data integrations/group`,
         },
         {
+          // @ts-ignore
           items: itemsDataLoaderSource,
           label: () => capitalize(DataIntegrationTypeEnum.SOURCES),
           uuid: `${BlockTypeEnum.DATA_LOADER}/Data integrations/${DataIntegrationTypeEnum.SOURCES}`,
