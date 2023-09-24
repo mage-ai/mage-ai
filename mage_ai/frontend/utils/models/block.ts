@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { StreamType } from '@interfaces/IntegrationSourceType';
 import { indexBy } from '@utils/array';
 
 export function getLeafNodes(
@@ -145,4 +146,12 @@ export function isDataIntegrationBlock(block: BlockType, pipeline: PipelineType 
   }
 
   return false;
+}
+
+export function getSelectedStreams(block: BlockType): StreamType[] {
+  const catalog = block?.catalog;
+
+  return (catalog?.streams || [])?.filter(({
+    metadata,
+  }) => metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected);
 }

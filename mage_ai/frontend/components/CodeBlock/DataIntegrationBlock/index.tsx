@@ -1,19 +1,22 @@
 import { useMemo } from 'react';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
-import Divider from '@oracle/elements/Divider';
-import Table from '@components/shared/Table';
 import Button from '@oracle/elements/Button';
-import Spacing from '@oracle/elements/Spacing';
-import FlexContainer from '@oracle/components/FlexContainer';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
-import Text from '@oracle/elements/Text';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import Link from '@oracle/elements/Link';
+import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
+import Text from '@oracle/elements/Text';
 import { Check, Close } from '@oracle/icons';
+import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
+import { getSelectedStreams } from '@utils/models/block';
+import { pushAtIndex } from '@utils/array';
 
 type DataIntegrationBlockProps = {
   block: BlockType,
@@ -41,15 +44,112 @@ function DataIntegrationBlock({
     name: dataIntegrationName,
   } = metadata?.data_integration || {}
 
-  const streams = useMemo(() => (catalog?.streams || [])?.filter(({
-    metadata,
-  }) => metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected),
-  [
-    catalog,
+  const streams = useMemo(() => getSelectedStreams(block), [
+    block,
   ])
 
   const isSource = BlockTypeEnum.DATA_LOADER === blockType;
   const displayTypeText: string = isSource ? 'source' : 'destination'
+
+  const tableEl = useMemo(() => {
+    let columnFlex = [1, 1, 1, null];
+    let columnsToShow = [
+      {
+        uuid: 'Stream',
+      },
+      {
+        uuid: 'Columns',
+      },
+      {
+        center: true,
+        uuid: 'Sync method',
+      },
+      {
+        uuid: 'Parallel',
+      },
+    ];
+
+    if (!isSource) {
+      columnFlex = pushAtIndex(1, 1, columnFlex);
+      columnsToShow = pushAtIndex({
+        uuid: 'Table name',
+      }, 1, columnsToShow)
+    }
+
+    return (
+      <Table
+        columnFlex={columnFlex}
+        columns={columnsToShow}
+        rows={streams?.map(({
+          destination_table: tableName,
+          metadata: metadataArray,
+          replication_method: replicationMethod,
+          run_in_parallel: runInParallel,
+          stream,
+          tap_stream_id: tapStreamID,
+        }: WorkspaceType) => {
+          const streamName = stream || tapStreamID;
+          let columnsCount = 0;
+          let columnsCountSelected = 0;
+
+          metadataArray?.forEach(({
+            breadcrumb,
+            metadata,
+          }) => {
+            if (breadcrumb?.length >= 1) {
+              columnsCount += 1;
+              if (metadata?.selected) {
+                columnsCountSelected += 1;
+              }
+            }
+          });
+
+          let row = [
+            <Link
+              key="stream"
+              monospace
+              onClick={() => alert('OPEN MODAL')}
+              preventDefault
+              sameColorAsText
+            >
+              {streamName}
+            </Link>,
+            <Text default monospace key="columns">
+              {columnsCountSelected} <Text
+                inline
+                monospace
+                muted
+              >
+                /
+              </Text> {columnsCount}
+            </Text>,
+            <Text center default key="replicationMethod">
+              {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
+            </Text>,
+            <FlexContainer justifyContent="flex-end" key="runInParallel">
+              {runInParallel
+                ? <Check size={UNIT * 2} success />
+                : <Close muted size={UNIT * 2} />
+              }
+            </FlexContainer>,
+          ];
+
+          if (!isSource) {
+            row = pushAtIndex((
+              <Text default key="tableName" monospace>
+                {tableName || streamName}
+              </Text>
+            ), 1, row);
+          }
+
+          return row;
+        })}
+      />
+    );
+  }, [
+    isSource,
+    streams,
+  ]);
 
   return (
     <>
@@ -71,13 +171,7 @@ function DataIntegrationBlock({
 
               <Button
                 compact
-                onClick={() => openSidekickView(
-                  ViewKeyEnum.BLOCK_SETTINGS,
-                  true,
-                  {
-                    blockUUID,
-                  }
-                )}
+                onClick={() => alert('OPEN MODAL')}
                 secondary
               >
                 Configure {displayTypeText}
@@ -107,85 +201,15 @@ function DataIntegrationBlock({
 
             <Button
               compact
-              onClick={() => openSidekickView(
-                ViewKeyEnum.BLOCK_SETTINGS,
-                true,
-                {
-                  blockUUID,
-                }
-              )}
+              onClick={() => alert('OPEN MODAL')}
               secondary
             >
-              Configure streams
+              Edit streams
             </Button>
           </FlexContainer>
         </Spacing>
 
-        <Table
-          columnFlex={[1, 1, 1, null]}
-          columns={[
-            {
-              uuid: 'Stream',
-            },
-            {
-              uuid: 'Columns',
-            },
-            {
-              center: true,
-              uuid: 'Replication method',
-            },
-            {
-              uuid: 'Run in parallel',
-            },
-          ]}
-          rows={streams?.map(({
-            metadata: metadataArray,
-            replication_method: replicationMethod,
-            run_in_parallel: runInParallel,
-            stream,
-            tap_stream_id: tapStreamID,
-          }: WorkspaceType) => {
-            const streamName = stream || tapStreamID;
-            let columnsCount = 0;
-            let columnsCountSelected = 0;
-
-            metadataArray?.forEach(({
-              breadcrumb,
-              metadata,
-            }) => {
-              if (breadcrumb?.length >= 1) {
-                columnsCount += 1;
-                if (metadata?.selected) {
-                  columnsCountSelected += 1;
-                }
-              }
-            });
-
-            return [
-              <Text key="stream">
-                {streamName}
-              </Text>,
-              <Text default monospace key="columns">
-                {columnsCountSelected} <Text
-                  inline
-                  monospace
-                  muted
-                >
-                  /
-                </Text> {columnsCount}
-              </Text>,
-              <Text center default key="replicationMethod">
-                {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
-              </Text>,
-              <FlexContainer justifyContent="center" key="runInParallel">
-                {runInParallel
-                  ? <Check size={UNIT * 2} success />
-                  : <Close muted size={UNIT * 2} />
-                }
-              </FlexContainer>,
-            ];
-          })}
-        />
+        {tableEl}
       </StreamSectionStyle>
     </>
   );

@@ -1827,20 +1827,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.callback_block is not None:
                 data['callback_content'] = await self.callback_block.content_async()
 
-        if include_block_catalog and \
-                self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
-                BlockLanguage.YAML == self.language and \
-                data.get('content') and \
-                self.pipeline:
-
-            content = data.get('content') or ''
-            if content:
-                try:
-                    config = yaml.safe_load(content)
-                    if config.get('source') or config.get('destination'):
-                        data['catalog'] = await self.get_catalog_from_file_async()
-                except yaml.constructor.ConstructorError as err:
-                    print(f'[WARNING] Block.to_dict_async: {err}')
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
