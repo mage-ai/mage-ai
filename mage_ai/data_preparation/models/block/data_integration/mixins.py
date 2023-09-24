@@ -88,7 +88,7 @@ class DataIntegrationMixin:
 
             return [up_uuid for up_uuid in self.upstream_block_uuids if up_uuid in inputs_combined]
 
-    def get_catalog_file_path(self) -> str:
+    def get_block_data_integration_settings_directory_path(self, block_uuid: str = None) -> str:
         if not self.pipeline:
             return
 
@@ -96,7 +96,12 @@ class DataIntegrationMixin:
             self.pipeline.repo_path,
             PIPELINES_FOLDER,
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid or self.uuid,
+        )
+
+    def get_catalog_file_path(self, block_uuid: str = None) -> str:
+        return os.path.join(
+            self.get_block_data_integration_settings_directory_path(block_uuid),
             BLOCK_CATALOG_FILENAME,
         )
 
