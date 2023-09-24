@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import yaml
@@ -26,7 +26,6 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
     MAX_QUERY_STRING_SIZE,
-    REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
     IngestMode,
@@ -137,7 +136,7 @@ def extract_stream_ids_from_streams(streams: List[Dict]) -> List[str]:
 
 def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     return list(filter(
-        lambda x: x['tap_stream_id'] in streams,
+        lambda x: x.get('tap_stream_id') in streams or x.get('stream') in streams,
         catalog.get('streams', []),
     ))
 
@@ -267,17 +266,18 @@ def execute_data_integration(
     block,
     outputs_from_input_vars,
     custom_code: str = None,
-    execution_partition: str = None,
-    from_notebook: bool = False,
-    global_vars: Dict = None,
-    input_vars: List = None,
-    logger: Logger = None,
-    logging_tags: Dict = None,
-    input_from_output: Dict = None,
-    runtime_arguments: Dict = None,
     data_integration_runtime_settings: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    execution_partition: str = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_from_output: Dict = None,
+    input_vars: List = None,
+    logger: Logger = None,
+    logging_tags: Dict = None,
+    run_settings: Dict = None,
+    runtime_arguments: Dict = None,
     **kwargs,
 ) -> List:
     if logging_tags is None:
@@ -303,9 +303,11 @@ def execute_data_integration(
     config_json = json.dumps(config)
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
-    index = block.template_runtime_configuration.get('index', 0)
-    is_last_block_run = block.template_runtime_configuration.get('is_last_block_run', False)
-    selected_streams = block.template_runtime_configuration.get('selected_streams', [])
+
+    runtime_settings = run_settings or block.template_runtime_configuration or {}
+    index = runtime_settings.get('index', 0)
+    is_last_block_run = runtime_settings.get('is_last_block_run', False)
+    selected_streams = runtime_settings.get('selected_streams', [])
 
     is_source = block.is_source()
 
@@ -333,7 +335,7 @@ def execute_data_integration(
 
         # TESTING PURPOSES ONLY
         if not selected_streams and catalog:
-            selected_streams = [s.get('tap_stream_id') for s in catalog.get('streams', [])]
+            selected_streams = [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
 
         stream = selected_streams[0] if len(selected_streams) >= 1 else None
         # destination_table = self.template_runtime_configuration.get('destination_table', stream)
@@ -445,6 +447,7 @@ def execute_data_integration(
             logger=logger,
             logging_tags=logging_tags,
             partition=execution_partition,
+            run_settings=run_settings,
         )
 
     if proc:
@@ -502,11 +505,10 @@ def convert_block_output_data_for_destination(
     dynamic_upstream_block_uuids: Union[List[str], None] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
-    input_vars: List = None,
     logger: Logger = None,
     logging_tags: Dict = None,
     partition: str = None,
-) -> List[str]:
+) -> Tuple[List[str], Dict]:
     variable = build_variable(
         block,
         data_integration_uuid=data_integration_uuid,
@@ -521,9 +523,10 @@ def convert_block_output_data_for_destination(
 
     # If not source, get the output data from upstream block,
     # then convert it to Singer Spec format.
-    input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+
+    input_vars_fetched, _kwargs_vars, upstream_block_uuids = \
         block.fetch_input_variables(
-            input_vars,
+            None,
             partition,
             global_vars,
             dynamic_block_index=dynamic_block_index,
@@ -531,12 +534,16 @@ def convert_block_output_data_for_destination(
             from_notebook=from_notebook,
             upstream_block_uuids=[stream],
         )
+
     data = input_vars_fetched[0] if input_vars_fetched else None
+
     if data is None:
-        logger.info(
-            f'No data for stream {stream}.',
-            **logging_tags,
-        )
+        msg = f'No data for stream {stream}.',
+        if logger:
+            logger.info(msg, **logging_tags)
+        else:
+            print(msg)
+
         return
 
     os.makedirs(os.path.dirname(output_dir_path), exist_ok=True)
@@ -549,9 +556,7 @@ def convert_block_output_data_for_destination(
 
         # We’re hardcoding the replication method for now until we fetch the catalog
         # from the upstream block.
-        schema = merge_dict(build_schema(data, stream), {
-            KEY_REPLICATION_METHOD: REPLICATION_METHOD_FULL_TABLE,
-        })
+        schema = build_schema(data, stream)
 
         logger.info(
             f'Writing {len(data.index)} records from stream {stream} to directory '
@@ -573,7 +578,7 @@ def convert_block_output_data_for_destination(
             schema=schema,
         )
 
-        return output_files_paths
+        return output_files_paths, schema
 
 
 def __execute_destination(
@@ -588,6 +593,7 @@ def __execute_destination(
     logger: Logger = None,
     logging_tags: Dict = None,
     partition: str = None,
+    run_settings: Dict = None,
     **kwargs,
 ) -> List:
     # Parameters
@@ -614,14 +620,16 @@ def __execute_destination(
     config = data_integration_settings.get('config') or {}
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
-    index = block.template_runtime_configuration.get('index', 0)
-    selected_streams_init = block.template_runtime_configuration.get('selected_streams', [])
+
+    runtime_settings = run_settings or block.template_runtime_configuration or {}
+    index = runtime_settings.get('index', 0)
+    selected_streams_init = runtime_settings.get('selected_streams', [])
     selected_streams = selected_streams_init
 
     configuration_data_integration = block.configuration_data_integration
     # TESTING PURPOSES ONLY
     if not selected_streams:
-        inputs_only = configuration_data_integration.get('inputs_only') or []
+        inputs_only = block.inputs_only_uuids
         uuids = [i for i in block.upstream_block_uuids if i not in inputs_only]
         if uuids:
             selected_streams = uuids
@@ -638,7 +646,7 @@ def __execute_destination(
     # in case the upstream source block is dynamic, we’ll use the parent_stream
     # value which will be the block run’s block UUID, which contains extra information
     # in the UUID (e.g. [block_uuid]:[index]).
-    parent_stream = block.template_runtime_configuration.get('parent_stream')
+    parent_stream = runtime_settings.get('parent_stream')
 
     # Check to see if the stream (aka block UUID) is a source block or a normal block
     if parent_stream:
@@ -686,6 +694,7 @@ def __execute_destination(
     )))
 
     output_file_path = None
+
     if IngestMode.DISK == ingest_mode:
         block_for_variable = None
         data_integration_uuid_for_variable = None
@@ -700,21 +709,21 @@ def __execute_destination(
             # Convert if running block from notebook.
             # If block is running from scheduler, the conversion happens at the
             # child controller block run for a stream.
-            output_file_paths = convert_block_output_data_for_destination(
+            pair = convert_block_output_data_for_destination(
                 block,
                 chunk_size=MAX_QUERY_STRING_SIZE,
                 data_integration_uuid=data_integration_uuid,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 from_notebook=from_notebook,
-                input_vars=input_vars,
                 logger=logger,
                 logging_tags=logging_tags,
                 partition=partition,
                 stream=stream,
             )
 
-            if output_file_paths:
+            if pair:
+                output_file_paths = pair[0]
                 output_file_path = output_file_paths[0]
         else:
             block_for_variable = block
@@ -770,8 +779,7 @@ def __execute_destination(
             '--input_file_path',
             output_file_path,
         ]
-
-    if not output_file_path:
+    else:
         raise Exception(
             f'No input file path exists for {data_integration_uuid} '
             f'in stream {stream} and batch {index}.',

@@ -1110,14 +1110,30 @@ class Block(DataIntegrationMixin):
             logging_tags=logging_tags,
         ):
             # Fetch input variables
-            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
-                input_args,
-                execution_partition,
-                global_vars,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                from_notebook=from_notebook,
-            )
+
+            # Only fetch the input variables that the destination block explicitly declares.
+            # If all the input variables are fetched, there is a chance that a lot of data from
+            # an upstream source block is loaded just to be used as inputs for the block’s
+            # decorated functions. Only do this for the notebook because
+            if from_notebook and self.is_data_integration():
+                input_vars, kwargs_vars, upstream_block_uuids = \
+                    self.fetch_input_variables_and_catalog(
+                        input_args,
+                        execution_partition,
+                        global_vars,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        from_notebook=from_notebook,
+                    )
+            else:
+                input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                    input_args,
+                    execution_partition,
+                    global_vars,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                )
 
             outputs_from_input_vars = {}
             if input_args is None:
@@ -1376,6 +1392,7 @@ class Block(DataIntegrationMixin):
         dynamic_upstream_block_uuids: List[str] = None,
         from_notebook: bool = False,
         upstream_block_uuids: List[str] = None,
+        data_integration_settings_mapping: Dict = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
             self.pipeline,
@@ -1386,6 +1403,7 @@ class Block(DataIntegrationMixin):
             dynamic_block_index,
             dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
 
     def get_analyses(self) -> List:
@@ -2017,6 +2035,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     exec(file.read(), results)
         else:
             test_functions = self.test_functions
+
+        if not test_functions or len(test_functions) == 0:
+            return
 
         variable_manager = self.pipeline.variable_manager
         outputs = [
