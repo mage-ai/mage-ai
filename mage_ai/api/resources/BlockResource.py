@@ -28,6 +28,9 @@ from mage_ai.data_preparation.models.custom_templates.custom_block_template impo
     CustomBlockTemplate,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.templates.data_integrations.constants import (
+    TEMPLATE_TYPE_DATA_INTEGRATION,
+)
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun
@@ -540,9 +543,18 @@ class BlockResource(GenericResource):
                 payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
             elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
                 block_type = object_from_cache.get('block_type')
-                language = object_from_cache.get('language')
                 payload_config['template_path'] = object_from_cache.get('path')
-                payload_config['template_variables'] = object_from_cache.get('template_variables')
+
+                if TEMPLATE_TYPE_DATA_INTEGRATION != object_from_cache.get('template_type'):
+                    language = object_from_cache.get('language')
+
+                for key in [
+                    'configuration',
+                    'template_type',
+                    'template_variables',
+                ]:
+                    if object_from_cache.get(key):
+                        payload_config[key] = object_from_cache.get(key)
 
         """
         New DBT models include "content" in its block create payload,
