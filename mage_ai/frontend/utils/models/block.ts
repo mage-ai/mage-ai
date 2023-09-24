@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { StreamType } from '@interfaces/IntegrationSourceType';
 import { indexBy } from '@utils/array';
 
 export function getLeafNodes(
@@ -116,4 +118,40 @@ export function useDynamicUpstreamBlocks(blocksToUse: BlockType[], blocks: Block
     blocks?.map(({ configuration }) => configuration?.reduce_output),
     blocks?.map(({ upstream_blocks: ub }) => ub),
   ]);
+}
+
+export function isDataIntegrationBlock(block: BlockType, pipeline: PipelineType = null) {
+  const {
+    configuration,
+    language,
+    type: blockType,
+  } = block || {};
+  const {
+    data_integration: dataIntegration,
+  } = configuration || {};
+
+  const isCorrectBlockType = [
+    BlockTypeEnum.DATA_LOADER,
+    BlockTypeEnum.DATA_EXPORTER,
+  ].includes(blockType);
+
+  if (PipelineTypeEnum.PYTHON === pipeline?.type && isCorrectBlockType) {
+    if (BlockLanguageEnum.YAML === language) {
+      return true;
+    }
+
+    if (BlockLanguageEnum.PYTHON === language && dataIntegration) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function getSelectedStreams(block: BlockType): StreamType[] {
+  const catalog = block?.catalog;
+
+  return (catalog?.streams || [])?.filter(({
+    metadata,
+  }) => metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected);
 }

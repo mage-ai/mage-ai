@@ -549,12 +549,16 @@ class BlockResource(GenericResource):
                     language = object_from_cache.get('language')
 
                 for key in [
-                    'configuration',
                     'template_type',
                     'template_variables',
                 ]:
                     if object_from_cache.get(key):
                         payload_config[key] = object_from_cache.get(key)
+
+                payload['configuration'] = merge_dict(
+                    payload.get('configuration') or {},
+                    object_from_cache.get('configuration') or {},
+                )
 
         """
         New DBT models include "content" in its block create payload,
