@@ -26,6 +26,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
     MAX_QUERY_STRING_SIZE,
+    OUTPUT_TYPE_SCHEMA,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
     IngestMode,
@@ -709,7 +710,7 @@ def __execute_destination(
             # Convert if running block from notebook.
             # If block is running from scheduler, the conversion happens at the
             # child controller block run for a stream.
-            pair = convert_block_output_data_for_destination(
+            output_file_paths, schema_from_source = convert_block_output_data_for_destination(
                 block,
                 chunk_size=MAX_QUERY_STRING_SIZE,
                 data_integration_uuid=data_integration_uuid,
@@ -722,9 +723,10 @@ def __execute_destination(
                 stream=stream,
             )
 
-            if pair:
-                output_file_paths = pair[0]
+            if output_file_paths:
                 output_file_path = output_file_paths[0]
+            if schema_from_source:
+                catalog_from_source = dict(streams=[schema_from_source])
         else:
             block_for_variable = block
             data_integration_uuid_for_variable = data_integration_uuid
@@ -754,6 +756,15 @@ def __execute_destination(
             logger.info(msg, **logging_tags)
         else:
             print(msg)
+
+        # Get the schema from the upstream block if the upstream block isn’t
+        if not catalog_from_source:
+            with open(output_file_path, 'r') as f:
+                for line in f:
+                    row = json.loads(line)
+                    if row and OUTPUT_TYPE_SCHEMA == row.get(KEY_TYPE):
+                        catalog_from_source = dict(streams=[row])
+                        break
 
     # Refer to destination table value in the stream’s schema settings
     if not from_notebook or KEY_TABLE not in config:
@@ -845,7 +856,7 @@ def __execute_destination(
             schema_dict = stream_settings_inner.get(KEY_SCHEMA)
             schema_final.update(extract(schema_dict or {}, [KEY_TYPE]))
 
-            if schema_dict.get(KEY_PROPERTIES):
+            if schema_dict and schema_dict.get(KEY_PROPERTIES):
                 schema_properties = schema_dict.get(KEY_PROPERTIES)
 
         catalog_final = dict(streams=[
