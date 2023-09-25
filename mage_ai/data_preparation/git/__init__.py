@@ -60,13 +60,7 @@ class Git:
             if self.remote_repo_link:
                 url = urlsplit(self.remote_repo_link)
 
-            if os.getenv(GIT_ACCESS_TOKEN_VAR):
-                token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-            elif self.git_config and self.git_config.access_token_secret_name:
-                token = get_secret_value(
-                    self.git_config.access_token_secret_name,
-                    repo_name=get_repo_path(),
-                )
+            token = self.__get_access_token()
 
             if self.git_config and url:
                 user = self.git_config.username
@@ -259,11 +253,41 @@ class Git:
         return wrapper
 
     @_remote_command
-    def submodules_update(self) -> None:
-        self.repo.submodule_update(
-            init=True,
-            recursive=True,
+    def submodules_update(self, repo_path: str = None) -> None:
+        self.__submodules_update(repo_path=repo_path)
+
+    def __submodules_update(self, repo_path: str = None) -> None:
+        import git
+        from git.config import GitConfigParser
+        if repo_path:
+            repo = git.Repo(repo_path)
+        else:
+            repo = self.repo
+            repo_path = self.repo_path
+
+        repo.git.submodule('init')
+        parser = GitConfigParser(
+            os.path.join(repo_path, '.gitmodules'),
+            read_only=True,
         )
+        sections = parser.sections()
+        for section in sections:
+            print(f'Updating {section}...')
+            try:
+                path = parser.get(section, 'path')
+                submodule_url = parser.get(section, 'url')
+                url = urlsplit(submodule_url)
+                user = self.git_config.username
+                token = self.__get_access_token()
+                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+                url = urlunsplit(url)
+                repo.config_writer().set_value(
+                    f'submodule.{path}', 'url', url).release()
+                repo.git.submodule('update', path)
+            except Exception:
+                pass
+            else:
+                print(f'{section} updated!')
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -517,7 +541,7 @@ class Git:
             self.repo.git.switch('-c', branch)
 
     @_remote_command
-    def clone(self):
+    def clone(self, sync_submodules: bool = False) -> None:
         from git import Repo
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
@@ -534,6 +558,9 @@ class Git:
                 origin=REMOTE_NAME,
                 env=env,
             )
+
+            if sync_submodules:
+                self.__submodules_update(repo_path=tmp_path)
 
             shutil.rmtree(os.path.join(self.repo_path, '.git'))
             shutil.copytree(
@@ -651,7 +678,7 @@ class Git:
                 self.__poll_process_with_timeout(
                     proc,
                     error_message='Error cloning repo.',
-                    timeout=20,
+                    timeout=40,
                 )
             )
 
@@ -726,3 +753,15 @@ class Git:
         if return_code is None:
             proc.kill()
             raise TimeoutError
+
+    def __get_access_token(self) -> str:
+        token = None
+        if os.getenv(GIT_ACCESS_TOKEN_VAR):
+            token = os.getenv(GIT_ACCESS_TOKEN_VAR)
+        elif self.git_config and self.git_config.access_token_secret_name:
+            token = get_secret_value(
+                self.git_config.access_token_secret_name,
+                repo_name=get_repo_path(),
+            )
+
+        return token

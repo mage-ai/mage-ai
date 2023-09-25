@@ -9,14 +9,14 @@ from mage_ai.shared.logger import VerboseFunctionExec
 
 class GitSync(BaseSync):
     def __init__(self, sync_config: GitConfig, setup_repo: bool = True):
-        self.sync_config = sync_config
+        self.sync_submodules = sync_config.sync_submodules
         self.branch = sync_config.branch or 'main'
         self.remote_repo_link = sync_config.remote_repo_link
         self.git_manager = Git(git_config=sync_config, setup_repo=setup_repo)
 
     def sync_data(self):
         self.git_manager.reset_hard(branch=self.branch)
-        if self.sync_config.sync_submodules:
+        if self.sync_submodules:
             self.git_manager.submodules_update()
 
     # Reset git sync by cloning the remote repo
@@ -25,9 +25,7 @@ class GitSync(BaseSync):
             f'Attempting to clone from remote repo {self.remote_repo_link}',
             verbose=True,
         ):
-            self.git_manager.clone()
-            if self.sync_config.sync_submodules:
-                self.git_manager.submodules_update()
+            self.git_manager.clone(sync_submodules=self.sync_submodules)
 
 
 def get_sync_config() -> Union[GitConfig, None]:
