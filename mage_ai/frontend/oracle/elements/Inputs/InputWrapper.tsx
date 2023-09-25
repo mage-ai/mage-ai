@@ -72,6 +72,7 @@ export type InputWrapperProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRadiusBottom?: boolean;
+  noBorderRadiusTop?: boolean;
   noBorderUntilFocus?: boolean;
   noBorderUntilHover?: boolean;
   noBlinkingCursor?: boolean;
@@ -245,6 +246,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${props => props.noBorderRadiusBottom && `
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+  `}
+
+  ${props => props.noBorderRadiusBottom && `
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   `}
 
   ${props => props.borderRadius && `
@@ -746,7 +752,12 @@ const InputWrapper = ({
           {React.cloneElement(
             beforeIcon,
             {
-              ...(beforeIconSize ? { ...iconProps, size: beforeIconSize } : iconProps),
+              ...(beforeIconSize
+                ? {
+                  ...iconProps,
+                  ...beforeIcon?.props,
+                  size: beforeIconSize,
+                } : iconProps),
               ...beforeIcon?.props,
             },
           )}

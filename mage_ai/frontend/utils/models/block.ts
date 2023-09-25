@@ -148,6 +148,35 @@ export function isDataIntegrationBlock(block: BlockType, pipeline: PipelineType 
   return false;
 }
 
+export function getStreamID(stream: StreamType) {
+  return stream?.stream || stream?.tap_stream_id;
+}
+
+export function getStreamMetadata(stream: StreamType): StreamType {
+  return stream?.metadata?.find(({
+    breadcrumb,
+  }) => breadcrumb?.length === 0) || {};
+}
+
+export function updateStreamMetadata(streamInit: StreamType, payload): StreamType {
+  const stream = { ...streamInit };
+  const index = stream?.metadata?.findIndex(({ breadcrumb }) => breadcrumb?.length === 0);
+
+  if (index >= 0) {
+    const metadata = getStreamMetadata(stream) || {};
+
+    stream.metadata[index] = {
+      ...metadata,
+      metadata: {
+        ...metadata?.metadata,
+        ...payload,
+      },
+    };
+  }
+
+  return stream;
+}
+
 export function isStreamSelected(stream: StreamType) {
   const {
     metadata,

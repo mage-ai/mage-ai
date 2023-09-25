@@ -11,7 +11,6 @@ export const ContainerStyle = styled.div<{
   maxWidth?: number;
 }>`
   border-radius: ${BORDER_RADIUS}px;
-  border-radius: ${BORDER_RADIUS}px;
   position: relative;
 
   ${props => `
@@ -45,5 +44,25 @@ export const NavigationStyle = styled.div<{
 
   ${props => props.selected && `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+`;
+
+export const StreamGridStyle = styled.div<{
+  selected?: boolean;
+}>`
+  border-radius: ${BORDER_RADIUS}px;
+  padding: ${PADDING_UNITS * UNIT}px;
+  margin: ${1 * UNIT}px;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  ${props => `
+    border: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.selected && `
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 `;
