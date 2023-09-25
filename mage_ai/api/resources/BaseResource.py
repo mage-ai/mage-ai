@@ -15,6 +15,11 @@ from mage_ai.shared.hash import merge_dict
 class BaseResource(Resource):
     collective_loader_attr = {}
     datetime_keys = []
+
+    # Declared list of cookies names to be injected into the payload
+    # - provide a list of cookie names in the subclassed resource
+    # - payload keys are contructed as:
+    #     mage_ai.api.operations.constants.COOKIE_PREFIX + <cookie_name>
     cookie_names = []
     model_class = None
     parent_models_attr = {}

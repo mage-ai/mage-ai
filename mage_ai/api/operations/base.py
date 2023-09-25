@@ -285,18 +285,23 @@ class BaseOperation():
                 if type(payload[key]) is str:
                     payload[key] = dateutil.parser.parse(payload[key])
 
+        # Inject any cookies declared by the resource into the payload
+        # - expecting a list of cookie names
+        # - payload keys are contructed as COOKIE_PREFIX + <cookie_name>
         cookie_names = self.__resource_class().cookie_names
         if len(cookie_names) > 0:
+            # Parse cookies
             cookies = None
             cookie_header = self.headers.get('Cookie')
             if cookie_header is not None:
                 from http.cookies import SimpleCookie
                 cookies = SimpleCookie()
                 cookies.load(cookie_header)
+            # Handle each cookie:
+            # - remove any matching name from incoming payload, for security
+            # - inject cookie values (if available)
             for cookie_name in cookie_names:
                 payload_key = COOKIE_PREFIX + cookie_name
-                # remove cookie keys from original payload
-                # do not let these keys thru as part of the regular payload
                 payload.pop(payload_key, None)
                 cookie = None
                 if cookies is not None:
