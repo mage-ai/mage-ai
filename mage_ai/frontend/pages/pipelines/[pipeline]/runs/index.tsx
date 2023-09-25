@@ -47,7 +47,6 @@ import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import {
   CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID,
   PageNameEnum,
-  RETRY_INCOMPLETE_BLOCK_RUNS_UUID,
 } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { POPUP_MENU_WIDTH } from '@components/shared/Table/Toolbar/constants';
@@ -315,8 +314,12 @@ function PipelineRuns({
       uuid: 'retry_selected',
     },
     {
-      beforeIcon: <Refresh muted={!hasIncompletePipelineRun} />,
-      disabled: !hasIncompletePipelineRun,
+      beforeIcon: (
+        <Refresh
+          muted={!hasIncompletePipelineRun || hasRunningPipeline}
+        />
+      ),
+      disabled: !hasIncompletePipelineRun || hasRunningPipeline,
       label: () => 'Retry all incomplete block runs',
       onClick: () => updatePipeline({
         pipeline: {
@@ -324,7 +327,7 @@ function PipelineRuns({
         },
       }),
       openConfirmationDialogue: true,
-      uuid: RETRY_INCOMPLETE_BLOCK_RUNS_UUID,
+      uuid: PipelineStatusEnum.RETRY_INCOMPLETE_BLOCK_RUNS,
     },
     {
       beforeIcon: <AlertTriangle muted={selectedRunningRunsCount === 0} />,
