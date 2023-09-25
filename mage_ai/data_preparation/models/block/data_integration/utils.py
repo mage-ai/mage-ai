@@ -144,18 +144,43 @@ def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     ))
 
 
+def get_metadata_from_stream(stream: Dict) -> Dict:
+    md = stream.get('metadata', [])
+    return find(
+        lambda x: len(x.get('breadcrumb') or []) == 0,
+        md,
+    )
+
+
+def update_metadata_in_stream(stream: Dict, metadata_payload: Dict) -> Dict:
+    stream_use = stream.copy()
+
+    metadata = (get_metadata_from_stream(stream_use) or {}).copy()
+    if metadata:
+        md1 = metadata.get('metadata') or {}
+        metadata['metadata'] = merge_dict(
+            md1,
+            metadata_payload,
+        )
+        md_index = None
+        for idx, md in enumerate(stream_use.get('metadata') or []):
+            if len(md.get('breadcrumb') or []) == 0:
+                md_index = idx
+                break
+
+        stream_use['metadata'][md_index] = metadata
+
+    return stream_use
+
+
 def get_selected_streams(catalog: Dict) -> List[Dict]:
     streams = []
 
     if catalog:
         for stream in catalog.get('streams', []):
-            md = stream.get('metadata', [])
-            md_find = find(
-                lambda x: len(x.get('breadcrumb') or []) == 0,
-                md,
-            )
+            md_find = get_metadata_from_stream(stream)
 
-            if md_find.get('metadata', {}).get('selected'):
+            if not md_find or md_find.get('metadata', {}).get('selected'):
                 streams.append(stream)
 
     return streams

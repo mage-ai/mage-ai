@@ -71,8 +71,8 @@ import {
   isStreamSelected,
   updateStreamMetadata,
 } from '@utils/models/block';
-import { indexBy, remove, sortByKey } from '@utils/array';
-import { ignoreKeys } from '@utils/hash';
+import { groupBy, indexBy, remove, sortByKey } from '@utils/array';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
@@ -178,19 +178,40 @@ function DataIntegrationModal({
   ]);
 
   const updateStreamInCatalog =
-    useCallback((streamID: string, prev1) => setBlockAttributes(prev => {
-      const catalog = prev?.catalog || {};
-      const streams = catalog?.streams || [];
-      const mapping = indexBy(streams, getStreamID);
+    useCallback((stream: StreamType) => setBlockAttributes(prev => {
+      const id1 = getStreamID(stream);
+      const parentStream1 = stream?.parent_stream;
 
-      const stream = mapping?.[streamID];
-      mapping[streamID] = prev1(stream || {});
+      const catalog = prev?.catalog || {};
+      const streamsTemp = [...(catalog?.streams || [])];
+      const indexOfStream = streamsTemp?.findIndex((stream2: StreamType) => {
+        const id2 = getStreamID(stream2);
+        const parentStream2 = stream2?.parent_stream;
+
+        return id1 === id2 && parentStream1 === parentStream2;
+      });
+
+      let streamPrev = {};
+      if (indexOfStream >= 0) {
+        streamPrev = streamsTemp?.[indexOfStream];
+      }
+
+      const streamUpdated = {
+        ...streamPrev,
+        ...stream,
+      };
+
+      if (indexOfStream >= 0) {
+        streamsTemp[indexOfStream] = streamUpdated;
+      } else {
+        streamsTemp.push(streamUpdated);
+      }
 
       return {
         ...prev,
         catalog: {
           ...catalog,
-          streams: Object.values(mapping),
+          streams: streamsTemp,
         },
       };
     }), [
@@ -342,55 +363,111 @@ function DataIntegrationModal({
 
     const streamsCount = streams?.length || 0;
 
-    streams?.forEach((stream, idx: number) => {
+    const streamsWithNoParents = [];
+    const groups = {};
+    streams?.forEach((stream) => {
       const {
-        stream: streamID,
-        tap_stream_id: tapStreamID,
+        parent_stream: parentStream,
       } = stream;
-      const uuid = tapStreamID || streamID;
-      const isSelected = isStreamSelected(stream);
 
-      arr.push(
-        <Divider key={`${uuid}-divider-top`} light />
-      );
+      if (parentStream) {
+        if (!groups?.[parentStream]) {
+          groups[parentStream] = [];
+        }
+        groups[parentStream].push(stream);
+      } else {
+        streamsWithNoParents.push(stream);
+      }
+    });
 
-      arr.push(
-        <NavigationStyle
-          key={uuid}
-          selected={selectedMainNavigationTab === uuid}
-        >
-          <Link
-            block
-            noHoverUnderline
-            noOutline
-            onClick={() => setSelectedMainNavigationTab(uuid)}
-            preventDefault
-          >
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <Circle
-                  size={UNIT * 1}
-                  success={isSelected}
-                />
+    [
+      {
+        streams: streamsWithNoParents,
+      },
+      ...sortByKey(
+        Object.entries(groups),
+        ([k, v]) => k,
+      ).map(([k, v]) => ({
+        block: blocksMapping?.[k],
+        streams: v,
+      })),
+    ].forEach(({
+      block: blockInGroup,
+      streams: streamsInGroup,
+    }) => {
+      if (blockInGroup) {
+        const buuid = blockInGroup?.uuid;
 
-                <Spacing mr={2} />
-
-                <Flex flex={1}>
-                  <Text default={!isSelected} monospace>
-                    {uuid}
-                  </Text>
-                </Flex>
-              </FlexContainer>
-            </Spacing>
-          </Link>
-        </NavigationStyle>
-      );
-
-      if (idx === streamsCount - 1) {
         arr.push(
-          <Divider key={`${uuid}-divider-last`} light />
+          <Divider key={`block-${buuid}-divider-top`} light />
+        );
+
+        arr.push(
+          <Spacing
+            key={`block-${buuid}`}
+            px={PADDING_UNITS}
+            py={1}
+          >
+            <Text
+              bold
+              color={getColorsForBlockType(blockInGroup?.type, {
+                blockColor: blockInGroup?.color,
+              }).accent}
+              monospace
+              small
+            >
+              {buuid}
+            </Text>
+          </Spacing>
         );
       }
+
+      streamsInGroup?.forEach((stream, idx: number) => {
+        const uuid = getStreamID(stream);
+        const isSelected = isStreamSelected(stream);
+
+        arr.push(
+          <Divider key={`${uuid}-divider-top`} light />
+        );
+
+        arr.push(
+          <NavigationStyle
+            key={uuid}
+            selected={selectedMainNavigationTab === uuid}
+          >
+            <Link
+              block
+              noHoverUnderline
+              noOutline
+              onClick={() => setSelectedMainNavigationTab(uuid)}
+              preventDefault
+            >
+              <Spacing p={PADDING_UNITS}>
+                <FlexContainer alignItems="center">
+                  <Circle
+                    size={UNIT * 1}
+                    success={isSelected}
+                  />
+
+                  <Spacing mr={2} />
+
+                  <Flex flex={1}>
+                    <Text default={!isSelected} monospace>
+                      {uuid}
+                    </Text>
+                  </Flex>
+                </FlexContainer>
+              </Spacing>
+            </Link>
+          </NavigationStyle>
+        );
+
+        if (idx === streamsCount - 1) {
+          arr.push(
+            <Divider key={`${uuid}-divider-last`} light />
+          );
+        }
+      });
     });
 
     return (
@@ -399,33 +476,85 @@ function DataIntegrationModal({
       </>
     );
   }, [
+    blocksMapping,
     selectedMainNavigationTab,
     setSelectedMainNavigationTab,
     streams,
   ]);
 
-  const [streamsFetched, setStreamsFetched] = useState<StreamType[]>(null);
-  const streamsFetchedMapping: {
-    [stream: string]: StreamType;
-  } = useMemo(() => indexBy(streamsFetched || [], ({ stream, tap_stream_id: i }) => stream || id),
-  [
-    streamsFetched,
-  ]);
+  const buildStreamMapping: {
+    noParents: {
+      [stream: string]: StreamType;
+    };
+    parents: {
+      [stream: string]: StreamType;
+    };
+  } = useCallback((streamsArr: StreamType[], existingMapping?: {
+    noParents: {
+      [stream: string]: StreamType;
+    };
+    parents: {
+      [stream: string]: StreamType;
+    };
+  }) => {
+    const {
+      noParents: noParentsExisting,
+      parents: parentsExisting,
+    } = existingMapping || {};
+    const mapping = {
+      noParents: {},
+      parents: {},
+    };
+
+    (streamsArr || [])?.forEach((stream: StreamType) => {
+      const parentStream = stream?.parent_stream;
+      const id = getStreamID(stream);
+      if (parentStream) {
+        if (!parentsExisting?.[parentStream]?.[id]) {
+          if (!mapping.parents[parentStream]) {
+            mapping.parents[parentStream] = {};
+          }
+
+          mapping.parents[parentStream][id] = stream;
+        }
+      } else {
+        if (!noParentsExisting?.[id]) {
+          mapping.noParents[id] = stream;
+        }
+      }
+    });
+
+    return mapping;
+  }, []);
+
   const streamsFromCatalogMapping: {
-    [stream: string]: StreamType;
-  } = useMemo(() => indexBy(
-    streams || [],
-    ({ stream, tap_stream_id: i }) => stream || id),
-  [
+    noParents: {
+      [stream: string]: StreamType;
+    };
+    parents: {
+      [stream: string]: StreamType;
+    };
+  } = useMemo(() => buildStreamMapping(streams), [
     streams,
   ]);
-  const streamIDCombined: string[] = useMemo(() => {
-    const streamSet = new Set(Object.keys(
-      streamsFetchedMapping || {},
-    ).concat(Object.keys(streamsFromCatalogMapping || {})));
 
-    return sortByKey(Array.from(streamSet), streamID => streamID);
-  }, [
+  const [streamsFetched, setStreamsFetched] = useState<StreamType[]>(null);
+  const streamsFetchedMapping: {
+    noParents: {
+      [stream: string]: StreamType;
+    };
+    parents: {
+      [stream: string]: StreamType;
+    };
+  } = useMemo(() => buildStreamMapping(streamsFetched, streamsFromCatalogMapping), [
+    streamsFetched,
+    streamsFromCatalogMapping,
+  ]);
+
+  const noStreamsAnywhere: boolean = useMemo(() => [
+    ...Object.values(streamsFetchedMapping || {}),
+    ...Object.values(streamsFromCatalogMapping || {}),
+  ].every(mapping => isEmptyObject(mapping)), [
     streamsFetchedMapping,
     streamsFromCatalogMapping,
   ]);
@@ -450,7 +579,7 @@ function DataIntegrationModal({
 
             setStreamsFetched(streamsInit);
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => showError({
             errors,
             response,
           }),
@@ -458,6 +587,7 @@ function DataIntegrationModal({
       ),
     },
   );
+
   const fetchIntegrationSource = useCallback(() => fetchIntegrationSourceInit({
     integration_source: {
       block_uuid: blockUUID,
@@ -517,7 +647,7 @@ function DataIntegrationModal({
               </Button>
             )}
 
-            {streamIDCombined?.length >= 1 && (
+            {!noStreamsAnywhere && (
               <Spacing px={PADDING_UNITS}>
                 <Button
                   compact
@@ -539,13 +669,13 @@ function DataIntegrationModal({
     blockUUID,
     fetchIntegrationSource,
     isLoadingFetchIntegrationSource,
+    noStreamsAnywhere,
     refSubheader,
     searchText,
     selectedMainNavigationTab,
     selectedSubTab,
     setSearchText,
     setSelectedSubTab,
-    streamIDCombined,
     subtabs,
   ]);
 
@@ -645,6 +775,19 @@ function DataIntegrationModal({
       ),
     },
   );
+
+  const filterStreams: SteamType[] =
+    useCallback((arr: StreamType[]) => arr?.filter((s: StreamType) => {
+      const re = new RegExp(searchText || '', 'i');
+      const id = getStreamID(s);
+
+      return !searchText
+        || id?.match(re)
+        || id?.replace('_', ' ').match(re)
+        || id?.replace('-', ' ').match(re)
+    }), [
+      searchText,
+    ]);
 
   const mainContentEl = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab) {
@@ -1127,7 +1270,7 @@ function DataIntegrationModal({
         );
       }
     } else if (MainNavigationTabEnum.STREAMS === selectedMainNavigationTab) {
-      if (!streamIDCombined?.length) {
+      if (noStreamsAnywhere) {
         return (
           <Spacing p={PADDING_UNITS}>
             <Button
@@ -1142,55 +1285,148 @@ function DataIntegrationModal({
         );
       }
 
-      const re = new RegExp(searchText || '', 'i');
-      const streamIDsFiltered =
-        streamIDCombined?.filter(i => !searchText
-          || i?.match(re)
-          || i?.replace('_', ' ').match(re)
-          || i?.replace('-', ' ').match(re)
-        );
+      const groups = [];
+
+      // Even if it’s a source block, don’t merge the newly fetched stream
+      // with the stream that is already in the catalog.
+
+      // Source blocks don’t care about parent stream
+      const titleFromFetched = 'Recently fetched';
+      const titleFromCatalog = 'Already in block';
+
+      if (BlockTypeEnum.DATA_LOADER === blockType) {
+        [
+          [titleFromFetched, streamsFetchedMapping],
+          [titleFromCatalog, streamsFromCatalogMapping],
+        ].forEach(([title, mapping]) => {
+          const arr1 = Object.values(mapping?.noParents || {});
+          const arr2 = Object.values(mapping?.parents || {});
+          const arr3 = arr1.concat(arr2);
+          const arr4 = filterStreams(arr);
+
+          if (arr4?.length >= 1) {
+            groups.push({
+              subgroups: arr4?.map((arr5) => ({
+                streams: arr5,
+              })),
+              title,
+            });
+          }
+        });
+      } else {
+        [
+          [titleFromFetched, streamsFetchedMapping],
+          [titleFromCatalog, streamsFromCatalogMapping],
+        ].forEach(([title, mapping]) => {
+          const subgroups = [];
+
+          [
+            [null, mapping?.noParents || {}],
+            ...Object.entries(mapping?.parents || {}),
+          ].forEach(([key, mapping2]) => {
+            const arr4 = filterStreams(Object.values(mapping2));
+
+            if (arr4?.length >= 1) {
+              subgroups.push({
+                block: blocksMapping?.[key],
+                streams: arr4,
+              });
+            }
+          });
+
+          if (subgroups?.length >= 1) {
+            groups.push({
+              subgroups,
+              title,
+            });
+          }
+        });
+      }
 
       return (
         <>
-          <Spacing p={1}>
-            <FlexContainer alignItems="center" flexWrap="wrap">
-              {streamIDsFiltered?.map((streamID: string) => {
-                const stream = streamsFromCatalogMapping?.[streamID]
-                  || streamsFetchedMapping?.[streamID];
+          {groups?.map(({
+            subgroups,
+            title,
+          }, idx1: number) => (
+            <Spacing key={title} pt={idx1 === 0 ? PADDING_UNITS : 1}>
+              {idx1 >= 1 && (
+                <Spacing pb={PADDING_UNITS}>
+                  <Divider light />
+                </Spacing>
+              )}
 
-                const selected = !!stream && isStreamSelected(stream);
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={4}>
+                  {title}
+                </Headline>
+              </Spacing>
 
-                return (
-                  <StreamGridStyle
-                    key={streamID}
-                    onClick={() => updateStreamInCatalog(streamID, prev => updateStreamMetadata(stream, {
-                      selected: !selected,
-                    }))}
-                    selected={selected}
-                  >
-                    <FlexContainer alignItems="center" justifyContent="space-between">
-                      <Flex flex={1}>
-                        <Text bold monospace muted={!selected}>
-                          {streamID}
-                        </Text>
-                      </Flex>
+              {subgroups?.map(({
+                block: blockParent,
+                streams: streamsSubgroup,
+              }, idx2: number) => (
+                <Spacing
+                  key={blockParent ? blockParent?.uuid : `no-subtitle-${idx2}`}
+                  mt={(blockParent && idx2 === 0) ? PADDING_UNITS : 1}
+                >
+                  {blockParent && (
+                    <Spacing px={PADDING_UNITS}>
+                      <Text
+                        bold
+                        color={getColorsForBlockType(blockParent?.type, {
+                          blockColor: blockParent?.color,
+                        })?.accent}
+                        default
+                        large
+                        monospace
+                      >
+                        {blockParent?.uuid}
+                      </Text>
+                    </Spacing>
+                  )}
 
-                      <Spacing mr={UNITS_BETWEEN_SECTIONS} />
+                  <Spacing p={1}>
+                    <FlexContainer alignItems="center" flexWrap="wrap">
+                      {streamsSubgroup?.map((stream: StreamType) => {
+                        const selected = !!stream && isStreamSelected(stream);
+                        const streamID = getStreamID(stream);
 
-                      {selected && <Settings size={2 * UNIT} />}
+                        return (
+                          <StreamGridStyle
+                            key={streamID}
+                            onClick={() => updateStreamInCatalog(updateStreamMetadata(stream, {
+                              selected: !selected,
+                            }))}
+                            selected={selected}
+                          >
+                            <FlexContainer alignItems="center" justifyContent="space-between">
+                              <Flex flex={1}>
+                                <Text bold monospace muted={!selected}>
+                                  {streamID}
+                                </Text>
+                              </Flex>
 
-                      <Spacing mr={selected ? 1 : 3} />
+                              <Spacing mr={UNITS_BETWEEN_SECTIONS} />
 
-                      <ToggleSwitch
-                        checked={selected}
-                        compact
-                      />
+                              {selected && <Settings size={2 * UNIT} />}
+
+                              <Spacing mr={selected ? 1 : 3} />
+
+                              <ToggleSwitch
+                                checked={selected}
+                                compact
+                              />
+                            </FlexContainer>
+                          </StreamGridStyle>
+                        );
+                      })}
                     </FlexContainer>
-                  </StreamGridStyle>
-                );
-              })}
-            </FlexContainer>
-          </Spacing>
+                  </Spacing>
+                </Spacing>
+              ))}
+            </Spacing>
+          ))}
         </>
       );
     }
@@ -1206,16 +1442,16 @@ function DataIntegrationModal({
     dataIntegrationConfiguration,
     dataIntegrationType,
     fetchIntegrationSource,
+    filterStreams,
     isLoadingFetchIntegrationSource,
     isLoadingTestConnection,
+    noStreamsAnywhere,
     pipelineUUID,
-    searchText,
     selectedMainNavigationTab,
     selectedSubTab,
     setBlockConfig,
     setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
-    streamIDCombined,
     streamsFetched,
     streamsFetchedMapping,
     streamsFromCatalogMapping,

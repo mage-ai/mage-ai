@@ -160,18 +160,31 @@ export function getStreamMetadata(stream: StreamType): StreamType {
 
 export function updateStreamMetadata(streamInit: StreamType, payload): StreamType {
   const stream = { ...streamInit };
+  if (!stream?.metadata) {
+    stream.metadata = [];
+  }
+
   const index = stream?.metadata?.findIndex(({ breadcrumb }) => breadcrumb?.length === 0);
 
+  let metadata = {
+    breadcrumb: [],
+  };
   if (index >= 0) {
-    const metadata = getStreamMetadata(stream) || {};
+    metadata = getStreamMetadata(stream) || {};
+  }
 
-    stream.metadata[index] = {
-      ...metadata,
-      metadata: {
-        ...metadata?.metadata,
-        ...payload,
-      },
-    };
+  const metadataUpdated = {
+    ...metadata,
+    metadata: {
+      ...metadata?.metadata,
+      ...payload,
+    },
+  };
+
+  if (index >= 0) {
+    stream.metadata[index] = metadataUpdated;
+  } else {
+    stream.metadata.push(metadataUpdated);
   }
 
   return stream;

@@ -99,6 +99,7 @@ export interface StreamType {
   disable_column_type_check?: boolean;
   key_properties: string[];
   metadata: MetadataType[];
+  parent_stream?: string;
   partition_keys: string[];
   replication_key: string;
   replication_method: ReplicationMethodEnum;

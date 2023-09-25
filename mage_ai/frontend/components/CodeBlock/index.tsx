@@ -2109,6 +2109,7 @@ function CodeBlock({
                 && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
                 && !isStreamingPipeline
                 && !replicatedBlockUUID
+                && !isDataIntegration
                 && (
                 <CodeHelperStyle normalPadding>
                   <Spacing mr={1}>
