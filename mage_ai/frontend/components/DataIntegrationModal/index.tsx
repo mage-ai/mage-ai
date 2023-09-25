@@ -46,6 +46,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getSelectedStreams, isStreamSelected } from '@utils/models/block';
 import { indexBy, remove } from '@utils/array';
 import { ignoreKeys } from '@utils/hash';
@@ -198,7 +199,7 @@ function DataIntegrationModal({
     uuid: componentUUID,
   });
 
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 40));
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(Math.max(
     get(localStorageKeyBefore),
@@ -417,12 +418,11 @@ function DataIntegrationModal({
   ]);
 
   const blockContentParsed = useMemo(() => {
-    if (BlockLanguageEnum.YAML === blockLanguage) {
+    if (BlockLanguageEnum.YAML === blockLanguage && blockContent) {
       return parse(blockContent);
     }
 
     return {};
-
   }, [
     blockContent,
     blockLanguage,
@@ -459,8 +459,9 @@ function DataIntegrationModal({
   const mainContentEl = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab) {
       if (SubTabEnum.CREDENTIALS === selectedSubTab) {
+        let codeEl;
         if (BlockLanguageEnum.YAML === blockLanguage) {
-          return (
+          codeEl = (
             <CodeEditorStyle>
               <CodeEditor
                 autoHeight
@@ -479,129 +480,140 @@ function DataIntegrationModal({
             </CodeEditorStyle>
           );
         } else if (BlockLanguageEnum.PYTHON === blockLanguage) {
-          const inputs = dataIntegrationConfiguration?.inputs || {};
-          const inputsBlocks = blockUpstreamBlocks?.reduce((acc, b) => {
-            const {
-              uuid,
-            } = b;
-            const input = inputs?.[uuid];
-            if (!input) {
-              return acc;
-            }
-
-            return acc.concat({
-              block: b,
-              input,
-            })
-          }, []);
-
-          return (
-            <>
-              <Spacing p={PADDING_UNITS}>
-                <Text bold default large>
-                  Inputs from upstream blocks
-                </Text>
-
-                {inputsBlocks?.length === 0 && (
-                  <Spacing mt={1}>
-                    <Text muted>
-                      No inputs are selected.
-                      Toggle the upstream blocks in the <Link
-                        bold
-                        onClick={() => setSelectedSubTab(SubTabEnum.UPSTREAM_BLOCK_SETTINGS)}
-                        preventDefault
-                      >
-                        Upstream block settings
-                      </Link> to enable its output data as an input.
-                    </Text>
-                  </Spacing>
-                )}
-              </Spacing>
-
-              {inputsBlocks?.length >= 1 && (
-                <Table
-                  columnFlex={[1, null, 1, null, null]}
-                  columns={[
-                    {
-                      uuid: 'Block',
-                    },
-                    {
-                      center: true,
-                      uuid: 'Catalog',
-                    },
-                    {
-                      center: true,
-                      uuid: 'Streams',
-                    },
-                    {
-                      center: true,
-                      uuid: 'Argument shape',
-                    },
-                    {
-                      center: true,
-                      uuid: 'Order',
-                    },
-                  ]}
-                  rows={inputsBlocks?.map(({
-                    block: {
-                      uuid,
-                    },
-                    input: {
-                      catalog,
-                      streams,
-                    },
-                  }, idx: number) => {
-                    const hasStreams = streams?.length >= 1;
-
-                    return [
-                      <Text key={`block-${uuid}`} monospace>
-                        {uuid}
-                      </Text>,
-                      <FlexContainer justifyContent="center" key={`catalog-${uuid}`}>
-                        {catalog
-                          ? <Check success />
-                          : <Close muted />
-                        }
-                      </FlexContainer>,
-                      <FlexContainer justifyContent="center" key={`selected-streams-${uuid}`}>
-                        {!hasStreams && <Close key={`catalog-${uuid}`} muted />}
-                        {hasStreams && streams?.includes(uuid)
-                          ? <Check success />
-                          : (
-                            <Text center default monospace small>
-                              {streams?.join(', ')}
-                            </Text>
-                          )
-                        }
-                      </FlexContainer>,
-                      <Text center default key={`shape-${uuid}`} monospace>
-                        {catalog && !hasStreams && 'Dict'}
-                        {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
-                        {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}
-                      </Text>,
-                      <Text center default key={`position-${uuid}`} monospace>
-                        {idx}
-                      </Text>,
-                    ];
-                  })}
-                />
-              )}
-
-              <CodeEditorStyle>
-                <CodeEditor
-                  autoHeight
-                  language={blockLanguage}
-                  onChange={(val: string) => {
-                    onChangeCodeBlock?.(blockType, blockUUID, val);
-                  }}
-                  tabSize={4}
-                  value={blockContent}
-                  width="100%"
-                />
-              </CodeEditorStyle>
-            </>
+          codeEl = (
+            <CodeEditorStyle>
+              <CodeEditor
+                autoHeight
+                language={blockLanguage}
+                onChange={(val: string) => {
+                  onChangeCodeBlock?.(blockType, blockUUID, val);
+                }}
+                tabSize={4}
+                value={blockContent}
+                width="100%"
+              />
+            </CodeEditorStyle>
           );
         }
+
+        const inputs = dataIntegrationConfiguration?.inputs || {};
+        const inputsBlocks = blockUpstreamBlocks?.reduce((acc, b) => {
+          const {
+            uuid,
+          } = b;
+          const input = inputs?.[uuid];
+          if (!input) {
+            return acc;
+          }
+
+          return acc.concat({
+            block: b,
+            input,
+          })
+        }, []);
+
+        return (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <Text bold default large>
+                Inputs from upstream blocks
+              </Text>
+
+              {inputsBlocks?.length === 0 && (
+                <Spacing mt={1}>
+                  <Text muted>
+                    No inputs are selected.
+                    Toggle the upstream blocks in the <Link
+                      bold
+                      onClick={() => setSelectedSubTab(SubTabEnum.UPSTREAM_BLOCK_SETTINGS)}
+                      preventDefault
+                    >
+                      Upstream block settings
+                    </Link> to enable its output data as an input.
+                  </Text>
+                </Spacing>
+              )}
+            </Spacing>
+
+            {inputsBlocks?.length >= 1 && (
+              <Table
+                columnFlex={[1, null, 1, null, null]}
+                columns={[
+                  {
+                    uuid: 'Block',
+                  },
+                  {
+                    center: true,
+                    uuid: 'Catalog',
+                  },
+                  {
+                    center: true,
+                    uuid: 'Streams',
+                  },
+                  {
+                    center: true,
+                    uuid: 'Argument shape',
+                  },
+                  {
+                    center: true,
+                    uuid: 'Order',
+                  },
+                ]}
+                rows={inputsBlocks?.map(({
+                  block: {
+                    color,
+                    type: bType,
+                    uuid,
+                  },
+                  input: {
+                    catalog,
+                    streams,
+                  },
+                }, idx: number) => {
+                  const hasStreams = streams?.length >= 1;
+                  const {
+                    accent,
+                  } = getColorsForBlockType(bType, {
+                    blockColor: color,
+                  });
+
+                  return [
+                    <Text color={accent} key={`block-${uuid}`} monospace>
+                      {uuid}
+                    </Text>,
+                    <FlexContainer justifyContent="center" key={`catalog-${uuid}`}>
+                      {catalog
+                        ? <Check success />
+                        : <Close muted />
+                      }
+                    </FlexContainer>,
+                    <FlexContainer justifyContent="center" key={`selected-streams-${uuid}`}>
+                      {!hasStreams && <Close key={`catalog-${uuid}`} muted />}
+                      {hasStreams && streams?.includes(uuid)
+                        ? <Check success />
+                        : (
+                          <Text center default monospace small>
+                            {streams?.join(', ')}
+                          </Text>
+                        )
+                      }
+                    </FlexContainer>,
+                    <Text center default key={`shape-${uuid}`} monospace>
+                      {catalog && !hasStreams && 'Dict'}
+                      {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
+                      {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}
+                    </Text>,
+                    <Text center default key={`position-${uuid}`} monospace>
+                      {idx}
+                    </Text>,
+                  ];
+                })}
+              />
+            )}
+
+            {codeEl}
+          </>
+        );
       } else if (SubTabEnum.UPSTREAM_BLOCK_SETTINGS === selectedSubTab) {
         const rows = blockUpstreamBlocks?.map(({
           uuid,
