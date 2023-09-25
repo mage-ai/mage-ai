@@ -27,7 +27,9 @@ class EmrConfig(BaseConfig):
     ec2_key_name: str = None
     master_security_group: str = None
     slave_security_group: str = None
+    master_instance_count: int = 1
     master_instance_type: str = DEFAULT_INSTANCE_TYPE
+    slave_instance_count: int = 1
     slave_instance_type: str = DEFAULT_INSTANCE_TYPE
     scaling_policy: EmrScalingPocliy = None
 
@@ -46,7 +48,7 @@ class EmrConfig(BaseConfig):
                     Market=market,
                     InstanceRole='MASTER',
                     InstanceType=self.master_instance_type,
-                    InstanceCount=1,
+                    InstanceCount=self.master_instance_count,
                     Configurations=[
                         {
                             'Classification': 'spark-defaults',
@@ -67,7 +69,7 @@ class EmrConfig(BaseConfig):
                     Market=market,
                     InstanceRole='CORE',
                     InstanceType=self.slave_instance_type,
-                    InstanceCount=1,
+                    InstanceCount=self.slave_instance_count,
                     Configurations=[
                         {
                             'Classification': 'spark-defaults',
