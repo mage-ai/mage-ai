@@ -123,6 +123,9 @@ const ContainerStyle = styled.div<{
   maxWidth?: number;
   visible?: boolean;
 }>`
+  display: flex;
+  align-items: center;
+
   .label-enter {
     opacity: 0;
     transform: translate(0, ${UNIT}px);

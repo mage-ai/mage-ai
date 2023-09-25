@@ -49,17 +49,22 @@ export const NavigationStyle = styled.div<{
 
 export const StreamGridStyle = styled.div<{
   selected?: boolean;
+  warning?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   padding: ${PADDING_UNITS * UNIT}px;
   margin: ${1 * UNIT}px;
 
-  &:hover {
-    cursor: pointer;
-  }
-
-  ${props => `
+  ${props => !props.warning && `
     border: 1px solid ${(props.theme.borders || dark.borders).light};
+
+    &:hover {
+      cursor: pointer;
+    }
+  `}
+
+  ${props => props.warning && `
+    border: 1px solid ${(props.theme.accent || dark.accent).warning};
   `}
 
   ${props => props.selected && `

@@ -71,7 +71,7 @@ import {
   isStreamSelected,
   updateStreamMetadata,
 } from '@utils/models/block';
-import { groupBy, indexBy, remove, sortByKey } from '@utils/array';
+import { equals, groupBy, indexBy, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
@@ -546,9 +546,69 @@ function DataIntegrationModal({
     parents: {
       [stream: string]: StreamType;
     };
-  } = useMemo(() => buildStreamMapping(streamsFetched, streamsFromCatalogMapping), [
+  } = useMemo(() => buildStreamMapping(streamsFetched), [
     streamsFetched,
-    streamsFromCatalogMapping,
+  ]);
+
+  const getStreamFromFetchedMapping: StreamType = useCallback((
+    stream: StreamType,
+  ) => {
+    const parentStream = stream?.parent_stream;
+    const id = getStreamID(stream);
+
+    if (parentStream) {
+      return streamsFetchedMapping?.parents?.[parentStream]?.[id];
+    }
+
+    return streamsFetchedMapping?.noParents?.[id];
+  }, [streamsFetchedMapping]);
+  const getStreamFromBlockCatalogMapping: StreamType = useCallback((
+    stream: StreamType,
+  ) => {
+    const parentStream = stream?.parent_stream;
+    const id = getStreamID(stream);
+
+    if (parentStream) {
+      return streamsFromCatalogMapping?.parents?.[parentStream]?.[id];
+    }
+
+    return streamsFromCatalogMapping?.noParents?.[id];
+  }, [streamsFromCatalogMapping]);
+
+  const isStreamFetchedAndInBlockCatalog: boolean =
+    useCallback((stream: StreamType) => !!getStreamFromFetchedMapping(stream)
+        && !!getStreamFromBlockCatalogMapping(stream),
+    [
+      getStreamFromFetchedMapping,
+      getStreamFromBlockCatalogMapping,
+    ]);
+
+  const isStreamFetchedDifferentThanInBlockCatalog: boolean = useCallback((
+    stream: StreamType,
+  ) => {
+    const s1 = getStreamFromFetchedMapping(stream)?.schema?.properties || {};
+    const s2 = getStreamFromBlockCatalogMapping(stream)?.schema?.properties || {};
+
+    const c1 = Object.keys(s1) || [];
+    const c2 = Object.keys(s2) || [];
+
+    // If there are more columns from fetched stream, then they are different.
+    if (c1?.length > c2?.length) {
+      return true;
+    }
+
+    const set2 = new Set(c2)
+
+    // If there is at least 1 column in fetched stream that isn’t in block catalog...
+    const set1 = new Set([...c1].filter(([col,]) => !set2.has(col)));
+    if (set1.size >= 1) {
+      return true;
+    }
+
+    return c1.some((col: string) => !equals(s1?.[col]?.type, s2?.[col]?.type));
+  }, [
+    getStreamFromFetchedMapping,
+    getStreamFromBlockCatalogMapping,
   ]);
 
   const noStreamsAnywhere: boolean = useMemo(() => [
@@ -1285,6 +1345,25 @@ function DataIntegrationModal({
         );
       }
 
+      const buildArray = arr => arr?.reduce((acc, stream: StreamType) => {
+        const existsInBothPlaces =
+          isStreamFetchedAndInBlockCatalog(stream);
+        const isDifferent =
+          isStreamFetchedDifferentThanInBlockCatalog(stream);
+
+        // Don’t show
+        if (existsInBothPlaces && !isDifferent) {
+          return acc;
+        } else if (existsInBothPlaces && isDifferent) {
+          return acc.concat({
+            ...stream,
+            isDifferent,
+          });
+        }
+
+        return acc.concat(stream);
+      }, []);
+
       const groups = [];
 
       // Even if it’s a source block, don’t merge the newly fetched stream
@@ -1296,28 +1375,31 @@ function DataIntegrationModal({
 
       if (BlockTypeEnum.DATA_LOADER === blockType) {
         [
-          [titleFromFetched, streamsFetchedMapping],
-          [titleFromCatalog, streamsFromCatalogMapping],
-        ].forEach(([title, mapping]) => {
+          [titleFromFetched, streamsFetchedMapping, true],
+          [titleFromCatalog, streamsFromCatalogMapping, false],
+        ].forEach(([title, mapping, isFetchedGroup]) => {
           const arr1 = Object.values(mapping?.noParents || {});
           const arr2 = Object.values(mapping?.parents || {});
           const arr3 = arr1.concat(arr2);
-          const arr4 = filterStreams(arr);
+          const arr4 = filterStreams(arr3);
+
 
           if (arr4?.length >= 1) {
             groups.push({
-              subgroups: arr4?.map((arr5) => ({
-                streams: arr5,
-              })),
+              subgroups: [
+                {
+                  streams: isFetchedGroup ? buildArray(arr4) : arr4,
+                },
+              ],
               title,
             });
           }
         });
       } else {
         [
-          [titleFromFetched, streamsFetchedMapping],
-          [titleFromCatalog, streamsFromCatalogMapping],
-        ].forEach(([title, mapping]) => {
+          [titleFromFetched, streamsFetchedMapping, true],
+          [titleFromCatalog, streamsFromCatalogMapping, false],
+        ].forEach(([title, mapping, isFetchedGroup]) => {
           const subgroups = [];
 
           [
@@ -1329,13 +1411,14 @@ function DataIntegrationModal({
             if (arr4?.length >= 1) {
               subgroups.push({
                 block: blocksMapping?.[key],
-                streams: arr4,
+                streams: isFetchedGroup ? buildArray(arr4) : arr4,
               });
             }
           });
 
           if (subgroups?.length >= 1) {
             groups.push({
+              isFetchedGroup,
               subgroups,
               title,
             });
@@ -1346,6 +1429,7 @@ function DataIntegrationModal({
       return (
         <>
           {groups?.map(({
+            isFetchedGroup,
             subgroups,
             title,
           }, idx1: number) => (
@@ -1388,35 +1472,73 @@ function DataIntegrationModal({
 
                   <Spacing p={1}>
                     <FlexContainer alignItems="center" flexWrap="wrap">
-                      {streamsSubgroup?.map((stream: StreamType) => {
+                      {streamsSubgroup?.map((stream: StreamType & {
+                        isDifferent?: boolean;
+                      }) => {
+                        const isDifferent = stream?.isDifferent;
                         const selected = !!stream && isStreamSelected(stream);
                         const streamID = getStreamID(stream);
 
                         return (
                           <StreamGridStyle
                             key={streamID}
-                            onClick={() => updateStreamInCatalog(updateStreamMetadata(stream, {
-                              selected: !selected,
-                            }))}
+                            onClick={isDifferent
+                              ? () => false
+                              : () => updateStreamInCatalog(updateStreamMetadata(stream, {
+                                selected: !selected,
+                              }))
+                            }
                             selected={selected}
+                            warning={isDifferent}
                           >
-                            <FlexContainer alignItems="center" justifyContent="space-between">
+                            <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
                               <Flex flex={1}>
                                 <Text bold monospace muted={!selected}>
                                   {streamID}
                                 </Text>
                               </Flex>
 
-                              <Spacing mr={UNITS_BETWEEN_SECTIONS} />
+                              {isDifferent && (
+                                <>
+                                  <Spacing mr={1} />
 
-                              {selected && <Settings size={2 * UNIT} />}
+                                  <Text warning>
+                                    stream already exists
+                                  </Text>
 
-                              <Spacing mr={selected ? 1 : 3} />
+                                  <Spacing mr={1} />
 
-                              <ToggleSwitch
-                                checked={selected}
-                                compact
-                              />
+                                  <Flex alignItems="center" style={{ height: 3 * UNIT }}>
+                                    <Button
+                                      compact
+                                      small
+                                    >
+                                      Merge and update
+                                    </Button>
+                                  </Flex>
+                                </>
+                              )}
+
+                              {!isDifferent && (
+                                <>
+                                  <Spacing mr={UNITS_BETWEEN_SECTIONS} />
+
+                                  {selected && <Settings size={2 * UNIT} />}
+
+                                  <Spacing mr={selected ? 1 : 3} />
+
+                                  <Flex alignItems="center" style={{ height: 3 * UNIT }}>
+                                    <ToggleSwitch
+                                      checked={selected}
+                                      compact
+                                      onClick={() => updateStreamInCatalog(updateStreamMetadata(stream, {
+                                        selected: !selected,
+                                      }))}
+                                    />
+                                  </Flex>
+                                </>
+                              )}
+
                             </FlexContainer>
                           </StreamGridStyle>
                         );
@@ -1445,6 +1567,8 @@ function DataIntegrationModal({
     filterStreams,
     isLoadingFetchIntegrationSource,
     isLoadingTestConnection,
+    isStreamFetchedAndInBlockCatalog,
+    isStreamFetchedDifferentThanInBlockCatalog,
     noStreamsAnywhere,
     pipelineUUID,
     selectedMainNavigationTab,
