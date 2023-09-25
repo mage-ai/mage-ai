@@ -743,19 +743,24 @@ WHERE table_id = '{table_name}'
         full_table_name: str,
         df: pd.DataFrame,
     ):
-        # schema_fields = []
-        # for col, obj in mapping.items():
-        #     item_type_converted = obj['item_type_converted']
-        #     type_converted = obj['type_converted']
-        #     is_array_type = COLUMN_TYPE_ARRAY == obj['type']
-        #     schema_field = bigquery.SchemaField(
-        #         name=col,
-        #         field_type=item_type_converted if is_array_type else type_converted,
-        #         mode='REPEATED' if is_array_type else 'NULLABLE',
-        #     )
-        #     schema_fields.append(schema_field)
+        schema_fields = []
+        source_format = bigquery.SourceFormat.PARQUET
+        for col, obj in mapping.items():
+            item_type_converted = obj['item_type_converted']
+            type_converted = obj['type_converted']
+            if type_converted == 'JSON':
+                # JSON format is not supported in PARQUET
+                source_format = bigquery.SourceFormat.CSV
+            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
+            schema_field = bigquery.SchemaField(
+                name=col,
+                field_type=item_type_converted if is_array_type else type_converted,
+                mode='REPEATED' if is_array_type else 'NULLABLE',
+            )
+            schema_fields.append(schema_field)
         job_config = bigquery.LoadJobConfig(
-            # schema=schema_fields,
+            schema=schema_fields,
+            source_format=source_format,
         )
         job = client.load_table_from_dataframe(
             df,
