@@ -46,7 +46,7 @@ from mage_integrations.utils.logger.constants import (
 )
 
 LOGGER = singer.get_logger()
-MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
+MAXIMUM_BATCH_SIZE_MB = 100
 
 
 class Destination():
@@ -248,15 +248,26 @@ class Destination():
 
         self.logger.info(f'{self.__class__.__name__} process record completed.', tags=tags)
 
-    def process_record_data(self, record_data: List[Dict], stream: str) -> None:
+    def process_record_data(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = None,
+    ) -> None:
+        if tags is None:
+            tags = {}
+
         batch_data = [dict(
             record=self.__validate_and_prepare_record(**rd),
             stream=stream,
         ) for rd in record_data]
 
-        tags = dict(
-            records=len(batch_data),
-            stream=stream,
+        tags = merge_dict(
+            tags,
+            dict(
+                records=len(batch_data),
+                stream=stream,
+            ),
         )
 
         self.logger.info(
@@ -265,7 +276,11 @@ class Destination():
         )
 
         if len(batch_data) >= 1:
-            self.export_batch_data(batch_data, stream)
+            self.export_batch_data(
+                batch_data,
+                stream,
+                tags=tags,
+            )
 
             self.logger.info(
                 f'{self.__class__.__name__} process record data for stream {stream} completed.',
@@ -493,7 +508,8 @@ class Destination():
                 if record_data:
                     current_byte_size += sys.getsizeof(json.dumps(record_data))
 
-                    if current_byte_size >= MAXIMUM_BATCH_BYTE_SIZE:
+                    if current_byte_size >= self.config.get(
+                            'maximum_batch_size_mb', MAXIMUM_BATCH_SIZE_MB) * 1024 * 1024:
                         self.__process_batch_set(
                             batches_by_stream,
                             final_record_data,
@@ -540,7 +556,11 @@ class Destination():
                 # If there is an error with a stream, catch error so that state can still
                 # be persisted for previously successfully streams
                 try:
-                    self.process_record_data(record_data, stream)
+                    self.process_record_data(
+                        record_data,
+                        stream,
+                        tags=tags,
+                    )
                     final_record_data = record_data[-1]
 
                     states = batches['state_data']
