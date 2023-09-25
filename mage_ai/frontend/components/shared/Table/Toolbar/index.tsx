@@ -379,7 +379,7 @@ function Toolbar({
               greyBorder
               loading={isLoadingExtraAction}
               onClick={openExtraActionConfirmDialogue
-                ? () => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.SECONDARY)
+                ? () => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.FIRST)
                 : onExtraActionClick
               }
               smallIcon
@@ -390,7 +390,7 @@ function Toolbar({
           </Tooltip>
           <ClickOutside
             onClickOutside={closeConfirmationDialogue}
-            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.SECONDARY}
+            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.FIRST}
           >
             <PopupMenu
               onCancel={closeConfirmationDialogue}
@@ -420,14 +420,14 @@ function Toolbar({
               disabled={disabledActions}
               greyBorder
               loading={isLoadingDelete}
-              onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.DELETE)}
+              onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.SECOND)}
               smallIcon
               uuid="Table/Toolbar/DeleteButton"
             />
           </Tooltip>
           <ClickOutside
             onClickOutside={closeConfirmationDialogue}
-            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.DELETE}
+            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.SECOND}
           >
             <PopupMenu
               danger

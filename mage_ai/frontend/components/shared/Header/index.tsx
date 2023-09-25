@@ -57,8 +57,8 @@ function Header({
   version: versionProp,
 }: HeaderProps) {
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
-  const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
-  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
+  const [highlightedMenuIndex, setHighlightedMenuIndex] = useState<number>(null);
+  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
 
   const menuRef = useRef(null);
