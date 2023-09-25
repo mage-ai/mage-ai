@@ -55,8 +55,10 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 
 BlockPolicy.allow_read([
     'bookmarks',
+    'configuration',
     'content',
     'description',
+    'documentation',
     'outputs',
     'pipelines',
     'runtime',
@@ -130,7 +132,10 @@ BlockPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 BlockPolicy.allow_query([
+    'data_integration_type',
+    'data_integration_uuid',
     'destination_table',
+    'include_documentation',
     'state_stream',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

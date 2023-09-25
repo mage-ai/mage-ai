@@ -7,6 +7,7 @@ import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 function Test() {
+  // const blockUUID = 'source_pg_python';
   const blockUUID = 'source_pg_yaml';
   const pipelineUUID = 'data_integration_blocks_client';
   const {

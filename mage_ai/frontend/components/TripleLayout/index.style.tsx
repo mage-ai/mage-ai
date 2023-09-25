@@ -304,6 +304,9 @@ export const MainContentStyle = styled.div<{
   ${props => `
     height: calc(100% - ${props.headerOffset || 0}px);
     position: ${props.inline ? 'relative' : 'fixed'};
+  `}
+
+  ${props => !props.inline && `
     top: ${props.headerOffset || 0}px;
   `}
 `;
