@@ -645,7 +645,7 @@ function DataIntegrationModal({
                               <Spacing key={stream} mt={1}>
                                 <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS}>
                                   <Flex>
-                                    <Text monospace small>
+                                    <Text default monospace small>
                                       {stream}
                                     </Text>
                                   </Flex>
@@ -684,9 +684,13 @@ function DataIntegrationModal({
                             <Text muted small>
                               If checked, then this block’s output data is only used as
                               inputs.
-                              <br />
-                              The block’s output data won’t be ingested when running a sync,
-                              regardless if it’s enabled in the settings.
+                              {BlockTypeEnum.DATA_EXPORTER === blockType && (
+                                <>
+                                  <br />
+                                  The block’s output data won’t be ingested when running a sync,
+                                  regardless if it’s enabled in the settings.
+                                </>
+                              )}
                             </Text>
                           </Flex>
 
