@@ -51,6 +51,7 @@ IntegrationSourcePolicy.allow_read([
 
 IntegrationSourcePolicy.allow_write([
     'action_type',
+    'block_uuid',
     'config',
     'pipeline_uuid',
     'streams',

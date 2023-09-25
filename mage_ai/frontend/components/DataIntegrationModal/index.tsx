@@ -23,7 +23,15 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { Check, Close, DocumentIcon, Lightning, SettingsWithKnobs, Sun } from '@oracle/icons';
+import {
+  Check,
+  Close,
+  DocumentIcon,
+  Lightning,
+  PlugAPI,
+  SettingsWithKnobs,
+  Sun,
+} from '@oracle/icons';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import {
   ConfigurationDataIntegrationInputsType,
@@ -230,7 +238,7 @@ function DataIntegrationModal({
 
   useEffect(() => {
     if (!selectedMainNavigationTab) {
-      setSelectedMainNavigationTab(MainNavigationTabEnum.CONFIGURATION);
+      setSelectedMainNavigationTab(MainNavigationTabEnum.STREAMS);
     }
   }, [
     selectedMainNavigationTab,
@@ -332,7 +340,7 @@ function DataIntegrationModal({
                 <Spacing mr={2} />
 
                 <Flex flex={1}>
-                  <Text large monospace>
+                  <Text monospace>
                     {uuid}
                   </Text>
                 </Flex>
@@ -456,6 +464,39 @@ function DataIntegrationModal({
     },
   );
 
+  const [connectionSuccessful, setConnectionSuccessful] = useState<boolean>(false);
+  const [testConnection, { isLoading: isLoadingTestConnection }] = useMutation(
+    api.integration_sources.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response,
+        {
+          callback: (resp) => {
+            const {
+              integration_source: integrationSource,
+            } = resp;
+
+            if (integrationSource?.error_message) {
+              showError({
+                response: {
+                  error: {
+                    exception: integrationSource?.error_message,
+                  },
+                },
+              });
+            } else if (integrationSource?.success) {
+              setConnectionSuccessful(true);
+            }
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const mainContentEl = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab) {
       if (SubTabEnum.CREDENTIALS === selectedSubTab) {
@@ -514,6 +555,50 @@ function DataIntegrationModal({
 
         return (
           <>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Button
+                  beforeIcon={<PlugAPI success />}
+                  loading={isLoadingTestConnection}
+                  onClick={() => {
+                    setConnectionSuccessful(false);
+                    testConnection({
+                      integration_source: {
+                        action_type: 'test_connection',
+                        block_uuid: blockUUID,
+                        pipeline_uuid: pipelineUUID,
+                      },
+                    });
+                  }}
+                  secondary
+                  compact
+                >
+                  Test connection
+                </Button>
+
+                {connectionSuccessful && (
+                  <>
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <FlexContainer alignItems="center">
+                      <Circle
+                        size={UNIT * 1}
+                        success
+                      />
+
+                      <Spacing mr={1} />
+
+                      <Text success>
+                        Connection successful
+                      </Text>
+                    </FlexContainer>
+                  </>
+                )}
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
             <Spacing p={PADDING_UNITS}>
               <Text bold default large>
                 Inputs from upstream blocks
@@ -900,12 +985,17 @@ function DataIntegrationModal({
     blockUUID,
     blockUpstreamBlocks,
     blocksMapping,
+    connectionSuccessful,
     dataIntegrationConfiguration,
     dataIntegrationType,
+    isLoadingTestConnection,
+    pipelineUUID,
     selectedMainNavigationTab,
     selectedSubTab,
     setBlockConfig,
+    setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
+    testConnection,
   ]);
 
   const after = useMemo(() => MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab

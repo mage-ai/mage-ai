@@ -6,6 +6,7 @@ from logging import Logger
 from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
+import simplejson
 import yaml
 
 from mage_ai.data_integrations.logger.utils import print_log_from_line
@@ -42,7 +43,8 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import dig, extract, merge_dict
+from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
@@ -1076,6 +1078,63 @@ def count_records(
         arr += json.loads(__run_in_subprocess(args, config=config))
 
     return arr
+
+
+def test_connection(block) -> None:
+    data_integration_settings = block.get_data_integration_settings(
+        from_notebook=True,
+        global_vars=block.pipeline.variables if block.pipeline else None,
+    )
+
+    config = data_integration_settings.get('config')
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
+
+    is_source = block.is_source()
+
+    module_file_path = None
+    if is_source:
+        module_file_path = source_module_file_path(data_integration_uuid)
+    else:
+        module_file_path = destination_module_file_path(data_integration_uuid)
+
+    try:
+        if module_file_path:
+            run_args = [
+                PYTHON_COMMAND,
+                module_file_path,
+                '--config_json',
+                simplejson.dumps(
+                    config,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
+                '--test_connection',
+            ]
+
+            proc = subprocess.run(
+                run_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+            )
+            proc.check_returncode()
+    except subprocess.CalledProcessError as err:
+        stderr = err.stderr.decode('utf-8')
+
+        json_object = {}
+        error = stderr
+        for line in stderr.split('\n'):
+            if line.startswith('ERROR'):
+                try:
+                    json_object = next(extract_json_objects(line))
+                    error = dig(json_object, 'tags.error')
+                except Exception:
+                    error = line
+            elif not error and line.startswith('CRITICAL'):
+                error = line
+        raise Exception(filter_out_config_values(error, config))
+    except Exception as err:
+        raise Exception(filter_out_config_values(str(err), config))
 
 
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:
