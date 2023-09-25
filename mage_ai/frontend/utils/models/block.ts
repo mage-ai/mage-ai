@@ -148,10 +148,28 @@ export function isDataIntegrationBlock(block: BlockType, pipeline: PipelineType 
   return false;
 }
 
-export function getSelectedStreams(block: BlockType): StreamType[] {
+export function isStreamSelected(stream: StreamType) {
+  const {
+    metadata,
+  } = stream || {};
+
+  return metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected;
+}
+
+export function getSelectedStreams(block: BlockType, opts?: {
+  getAll?: boolean;
+}): StreamType[] {
+  const {
+    getAll,
+  } = opts || {};
+
   const catalog = block?.catalog;
 
-  return (catalog?.streams || [])?.filter(({
-    metadata,
-  }) => metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected);
+  const arr = catalog?.streams || [];
+
+  if (getAll) {
+    return arr;
+  }
+
+  return arr?.filter(isStreamSelected);
 }

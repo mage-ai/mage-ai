@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -15,6 +16,8 @@ import TripleLayout from '@components/TripleLayout';
 import { Close, DocumentIcon, Lightning, SettingsWithKnobs } from '@oracle/icons';
 import { ContainerStyle, HeaderStyle, MODAL_PADDING, NavigationStyle } from './index.style';
 import { MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING, MainNavigationTabEnum } from './constants';
+import { getSelectedStreams, isStreamSelected } from '@utils/models/block';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { useWindowSize } from '@utils/sizes';
@@ -41,6 +44,10 @@ function DataIntegrationModal({
     metadata,
     uuid: blockUUID,
   } = block || {};
+
+  const streams = useMemo(() => getSelectedStreams(block, { getAll: true }), [
+    block,
+  ]);
 
   const {
     name: nameDisplay,
@@ -108,6 +115,59 @@ function DataIntegrationModal({
       </NavigationStyle>
     ));
 
+    const streamsCount = streams?.length || 0;
+
+    streams?.forEach((stream, idx: number) => {
+      const {
+        stream: streamID,
+        tap_stream_id: tapStreamID,
+      } = stream;
+      const uuid = tapStreamID || streamID;
+      const isSelected = isStreamSelected(stream);
+
+      arr.push(
+        <Divider key={`${uuid}-divider-top`} light />
+      );
+
+      arr.push(
+        <NavigationStyle
+          key={uuid}
+          selected={selectedMainNavigationTab === uuid}
+        >
+          <Link
+            block
+            noHoverUnderline
+            noOutline
+            onClick={() => setSelectedMainNavigationTab(uuid)}
+            preventDefault
+          >
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Circle
+                  size={UNIT * 1}
+                  success={isSelected}
+                />
+
+                <Spacing mr={2} />
+
+                <Flex flex={1}>
+                  <Text large monospace>
+                    {uuid}
+                  </Text>
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          </Link>
+        </NavigationStyle>
+      );
+
+      if (idx === streamsCount - 1) {
+        arr.push(
+          <Divider key={`${uuid}-divider-last`} light />
+        );
+      }
+    });
+
     return (
       <>
         {arr}
@@ -116,6 +176,7 @@ function DataIntegrationModal({
   }, [
     selectedMainNavigationTab,
     setSelectedMainNavigationTab,
+    streams,
   ]);
 
   const after = useMemo(() => {
