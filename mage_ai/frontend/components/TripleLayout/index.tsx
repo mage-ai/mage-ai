@@ -145,18 +145,20 @@ function TripleLayout({
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
     setAfterHidden?.(val);
-    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
+    set(uuid || LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
   }, [
     afterHidden,
     setAfterHidden,
+    uuid,
   ]);
   const toggleBefore = useCallback(() => {
     const val = !beforeHidden;
     setBeforeHidden?.(val);
-    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
+    set(uuid || LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
   }, [
     beforeHidden,
     setBeforeHidden,
+    uuid,
   ]);
 
   useEffect(() => {

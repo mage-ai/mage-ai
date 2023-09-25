@@ -370,6 +370,7 @@ class DataIntegrationMixin:
                 if input_streams:
                     if idx is not None:
                         input_data = input_vars_fetched[idx]
+                    # This has to come first before catalog.
                     input_var_to_add.append(input_data)
 
                 if input_catalog:

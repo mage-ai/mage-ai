@@ -23,7 +23,7 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { Close, DocumentIcon, Lightning, SettingsWithKnobs, Sun } from '@oracle/icons';
+import { Check, Close, DocumentIcon, Lightning, SettingsWithKnobs, Sun } from '@oracle/icons';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import {
   ConfigurationDataIntegrationInputsType,
@@ -218,7 +218,7 @@ function DataIntegrationModal({
         ? SUB_TABS_BY_MAIN_NAVIGATION_TAB[val1]
         : SUB_TABS_FOR_STREAM_DETAIL;
 
-      setSelectedSubTab(tabs?.[1]?.uuid);
+      setSelectedSubTab(tabs?.[0]?.uuid);
 
       return val1;
     });
@@ -401,15 +401,17 @@ function DataIntegrationModal({
     refSubheader,
   ]);
 
+  const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
   const afterHidden: boolean = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
       && SubTabEnum.CREDENTIALS === selectedSubTab
     ) {
-      return false;
+      return afterHiddenState;
     }
 
     return true;
   }, [
+    afterHiddenState,
     selectedMainNavigationTab,
     selectedSubTab,
   ]);
@@ -477,19 +479,127 @@ function DataIntegrationModal({
             </CodeEditorStyle>
           );
         } else if (BlockLanguageEnum.PYTHON === blockLanguage) {
+          const inputs = dataIntegrationConfiguration?.inputs || {};
+          const inputsBlocks = blockUpstreamBlocks?.reduce((acc, b) => {
+            const {
+              uuid,
+            } = b;
+            const input = inputs?.[uuid];
+            if (!input) {
+              return acc;
+            }
+
+            return acc.concat({
+              block: b,
+              input,
+            })
+          }, []);
+
           return (
-            <CodeEditorStyle>
-              <CodeEditor
-                autoHeight
-                language={blockLanguage}
-                onChange={(val: string) => {
-                  onChangeCodeBlock?.(blockType, blockUUID, val);
-                }}
-                tabSize={4}
-                value={blockContent}
-                width="100%"
-              />
-            </CodeEditorStyle>
+            <>
+              <Spacing p={PADDING_UNITS}>
+                <Text bold default large>
+                  Inputs from upstream blocks
+                </Text>
+
+                {inputsBlocks?.length === 0 && (
+                  <Spacing mt={1}>
+                    <Text muted>
+                      No inputs are selected.
+                      Toggle the upstream blocks in the <Link
+                        bold
+                        onClick={() => setSelectedSubTab(SubTabEnum.UPSTREAM_BLOCK_SETTINGS)}
+                        preventDefault
+                      >
+                        Upstream block settings
+                      </Link> to enable its output data as an input.
+                    </Text>
+                  </Spacing>
+                )}
+              </Spacing>
+
+              {inputsBlocks?.length >= 1 && (
+                <Table
+                  columnFlex={[1, null, 1, null, null]}
+                  columns={[
+                    {
+                      uuid: 'Block',
+                    },
+                    {
+                      center: true,
+                      uuid: 'Catalog',
+                    },
+                    {
+                      center: true,
+                      uuid: 'Streams',
+                    },
+                    {
+                      center: true,
+                      uuid: 'Argument shape',
+                    },
+                    {
+                      center: true,
+                      uuid: 'Order',
+                    },
+                  ]}
+                  rows={inputsBlocks?.map(({
+                    block: {
+                      uuid,
+                    },
+                    input: {
+                      catalog,
+                      streams,
+                    },
+                  }, idx: number) => {
+                    const hasStreams = streams?.length >= 1;
+
+                    return [
+                      <Text key={`block-${uuid}`} monospace>
+                        {uuid}
+                      </Text>,
+                      <FlexContainer justifyContent="center" key={`catalog-${uuid}`}>
+                        {catalog
+                          ? <Check success />
+                          : <Close muted />
+                        }
+                      </FlexContainer>,
+                      <FlexContainer justifyContent="center" key={`selected-streams-${uuid}`}>
+                        {!hasStreams && <Close key={`catalog-${uuid}`} muted />}
+                        {hasStreams && streams?.includes(uuid)
+                          ? <Check success />
+                          : (
+                            <Text center default monospace small>
+                              {streams?.join(', ')}
+                            </Text>
+                          )
+                        }
+                      </FlexContainer>,
+                      <Text center default key={`shape-${uuid}`} monospace>
+                        {catalog && !hasStreams && 'Dict'}
+                        {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
+                        {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}
+                      </Text>,
+                      <Text center default key={`position-${uuid}`} monospace>
+                        {idx}
+                      </Text>,
+                    ];
+                  })}
+                />
+              )}
+
+              <CodeEditorStyle>
+                <CodeEditor
+                  autoHeight
+                  language={blockLanguage}
+                  onChange={(val: string) => {
+                    onChangeCodeBlock?.(blockType, blockUUID, val);
+                  }}
+                  tabSize={4}
+                  value={blockContent}
+                  width="100%"
+                />
+              </CodeEditorStyle>
+            </>
           );
         }
       } else if (SubTabEnum.UPSTREAM_BLOCK_SETTINGS === selectedSubTab) {
@@ -786,23 +896,27 @@ function DataIntegrationModal({
     setDataIntegrationConfigurationForInputs,
   ]);
 
-  const after = useMemo(() => !afterHidden && (
-    <Spacing p={PADDING_UNITS}>
-      {!dataBlock && (
-        <Spinner />
-      )}
+  const after = useMemo(() => MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
+    && SubTabEnum.CREDENTIALS === selectedSubTab
+    && (
+      <Spacing p={PADDING_UNITS}>
+        {!dataBlock && (
+          <Spinner />
+        )}
 
-      {documentation && (
-        <Markdown>
-          {documentation.replace(/\<br \/\>/g, '\n\n')}
-        </Markdown>
-      )}
-    </Spacing>
-  ), [
-    afterHidden,
-    dataBlock,
-    documentation,
-  ]);
+        {documentation && (
+          <Markdown>
+            {documentation.replace(/\<br \/\>/g, '\n\n')}
+          </Markdown>
+        )}
+      </Spacing>
+    ), [
+      afterHidden,
+      dataBlock,
+      selectedMainNavigationTab,
+      selectedSubTab,
+      documentation,
+    ]);
 
   return (
     <ContainerStyle
@@ -853,6 +967,13 @@ function DataIntegrationModal({
 
       <TripleLayout
         after={after}
+        afterHeader={after && (
+          <Spacing px={1}>
+            <Text bold>
+              Documentation
+            </Text>
+          </Spacing>
+        )}
         afterHeightOffset={0}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
@@ -864,14 +985,16 @@ function DataIntegrationModal({
         contained
         headerOffset={headerOffset}
         height={heightWindow - (MODAL_PADDING * 2)}
-        hideAfterCompletely
+        hideAfterCompletely={!after}
         inline
         mainContainerHeader={subheaderEl}
         mainContainerRef={mainContainerRef}
+        setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}
         setAfterWidth={setAfterWidth}
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
+        uuid={componentUUID}
       >
         <div style={{ height: 3000 }}>
           {mainContentEl}
