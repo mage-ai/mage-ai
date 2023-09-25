@@ -37,7 +37,7 @@ EMOJI_PATTERN = re.compile(
     u"\u3030"                 # wavy dash
     u"\U00002500-\U00002BEF"  # Chinese characters
     u"\U00010000-\U0010ffff"  # other characters
-    u'\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\uD83C-\uDBFF\uDC00-\uDFFF'
+    u'\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\uD83C-\uDBFF\uDC00-\uDFFF'     # noqa: E501
     "]+",
     flags=re.UNICODE,  # specify the unicode flag to handle unicode characters properly
 )
@@ -45,7 +45,7 @@ EMOJI_PATTERN = re.compile(
 
 def remove_emoji_code(v: str) -> str:
     if type(v) is str:
-        v = re.sub(r'(\\ud83d(\\ud[0-f][0-f][0-f])?)|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)
+        v = re.sub(r'(\\ud83d(\\ud[0-f][0-f][0-f])?)|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)     # noqa: E501
         v = EMOJI_PATTERN.sub(r'', v)
     return v
 
@@ -217,12 +217,17 @@ def convert_json_or_string(value, column_type_dict):
     return value
 
 
-def convert_json_or_string_for_batch_load(value, column_type_dict):
+def convert_json_or_string_for_batch_load(
+    value,
+    column_type_dict,
+    convert_json_to_dict: bool = True,
+):
     column_type = column_type_dict['type']
     if COLUMN_TYPE_OBJECT == column_type:
         value = stringify_object_and_remove_emoji_code(value)
         value = value.replace('\n', '\\n')
-        # value = json.loads(value)
+        if convert_json_to_dict:
+            value = json.loads(value)
     elif COLUMN_TYPE_STRING == column_type:
         if type(value) is not str:
             value = str(value)

@@ -24,6 +24,7 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
+    convert_datetime_for_batch_load,
     convert_json_or_string,
     convert_json_or_string_for_batch_load,
     remove_duplicate_rows,
@@ -569,7 +570,7 @@ WHERE table_id = '{table_name}'
 
         if self.use_batch_load:
             self.logger.info('Using batch load method for BigQuery...')
-            job_results, jobs = self.__upload_to_file(
+            job_results, jobs = self.__run_load_job(
                 client,
                 record_data,
                 mapping,
@@ -687,7 +688,7 @@ WHERE table_id = '{table_name}'
 
         return job_results, jobs
 
-    def __upload_to_file(
+    def __run_load_job(
         self,
         client,
         record_data: List[Dict],
@@ -699,8 +700,32 @@ WHERE table_id = '{table_name}'
         jobs = []
 
         records = [d['record'] for d in record_data]
-
         values = []
+
+        load_method = 'load_from_dataframe'
+        schema_fields = []
+        source_format = bigquery.SourceFormat.PARQUET
+        for col, obj in mapping.items():
+            item_type_converted = obj['item_type_converted']
+            type_converted = obj['type_converted']
+            if type_converted == 'JSON':
+                # JSON format is not supported in PARQUET
+                source_format = bigquery.SourceFormat.CSV
+            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
+            if is_array_type:
+                load_method = 'load_from_json'
+            schema_field = bigquery.SchemaField(
+                name=col,
+                field_type=item_type_converted if is_array_type else type_converted,
+                mode='REPEATED' if is_array_type else 'NULLABLE',
+            )
+            schema_fields.append(schema_field)
+
+        if load_method == 'load_from_dataframe':
+            convert_json_to_dict = False
+        else:
+            convert_json_to_dict = True
+
         for row in records:
             vals = dict()
             for column in columns:
@@ -718,63 +743,53 @@ WHERE table_id = '{table_name}'
                         if type(v) is str:
                             v = literal_eval(v)
                         value_final = convert_array_for_batch_load(v, column_type_dict)
+                    elif load_method == 'load_from_json' and \
+                            COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                        value_final = convert_datetime_for_batch_load(v)
                     else:
-                        value_final = convert_json_or_string_for_batch_load(v, column_type_dict)
+                        value_final = convert_json_or_string_for_batch_load(
+                            v,
+                            column_type_dict,
+                            convert_json_to_dict=convert_json_to_dict,
+                        )
                 vals[column] = value_final
             values.append(vals)
 
-        # Convert the records to dataframe to speed up the BigQuery load job
-        df = pd.DataFrame.from_records(values)
-        for column in columns:
-            column_type_dict = mapping[column]
-            column_settings = column_type_dict['column_settings']
-            if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                df[column] = pd.to_datetime(df[column])
-        job_result, job = self.__create_load_job(client, mapping, full_table_name, df)
-        job_results.append(job_result)
-        jobs.append(job)
-
-        return job_results, jobs
-
-    def __create_load_job(
-        self,
-        client,
-        mapping: str,
-        full_table_name: str,
-        df: pd.DataFrame,
-    ):
-        schema_fields = []
-        source_format = bigquery.SourceFormat.PARQUET
-        for col, obj in mapping.items():
-            item_type_converted = obj['item_type_converted']
-            type_converted = obj['type_converted']
-            if type_converted == 'JSON':
-                # JSON format is not supported in PARQUET
-                source_format = bigquery.SourceFormat.CSV
-            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
-            schema_field = bigquery.SchemaField(
-                name=col,
-                field_type=item_type_converted if is_array_type else type_converted,
-                mode='REPEATED' if is_array_type else 'NULLABLE',
-            )
-            schema_fields.append(schema_field)
         job_config = bigquery.LoadJobConfig(
             schema=schema_fields,
-            source_format=source_format,
         )
-        job = client.load_table_from_dataframe(
-            df,
-            full_table_name,
-            job_config=job_config,
-        )
+        if load_method == 'load_from_dataframe':
+            job_config.source_format = source_format
+
+            # Convert the records to dataframe to speed up the BigQuery load job
+            df = pd.DataFrame.from_records(values)
+            for column in columns:
+                column_type_dict = mapping[column]
+                column_settings = column_type_dict['column_settings']
+                if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                    df[column] = pd.to_datetime(df[column])
+            job = client.load_table_from_dataframe(
+                df,
+                full_table_name,
+                job_config=job_config,
+            )
+        else:
+            job = client.load_table_from_json(
+                values,
+                full_table_name,
+                job_config=job_config,
+            )
+
         try:
-            result = job.result()
+            job_result = job.result()
         except BadRequest:
             for err in job.errors:
                 self.logger.exception('BigQuery batch load error:', err)
             raise
 
-        return result, job
+        job_results.append(job_result)
+        jobs.append(job)
+        return job_results, jobs
 
 
 if __name__ == '__main__':
