@@ -11,7 +11,7 @@ from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
-from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+from mage_ai.settings import SCHEDULER_TRIGGER_INTERVAL, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
@@ -35,7 +35,7 @@ def run_scheduler():
     except Exception:
         traceback.print_exc()
     try:
-        LoopTimeTrigger().start()
+        LoopTimeTrigger(trigger_interval=SCHEDULER_TRIGGER_INTERVAL).start()
     except Exception as e:
         traceback.print_exc()
         raise e

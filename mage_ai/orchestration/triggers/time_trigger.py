@@ -3,7 +3,7 @@ from mage_ai.orchestration.pipeline_scheduler import check_sla, schedule_all
 
 
 class TimeTrigger(ABC):
-    def __init__(self, trigger_interval: int = 10) -> None:
+    def __init__(self, trigger_interval) -> None:
         self.trigger_interval = trigger_interval
 
     def run(self) -> None:
