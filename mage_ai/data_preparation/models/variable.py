@@ -1,4 +1,3 @@
-import json
 import os
 import traceback
 from contextlib import contextmanager
@@ -411,15 +410,14 @@ class Variable:
 
         column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
         if os.path.exists(column_types_filename):
-            with open(column_types_filename, 'r') as f:
-                column_types = json.load(f)
-                # ddf = dask_from_pandas(df)
-                if should_deserialize_pandas(column_types):
-                    df = apply_transform_pandas(
-                        df,
-                        lambda row: deserialize_columns(row, column_types),
-                    )
-                df = cast_column_types(df, column_types)
+            column_types = self.storage.read_json_file(column_types_filename)
+            # ddf = dask_from_pandas(df)
+            if should_deserialize_pandas(column_types):
+                df = apply_transform_pandas(
+                    df,
+                    lambda row: deserialize_columns(row, column_types),
+                )
+            df = cast_column_types(df, column_types)
         return df
 
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
@@ -479,8 +477,10 @@ class Variable:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
-        with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
-            f.write(json.dumps(column_types))
+        self.storage.write_json_file(
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
+            column_types,
+        )
 
         if should_serialize_pandas(column_types):
             # Try using Polars to write the dataframe to improve performance
