@@ -1,9 +1,9 @@
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.postgresql import PostgreSQL
-from unittest.mock import MagicMock, patch
 import io
 import unittest
+from unittest.mock import MagicMock, patch
 
+from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.postgresql import PostgreSQL
 
 SAMPLE_RECORD = {
     'id': 2,
@@ -44,6 +44,7 @@ SAMPLE_SCHEMA_ROW = {
 }
 SAMPLE_STREAM_NAME = 'demo_users'
 
+
 def build_test_destination():
     destination = Destination(
         config=dict(database='demo_db'),
@@ -60,6 +61,7 @@ def build_test_destination():
     destination.versions = {}
 
     return destination
+
 
 class BaseDestinationTests(unittest.TestCase):
     def test_templates(self):
@@ -112,6 +114,7 @@ class BaseDestinationTests(unittest.TestCase):
             mock_export_batch_data.assert_called_once_with(
                 [dict(record=SAMPLE_RECORD, stream=SAMPLE_STREAM_NAME)],
                 SAMPLE_STREAM_NAME,
+                tags={'records': 1, 'stream': 'demo_users'},
             )
 
     def test_process_empty_record_data(self):
@@ -169,10 +172,12 @@ class BaseDestinationTests(unittest.TestCase):
 
     def test_process_no_state(self):
         destination = build_test_destination()
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception) as context:
             destination.process_state(
                 row=SAMPLE_RECORD_ROW
             )
+            self.assertEqual(
+                str(context.exception), 'A state message is missing a state value.')
 
     def test_process_test_connection(self):
         destination = build_test_destination()
