@@ -22,6 +22,16 @@ type ScrollbarTrackType = {
   noScrollbarTrackBackground?: boolean;
 };
 
+export const InlineContainerStyle = styled.div<{
+  height?: number;
+}>`
+  position: relative;
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+`;
+
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
 }>`
@@ -77,13 +87,21 @@ export const TabStyle = styled.div<{
 
 const ASIDE_STYLE = css<{
   heightOffset?: number;
+  inline?: boolean;
 }>`
-  position: fixed;
   z-index: 2;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
     height: calc(100% - ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px);
+  `}
+
+  ${props => props.inline && `
+    position: absolute;
+  `}
+
+  ${props => !props.inline && `
+    position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
 `;
@@ -136,12 +154,12 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
 export const AsideHeaderStyle = styled.div<{
   contained?: boolean;
+  inline?: boolean;
   top?: number;
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
   height: ${ASIDE_SUBHEADER_HEIGHT}px;
-  position: fixed;
   z-index: 4;
 
   ${hideScrollBar()}
@@ -159,6 +177,10 @@ export const AsideHeaderStyle = styled.div<{
 
   ${props => props.contained && `
     border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => !props.inline && `
+    position: fixed;
   `}
 `;
 
@@ -196,7 +218,9 @@ export const AsideSubheaderStyle = styled.div<{
   `}
 `;
 
-export const BeforeStyle = styled.aside`
+export const BeforeStyle = styled.aside<{
+  inline?: boolean;
+}>`
   ${ASIDE_STYLE}
 
   left: 0;
@@ -219,7 +243,9 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   `}
 `;
 
-export const AfterStyle = styled.aside`
+export const AfterStyle = styled.aside<{
+  inline?: boolean;
+}>`
   ${ASIDE_STYLE}
 
   right: 0;
@@ -256,25 +282,28 @@ export const DraggableStyle = styled.div<{
   `}
 `;
 
-export const MainWrapper = styled.div`
+export const MainWrapper = styled.div<{
+  inline?: boolean;
+}>`
   height: 100%;
-  position: fixed;
   z-index: 1;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
+    position: ${props.inline ? 'absolute' : 'fixed'};
   `}
 `;
 
 export const MainContentStyle = styled.div<{
   beforeVisible?: boolean;
   headerOffset?: number;
+  inline?: boolean;
 }>`
-  position: fixed;
   z-index: 2;
 
   ${props => `
     height: calc(100% - ${props.headerOffset || 0}px);
+    position: ${props.inline ? 'relative' : 'fixed'};
     top: ${props.headerOffset || 0}px;
   `}
 `;

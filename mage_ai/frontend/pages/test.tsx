@@ -1,9 +1,74 @@
-import FileUploader from '@components/FileUploader';
+import { useEffect } from 'react';
+import { useMutation } from 'react-query';
+
+import DataIntegrationModal from '@components/DataIntegrationModal';
+import api from '@api';
+import { onSuccess } from '@api/utils/response';
+import { useModal } from '@context/Modal';
 
 function Test() {
+  const blockUUID = 'source_pg_yaml';
+  const pipelineUUID = 'data_integration_blocks_client';
+  const {
+    data,
+    mutate: fetchPipeline,
+  } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      include_block_pipelines: true,
+      includes_outputs: true,
+    },
+  );
+  const pipeline = data?.pipeline;
+  const block = pipeline?.blocks?.find(({ uuid }) => blockUUID === uuid);
+
+  const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
+    api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [showModal, hideModal] = useModal(() => (
+    <DataIntegrationModal
+      block={block}
+      onClose={hideModal}
+      pipeline={pipeline}
+    />
+  ), {}, [
+    block,
+    blockUUID,
+    pipeline,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    disableCloseButton: true,
+    disableEscape: true,
+    uuid: `DataIntegrationModal/${blockUUID}`,
+  });
+
+  useEffect(() => {
+    if (block) {
+      showModal();
+    }
+  }, [
+    block,
+    pipeline,
+    showModal,
+  ]);
+
   return (
     <div>
-      <FileUploader />
     </div>
   );
 }

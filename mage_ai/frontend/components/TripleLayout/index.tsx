@@ -28,6 +28,7 @@ import {
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
+  InlineContainerStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
@@ -78,8 +79,10 @@ type TripleLayoutProps = {
   contained?: boolean;
   header?: any;
   headerOffset?: number;
+  height?: number;
   hideAfterCompletely?: boolean;
   hideBeforeCompletely?: boolean;
+  inline?: boolean;
   leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
@@ -117,8 +120,10 @@ function TripleLayout({
   contained,
   header,
   headerOffset = 0,
+  height: heightInlineContainer,
   hideAfterCompletely,
   hideBeforeCompletely,
+  inline,
   leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
@@ -266,6 +271,7 @@ function TripleLayout({
       {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
+            inline={inline}
             style={{
               width: hasAfterNavigationItems
                 // Required
@@ -344,6 +350,7 @@ function TripleLayout({
     contained,
     hasAfterNavigationItems,
     headerOffset,
+    inline,
     refAfterInner,
     setAfterHidden,
     toggleAfter,
@@ -360,6 +367,7 @@ function TripleLayout({
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
           contained={contained}
+          inline={inline}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -465,13 +473,14 @@ function TripleLayout({
     contained,
     headerOffset,
     hasBeforeNavigationItems,
+    inline,
     refBeforeInner,
     setBeforeHidden,
     toggleBefore,
   ]);
 
-  return (
-    <ClientOnly>
+  const el = useMemo(() => (
+    <>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
         <NextHead>
           <style
@@ -495,6 +504,7 @@ function TripleLayout({
       {before && (
         <BeforeStyle
           heightOffset={beforeHeightOffset}
+          inline={inline}
           style={{
             left: leftOffset,
             width: beforeWidthFinal,
@@ -546,6 +556,7 @@ function TripleLayout({
       )}
 
       <MainWrapper
+        inline={inline}
         style={{
           left: beforeWidthFinal + leftOffset,
           width: mainWidth,
@@ -558,8 +569,9 @@ function TripleLayout({
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
           }
+          inline={inline}
           style={{
-            width: mainWidth,
+            width: inline ? null : mainWidth,
           }}
         >
           <MainContentInnerStyle
@@ -574,6 +586,7 @@ function TripleLayout({
       {after && !shouldHideAfterWrapper && (
         <AfterStyle
           heightOffset={afterHeightOffset}
+          inline={inline}
           style={{
             width: afterWidthFinal,
           }}
@@ -622,6 +635,46 @@ function TripleLayout({
           {!hasAfterNavigationItems && afterContent}
         </AfterStyle>
       )}
+    </>
+  ), [
+    after,
+    afterContent,
+    afterHeightOffset,
+    afterHidden,
+    afterMousedownActive,
+    afterNavigationItems,
+    afterWidthFinal,
+    beforeContent,
+    beforeHeightOffset,
+    beforeHidden,
+    beforeMousedownActive,
+    beforeNavigationItems,
+    beforeWidthFinal,
+    children,
+    contained,
+    hasAfterNavigationItems,
+    hasBeforeNavigationItems,
+    header,
+    headerOffset,
+    inline,
+    leftOffset,
+    mainContainerHeader,
+    mainContainerRef,
+    mainWidth,
+    navigationShowMore,
+    refAfterInnerDraggable,
+    refBeforeInnerDraggable,
+    shouldHideAfterWrapper,
+  ]);
+
+  return (
+    <ClientOnly>
+      {inline && (
+        <InlineContainerStyle height={heightInlineContainer}>
+          {el}
+        </InlineContainerStyle>
+      )}
+      {!inline && el}
     </ClientOnly>
   );
 }
