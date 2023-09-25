@@ -503,20 +503,16 @@ class PipelineScheduler:
 
             for status, block_uuids in statuses.items():
                 if dynamic_upstream_block_uuids:
-                    if all(
-                        b in block_uuids
-                        for b in dynamic_upstream_block_uuids
-                    ):
-                        block_run.update(status=status)
-                        updated_status = True
+                    upstream_block_uuids = dynamic_upstream_block_uuids
                 else:
                     block = self.pipeline.get_block(block_run.block_uuid)
-                    if any(
-                        b in block_uuids
-                        for b in block.upstream_block_uuids
-                    ):
-                        block_run.update(status=status)
-                        updated_status = True
+                    upstream_block_uuids = block.upstream_block_uuids
+                if any(
+                    b in block_uuids
+                    for b in upstream_block_uuids
+                ):
+                    block_run.update(status=status)
+                    updated_status = True
 
             if not updated_status:
                 not_updated_block_runs.append(block_run)
