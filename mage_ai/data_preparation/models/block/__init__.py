@@ -1773,6 +1773,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def to_dict(
         self,
+        include_block_catalog: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
@@ -1786,6 +1787,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = self.content
             if self.callback_block is not None:
                 data['callback_content'] = self.callback_block.content
+
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = self.get_catalog_from_file()
 
         if include_outputs:
             data['outputs'] = self.outputs

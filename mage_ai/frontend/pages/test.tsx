@@ -3,12 +3,13 @@ import { useMutation } from 'react-query';
 
 import DataIntegrationModal from '@components/DataIntegrationModal';
 import api from '@api';
+import { ErrorProvider } from '@context/Error';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 function Test() {
-  // const blockUUID = 'source_pg_python';
-  const blockUUID = 'source_pg_yaml';
+  const blockUUID = 'source_pg_python';
+  // const blockUUID = 'source_pg_yaml';
   const pipelineUUID = 'data_integration_blocks_client';
   const {
     data,
@@ -41,11 +42,13 @@ function Test() {
   );
 
   const [showModal, hideModal] = useModal(() => (
-    <DataIntegrationModal
-      block={block}
-      onClose={hideModal}
-      pipeline={pipeline}
-    />
+    <ErrorProvider>
+      <DataIntegrationModal
+        block={block}
+        onClose={hideModal}
+        pipeline={pipeline}
+      />
+    </ErrorProvider>
   ), {}, [
     block,
     blockUUID,

@@ -105,6 +105,13 @@ class DataIntegrationMixin:
             BLOCK_CATALOG_FILENAME,
         )
 
+    def get_catalog_from_file(self) -> Dict:
+        catalog_full_path = self.get_catalog_file_path()
+
+        if os.path.exists(catalog_full_path):
+            with open(catalog_full_path, mode='r') as f:
+                return json.loads(f.read() or '')
+
     async def get_catalog_from_file_async(self) -> Dict:
         catalog_full_path = self.get_catalog_file_path()
 
@@ -243,7 +250,7 @@ class DataIntegrationMixin:
 
             settings = yaml.safe_load(text)
 
-            catalog = self.__get_catalog_from_file()
+            catalog = self.get_catalog_from_file()
             config = settings.get('config')
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
@@ -541,13 +548,6 @@ class DataIntegrationMixin:
             print(f'[Block.__execute_data_integration_block_code]: {seconds} | {self.uuid}')
 
         return self._data_integration
-
-    def __get_catalog_from_file(self) -> Dict:
-        catalog_full_path = self.get_catalog_file_path()
-
-        if os.path.exists(catalog_full_path):
-            with open(catalog_full_path, mode='r') as f:
-                return json.loads(f.read() or '')
 
     def __block_decorator_catalog(self, decorated_functions):
         def custom_code(

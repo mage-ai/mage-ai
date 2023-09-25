@@ -39,6 +39,7 @@ BlockPolicy.allow_actions([
 
 BlockPolicy.allow_read([
     'catalog',
+    'configuration',
     'content',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -55,6 +56,7 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 
 BlockPolicy.allow_read([
     'bookmarks',
+    'catalog',
     'configuration',
     'content',
     'description',
@@ -105,6 +107,7 @@ BlockPolicy.allow_write([
     'conditional_blocks',
     'configuration',
     'content',
+    'documentation',
     'destination_table',
     'downstream_blocks',
     'executor_config',
@@ -135,6 +138,7 @@ BlockPolicy.allow_query([
     'data_integration_type',
     'data_integration_uuid',
     'destination_table',
+    'include_block_catalog',
     'include_documentation',
     'state_stream',
 ], scopes=[
@@ -156,6 +160,7 @@ BlockPolicy.allow_query([
     'block_language',
     'block_type',
     'extension_uuid',
+    'include_block_catalog',
     'update_state',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

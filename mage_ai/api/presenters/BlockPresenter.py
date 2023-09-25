@@ -67,8 +67,13 @@ class BlockPresenter(BasePresenter):
             if destination_table:
                 destination_table = destination_table[0]
 
+            include_block_catalog = query.get('include_block_catalog', [False])
+            if include_block_catalog:
+                include_block_catalog = include_block_catalog[0]
+
             data = self.model.to_dict(
                 destination_table=destination_table,
+                include_block_catalog=include_block_catalog,
                 include_content=True,
                 include_outputs=include_outputs,
                 state_stream=state_stream,
@@ -99,9 +104,9 @@ class BlockPresenter(BasePresenter):
                 if option:
                     if not data_integration_type:
                         if BlockType.DATA_LOADER == self.model.type:
-                            data_integration_type = DATA_INTEGRATION_TYPE_DESTINATIONS
-                        else:
                             data_integration_type = DATA_INTEGRATION_TYPE_SOURCES
+                        else:
+                            data_integration_type = DATA_INTEGRATION_TYPE_DESTINATIONS
 
                     info = build_integration_module_info(data_integration_type, option)
                     if info and info.get('docs'):
