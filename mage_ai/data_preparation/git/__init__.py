@@ -32,7 +32,6 @@ class Git:
         auth_type: AuthType = None,
         git_config: GitConfig = None,
         setup_repo: bool = True,
-        sync_submodules: bool = False,
     ) -> None:
         import git
         import git.exc
@@ -71,7 +70,7 @@ class Git:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             if setup_repo:
-                self.__setup_repo(sync_submodules=sync_submodules)
+                self.__setup_repo()
 
         if self.repo and self.git_config:
             self.__set_git_config()
@@ -257,6 +256,14 @@ class Git:
         self.__submodules_update(repo_path=repo_path)
 
     def __submodules_update(self, repo_path: str = None) -> None:
+        """
+        Attempt to update submodules for the specified repo path. Only the top-level
+        submodules will be updated at the moment.
+
+        Args:
+            repo_path (str, optional): The path to the repo. If not provided, self.repo will be
+                used.
+        """
         import git
         from git.config import GitConfigParser
         if repo_path:
@@ -265,29 +272,66 @@ class Git:
             repo = self.repo
             repo_path = self.repo_path
 
-        repo.git.submodule('init')
         parser = GitConfigParser(
             os.path.join(repo_path, '.gitmodules'),
             read_only=True,
         )
         sections = parser.sections()
         for section in sections:
-            print(f'Updating {section}...')
-            try:
-                path = parser.get(section, 'path')
-                submodule_url = parser.get(section, 'url')
-                url = urlsplit(submodule_url)
-                user = self.git_config.username
-                token = self.__get_access_token()
-                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-                url = urlunsplit(url)
-                repo.config_writer().set_value(
-                    f'submodule.{path}', 'url', url).release()
-                repo.git.submodule('update', path)
-            except Exception:
-                pass
-            else:
-                print(f'{section} updated!')
+            path = parser.get(section, 'path', fallback=None)
+            submodule_url = parser.get(section, 'url', fallback=None)
+            parser.release()
+            if path and submodule_url:
+                submodule_full_path = os.path.join(repo_path, path)
+                tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
+                try:
+                    print(f'Updating {section}...')
+                    # Create a temporary directory to store the current contents of the submodule
+                    # directory because the `git submodule update` command will fail if the
+                    # submodule directory already exists and is not empty.
+                    if os.path.exists(submodule_full_path) and next(
+                        os.scandir(submodule_full_path), None
+                    ):
+                        shutil.move(
+                            submodule_full_path,
+                            tmp_full_path,
+                        )
+                    url = urlsplit(submodule_url)
+                    if self.auth_type == AuthType.HTTPS:
+                        user = self.git_config.username
+                        token = self.__get_access_token()
+                        url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+                        url = urlunsplit(url)
+                        # Overwrite the submodule URL with git credentials.
+                        repo.config_writer().set_value(
+                            f'submodule.{path}', 'url', url).release()
+
+                    subprocess.run(
+                        [
+                            'git',
+                            'submodule',
+                            'update',
+                            '--init',
+                            path,
+                        ],
+                        check=True,
+                        cwd=repo_path,
+                        timeout=20,
+                    )
+                except Exception:
+                    if os.path.exists(tmp_full_path):
+                        shutil.move(
+                            tmp_full_path,
+                            submodule_full_path,
+                        )
+                else:
+                    print(f'{section} updated!')
+                finally:
+                    if os.path.exists(tmp_full_path):
+                        shutil.rmtree(tmp_full_path)
+                    repo_config_writer = repo.config_writer()
+                    repo_config_writer.remove_section(f'submodule.{path}')
+                    repo_config_writer.release()
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -651,7 +695,7 @@ class Git:
 
         return private_key_file
 
-    def __setup_repo(self, sync_submodules: bool = False):
+    def __setup_repo(self):
         import git
         import git.cmd
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
@@ -678,7 +722,7 @@ class Git:
                 self.__poll_process_with_timeout(
                     proc,
                     error_message='Error cloning repo.',
-                    timeout=40,
+                    timeout=20,
                 )
             )
 
@@ -692,24 +736,6 @@ class Git:
             self.commit('Initial commit')
         finally:
             shutil.rmtree(tmp_path)
-
-        if sync_submodules:
-            try:
-                proc = repo_git.submodule(
-                    'update',
-                    '--init',
-                    '--recursive',
-                    as_process=True,
-                )
-                asyncio.run(
-                    self.__poll_process_with_timeout(
-                        proc,
-                        error_message='Error initializing submodules.',
-                        timeout=60,
-                    )
-                )
-            except Exception:
-                print('Error initializing submodules.')
 
     def __add_host_to_known_hosts(self):
         url = f'ssh://{self.git_config.remote_repo_link}'

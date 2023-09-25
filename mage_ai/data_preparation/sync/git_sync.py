@@ -7,6 +7,20 @@ from mage_ai.data_preparation.sync.base_sync import BaseSync
 from mage_ai.shared.logger import VerboseFunctionExec
 
 
+class PreserveGitConfig:
+    def __init__(self):
+        self.preferences_file_path = get_preferences().preferences_file_path
+        self.initial_preferences = ''
+
+    def __enter__(self):
+        with open(self.preferences_file_path, 'r', encoding='utf-8') as f:
+            self.initial_preferences = f.read()
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        with open(self.preferences_file_path, 'w', encoding='utf-8') as f:
+            f.write(self.initial_preferences)
+
+
 class GitSync(BaseSync):
     def __init__(self, sync_config: GitConfig, setup_repo: bool = True):
         self.sync_submodules = sync_config.sync_submodules
@@ -15,13 +29,14 @@ class GitSync(BaseSync):
         self.git_manager = Git(git_config=sync_config, setup_repo=setup_repo)
 
     def sync_data(self):
-        self.git_manager.reset_hard(branch=self.branch)
-        if self.sync_submodules:
-            self.git_manager.submodules_update()
+        with PreserveGitConfig():
+            self.git_manager.reset_hard(branch=self.branch)
+            if self.sync_submodules:
+                self.git_manager.submodules_update()
 
     # Reset git sync by cloning the remote repo
     def reset(self):
-        with VerboseFunctionExec(
+        with PreserveGitConfig(), VerboseFunctionExec(
             f'Attempting to clone from remote repo {self.remote_repo_link}',
             verbose=True,
         ):
