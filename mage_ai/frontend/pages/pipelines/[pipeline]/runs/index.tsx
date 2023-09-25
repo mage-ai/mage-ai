@@ -44,8 +44,13 @@ import {
 } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
-import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import {
+  CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID,
+  PageNameEnum,
+  RETRY_INCOMPLETE_BLOCK_RUNS_UUID,
+} from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
+import { POPUP_MENU_WIDTH } from '@components/shared/Table/Toolbar/constants';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
@@ -72,6 +77,7 @@ const TABS = [
   TAB_BLOCK_RUNS,
 ];
 
+
 type PipelineRunsProp = {
   pipeline: {
     uuid: string;
@@ -91,7 +97,7 @@ function PipelineRuns({
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
-  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
+  const [confirmationDialogueOpenId, setConfirmationDialogueOpenId] = useState<string>(null);
   const [confirmationAction, setConfirmationAction] = useState(null);
   const [query, setQuery] = useState<{
     offset?: number;
@@ -317,7 +323,8 @@ function PipelineRuns({
           status: PipelineStatusEnum.RETRY_INCOMPLETE_BLOCK_RUNS,
         },
       }),
-      uuid: 'retry_incomplete_block_runs',
+      openConfirmationDialogue: true,
+      uuid: RETRY_INCOMPLETE_BLOCK_RUNS_UUID,
     },
     {
       beforeIcon: <AlertTriangle muted={selectedRunningRunsCount === 0} />,
@@ -341,7 +348,7 @@ function PipelineRuns({
         },
       }),
       openConfirmationDialogue: true,
-      uuid: 'cancel_all_running',
+      uuid: CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID,
     },
   ]), [
     hasIncompletePipelineRun,
@@ -472,13 +479,14 @@ function PipelineRuns({
                 <Spacing px={2}>
                   <FlyoutMenuWrapper
                     items={pipelineRunActionItems}
+                    multipleConfirmDialogues
                     onClickCallback={() => setShowActionsMenu(false)}
                     onClickOutside={() => setShowActionsMenu(false)}
                     open={showActionsMenu}
                     parentRef={refActionsMenu}
                     roundedStyle
                     setConfirmationAction={setConfirmationAction}
-                    setConfirmationDialogueOpen={setConfirmationDialogueOpen}
+                    setConfirmationDialogueOpen={setConfirmationDialogueOpenId}
                     topOffset={4}
                     uuid="PipelineRuns/ActionsMenu"
                   >
@@ -493,19 +501,22 @@ function PipelineRuns({
                   </FlyoutMenuWrapper>
 
                   <ClickOutside
-                    onClickOutside={() => setConfirmationDialogueOpen(false)}
-                    open={confirmationDialogueOpen}
+                    onClickOutside={() => setConfirmationDialogueOpenId(null)}
+                    open={!!confirmationDialogueOpenId}
                   >
                     <PopupMenu
-                      danger
-                      onCancel={() => setConfirmationDialogueOpen(false)}
+                      danger={confirmationDialogueOpenId === CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID}
+                      onCancel={() => setConfirmationDialogueOpenId(null)}
                       onClick={() => {
                         confirmationAction?.();
-                        setConfirmationDialogueOpen(false);
+                        setConfirmationDialogueOpenId(null);
                       }}
                       subtitle="This includes runs on other pages as well, not just the current page."
-                      title="Are you sure you want to cancel all pipeline runs in progress?"
-                      width={UNIT * 40}
+                      title={confirmationDialogueOpenId === CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID
+                        ? 'Are you sure you want to cancel all pipeline runs in progress?'
+                        : 'Are you sure you want to retry all incomplete block runs?'
+                      }
+                      width={POPUP_MENU_WIDTH}
                     />
                   </ClickOutside>
                 </Spacing>
