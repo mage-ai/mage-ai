@@ -1,5 +1,3 @@
-import io
-import json
 import sys
 import uuid
 from ast import literal_eval
@@ -7,6 +5,7 @@ from functools import reduce
 from typing import Any, Dict, List, Tuple
 
 import google
+import pandas as pd
 from google.api_core.exceptions import BadRequest
 from google.cloud import bigquery
 
@@ -25,7 +24,6 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
-    convert_datetime_for_batch_load,
     convert_json_or_string,
     convert_json_or_string_for_batch_load,
     remove_duplicate_rows,
@@ -40,6 +38,7 @@ from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
+    build_insert_columns,
     build_insert_command,
     clean_column_name,
     column_type_mapping,
@@ -424,8 +423,6 @@ WHERE table_id = '{table_name}'
         if query_job_config is None:
             query_job_config = {}
 
-        records = [d['record'] for d in record_data]
-
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get(self.TABLE_CONFIG_KEY)
@@ -436,7 +433,7 @@ WHERE table_id = '{table_name}'
 
         tags = dict(
             database_name=database_name,
-            records=len(records),
+            records=len(record_data),
             schema_name=schema_name,
             stream=stream,
             table_name=table_name,
@@ -452,16 +449,8 @@ WHERE table_id = '{table_name}'
             number_type='FLOAT64',
             string_type='STRING',
         )
-        insert_columns, insert_values = build_insert_command(
-            column_type_mapping=mapping,
+        insert_columns = build_insert_columns(
             columns=columns,
-            convert_array_func=convert_array,
-            convert_column_to_type_func=convert_column_if_json,
-            convert_datetime_func=convert_datetime,
-            records=records,
-            string_parse_func=convert_json_or_string,
-            stringify_values=False,
-            convert_column_types=True,
             column_identifier=self.quote,
         )
         insert_columns = ', '.join(insert_columns)
@@ -502,8 +491,6 @@ WHERE table_id = '{table_name}'
                 client=client,
                 columns=columns,
                 full_table_name=temp_table_name,
-                insert_columns=insert_columns,
-                insert_values=insert_values,
                 mapping=mapping,
                 count_rows=False,
                 query_job_config=query_job_config,
@@ -549,8 +536,6 @@ WHERE table_id = '{table_name}'
                 client=client,
                 columns=columns,
                 full_table_name=full_table_name,
-                insert_columns=insert_columns,
-                insert_values=insert_values,
                 mapping=mapping,
                 count_rows=True,
                 query_job_config=query_job_config,
@@ -568,8 +553,6 @@ WHERE table_id = '{table_name}'
         client: Any,
         columns: List[str],
         full_table_name: str,
-        insert_columns: str,
-        insert_values: List[Any],
         mapping: Dict,
         record_data: List[Dict],
         count_rows: bool = True,
@@ -594,6 +577,20 @@ WHERE table_id = '{table_name}'
                 full_table_name,
             )
         else:
+            insert_columns, insert_values = build_insert_command(
+                column_type_mapping=mapping,
+                columns=columns,
+                convert_array_func=convert_array,
+                convert_column_to_type_func=convert_column_if_json,
+                convert_datetime_func=convert_datetime,
+                records=[d['record'] for d in record_data],
+                string_parse_func=convert_json_or_string,
+                stringify_values=False,
+                convert_column_types=True,
+                column_identifier=self.quote,
+            )
+            insert_columns = ', '.join(insert_columns)
+
             max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
 
             insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
@@ -720,17 +717,20 @@ WHERE table_id = '{table_name}'
                     if COLUMN_TYPE_ARRAY == column_type:
                         if type(v) is str:
                             v = literal_eval(v)
-
                         value_final = convert_array_for_batch_load(v, column_type_dict)
-                    elif COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                        value_final = convert_datetime_for_batch_load(v)
                     else:
                         value_final = convert_json_or_string_for_batch_load(v, column_type_dict)
-
                 vals[column] = value_final
             values.append(vals)
-        json_data = '\n'.join([json.dumps(value) for value in values])
-        job_result, job = self.__create_load_job(client, mapping, full_table_name, json_data)
+
+        # Convert the records to dataframe to speed up the BigQuery load job
+        df = pd.DataFrame.from_records(values)
+        for column in columns:
+            column_type_dict = mapping[column]
+            column_settings = column_type_dict['column_settings']
+            if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                df[column] = pd.to_datetime(df[column])
+        job_result, job = self.__create_load_job(client, mapping, full_table_name, df)
         job_results.append(job_result)
         jobs.append(job)
 
@@ -741,27 +741,24 @@ WHERE table_id = '{table_name}'
         client,
         mapping: str,
         full_table_name: str,
-        json_data: str,
+        df: pd.DataFrame,
     ):
-        schema_fields = []
-        for col, obj in mapping.items():
-            item_type_converted = obj['item_type_converted']
-            type_converted = obj['type_converted']
-            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
-            schema_field = bigquery.SchemaField(
-                name=col,
-                field_type=item_type_converted if is_array_type else type_converted,
-                mode='REPEATED' if is_array_type else 'NULLABLE',
-            )
-            schema_fields.append(schema_field)
-
+        # schema_fields = []
+        # for col, obj in mapping.items():
+        #     item_type_converted = obj['item_type_converted']
+        #     type_converted = obj['type_converted']
+        #     is_array_type = COLUMN_TYPE_ARRAY == obj['type']
+        #     schema_field = bigquery.SchemaField(
+        #         name=col,
+        #         field_type=item_type_converted if is_array_type else type_converted,
+        #         mode='REPEATED' if is_array_type else 'NULLABLE',
+        #     )
+        #     schema_fields.append(schema_field)
         job_config = bigquery.LoadJobConfig(
-            schema=schema_fields,
-            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+            # schema=schema_fields,
         )
-        json_file = io.StringIO(json_data)
-        job = client.load_table_from_file(
-            json_file,
+        job = client.load_table_from_dataframe(
+            df,
             full_table_name,
             job_config=job_config,
         )
