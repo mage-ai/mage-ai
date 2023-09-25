@@ -84,7 +84,7 @@ ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
 # Sets the trigger interval of the scheduler to a numeric value, in seconds
 # Determines how often the scheduler gets invoked
 try:
-    SCHEDULER_TRIGGER_INTERVAL = int(os.getenv('SCHEDULER_TRIGGER_INTERVAL', '10'))
+    SCHEDULER_TRIGGER_INTERVAL = float(os.getenv('SCHEDULER_TRIGGER_INTERVAL', '10'))
 except ValueError:
     SCHEDULER_TRIGGER_INTERVAL = 10
 
