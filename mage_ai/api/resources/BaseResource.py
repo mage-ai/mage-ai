@@ -1,3 +1,8 @@
+import importlib
+import inspect
+
+import inflection
+
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.Resource import Resource
@@ -5,14 +10,17 @@ from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.hash import merge_dict
-import importlib
-import inflection
-import inspect
 
 
 class BaseResource(Resource):
     collective_loader_attr = {}
     datetime_keys = []
+
+    # Declared list of cookies names to be injected into the payload
+    # - provide a list of cookie names in the subclassed resource
+    # - payload keys are contructed as:
+    #     mage_ai.api.operations.constants.COOKIE_PREFIX + <cookie_name>
+    cookie_names = []
     model_class = None
     parent_models_attr = {}
     parent_resource_attr = {}

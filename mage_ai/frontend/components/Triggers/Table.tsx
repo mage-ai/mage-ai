@@ -38,6 +38,10 @@ import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
+import {
+  checkIfCustomInterval,
+  convertUtcCronExpressionToLocalTimezone,
+} from './utils';
 import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
@@ -245,6 +249,7 @@ function TriggersTable({
                 tags,
               } = pipelineSchedule;
               const isActive = ScheduleStatusEnum.ACTIVE === status;
+              const isCustomInterval = checkIfCustomInterval(scheduleInterval);
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
               deleteButtonRefs.current[id] = createRef();
 
@@ -352,7 +357,10 @@ function TriggersTable({
               if (!disableActions) {
                 rows.push(
                   <Text default key={`trigger_frequency_${idx}`} monospace>
-                    {scheduleInterval}
+                    {(displayLocalTimezone && isCustomInterval)
+                      ? convertUtcCronExpressionToLocalTimezone(scheduleInterval)
+                      : scheduleInterval
+                    }
                   </Text>,
                 );
               }

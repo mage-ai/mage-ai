@@ -458,6 +458,7 @@ def output_variables(
     from_notebook: bool = False,
     global_vars: Dict = None,
     input_args: List[Any] = None,
+    data_integration_settings_mapping: Dict = None,
 ) -> List[str]:
     """
     Retrieves the output variables of a block.
@@ -482,9 +483,14 @@ def output_variables(
     """
 
     block = pipeline.get_block(block_uuid)
-    data_integration_settings = None
-    if block:
-        data_integration_settings = block.get_data_integration_settings(
+
+    di_settings = None
+    if data_integration_settings_mapping:
+        di_settings = data_integration_settings_mapping.get(block_uuid) or \
+            data_integration_settings_mapping.get(block.uuid)
+
+    if block and not di_settings:
+        di_settings = block.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
@@ -493,8 +499,8 @@ def output_variables(
             partition=execution_partition,
         )
 
-    if block and data_integration_settings:
-        streams = get_selected_streams(data_integration_settings.get('catalog'))
+    if block and di_settings:
+        streams = get_selected_streams(di_settings.get('catalog'))
         output_variables = [s.get('tap_stream_id') for s in streams]
     else:
         all_variables = pipeline.variable_manager.get_variables_by_block(
@@ -561,6 +567,7 @@ def input_variables(
     from_notebook: bool = False,
     global_vars: Dict = None,
     input_args: List[Any] = None,
+    data_integration_settings_mapping: Dict = None,
 ) -> Dict[str, List[str]]:
     """
     Retrieves the input variables from the output variables of upstream blocks.
@@ -586,6 +593,7 @@ def input_variables(
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
         mapping[block_uuid] = out_vars
 
@@ -601,6 +609,7 @@ def fetch_input_variables(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
+    data_integration_settings_mapping: Dict = None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -627,6 +636,8 @@ def fetch_input_variables(
     input_vars = []
     if input_args is not None:
         input_vars = input_args
+        if upstream_block_uuids:
+            upstream_block_uuids_final = upstream_block_uuids
     elif pipeline is not None:
         input_vars = [None for i in range(len(upstream_block_uuids))]
         input_variables_by_uuid = input_variables(
@@ -638,6 +649,7 @@ def fetch_input_variables(
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
         keys = input_variables_by_uuid.keys()
         reduce_output_indexes = []
@@ -729,6 +741,7 @@ def fetch_input_variables(
                     from_notebook=from_notebook,
                     global_vars=global_vars,
                     input_args=input_args,
+                    data_integration_settings_mapping=data_integration_settings_mapping,
                 )
 
                 final_value = []

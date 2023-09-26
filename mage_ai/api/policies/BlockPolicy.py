@@ -3,6 +3,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockPresenter import BlockPresenter
 from mage_ai.orchestration.constants import Entity
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 
 
 class BlockPolicy(BasePolicy):
@@ -10,7 +11,13 @@ class BlockPolicy(BasePolicy):
     def entity(self):
         parent_model = self.options.get('parent_model')
         if parent_model:
-            return Entity.PIPELINE, parent_model.uuid
+            pipeline_uuid = None
+            if isinstance(parent_model, PipelineRun):
+                pipeline_uuid = parent_model.pipeline_uuid
+            else:
+                pipeline_uuid = parent_model.uuid
+
+            return Entity.PIPELINE, pipeline_uuid
 
         return super().entity
 
@@ -25,6 +32,7 @@ BlockPolicy.allow_actions([
 
 BlockPolicy.allow_actions([
     constants.DETAIL,
+    constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
@@ -48,12 +56,16 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 BlockPolicy.allow_read([
     'bookmarks',
     'content',
+    'description',
     'outputs',
     'pipelines',
+    'runtime',
+    'tags',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,
+    constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_write([

@@ -1,3 +1,9 @@
+import json
+import re
+from typing import Dict, List
+
+import dateutil.parser
+
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -5,11 +11,9 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
-from mage_integrations.destinations.sql.utils import convert_column_type as convert_column_type_orig
-from typing import Dict, List
-import dateutil.parser
-import json
-import re
+from mage_integrations.destinations.sql.utils import (
+    convert_column_type as convert_column_type_orig,
+)
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -33,7 +37,7 @@ EMOJI_PATTERN = re.compile(
     u"\u3030"                 # wavy dash
     u"\U00002500-\U00002BEF"  # Chinese characters
     u"\U00010000-\U0010ffff"  # other characters
-    u'\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\uD83C-\uDBFF\uDC00-\uDFFF'
+    u'\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\uD83C-\uDBFF\uDC00-\uDFFF'     # noqa: E501
     "]+",
     flags=re.UNICODE,  # specify the unicode flag to handle unicode characters properly
 )
@@ -41,7 +45,7 @@ EMOJI_PATTERN = re.compile(
 
 def remove_emoji_code(v: str) -> str:
     if type(v) is str:
-        v = re.sub(r'(\\ud83d(\\ud[0-f][0-f][0-f])?)|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)
+        v = re.sub(r'(\\ud83d(\\ud[0-f][0-f][0-f])?)|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)     # noqa: E501
         v = EMOJI_PATTERN.sub(r'', v)
     return v
 
@@ -76,9 +80,11 @@ def convert_array(value: str, column_type_dict: Dict) -> str:
         return f'[{arr_string}]'
 
     if type(value) is list:
-        value_next = [f"CAST('{replace_single_quotes_with_double(v)}' AS {item_type_converted})" for v in value]
+        value_next = [f"CAST('{replace_single_quotes_with_double(v)}' AS {item_type_converted})"
+                      for v in value]
     else:
-        value_next = [f"CAST('{replace_single_quotes_with_double(value)}' AS {item_type_converted})"]
+        value_next = \
+            [f"CAST('{replace_single_quotes_with_double(value)}' AS {item_type_converted})"]
 
     arr_string = ', '.join([str(v) for v in value_next])
 
@@ -160,6 +166,7 @@ def convert_datetime_for_batch_load(value: str) -> str:
 
     return dateutil.parser.parse(final_value).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
+
 def convert_converted_type_to_parameter_type(converted_type):
     """
     https://cloud.google.com/python/docs/reference/bigquery/latest/google.cloud.bigquery.query.ScalarQueryParameterType
@@ -210,12 +217,17 @@ def convert_json_or_string(value, column_type_dict):
     return value
 
 
-def convert_json_or_string_for_batch_load(value, column_type_dict):
+def convert_json_or_string_for_batch_load(
+    value,
+    column_type_dict,
+    convert_json_to_dict: bool = True,
+):
     column_type = column_type_dict['type']
     if COLUMN_TYPE_OBJECT == column_type:
         value = stringify_object_and_remove_emoji_code(value)
         value = value.replace('\n', '\\n')
-        value = json.loads(value)
+        if convert_json_to_dict:
+            value = json.loads(value)
     elif COLUMN_TYPE_STRING == column_type:
         if type(value) is not str:
             value = str(value)
@@ -228,8 +240,10 @@ def remove_duplicate_rows(
     row_data: List[Dict],
     unique_constraints: List[str],
     logger=None,
-    tags: Dict = {}
+    tags: Dict = None,
 ) -> List[Dict]:
+    if tags is None:
+        tags = {}
     if not unique_constraints or len(unique_constraints) == 0:
         return row_data
 
@@ -247,8 +261,8 @@ def remove_duplicate_rows(
         if existing_record:
             if logger:
                 logger.info(
-                    f"Duplicate record found for unique constraints {', '.join(unique_constraints)} "
-                    f"with values {', '.join(values_for_unique_constraints)}: {record}.",
+                    f"Duplicate record found for unique constraints {', '.join(unique_constraints)}"
+                    f" with values {', '.join(values_for_unique_constraints)}: {record}.",
                     tags=tags,
                 )
 
@@ -265,7 +279,8 @@ def remove_duplicate_rows(
                     logger.info(
                         'Replacing previous record with duplicate record because duplicate record '
                         f'has {non_null_values} non-null values, '
-                        f'which is greater than or equal to the previous record {existing_non_null_values} non-null values.',
+                        'which is greater than or equal to the previous record '
+                        f'{existing_non_null_values} non-null values.',
                         tags=tags,
                     )
 
@@ -275,7 +290,8 @@ def remove_duplicate_rows(
                 logger.info(
                     'Skipping duplicate record because previous record has '
                     f'{existing_non_null_values} non-null values, '
-                    f'which is greater than or equal to the duplicate record {non_null_values} non-null values.',
+                    f'which is greater than or equal to the duplicate record {non_null_values} '
+                    'non-null values.',
                     tags=tags,
                 )
         else:

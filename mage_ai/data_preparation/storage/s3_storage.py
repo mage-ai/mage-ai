@@ -1,14 +1,17 @@
-from mage_ai.services.aws.s3 import s3
-from mage_ai.data_preparation.storage.base_storage import BaseStorage
-from mage_ai.shared.constants import S3_PREFIX
-from mage_ai.shared.parsers import encode_complex
-from mage_ai.shared.urls import s3_url_path
-from typing import Dict, List
 import io
 import json
+from contextlib import contextmanager
+from typing import Dict, List
+
 import pandas as pd
 import polars as pl
 import simplejson
+
+from mage_ai.data_preparation.storage.base_storage import BaseStorage
+from mage_ai.services.aws.s3 import s3
+from mage_ai.shared.constants import S3_PREFIX
+from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.urls import s3_url_path
 
 
 class S3Storage(BaseStorage):
@@ -47,13 +50,15 @@ class S3Storage(BaseStorage):
     def remove_dir(self, path: str) -> None:
         self.client.delete_objects(s3_url_path(path))
 
-    def read_json_file(self, file_path: str, default_value={}) -> Dict:
+    def read_json_file(self, file_path: str, default_value=None) -> Dict:
+        if default_value is None:
+            default_value = {}
         try:
             return json.loads(self.client.read(s3_url_path(file_path)))
         except Exception:
             return default_value
 
-    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+    async def read_json_file_async(self, file_path: str, default_value=None) -> Dict:
         """
         TODO: Implement async http call.
         """
@@ -90,3 +95,12 @@ class S3Storage(BaseStorage):
         df.write_parquet(buffer)
         buffer.seek(0)
         self.client.upload_object(s3_url_path(file_path), buffer)
+
+    @contextmanager
+    def open_to_write(self, file_path: str) -> None:
+        try:
+            stream = io.StringIO()
+            yield stream
+        finally:
+            self.client.upload(s3_url_path(file_path), stream.getvalue())
+            stream.close()

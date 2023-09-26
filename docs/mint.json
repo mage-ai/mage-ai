@@ -333,15 +333,7 @@
                 "integrations/databases/trino"
               ]
             },
-            "getting-started/kernels",
-            {
-              "group": "Versioning",
-              "pages": [
-                "getting-started/setting-up-git",
-                "getting-started/file-versions"
-              ]
-            },
-            "development/project/local-timezone"
+            "getting-started/kernels"
           ]
         },
         {
@@ -349,6 +341,9 @@
           "icon": "flask",
           "pages": [
             "development/project/setup",
+            "getting-started/setting-up-git",
+            "development/git/generate-an-ssh-token",
+            "getting-started/file-versions",
             "development/text-editor"
           ]
         },
@@ -433,14 +428,15 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/ai/overview",
         {
           "group": "Visualizations",
           "icon": "chart-line-up-down",
           "pages": [
             "visualizations/dashboards"
           ]
-        }
+        },
+        "development/ai/overview",
+        "development/updating-mage"
       ]
     },
     {
@@ -448,23 +444,23 @@
       "icon": "info",
       "pages": [
         "about/code-of-conduct",
-        "about/statistics"
+        "about/statistics",
+        "about/frequently-asked-questions"
       ]
     },
     {
       "group": "Get Started",
       "pages": [
-        "guides/overview",
-        {
-          "group": "Quickstart",
-          "icon": "rocket",
-          "pages": [
-            "guides/load-api-data",
-            "guides/data-integration-pipeline",
-            "guides/setup-dbt",
-            "guides/integrate-mage-airflow"
-          ]
-        }
+        "guides/overview"
+      ]
+    },
+    {
+      "group": "Quickstarts",
+      "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        "guides/setup-dbt",
+        "guides/integrate-mage-airflow"
       ]
     },
     {
@@ -494,7 +490,8 @@
           ]
         },
         "guides/ai/overview",
-        "guides/community-examples"
+        "guides/community-examples",
+        "guides/tips-and-tricks"
       ]
     },
     {

@@ -538,7 +538,8 @@ function BrowseTemplates({
                 <br />
 
                 <Text>
-                  Add a new template by clicking the button above.
+                  Add a new template by right-clicking a pipeline row from the
+                  Pipelines page and selecting &#34;Create template&#34;.
                 </Text>
               </Spacing>
             )}

@@ -1,23 +1,23 @@
-from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.schedules import (
-    Backfill,
-    PipelineRun,
-    PipelineSchedule,
-)
+from typing import Optional, Tuple
 
 
-@safe_db_query
-def transfer_related_models_for_pipeline(old_uuid: str, new_uuid: str):
-    # Migrate pipeline schedules
-    PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({
-        PipelineSchedule.pipeline_uuid: new_uuid
-    }, synchronize_session=False)
-    # Migrate pipeline runs (block runs have foreign key ref to PipelineRun id)
-    PipelineRun.query.filter(PipelineRun.pipeline_uuid == old_uuid).update({
-        PipelineRun.pipeline_uuid: new_uuid
-    }, synchronize_session=False)
-    # Migrate backfills
-    Backfill.query.filter(Backfill.pipeline_uuid == old_uuid).update({
-        Backfill.pipeline_uuid: new_uuid
-    }, synchronize_session=False)
-    db_connection.session.commit()
+def get_user_info_from_db_connection_url(
+    url: str,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Attempt to parse db connection url to get username and password. urllib.parse
+    does not work for all cases.
+
+    Args:
+        url (str): db connection url usually in the form of
+            "scheme://username:password@host:port/dbname?options"
+
+    Returns:
+        Tuple[str, str]: tuple of username, password
+    """
+    try:
+        prefix = '@'.join(url.split('@')[0:-1])
+        user_info = prefix.split('://', 1)[1]
+        return user_info.split(':', 1)
+    except Exception:
+        return None, None

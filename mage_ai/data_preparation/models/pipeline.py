@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
-from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
     NoMultipleDynamicUpstreamBlocks,
@@ -89,7 +89,7 @@ class Pipeline:
             self.repo_config = repo_config
         self.variable_manager = VariableManager.get_manager(
             self.repo_path,
-            self.variables_dir,
+            self.remote_variables_dir or self.variables_dir,
         )
 
     @property
@@ -134,7 +134,11 @@ class Pipeline:
 
     @property
     def remote_variables_dir(self):
-        return self.repo_config.remote_variables_dir
+        remote_variables_dir = self.repo_config.remote_variables_dir
+        if remote_variables_dir == 's3://bucket/path_prefix':
+            # Filter out default value
+            return None
+        return remote_variables_dir
 
     @property
     def version(self):
@@ -761,7 +765,9 @@ class Pipeline:
         return merge_dict(self.to_dict_base(), data)
 
     async def update(self, data, update_content=False):
-        from mage_ai.orchestration.db.utils import transfer_related_models_for_pipeline
+        from mage_ai.orchestration.db.models.utils import (
+            transfer_related_models_for_pipeline,
+        )
 
         old_uuid = None
         should_update_block_cache = False
@@ -932,15 +938,6 @@ class Pipeline:
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
-                    if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                        update_model_settings(
-                            block,
-                            block.upstream_blocks,
-                            [],
-                            force_update=True,
-                            variables=self.variables,
-                        )
-
                     if widget:
                         keys_to_update = []
 
@@ -976,6 +973,21 @@ class Pipeline:
                         widget=widget,
                     )
 
+        # If there are any dbt blocks which could receive an upstream df
+        # we need to update mage_sources.yml
+        if any(
+            (
+                not isinstance(block, DBTBlock) and
+                block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(
+                    isinstance(downstream_block, DBTBlock)
+                    for downstream_block in block.downstream_blocks
+                )
+            )
+            for _uuid, block in self.blocks_by_uuid.items()
+        ):
+            DBTBlock.update_sources(self.blocks_by_uuid, variables=self.variables)
+
         if should_update_block_cache:
             from mage_ai.cache.block import BlockCache
 
@@ -1002,21 +1014,39 @@ class Pipeline:
 
         min_length = min(len(uuids_new), len(uuids_old))
 
-        # If there are no blocks or the order has changed
+        # If there are no blocks or the order has not changed
         if min_length == 0 or uuids_new[:min_length] == uuids_old[:min_length]:
             return False
 
         block_configs_by_uuids = index_by(lambda x: x['uuid'], self.block_configs)
+        new_indexes_by_uuid = {uuid: index for index, uuid in enumerate(uuids_new)}
 
         block_configs = []
         blocks_by_uuid = {}
 
         for block_uuid in uuids_new:
+            upstream_blocks = None
+            upstream_blocks_reordered = None
             if block_uuid in block_configs_by_uuids:
-                block_configs.append(block_configs_by_uuids[block_uuid])
+                block_config = block_configs_by_uuids[block_uuid]
+
+                # Sort upstream_blocks order based on new block order
+                upstream_blocks = block_config['upstream_blocks']
+                if len(upstream_blocks) > 1:
+                    upstream_blocks_reordered = upstream_blocks.copy()
+                    upstream_blocks_reordered.sort(key=lambda uuid: new_indexes_by_uuid[uuid])
+
+                block_configs.append(block_config)
 
             if block_uuid in self.blocks_by_uuid:
-                blocks_by_uuid[block_uuid] = self.blocks_by_uuid[block_uuid]
+                block = self.blocks_by_uuid[block_uuid]
+                if upstream_blocks_reordered is not None and \
+                        upstream_blocks != upstream_blocks_reordered:
+                    block.update(
+                        dict(upstream_blocks=upstream_blocks_reordered),
+                        check_upstream_block_order=True,
+                    )
+                blocks_by_uuid[block_uuid] = block
 
         self.block_configs = block_configs
         self.blocks_by_uuid = blocks_by_uuid
@@ -1130,6 +1160,9 @@ class Pipeline:
         block = mapping.get(block_uuid)
         if not block:
             # Dynamic blocks have the following block UUID convention: [block_uuid]:[index]
+            # Data integration blocks have:
+            #   [block UUID]:controller
+            #   [block UUID]:[source UUID]:[stream]:[index]
             # Replica blocks have the following block UUID convention:
             # [block_uuid]:[replicated_block_uuid]
             block = mapping.get(block_uuid.split(':')[0])
@@ -1145,6 +1178,8 @@ class Pipeline:
         input_args: List[Any] = None,
         partition: str = None,
         spark=None,
+        index: int = None,
+        sample_count: int = None,
     ):
         block = self.get_block(block_uuid)
 
@@ -1160,8 +1195,10 @@ class Pipeline:
                 block,
                 data_integration_settings.get('catalog'),
                 from_notebook=from_notebook,
+                index=index,
                 partition=partition,
-                source_uuid=data_integration_settings.get('source'),
+                sample_count=sample_count,
+                data_integration_uuid=data_integration_settings.get('data_integration_uuid'),
                 stream_id=variable_name,
             )
 
@@ -1202,6 +1239,7 @@ class Pipeline:
         self,
         block: Block,
         callback_block_uuids: List[str] = None,
+        check_upstream_block_order: bool = False,
         conditional_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
@@ -1242,7 +1280,9 @@ class Pipeline:
 
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
-            if curr_upstream_block_uuids != new_upstream_block_uuids:
+            if curr_upstream_block_uuids != new_upstream_block_uuids or \
+                (check_upstream_block_order and
+                    block.upstream_block_uuids != upstream_block_uuids):
                 # Only set upstream block’s downstream to the current block if current block
                 # is not an extension block and not a callback/conditional block
                 if not is_extension and not is_callback and not is_conditional:
@@ -1369,6 +1409,23 @@ class Pipeline:
 
             if block.replicated_block == old_uuid:
                 block.replicated_block = new_uuid
+
+        # Update the block directory name that is under the pipeline directory.
+        # This block directory contains the catalog.json. For example:
+        # pipelines/[pipeline_uuid]/[block_uuid]/catalog.json
+        if block.is_data_integration():
+            dir_old = block.get_block_data_integration_settings_directory_path(old_uuid)
+            if os.path.isdir(dir_old):
+                dir_new = block.get_block_data_integration_settings_directory_path(new_uuid)
+                filenames = os.listdir(dir_old)
+                if filenames:
+                    os.makedirs(dir_new, exist_ok=True)
+
+                for filename in filenames:
+                    path_old = os.path.join(dir_old, filename)
+                    path_new = os.path.join(dir_new, filename)
+                    shutil.move(path_old, path_new)
+                shutil.rmtree(dir_old)
 
         self.save()
         return block

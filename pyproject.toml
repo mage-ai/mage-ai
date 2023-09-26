@@ -82,7 +82,7 @@ aws = [
 ]
 azure = [
   'azure-eventhub==5.11.2',
-  'azure-identity==1.11.0',
+  'azure-identity==1.12.0',
   'azure-keyvault-secrets==4.6.0',
   'azure-keyvault-certificates==4.6.0',
   'azure-mgmt-containerinstance==10.1.0',
@@ -168,14 +168,15 @@ trino = [
 # transformations
 dbt = [
   'dbt-bigquery==1.4.3',
-  'dbt-core==1.4.6',
-  'dbt-postgres==1.4.6',
-  'dbt-redshift==1.4.0',
-  'dbt-snowflake==1.4.0',
-  'dbt-spark==1.4.0',
-  'dbt-sqlserver==1.3.1',
-  'dbt-trino==1.4.0',
   'dbt-clickhouse==1.4.0',
+  'dbt-core==1.4.8',
+  'dbt-duckdb==1.4.2',
+  'dbt-postgres==1.4.8',
+  'dbt-redshift==1.4.0',
+  'dbt-snowflake==1.4.1',
+  'dbt-spark==1.4.0',
+  'dbt-sqlserver==1.4.3',
+  'dbt-trino==1.4.0',
 ]
 
 # observability
@@ -276,7 +277,7 @@ profile = "black"
 
 [tool.poetry]
 name = "mage-ai"
-version = "0.9.26"
+version = "0.9.27"
 description = "DevEx poetry configuration"
 authors = ["Mage <eng@mage.ai>"]
 readme = "README.md"

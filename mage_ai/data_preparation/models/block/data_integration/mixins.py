@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from inspect import Parameter, signature
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
 import yaml
@@ -11,6 +11,7 @@ from jinja2 import Template
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     BLOCK_CATALOG_FILENAME,
 )
+from mage_ai.data_preparation.models.block.data_integration.schema import build_schema
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     discover as discover_func,
 )
@@ -19,6 +20,7 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 )
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     extract_stream_ids_from_streams,
+    get_streams_from_catalog,
     select_streams_in_catalog,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -33,8 +35,60 @@ from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 
 
-class SourceMixin:
-    def get_catalog_file_path(self) -> str:
+class DataIntegrationMixin:
+    @property
+    def controller_uuid(self) -> str:
+        return f'{self.uuid}:controller'
+
+    @property
+    def configuration_data_integration(self) -> Dict:
+        if self.configuration:
+            return self.configuration.get('data_integration') or {}
+
+        return {}
+
+    @property
+    def inputs_only_uuids(self) -> List[str]:
+        arr = []
+
+        for stream_id, settings in self.data_integration_inputs.items():
+            if settings.get('input_only'):
+                arr.append(stream_id)
+
+        return arr
+
+    @property
+    def data_integration_inputs(self) -> Dict:
+        mapping = {}
+
+        if self.configuration_data_integration:
+            inputs = self.configuration_data_integration.get('inputs')
+            if isinstance(inputs, list):
+                for stream_id in inputs:
+                    mapping[stream_id] = dict(streams=[stream_id])
+            elif isinstance(inputs, dict):
+                mapping.update(inputs)
+
+        return mapping
+
+    @property
+    def uuids_for_inputs(self) -> List[str]:
+        arr = []
+
+        for stream_id, settings in self.data_integration_inputs.items():
+            if settings.get('streams'):
+                arr.append(stream_id)
+
+        return arr
+
+    @property
+    def upstream_block_uuids_for_inputs(self) -> List[str]:
+        if self.configuration_data_integration:
+            inputs_combined = self.uuids_for_inputs + self.inputs_only_uuids
+
+            return [up_uuid for up_uuid in self.upstream_block_uuids if up_uuid in inputs_combined]
+
+    def get_block_data_integration_settings_directory_path(self, block_uuid: str = None) -> str:
         if not self.pipeline:
             return
 
@@ -42,7 +96,12 @@ class SourceMixin:
             self.pipeline.repo_path,
             PIPELINES_FOLDER,
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid or self.uuid,
+        )
+
+    def get_catalog_file_path(self, block_uuid: str = None) -> str:
+        return os.path.join(
+            self.get_block_data_integration_settings_directory_path(block_uuid),
             BLOCK_CATALOG_FILENAME,
         )
 
@@ -62,6 +121,38 @@ class SourceMixin:
             with open(catalog_full_path, mode='w') as f:
                 f.write(json.dumps(catalog))
 
+    def is_data_integration(self) -> bool:
+        if not self.pipeline or not \
+                Project(self.pipeline.repo_config).is_feature_enabled(
+                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                ):
+
+            return False
+
+        if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
+                BlockLanguage.YAML == self.language:
+
+            return True
+
+        if BlockLanguage.PYTHON == self.language:
+            configuration = self.configuration or {}
+            if configuration and 'data_integration' in configuration:
+                return True
+
+        return False
+
+    def is_destination(self) -> bool:
+        if not self.is_data_integration():
+            return False
+
+        return BlockType.DATA_EXPORTER == self.type
+
+    def is_source(self) -> bool:
+        if not self.is_data_integration():
+            return False
+
+        return BlockType.DATA_LOADER == self.type
+
     def get_data_integration_settings(
         self,
         dynamic_block_index: Union[int, None] = None,
@@ -72,11 +163,7 @@ class SourceMixin:
         partition: str = None,
         **kwargs,
     ) -> Dict:
-        if not self.pipeline or not \
-                Project(self.pipeline.repo_config).is_feature_enabled(
-                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-                ):
-
+        if not self.is_data_integration():
             return
 
         if self._data_integration or self._data_integration_loaded:
@@ -84,24 +171,81 @@ class SourceMixin:
 
         catalog = None
         config = None
-        destination_uuid = None
         selected_streams = None
-        source_uuid = None
+
+        key = 'source' if self.is_source() else 'destination'
+        data_integration_uuid = None
 
         if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
                 BlockLanguage.YAML == self.language and \
                 self.content:
 
+            def _block_output(
+                block_uuid: str,
+                parse: str = None,
+                current_block=self,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                input_vars=input_vars,
+                partition=partition,
+            ) -> Any:
+                data = None
+
+                if not self.fetched_inputs_from_blocks:
+                    input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+                        self.fetch_input_variables_and_catalog(
+                            input_vars,
+                            partition,
+                            global_vars,
+                            dynamic_block_index=dynamic_block_index,
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            from_notebook=from_notebook,
+                        )
+                    self.fetched_inputs_from_blocks = input_vars_fetched
+
+                if block_uuid in self.upstream_block_uuids and \
+                        self.data_integration_inputs and \
+                        block_uuid in self.data_integration_inputs:
+
+                    index = self.upstream_block_uuids.index(block_uuid)
+                    data = self.fetched_inputs_from_blocks[index]
+
+                if parse:
+                    results = {}
+                    exec(f'_parse_func = {parse}', results)
+                    return results['_parse_func'](data)
+
+                return data
+
+            def _get_variable(
+                var_name: str,
+                parse: str = None,
+                global_vars=global_vars,
+            ) -> Any:
+                if not global_vars:
+                    return None
+
+                val = global_vars.get(var_name)
+                if parse:
+                    results = {}
+                    exec(f'_parse_func = {parse}', results)
+                    return results['_parse_func'](val)
+
+                return val
+
             text = Template(self.content).render(
-                variables=lambda x: global_vars.get(x) if global_vars else None,
+                block_output=_block_output,
+                variables=_get_variable,
                 **get_template_vars(),
             )
+
             settings = yaml.safe_load(text)
 
             catalog = self.__get_catalog_from_file()
             config = settings.get('config')
-            destination_uuid = settings.get('destination')
-            source_uuid = settings.get('source')
+            data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(
                 dynamic_block_index=dynamic_block_index,
@@ -116,26 +260,149 @@ class SourceMixin:
             catalog = results_from_block_code.get('catalog')
             config = results_from_block_code.get('config')
             selected_streams = results_from_block_code.get('selected_streams')
-            source_uuid = results_from_block_code.get('source')
+            data_integration_uuid = results_from_block_code.get(key)
 
-        if destination_uuid or source_uuid:
-            settings = dict(
-                catalog=catalog,
-                config=config,
-                selected_streams=selected_streams,
-            )
-
-            if destination_uuid:
-                settings['destination'] = destination_uuid
-            if source_uuid:
-                settings['source'] = source_uuid
-
-            self._data_integration = settings
+        if data_integration_uuid:
+            self._data_integration = {
+                'catalog': catalog,
+                'config': config,
+                'data_integration_uuid': data_integration_uuid,
+                'selected_streams': selected_streams,
+                key: data_integration_uuid,
+            }
 
         # Only attempt this once
         self._data_integration_loaded = True
 
         return self._data_integration
+
+    def fetch_input_variables_and_catalog(
+        self,
+        input_vars,
+        execution_partition: str = None,
+        global_vars: Dict = None,
+        dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        from_notebook: bool = False,
+    ) -> Tuple[List, List, List]:
+        block_uuids_to_fetch = self.upstream_block_uuids_for_inputs
+
+        catalog_by_upstream_block_uuid = {}
+        data_integration_settings_mapping = {}
+
+        for up_uuid, settings in self.data_integration_inputs.items():
+            input_catalog = settings.get('catalog', False)
+
+            upstream_block = self.pipeline.get_block(up_uuid)
+            if input_catalog and upstream_block.is_source():
+                di_settings = upstream_block.get_data_integration_settings(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                    global_vars=input_vars,
+                    input_vars=input_vars,
+                    partition=execution_partition,
+                )
+
+                catalog = di_settings.get('catalog') or {}
+
+                streams = settings.get('streams')
+                if streams:
+                    catalog['streams'] = get_streams_from_catalog(catalog, streams)
+
+                catalog_by_upstream_block_uuid[up_uuid] = catalog
+                data_integration_settings_mapping[up_uuid] = di_settings
+
+        # Get the output as inputs for this block
+        input_vars_fetched, kwargs_vars, up_block_uuids = self.fetch_input_variables(
+            input_vars,
+            execution_partition,
+            global_vars,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            upstream_block_uuids=block_uuids_to_fetch,
+            data_integration_settings_mapping=data_integration_settings_mapping,
+        )
+
+        if block_uuids_to_fetch and is_debug():
+            uuids = ', '.join(block_uuids_to_fetch)
+            inputs_count = len(input_vars_fetched) if input_vars_fetched else 0
+            print(
+                '[Block.__execute_data_integration_block_code]: Inputs fetched from '
+                f'block UUIDS {uuids}: {inputs_count} inputs fetched.',
+            )
+
+        if self.data_integration_inputs:
+            input_vars_updated = []
+            kwargs_vars_updated = []
+            up_block_uuids_updated = []
+
+            for up_uuid in self.upstream_block_uuids:
+                if up_uuid not in self.data_integration_inputs:
+                    continue
+
+                upstream_block = self.pipeline.get_block(up_uuid)
+                is_source = upstream_block.is_source()
+
+                settings = self.data_integration_inputs.get(up_uuid)
+                input_catalog = settings.get('catalog', False)
+                input_streams = settings.get('streams')
+
+                input_var_to_add = []
+                kwargs_var_to_add = None
+
+                idx = None
+                if up_uuid in up_block_uuids:
+                    idx = up_block_uuids.index(up_uuid)
+
+                if idx is not None and idx < len(kwargs_vars):
+                    kwargs_var_to_add = kwargs_vars[idx]
+
+                input_data = None
+                if input_streams:
+                    if idx is not None:
+                        input_data = input_vars_fetched[idx]
+                    input_var_to_add.append(input_data)
+
+                if input_catalog:
+                    catalog = None
+                    if is_source:
+                        catalog = catalog_by_upstream_block_uuid.get(up_uuid)
+                    elif input_data is None:
+                        input_vars_inner, \
+                            kwargs_vars_inner, \
+                            _up_block_uuids = self.fetch_input_variables(
+                                None,
+                                execution_partition,
+                                global_vars,
+                                dynamic_block_index=dynamic_block_index,
+                                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                                from_notebook=from_notebook,
+                                upstream_block_uuids=[up_uuid],
+                                data_integration_settings_mapping=data_integration_settings_mapping,
+                            )
+
+                        if input_vars_inner:
+                            input_data = input_vars_inner[0]
+
+                        if kwargs_vars_inner and not kwargs_var_to_add:
+                            kwargs_var_to_add = kwargs_vars_inner[0]
+
+                    if not catalog and input_data is not None:
+                        catalog = build_schema(input_data, up_uuid)
+
+                    input_var_to_add.append(catalog)
+
+                if len(input_var_to_add) == 1:
+                    input_var_to_add = input_var_to_add[0]
+                input_vars_updated.append(input_var_to_add)
+                kwargs_vars_updated.append(kwargs_var_to_add)
+                up_block_uuids_updated.append(up_uuid)
+
+            return input_vars_updated, kwargs_vars_updated, up_block_uuids_updated
+
+        return input_vars_fetched, kwargs_vars, up_block_uuids
 
     def __execute_data_integration_block_code(
         self,
@@ -152,6 +419,7 @@ class SourceMixin:
         decorated_functions = []
         decorated_functions_catalog = []
         decorated_functions_config = []
+        decorated_functions_destination = []
         decorated_functions_selected_streams = []
         decorated_functions_source = []
         test_functions = []
@@ -159,6 +427,7 @@ class SourceMixin:
         results = {
             'data_integration_catalog': self.__block_decorator_catalog(decorated_functions_catalog),
             'data_integration_config': self._block_decorator(decorated_functions_config),
+            'data_integration_destination': self._block_decorator(decorated_functions_destination),
             'data_integration_selected_streams': self.__block_decorator_selected_streams(
                 decorated_functions_selected_streams,
             ),
@@ -180,8 +449,16 @@ class SourceMixin:
         if not self._data_integration:
             self._data_integration = {}
 
-        if len(decorated_functions_source) >= 1:
-            block_function = decorated_functions_source[0]
+        is_source = self.is_source()
+        if is_source:
+            key = 'source'
+            decorated_functions_arr = decorated_functions_source
+        else:
+            key = 'destination'
+            decorated_functions_arr = decorated_functions_destination
+
+        if len(decorated_functions_arr) >= 1:
+            block_function = decorated_functions_arr[0]
             sig = signature(block_function)
 
             num_args = sum(
@@ -192,18 +469,17 @@ class SourceMixin:
 
             if num_args > num_inputs:
                 input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
-                        self.fetch_input_variables(
-                            input_vars,
-                            partition,
-                            global_vars,
-                            dynamic_block_index=dynamic_block_index,
-                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                            from_notebook=from_notebook,
-                        )
-
+                    self.fetch_input_variables_and_catalog(
+                        input_vars,
+                        partition,
+                        global_vars,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        from_notebook=from_notebook,
+                    )
                 input_vars_use = input_vars_fetched
 
-            self._data_integration['source'] = self.execute_block_function(
+            self._data_integration[key] = self.execute_block_function(
                 block_function,
                 input_vars_use,
                 from_notebook=from_notebook,
@@ -216,25 +492,25 @@ class SourceMixin:
                 decorated_functions_config[0],
                 input_vars_use,
                 from_notebook=from_notebook,
-                global_vars=merge_dict(dict(
-                    source=self._data_integration.get('source'),
-                ), global_vars),
+                global_vars=merge_dict({
+                    key: self._data_integration.get(key),
+                }, global_vars),
                 initialize_decorator_modules=False,
             )
 
-        source = self._data_integration.get('source')
+        data_integration_uuid = self._data_integration.get(key)
         config = self._data_integration.get('config')
 
-        if source and config:
+        if data_integration_uuid and config:
             if decorated_functions_selected_streams:
                 self._data_integration['selected_streams'] = self.execute_block_function(
                     decorated_functions_selected_streams[0],
                     input_vars_use,
                     from_notebook=from_notebook,
-                    global_vars=merge_dict(dict(
-                        config=config,
-                        source=source,
-                    ), global_vars),
+                    global_vars=merge_dict({
+                        'config': config,
+                        key: data_integration_uuid,
+                    }, global_vars),
                     initialize_decorator_modules=False,
                 )
             else:
@@ -245,16 +521,16 @@ class SourceMixin:
                     decorated_functions_catalog[0],
                     input_vars_use,
                     from_notebook=from_notebook,
-                    global_vars=merge_dict(dict(
-                        config=config,
-                        selected_streams=self._data_integration.get('selected_streams'),
-                        source=source,
-                    ), global_vars),
+                    global_vars=merge_dict({
+                        'config': config,
+                        'selected_streams': self._data_integration.get('selected_streams'),
+                        key: data_integration_uuid,
+                    }, global_vars),
                     initialize_decorator_modules=False,
                 )
-            else:
+            elif is_source:
                 selected_streams = self._data_integration.get('selected_streams')
-                catalog = discover_func(source, config, selected_streams)
+                catalog = discover_func(data_integration_uuid, config, selected_streams)
                 self._data_integration['catalog'] = select_streams_in_catalog(
                     catalog,
                     selected_streams,

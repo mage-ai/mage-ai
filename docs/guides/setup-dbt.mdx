@@ -33,12 +33,12 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
    ```bash
    cd demo_project/dbt
-   dbt init demo -s
+   dbt init -s demo
    touch demo/profiles.yml
    ```
 
    For more information on creating a dbt project, read their
-   [documentation](https://docs.getdbt.com/docs/get-started/getting-started-dbt-core#create-a-project).
+   [documentation](https://docs.getdbt.com/reference/commands/init).
 
 ---
 
@@ -171,7 +171,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
    >
    > When a dbt model depends on an upstream block that isn’t a dbt model, a
    > source for that block is automatically added to the
-   > `demo_project/dbt/demo/models/example/mage_sources.yml` file.
+   > `demo_project/dbt/demo/models/mage_sources.yml` file.
    >
    > Read more about dbt sources in their
    > [documentation](https://docs.getdbt.com/docs/build/sources).

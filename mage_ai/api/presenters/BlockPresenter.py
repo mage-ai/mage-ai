@@ -1,10 +1,6 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.block.dbt.utils import (
-    add_blocks_upstream_from_refs,
-    compiled_query_string,
-)
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import BlockLanguage, PipelineType
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 
@@ -68,14 +64,16 @@ class BlockPresenter(BasePresenter):
             )
 
             if 'dbt' == display_format:
-                upstream_blocks = add_blocks_upstream_from_refs(
-                    self.model,
-                    add_current_block=True,
-                    read_only=True,
-                )
-                query_string = compiled_query_string(self.model)
+                query_string = None
+                lineage = None
+                if self.model.language == BlockLanguage.SQL:
+                    lineage = [
+                        block.to_dict()
+                        for block in self.model.upstream_dbt_blocks(read_only=True)
+                    ]
+                    query_string = self.model.content_compiled
                 data['metadata'] = dict(dbt=dict(
-                    lineage=[b.to_dict() for b in upstream_blocks],
+                    lineage=lineage,
                     sql=query_string,
                 ))
 
@@ -86,6 +84,8 @@ class BlockPresenter(BasePresenter):
             )
 
             return data
+        elif constants.LIST == display_format and isinstance(self.model, dict):
+            return self.model
 
         return self.model.to_dict()
 

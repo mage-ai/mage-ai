@@ -7,7 +7,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import BadConversionError, PandasTypes
+from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
 
 logger = logging.getLogger(__name__)
@@ -89,10 +89,7 @@ class DuckDB(BaseSQL):
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
         ):
-            raise BadConversionError(
-                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
-                'a DuckDB datatype.'
-            )
+            return 'TEXT'
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:
                 if column.dt.tz:

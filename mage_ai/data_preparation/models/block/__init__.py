@@ -2,6 +2,7 @@ import asyncio
 import functools
 import importlib.util
 import json
+import logging
 import os
 import sys
 import time
@@ -23,8 +24,12 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
-from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
+from mage_ai.data_preparation.models.block.data_integration.mixins import (
+    DataIntegrationMixin,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    execute_data_integration,
+)
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -59,6 +64,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
@@ -66,7 +72,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -81,7 +87,8 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
-    global_vars=None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
     parallel: bool = True,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -91,6 +98,8 @@ async def run_blocks(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+    if global_vars is None:
+        global_vars = dict()
 
     def create_block_task(block: 'Block') -> asyncio.Task:
         async def execute_and_run_tests() -> None:
@@ -99,10 +108,19 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
+                variables = global_vars
+                if from_notebook:
+                    logger = logging.getLogger(f'{block.uuid}_test')
+                    logger.setLevel('INFO')
+                    if 'logger' not in variables:
+                        variables = {
+                            'logger': logger,
+                            **variables,
+                        }
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
-                    global_vars=global_vars,
+                    global_vars=variables,
                     run_all_blocks=True,
                     run_sensors=run_sensors,
                     update_status=update_status,
@@ -163,6 +181,7 @@ def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
+    from_notebook: bool = False,
     global_vars: Dict = None,
     run_sensors: bool = True,
     run_tests: bool = True,
@@ -171,6 +190,9 @@ def run_blocks_sync(
     tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
+
+    if global_vars is None:
+        global_vars = dict()
 
     for block in root_blocks:
         blocks.put(block)
@@ -204,6 +226,14 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
+            if from_notebook:
+                logger = logging.getLogger(f'{block.uuid}_test')
+                logger.setLevel('INFO')
+                if 'logger' not in global_vars:
+                    global_vars = {
+                        'logger': logger,
+                        **global_vars,
+                    }
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -227,7 +257,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(SourceMixin):
+class Block(DataIntegrationMixin):
     def __init__(
         self,
         name: str,
@@ -301,10 +331,17 @@ class Block(SourceMixin):
         # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
         self._data_integration = None
         self._data_integration_loaded = False
+        # Used when interpolating upstream block outputs in YAML files
+        self.fetched_inputs_from_blocks = None
 
     @property
     def uuid(self) -> str:
         return self.dynamic_block_uuid or self._uuid
+
+    @property
+    def uuid_replicated(self) -> str:
+        if self.replicated_block:
+            return f'{self.uuid}:{self.replicated_block}'
 
     @uuid.setter
     def uuid(self, x) -> None:
@@ -343,6 +380,30 @@ class Block(SourceMixin):
         return self._content
 
     async def metadata_async(self) -> Dict:
+        if self.is_data_integration():
+            if BlockLanguage.YAML == self.language:
+                content = await self.content_async()
+                if content:
+                    variables = {}
+                    if self.pipeline and self.pipeline.variables:
+                        variables.update(self.pipeline.variables)
+
+                    text = Template(content).render(
+                        variables=lambda x: variables.get(x) if variables else None,
+                        **get_template_vars(),
+                    )
+
+                    settings = yaml.safe_load(text)
+                    uuid = settings.get('source') or settings.get('destination')
+                    mapping = get_templates(group_templates=True).get(uuid)
+
+                    return dict(
+                        data_integration=merge_dict(
+                            extract(mapping, ['name']),
+                            settings,
+                        ),
+                    )
+
         return {}
 
     @property
@@ -438,29 +499,28 @@ class Block(SourceMixin):
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt.utils import (
-            add_blocks_upstream_from_refs,
-        )
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = add_blocks_upstream_from_refs(block)
-                upstream_block_uuids += [b.uuid for b in arr]
-                upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
-                priority_final = priority if len(upstream_block_uuids) == 0 else None
+            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks()
+                }
+                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                pipeline.validate('A cycle was formed while adding a block')
+                pipeline.save()
             else:
-                priority_final = priority
-
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority_final,
-                widget=widget,
-            )
+                pipeline.add_block(
+                    block,
+                    upstream_block_uuids,
+                    priority=priority,
+                    widget=widget,
+                )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
@@ -657,15 +717,23 @@ class Block(SourceMixin):
             status=status,
         )
 
-    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]) -> bool:
+    def all_upstream_blocks_completed(
+        self,
+        completed_block_uuids: Set[str],
+        upstream_block_uuids: List[str] = None,
+    ) -> bool:
         arr = []
-        for b in self.upstream_blocks:
-            uuid = b.uuid
-            # Replicated block’s have a block_run block_uuid value with this convention:
-            # [block_uuid]:[replicated_block_uuid]
-            if b.replicated_block:
-                uuid = f'{uuid}:{b.replicated_block}'
-            arr.append(uuid)
+
+        if upstream_block_uuids:
+            arr += upstream_block_uuids
+        else:
+            for b in self.upstream_blocks:
+                uuid = b.uuid
+                # Replicated block’s have a block_run block_uuid value with this convention:
+                # [block_uuid]:[replicated_block_uuid]
+                if b.replicated_block:
+                    uuid = f'{uuid}:{b.replicated_block}'
+                arr.append(uuid)
 
         return all(uuid in completed_block_uuids for uuid in arr)
 
@@ -1069,14 +1137,30 @@ class Block(SourceMixin):
             logging_tags=logging_tags,
         ):
             # Fetch input variables
-            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
-                input_args,
-                execution_partition,
-                global_vars,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                from_notebook=from_notebook,
-            )
+
+            # Only fetch the input variables that the destination block explicitly declares.
+            # If all the input variables are fetched, there is a chance that a lot of data from
+            # an upstream source block is loaded just to be used as inputs for the block’s
+            # decorated functions. Only do this for the notebook because
+            if from_notebook and self.is_data_integration():
+                input_vars, kwargs_vars, upstream_block_uuids = \
+                    self.fetch_input_variables_and_catalog(
+                        input_args,
+                        execution_partition,
+                        global_vars,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        from_notebook=from_notebook,
+                    )
+            else:
+                input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                    input_args,
+                    execution_partition,
+                    global_vars,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                )
 
             outputs_from_input_vars = {}
             if input_args is None:
@@ -1112,6 +1196,28 @@ class Block(SourceMixin):
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
+
+            # If block has downstream dbt block, then materialize output
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+            if (
+                not isinstance(self, DBTBlock) and
+                self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
+                any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
+            ):
+                # project_path and target sets
+                DBTBlock.materialize_df(
+                    df=outputs[0],
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=self.uuid,
+                    targets=list(set(
+                        (block.project_path, block.target(variables=global_vars))
+                        for _uuid, block in self.pipeline.blocks_by_uuid.items()
+                        if isinstance(block, DBTBlock)
+                    )),
+                    logger=logger,
+                    global_vars=global_vars_copy,
+                    runtime_arguments=runtime_arguments,
+                )
 
         return dict(output=outputs)
 
@@ -1181,7 +1287,7 @@ class Block(SourceMixin):
             input_vars=input_vars,
             partition=execution_partition,
         ):
-            return execute_source(
+            return execute_data_integration(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
                 custom_code=custom_code,
@@ -1313,6 +1419,7 @@ class Block(SourceMixin):
         dynamic_upstream_block_uuids: List[str] = None,
         from_notebook: bool = False,
         upstream_block_uuids: List[str] = None,
+        data_integration_settings_mapping: Dict = None,
     ) -> Tuple[List, List, List]:
         return fetch_input_variables(
             self.pipeline,
@@ -1323,6 +1430,7 @@ class Block(SourceMixin):
             dynamic_block_index,
             dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
 
     def get_analyses(self) -> List:
@@ -1719,17 +1827,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.callback_block is not None:
                 data['callback_content'] = await self.callback_block.content_async()
 
-        if include_block_catalog and \
-                self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
-                BlockLanguage.YAML == self.language and \
-                data.get('content') and \
-                self.pipeline:
-
-            content = data.get('content') or ''
-            if content:
-                config = yaml.safe_load(content)
-                if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.get_catalog_from_file_async()
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1773,10 +1872,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.color = data['color']
             self.__update_pipeline_block()
 
-        if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
-            self.upstream_block_uuids
+        check_upstream_block_order = kwargs.get('check_upstream_block_order', False)
+        if 'upstream_blocks' in data and (
+            (check_upstream_block_order and
+                data['upstream_blocks'] != self.upstream_block_uuids) or
+            set(data['upstream_blocks']) != set(self.upstream_block_uuids)
         ):
-            self.__update_upstream_blocks(data['upstream_blocks'])
+            self.__update_upstream_blocks(
+                data['upstream_blocks'],
+                check_upstream_block_order=check_upstream_block_order,
+            )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
             self.callback_block_uuids
@@ -1881,7 +1986,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     visited.add(block)
         return list(visited)
 
-    def run_upstream_blocks(self, incomplete_only: bool = False, **kwargs) -> None:
+    def run_upstream_blocks(
+        self,
+        from_notebook: bool = False,
+        incomplete_only: bool = False,
+        **kwargs
+    ) -> None:
         def process_upstream_block(
             block: 'Block',
             root_blocks: List['Block'],
@@ -1901,6 +2011,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         run_blocks_sync(
             root_blocks,
+            from_notebook=from_notebook,
             selected_blocks=upstream_block_uuids,
             **kwargs,
         )
@@ -1943,6 +2054,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
+        if not test_functions or len(test_functions) == 0:
+            return
+
         variable_manager = self.pipeline.variable_manager
         outputs = [
             variable_manager.get_variable(
@@ -1958,6 +2072,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 global_vars=global_vars,
             )
         ]
+
+        if logger and 'logger' not in global_vars:
+            global_vars['logger'] = logger
 
         with self._redirect_streams(
             build_block_output_stdout=build_block_output_stdout,
@@ -2479,11 +2596,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             language=self.language,
         )
 
-    def __update_upstream_blocks(self, upstream_blocks) -> None:
+    def __update_upstream_blocks(
+        self,
+        upstream_blocks,
+        check_upstream_block_order: bool = False,
+    ) -> None:
         if self.pipeline is None:
             return
         self.pipeline.update_block(
             self,
+            check_upstream_block_order=check_upstream_block_order,
             upstream_block_uuids=upstream_blocks,
             widget=BlockType.CHART == self.type,
         )
