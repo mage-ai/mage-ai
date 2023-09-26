@@ -35,18 +35,26 @@ class Destination(BaseDestination):
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
+    def export_batch_data(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = None,
+    ) -> None:
+        if tags is None:
+            tags = {}
+
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
-        tags = dict(
+        tags = merge_dict(tags, dict(
             database_name=database_name,
             records=len(record_data),
             schema_name=schema_name,
             stream=stream,
             table_name=table_name,
-        )
+        ))
 
         self.logger.info('Export data started', tags=tags)
 
@@ -57,19 +65,26 @@ class Destination(BaseDestination):
         for r in record_data:
             r['record'] = update_record_with_internal_columns(r['record'])
 
-        # Create schema if not exists
+        # Create schema if not exists. Only run this command for the first batch.
         # Pass if user decides to skip it
-        if self.config.get("skip_schema_creation") is True:
-            # User decided not to run CREATE SCHEMA command
-            self.logger.info('Skipping CREATE SCHEMA command')
-        else:
-            create_schema_commands = self.build_create_schema_commands(
-                database_name=database_name,
-                schema_name=schema_name,
-            )
-            self.build_connection().execute(create_schema_commands, commit=True)
+        if tags.get('batch') == 0:
+            if self.config.get("skip_schema_creation") is True:
+                # User decided not to run CREATE SCHEMA command
+                self.logger.info('Skipping CREATE SCHEMA command')
+            else:
+                create_schema_commands = self.build_create_schema_commands(
+                    database_name=database_name,
+                    schema_name=schema_name,
+                )
+                self.build_connection().execute(create_schema_commands, commit=True)
 
-        query_strings = self.build_query_strings(record_data, stream)
+        query_strings = self.build_query_strings(
+            record_data,
+            stream,
+            tags=tags,
+        )
+
+        self.logger.info(f'Process queries {query_strings}')
 
         data = self.process_queries(
             query_strings,
@@ -96,7 +111,15 @@ class Destination(BaseDestination):
         self,
         record_data: List[Dict],
         stream: str,
+        tags: Dict = None,
     ) -> List[str]:
+        if tags is None:
+            tags = {}
+
+        # Only run the table create and alter commands for the first batch
+        if tags.get('batch') > 0:
+            return []
+
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get(self.TABLE_CONFIG_KEY)
@@ -104,12 +127,15 @@ class Destination(BaseDestination):
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
 
-        tags = dict(
-            database_name=database_name,
-            records=len(record_data),
-            schema_name=schema_name,
-            stream=stream,
-            table_name=table_name,
+        tags = merge_dict(
+            tags,
+            dict(
+                database_name=database_name,
+                records=len(record_data),
+                schema_name=schema_name,
+                stream=stream,
+                table_name=table_name,
+            )
         )
 
         query_strings = []

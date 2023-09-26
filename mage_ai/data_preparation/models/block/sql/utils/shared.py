@@ -349,10 +349,6 @@ def create_upstream_block_tables(
 ):
     if cache_keys is None:
         cache_keys = []
-    from mage_ai.data_preparation.models.block.dbt.utils import (
-        parse_attributes,
-        source_table_name_for_block,
-    )
     configuration = configuration if configuration else block.configuration
 
     input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
@@ -408,12 +404,6 @@ def create_upstream_block_tables(
 
             if not schema and not no_schema:
                 schema = schema_name
-
-            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
-                if not no_schema:
-                    attributes_dict = parse_attributes(block, variables=variables)
-                    schema = attributes_dict['source_name']
-                table_name = source_table_name_for_block(upstream_block)
 
             full_table_name = '.'.join(list(filter(lambda x: x, [
                 schema,

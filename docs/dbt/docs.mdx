@@ -23,7 +23,7 @@ Before enabling dbt docs in production, we need to make sure the static files fo
               - "target"
               - "dbt_packages"
             ```
-        1. `profiles.yml`: The config in this file is not necessary, but it needs to compile.
+        1. `profiles.yml`: The config in this file is not used, but it needs to still be a valid output target in order for the project to compile.
             ```yaml
             base:
               target: dev

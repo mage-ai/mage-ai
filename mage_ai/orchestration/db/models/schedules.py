@@ -34,7 +34,11 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
 )
-from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_SAMPLE_COUNT,
+    ExecutorType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -47,6 +51,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
@@ -629,9 +634,26 @@ class PipelineRun(BaseModel):
         completed_block_uuids = _build_block_uuids(self.completed_block_runs)
         finished_block_uuids = _build_block_uuids(self.block_runs)
 
+        data_integration_block_uuids_mapping = {}
+        for block_run in self.block_runs:
+            block = pipeline.get_block(block_run.block_uuid)
+            metrics = block_run.metrics
+            if metrics and block and block.is_data_integration():
+                original_block_uuid = metrics.get('original_block_uuid')
+
+                if original_block_uuid and metrics.get('child'):
+                    if not metrics.get('controller') or not metrics.get('run_in_parallel'):
+                        if original_block_uuid not in data_integration_block_uuids_mapping:
+                            data_integration_block_uuids_mapping[original_block_uuid] = []
+
+                        data_integration_block_uuids_mapping[original_block_uuid].append(
+                            block_run.block_uuid,
+                        )
+
         executable_block_runs = list()
         for block_run in self.initial_block_runs:
             completed = False
+            upstream_block_uuids_override = None
 
             dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
                 'dynamic_upstream_block_uuids',
@@ -646,8 +668,39 @@ class PipelineRun(BaseModel):
                                     for uuid in dynamic_upstream_block_uuids)
             else:
                 block = pipeline.get_block(block_run.block_uuid)
+
+                metrics = block_run.metrics
+
+                if metrics and block and block.is_data_integration():
+                    if metrics.get('original'):
+                        # If this is the original block, it must depend on all the children
+                        # except the children that are controllers.
+                        # If a child controller has run_in_parallel False, then the original block
+                        # must depend on that as well.
+
+                        child_block_uuids = data_integration_block_uuids_mapping.get(
+                            block.uuid,
+                        )
+                        controller_block_uuid = metrics.get('controller_block_uuid')
+
+                        if child_block_uuids:
+                            upstream_block_uuids_override = child_block_uuids
+                        elif controller_block_uuid:
+                            upstream_block_uuids_override = [
+                                controller_block_uuid,
+                            ]
+                    elif metrics.get('controller') and \
+                            metrics.get('child') and not \
+                            metrics.get('run_in_parallel') and \
+                            metrics.get('upstream_block_uuids'):
+
+                        upstream_block_uuids_override = metrics.get('upstream_block_uuids')
+
                 completed = block is not None and \
-                    block.all_upstream_blocks_completed(completed_block_uuids)
+                    block.all_upstream_blocks_completed(
+                        completed_block_uuids,
+                        upstream_block_uuids_override,
+                    )
 
             if completed:
                 executable_block_runs.append(block_run)
@@ -741,10 +794,12 @@ class PipelineRun(BaseModel):
             if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
                 arr.append(block)
 
-        block_uuids = []
+        block_arr = []
 
         for block in arr:
+            create_options = {}
             block_uuid = block.uuid
+
             if block.replicated_block:
                 replicated_block = pipeline.get_block(block.replicated_block)
                 if replicated_block:
@@ -754,10 +809,24 @@ class PipelineRun(BaseModel):
                         f'Replicated block {block.replicated_block} ' +
                         f'does not exist in pipeline {pipeline.uuid}.',
                     )
+            elif block.is_data_integration():
+                controller_uuid = block.controller_uuid
+                create_options['metrics'] = dict(
+                    controller_block_uuid=controller_uuid,
+                    original=1,
+                )
 
-            block_uuids.append(block_uuid)
+                block_arr.append((
+                    controller_uuid,
+                    dict(metrics=dict(
+                        controller=1,
+                        original_block_uuid=block_uuid,
+                    )),
+                ))
 
-        return [self.create_block_run(block_uuid) for block_uuid in block_uuids]
+            block_arr.append((block_uuid, create_options))
+
+        return [self.create_block_run(block_uuid, **options) for block_uuid, options in block_arr]
 
     def any_blocks_failed(self) -> bool:
         return any(
@@ -946,6 +1015,75 @@ class BlockRun(BaseModel):
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         block = pipeline.get_block(self.block_uuid)
         block_uuid = self.block_uuid
+
+        if self.metrics and block.is_data_integration():
+            child = self.metrics.get('child')
+            controller = self.metrics.get('controller')
+
+            # Data integration child block run
+            if child:
+                # [block UUID]:[source destination UUID]:[stream]:[controller|index]
+                parts = self.block_uuid.split(':')
+                if len(parts) >= 4:
+                    source_destination_uuid = parts[1]
+                    stream = parts[2]
+                    index = parts[3]
+
+                    if controller:
+                        return [
+                            dict(
+                                text_data='This block run controls all the child blocks '
+                                f'starting with {block.uuid} for stream {stream}.\n'
+                                'To view the output of this block, click on the child block runs '
+                                'that start with\n'
+                                f'{block.uuid}:{source_destination_uuid}:{stream}:[index].',
+                                type=DataType.TEXT,
+                                variable_uuid='controller',
+                            ),
+                        ]
+                    else:
+                        data = pipeline.get_block_variable(
+                            block_uuid=block.uuid,
+                            variable_name=stream,
+                            partition=self.pipeline_run.execution_partition,
+                            index=index,
+                            sample_count=sample_count or DATAFRAME_SAMPLE_COUNT,
+                        )
+                        if data:
+                            columns = data.get('columns')
+                            return [
+                                dict(
+                                    sample_data=dict(
+                                        columns=columns,
+                                        rows=data.get('rows'),
+                                    ),
+                                    shape=[None, len(columns)],
+                                    type=DataType.TABLE,
+                                    variable_uuid=stream,
+                                ),
+                            ]
+            elif controller and not child:
+                return [
+                    dict(
+                        text_data='This block run controls all the child blocks '
+                        f'starting with {block.uuid}.\n'
+                        'To view the output of this block, click on the child block runs that '
+                        f'start with\n{block.uuid}:[source|destination]:[stream].',
+                        type=DataType.TEXT,
+                        variable_uuid='controller',
+                    ),
+                ]
+            elif self.metrics.get('original'):
+                return [
+                    dict(
+                        text_data='This block run is the last one in the set of block runs '
+                        f'starting with {block.uuid}.\n'
+                        'To view the output of this block, click on the child block runs that '
+                        f'start with\n{block.uuid}:[source|destination]:[stream].',
+                        type=DataType.TEXT,
+                        variable_uuid='original',
+                    ),
+                ]
 
         # The block_run’s block_uuid for replicated blocks will be in this format:
         # [block_uuid]:[replicated_block_uuid]

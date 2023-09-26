@@ -3,7 +3,8 @@ import os
 
 import singer
 from singer import metadata
-from tap_github.streams import STREAMS
+
+from mage_integrations.sources.github.tap_github.streams import STREAMS
 
 
 def get_abs_path(path):
@@ -35,7 +36,8 @@ def load_schema_references():
 
 def get_schemas():
     """
-    Load the schema references, prepare metadata for each streams and return schema and metadata for the catalog.
+    Load the schema references, prepare metadata for each streams and return schema and metadata
+    for the catalog.
     """
     schemas = {}
     field_metadata = {}
@@ -64,7 +66,8 @@ def get_schemas():
         )
         mdata = metadata.to_map(mdata)
 
-        # Loop through all keys and make replication keys and primary keys of child stream which are not automatic in parent stream of automatic inclusion
+        # Loop through all keys and make replication keys and primary keys of child stream which
+        # are not automatic in parent stream of automatic inclusion
         for field_name in schema["properties"].keys():
             pk_child_fields = (
                 hasattr(stream_metadata, "pk_child_fields") or None

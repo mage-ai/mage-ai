@@ -1,4 +1,5 @@
 import BlockRunType from '@interfaces/BlockRunType';
+import BlockType, { OutputType } from '@interfaces/BlockType';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -13,6 +14,7 @@ import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
 import { isJsonString } from '@utils/string';
+import { sortByKey } from '@utils/array';
 
 export const TAB_TREE = { uuid: 'Dependency tree' };
 export const TAB_OUTPUT = { uuid: 'Block output' };
@@ -21,14 +23,18 @@ export const TABS = [
   TAB_TREE,
 ];
 
+const MAX_COLUMNS = 40;
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default function({
   blockRuns,
+  blocksOverride,
   columns,
   dataType,
   height,
   heightOffset,
   loadingData,
+  outputs,
   pipeline,
   renderColumnHeader,
   rows,
@@ -39,11 +45,13 @@ export default function({
   ...props
 }: {
   blockRuns: BlockRunType[];
+  blocksOverride?: BlockType[];
   columns: string[],
   dataType: DataTypeEnum,
   height: number;
   heightOffset?: number;
   loadingData?: boolean;
+  outputs?: OutputType[];
   pipeline: PipelineType;
   renderColumnHeader?: (column: any, idx: number, opts: {
     width: number;
@@ -58,46 +66,128 @@ export default function({
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
 
-  const emptyOutputMessageEl = (
-    <Spacing ml={2}>
-      <Text>
-        This block run has no output.
-      </Text>
-    </Spacing>
-  );
+  const arr = [];
+  const tabsMoreInner = [];
 
-  const blockOutputTable = (rows && rows.length > 0
-    ? (
-      <DataTable
-        columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
-        columns={columns}
-        height={height - heightOffset - 90}
-        noBorderBottom
-        noBorderLeft
-        noBorderRight
-        renderColumnHeader={renderColumnHeader}
-        rows={rows}
-      />
-    ) : emptyOutputMessageEl
-  );
+  if (!loadingData) {
+    const outputsByType = {};
 
-  const parsedText = isJsonString(textData)
-    ? JSON.stringify(JSON.parse(textData), null, 2)
-    : textData;
-  const blockOutputText = (!!textData
-    ? (
-      <Spacing ml={2}>
-        <Text monospace>
-          <pre>
-            {parsedText}
-          </pre>
-        </Text>
-      </Spacing>
-    )
-    : emptyOutputMessageEl
-  );
+    outputs?.forEach((output) => {
+      const dataType = output.type;
+
+      if (!outputsByType[dataType]) {
+        outputsByType[dataType] = {
+          outputs: [],
+          priority: Object.keys(outputsByType).length,
+        }
+      }
+
+      outputsByType[dataType].outputs.push(output);
+    });
+
+    sortByKey(
+      Object.entries(outputsByType),
+      ([_, d]) => d.priority,
+    )?.forEach(([dataTypeInit, d]) => {
+      const {
+        outputs: outputsInGroup,
+      } = d;
+
+      const arrGroup = [];
+
+      outputsInGroup?.forEach(({
+        sample_data: blockSampleData,
+        text_data: textData,
+        type: dataType,
+      }, idx: number) => {
+        const emptyOutputMessageEl = (
+          <Spacing key={`output-empty-${idx}`} ml={2}>
+            <Text>
+              This block run has no output.
+            </Text>
+          </Spacing>
+        );
+
+        let el;
+
+        if (dataType === DataTypeEnum.TABLE) {
+          const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
+          const rows = blockSampleData?.rows || [];
+
+          if (rows && rows?.length >= 1) {
+            el = <DataTable
+              columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
+              columns={columns}
+              height={height - heightOffset - 90}
+              key={`output-table-${idx}`}
+              noBorderBottom
+              noBorderLeft
+              noBorderRight
+              renderColumnHeader={renderColumnHeader}
+              rows={rows}
+            />;
+          } else {
+            el = emptyOutputMessageEl;
+          }
+        } else {
+          const parsedText = isJsonString(textData)
+            ? JSON.stringify(JSON.parse(textData), null, 2)
+            : textData;
+
+          const blockOutputText = !!textData
+            ? (
+              <Spacing key={`output-text-${idx}`} ml={2}>
+                <Text monospace>
+                  <pre>
+                    {parsedText}
+                  </pre>
+                </Text>
+              </Spacing>
+            )
+            : emptyOutputMessageEl;
+
+          el = blockOutputText;
+        }
+
+        // If output is text, group them into 1 tab
+        if (DataTypeEnum.TEXT === dataTypeInit) {
+          arrGroup.push(el);
+
+          if (idx === 0) {
+            tabsMoreInner.push({
+              uuid: `Block output ${idx + 1}`,
+            });
+          }
+        } else {
+          arr.push(el);
+
+          tabsMoreInner.push({
+            uuid: `Block output ${idx + 1}`,
+          });
+        }
+      });
+
+      if (DataTypeEnum.TEXT === dataTypeInit) {
+        arr.push(arrGroup)
+      }
+    });
+  }
+
+  const outputEls = arr;
+  const tabsMore = tabsMoreInner;
+
+  let tabsUse = TABS;
+  if (tabsMore?.length >= 2) {
+    tabsUse = [
+      TAB_OUTPUT,
+      ...tabsMore.slice(1),
+      TAB_TREE,
+    ];
+  }
 
   const showTabs = selectedTab && setSelectedTab;
+  const idx = tabsUse.findIndex(({ uuid }) => uuid === selectedTab?.uuid);
+  const blockOutputToShow = outputEls[idx];
 
   return (
     <>
@@ -112,7 +202,7 @@ export default function({
             <ButtonTabs
               onClickTab={setSelectedTab}
               selectedTabUUID={selectedTab?.uuid}
-              tabs={selectedRun ? TABS : [TAB_TREE]}
+              tabs={selectedRun ? tabsUse : [TAB_TREE]}
             />
           </Spacing>
         )}
@@ -127,13 +217,14 @@ export default function({
         {(!selectedRun || TAB_TREE.uuid === selectedTab?.uuid) && (
           <DependencyGraph
             {...updatedProps}
+            blocksOverride={blocksOverride}
             height={height}
             heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
             pipeline={pipeline}
           />
         )}
 
-        {(selectedRun && TAB_OUTPUT.uuid === selectedTab?.uuid) && (
+        {selectedRun && selectedTab && TAB_TREE.uuid !== selectedTab?.uuid && (
           <>
             {loadingData && (
               <Spacing mt={2}>
@@ -142,8 +233,7 @@ export default function({
                 </FlexContainer>
               </Spacing>
             )}
-            {(!loadingData && dataType === DataTypeEnum.TABLE) && blockOutputTable}
-            {(!loadingData && dataType !== DataTypeEnum.TABLE) && blockOutputText}
+            {!loadingData && blockOutputToShow}
           </>
         )}
       </div>

@@ -142,6 +142,13 @@ function LogsTable({
       uuid,
     } = logData || {};
 
+    let displayText = message || content;
+    if (Array.isArray(displayText)) {
+      displayText = displayText.join(' ');
+    } else if (typeof displayText === 'object') {
+      displayText = JSON.stringify(displayText);
+    }
+
     let idEl;
     let blockUUID = blockUUIDProp || name.split('.log')[0];
 
@@ -268,10 +275,10 @@ function LogsTable({
             key="log_message"
             monospace
             textOverflow
-            title={message || content}
+            title={displayText}
           >
             <Ansi>
-              {message || content}
+              {displayText}
             </Ansi>
           </Text>
         </Flex>

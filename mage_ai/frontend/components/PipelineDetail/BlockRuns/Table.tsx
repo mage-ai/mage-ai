@@ -38,7 +38,7 @@ export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
   0: 'status',
   1: 'block_uuid',
-  4: 'completed_at',
+  5: 'completed_at',
 };
 
 type BlockRunsTableProps = {
@@ -117,7 +117,7 @@ function BlockRunsTable({
   );
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [1, 2, 2, 1, 1, null, null];
+  const columnFlex = [1, 2, 2, 1, 1, 1, null, null];
   const columns = [
     {
       uuid: 'Status',
@@ -131,6 +131,10 @@ function BlockRunsTable({
     {
       ...timezoneTooltipProps,
       uuid: 'Created at',
+    },
+    {
+      ...timezoneTooltipProps,
+      uuid: 'Started at',
     },
     {
       ...timezoneTooltipProps,
@@ -164,6 +168,7 @@ function BlockRunsTable({
           pipeline_run_id: pipelineRunId,
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
+          started_at: startedAt,
           status,
         } = blockRun || {};
         let blockUUID = blockUUIDOrig;
@@ -250,6 +255,22 @@ function BlockRunsTable({
             {displayLocalTimezone
               ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
               : dateFormatLong(createdAt, { includeSeconds: true })
+            }
+          </Text>,
+          <Text
+            default
+            key={`${id}_started_at`}
+            monospace
+            small
+            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+          >
+            {startedAt
+              ? (displayLocalTimezone
+                ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                : dateFormatLong(startedAt, { includeSeconds: true })
+              ): (
+                <>&#8212;</>
+              )
             }
           </Text>,
           <Text

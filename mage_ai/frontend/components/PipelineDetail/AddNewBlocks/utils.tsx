@@ -1,4 +1,4 @@
-import BlockTemplateType from '@interfaces/BlockTemplateType';
+import BlockTemplateType, { DataIntegrationTypeEnum } from '@interfaces/BlockTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import {
@@ -131,11 +131,13 @@ export function groupBlockTemplates(
 
   blockTemplates?.forEach(({
     block_type: blockType,
+    configuration,
     description,
     groups,
     language,
     name,
     path,
+    template_type: templateType,
     template_variables: templateVariables,
   }) => {
     if (!mapping[blockType]) {
@@ -155,8 +157,10 @@ export function groupBlockTemplates(
       onClick: () => addNewBlock({
         config: {
           template_path: path,
+          template_type: templateType,
           template_variables: templateVariables,
         },
+        configuration,
         language,
         type: blockType,
       }),
@@ -232,6 +236,7 @@ export const getdataSourceMenuItems = (
         [language: string]: FlyoutMenuItemType;
       };
     };
+    dataIntegrationType?: DataIntegrationTypeEnum;
     languages?: BlockLanguageEnum[];
     onlyCustomTemplate?: boolean;
     showBrowseTemplates?: (opts?: {
@@ -245,6 +250,7 @@ export const getdataSourceMenuItems = (
 ) => {
   const {
     blockTemplatesByBlockType,
+    dataIntegrationType,
     languages,
     onlyCustomTemplate,
     showBrowseTemplates,
@@ -279,6 +285,17 @@ export const getdataSourceMenuItems = (
     || (pipelineType === PipelineTypeEnum.STREAMING)
   ) {
     return dataSourceMenuItemsMapping[blockType];
+  } else if (dataIntegrationType && opts?.v2) {
+    const additionalTemplates =
+      blockTemplatesByBlockType?.[blockType]?.[dataIntegrationType]?.items || [];
+
+    return [
+      {
+        // @ts-ignore
+        items: sortByKey(additionalTemplates, ({ label }) => label()),
+        uuid: `${blockType}/${dataIntegrationType}`,
+      }
+    ];
   } else {
     const additionalTemplates =
       blockTemplatesByBlockType?.[blockType]?.[BlockLanguageEnum.PYTHON]?.items || [];

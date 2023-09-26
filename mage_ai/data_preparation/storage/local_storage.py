@@ -1,14 +1,17 @@
+import json
+import os
+import shutil
+from contextlib import contextmanager
+from typing import Dict, List
+
+import aiofiles
+import pandas as pd
+import polars as pl
+import simplejson
+
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.parsers import encode_complex
-from typing import Dict, List
-import aiofiles
-import json
-import os
-import pandas as pd
-import polars as pl
-import shutil
-import simplejson
 
 
 class LocalStorage(BaseStorage):
@@ -35,23 +38,23 @@ class LocalStorage(BaseStorage):
     def remove_dir(self, path: str) -> None:
         shutil.rmtree(path, ignore_errors=True)
 
-    def read_json_file(self, file_path: str, default_value={}) -> Dict:
+    def read_json_file(self, file_path: str, default_value: Dict = None) -> Dict:
         if not self.path_exists(file_path):
-            return default_value
+            return default_value or {}
         with open(file_path) as file:
             try:
                 return json.load(file)
             except Exception:
-                return default_value
+                return default_value or {}
 
-    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+    async def read_json_file_async(self, file_path: str, default_value: Dict = None) -> Dict:
         if not self.path_exists(file_path):
-            return default_value
+            return default_value or {}
         async with aiofiles.open(file_path, mode='r') as file:
             try:
                 return json.loads(await file.read())
             except Exception:
-                return default_value
+                return default_value or {}
 
     def write_json_file(self, file_path: str, data) -> None:
         dirname = os.path.dirname(file_path)
@@ -89,3 +92,15 @@ class LocalStorage(BaseStorage):
     def write_polars_dataframe(self, df: pl.DataFrame, file_path: str) -> None:
         File.create_parent_directories(file_path)
         df.write_parquet(file_path)
+
+    @contextmanager
+    def open_to_write(self, file_path: str) -> None:
+        dirname = os.path.dirname(file_path)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+
+        try:
+            file = open(file_path, 'w')
+            yield file
+        finally:
+            file.close()
