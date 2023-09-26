@@ -262,6 +262,7 @@
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis"
               ]
@@ -317,6 +318,7 @@
                 "development/dependencies/custom-files"
               ]
             },
+            "development/io_config",
             {
               "group": "Storage",
               "pages": [
@@ -490,7 +492,8 @@
           ]
         },
         "guides/ai/overview",
-        "guides/community-examples",
+        "guides/docker/connecting-a-database",
+        "guides/community-examples"
         "guides/tips-and-tricks"
       ]
     },
