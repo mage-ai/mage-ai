@@ -192,28 +192,37 @@ class LLMPipelineWizard:
         openai.api_key = openai_api_key
         self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
 
-    async def __async_llm_generate_documentation(
+    async def __async_llm_call(
         self,
-        block_content: str,
-        file_type: str,
-        purpose: str,
-        template: str,
-        add_on_prompt: str = '',
+        variable_values: Dict[str, str],
+        prompt_template: str,
+        is_json_response: bool = True,
     ):
-        prompt_template = PromptTemplate(
-            input_variables=[
-                'block_content',
-                'file_type',
-                'purpose',
-                'add_on_prompt'
-            ],
-            template=template,
+        """Generic function to call OpenAI LLM and return JSON response by default.
+
+        Fill variables and values into template, and run against LLM
+        to genenrate JSON format response.
+
+        Args:
+            variable_values: all required variable and values in prompt.
+            prompt_template: prompt template for LLM call.
+            is_json_response: default is json formatted response.
+
+        Returns:
+            We typically suggest response in JSON format. For example:
+                {
+                    'action_code': 'grade == 5 or grade == 6',
+                    'arguments': ['class']
+                }
+        """
+        filled_prompt = PromptTemplate(
+            input_variables=list(variable_values.keys()),
+            template=prompt_template,
         )
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        return await chain.arun(block_content=block_content,
-                                file_type=file_type,
-                                purpose=purpose,
-                                add_on_prompt=add_on_prompt)
+        chain = LLMChain(llm=self.llm, prompt=filled_prompt)
+        if is_json_response:
+            return json.loads(await chain.arun(variable_values))
+        return await chain.arun(variable_values)
 
     def __parse_argument_value(self, value: str) -> str:
         if value is None:
@@ -247,80 +256,6 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
-    async def __async_llm_inferene_with_code_description_variable(
-            self,
-            code_description: str,
-            template: str) -> Dict:
-        """Calls LLM with prompt with template and code_description.
-
-        Fill the code_description variable into template, and run against LLM
-        to genenrate JSON format response.
-
-        Args:
-            code_description: description of the block code. It is used in the template prompt.
-            template: template prompt with variable used to call LLM.
-
-        Returns:
-            JSON formated response.
-            If template is PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON, response contains key 'action_code'
-            and 'arguments'. 'action_code' is the filter logic mentioned in code_description
-            applying to data. 'arguments' are columns to be aggregrated on.
-            Example:
-                For PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON prompt, format of response is:
-                {
-                    'action_code': 'grade == 5 or grade == 6',
-                    'arguments': ['class']
-                }
-            If template is PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL, response contains key 'sql_code'
-            , which is the SQL code based on the code_description.
-            {
-                'sql_code': 'SELECT book_id, book_price FROM book_table WHERE book_price > 100'
-            }
-        """
-        prompt_template = PromptTemplate(
-            input_variables=[
-                'code_description',
-            ],
-            template=template,
-        )
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        customized_logic_json = await chain.arun(code_description=code_description)
-        return json.loads(customized_logic_json)
-
-    async def __async_llm_generate_customized_code_with_base_template(
-            self,
-            code_description: str,
-            code_language: str,
-            template: str) -> Dict:
-        """Calls LLM with prompt with template, code_description and language variables.
-
-        Fill the code_description and code_language variables into template, and run against LLM
-        to genenrate JSON format response.
-
-        Args:
-            code_description: description of the block code. It is used in the template prompt.
-            code_language: language of the block code. It is used in the template prompt.
-            template: template prompt with variable used to call LLM.
-
-        Returns:
-            Response is in JSON format with key 'code'. Example:
-                {
-                    'code': 'data.groupby('class_name').sort_values()'
-                }
-        """
-        prompt_template = PromptTemplate(
-            input_variables=[
-                'code_description',
-                'code_language',
-            ],
-            template=template,
-        )
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        customized_logic_json = await chain.arun(
-            code_description=code_description,
-            code_language=code_language)
-        return json.loads(customized_logic_json)
-
     async def async_create_customized_code_in_block(
             self,
             block_code: str,
@@ -330,9 +265,11 @@ class LLMPipelineWizard:
         Based on the code description to generate code.
         It supports both python or SQL languages.
         """
+        variable_values = dict()
+        variable_values['code_description'] = code_description
         if block_language == BlockLanguage.PYTHON:
-            customized_logic = await self.__async_llm_inferene_with_code_description_variable(
-                code_description,
+            customized_logic = await self.__async_llm_call(
+                variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
             if 'action_code' in customized_logic.keys():
@@ -344,8 +281,8 @@ class LLMPipelineWizard:
                     'arguments=[]',
                     f'arguments={customized_logic.get("arguments")}')
         elif block_language == BlockLanguage.SQL:
-            customized_logic = await self.__async_llm_inferene_with_code_description_variable(
-                code_description,
+            customized_logic = await self.__async_llm_call(
+                variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
             )
             if "sql_code" in customized_logic.keys():
@@ -368,13 +305,14 @@ class LLMPipelineWizard:
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
+            variable_values = dict()
+            variable_values['code_description'] = block_description
+            variable_values['code_language'] = block_language
             if is_default_transformer_template(config):
-                customized_logic = await \
-                    self.__async_llm_generate_customized_code_with_base_template(
-                        block_description,
-                        block_language,
-                        PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
-                    )
+                customized_logic = await self.__async_llm_call(
+                    variable_values,
+                    PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                )
                 if 'code' in customized_logic.keys():
                     config["existing_code"] = customized_logic.get("code")
                 block_code = fetch_template_source(
@@ -398,13 +336,13 @@ class LLMPipelineWizard:
                 except TemplateNotFound:
                     # Use default template if template not found and
                     # ask LLM to fully generate the customized code.
-                    customized_logic = await \
-                        self.__async_llm_generate_customized_code_with_base_template(
-                            block_description,
-                            block_language,
-                            PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
-                        )
-                    block_code = fetch_transformer_default_template(customized_logic)
+                    customized_logic = await self.__async_llm_call(
+                        variable_values,
+                        PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                    )
+                    if 'code' in customized_logic.keys():
+                        block_code = fetch_transformer_default_template(
+                            customized_logic.get('code'))
 
             return dict(
                 block_type=block_type,
@@ -417,16 +355,6 @@ class LLMPipelineWizard:
             logger.error("Failed to interpret the description as a block template.")
             return None
 
-    async def __async_split_description_by_blocks(self, code_description: str) -> str:
-        prompt_template = PromptTemplate(
-            input_variables=[
-                'code_description',
-            ],
-            template=PROMPT_TO_SPLIT_BLOCKS,
-        )
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        return await chain.arun(code_description=code_description)
-
     async def __async_generate_blocks(self,
                                       block_dict: dict,
                                       block_id: int,
@@ -436,8 +364,13 @@ class LLMPipelineWizard:
         block_dict[block_id] = block
 
     async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
-        splited_block_descriptions = await self.__async_split_description_by_blocks(
-            pipeline_description)
+        variable_values = dict()
+        variable_values['code_description'] = pipeline_description
+        splited_block_descriptions = await self.__async_llm_call(
+            variable_values,
+            PROMPT_TO_SPLIT_BLOCKS,
+            False,
+        )
         blocks = {}
         block_tasks = []
         for line in splited_block_descriptions.strip().split('\n'):
@@ -482,18 +415,15 @@ class LLMPipelineWizard:
         return ast.unparse(tree)
 
     async def async_generate_comment_for_block(self, block_content: str) -> str:
-        prompt_template = PromptTemplate(
-            input_variables=[
-                'block_content',
-            ],
-            template=PROMPT_FOR_FUNCTION_COMMENT,
+        variable_values = dict()
+        variable_values['block_content'] = block_content
+        function_comments = await self.__async_llm_call(
+            variable_values,
+            PROMPT_FOR_FUNCTION_COMMENT
         )
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        function_comments_json = await chain.arun(block_content=block_content)
-        function_comments = json.loads(function_comments_json)
         return self.__insert_comments_in_functions(block_content, function_comments)
 
-    async def async_generate_pipeline_documentation(
+    async def async_generate_doc_for_pipeline(
         self,
         pipeline_uuid: str,
         project_path: str = None,
@@ -507,7 +437,7 @@ class LLMPipelineWizard:
         for block in pipeline.blocks_by_uuid.values():
             if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 continue
-            async_block_docs.append(self.__async_generate_block_documentation(block))
+            async_block_docs.append(self.__async_generate_doc_for_block(block))
         block_docs = await asyncio.gather(*async_block_docs)
         block_docs_content = '\n'.join(block_docs)
         if print_block_doc:
@@ -521,7 +451,7 @@ class LLMPipelineWizard:
             pipeline_doc=pipeline_doc,
         )
 
-    async def async_generate_block_documentation_with_name(
+    async def async_generate_doc_for_block(
         self,
         pipeline_uuid: str,
         block_uuid: str,
@@ -529,10 +459,9 @@ class LLMPipelineWizard:
     ) -> str:
         pipeline = Pipeline.get(uuid=pipeline_uuid,
                                 repo_path=project_path or get_repo_path())
-        return asyncio.run(
-            self.__async_generate_block_documentation(pipeline.get_block(block_uuid)))
+        return await self.__async_generate_doc_for_block(pipeline.get_block(block_uuid))
 
-    async def __async_generate_block_documentation(
+    async def __async_generate_doc_for_block(
         self,
         block: Block,
     ) -> str:
@@ -540,10 +469,9 @@ class LLMPipelineWizard:
         if block.type == BlockType.TRANSFORMER:
             add_on_prompt = "Focus on the customized business logic in execute_transformer_action \
                              function."
-        return await self.__async_llm_generate_documentation(
-                    block.content,
-                    BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language],
-                    BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, ""),
-                    PROMPT_FOR_BLOCK,
-                    add_on_prompt
-                )
+        variable_values = dict()
+        variable_values['block_content'] = block.content
+        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language],
+        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, ""),
+        variable_values['add_on_prompt'] = add_on_prompt
+        return await self.__async_llm_call(variable_values, PROMPT_FOR_BLOCK)
