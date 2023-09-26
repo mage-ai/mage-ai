@@ -43,7 +43,7 @@ export const COLUMN_TYPES = [
   ColumnFormatEnum.UUID,
 ];
 
-enum BreadcrumbEnum {
+export enum BreadcrumbEnum {
   PROPERTIES = 'properties',
 }
 
@@ -87,7 +87,7 @@ export interface PropertyMetadataType {
   selected: boolean;
 }
 
-interface MetadataType {
+export interface MetadataType {
   breadcrumb: BreadcrumbEnum | string;
   metadata: PropertyMetadataType;
 }

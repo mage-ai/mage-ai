@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { SchemaPropertyType, StreamType } from '@interfaces/IntegrationSourceType';
+import {
+  BreadcrumbEnum,
+  MetadataType,
+  SchemaPropertyType,
+  StreamType,
+} from '@interfaces/IntegrationSourceType';
 import { equals, indexBy } from '@utils/array';
 import { isEmptyObject, isEqual } from '@utils/hash';
 
@@ -185,10 +190,12 @@ export function getStreamIDWithParentStream(stream: StreamType) {
   return  [parentStream, id].filter(i => i).join('/');
 }
 
+export function isMetadataForStreamFromMetadataArray(metadata: MetadataType): boolean {
+  return metadata?.breadcrumb?.length === 0;
+}
+
 export function getStreamMetadata(stream: StreamType): StreamType {
-  return stream?.metadata?.find(({
-    breadcrumb,
-  }) => breadcrumb?.length === 0) || {};
+  return stream?.metadata?.find(isMetadataForStreamFromMetadataArray) || {};
 }
 
 export function updateStreamMetadata(streamInit: StreamType, payload): StreamType {
@@ -197,7 +204,7 @@ export function updateStreamMetadata(streamInit: StreamType, payload): StreamTyp
     stream.metadata = [];
   }
 
-  const index = stream?.metadata?.findIndex(({ breadcrumb }) => breadcrumb?.length === 0);
+  const index = stream?.metadata?.findIndex(isMetadataForStreamFromMetadataArray);
 
   let metadata = {
     breadcrumb: [],
@@ -228,7 +235,7 @@ export function isStreamSelected(stream: StreamType) {
     metadata,
   } = stream || {};
 
-  return metadata?.find(({ breadcrumb }) => breadcrumb?.length === 0)?.metadata?.selected;
+  return metadata?.find(isMetadataForStreamFromMetadataArray)?.metadata?.selected;
 }
 
 export function getSelectedStreams(block: BlockType, opts?: {
@@ -407,4 +414,31 @@ export function noStreamsAnywhere(
     ...Object.values(mapping1 || {}),
     ...Object.values(mapping2 || {}),
   ].every(mapping => isEmptyObject(mapping));
+}
+
+export function getSchemaPropertiesWithMetadata(stream: StreamType): {
+  [column: string]: SchemaPropertyType;
+} {
+  const schemaProperties = {
+    ...(stream?.schema?.properties || {}),
+  };
+
+  stream?.metadata?.forEach((metadata: MetadataType) => {
+    if (!isMetadataForStreamFromMetadataArray(metadata)) {
+      const {
+        breadcrumb,
+        metadata: md,
+      } = metadata;
+
+      const column = breadcrumb?.find(key => key !== BreadcrumbEnum.PROPERTIES);
+      if (column && schemaProperties?.[column]) {
+        schemaProperties[column] = {
+          ...schemaProperties[column],
+          metadata: md,
+        };
+      }
+    }
+  });
+
+  return schemaProperties;
 }

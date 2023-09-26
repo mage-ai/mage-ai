@@ -6,20 +6,16 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
-export const MODAL_PADDING = 8 * UNIT;
-
-export const ContainerStyle = styled.div<{
-  maxWidth?: number;
+export const SectionStyle = styled.div<{
+  noPadding?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
-  position: relative;
 
   ${props => `
     border: 1px solid ${(props.theme.borders || dark.borders).light};
-    background-color: ${(props.theme.background || dark.background).panel};
   `}
 
-  ${props => props.maxWidth && `
-    width: ${props.maxWidth}px;
+  ${props => !props.noPadding && `
+    padding: ${PADDING_UNITS * UNIT}px;
   `}
 `;

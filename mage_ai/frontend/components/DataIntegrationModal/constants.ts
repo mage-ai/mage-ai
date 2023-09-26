@@ -17,6 +17,7 @@ export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
 export enum SubTabEnum {
   BOOKMARKS = 'bookmarks',
   CREDENTIALS = 'credentials',
+  OVERVIEW = 'overview',
   UPSTREAM_BLOCK_SETTINGS = 'upstream_block_settings',
   SETTINGS = 'settings',
   SAMPLE_DATA = 'sample_data',
@@ -46,6 +47,10 @@ export const SUB_TABS_BY_MAIN_NAVIGATION_TAB: {
 };
 
 export const SUB_TABS_FOR_STREAM_DETAIL = [
+  {
+    label: () => 'Overview',
+    uuid: SubTabEnum.OVERVIEW,
+  },
   {
     label: () => 'Settings',
     uuid: SubTabEnum.SETTINGS,

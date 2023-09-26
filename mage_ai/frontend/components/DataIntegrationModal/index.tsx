@@ -317,13 +317,10 @@ function DataIntegrationModal({
     if (!selectedMainNavigationTab) {
       // TODO: remove this after done testing.
       setSelectedMainNavigationTab(
-        // 'account_v2',
-        MainNavigationTabEnum.OVERVIEW,
+        'account_v2',
+        MainNavigationTabEnum.STREAMS,
       );
-      // setSelectedMainNavigationTabSub(
-      //   // 'source_pg_yaml',
-      //   MainNavigationTabEnum.STREAMS,
-      // );
+      setSelectedMainNavigationTabSub('source_pg_yaml');
     }
   }, [
     selectedMainNavigationTab,
@@ -1297,7 +1294,13 @@ function DataIntegrationModal({
       if (stream) {
         return (
           <StreamDetail
+            block={blockAttributes}
+            blocksMapping={blocksMapping}
+            selectedSubTab={selectedSubTab}
+            setBlockAttributes={setBlockAttributes}
             stream={stream}
+            streamMapping={streamsFromCatalogMapping}
+            updateStreamsInCatalog={updateStreamsInCatalog}
           />
         );
       }
@@ -1327,6 +1330,7 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
     selectedSubTab,
+    setBlockAttributes,
     setBlockConfig,
     setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,

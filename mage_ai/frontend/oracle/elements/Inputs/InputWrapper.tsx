@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 import Text, { SHARED_LARGE_TEXT_RESPONSIVE_STYLES } from '../Text';
 import dark from '@oracle/styles/themes/dark';
 import {
+  BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
@@ -241,7 +242,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => !props.borderless && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
     border-style: ${BORDER_STYLE};
     border-width: ${BORDER_WIDTH}px};
   `}

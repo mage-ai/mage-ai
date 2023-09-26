@@ -13,6 +13,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ReplicationMethodEnum, UniqueConflictMethodEnum } from '@interfaces/IntegrationSourceType';
 import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { sortByKey } from '@utils/array';
 import {
@@ -22,7 +23,7 @@ import {
   updateStreamMetadata,
 } from '@utils/models/block';
 
-type StreamsOverviewProps = {
+export type StreamsOverviewProps = {
   block: BlockType;
   blocksMapping: {
     [blockUUID: string]: BlockType;
@@ -253,7 +254,7 @@ function StreamsOverview({
           >
             {Object.values(ReplicationMethodEnum).map(value => (
               <option key={value} value={value}>
-                {value}
+                {capitalizeRemoveUnderscoreLower(value)}
               </option>
             ))}
           </Select>,
@@ -271,7 +272,7 @@ function StreamsOverview({
           >
             {Object.values(UniqueConflictMethodEnum).map(value => (
               <option key={value} value={value}>
-                {value}
+                {capitalizeRemoveUnderscoreLower(value)}
               </option>
             ))}
           </Select>,
