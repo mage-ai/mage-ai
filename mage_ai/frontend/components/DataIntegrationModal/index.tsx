@@ -643,6 +643,9 @@ function DataIntegrationModal({
     subtabs,
   ]);
 
+  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
+  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
+
   const [headerOffset, setHeaderOffset] = useState<number>(null);
   useEffect(() => {
     if (selectedMainNavigationTab && refSubheader?.current) {
@@ -1240,13 +1243,17 @@ function DataIntegrationModal({
         <StreamGrid
           block={blockAttributes}
           blocksMapping={blocksMapping}
+          height={heightModal - headerOffset}
           searchText={searchText}
           streamsFetched={streamsFetched}
           updateStreamInCatalog={updateStreamInCatalog}
+          width={widthModal - (beforeWidth + (afterHidden ? 0 : afterWidth))}
         />
       )
     }
   }, [
+    afterWidth,
+    beforeWidth,
     blockConfig,
     blockContent,
     blockLanguage,
@@ -1259,6 +1266,8 @@ function DataIntegrationModal({
     dataIntegrationType,
     fetchIntegrationSource,
     getDifferencesBetweenStreams,
+    headerOffset,
+    heightModal,
     isLoadingFetchIntegrationSource,
     isLoadingTestConnection,
     isStreamFetchedAndInCatalog,
@@ -1275,6 +1284,7 @@ function DataIntegrationModal({
     streamsFromFetchedMapping,
     testConnection,
     updateStreamInCatalog,
+    widthModal,
   ]);
 
   const after = useMemo(() => MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
@@ -1301,7 +1311,7 @@ function DataIntegrationModal({
 
   return (
     <ContainerStyle
-      maxWidth={widthWindow - (MODAL_PADDING * 2)}
+      maxWidth={widthModal}
     >
       <HeaderStyle>
         <FlexContainer
@@ -1365,7 +1375,7 @@ function DataIntegrationModal({
         beforeWidth={beforeWidth}
         contained
         headerOffset={headerOffset}
-        height={heightWindow - (MODAL_PADDING * 2)}
+        height={heightModal}
         hideAfterCompletely={!after}
         inline
         mainContainerHeader={subheaderEl}
@@ -1377,9 +1387,7 @@ function DataIntegrationModal({
         setBeforeWidth={setBeforeWidth}
         uuid={componentUUID}
       >
-        <div style={{ height: 3000 }}>
-          {mainContentEl}
-        </div>
+        {mainContentEl}
       </TripleLayout>
     </ContainerStyle>
   );

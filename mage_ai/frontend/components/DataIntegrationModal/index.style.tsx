@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 export const MODAL_PADDING = 8 * UNIT;
@@ -47,6 +48,23 @@ export const NavigationStyle = styled.div<{
   `}
 `;
 
+export const StreamGridGroupStyle = styled.div`
+  position: absolute;
+`;
+
+export const StreamGridGroupInnerStyle = styled.div<{
+  borderRight?: boolean;
+}>`
+  ${ScrollbarStyledCss}
+
+  overflow: auto;
+  position: fixed;
+
+  ${props => props.borderRight && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+`;
+
 export const StreamGridStyle = styled.div<{
   selected?: boolean;
   warning?: boolean;
@@ -75,6 +93,6 @@ export const StreamGridStyle = styled.div<{
 
   ${props => props.selected && !props.warning && `
     background-color: ${(props.theme.background || dark.background).panel};
-    border: 1px solid ${(props.theme.borders || dark.borders).success};
+    border: 1px solid ${(props.theme.borders || dark.borders).contrast};
   `}
 `;

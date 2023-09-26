@@ -12,21 +12,15 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import {
   PADDING_UNITS,
   UNIT,
-  // UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { Settings } from '@oracle/icons';
 import {
-  // Check,
-  // Close,
-  // DocumentIcon,
-  // Lightning,
-  // PlugAPI,
-  // Search,
-  Settings,
-  // SettingsWithKnobs,
-  // Sun,
-} from '@oracle/icons';
-import { StreamGridStyle } from './index.style';
+  StreamGridGroupInnerStyle,
+  StreamGridGroupStyle,
+  StreamGridStyle,
+} from './index.style';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import {
   StreamMapping,
@@ -40,22 +34,28 @@ import {
   updateStreamMetadata,
 } from '@utils/models/block';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { pluralize } from '@utils/string';
+import { sum } from '@utils/array';
 
 type StreamGridPros = {
   block: BlockType;
   blocksMapping: {
     [blockUUID: string]: BlockType;
   };
+  height: number;
   searchText?: string;
   streamsFetched?: StreamType[];
   updateStreamInCatalog: (stream: StreamType) => any;
+  width: number;
 }
 
 const GROUP_FETCHED = {
+  label: (count: number) => `${pluralize('stream', count, true)} fetched`,
   uuid: 'Recently fetched',
 };
 const GROUP_EXISTS = {
-  uuid: 'Exists in stream settings',
+  label: (count: number) => `${pluralize('stream', count, true)} from settings`,
+  uuid: 'From stream settings',
 };
 
 const GROUPS = [
@@ -78,9 +78,11 @@ function filterStreams(searchText: string, arr: StreamType[]): StreamType[] {
 function StreamGrid({
   block,
   blocksMapping,
+  height,
   searchText,
   streamsFetched,
   updateStreamInCatalog,
+  width,
 }: StreamGridPros) {
   const allStreamsFromCatalog = useMemo(() => getSelectedStreams(block, { getAll: true }), [
     block,
@@ -124,12 +126,15 @@ function StreamGrid({
   ]);
 
   const groupsOfStreams: {
+    count: number;
+    label: (count: number) => str;
     subgroups: StreamType[];
     uuid: string;
   }[] = useMemo(() => {
     const groups = [];
 
     GROUPS.forEach(({
+      label,
       uuid: groupUUID,
     },idx: number) => {
       const mapping = getMappingByGroupUUID(groupUUID);
@@ -156,6 +161,8 @@ function StreamGrid({
 
       if (subgroups?.length >= 1) {
         groups.push({
+          count: sum(subgroups?.map(({ streams: arr }) => arr?.length || 0) || []),
+          label,
           subgroups,
           uuid: groupUUID,
         });
@@ -168,160 +175,180 @@ function StreamGrid({
     searchText,
   ]);
 
-  return (
-    <>
-      {groupsOfStreams?.map(({
-        subgroups,
-        uuid: groupUUID,
-      }, idx1: number) => (
-        <Spacing key={groupUUID} pt={idx1 === 0 ? PADDING_UNITS : 1}>
-          {idx1 >= 1 && (
-            <Spacing pb={PADDING_UNITS}>
-              <Divider light />
+  const groupsCount = useMemo(() => groupsOfStreams?.length || 0, [groupsOfStreams]);
+
+  return groupsOfStreams?.map(({
+    count,
+    label,
+    subgroups,
+    uuid: groupUUID,
+  }, idx1: number) => {
+    const isFetchedGroup = GROUP_FETCHED.uuid === groupUUID;
+
+    return (
+      <StreamGridGroupStyle
+        key={groupUUID}
+        style={{
+          height,
+          right: GROUP_EXISTS.uuid === groupUUID ? null : 0,
+          width: width / groupsCount,
+        }}
+      >
+        <StreamGridGroupInnerStyle
+          borderRight={groupsCount >= 2 && !isFetchedGroup}
+          style={{
+            height,
+            width: width / groupsCount,
+          }}
+        >
+          <Spacing pt={PADDING_UNITS}>
+            <Spacing px={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Headline level={4}>
+                {label(count)}
+              </Headline>
             </Spacing>
-          )}
 
-          <Spacing px={PADDING_UNITS}>
-            <Headline level={4}>
-              {groupUUID}
-            </Headline>
-          </Spacing>
-
-          {subgroups?.map(({
-            block: blockParent,
-            streams: streamsSubgroup,
-          }, idx2: number) => (
-            <Spacing
-              key={blockParent ? blockParent?.uuid : `no-subtitle-${idx2}`}
-              mt={(blockParent && idx2 === 0) ? PADDING_UNITS : 1}
-            >
-              {blockParent && (
-                <Spacing px={PADDING_UNITS}>
-                  <Text
-                    bold
-                    color={getColorsForBlockType(blockParent?.type, {
-                      blockColor: blockParent?.color,
-                    })?.accent}
-                    default
-                    large
-                    monospace
-                  >
-                    {blockParent?.uuid}
-                  </Text>
+            {subgroups?.map(({
+              block: blockParent,
+              streams: streamsSubgroup,
+            }, idx2: number) => (
+              <Spacing
+                key={blockParent ? blockParent?.uuid : `no-subtitle-${idx2}`}
+                mt={(blockParent && idx2 === 0) ? PADDING_UNITS : 1}
+              >
+                <Spacing
+                  mb={blockParent ? PADDING_UNITS : 0}
+                  mt={blockParent ? 0 : PADDING_UNITS}
+                >
+                  <Divider light />
                 </Spacing>
-              )}
 
-              <Spacing p={1}>
-                <FlexContainer alignItems="center" flexWrap="wrap">
-                  {streamsSubgroup?.map((stream: StreamType) => {
-                    const isFetchedGroup = idx1 === 0;
+                {blockParent && (
+                  <Spacing px={PADDING_UNITS}>
+                    <Text
+                      bold
+                      color={getColorsForBlockType(blockParent?.type, {
+                        blockColor: blockParent?.color,
+                      })?.accent}
+                      default
+                      large
+                      monospace
+                    >
+                      {blockParent?.uuid}
+                    </Text>
+                  </Spacing>
+                )}
 
-                    const existsInBothPlaces = isStreamInBothPlaces(stream);
-                    const isDifferent = !!getDiffs(stream);
-                    const streamID = getStreamID(stream);
+                <Spacing p={1}>
+                  <FlexContainer alignItems="center" flexWrap="wrap">
+                    {streamsSubgroup?.map((stream: StreamType) => {
+                      const existsInBothPlaces = isStreamInBothPlaces(stream);
+                      const isDifferent = !!getDiffs(stream);
+                      const streamID = getStreamID(stream);
 
-                    let selected = false;
-                    if (isFetchedGroup) {
-                      // Only show selected if this group is the fetched group
-                      const streamFromMapping =
-                        getStreamFromStreamMapping(
-                          stream,
-                          getMappingByGroupUUID(GROUP_EXISTS.uuid),
-                        );
-                      // and the stream exists in the catalog
-                      if (streamFromMapping) {
-                        // and that stream is selected in the catalog.
-                        selected = isStreamSelected(streamFromMapping);
-                      }
-                    } else {
-                      selected = isStreamSelected(stream);
-                    }
-
-                    const isDifferentWithExisting = existsInBothPlaces && isDifferent;
-
-                    return (
-                      <StreamGridStyle
-                        key={streamID}
-                        onClick={(isFetchedGroup && isDifferentWithExisting)
-                          ? () => false
-                          : (e) => {
-                            e.preventDefault();
-                            updateStreamInCatalog(updateStreamMetadata(stream, {
-                              selected: !selected,
-                            }));
-                          }
+                      let selected = false;
+                      if (isFetchedGroup) {
+                        // Only show selected if this group is the fetched group
+                        const streamFromMapping =
+                          getStreamFromStreamMapping(
+                            stream,
+                            getMappingByGroupUUID(GROUP_EXISTS.uuid),
+                          );
+                        // and the stream exists in the catalog
+                        if (streamFromMapping) {
+                          // and that stream is selected in the catalog.
+                          selected = isStreamSelected(streamFromMapping);
                         }
-                        selected={selected}
-                        warning={isDifferentWithExisting && isFetchedGroup}
-                      >
-                        <FlexContainer
-                          alignItems="center"
-                          fullHeight
-                          justifyContent="space-between"
+                      } else {
+                        selected = isStreamSelected(stream);
+                      }
+
+                      const isDifferentWithExisting = existsInBothPlaces && isDifferent;
+
+                      return (
+                        <StreamGridStyle
+                          key={streamID}
+                          onClick={(isFetchedGroup && isDifferentWithExisting)
+                            ? () => false
+                            : (e) => {
+                              e.preventDefault();
+                              updateStreamInCatalog(updateStreamMetadata(stream, {
+                                selected: !selected,
+                              }));
+                            }
+                          }
+                          selected={selected}
+                          warning={isDifferentWithExisting && isFetchedGroup}
                         >
-                          <Flex flex={1}>
-                            <Text bold monospace muted={!selected}>
-                              {streamID}
-                            </Text>
-                          </Flex>
-
-                          {isDifferentWithExisting && isFetchedGroup && (
-                            <>
-                              <Spacing mr={1} />
-
-                              <Text warning>
-                                stream exists with changes
+                          <FlexContainer
+                            alignItems="center"
+                            fullHeight
+                            justifyContent="space-between"
+                          >
+                            <Flex flex={1}>
+                              <Text monospace muted={!selected}>
+                                {streamID}
                               </Text>
+                            </Flex>
 
-                              <Spacing mr={1} />
+                            {isDifferentWithExisting && isFetchedGroup && (
+                              <>
+                                <Spacing mr={1} />
 
-                              <Flex alignItems="center" style={{ height: 3 * UNIT }}>
-                                <Button
-                                  compact
-                                  onClick={() => alert('Change to stream detail')}
-                                  small
-                                  warning
-                                >
-                                  View differences
-                                </Button>
-                              </Flex>
-                            </>
-                          )}
+                                <Text warning>
+                                  stream exists with changes
+                                </Text>
 
-                          {(!isDifferentWithExisting || !isFetchedGroup) && (
-                            <>
-                              <Spacing mr={UNITS_BETWEEN_SECTIONS} />
+                                <Spacing mr={1} />
 
-                              {selected && <Settings size={2 * UNIT} />}
+                                <Flex alignItems="center" style={{ height: 3 * UNIT }}>
+                                  <Button
+                                    compact
+                                    onClick={() => alert('Change to stream detail')}
+                                    small
+                                    warning
+                                  >
+                                    View differences
+                                  </Button>
+                                </Flex>
+                              </>
+                            )}
 
-                              <Spacing mr={selected ? 1 : 3} />
+                            {(!isDifferentWithExisting || !isFetchedGroup) && (
+                              <>
+                                <Spacing mr={UNITS_BETWEEN_SECTIONS} />
 
-                              <Flex alignItems="center" style={{ height: 3 * UNIT }}>
-                                <ToggleSwitch
-                                  checked={selected}
-                                  compact
-                                  onCheck={valFunc => updateStreamInCatalog(
-                                    updateStreamMetadata(stream, {
-                                      selected: valFunc(selected),
-                                    }),
-                                  )}
-                                />
-                              </Flex>
-                            </>
-                          )}
+                                {selected && <Settings size={2 * UNIT} />}
 
-                        </FlexContainer>
-                      </StreamGridStyle>
-                    );
-                  })}
-                </FlexContainer>
+                                <Spacing mr={selected ? 1 : 3} />
+
+                                <Flex alignItems="center" style={{ height: 3 * UNIT }}>
+                                  <ToggleSwitch
+                                    checked={selected}
+                                    compact
+                                    onCheck={valFunc => updateStreamInCatalog(
+                                      updateStreamMetadata(stream, {
+                                        selected: valFunc(selected),
+                                      }),
+                                    )}
+                                  />
+                                </Flex>
+                              </>
+                            )}
+
+                          </FlexContainer>
+                        </StreamGridStyle>
+                      );
+                    })}
+                  </FlexContainer>
+                </Spacing>
               </Spacing>
-            </Spacing>
-          ))}
-        </Spacing>
-      ))}
-    </>
-  );
+            ))}
+          </Spacing>
+        </StreamGridGroupInnerStyle>
+      </StreamGridGroupStyle>
+    );
+  });
 }
 
 export default StreamGrid;
