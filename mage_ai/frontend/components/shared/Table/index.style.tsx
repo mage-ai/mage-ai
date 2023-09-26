@@ -5,6 +5,7 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const TableContainerStyle = styled.div<{
+  hide?: boolean;
   includePadding?: boolean;
   maxHeight?: string;
   minHeight?: number;
@@ -28,6 +29,10 @@ export const TableContainerStyle = styled.div<{
 
   ${props => props.overflowVisible && `
     overflow: visible;
+  `}
+
+  ${({ hide }) => hide && `
+    display: none;
   `}
 `;
 
