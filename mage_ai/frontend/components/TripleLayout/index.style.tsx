@@ -252,6 +252,7 @@ export const AfterStyle = styled.aside<{
 `;
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
+  heightMinus?: number;
   overflow?: string;
   verticalOffset?: number;
 }>`
@@ -259,6 +260,10 @@ export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
 
   ${props => props.overflow && `
     overflow: ${props.overflow};
+  `}
+
+  ${props => props.heightMinus && `
+    height: calc(100% - ${props.heightMinus}px);
   `}
 `;
 

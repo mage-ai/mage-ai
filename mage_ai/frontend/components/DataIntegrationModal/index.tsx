@@ -101,6 +101,7 @@ function DataIntegrationModal({
   onSaveBlock,
 }) {
   const mainContainerRef = useRef(null);
+  const refAfterHeader = useRef(null);
   const refSubheader = useRef(null);
 
   const {
@@ -647,12 +648,20 @@ function DataIntegrationModal({
   const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
 
   const [headerOffset, setHeaderOffset] = useState<number>(null);
+  const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
+
   useEffect(() => {
-    if (selectedMainNavigationTab && refSubheader?.current) {
-      setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
+    if (selectedMainNavigationTab) {
+      if (refSubheader?.current) {
+        setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
+      }
+      if (refAfterHeader?.current) {
+        setAfterInnerTopOffset(refAfterHeader?.current?.getBoundingClientRect()?.height);
+      }
     }
   }, [
     selectedMainNavigationTab,
+    refAfterHeader,
     refSubheader,
   ]);
 
@@ -1309,6 +1318,9 @@ function DataIntegrationModal({
       documentation,
     ]);
 
+
+  console.log('wtf', headerOffset, afterInnerTopOffset)
+
   return (
     <ContainerStyle
       maxWidth={widthModal}
@@ -1359,14 +1371,16 @@ function DataIntegrationModal({
       <TripleLayout
         after={after}
         afterHeader={after && (
-          <Spacing px={1}>
+          <Spacing ref={refAfterHeader} px={1}>
             <Text bold>
               Documentation
             </Text>
           </Spacing>
         )}
         afterHeightOffset={0}
+        afterHeaderOffset={0}
         afterHidden={afterHidden}
+        afterInnerHeightMinus={headerOffset - afterInnerTopOffset}
         afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}
         before={before}

@@ -61,6 +61,7 @@ type TripleLayoutProps = {
   afterHeaderOffset?: number;
   afterHeightOffset?: number;
   afterHidden: boolean;
+  afterInnerHeightMinus?: number;
   afterMousedownActive: boolean;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
@@ -102,6 +103,7 @@ function TripleLayout({
   afterHeaderOffset,
   afterHeightOffset,
   afterHidden,
+  afterInnerHeightMinus,
   afterMousedownActive,
   afterNavigationItems,
   afterOverflow,
@@ -327,6 +329,7 @@ function TripleLayout({
       )}
 
       <AfterInnerStyle
+        heightMinus={afterInnerHeightMinus}
         noScrollbarTrackBackground
         overflow={afterOverflow}
         ref={refAfterInner}
