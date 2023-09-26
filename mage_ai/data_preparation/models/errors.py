@@ -7,3 +7,7 @@ class FileExistsError(MageBaseException):
 
 class FileNotInProjectError(MageBaseException):
     pass
+
+
+class SerializationError(MageBaseException):
+    pass

@@ -29,7 +29,9 @@ from mage_ai.data_preparation.models.constants import (
     ExecutorType,
     PipelineType,
 )
+from mage_ai.data_preparation.models.errors import SerializationError
 from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.utils import is_yaml_serializable
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import (
     RepoConfig,
@@ -1431,15 +1433,12 @@ class Pipeline:
         return block
 
     def update_global_variable(self, key, value):
+        if not is_yaml_serializable(key, value):
+            raise SerializationError(
+                f'Failed to update variable {key} because the value is not serializable.')
         if self.variables is None:
             self.variables = {}
         self.variables[key] = value
-        try:
-            s = yaml.dump(dict(key=value))
-            yaml.safe_load(s)
-        except Exception:
-            raise Exception(
-                f'Failed to update variable {key} because the value is not serializable.')
         self.save()
 
     def delete_global_variable(self, key):
