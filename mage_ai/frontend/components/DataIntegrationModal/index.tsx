@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockTypeEnum, BlockLanguageEnum } from '@interfaces/BlockType';
+import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -66,17 +67,19 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
-  StreamDifferencesType,
-  StreamMapping,
   buildStreamMapping,
   getDifferencesBetweenStreams as getDifferencesBetweenStreamsFunc,
+  getParentStreamID,
   getSelectedStreams,
   getStreamFromStreamMapping,
   getStreamID,
+  getStreamIDWithParentStream,
   isStreamInMappings,
   isStreamSelected,
   mergeSchemaProperties,
   noStreamsAnywhere as noStreamsAnywhereFunc,
+  StreamDifferencesType,
+  StreamMapping,
   updateStreamMetadata,
 } from '@utils/models/block';
 import { equals, groupBy, indexBy, remove, sortByKey } from '@utils/array';
@@ -135,9 +138,11 @@ function DataIntegrationModal({
     const query: {
       data_integration_uuid?: string;
       include_block_catalog: boolean;
+      include_block_metadata: boolean;
       include_documentation: boolean;
     } = {
       include_block_catalog: true,
+      include_block_metadata: true,
       include_documentation: true,
     };
 
@@ -283,6 +288,7 @@ function DataIntegrationModal({
 
   const [selectedMainNavigationTab, setSelectedMainNavigationTabState] =
     useState<MainNavigationTabEnum>();
+  const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
   const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(null);
 
   const setSelectedMainNavigationTab = useCallback((prev1) => {
@@ -432,8 +438,12 @@ function DataIntegrationModal({
       }
 
       streamsInGroup?.forEach((stream, idx: number) => {
-        const uuid = getStreamID(stream);
+        const streamID = getStreamID(stream);
+        const parentStreamID = getParentStreamID(stream);
+        const uuid = getStreamIDWithParentStream(stream);
         const isSelected = isStreamSelected(stream);
+        const isNavigationSelected = selectedMainNavigationTab === streamID
+          && (!parentStreamID || selectedMainNavigationTabSub === parentStreamID);
 
         arr.push(
           <Divider key={`${uuid}-divider-top`} light />
@@ -442,13 +452,16 @@ function DataIntegrationModal({
         arr.push(
           <NavigationStyle
             key={uuid}
-            selected={selectedMainNavigationTab === uuid}
+            selected={isNavigationSelected}
           >
             <Link
               block
               noHoverUnderline
               noOutline
-              onClick={() => setSelectedMainNavigationTab(uuid)}
+              onClick={() => {
+                setSelectedMainNavigationTab(streamID);
+                setSelectedMainNavigationTabSub(parentStreamID);
+              }}
               preventDefault
             >
               <Spacing p={PADDING_UNITS}>
@@ -462,7 +475,7 @@ function DataIntegrationModal({
 
                   <Flex flex={1}>
                     <Text default={!isSelected} monospace>
-                      {uuid}
+                      {streamID}
                     </Text>
                   </Flex>
                 </FlexContainer>
@@ -479,15 +492,13 @@ function DataIntegrationModal({
       });
     });
 
-    return (
-      <>
-        {arr}
-      </>
-    );
+    return arr;
   }, [
     blocksMapping,
     selectedMainNavigationTab,
+    selectedMainNavigationTabSub,
     setSelectedMainNavigationTab,
+    setSelectedMainNavigationTabSub,
     streams,
   ]);
 
@@ -1254,6 +1265,8 @@ function DataIntegrationModal({
           blocksMapping={blocksMapping}
           height={heightModal - headerOffset}
           searchText={searchText}
+          setSelectedMainNavigationTab={setSelectedMainNavigationTab}
+          setSelectedMainNavigationTabSub={setSelectedMainNavigationTabSub}
           streamsFetched={streamsFetched}
           updateStreamInCatalog={updateStreamInCatalog}
           width={widthModal - (beforeWidth + (afterHidden ? 0 : afterWidth))}
@@ -1288,6 +1301,8 @@ function DataIntegrationModal({
     setBlockConfig,
     setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
+    setSelectedMainNavigationTab,
+    setSelectedMainNavigationTabSub,
     streamsFetched,
     streamsFromCatalogMapping,
     streamsFromFetchedMapping,
@@ -1318,8 +1333,39 @@ function DataIntegrationModal({
       documentation,
     ]);
 
+  const breadcrumbsEl = useMemo(() => {
+    const arr = [
+      {
+        label: () => blockUUID,
+      },
+    ];
 
-  console.log('wtf', headerOffset, afterInnerTopOffset)
+    if (nameDisplay) {
+      arr.push({
+        bold: !selectedMainNavigationTab,
+        label: () => nameDisplay,
+      });
+    }
+
+    if (selectedMainNavigationTab) {
+      arr.push({
+        bold: true,
+        label: () => MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[selectedMainNavigationTab]
+          || selectedMainNavigationTab,
+      });
+    }
+
+    return (
+      <Breadcrumbs
+        breadcrumbs={arr}
+        noMarginLeft
+      />
+    );
+  }, [
+    blockUUID,
+    nameDisplay,
+    selectedMainNavigationTab,
+  ]);
 
   return (
     <ContainerStyle
@@ -1331,9 +1377,7 @@ function DataIntegrationModal({
           justifyContent="space-between"
         >
           <Flex>
-            <Text bold>
-              {nameDisplay}
-            </Text>
+            {breadcrumbsEl}
           </Flex>
 
           <Spacing mr={1} />

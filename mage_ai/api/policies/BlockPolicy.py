@@ -41,6 +41,8 @@ BlockPolicy.allow_read([
     'catalog',
     'configuration',
     'content',
+    'documenation',
+    'metadata',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -61,6 +63,7 @@ BlockPolicy.allow_read([
     'content',
     'description',
     'documentation',
+    'metadata',
     'outputs',
     'pipelines',
     'runtime',
@@ -139,6 +142,7 @@ BlockPolicy.allow_query([
     'data_integration_uuid',
     'destination_table',
     'include_block_catalog',
+    'include_block_metadata',
     'include_documentation',
     'state_stream',
 ], scopes=[

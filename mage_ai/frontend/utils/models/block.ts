@@ -174,6 +174,17 @@ export function getStreamID(stream: StreamType) {
   return stream?.stream || stream?.tap_stream_id;
 }
 
+export function getParentStreamID(stream: Stream): string {
+  return stream?.parent_stream;
+}
+
+export function getStreamIDWithParentStream(stream: StreamType) {
+  const parentStream = getParentStreamID(stream);
+  const id = getStreamID(stream);
+
+  return  [parentStream, id].filter(i => i).join('/');
+}
+
 export function getStreamMetadata(stream: StreamType): StreamType {
   return stream?.metadata?.find(({
     breadcrumb,

@@ -434,6 +434,9 @@ class DestinationBlock(IntegrationBlock):
             data,
         )
 
+    async def to_dict_async(self, **kwargs) -> Dict:
+        return self.to_dict(**kwargs)
+
     def update(self, data, update_state=False):
         if update_state:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (

@@ -26,6 +26,7 @@ import {
   StreamMapping,
   buildStreamMapping,
   getDifferencesBetweenStreams,
+  getParentStreamID,
   getSelectedStreams,
   getStreamFromStreamMapping,
   getStreamID,
@@ -44,6 +45,8 @@ type StreamGridPros = {
   };
   height: number;
   searchText?: string;
+  setSelectedMainNavigationTab: (id: string) => void;
+  setSelectedMainNavigationTabSub: (id: string) => void;
   streamsFetched?: StreamType[];
   updateStreamInCatalog: (stream: StreamType) => any;
   width: number;
@@ -80,6 +83,8 @@ function StreamGrid({
   blocksMapping,
   height,
   searchText,
+  setSelectedMainNavigationTab,
+  setSelectedMainNavigationTabSub,
   streamsFetched,
   updateStreamInCatalog,
   width,
@@ -245,6 +250,7 @@ function StreamGrid({
                       const existsInBothPlaces = isStreamInBothPlaces(stream);
                       const isDifferent = !!getDiffs(stream);
                       const streamID = getStreamID(stream);
+                      const parentStream = getParentStreamID(stream);
 
                       let selected = false;
                       if (isFetchedGroup) {
@@ -304,7 +310,10 @@ function StreamGrid({
                                 <Flex alignItems="center" style={{ height: 3 * UNIT }}>
                                   <Button
                                     compact
-                                    onClick={() => alert('Change to stream detail')}
+                                    onClick={() => {
+                                      setSelectedMainNavigationTab(streamID);
+                                      setSelectedMainNavigationTabSub(parentStream);
+                                    }}
                                     small
                                     warning
                                   >

@@ -19,10 +19,12 @@ export type BreadcrumbType = {
 
 type BreadcrumbsProps = {
   breadcrumbs?: BreadcrumbType[];
+  noMarginLeft?: boolean;
 };
 
 function Breadcrumbs({
   breadcrumbs,
+  noMarginLeft,
 }: BreadcrumbsProps) {
   const count = breadcrumbs.length;
   const arr = [];
@@ -61,7 +63,7 @@ function Breadcrumbs({
     let el = (
       <Spacing
         key={`breadcrumb-${title}`}
-        ml={idx === 0 ? 2 : 0}
+        ml={(!noMarginLeft && idx === 0) ? 2 : 0}
       >
         {titleEl}
       </Spacing>

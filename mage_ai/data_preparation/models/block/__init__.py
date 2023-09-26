@@ -1821,6 +1821,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_outputs: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
+        **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
             include_callback_blocks=include_callback_blocks,

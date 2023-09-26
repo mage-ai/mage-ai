@@ -71,9 +71,14 @@ class BlockPresenter(BasePresenter):
             if include_block_catalog:
                 include_block_catalog = include_block_catalog[0]
 
-            data = self.model.to_dict(
+            include_block_metadata = query.get('include_block_metadata', [False])
+            if include_block_metadata:
+                include_block_metadata = include_block_metadata[0]
+
+            data = await self.model.to_dict_async(
                 destination_table=destination_table,
                 include_block_catalog=include_block_catalog,
+                include_block_metadata=include_block_metadata,
                 include_content=True,
                 include_outputs=include_outputs,
                 state_stream=state_stream,
