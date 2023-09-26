@@ -1281,6 +1281,7 @@ function DataIntegrationModal({
         <Spacing p={PADDING_UNITS}>
           <StreamsOverview
             block={blockAttributes}
+            blocksMapping={blocksMapping}
             streamMapping={streamsFromCatalogMapping}
             updateStreamsInCatalog={updateStreamsInCatalog}
           />

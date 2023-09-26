@@ -83,7 +83,7 @@ type TableProps = {
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
   rightClickMenuWidth?: number;
-  rowGroupHeaders?: string[];
+  rowGroupHeaders?: string[] | any[];
   rowVerticalPadding?: number;
   rows: any[][];
   rowsGroupedByIndex?: number[][] | string[][];

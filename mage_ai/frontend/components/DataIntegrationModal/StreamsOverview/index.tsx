@@ -13,6 +13,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ReplicationMethodEnum, UniqueConflictMethodEnum } from '@interfaces/IntegrationSourceType';
 import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { sortByKey } from '@utils/array';
 import {
   getStreamID,
@@ -23,6 +24,9 @@ import {
 
 type StreamsOverviewProps = {
   block: BlockType;
+  blocksMapping: {
+    [blockUUID: string]: BlockType;
+  };
   streamMapping: StreamMapping;
   updateStreamsInCatalog: (streams: StreamType[]) => any;
 };
@@ -34,6 +38,7 @@ const INPUT_SHARED_PROPS = {
 
 function StreamsOverview({
   block,
+  blocksMapping,
   streamMapping,
   updateStreamsInCatalog,
 }: StreamsOverviewProps) {
@@ -50,7 +55,7 @@ function StreamsOverview({
     streams: StreamType[];
   } = useMemo(() => [
     {
-      groupHeader: '',
+      groupHeader: null,
       streams: sortByKey(Object.values(noParents), (stream: StreamType) => getStreamID(stream)),
     },
     ...sortByKey(Object.entries(parents), ([parentStreamID,]) => parentStreamID).map(([
@@ -147,7 +152,7 @@ function StreamsOverview({
     rows,
     rowsGroupedByIndex,
   }: {
-    rowGroupHeaders?: string[];
+    rowGroupHeaders?: string[] | any[];
     rows: any[][];
     rowsGroupedByIndex?: number[][] | string[][];
   } = useMemo(() => {
@@ -160,7 +165,22 @@ function StreamsOverview({
       groupHeader,
       streams,
     }) => {
-      rowGroupHeadersInner.push(groupHeader);
+      const blockInGroup = groupHeader ? blocksMapping?.[groupHeader] : null;
+      if (blockInGroup) {
+        rowGroupHeadersInner.push(
+          <Text
+            bold
+            color={getColorsForBlockType(blockInGroup?.type, {
+              blockColor: blockInGroup?.color,
+            }).accent}
+            monospace
+          >
+            {groupHeader}
+          </Text>
+        );
+      } else {
+        rowGroupHeadersInner.push(groupHeader);
+      }
 
       const groupIndexes = [];
 
@@ -314,6 +334,7 @@ function StreamsOverview({
     }
   }, [
     blockType,
+    blocksMapping,
     streamsGrouped,
     updateStreamsInCatalog,
   ]);
