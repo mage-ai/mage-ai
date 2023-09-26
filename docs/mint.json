@@ -493,7 +493,7 @@
         },
         "guides/ai/overview",
         "guides/docker/connecting-a-database",
-        "guides/community-examples"
+        "guides/community-examples",
         "guides/tips-and-tricks"
       ]
     },
