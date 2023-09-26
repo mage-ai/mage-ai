@@ -110,14 +110,24 @@ class DataIntegrationMixin:
 
         if os.path.exists(catalog_full_path):
             with open(catalog_full_path, mode='r') as f:
-                return json.loads(f.read() or '')
+                t = f.read()
+                if t:
+                    try:
+                        return json.loads(t)
+                    except json.decoder.JSONDecodeError:
+                        return
 
     async def get_catalog_from_file_async(self) -> Dict:
         catalog_full_path = self.get_catalog_file_path()
 
         if os.path.exists(catalog_full_path):
             async with aiofiles.open(catalog_full_path, mode='r') as f:
-                return json.loads(await f.read() or '')
+                t = await f.read()
+                if t:
+                    try:
+                        return json.loads(t)
+                    except json.decoder.JSONDecodeError:
+                        return
 
     def update_catalog_file(self, catalog: Dict = None) -> Dict:
         catalog_full_path = self.get_catalog_file_path()

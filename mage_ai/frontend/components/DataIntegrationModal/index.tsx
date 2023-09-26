@@ -19,6 +19,7 @@ import PipelineType from '@interfaces/PipelineType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import StreamDetail from './StreamDetail';
 import StreamGrid from './StreamGrid';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -68,7 +69,6 @@ import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   buildStreamMapping,
-  getDifferencesBetweenStreams as getDifferencesBetweenStreamsFunc,
   getParentStreamID,
   getSelectedStreams,
   getStreamFromStreamMapping,
@@ -502,39 +502,18 @@ function DataIntegrationModal({
     streams,
   ]);
 
+  const [streamsFetched, setStreamsFetched] = useState<StreamType[]>(null);
   const streamsFromCatalogMapping: StreamMapping =
     useMemo(() => buildStreamMapping(streams), [
       streams,
     ]);
-
-  const [streamsFetched, setStreamsFetched] = useState<StreamType[]>(null);
-  const [streamsFromFetchedMapping, setStreamsFromFetchedMapping] = useState<StreamMapping>({
-    noParents: {},
-    parents: {},
-  });
-  const noStreamsAnywhere: boolean = useMemo(() => noStreamsAnywhereFunc(
-    streamsFromFetchedMapping,
+  const noStreamsAnywhere = useMemo(() => noStreamsAnywhereFunc(
     streamsFromCatalogMapping,
+    buildStreamMapping(streamsFetched || []),
   ), [
-    streamsFromFetchedMapping,
     streamsFromCatalogMapping,
+    streamsFetched,
   ]);
-  const isStreamFetchedAndInCatalog: boolean =
-    useMemo((stream: StreamType) => isStreamInMappings(
-      streamsFromFetchedMapping,
-      streamsFromCatalogMapping,
-    ), [
-      streamsFromFetchedMapping,
-      streamsFromCatalogMapping,
-    ]);
-  const getDifferencesBetweenStreams =
-    useCallback((stream: StreamType) => getDifferencesBetweenStreamsFunc(
-      streamsFromFetchedMapping,
-      streamsFromCatalogMapping,
-    ), [
-      streamsFromFetchedMapping,
-      streamsFromCatalogMapping,
-    ]);
 
   const [
     fetchIntegrationSourceInit,
@@ -1272,6 +1251,28 @@ function DataIntegrationModal({
           width={widthModal - (beforeWidth + (afterHidden ? 0 : afterWidth))}
         />
       )
+    } else if (MainNavigationTabEnum.SYNC === selectedMainNavigationTab) {
+      return (
+        <Spacing p={PADDING_UNITS}>
+          <Text>
+            Coming soon
+          </Text>
+        </Spacing>
+      );
+    } else if (selectedMainNavigationTab) {
+      const stream = getStreamFromStreamMapping({
+        parent_stream: selectedMainNavigationTabSub,
+        stream: selectedMainNavigationTab,
+        tap_stream_id: selectedMainNavigationTab,
+      }, streamsFromCatalogMapping);
+
+      if (stream) {
+        return (
+          <StreamDetail
+            stream={stream}
+          />
+        );
+      }
     }
   }, [
     afterWidth,
@@ -1287,16 +1288,15 @@ function DataIntegrationModal({
     dataIntegrationConfiguration,
     dataIntegrationType,
     fetchIntegrationSource,
-    getDifferencesBetweenStreams,
     headerOffset,
     heightModal,
     isLoadingFetchIntegrationSource,
     isLoadingTestConnection,
-    isStreamFetchedAndInCatalog,
     noStreamsAnywhere,
     pipelineUUID,
     searchText,
     selectedMainNavigationTab,
+    selectedMainNavigationTabSub,
     selectedSubTab,
     setBlockConfig,
     setConnectionSuccessful,
@@ -1305,7 +1305,6 @@ function DataIntegrationModal({
     setSelectedMainNavigationTabSub,
     streamsFetched,
     streamsFromCatalogMapping,
-    streamsFromFetchedMapping,
     testConnection,
     updateStreamInCatalog,
     widthModal,
