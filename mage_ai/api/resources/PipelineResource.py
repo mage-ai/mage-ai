@@ -435,8 +435,10 @@ class PipelineResource(BaseResource):
                 join(b, a.id == b.pipeline_run_id).
                 filter(a.pipeline_uuid == pipeline_uuid).
                 filter(a.status == PipelineRun.PipelineRunStatus.FAILED).
-                filter(b.status != BlockRun.BlockRunStatus.COMPLETED).
-                filter(b.status != BlockRun.BlockRunStatus.CONDITION_FAILED)
+                filter(b.status.not_in([
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.CONDITION_FAILED,
+                ]))
             ).all()
 
             return result
