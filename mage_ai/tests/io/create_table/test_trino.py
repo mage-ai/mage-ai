@@ -11,7 +11,7 @@ class TestTableTrino(DBTestCase):
         df = pd.DataFrame({'varchar_time': '2002-01-01 00:00:00',
                            'datetime_time': '2002-01-02 00:00:00'}, index=[0])
         dtypes = infer_dtypes(df)
-        db_dtypes = {col: trino.get_type(df[col], dtypes[col]) for col in dtypes}
+        db_dtypes = {col: trino.get_type(df[col], dtypes[col], {}) for col in dtypes}
         unique_constraints = None
         overwrite_type = {'datetime_time': "TIMESTAMP"}
         schema_name = 'Test'
