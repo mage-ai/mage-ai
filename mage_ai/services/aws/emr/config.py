@@ -1,8 +1,9 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.hash import merge_dict
 
 DEFAULT_DRIVER_MEMORY = '32000M'
 DEFAULT_INSTANCE_TYPE = 'r5.4xlarge'
@@ -28,8 +29,10 @@ class EmrConfig(BaseConfig):
     master_security_group: str = None
     slave_security_group: str = None
     master_instance_type: str = DEFAULT_INSTANCE_TYPE
+    master_spark_properties: Dict = field(default_factory=dict)
     slave_instance_count: int = 1
     slave_instance_type: str = DEFAULT_INSTANCE_TYPE
+    slave_spark_properties: Dict = field(default_factory=dict)
     scaling_policy: EmrScalingPocliy = None
 
     def get_instances_config(
@@ -51,7 +54,7 @@ class EmrConfig(BaseConfig):
                     Configurations=[
                         {
                             'Classification': 'spark-defaults',
-                            'Properties': {
+                            'Properties': merge_dict({
                                 'spark.driver.memory': self.__driver_memory(
                                     self.master_instance_type,
                                 ),
@@ -59,7 +62,7 @@ class EmrConfig(BaseConfig):
                                 'spark.executor.memory': self.__driver_memory(
                                     self.master_instance_type,
                                 ),
-                            },
+                            }, self.master_spark_properties),
                         },
                     ],
                 ),
@@ -72,7 +75,7 @@ class EmrConfig(BaseConfig):
                     Configurations=[
                         {
                             'Classification': 'spark-defaults',
-                            'Properties': {
+                            'Properties': merge_dict({
                                 'spark.driver.memory': self.__driver_memory(
                                     self.slave_instance_type,
                                 ),
@@ -80,7 +83,7 @@ class EmrConfig(BaseConfig):
                                 'spark.executor.memory': self.__driver_memory(
                                     self.slave_instance_type,
                                 ),
-                            },
+                            }, self.slave_spark_properties),
                         },
                     ],
                 ),
