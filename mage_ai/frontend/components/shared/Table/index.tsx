@@ -8,8 +8,10 @@ import React, {
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -21,6 +23,7 @@ import {
   SortDirectionEnum,
   SortQueryEnum,
 } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
   SortIconContainerStyle,
@@ -29,7 +32,6 @@ import {
   TableRowStyle,
   TableStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
@@ -71,6 +73,7 @@ type TableProps = {
   defaultSortColumnIndex?: number;
   getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
+  groupsInline?: boolean;
   highlightRowOnHover?: boolean;
   localStorageKeySortColIdx?: string;
   localStorageKeySortDirection?: string;
@@ -111,6 +114,7 @@ function Table({
   defaultSortColumnIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
+  groupsInline,
   highlightRowOnHover,
   isSelectedRow,
   localStorageKeySortColIdx,
@@ -591,34 +595,73 @@ function Table({
         const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
         if (els?.length >= 1) {
           const header = rowGroupHeaders[idx];
+          const key = `table-group-${idx}`;
 
-          acc.push(
-            // @ts-ignore
-            <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
-              <Accordion
-                visibleMapping={{
-                  '0': true,
-                }}
+          if (groupsInline) {
+            acc.push(
+              <div
+                key={key}
               >
-                <AccordionPanel
-                  noPaddingContent
-                  title={header}
+                {header && (
+                  <>
+                    {typeof header === 'string' && (
+                      <>
+                        <Spacing p={PADDING_UNITS}>
+                          <Headline level={5}>
+                            {header}
+                          </Headline>
+                        </Spacing>
+
+                        <Divider light />
+                      </>
+                    )}
+
+                    {typeof header !== 'string' && header}
+                  </>
+                )}
+
+                <TableStyle
+                  borderCollapseSeparate={borderCollapseSeparate}
+                  columnBorders={columnBorders}
                 >
-                  <TableStyle
-                    borderCollapseSeparate={borderCollapseSeparate}
-                    columnBorders={columnBorders}
+                  <>
+                    {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                      groupIndex: idx,
+                    })}
+                    {els}
+                  </>
+                </TableStyle>
+              </div>
+            );
+          } else {
+            acc.push(
+              // @ts-ignore
+              <Spacing key={key} mt={idx >= 1 ? 2 : 0}>
+                <Accordion
+                  visibleMapping={{
+                    '0': true,
+                  }}
+                >
+                  <AccordionPanel
+                    noPaddingContent
+                    title={header}
                   >
-                    <>
-                      {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
-                        groupIndex: idx,
-                      })}
-                      {els}
-                    </>
-                  </TableStyle>
-                </AccordionPanel>
-              </Accordion>
-            </Spacing>,
-          );
+                    <TableStyle
+                      borderCollapseSeparate={borderCollapseSeparate}
+                      columnBorders={columnBorders}
+                    >
+                      <>
+                        {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                          groupIndex: idx,
+                        })}
+                        {els}
+                      </>
+                    </TableStyle>
+                  </AccordionPanel>
+                </Accordion>
+              </Spacing>,
+            );
+          }
         }
 
         return acc;
@@ -638,6 +681,7 @@ function Table({
     borderCollapseSeparate,
     columnBorders,
     columns?.length,
+    groupsInline,
     noHeader,
     renderHeaderRow,
     rowEls,

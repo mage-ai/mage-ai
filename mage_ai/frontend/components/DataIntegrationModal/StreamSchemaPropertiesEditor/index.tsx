@@ -11,10 +11,12 @@ import {
   AttributeUUIDEnum,
   InputTypeEnum,
 } from './constants';
+import { COLUMN_TYPES } from '@interfaces/IntegrationSourceType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { StreamDetailProps } from './StreamDetail/constants';
+import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { ignoreKeys } from '@utils/hash';
-import { pluralize } from '@utils/string';
+import { pauseEvent } from '@utils/events';
 import { remove, sortByKey } from '@utils/array';
 
 function StreamSchemaPropertiesEditor({
@@ -31,7 +33,9 @@ function StreamSchemaPropertiesEditor({
     useState<{
       [attribute: string]: {
         selected: boolean;
-        value?: boolean | number | string;
+        value?: boolean | number | string | {
+          [columnType]: string;
+        };
       };
     }>({});
 
@@ -54,25 +58,30 @@ function StreamSchemaPropertiesEditor({
 
   const attributesToRender: AttributeType = [
     {
-      label: () => 'Unique constraints',
+      label: () => 'Unique constraint',
       inputType: InputTypeEnum.CHECKBOX,
       uuid: AttributeUUIDEnum.UNIQUE_CONSTRAINTS,
     },
     {
-      label: () => 'Bookmark properties',
+      label: () => 'Bookmark property',
       inputType: InputTypeEnum.CHECKBOX,
       uuid: AttributeUUIDEnum.BOOKMARK_PROPERTIES,
     },
     {
-      label: () => 'Key properties',
+      label: () => 'Key property',
       inputType: InputTypeEnum.CHECKBOX,
       uuid: AttributeUUIDEnum.KEY_PROPERTIES,
     },
     {
-      label: () => 'Partition keys',
+      label: () => 'Partition key',
       inputType: InputTypeEnum.CHECKBOX,
       uuid: AttributeUUIDEnum.PARTITION_KEYS,
     },
+    ...COLUMN_TYPES.map((columnType: string) => ({
+      label: () => capitalizeRemoveUnderscoreLower(columnType),
+      inputType: InputTypeEnum.CHECKBOX,
+      uuid: columnType,
+    })),
   ];
 
   const renderRow = useCallback((attribute: AttributeType) => {
@@ -92,13 +101,16 @@ function StreamSchemaPropertiesEditor({
         <Checkbox
           checked={!!value}
           disabled={!isSelected}
-          onClick={() => setAttributesMapping(prev => ({
-            ...prev,
-            [uuid]: {
-              ...prev?.[uuid],
-              value: !value,
-            },
-          }))}
+          onClick={(e) => {
+            pauseEvent(e);
+            setAttributesMapping(prev => ({
+              ...prev,
+              [uuid]: {
+                ...prev?.[uuid],
+                value: !value,
+              },
+            }));
+          }}
         />
       );
     }
@@ -107,13 +119,16 @@ function StreamSchemaPropertiesEditor({
       <Checkbox
         checked={isSelected}
         key={`${uuid}-checkbox`}
-        onClick={() => setAttributesMapping(prev => ({
-          ...prev,
-          [uuid]: {
-            ...prev?.[uuid],
-            selected: !isSelected,
-          },
-        }))}
+        onClick={(e) => {
+          pauseEvent(e);
+          setAttributesMapping(prev => ({
+            ...prev,
+            [uuid]: {
+              ...prev?.[uuid],
+              selected: !isSelected,
+            },
+          }));
+        }}
       />,
       <Text
         key={`${uuid}-name`}
@@ -134,24 +149,50 @@ function StreamSchemaPropertiesEditor({
     setAttributesMapping,
   ]);
 
-  const tableMemo = useMemo(() => (
-    <Table
-      columnFlex={[null, 1, null]}
-      columns={[
-        {
-          label: () => '',
-          uuid: 'action',
-        },
-        {
-          uuid: 'Attribute',
-        },
-        {
-          uuid: 'Value',
-        },
-      ]}
-      rows={attributesToRender.map(renderRow)}
-    />
-  ), [
+  const tableMemo = useMemo(() => {
+    return (
+      <Table
+        alignTop
+        columnFlex={[null, 1, null]}
+        columns={[
+          {
+            uuid: 'Use',
+          },
+          {
+            uuid: 'Attribute',
+          },
+          {
+            uuid: 'Value',
+          },
+        ]}
+        groupsInline
+        onClickRow={(rowIndex: number) => {
+          const attribute = attributesToRender?.[rowIndex];
+          const uuid = attribute?.uuid;
+          const data = attributesMapping?.[uuid];
+          const isSelected = !!data?.selected;
+
+          setAttributesMapping(prev => ({
+            ...prev,
+            [uuid]: {
+              ...prev?.[uuid],
+              selected: !isSelected,
+            },
+          }));
+        }}
+        rowGroupHeaders={[
+          'Options',
+          'Column types',
+        ]}
+        rowsGroupedByIndex={[
+          [0, 1, 2, 3],
+          attributesToRender?.map((_, idx: number) => idx + 4),
+        ]}
+        rows={attributesToRender.map(renderRow)}
+      />
+    );
+  }, [
+    attributesMapping,
     attributesToRender,
     renderRow,
   ]);
@@ -159,44 +200,55 @@ function StreamSchemaPropertiesEditor({
   return (
     <>
       <Spacing p={PADDING_UNITS}>
-        <Spacing mb={PADDING_UNITS}>
+        <div>
           <Text bold large>
-            {pluralize('column', columns?.length || 0)} to apply changes on
+            {pluralize('property', columns?.length || 0)} to apply changes on
           </Text>
-        </Spacing>
 
-        <FlexContainer
-          alignItems="center"
-          flexWrap="wrap"
-        >
-          {columns?.map((column: string) => (
-            <div
-              key={`${column}-chip`}
-              style={{
-                marginBottom: UNIT / 2,
-                marginRight: UNIT / 2,
-              }}
+          <Spacing mt={1}>
+            <Text default>
+              {!columns?.length && 'Click 1 or more rows in the table to select which schema properties to apply bulk changes to.'}
+              {columns?.length >= 1 && 'The properties chosen below can have bulk changes applied to it.'}
+            </Text>
+          </Spacing>
+        </div>
+
+        {columns?.length >= 1 && (
+          <Spacing mt={PADDING_UNITS}>
+            <FlexContainer
+              alignItems="center"
+              flexWrap="wrap"
             >
-              <Chip
-                label={column}
-                onClick={() => {
-                  setHighlightedColumnsMapping((prev) => {
-                    const exists = !!prev?.[column];
+              {columns?.map((column: string) => (
+                <div
+                  key={`${column}-chip`}
+                  style={{
+                    marginBottom: UNIT / 2,
+                    marginRight: UNIT / 2,
+                  }}
+                >
+                  <Chip
+                    label={column}
+                    onClick={() => {
+                      setHighlightedColumnsMapping((prev) => {
+                        const exists = !!prev?.[column];
 
-                    if (exists) {
-                      return ignoreKeys(prev, [column]);
-                    }
+                        if (exists) {
+                          return ignoreKeys(prev, [column]);
+                        }
 
-                    return {
-                      ...prev,
-                      [column]: true,
-                    };
-                  });
-                }}
-              />
-            </div>
-          ))}
-        </FlexContainer>
+                        return {
+                          ...prev,
+                          [column]: true,
+                        };
+                      });
+                    }}
+                  />
+                </div>
+              ))}
+            </FlexContainer>
+          </Spacing>
+        )}
       </Spacing>
 
       {tableMemo}
