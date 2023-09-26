@@ -399,6 +399,21 @@ emr_config:
   ec2_key_name: aws-ec2
 ```
 
+Additionally, you can customize the instance count and Spark properties in your EMR cluster. Here is
+an example config:
+```yaml
+emr_config:
+  master_instance_type: 'r5.4xlarge'
+  master_spark_properties:
+    spark.driver.memory: 400M
+    spark.executor.cores: '8'
+  slave_instance_count: 2
+  slave_instance_type: 'r5.4xlarge'
+  slave_spark_properties:
+    spark.driver.memory: 400M
+    spark.executor.cores: '8'
+```
+
 <Note>
 You may need to request an increase in quota limits for using those instance
 types.
