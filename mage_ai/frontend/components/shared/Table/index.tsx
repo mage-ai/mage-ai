@@ -37,7 +37,10 @@ import { sortByKey } from '@utils/array';
 export type ColumnType = {
   center?: boolean;
   fitTooltipContentWidth?: boolean;
-  label?: () => any | string;
+  label?: (opts?: {
+    columnIndex?: number;
+    groupIndex?: number;
+  }) => any | string;
   tooltipAppearAfter?: boolean;
   tooltipMessage?: string
   tooltipWidth?: number;
@@ -83,7 +86,7 @@ type TableProps = {
   rowGroupHeaders?: string[];
   rowVerticalPadding?: number;
   rows: any[][];
-  rowsGroupedByIndex?: string[][];
+  rowsGroupedByIndex?: number[][] | string[][];
   setRowsSorted?: (rows: React.ReactElement[][]) => void;
   sortableColumnIndexes?: number[];
   sortedColumn?: SortedColumnType;
@@ -454,7 +457,11 @@ function Table({
     wrapColumns,
   ]);
 
-  const headerRowEl = useMemo(() => (
+  const renderHeaderRow = useCallback(({
+    groupIndex,
+  }: {
+    groupIndex?: number;
+  } = {}) => (
     <TableRowStyle noHover>
       {columns?.map((col, idx) => {
         const {
@@ -476,7 +483,10 @@ function Table({
               monospace
               muted
             >
-              {label ? label() : columnUUID}
+              {label ? label({
+                columnIndex: idx,
+                groupIndex,
+              }) : columnUUID}
             </Text>
             {tooltipMessage && (
               <Spacing ml="4px">
@@ -597,7 +607,9 @@ function Table({
                     columnBorders={columnBorders}
                   >
                     <>
-                      {(columns?.length >= 1 && !noHeader) && headerRowEl}
+                      {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                        groupIndex: idx,
+                      })}
                       {els}
                     </>
                   </TableStyle>
@@ -616,7 +628,7 @@ function Table({
         borderCollapseSeparate={borderCollapseSeparate}
         columnBorders={columnBorders}
       >
-        {(columns?.length >= 1 && !noHeader) && headerRowEl}
+        {(columns?.length >= 1 && !noHeader) && renderHeaderRow()}
         {rowEls}
       </TableStyle>
     );
@@ -624,8 +636,8 @@ function Table({
     borderCollapseSeparate,
     columnBorders,
     columns?.length,
-    headerRowEl,
     noHeader,
+    renderHeaderRow,
     rowEls,
     rowGroupHeaders,
     rowsGroupedByIndex,

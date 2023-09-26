@@ -21,6 +21,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import StreamDetail from './StreamDetail';
 import StreamGrid from './StreamGrid';
+import StreamsOverview from './StreamsOverview';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -38,6 +39,7 @@ import {
   Settings,
   SettingsWithKnobs,
   Sun,
+  Table as TableIcon,
 } from '@oracle/icons';
 import { CodeEditorStyle} from '@components/IntegrationPipeline/index.style';
 import {
@@ -64,10 +66,9 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localStorage';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
+  StreamDifferencesType,
+  StreamMapping,
   buildStreamMapping,
   getParentStreamID,
   getSelectedStreams,
@@ -78,10 +79,11 @@ import {
   isStreamSelected,
   mergeSchemaProperties,
   noStreamsAnywhere as noStreamsAnywhereFunc,
-  StreamDifferencesType,
-  StreamMapping,
   updateStreamMetadata,
 } from '@utils/models/block';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { get, set } from '@storage/localStorage';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { equals, groupBy, indexBy, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -191,35 +193,38 @@ function DataIntegrationModal({
     setDataIntegrationConfiguration,
   ]);
 
-  const updateStreamInCatalog =
-    useCallback((stream: StreamType) => setBlockAttributes(prev => {
-      const id1 = getStreamID(stream);
-      const parentStream1 = stream?.parent_stream;
-
+  const updateStreamsInCatalog =
+    useCallback((streams: StreamType[]) => setBlockAttributes(prev => {
       const catalog = prev?.catalog || {};
       const streamsTemp = [...(catalog?.streams || [])];
-      const indexOfStream = streamsTemp?.findIndex((stream2: StreamType) => {
-        const id2 = getStreamID(stream2);
-        const parentStream2 = stream2?.parent_stream;
 
-        return id1 === id2 && parentStream1 === parentStream2;
+      streams?.forEach((stream: StreamType) => {
+        const id1 = getStreamID(stream);
+        const parentStream1 = stream?.parent_stream;
+
+        const indexOfStream = streamsTemp?.findIndex((stream2: StreamType) => {
+          const id2 = getStreamID(stream2);
+          const parentStream2 = stream2?.parent_stream;
+
+          return id1 === id2 && parentStream1 === parentStream2;
+        });
+
+        let streamPrev = {};
+        if (indexOfStream >= 0) {
+          streamPrev = streamsTemp?.[indexOfStream];
+        }
+
+        const streamUpdated = {
+          ...streamPrev,
+          ...stream,
+        };
+
+        if (indexOfStream >= 0) {
+          streamsTemp[indexOfStream] = streamUpdated;
+        } else {
+          streamsTemp.push(streamUpdated);
+        }
       });
-
-      let streamPrev = {};
-      if (indexOfStream >= 0) {
-        streamPrev = streamsTemp?.[indexOfStream];
-      }
-
-      const streamUpdated = {
-        ...streamPrev,
-        ...stream,
-      };
-
-      if (indexOfStream >= 0) {
-        streamsTemp[indexOfStream] = streamUpdated;
-      } else {
-        streamsTemp.push(streamUpdated);
-      }
 
       return {
         ...prev,
@@ -310,7 +315,15 @@ function DataIntegrationModal({
 
   useEffect(() => {
     if (!selectedMainNavigationTab) {
-      setSelectedMainNavigationTab(MainNavigationTabEnum.STREAMS);
+      // TODO: remove this after done testing.
+      setSelectedMainNavigationTab(
+        // 'account_v2',
+        MainNavigationTabEnum.OVERVIEW,
+      );
+      // setSelectedMainNavigationTabSub(
+      //   // 'source_pg_yaml',
+      //   MainNavigationTabEnum.STREAMS,
+      // );
     }
   }, [
     selectedMainNavigationTab,
@@ -336,6 +349,10 @@ function DataIntegrationModal({
       {
         Icon: Lightning,
         uuid: MainNavigationTabEnum.SYNC,
+      },
+      {
+        Icon: TableIcon,
+        uuid: MainNavigationTabEnum.OVERVIEW,
       },
       {
         Icon: Sun,
@@ -1247,7 +1264,7 @@ function DataIntegrationModal({
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
           setSelectedMainNavigationTabSub={setSelectedMainNavigationTabSub}
           streamsFetched={streamsFetched}
-          updateStreamInCatalog={updateStreamInCatalog}
+          updateStreamsInCatalog={updateStreamsInCatalog}
           width={widthModal - (beforeWidth + (afterHidden ? 0 : afterWidth))}
         />
       )
@@ -1257,6 +1274,16 @@ function DataIntegrationModal({
           <Text>
             Coming soon
           </Text>
+        </Spacing>
+      );
+    } else if (MainNavigationTabEnum.OVERVIEW === selectedMainNavigationTab) {
+      return (
+        <Spacing p={PADDING_UNITS}>
+          <StreamsOverview
+            block={blockAttributes}
+            streamMapping={streamsFromCatalogMapping}
+            updateStreamsInCatalog={updateStreamsInCatalog}
+          />
         </Spacing>
       );
     } else if (selectedMainNavigationTab) {
@@ -1277,6 +1304,7 @@ function DataIntegrationModal({
   }, [
     afterWidth,
     beforeWidth,
+    blockAttributes,
     blockConfig,
     blockContent,
     blockLanguage,
@@ -1306,7 +1334,7 @@ function DataIntegrationModal({
     streamsFetched,
     streamsFromCatalogMapping,
     testConnection,
-    updateStreamInCatalog,
+    updateStreamsInCatalog,
     widthModal,
   ]);
 

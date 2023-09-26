@@ -388,8 +388,57 @@ class Block(DataIntegrationMixin):
                     if self.pipeline and self.pipeline.variables:
                         variables.update(self.pipeline.variables)
 
+                    def _block_output(
+                        block_uuid: str,
+                        parse: str = None,
+                        current_block=self,
+                        global_vars=variables,
+                    ) -> Any:
+                        data = None
+
+                        if not self.fetched_inputs_from_blocks:
+                            input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+                                self.fetch_input_variables_and_catalog(
+                                    None,
+                                    None,
+                                    global_vars=global_vars,
+                                    from_notebook=True,
+                                )
+                            self.fetched_inputs_from_blocks = input_vars_fetched
+
+                        if block_uuid in self.upstream_block_uuids and \
+                                self.data_integration_inputs and \
+                                block_uuid in self.data_integration_inputs:
+
+                            index = self.upstream_block_uuids.index(block_uuid)
+                            data = self.fetched_inputs_from_blocks[index]
+
+                        if parse:
+                            results = {}
+                            exec(f'_parse_func = {parse}', results)
+                            return results['_parse_func'](data)
+
+                        return data
+
+                    def _get_variable(
+                        var_name: str,
+                        parse: str = None,
+                        global_vars=variables,
+                    ) -> Any:
+                        if not global_vars:
+                            return None
+
+                        val = global_vars.get(var_name)
+                        if parse:
+                            results = {}
+                            exec(f'_parse_func = {parse}', results)
+                            return results['_parse_func'](val)
+
+                        return val
+
                     text = Template(content).render(
-                        variables=lambda x: variables.get(x) if variables else None,
+                        block_output=_block_output,
+                        variables=_get_variable,
                         **get_template_vars(),
                     )
 

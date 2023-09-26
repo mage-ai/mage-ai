@@ -48,7 +48,7 @@ type StreamGridPros = {
   setSelectedMainNavigationTab: (id: string) => void;
   setSelectedMainNavigationTabSub: (id: string) => void;
   streamsFetched?: StreamType[];
-  updateStreamInCatalog: (stream: StreamType) => any;
+  updateStreamsInCatalog: (streams: StreamType[]) => any;
   width: number;
 }
 
@@ -86,7 +86,7 @@ function StreamGrid({
   setSelectedMainNavigationTab,
   setSelectedMainNavigationTabSub,
   streamsFetched,
-  updateStreamInCatalog,
+  updateStreamsInCatalog,
   width,
 }: StreamGridPros) {
   const allStreamsFromCatalog = useMemo(() => getSelectedStreams(block, { getAll: true }), [
@@ -278,9 +278,11 @@ function StreamGrid({
                             ? () => false
                             : (e) => {
                               e.preventDefault();
-                              updateStreamInCatalog(updateStreamMetadata(stream, {
-                                selected: !selected,
-                              }));
+                              updateStreamsInCatalog([
+                                updateStreamMetadata(stream, {
+                                  selected: !selected,
+                                }),
+                              ]);
                             }
                           }
                           selected={selected}
@@ -335,11 +337,11 @@ function StreamGrid({
                                   <ToggleSwitch
                                     checked={selected}
                                     compact
-                                    onCheck={valFunc => updateStreamInCatalog(
+                                    onCheck={valFunc => updateStreamsInCatalog([
                                       updateStreamMetadata(stream, {
                                         selected: valFunc(selected),
                                       }),
-                                    )}
+                                    ])}
                                   />
                                 </Flex>
                               </>
