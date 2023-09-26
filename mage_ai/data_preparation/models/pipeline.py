@@ -1434,6 +1434,12 @@ class Pipeline:
         if self.variables is None:
             self.variables = {}
         self.variables[key] = value
+        try:
+            s = yaml.dump(dict(key=value))
+            yaml.safe_load(s)
+        except Exception:
+            raise Exception(
+                f'Failed to update variable {key} because the value is not serializable.')
         self.save()
 
     def delete_global_variable(self, key):
