@@ -24,3 +24,22 @@ class AIClient():
                 }
         """
         raise Exception('Subclasses must override this method.')
+
+    async def find_block_params(
+            self,
+            block_description: str
+    ):
+        """
+        Based on the block descriptionn, find the block type,
+        block language, pipeline type, and config for this block.
+
+        Args:
+          block_description: description of the block functions.
+
+        Returns:
+          block_type: type of the block: data_loader, transfomer or data_exporter.
+          block_language: language of the block.
+          pipeline_type: type of the pipeline.
+          config: config of the block including "action_type", "data_source".
+        """
+        raise Exception('Subclasses must override this method.')

@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 from mage_ai.data_preparation.models.block import Block
@@ -14,39 +14,12 @@ BLOCK 3: function: export it to postgres. upstream: 2"""
 EXPECTED_LOAD_BLOCK = '{"code": "load mysql"}'
 EXPECTED_FILTER_BLOCK = '{"code": "filter record"}'
 EXPECTED_EXPORT_BLOCK = '{"code": "export postgres"}'
-MOCK_TRANSFORMER_CLASSIFICATION = {
-    'role': 'assistant',
-    'function_call': {
-        'name': 'classify_description',
-        'arguments': '{\n  "BlockType": "BlockType__transformer",\n  '
-        '"BlockLanguage": "BlockLanguage__python",\n  '
-        '"ActionType": "ActionType__filter"\n}'
-    }
-}
-MOCK_LOADER_FUNCTION_CLASSIFICATION = {
-    'role': 'assistant',
-    'function_call': {
-        'name': 'classify_description',
-        'arguments': '{\n  "BlockType": "BlockType__data_loader",\n  '
-        '"BlockLanguage": "BlockLanguage__python",\n  '
-        '"DataSource": "DataSource__mysql"\n}'
-    }
-}
-MOCK_EXPORTERS_FUNCTION_CLASSIFICATION = {
-    'role': 'assistant',
-    'function_call': {
-        'name': 'classify_description',
-        'arguments': '{\n  "BlockType": "BlockType__data_exporter",\n  '
-        '"BlockLanguage": "BlockLanguage__python",\n  '
-        '"DataSource": "DataSource__postgres"\n}'
-    }
-}
 
 
 class AIFunctionTest(TestCase):
     def setUp(self):
         self.wizard = LLMPipelineWizard()
-        self.pipeline = Pipeline.create("test_pipeline", repo_path="test")
+        self.pipeline = Pipeline.create('test_pipeline', repo_path='test')
         self.block = Block.create(name="test_block", block_type="data_loader", repo_path="test")
         self.pipeline.add_block(self.block)
         self.loop = asyncio.new_event_loop()
@@ -68,11 +41,15 @@ class AIFunctionTest(TestCase):
                          mock_customized_code,
                          mock_customized_code,
                          mock_customized_code])
-        self.wizard._LLMPipelineWizard__async_identify_function_parameters = MagicMock(
+        self.wizard.client.find_block_params = MagicMock(
             side_effect=[
-                self.__set_expected_future_result(MOCK_LOADER_FUNCTION_CLASSIFICATION),
-                self.__set_expected_future_result(MOCK_TRANSFORMER_CLASSIFICATION),
-                self.__set_expected_future_result(MOCK_EXPORTERS_FUNCTION_CLASSIFICATION)])
+                self.__set_expected_future_result(('data_loader', 'python', 'python',
+                                                   {'data_source': 'mysql'})),
+                self.__set_expected_future_result(('transformer', 'python', 'python',
+                                                   {'action_type': 'filter'})),
+                self.__set_expected_future_result(('data_exporter', 'python', 'python',
+                                                   {'data_source': 'postgres'}))]
+        )
 
         pipeine_description = 'load data from mysql, filter out \
             records column age < 18, export it to postgres'
@@ -91,12 +68,14 @@ class AIFunctionTest(TestCase):
         self.assertTrue('2' in exporter_block.get('upstream_blocks'))
 
     def test_async_generate_block_with_description(self):
-        self.wizard._LLMPipelineWizard__async_identify_function_parameters = Mock(
-            return_value=self.__set_expected_future_result(MOCK_TRANSFORMER_CLASSIFICATION))
         upstream_blocks = [1, 2, 3]
         customized_code = {'code': 'Test code'}
         self.wizard.client.inference_with_prompt = MagicMock(
             return_value=self.__set_expected_future_result(customized_code))
+        self.wizard.client.find_block_params = MagicMock(
+            side_effect=[
+                self.__set_expected_future_result(('transformer', 'python', 'python',
+                                                   {'action_type': 'filter'}))])
         block = asyncio.run(self.wizard.async_generate_block_with_description(
             'test block generation', upstream_blocks))
         self.assertEqual(block.get('block_type'), 'transformer')
