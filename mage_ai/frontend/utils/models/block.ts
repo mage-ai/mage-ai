@@ -2,8 +2,30 @@ import { useMemo } from 'react';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { StreamType } from '@interfaces/IntegrationSourceType';
-import { indexBy } from '@utils/array';
+import { SchemaPropertyType, StreamType } from '@interfaces/IntegrationSourceType';
+import { equals, indexBy } from '@utils/array';
+import { isEmptyObject, isEqual } from '@utils/hash';
+
+export interface StreamDifferencesType {
+  newColumnSettings: {
+    [column: string]: SchemaPropertyType;
+  };
+  newColumns: string[];
+  stream: StreamType;
+}
+
+export interface StreamMapping {
+  noParents: {
+    [stream: string]: StreamType & {
+
+    };
+  };
+  parents: {
+    [stream: string]: StreamType & {
+
+    };
+  };
+}
 
 export function getLeafNodes(
   block: BlockType,
@@ -214,4 +236,164 @@ export function getSelectedStreams(block: BlockType, opts?: {
   }
 
   return arr?.filter(isStreamSelected);
+}
+
+export function mergeSchemaProperties(
+  streamChild: StreamType,
+  streamOverride: StreamType,
+): StreamDifferencesType {
+  const newColumnSettings = {};
+  const newColumns = [];
+  const newProperties = {};
+
+  function updateNewColumnSettings(column, data) {
+    if (!newColumnSettings?.[column]) {
+      newColumnSettings[column] = {}
+    }
+
+    newColumnSettings[column] = {
+      ...newColumnSettings?.[column],
+      ...data,
+    };
+  }
+
+  // Add new columns from stream child.
+  // For existing columns, update the property type.
+
+  const p1 = streamChild?.schema?.properties || {};
+  const p2 = streamOverride?.schema?.properties || {};
+
+  Object.entries(p1).forEach(([column, settings1]) => {
+    const settings2 = p2?.[column];
+
+    // Existing column
+    if (settings2) {
+      const t1 = settings1?.type || [];
+      const t2 = settings2?.type || [];
+      if (!equals(t1, t2)) {
+        updateNewColumnSettings(column, {
+          type: t1,
+        });
+      }
+
+      const f1 = settings1?.format;
+      const f2 = settings2?.format;
+      if (f1 !== f2) {
+        updateNewColumnSettings(column, {
+          format: f1,
+        });
+      }
+
+      const a1 = settings1?.anyOf || {};
+      const a2 = settings2?.anyOf || {};
+      if (!isEqual(a1, a2)) {
+        updateNewColumnSettings(column, {
+          anyOf: a1,
+        });
+      }
+
+      if (newColumnSettings?.[column]) {
+        newProperties[column] = settings1;
+      }
+    } else {
+      // New column
+      newColumns.push(column);
+      newProperties[column] = settings1;
+    }
+  });
+
+  return {
+    newColumnSettings,
+    newColumns,
+    stream: {
+      ...streamOverride,
+      schema: {
+        ...streamOverride?.schema,
+        properties: {
+          ...p2,
+          ...newColumnSettings,
+        },
+      },
+    },
+  };
+}
+
+export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: StreamMapping) {
+  const {
+    noParents: noParentsExisting,
+    parents: parentsExisting,
+  } = existingMapping || {};
+  const mapping = {
+    noParents: {},
+    parents: {},
+  };
+
+  streamsArr?.forEach((stream: StreamType) => {
+    const parentStream = stream?.parent_stream;
+    const id = getStreamID(stream);
+    if (parentStream) {
+      if (!parentsExisting?.[parentStream]?.[id]) {
+        if (!mapping.parents[parentStream]) {
+          mapping.parents[parentStream] = {};
+        }
+
+        mapping.parents[parentStream][id] = stream;
+      }
+    } else {
+      if (!noParentsExisting?.[id]) {
+        mapping.noParents[id] = stream;
+      }
+    }
+  });
+
+  return mapping;
+}
+
+export function getStreamFromStreamMapping(stream: StreamType, mapping: StreamMapping): StreamType {
+  const parentStream = stream?.parent_stream;
+  const id = getStreamID(stream);
+
+  if (parentStream) {
+    return mapping?.parents?.[parentStream]?.[id];
+  }
+
+  return mapping?.noParents?.[id];
+}
+
+export function isStreamInMappings(
+  stream: StreamType,
+  mapping1: StreamMapping,
+  mapping2: StreamMapping,
+): boolean {
+  return !!getStreamFromStreamMapping(stream, mapping1)
+    && !!getStreamFromStreamMapping(stream, mapping2);
+}
+
+export function getDifferencesBetweenStreams(
+  stream: StreamType,
+  mapping1: StreamMapping,
+  mapping2: StreamMapping,
+): StreamDifferencesType {
+  const s1 = getStreamFromStreamMapping(stream, mapping1);
+  const s2 = getStreamFromStreamMapping(stream, mapping2);
+
+  const diffs = mergeSchemaProperties(s1, s2);
+  const {
+    newColumnSettings,
+    newColumns,
+  } = diffs || {};
+
+  if (!isEmptyObject(newColumnSettings || {}) || newColumns?.length >= 1) {
+    return diffs;
+  }
+}
+
+export function noStreamsAnywhere(
+  mapping1: StreamMapping,
+  mapping2: StreamMapping,
+): boolean {
+  return [
+    ...Object.values(mapping1 || {}),
+    ...Object.values(mapping2 || {}),
+  ].every(mapping => isEmptyObject(mapping));
 }

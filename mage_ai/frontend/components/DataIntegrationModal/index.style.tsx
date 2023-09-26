@@ -56,18 +56,25 @@ export const StreamGridStyle = styled.div<{
   margin: ${1 * UNIT}px;
 
   ${props => !props.warning && `
-    border: 1px solid ${(props.theme.borders || dark.borders).light};
-
     &:hover {
       cursor: pointer;
     }
   `}
 
-  ${props => props.warning && `
+  ${props => !props.selected && !props.warning && `
+    border: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.warning && !props.selected && `
+    border: 1px solid ${(props.theme.accent || dark.accent).warningTransparent};
+  `}
+
+  ${props => props.warning && props.selected && `
     border: 1px solid ${(props.theme.accent || dark.accent).warning};
   `}
 
-  ${props => props.selected && `
+  ${props => props.selected && !props.warning && `
     background-color: ${(props.theme.background || dark.background).panel};
+    border: 1px solid ${(props.theme.borders || dark.borders).success};
   `}
 `;
