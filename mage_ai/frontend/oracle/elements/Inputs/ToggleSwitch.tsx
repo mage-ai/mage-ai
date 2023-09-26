@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import InputWrapper, { InputWrapperProps, SHARED_INPUT_STYLES } from './InputWrapper';
 import dark from '@oracle/styles/themes/dark';
+import { pauseEvent } from '@utils/events';
 
 const HEIGHT = 26;
 const WIDTH = 46;
@@ -112,7 +113,10 @@ const ToggleSwitch = ({
         <span
           onClick={disabled
             ? null
-            : () => onCheck?.(value => !value)
+            : (e) => {
+              pauseEvent(e);
+              onCheck?.(value => !value);
+            }
           }
         />
       </ToggleSwitchStyle>

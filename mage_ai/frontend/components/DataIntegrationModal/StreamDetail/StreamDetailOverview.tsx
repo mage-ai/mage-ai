@@ -93,7 +93,7 @@ function StreamDetailOverview({
       },
     ]) => {
       columns.push(column);
-      if (!metadata || metadata?.selected) {
+      if (!metadata || !metadata?.metadata || metadata?.metadata?.selected) {
         columnsSelected.push(column);
       }
 

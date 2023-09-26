@@ -75,6 +75,7 @@ type TableProps = {
   localStorageKeySortColIdx?: string;
   localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
+  menu?: any;
   noBorder?: boolean;
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
@@ -114,6 +115,7 @@ function Table({
   isSelectedRow,
   localStorageKeySortColIdx,
   localStorageKeySortDirection,
+  menu,
   noBorder,
   noHeader,
   onClickRow,
@@ -646,7 +648,7 @@ function Table({
   return (
     <div style={{ position: 'relative' }}>
       {tableEl}
-
+      {menu}
       {hasRightClickMenu && coordinates && rightClickMenu}
     </div>
   );

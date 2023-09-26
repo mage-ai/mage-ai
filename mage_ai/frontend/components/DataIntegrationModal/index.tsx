@@ -21,6 +21,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import StreamDetail from './StreamDetail';
 import StreamGrid from './StreamGrid';
+import StreamSchemaPropertiesEditor from './StreamSchemaPropertiesEditor';
 import StreamsOverview from './StreamsOverview';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -296,6 +297,10 @@ function DataIntegrationModal({
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
   const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(null);
 
+  const [highlightedColumnsMapping, setHighlightedColumnsMapping] = useState<{
+    [column: string]: any;
+  }>({});
+
   const setSelectedMainNavigationTab = useCallback((prev1) => {
     setSelectedMainNavigationTabState((prev2) => {
       const val1 = typeof prev1 === 'function' ? prev1(prev2) : prev1
@@ -306,9 +311,16 @@ function DataIntegrationModal({
 
       setSelectedSubTab(tabs?.[0]?.uuid);
 
+      const valOld = typeof prev2 === 'function' ? prev2() : prev2;
+
+      if (val1 !== valOld) {
+        setHighlightedColumnsMapping({});
+      }
+
       return val1;
     });
   }, [
+    setHighlightedColumnsMapping,
     setSelectedMainNavigationTabState,
     setSelectedSubTab,
   ]);
@@ -348,12 +360,12 @@ function DataIntegrationModal({
         uuid: MainNavigationTabEnum.SYNC,
       },
       {
-        Icon: TableIcon,
-        uuid: MainNavigationTabEnum.OVERVIEW,
-      },
-      {
         Icon: Sun,
         uuid: MainNavigationTabEnum.STREAMS,
+      },
+      {
+        Icon: TableIcon,
+        uuid: MainNavigationTabEnum.OVERVIEW,
       },
     ].map(({
       Icon,
@@ -670,19 +682,6 @@ function DataIntegrationModal({
   ]);
 
   const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
-  const afterHidden: boolean = useMemo(() => {
-    if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
-      && SubTabEnum.CREDENTIALS === selectedSubTab
-    ) {
-      return afterHiddenState;
-    }
-
-    return true;
-  }, [
-    afterHiddenState,
-    selectedMainNavigationTab,
-    selectedSubTab,
-  ]);
 
   const blockContentParsed = useMemo(() => {
     if (BlockLanguageEnum.YAML === blockLanguage && blockContent) {
@@ -755,6 +754,83 @@ function DataIntegrationModal({
       ),
     },
   );
+
+  const isOnStreamDetail = useMemo(() => selectedMainNavigationTab
+    && ![
+      MainNavigationTabEnum.CONFIGURATION,
+      MainNavigationTabEnum.OVERVIEW,
+      MainNavigationTabEnum.STREAMS,
+      MainNavigationTabEnum.SYNC,
+    ].includes(selectedMainNavigationTab),
+  [
+    selectedMainNavigationTab,
+  ]);
+
+  const isOnStreamDetailSchemaProperties = useMemo(() => isOnStreamDetail
+    && SubTabEnum.SETTINGS === selectedSubTab,
+  [
+    isOnStreamDetail,
+    selectedSubTab,
+  ]);
+
+  const isOnConfigurationCredentials =
+    useMemo(() => MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
+      && SubTabEnum.CREDENTIALS === selectedSubTab
+    ,
+    [
+      selectedMainNavigationTab,
+      selectedSubTab,
+    ]);
+
+  const afterHidden: boolean = useMemo(() => {
+    if (isOnConfigurationCredentials || isOnStreamDetailSchemaProperties) {
+      return afterHiddenState;
+    }
+
+    return true;
+  }, [
+    afterHiddenState,
+    isOnConfigurationCredentials,
+    isOnStreamDetailSchemaProperties,
+    selectedMainNavigationTab,
+    selectedSubTab,
+  ]);
+
+  const streamDetailMemo = useMemo(() => {
+    const stream = getStreamFromStreamMapping({
+      parent_stream: selectedMainNavigationTabSub,
+      stream: selectedMainNavigationTab,
+      tap_stream_id: selectedMainNavigationTab,
+    }, streamsFromCatalogMapping);
+
+    if (stream) {
+      return (
+        <StreamDetail
+          block={blockAttributes}
+          blocksMapping={blocksMapping}
+          highlightedColumnsMapping={highlightedColumnsMapping}
+          selectedSubTab={selectedSubTab}
+          setBlockAttributes={setBlockAttributes}
+          setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+          stream={stream}
+          streamMapping={streamsFromCatalogMapping}
+          updateStreamsInCatalog={updateStreamsInCatalog}
+        />
+      );
+    }
+  }, [
+    blockAttributes,
+    blocksMapping,
+    highlightedColumnsMapping,
+    selectedMainNavigationTab,
+    selectedMainNavigationTabSub,
+    selectedSubTab,
+    setBlockAttributes,
+    setHighlightedColumnsMapping,
+    streamsFromCatalogMapping,
+    streamsFromCatalogMapping,
+    updateStreamsInCatalog,
+  ]);
 
   const mainContentEl = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab) {
@@ -1284,28 +1360,9 @@ function DataIntegrationModal({
           />
         </Spacing>
       );
-    } else if (selectedMainNavigationTab) {
-      const stream = getStreamFromStreamMapping({
-        parent_stream: selectedMainNavigationTabSub,
-        stream: selectedMainNavigationTab,
-        tap_stream_id: selectedMainNavigationTab,
-      }, streamsFromCatalogMapping);
-
-      if (stream) {
-        return (
-          <StreamDetail
-            block={blockAttributes}
-            blocksMapping={blocksMapping}
-            selectedSubTab={selectedSubTab}
-            setBlockAttributes={setBlockAttributes}
-            stream={stream}
-            streamMapping={streamsFromCatalogMapping}
-            updateStreamsInCatalog={updateStreamsInCatalog}
-          />
-        );
-      }
     }
   }, [
+    afterHidden,
     afterWidth,
     beforeWidth,
     blockAttributes,
@@ -1343,27 +1400,56 @@ function DataIntegrationModal({
     widthModal,
   ]);
 
-  const after = useMemo(() => MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
-    && SubTabEnum.CREDENTIALS === selectedSubTab
-    && (
-      <Spacing p={PADDING_UNITS}>
-        {!dataBlock && (
-          <Spinner />
-        )}
+  const afterHeader = useMemo(() => {
+    if (isOnConfigurationCredentials) {
+      return (
+        <Text bold>
+          Documentation
+        </Text>
+      );
+    } else if (isOnStreamDetailSchemaProperties) {
+      return (
+        <Text bold>
+          Mass editing
+        </Text>
+      );
+    }
+  }, [
+    isOnConfigurationCredentials,
+    isOnStreamDetailSchemaProperties,
+  ]);
 
-        {documentation && (
-          <Markdown>
-            {documentation.replace(/\<br \/\>/g, '\n\n')}
-          </Markdown>
-        )}
-      </Spacing>
-    ), [
-      afterHidden,
-      dataBlock,
-      selectedMainNavigationTab,
-      selectedSubTab,
-      documentation,
-    ]);
+  const after = useMemo(() => {
+    if (isOnConfigurationCredentials) {
+      return (
+        <Spacing p={PADDING_UNITS}>
+          {!dataBlock && (
+            <Spinner />
+          )}
+
+          {documentation && (
+            <Markdown>
+              {documentation.replace(/\<br \/\>/g, '\n\n')}
+            </Markdown>
+          )}
+        </Spacing>
+      );
+    } else if (isOnStreamDetailSchemaProperties) {
+      return (
+        <StreamSchemaPropertiesEditor
+          highlightedColumnsMapping={highlightedColumnsMapping}
+          setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+        />
+      );
+    }
+  }, [
+    dataBlock,
+    documentation,
+    highlightedColumnsMapping,
+    isOnConfigurationCredentials,
+    isOnStreamDetailSchemaProperties,
+    setHighlightedColumnsMapping,
+  ]);
 
   const breadcrumbsEl = useMemo(() => {
     const arr = [
@@ -1446,11 +1532,9 @@ function DataIntegrationModal({
 
       <TripleLayout
         after={after}
-        afterHeader={after && (
+        afterHeader={(
           <Spacing ref={refAfterHeader} px={1}>
-            <Text bold>
-              Documentation
-            </Text>
+            {afterHeader}
           </Spacing>
         )}
         afterHeightOffset={0}
@@ -1477,7 +1561,8 @@ function DataIntegrationModal({
         setBeforeWidth={setBeforeWidth}
         uuid={componentUUID}
       >
-        {mainContentEl}
+        {isOnStreamDetail && streamDetailMemo}
+        {!isOnStreamDetail && mainContentEl}
       </TripleLayout>
     </ContainerStyle>
   );

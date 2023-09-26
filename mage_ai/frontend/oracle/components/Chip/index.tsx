@@ -19,7 +19,7 @@ export type ChipProps = {
   disabled?: boolean;
   label?: string | any;
   monospace?: boolean;
-  onClick?: () => void;
+  onClick?: (e: any) => void;
   primary?: boolean;
   small?: boolean;
   xsmall?: boolean;

@@ -4,14 +4,26 @@ import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockTy
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BreadcrumbEnum,
+  COLUMN_TYPE_CUSTOM_DATE_TIME,
+  ColumnFormatEnum,
+  ColumnFormatMapping,
+  ColumnTypeEnum,
   InclusionEnum,
   MetadataType,
   PropertyMetadataType,
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { equals, indexBy } from '@utils/array';
+import { equals, indexBy, remove } from '@utils/array';
 import { isEmptyObject, isEqual } from '@utils/hash';
+
+export type PropertyColumnWithUUIDType = {
+  uuid: string;
+} & SchemaPropertyType;
+
+export type PropertyColumnMoreType = {
+  typesDerived: string | ColumnFormatEnum | ColumnTypeEnum;
+} & PropertyColumnWithUUIDType;
 
 export interface StreamDifferencesType {
   newColumnSettings: {
@@ -530,5 +542,92 @@ export function updateStreamMetadataForColumns(stream: StreamType, metadataByCol
       metadataForStream,
       ...Object.values(metadataByColumnUpdated || {}),
     ],
+  };
+}
+
+export function addTypesToProperty(
+  typesDerivedToAdd: string[],
+  property: PropertyColumnMoreType,
+) {
+  const {
+    type: types,
+    typesDerived: typesDerived1,
+  } = property || {};
+  const property2 = {
+    ...property,
+  };
+
+  let types2 = [...types];
+  let typesDerived2 = [...typesDerived1];
+
+  typesDerivedToAdd?.forEach((td) => {
+    if (COLUMN_TYPE_CUSTOM_DATE_TIME === td) {
+      property2.format = ColumnFormatEnum.DATE_TIME;
+    } else if (ColumnFormatEnum.UUID === td) {
+      property2.format = ColumnFormatEnum.UUID;
+    } else {
+      types2.push(td);
+      typesDerived2.push(td);
+    }
+  });
+
+  return {
+    ...property2,
+    type: types2,
+    typesDerived: typesDerived2,
+  };
+}
+
+export function removeTypesFromProperty(
+  typesDerivedToRemove: string[],
+  property: PropertyColumnMoreType,
+) {
+  const {
+    format,
+    type: types,
+    typesDerived: typesDerived1,
+  } = property || {};
+  const property2 = {
+    ...property,
+  };
+
+  let types2 = [...types];
+  let typesDerived2 = [...typesDerived1];
+
+  typesDerivedToRemove?.forEach((td) => {
+    if (format && ColumnFormatMapping[format] === td) {
+      delete property2.format;
+    } else {
+      types2 = remove(types2, i => i === td);
+      typesDerived2 = remove(typesDerived2, i => i === td);
+    }
+  });
+
+  return {
+    ...property2,
+    type: types2,
+    typesDerived: typesDerived2,
+  };
+}
+
+export function hydrateProperty(
+  uuid: string,
+  property: SchemaPropertyType,
+): PropertyColumnMoreType {
+  const {
+    format,
+    type: types = [],
+  } = property || {};
+
+  const typesDerived = [...types];
+
+  if (ColumnFormatEnum.DATE_TIME === format || ColumnFormatEnum.UUID === format) {
+    typesDerived.push(ColumnFormatMapping[format]);
+  }
+
+  return {
+    ...property,
+    typesDerived,
+    uuid,
   };
 }

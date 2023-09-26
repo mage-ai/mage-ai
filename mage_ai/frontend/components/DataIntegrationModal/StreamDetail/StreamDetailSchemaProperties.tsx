@@ -1,51 +1,86 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
+import Circle from '@oracle/elements/Circle';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Panel from '@oracle/components/Panel/v2';
+import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { Edit } from '@oracle/icons';
+import { Close, Edit } from '@oracle/icons';
 import {
+  COLUMN_TYPES,
   MetadataType,
   ReplicationMethodEnum,
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { StreamDetailProps } from './constants';
 import { StreamsOverviewProps } from '../StreamsOverview';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { appendArray, indexBy, remove, sortByKey } from '@utils/array';
 import {
+  PropertyColumnMoreType,
+  addTypesToProperty,
   buildMetadataForColumn,
   getSchemaPropertiesWithMetadata,
   getStreamID,
   getStreamIDWithParentStream,
   getStreamMetadataByColumn,
   getStreamMetadataFromMetadataArray,
+  hydrateProperty,
   isStreamSelected,
+  removeTypesFromProperty,
   updateStreamInBlock,
   updateStreamMetadataForColumns,
   updateStreamPropertiesForColumns,
 } from '@utils/models/block';
 import { ignoreKeys } from '@utils/hash';
-
-type StreamDetailSchemaPropertiesProps = {
-  setBlockAttributes: (prev: any) => void;
-  stream: StreamType;
-} & StreamsOverviewProps;
+import { pauseEvent } from '@utils/events';
 
 function StreamDetailSchemaProperties({
   block,
   blocksMapping,
+  highlightedColumnsMapping,
   setBlockAttributes,
+  setHighlightedColumnsMapping,
   stream,
   streamMapping,
   updateStreamsInCatalog,
-}: StreamDetailSchemaPropertiesProps) {
-  const schemaProperties = useMemo(() => getSchemaPropertiesWithMetadata(stream) || {}, [
+}: StreamDetailProps) {
+  const schemaProperties:{
+    [column: string]: SchemaPropertyType;
+  } = useMemo(() => getSchemaPropertiesWithMetadata(stream) || {}, [
     stream,
+  ]);
+
+  const [propertyFocused, setPropertyFocused] = useState<PropertyColumnMoreType>(null);
+
+  const refTable = useRef(null);
+  const [coordinates, setCoordinates] = useState<{
+    x: number;
+    y: number;
+  }>(null);
+
+  const handleClick = useCallback(() => {
+    setCoordinates(null);
+    setPropertyFocused(null);
+  }, [
+    setCoordinates,
+    setPropertyFocused,
+  ]);
+  useEffect(() => {
+    document?.addEventListener('click', handleClick);
+
+    return () => {
+      document?.removeEventListener('click', handleClick);
+    };
+  }, [
+    handleClick,
   ]);
 
   const {
@@ -218,6 +253,11 @@ function StreamDetailSchemaProperties({
       metadata,
       type: columnTypes,
     }: SchemaPropertyType = property;
+    const p2 = hydrateProperty(column, property) || {};
+    const {
+      typesDerived,
+    }  = p2 || {}
+
     const isSelected = !metadata || !metadata?.metadata || metadata?.metadata?.selected;
     const isUnique = uniqueConstraintsMapping?.[column];
     const isBookmark = bookmarkPropertiesMapping?.[column];
@@ -225,25 +265,29 @@ function StreamDetailSchemaProperties({
     const isPartitionKey = partitionKeysMapping?.[column];
 
     const row = [
-      <ToggleSwitch
-        checked={isSelected}
-        compact
+      <div
         key={`${column}-selected`}
-        onCheck={(valFunc: (val: boolean) => boolean) => {
-          setBlockAttributes(prev => updateStreamInBlock(
-            updateStreamMetadataForColumns(stream, {
-              [column]: {
-                ...metadata,
-                metadata: {
-                  ...metadata?.metadata,
-                  selected: valFunc(isSelected),
+        style={{ minHeight: 22 }}
+      >
+        <ToggleSwitch
+          checked={isSelected}
+          compact
+          onCheck={(valFunc: (val: boolean) => boolean) => {
+            setBlockAttributes(prev => updateStreamInBlock(
+              updateStreamMetadataForColumns(stream, {
+                [column]: {
+                  ...metadata,
+                  metadata: {
+                    ...metadata?.metadata,
+                    selected: valFunc(isSelected),
+                  },
                 },
-              },
-            }),
-            prev,
-          ));
-        }}
-      />,
+              }),
+              prev,
+            ));
+          }}
+        />
+      </div>,
       <Text key={`${column}-column`}>
         {column}
       </Text>,
@@ -252,18 +296,35 @@ function StreamDetailSchemaProperties({
         flexWrap="wrap"
         key={`${column}-types`}
       >
-        {sortByKey(columnTypes || [], i => i)?.map((columnType: string) => (
-          <div key={`${column}-types-${columnType}`} style={{ marginRight: UNIT / 2 }}>
+        {(typesDerived || [])?.map((columnType: string) => (
+          <div
+            key={`${column}-types-${columnType}`}
+            style={{
+              paddingBottom: 1,
+              marginRight: 2,
+              paddingTop: 1,
+             }}
+          >
             <Chip
               label={columnType}
-              onClick={() => {
+              onClick={(e) => {
+                pauseEvent(e);
+
+                const isSelected = !!typesDerived?.includes(columnType);
+
+                const propUpdated1 = isSelected
+                  ? removeTypesFromProperty([columnType], p2)
+                  : addTypesToProperty([columnType], p2);
+
+                const propUpdated2 = {
+                  any: propUpdated1?.any,
+                  format: propUpdated1?.format,
+                  type: propUpdated1?.type,
+                };
+
                 setBlockAttributes(prev => updateStreamInBlock(
                   updateStreamPropertiesForColumns(stream, {
-                    [column]: {
-                      any,
-                      format,
-                      type: remove(columnTypes, i => i === columnType),
-                    },
+                    [column]: propUpdated2,
                   }),
                   prev,
                 ));
@@ -277,8 +338,13 @@ function StreamDetailSchemaProperties({
           noBackground
           noBorder
           noPadding
-          onClick={() => {
-            alert('EDIT');
+          onClick={(e) => {
+            pauseEvent(e);
+            setCoordinates({
+              x: e.pageX,
+              y: e.pageY,
+            });
+            setPropertyFocused(p2);
           }}
         >
           <Edit default />
@@ -291,7 +357,8 @@ function StreamDetailSchemaProperties({
       >
         <Checkbox
           checked={isUnique}
-          onClick={() => {
+          onClick={(e) => {
+            pauseEvent(e);
             setBlockAttributes(prev => updateStreamInBlock(
               {
                 ...stream,
@@ -342,7 +409,8 @@ function StreamDetailSchemaProperties({
         >
           <Checkbox
             checked={value}
-            onClick={() => {
+            onClick={(e) => {
+              pauseEvent(e);
               setBlockAttributes(prev => updateStreamInBlock(
                 {
                   ...stream,
@@ -370,25 +438,179 @@ function StreamDetailSchemaProperties({
     schemaProperties,
     schemaPropertiesSortedArray,
     setBlockAttributes,
+    setCoordinates,
+    setPropertyFocused,
     stream,
     uniqueConstraints,
     uniqueConstraintsMapping,
   ]);
 
-  const tableMemo = useMemo(() => {
+  const getSchemaPropertyAndHighlightedByIndex =
+    useCallback((index: number) => {
+      const d = schemaPropertiesSortedArray?.[index];
 
+      return {
+        ...d,
+        highlighted: !!highlightedColumnsMapping?.[d?.column],
+      };
+    }, [
+      highlightedColumnsMapping,
+      schemaPropertiesSortedArray,
+    ]);
+
+  const rowMenu = useMemo(() => {
+    if (!coordinates || !propertyFocused) {
+      return;
+    }
+
+    const menuWidth = UNIT * 21;
+
+    const {
+      x: xContainer,
+      width,
+    } = refTable?.current?.getBoundingClientRect() || {};
+    const {
+      x = 0,
+      y = 0,
+    } = coordinates || {};
+    let xFinal = x;
+    if (x + menuWidth >= xContainer + width) {
+      xFinal = (xContainer + width) - (menuWidth + UNIT);
+    }
+    if (xFinal < 0) {
+      xFinal = 0;
+    }
+
+    const p1 = schemaProperties?.[propertyFocused?.uuid] || {};
+    const p2 = hydrateProperty(propertyFocused?.uuid, p1 || {});
+
+    const {
+      typesDerived = [],
+      uuid: column,
+    } = p2 || {};
+
+    return (
+      <div
+        onClick={pauseEvent}
+        style={{
+          left: xFinal,
+          position: 'fixed',
+          top: y + (UNIT / 2),
+          width: menuWidth,
+          zIndex: 100,
+        }}
+      >
+        <Panel>
+          <div style={{ position: 'relative' }}>
+            <Button
+              iconOnly
+              noBackground
+              noBorder
+              noPadding
+              onClick={(e) => {
+                pauseEvent(e);
+                setCoordinates(null);
+                setPropertyFocused(null);
+              }}
+              style={{
+                position: 'absolute',
+                right: -0.5 * UNIT,
+                top: -0.5 * UNIT,
+                zIndex: 1,
+              }}
+            >
+              <Circle default size={2.5 * UNIT}>
+                <Close size={1.5 * UNIT} />
+              </Circle>
+            </Button>
+          </div>
+
+          <Spacing p={PADDING_UNITS}>
+            {COLUMN_TYPES.map((columnType: string, idx: number) => {
+              const isSelected = !!typesDerived?.includes(columnType);
+
+              return (
+                <div key={columnType} style={{ marginTop: idx === 0 ? 0 : 4 }}>
+                  <FlexContainer alignItems="center">
+                    <Checkbox
+                      checked={isSelected}
+                      label={columnType}
+                      onClick={(e) => {
+                        pauseEvent(e);
+
+                        const propUpdated1 = isSelected
+                          ? removeTypesFromProperty([columnType], p2)
+                          : addTypesToProperty([columnType], p2);
+
+                        const propUpdated2 = {
+                          any: propUpdated1?.any,
+                          format: propUpdated1?.format,
+                          type: propUpdated1?.type,
+                        };
+
+                        setBlockAttributes(prev => updateStreamInBlock(
+                          updateStreamPropertiesForColumns(stream, {
+                            [column]: propUpdated2,
+                          }),
+                          prev,
+                        ));
+                      }}
+                    />
+                  </FlexContainer>
+                </div>
+              );
+            })}
+          </Spacing>
+        </Panel>
+      </div>
+    );
+  }, [
+    coordinates,
+    propertyFocused,
+    refTable,
+    schemaProperties,
+    setBlockAttributes,
+    setCoordinates,
+    setPropertyFocused,
+    stream,
+  ]);
+
+  const tableMemo = useMemo(() => {
     return (
       <Table
         columnFlex={columnFlex}
         columns={columns}
+        highlightRowOnHover
+        isSelectedRow={(index: number) => getSchemaPropertyAndHighlightedByIndex(
+          index,
+        )?.highlighted}
+        menu={rowMenu}
+        onClickRow={(index: number) => {
+          const {
+            column,
+            highlighted,
+          } = getSchemaPropertyAndHighlightedByIndex(index);
+
+          setHighlightedColumnsMapping(prev => highlighted
+            ? ignoreKeys(prev, [column])
+            : { ...prev, [column]: true }
+          );
+        }}
+        ref={refTable}
         rows={rows}
+        stickyHeader
       />
     );
   }, [
     columnFlex,
     columns,
+    getSchemaPropertyAndHighlightedByIndex,
+    refTable,
+    rowMenu,
     rows,
+    setHighlightedColumnsMapping,
   ]);
+
 
   return tableMemo;
 }
