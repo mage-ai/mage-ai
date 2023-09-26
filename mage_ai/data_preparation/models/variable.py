@@ -409,7 +409,7 @@ class Variable:
                 df = df.iloc[:sample_count]
 
         column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
-        if os.path.exists(column_types_filename):
+        if self.storage.path_exists(column_types_filename):
             column_types = self.storage.read_json_file(column_types_filename)
             # ddf = dask_from_pandas(df)
             if should_deserialize_pandas(column_types):
