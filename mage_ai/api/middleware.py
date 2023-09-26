@@ -79,8 +79,10 @@ class OAuthMiddleware(RequestHandler):
             self.request.__setattr__('oauth_client', oauth_client)
             if not oauth_client:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+                self.set_status(ApiError.INVALID_API_KEY['code'])
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+                self.set_status(ApiError.INVALID_API_KEY['code'])
             else:
                 should_check = False
                 oauth_token = None
@@ -108,8 +110,11 @@ class OAuthMiddleware(RequestHandler):
                         else:
                             self.request.__setattr__(
                                 'error', ApiError.EXPIRED_OAUTH_TOKEN)
+                            self.set_status(ApiError.EXPIRED_OAUTH_TOKEN['code'])
                     else:
                         self.request.__setattr__(
                             'error', ApiError.INVALID_OAUTH_TOKEN)
+                        self.set_status(ApiError.INVALID_OAUTH_TOKEN['code'])
         else:
             self.request.__setattr__('error', ApiError.INVALID_API_KEY)
+            self.set_status(ApiError.INVALID_API_KEY['code'])

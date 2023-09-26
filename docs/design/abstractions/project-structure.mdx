@@ -112,3 +112,17 @@ Project-level data is stored in the `mage_data` directory— located at the same
 - Cache: `mage_data/[project_folder]/.cache`
 
 To clear project block output, cache data, or log data, consider performing routine operations on this folder. This might be helpful for reducing storage size, optimizing cost, or otherwise maintaining your Mage project.
+
+## Changing the name of your project
+
+### Docker
+
+If you’re running Mage in Docker, change the environment variable `USER_CODE_PATH` to the absolute path where your project lives.
+
+For example, if your original project name was `demo_magic` and the directory is located at `/home/src/demo_magic`, 
+then the value of `USER_CODE_PATH` should be: `/home/src/demo_magic`.
+
+### Not using Docker
+
+When you run `mage start [project_name]` on the command line to start running Mage,
+the 1st command line argument value is used for your project’s name.

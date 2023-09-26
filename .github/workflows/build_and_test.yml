@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
       - name: Install Poetry
         run: pipx install poetry
@@ -75,7 +77,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: "14.19.1"
+          node-version: "18.18.0"
         if: matrix.python-version == '3.10'
       - name: Create Mage test project
         run: |
