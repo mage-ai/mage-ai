@@ -1,5 +1,6 @@
-from mage_ai.shared.constants import S3_PREFIX, GCS_PREFIX
 from urllib.parse import urlparse
+
+from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 
 
 def s3_url_path(path):
@@ -7,6 +8,7 @@ def s3_url_path(path):
         s3_url = urlparse(path, allow_fragments=False)
         return s3_url.path.lstrip('/')
     return path
+
 
 def gcs_url_path(path):
     if path.startswith(GCS_PREFIX):

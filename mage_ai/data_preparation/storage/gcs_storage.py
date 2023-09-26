@@ -6,14 +6,13 @@ from typing import Dict, List
 import pandas as pd
 import polars as pl
 import simplejson
-
 from google.cloud import storage
 
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.constants import GCS_PREFIX
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.urls import gcs_url_path
-from mage_ai.shared.config import BaseConfig
+
 
 class GCSStorage(BaseStorage):
     def __init__(self, dirpath=None, **kwargs):
@@ -21,7 +20,7 @@ class GCSStorage(BaseStorage):
 
         if dirpath is None or not dirpath.startswith(GCS_PREFIX):
             raise Exception('')
-        
+
         path_parts = dirpath.replace(GCS_PREFIX, '').split('/')
         self.bucket = self.client.bucket(path_parts.pop(0))
 
@@ -42,12 +41,12 @@ class GCSStorage(BaseStorage):
         return [k[len(path):].rstrip('/') for k in keys]
 
     def makedirs(self, path: str, **kwargs) -> None:
-        blob = self.bucket.blob(gcs_url_path(path)+'/')
+        blob = self.bucket.blob(gcs_url_path(path) + '/')
         blob.upload_from_string('')
 
     def path_exists(self, path: str) -> bool:
         blob = self.bucket.blob(blob_name=gcs_url_path(path))
-        dir = self.bucket.blob(blob_name=gcs_url_path(path+'/'))
+        dir = self.bucket.blob(blob_name=gcs_url_path(path + '/'))
         return blob.exists() or dir.exists()
 
     def remove(self, path: str) -> None:
