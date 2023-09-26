@@ -141,7 +141,7 @@ function SyncData() {
     > = setSync;
     let settings: SyncType | UserGitSettingsType = sync;
 
-    if (requireUserAuthentication) {
+    if (!showSyncSettings && requireUserAuthentication) {
       updateSettings = setUserGitSettings;
       settings = userGitSettings;
     }
@@ -156,34 +156,85 @@ function SyncData() {
           required,
           type,
           uuid,
-        }: SyncFieldType) => (
-          <Spacing key={uuid} mt={2}>
-            {labelDescription && (
+        }: SyncFieldType) => {
+          let description;
+          if (uuid === 'ssh_public_key') {
+            description = (
+              <Spacing mb={1}>
+                <Text small>
+                  Run <Link
+                    onClick={() => {
+                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n | echo');
+                      toast.success(
+                        'Successfully copied to clipboard.',
+                        {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: uuid,
+                        },
+                      );
+                    }}
+                    small
+                  >
+                    cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n | echo
+                  </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.
+                </Text>
+              </Spacing>
+            )
+          } else if (uuid === 'ssh_private_key') {
+            description = (
+              <Spacing mb={1}>
+                <Text small>
+                  Follow same steps as the public key, but run <Link
+                    onClick={() => {
+                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519 | base64 | tr -d \\\\n && echo');
+                      toast.success(
+                        'Successfully copied to clipboard.',
+                        {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: uuid,
+                        },
+                      );
+                    }}
+                    small
+                  >
+                    cat ~/.ssh/id_ed25519 | base64 | tr -d \\n && echo
+                  </Link> instead. The key will be stored as a Mage secret.
+                </Text>
+              </Spacing>
+            );
+          } else {
+            description = labelDescription && (
               <Spacing mb={1}>
                 <Text small>
                   {labelDescription}
                 </Text>
               </Spacing>
-            )}
-            <TextInput  
-              autoComplete={autoComplete}
-              disabled={disabled}
-              label={label}
-              // @ts-ignore
-              onChange={e => {
-                updateSettings(prev => ({
-                  ...prev,
-                  [uuid]: e.target.value,
-                }));
-              }}
-              primary
-              required={required}
-              setContentOnMount
-              type={type}
-              value={settings?.[uuid] || ''}
-            />
-          </Spacing>
-        ))}
+            );
+          }
+          return (
+            <Spacing key={uuid} mt={2}>
+              {description}
+
+              <TextInput  
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  updateSettings(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={settings?.[uuid] || ''}
+              />
+            </Spacing>
+          );
+        })}
       </form>
     );
   }, [
@@ -191,6 +242,7 @@ function SyncData() {
     requireUserAuthentication,
     setUserGitSettings,
     setSync,
+    showSyncSettings,
     sync,
     userGitSettings,
   ]);
@@ -248,7 +300,7 @@ function SyncData() {
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           {authType === AuthType.SSH && (
             <Text bold>
-              You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
+              You will need to <Link href="https://docs.mage.ai/development/git/generate-an-ssh-token" openNewWindow>
                 set up your SSH key
               </Link> if you have not done so already.
             </Text>
@@ -317,10 +369,10 @@ function SyncData() {
             <Text bold>
               Use <Link
                 bold
-                href="https://docs.mage.ai/production/data-sync/git#git-sync"
+                href="https://docs.mage.ai/production/data-sync/git#optional-one-way-sync"
                 openNewWindow>
-                Git Sync
-              </Link> (Click link for more information)
+                One-way sync
+              </Link> (Click link for more info)
             </Text>
           </FlexContainer>
         </Spacing>
@@ -416,44 +468,7 @@ function SyncData() {
                 the specified Git repository.
               </Text>
             </Spacing>
-            <form>
-              {additionalGitFields.map(({
-                autoComplete,
-                disabled,
-                label,
-                labelDescription,
-                required,
-                type,
-                uuid,
-              }: SyncFieldType) => (
-                <Spacing key={uuid} mt={2}>
-                  {labelDescription && (
-                    <Spacing mb={1}>
-                      <Text small>
-                        {labelDescription}
-                      </Text>
-                    </Spacing>
-                  )}
-                  <TextInput  
-                    autoComplete={autoComplete}
-                    disabled={disabled}
-                    label={label}
-                    // @ts-ignore
-                    onChange={e => {
-                      setSync(prev => ({
-                        ...prev,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
-                    primary
-                    required={required}
-                    setContentOnMount
-                    type={type}
-                    value={sync?.[uuid] || ''}
-                  />
-                </Spacing>
-              ))}
-            </form>
+            {userGitFields}
           </>
         ) : (
           <>
