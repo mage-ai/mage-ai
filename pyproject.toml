@@ -1,32 +1,290 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "mage-ai"
-version = "0.8.75-dev"
-description = "DevEx poetry configuration"
-authors = ["Mage"]
+version = "0.9.26"
+description = "Mage is a tool for building and deploying data pipelines."
 readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Mage", email = "eng@mage.ai"}
+]
+maintainers = [
+  {name = "Mage", email = "eng@mage.ai"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent"
+]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+dependencies = [
+  'aiofiles==22.1.0',
+  'aiohttp',
+  'alembic>=1.7.5',
+  'bcrypt==4.0.1',
+  'click',
+  'croniter==1.3.7',
+  'cryptography==36.0.2',
+  'dask>=2022.2.0',
+  'Faker==4.14.0',
+  'freezegun==1.2.2',
+  'GitPython==3.1.34',
+  'httpx==0.23.1',
+  'inflection==0.5.1',
+  'ipython==7.34.0',
+  'itsdangerous~=1.1.0',
+  'Jinja2==3.1.2',
+  'joblib>=1.1.0',
+  'jupyter_client==7.3.4',
+  'jupyter-server-proxy==3.2.1',
+  'jupyter-server==1.23.5',
+  'kubernetes==25.3.0',
+  'langchain>=0.0.222; python_version >= "3.8"',
+  'ldap3==2.9.1',
+  'numpy>=1.21.0',
+  'openai>=0.27.8',
+  'pandas~=1.3',
+  'polars<=0.19.2',
+  'protobuf',
+  'psutil',
+  'pyarrow==10.0.1',
+  'PyJWT==2.6.0',
+  'python-dateutil==2.8.2',
+  'pytz>=2022.2.1',
+  'pyyaml~=6.0',
+  'redis',
+  'requests==2.27.1',
+  'rich',
+  'ruamel.yaml==0.17.17',
+  'scikit-learn',
+  'scipy',
+  'simplejson',
+  'six>=1.15.0',
+  'sqlalchemy>=1.4.20, <2.0.0',
+  'sshtunnel==0.4.0',
+  'terminado==0.17.1',
+  'thefuzz[speedup]==0.19.0',
+  'tornado==6.1',
+  'typer[all]==0.7.0',
+]
 
-[tool.poetry.group.dev.dependencies]
-mypy = "*"
-black = "*"
-flake8 = "*"
-pre-commit = "*"
-pytest = "*"
-pytest-cov = "*"
-interrogate = "*"
-isort = "*"
-commitizen = "*"
-ipykernel = "^6.17.1"
-pandas-stubs = "*"
-flake8-bugbear = "*"
-sourcery = "*"
+[project.optional-dependencies]
+# cloud provider
+aws = [
+  'aws-secretsmanager-caching==1.1.1.5',
+  'boto3==1.26.60',
+  'botocore==1.29.60',
+  'requests_aws4auth==1.1.2',
+]
+azure = [
+  'azure-eventhub==5.11.2',
+  'azure-identity==1.12.0',
+  'azure-keyvault-secrets==4.6.0',
+  'azure-keyvault-certificates==4.6.0',
+  'azure-mgmt-containerinstance==10.1.0',
+  'azure-storage-blob==12.14.1',
+]
+google = [
+  'google-api-python-client==2.70.0',
+  'google-cloud-iam==2.9.0',
+  'google-cloud-pubsub==2.16.0',
+  'google-cloud-run==0.5.0',
+  'mage-ai[google-cloud-storage]',
+]
+
+# sources/destinations
+bigquery = [
+  'google-cloud-bigquery~=3.0',
+  'db-dtypes==1.0.5',
+]
+clickhouse = [
+  'clickhouse-connect==0.5.20',
+]
+deltalake = [
+  'deltalake',
+]
+duckdb =[
+  'duckdb==0.8.1',
+]
+druid = [
+  'pydruid==0.6.5',
+]
+elasticsearch = [
+  'elasticsearch==8.9.0',
+]
+github = [
+  'PyGithub==1.59.0',
+]
+influxdb = [
+  'influxdb-client==1.36.1',
+]
+kafka = [
+  'confluent-avro',
+  'kafka-python==2.0.2',
+]
+mongodb = [
+  'pymongo==4.3.3',
+]
+mssql = [
+  'pyodbc==4.0.35',
+]
+mysql = [
+  'mysql-connector-python==8.0.31',
+]
+opensearch = [
+  'opensearch-py==2.0.0',
+]
+oracle = [
+  'oracledb==1.3.1',
+]
+pika = [
+  'pika==1.3.1',
+]
+postgres = [
+  'psycopg2-binary==2.9.3',
+  'psycopg2==2.9.3',
+]
+redshift = [
+  'mage-ai[aws]',
+  'redshift-connector==2.0.909',
+]
+s3 = [
+  'mage-ai[aws]',
+]
+snowflake = [
+  'snowflake-connector-python==2.7.9',
+]
+spark = [
+  'mage-ai[aws]',
+]
+trino = [
+  'trino==0.321.0',
+]
+
+# transformations
+dbt = [
+  'dbt-bigquery==1.4.3',
+  'dbt-clickhouse==1.4.0',
+  'dbt-core==1.4.8',
+  'dbt-duckdb==1.4.2',
+  'dbt-postgres==1.4.8',
+  'dbt-redshift==1.4.0',
+  'dbt-snowflake==1.4.1',
+  'dbt-spark==1.4.0',
+  'dbt-sqlserver==1.4.3',
+  'dbt-trino==1.4.0',
+]
+
+# observability
+datadog = [
+  'datadog==0.44.0',
+]
+great-expectations = [
+  'great_expectations==0.15.50',
+]
+newrelic = [
+  'newrelic==8.8.0',
+]
+sentry = [
+  'sentry-sdk==1.19.1',
+]
+
+# misc
+ai = [
+  'langchain>=0.0.222',
+  'openai>=0.27.8',
+]
+google-cloud-storage = [
+  'google-cloud-storage==2.5.0'
+]
+hdf5 = [
+  'tables==3.7.0'
+]
+streaming = [
+  'mage-ai[kafka]',
+  'mage-ai[influxdb]',
+  'mage-ai[opensearch]',
+  'mage-ai[pika]',
+  'mage-ai[mongodb]',
+  'requests_aws4auth==1.1.2',
+]
+
+# groups
+cloud-providers = [
+  'mage-ai[aws]',
+  'mage-ai[azure]',
+  'mage-ai[google]',
+]
+
+observability = [
+  'mage-ai[datadog]',
+  'mage-ai[great-expectations]',
+  'mage-ai[newrelic]',
+  'mage-ai[sentry]',
+]
+
+sources-destinations = [
+  'mage-ai[bigquery]',
+  'mage-ai[clickhouse]',
+  'mage-ai[deltalake]',
+  'mage-ai[duckdb]',
+  'mage-ai[druid]',
+  'mage-ai[elasticsearch]',
+  'mage-ai[github]',
+  'mage-ai[influxdb]',
+  'mage-ai[kafka]',
+  'mage-ai[mongodb]',
+  'mage-ai[mssql]',
+  'mage-ai[mysql]',
+  'mage-ai[opensearch]',
+  'mage-ai[oracle]',
+  'mage-ai[pika]',
+  'mage-ai[postgres]',
+  'mage-ai[redshift]',
+  'mage-ai[s3]',
+  'mage-ai[snowflake]',
+  'mage-ai[spark]',
+  'mage-ai[trino]',
+]
+
+transformations = [
+  'mage-ai[dbt]'
+]
+
+all = [
+  'mage-ai[ai]',
+  'mage-ai[cloud-providers]',
+  'mage-ai[observability]',
+  'mage-ai[sources-destinations]',
+  'mage-ai[transformations]',
+]
+
+[project.urls]
+homepage = "https://mage.ai"
+documentation = "https://docs.mage.ai"
+repository = "https://github.com/mage-ai/mage-ai"
+changelog = "https://github.com/mage-ai/mage-ai/releases"
+
+[project.scripts]
+mage = "mage_ai.cli.main:app"
 
 [tool.isort]
 profile = "black"
 
+[tool.poetry]
+name = "mage-ai"
+version = "0.9.27"
+description = "DevEx poetry configuration"
+authors = ["Mage <eng@mage.ai>"]
+readme = "README.md"
 
-[build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false

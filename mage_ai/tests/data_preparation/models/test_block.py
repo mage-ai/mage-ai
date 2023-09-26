@@ -1,8 +1,8 @@
+import asyncio
 import os
 from unittest.mock import patch
 
 import pandas as pd
-from async_timeout import asyncio
 from faker import Faker
 from pandas.testing import assert_frame_equal
 
@@ -233,7 +233,6 @@ def union_datasets(df1, df2):
         # self.assertTrue(len(analysis['insights']) > 0)
         # self.assertTrue(len(analysis['suggestions']) == 0)
 
-    def test_execute_validation(self):
         pipeline = Pipeline.create(
             'test pipeline 3',
             repo_path=self.repo_path,
