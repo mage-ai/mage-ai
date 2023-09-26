@@ -366,6 +366,25 @@ function SyncData() {
             <FlexContainer alignItems="center">
               <Spacing mt={2}>
                 <Checkbox
+                  checked={sync?.sync_submodules}
+                  label="Include submodules"
+                  onClick={() => {
+                    setSync(prev => ({
+                      ...prev,
+                      sync_submodules: !sync?.sync_submodules,
+                    }));
+                  }}
+                />
+              </Spacing>
+            </FlexContainer>
+            <Spacing mt={2}>
+              <Headline level={5}>
+                Additional sync settings
+              </Headline>
+            </Spacing>
+            <FlexContainer alignItems="center">
+              <Spacing mt={2}>
+                <Checkbox
                   checked={sync?.sync_on_pipeline_run}
                   label="Sync before each trigger run"
                   onClick={() => {
