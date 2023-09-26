@@ -75,7 +75,6 @@ def get_user_type(usr_input: Dict):
         return mod_columns, col_with_usr_types
 
     elif os.path.isfile(usr_input):
-        # TODO add json file support
 
         json_file = open(usr_input, 'r')
 
