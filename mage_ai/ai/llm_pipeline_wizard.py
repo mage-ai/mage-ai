@@ -7,10 +7,12 @@ from typing import Dict, List
 
 import astor
 import openai
+from huggingface_hub import login
 from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
+from mage_ai.ai.ai_client import AIClient
 from mage_ai.ai.hugging_face_client import HuggingFaceClient
 from mage_ai.ai.openai_client import OpenAIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -383,6 +385,7 @@ class LLMPipelineWizard:
         block_dict[block_id] = block
 
     async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
+        print(f"Testing client name: {self.client.__class__.__name__}")
         variable_values = dict()
         variable_values['code_description'] = pipeline_description
         splited_block_descriptions = await self.client.inference_with_prompt(
@@ -390,6 +393,7 @@ class LLMPipelineWizard:
             PROMPT_TO_SPLIT_BLOCKS,
             is_json_response=False,
         )
+        print(f"Testing splited_block_descriptions: {splited_block_descriptions}")
         blocks = {}
         block_tasks = []
         for line in splited_block_descriptions.strip().split('\n'):
@@ -499,4 +503,4 @@ class LLMPipelineWizard:
         variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, "")
         variable_values['add_on_prompt'] = add_on_prompt
         return await self.client.inference_with_prompt(
-            variable_values, PROMPT_FOR_BLOCK, False)
+            variable_values, PROMPT_FOR_BLOCK, is_json_response=False)

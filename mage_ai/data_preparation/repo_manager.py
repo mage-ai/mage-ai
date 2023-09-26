@@ -56,6 +56,7 @@ class RepoConfig:
         self.notification_config = None
         self.queue_config = None
         self.help_improve_mage = None
+        self.huggingface_token = None
         self.openai_api_key = None
         self.retry_config = None
         self.ldap_config = None
@@ -117,6 +118,7 @@ class RepoConfig:
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.openai_api_key = repo_config.get('openai_api_key')
+            self.huggingface_token = repo_config.get('huggingface_token')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
