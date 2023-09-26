@@ -58,9 +58,19 @@ interface SchemaPropertyAnyOfType {
   items: SchemaType;
 }
 
+export interface PropertyMetadataType {
+  [MetadataKeyEnum.FORCED_REPLICATION_METHOD]?: ReplicationMethodEnum,
+  [MetadataKeyEnum.KEY_PROPERTIES]?: string[];
+  [MetadataKeyEnum.REPLICATION_KEYS]?: string[];
+  [MetadataKeyEnum.SCHEMA_NAME]?: string;
+  inclusion?: InclusionEnum;
+  selected: boolean;
+}
+
 export interface SchemaPropertyType {
   anyOf?: SchemaPropertyAnyOfType[];
   format?: ColumnFormatEnum;
+  metadata?: MetadataType;
   type?: ColumnTypeEnum[];
 }
 
@@ -76,15 +86,6 @@ export enum MetadataKeyEnum {
   KEY_PROPERTIES = 'table-key-properties',
   REPLICATION_KEYS = 'valid-replication-keys',
   SCHEMA_NAME = 'schema-name',
-}
-
-export interface PropertyMetadataType {
-  [MetadataKeyEnum.FORCED_REPLICATION_METHOD]?: ReplicationMethodEnum,
-  [MetadataKeyEnum.KEY_PROPERTIES]?: string[];
-  [MetadataKeyEnum.REPLICATION_KEYS]?: string[];
-  [MetadataKeyEnum.SCHEMA_NAME]?: string;
-  inclusion?: InclusionEnum;
-  selected: boolean;
 }
 
 export interface MetadataType {

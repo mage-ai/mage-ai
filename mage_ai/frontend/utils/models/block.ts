@@ -4,7 +4,9 @@ import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockTy
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BreadcrumbEnum,
+  InclusionEnum,
   MetadataType,
+  PropertyMetadataType,
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
@@ -194,8 +196,31 @@ export function isMetadataForStreamFromMetadataArray(metadata: MetadataType): bo
   return metadata?.breadcrumb?.length === 0;
 }
 
-export function getStreamMetadata(stream: StreamType): StreamType {
+export function getStreamMetadataFromMetadataArray(stream: StreamType): StreamType {
   return stream?.metadata?.find(isMetadataForStreamFromMetadataArray) || {};
+}
+
+export function updateStreamInBlock(stream: StreamType, block: BlockType) {
+  const catalog = block?.catalog || {};
+  const streams = [...(catalog?.streams || [])];
+
+  const index = streams?.findIndex(
+    (s: StreamType) => getStreamIDWithParentStream(s) === getStreamIDWithParentStream(stream),
+  );
+
+  if (index >= 0) {
+    streams[index] = stream;
+  } else {
+    streams.push(stream);
+  }
+
+  return {
+    ...block,
+    catalog: {
+      ...catalog,
+      streams,
+    },
+  };
 }
 
 export function updateStreamMetadata(streamInit: StreamType, payload): StreamType {
@@ -210,7 +235,7 @@ export function updateStreamMetadata(streamInit: StreamType, payload): StreamTyp
     breadcrumb: [],
   };
   if (index >= 0) {
-    metadata = getStreamMetadata(stream) || {};
+    metadata = getStreamMetadataFromMetadataArray(stream) || {};
   }
 
   const metadataUpdated = {
@@ -425,20 +450,85 @@ export function getSchemaPropertiesWithMetadata(stream: StreamType): {
 
   stream?.metadata?.forEach((metadata: MetadataType) => {
     if (!isMetadataForStreamFromMetadataArray(metadata)) {
-      const {
-        breadcrumb,
-        metadata: md,
-      } = metadata;
 
-      const column = breadcrumb?.find(key => key !== BreadcrumbEnum.PROPERTIES);
+      const column = metadata?.breadcrumb?.find(key => key !== BreadcrumbEnum.PROPERTIES);
       if (column && schemaProperties?.[column]) {
         schemaProperties[column] = {
           ...schemaProperties[column],
-          metadata: md,
+          metadata,
         };
       }
     }
   });
 
   return schemaProperties;
+}
+
+export function getStreamMetadataByColumn(stream: StreamType): {
+  [column: string]: MetadataType;
+} {
+  return stream?.metadata?.reduce((acc, metadata: MetadataType) => {
+    if (isMetadataForStreamFromMetadataArray(metadata)) {
+      return acc;
+    }
+
+    const column = getColumnFromMetadata(metadata);
+    if (column) {
+      acc[column] = metadata;
+    }
+
+    return acc;
+  }, {})
+}
+
+export function getColumnFromMetadata(metadata: MetadataType): string {
+  return metadata?.breadcrumb?.find(key => key !== BreadcrumbEnum.PROPERTIES);
+}
+
+export function buildMetadataForColumn(column: string): MetadataType {
+  return {
+    breadcrumb: [
+      BreadcrumbEnum.PROPERTIES,
+      column,
+    ],
+    metadata: {
+      inclusion: InclusionEnum.AVAILABLE,
+      selected: true,
+    },
+  };
+}
+
+export function updateStreamPropertiesForColumns(stream: StreamType, properties: {
+  [column: string]: SchemaPropertyType;
+}) {
+  return {
+    ...stream,
+    schema: {
+      ...stream?.schema,
+      properties: {
+        ...stream?.schema?.properties,
+        ...properties,
+      },
+    },
+  };
+}
+
+export function updateStreamMetadataForColumns(stream: StreamType, metadataByColumn: {
+  [column: string]: MetadataType;
+}): StreamType {
+  const metadataForStream: MetadataType = getStreamMetadataFromMetadataArray(stream);
+  const streamMetadataByColumn = getStreamMetadataByColumn(stream);
+
+  const metadataByColumnUpdated = {
+    ...streamMetadataByColumn,
+    ...metadataByColumn,
+  };
+
+  return {
+    ...stream,
+    metadata: [
+      metadataForStream,
+      ...Object.values(metadataByColumnUpdated || {}),
+    ],
+  };
 }

@@ -47,13 +47,14 @@ export const SUB_TABS_BY_MAIN_NAVIGATION_TAB: {
 };
 
 export const SUB_TABS_FOR_STREAM_DETAIL = [
+  // TODO: testing order only
+  {
+    label: () => 'Schema properties',
+    uuid: SubTabEnum.SETTINGS,
+  },
   {
     label: () => 'Overview',
     uuid: SubTabEnum.OVERVIEW,
-  },
-  {
-    label: () => 'Settings',
-    uuid: SubTabEnum.SETTINGS,
   },
   {
     label: () => 'Sample data',

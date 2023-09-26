@@ -1,4 +1,5 @@
 import StreamDetailOverview from './StreamDetailOverview';
+import StreamDetailSchemaProperties from './StreamDetailSchemaProperties';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { StreamsOverviewProps } from '../StreamsOverview';
 import { SubTabEnum } from '../constants';
@@ -16,6 +17,12 @@ function StreamDetail({
   if (SubTabEnum.OVERVIEW === selectedSubTab || !selectedSubTab) {
     return (
       <StreamDetailOverview
+        {...propsRest}
+      />
+    );
+  } else if (SubTabEnum.SETTINGS === selectedSubTab) {
+    return (
+      <StreamDetailSchemaProperties
         {...propsRest}
       />
     );

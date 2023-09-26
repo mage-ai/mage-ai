@@ -4,7 +4,7 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
 import Flex from '@oracle/components/Flex';
-import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -158,7 +158,6 @@ function StreamDetailOverview({
                 <div key={`${attributeName}-value-${column}`} style={{ marginLeft: UNIT / 2 }}>
                   <Chip
                     label={column}
-                    monospace
                     onClick={() => updateValue(
                       key,
                       remove(arr, i => i === column),
