@@ -6,7 +6,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
-
 from mage_ai.shared.strings import replacer
 
 
