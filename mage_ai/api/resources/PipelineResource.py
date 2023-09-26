@@ -434,7 +434,9 @@ class PipelineResource(BaseResource):
                 select(*columns).
                 join(b, a.id == b.pipeline_run_id).
                 filter(a.pipeline_uuid == pipeline_uuid).
-                filter(b.status != BlockRun.BlockRunStatus.COMPLETED)
+                filter(a.status == PipelineRun.PipelineRunStatus.FAILED).
+                filter(b.status != BlockRun.BlockRunStatus.COMPLETED).
+                filter(b.status != BlockRun.BlockRunStatus.CONDITION_FAILED)
             ).all()
 
             return result
@@ -449,7 +451,7 @@ class PipelineResource(BaseResource):
             )
             PipelineRun.batch_update_status(
                 pipeline_run_ids,
-                PipelineRun.PipelineRunStatus.RUNNING,
+                PipelineRun.PipelineRunStatus.INITIAL,
             )
 
         status = payload.get('status')

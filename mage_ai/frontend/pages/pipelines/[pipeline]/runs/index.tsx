@@ -221,8 +221,8 @@ function PipelineRuns({
   const hasRunningPipeline = useMemo(() => pipelineRuns.some(({ status }) => (
     status === RunStatusEnum.INITIAL || status === RunStatusEnum.RUNNING
   )), [pipelineRuns]);
-  const hasIncompletePipelineRun = useMemo(() => pipelineRuns.some(({ status }) => (
-    status !== RunStatusEnum.COMPLETED
+  const hasFailedPipelineRun = useMemo(() => pipelineRuns.some(({ status }) => (
+    status === RunStatusEnum.FAILED
   )), [pipelineRuns]);
   const selectedRunsArr = useMemo(() => (
     Object.values(selectedRuns || {})
@@ -316,10 +316,10 @@ function PipelineRuns({
     {
       beforeIcon: (
         <Refresh
-          muted={!hasIncompletePipelineRun || hasRunningPipeline}
+          muted={!hasFailedPipelineRun || hasRunningPipeline}
         />
       ),
-      disabled: !hasIncompletePipelineRun || hasRunningPipeline,
+      disabled: !hasFailedPipelineRun || hasRunningPipeline,
       label: () => 'Retry all incomplete block runs',
       onClick: () => updatePipeline({
         pipeline: {
@@ -354,7 +354,7 @@ function PipelineRuns({
       uuid: CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID,
     },
   ]), [
-    hasIncompletePipelineRun,
+    hasFailedPipelineRun,
     hasRunningPipeline,
     isPipelineRunsTab,
     selectedRunningRunsArr,
@@ -514,10 +514,15 @@ function PipelineRuns({
                         confirmationAction?.();
                         setConfirmationDialogueOpenId(null);
                       }}
-                      subtitle="This includes runs on other pages as well, not just the current page."
+                      subtitle={'This includes runs on other pages as well, not just the current page.' +
+                        (confirmationDialogueOpenId === PipelineStatusEnum.RETRY_INCOMPLETE_BLOCK_RUNS
+                          ? ' Incomplete block runs will be retried for FAILED pipeline runs specifically.'
+                          : ''
+                        )
+                      }
                       title={confirmationDialogueOpenId === CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID
                         ? 'Are you sure you want to cancel all pipeline runs in progress?'
-                        : 'Are you sure you want to retry all incomplete block runs?'
+                        : 'Are you sure you want to retry all incomplete block runs for any failed pipeline runs?'
                       }
                       width={POPUP_MENU_WIDTH}
                     />
