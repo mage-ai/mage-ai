@@ -11,3 +11,5 @@ export enum PageNameEnum {
   SYNCS = 'syncs',
   TRIGGERS = 'triggers',
 }
+
+export const CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID = 'cancel_all_running_pipeline_runs';

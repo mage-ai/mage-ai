@@ -917,6 +917,8 @@ function Edit({
                 [minute] [hour] [day(month)] [month] [day(week)]
               </Text>
 
+              <Spacing mb="2px" />
+
               {!customInterval
                 ? null
                 : (

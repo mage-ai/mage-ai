@@ -729,6 +729,14 @@ class PipelineRun(BaseModel):
         return query.all()
 
     @classmethod
+    @safe_db_query
+    def batch_update_status(self, pipeline_run_ids: List[int], status):
+        PipelineRun.query.filter(PipelineRun.id.in_(pipeline_run_ids)).update({
+            PipelineRun.status: status
+        }, synchronize_session=False)
+        db_connection.session.commit()
+
+    @classmethod
     def create(self, create_block_runs: bool = True, **kwargs) -> 'PipelineRun':
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
