@@ -1,10 +1,11 @@
+import json
 import os
 import re
 import socket
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
-import json
+
 
 from mage_ai.shared.strings import replacer
 
