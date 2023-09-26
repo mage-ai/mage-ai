@@ -97,6 +97,7 @@ class Trino(BaseSQL):
                 user=settings.get('user'),
                 verify=settings.get('verify'),
                 data_type_properties=settings.get('data_type_properties'),
+                overwrite_type=settings.get('overwrite_type'),
             )
 
         return cls(
@@ -279,7 +280,6 @@ class Trino(BaseSQL):
         query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
-        overwrite_type: Dict = None,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -362,7 +362,7 @@ class Trino(BaseSQL):
                             db_dtypes,
                             schema_name,
                             table_name,
-                            user_types=overwrite_type,
+                            user_types=self.settings.get('overwrite_type'),
                         )
                         cur.execute(query)
 

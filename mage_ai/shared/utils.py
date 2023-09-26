@@ -4,6 +4,7 @@ import socket
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+import json
 
 from mage_ai.shared.strings import replacer
 
@@ -75,7 +76,18 @@ def get_user_type(usr_input: Dict):
 
     elif os.path.isfile(usr_input):
         # TODO add json file support
-        pass
+
+        json_file = open(usr_input, 'r')
+
+        json_data = json.loads(json_file.read())
+
+        mod_columns = [col for col in json_data.keys()]
+
+        columns_with_types = [(col, col_type) for col, col_type in json_data.items()]
+
+        col_with_usr_types = [f'"{col}" {col_type}' for col, col_type in columns_with_types]
+
+        return mod_columns, col_with_usr_types
 
     else:
         raise Exception(f"Mage can't find your destination config \
