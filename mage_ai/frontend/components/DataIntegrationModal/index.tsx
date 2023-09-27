@@ -68,9 +68,12 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import {
+  AttributesMappingType,
+  ColumnsMappingType,
   StreamDifferencesType,
   StreamMapping,
   buildStreamMapping,
+  getAllStreamsFromStreamMapping,
   getParentStreamID,
   getSelectedStreams,
   getStreamFromStreamMapping,
@@ -80,6 +83,8 @@ import {
   isStreamSelected,
   mergeSchemaProperties,
   noStreamsAnywhere as noStreamsAnywhereFunc,
+  updateStreamInBlock,
+  updateStreamMappingWithPropertyAttributeValues,
   updateStreamMetadata,
 } from '@utils/models/block';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -108,6 +113,7 @@ function DataIntegrationModal({
 }) {
   const mainContainerRef = useRef(null);
   const refAfterHeader = useRef(null);
+  const refAfterFooter = useRef(null);
   const refSubheader = useRef(null);
 
   const {
@@ -297,9 +303,8 @@ function DataIntegrationModal({
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
   const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(null);
 
-  const [highlightedColumnsMapping, setHighlightedColumnsMapping] = useState<{
-    [column: string]: any;
-  }>({});
+  const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
+    useState<ColumnsMappingType>({});
 
   const setSelectedMainNavigationTab = useCallback((prev1) => {
     setSelectedMainNavigationTabState((prev2) => {
@@ -533,6 +538,7 @@ function DataIntegrationModal({
     useMemo(() => buildStreamMapping(streams), [
       streams,
     ]);
+
   const noStreamsAnywhere = useMemo(() => noStreamsAnywhereFunc(
     streamsFromCatalogMapping,
     buildStreamMapping(streamsFetched || []),
@@ -664,6 +670,7 @@ function DataIntegrationModal({
   const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
 
   const [headerOffset, setHeaderOffset] = useState<number>(null);
+  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
   const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
 
   useEffect(() => {
@@ -674,10 +681,14 @@ function DataIntegrationModal({
       if (refAfterHeader?.current) {
         setAfterInnerTopOffset(refAfterHeader?.current?.getBoundingClientRect()?.height);
       }
+      if (refAfterFooter?.current) {
+        setAfterFooterBottomOffset(refAfterFooter?.current?.getBoundingClientRect()?.height);
+      }
     }
   }, [
     selectedMainNavigationTab,
     refAfterHeader,
+    refAfterFooter,
     refSubheader,
   ]);
 
@@ -827,7 +838,6 @@ function DataIntegrationModal({
     selectedSubTab,
     setBlockAttributes,
     setHighlightedColumnsMapping,
-    streamsFromCatalogMapping,
     streamsFromCatalogMapping,
     updateStreamsInCatalog,
   ]);
@@ -1351,14 +1361,14 @@ function DataIntegrationModal({
       );
     } else if (MainNavigationTabEnum.OVERVIEW === selectedMainNavigationTab) {
       return (
-        <Spacing p={PADDING_UNITS}>
-          <StreamsOverview
-            block={blockAttributes}
-            blocksMapping={blocksMapping}
-            streamMapping={streamsFromCatalogMapping}
-            updateStreamsInCatalog={updateStreamsInCatalog}
-          />
-        </Spacing>
+        <StreamsOverview
+          block={blockAttributes}
+          blocksMapping={blocksMapping}
+          setSelectedMainNavigationTab={setSelectedMainNavigationTab}
+          setSelectedMainNavigationTabSub={setSelectedMainNavigationTabSub}
+          streamMapping={streamsFromCatalogMapping}
+          updateStreamsInCatalog={updateStreamsInCatalog}
+        />
       );
     }
   }, [
@@ -1419,6 +1429,58 @@ function DataIntegrationModal({
     isOnStreamDetailSchemaProperties,
   ]);
 
+  const [attributesMapping, setAttributesMapping] = useState<AttributesMappingType>({});
+  const [selectedStreamMapping, setSelectedStreamMapping] = useState<StreamMapping>(null);
+
+  const afterFooter = useMemo(() => {
+    if (isOnStreamDetailSchemaProperties) {
+      return (
+        <Spacing p={PADDING_UNITS} ref={refAfterFooter}>
+          <FlexContainer>
+            <Button
+              fullWidth
+              onClick={() => {
+                const streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
+                  selectedStreamMapping,
+                  highlightedColumnsMapping,
+                  attributesMapping,
+                );
+
+                updateStreamsInCatalog(getAllStreamsFromStreamMapping(streamMappingUpdated));
+              }}
+              primary
+            >
+              Apply changes
+            </Button>
+
+            <Spacing mr={1} />
+
+            <Button
+              fullWidth
+              onClick={() => {
+                setAttributesMapping({});
+                setHighlightedColumnsMapping({});
+                setSelectedStreamMapping(null);
+              }}
+              secondary
+            >
+              Clear
+            </Button>
+          </FlexContainer>
+        </Spacing>
+      );
+    }
+  }, [
+    attributesMapping,
+    highlightedColumnsMapping,
+    isOnStreamDetailSchemaProperties,
+    refAfterFooter,
+    selectedStreamMapping,
+    setAttributesMapping,
+    setHighlightedColumnsMapping,
+    setSelectedStreamMapping,
+  ]);
+
   const after = useMemo(() => {
     if (isOnConfigurationCredentials) {
       return (
@@ -1435,20 +1497,44 @@ function DataIntegrationModal({
         </Spacing>
       );
     } else if (isOnStreamDetailSchemaProperties) {
+      const stream = getStreamFromStreamMapping({
+        parent_stream: selectedMainNavigationTabSub,
+        stream: selectedMainNavigationTab,
+        tap_stream_id: selectedMainNavigationTab,
+      }, streamsFromCatalogMapping);
+
       return (
         <StreamSchemaPropertiesEditor
+          attributesMapping={attributesMapping}
+          block={blockAttributes}
+          blocksMapping={blocksMapping}
           highlightedColumnsMapping={highlightedColumnsMapping}
+          selectedStreamMapping={selectedStreamMapping}
+          setAttributesMapping={setAttributesMapping}
+          setBlockAttributes={setBlockAttributes}
           setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+          setSelectedStreamMapping={setSelectedStreamMapping}
+          stream={stream}
+          streamMapping={streamsFromCatalogMapping}
+          updateStreamsInCatalog={updateStreamsInCatalog}
         />
       );
     }
   }, [
+    attributesMapping,
+    blockAttributes,
+    blocksMapping,
     dataBlock,
     documentation,
     highlightedColumnsMapping,
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
+    selectedStreamMapping,
+    setAttributesMapping,
     setHighlightedColumnsMapping,
+    setSelectedStreamMapping,
+    streamsFromCatalogMapping,
+    updateStreamsInCatalog,
   ]);
 
   const breadcrumbsEl = useMemo(() => {
@@ -1532,6 +1618,8 @@ function DataIntegrationModal({
 
       <TripleLayout
         after={after}
+        afterFooter={afterFooter}
+        afterFooterBottomOffset={afterFooterBottomOffset - (MODAL_PADDING / 2)}
         afterHeader={(
           <Spacing ref={refAfterHeader} px={1}>
             {afterHeader}
@@ -1540,7 +1628,9 @@ function DataIntegrationModal({
         afterHeightOffset={0}
         afterHeaderOffset={0}
         afterHidden={afterHidden}
-        afterInnerHeightMinus={headerOffset - afterInnerTopOffset}
+        afterInnerHeightMinus={
+          (headerOffset - afterInnerTopOffset) + (afterFooterBottomOffset || 0)
+        }
         afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}
         before={before}
@@ -1552,6 +1642,7 @@ function DataIntegrationModal({
         height={heightModal}
         hideAfterCompletely={!after}
         inline
+        aside
         mainContainerHeader={subheaderEl}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}

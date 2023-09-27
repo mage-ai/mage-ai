@@ -83,13 +83,6 @@ function StreamDetailSchemaProperties({
     handleClick,
   ]);
 
-  const {
-    bookmark_properties: bookmarkProperties,
-    key_properties: keyProperties,
-    partition_keys: partitionKeys,
-    replication_method: replicationMethod,
-    unique_constraints: uniqueConstraints,
-  } = stream || {};
 
   const {
     bookmarkPropertiesMapping,
@@ -97,6 +90,13 @@ function StreamDetailSchemaProperties({
     partitionKeysMapping,
     uniqueConstraintsMapping,
   } = useMemo(() => {
+    const {
+      bookmark_properties: bookmarkProperties,
+      key_properties: keyProperties,
+      partition_keys: partitionKeys,
+      replication_method: replicationMethod,
+      unique_constraints: uniqueConstraints,
+    } = stream;
 
     return {
       bookmarkPropertiesMapping: indexBy(
@@ -117,10 +117,7 @@ function StreamDetailSchemaProperties({
       ),
     };
   }, [
-    bookmarkProperties,
-    keyProperties,
-    partitionKeys,
-    uniqueConstraints,
+    stream,
   ]);
 
   const schemaPropertiesSortedArray: {
@@ -209,6 +206,10 @@ function StreamDetailSchemaProperties({
       },
     ];
 
+    const {
+      replication_method: replicationMethod,
+    } = stream;
+
     if (ReplicationMethodEnum.INCREMENTAL === replicationMethod) {
       columnFlexInner.push(null);
       columnsInner.push({
@@ -234,9 +235,9 @@ function StreamDetailSchemaProperties({
       columns: columnsInner,
     };
   }, [
-    replicationMethod,
     schemaPropertiesSortedArray,
     setBlockAttributes,
+    stream,
     streamMetadataByColumn,
   ]);
 
@@ -247,6 +248,13 @@ function StreamDetailSchemaProperties({
     column: string;
     property: SchemaPropertyType;
   }) => {
+    const {
+      bookmark_properties: bookmarkProperties,
+      key_properties: keyProperties,
+      partition_keys: partitionKeys,
+      replication_method: replicationMethod,
+      unique_constraints: uniqueConstraints,
+    } = stream;
     const {
       any,
       format,
@@ -428,20 +436,15 @@ function StreamDetailSchemaProperties({
 
     return row;
   }), [
-    bookmarkProperties,
     bookmarkPropertiesMapping,
-    keyProperties,
     keyPropertiesMapping,
-    partitionKeys,
     partitionKeysMapping,
-    replicationMethod,
     schemaProperties,
     schemaPropertiesSortedArray,
     setBlockAttributes,
     setCoordinates,
     setPropertyFocused,
     stream,
-    uniqueConstraints,
     uniqueConstraintsMapping,
   ]);
 

@@ -92,7 +92,6 @@ const ASIDE_STYLE = css<{
   z-index: 2;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
     height: calc(100% - ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px);
   `}
 
@@ -101,6 +100,7 @@ const ASIDE_STYLE = css<{
   `}
 
   ${props => !props.inline && `
+    background-color: ${(props.theme.background || dark.background).panel};
     position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
@@ -376,21 +376,33 @@ export const NavigationContainerStyle = styled.div<{
 `;
 
 export const AsideFooterStyle = styled.div<{
+  bottom?: number;
   contained?: boolean;
+  inline?: boolean;
 }>`
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
   border-top: 1px solid transparent;
-  bottom: 0;
   position: fixed;
   z-index: 3;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
     border-top-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => !props.inline && `
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 
   ${props => props.contained && `
     border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => typeof props.bottom === 'undefined' && `
+    bottom: 0;
+  `}
+
+  ${props => typeof props.bottom !== 'undefined' && `
+    bottom: ${props.bottom}px;
   `}
 `;

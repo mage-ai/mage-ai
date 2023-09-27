@@ -57,6 +57,8 @@ import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
+  afterFooter?: any;
+  afterFooterBottomOffset?: number;
   afterHeader?: any;
   afterHeaderOffset?: number;
   afterHeightOffset?: number;
@@ -99,6 +101,8 @@ type TripleLayoutProps = {
 
 function TripleLayout({
   after,
+  afterFooter,
+  afterFooterBottomOffset,
   afterHeader,
   afterHeaderOffset,
   afterHeightOffset,
@@ -270,6 +274,7 @@ function TripleLayout({
   const hasAfterNavigationItems = useMemo(() => afterNavigationItems?.length >= 1, [
     afterNavigationItems,
   ]);
+
   const afterContent = useMemo(() => (
     <>
       {(setAfterHidden || afterHeader) && (
@@ -342,9 +347,29 @@ function TripleLayout({
       >
         {!afterHidden && after}
       </AfterInnerStyle>
+
+      {afterFooter && (
+        <AsideFooterStyle
+          bottom={inline
+            ? afterFooterBottomOffset
+            : null
+          }
+          inline={inline}
+          style={{
+            overflow: afterHidden
+              ? 'visible'
+              : 'hidden',
+            width: afterWidthFinal,
+          }}
+        >
+          {afterFooter}
+        </AsideFooterStyle>
+      )}
     </>
   ), [
     after,
+    afterFooter,
+    afterFooterBottomOffset,
     afterHeader,
     afterHeaderOffset,
     afterHeightOffset,
@@ -436,7 +461,7 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
-        contained={contained}
+        contained={contained && !inline}
         heightOffset={beforeFooter
           ? beforeFooterRef?.current?.getBoundingClientRect()?.height
           : null

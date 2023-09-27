@@ -33,10 +33,6 @@ function Test() {
           callback: () => {
 
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
         },
       ),
     },

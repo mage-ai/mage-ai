@@ -9,6 +9,7 @@ import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import { MainNavigationTabEnum, SubTabEnum } from '../constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ReplicationMethodEnum, UniqueConflictMethodEnum } from '@interfaces/IntegrationSourceType';
 import { StreamMapping } from '@utils/models/block';
@@ -17,8 +18,10 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { sortByKey } from '@utils/array';
 import {
+  getParentStreamID,
   getStreamID,
   getStreamIDWithParentStream,
+  groupStreamsForTables,
   isStreamSelected,
   updateStreamMetadata,
 } from '@utils/models/block';
@@ -28,6 +31,8 @@ export type StreamsOverviewProps = {
   blocksMapping: {
     [blockUUID: string]: BlockType;
   };
+  setSelectedMainNavigationTab: (prev: (tab: MainNavigationTabEnum) => void) => void;
+  setSelectedMainNavigationTabSub: (prev: (subtab: string) => void) => void;
   streamMapping: StreamMapping;
   updateStreamsInCatalog: (streams: StreamType[]) => any;
 };
@@ -40,6 +45,8 @@ const INPUT_SHARED_PROPS = {
 function StreamsOverview({
   block,
   blocksMapping,
+  setSelectedMainNavigationTab,
+  setSelectedMainNavigationTabSub,
   streamMapping,
   updateStreamsInCatalog,
 }: StreamsOverviewProps) {
@@ -54,21 +61,8 @@ function StreamsOverview({
   const streamsGrouped: {
     groupHeader: string;
     streams: StreamType[];
-  } = useMemo(() => [
-    {
-      groupHeader: null,
-      streams: sortByKey(Object.values(noParents), (stream: StreamType) => getStreamID(stream)),
-    },
-    ...sortByKey(Object.entries(parents), ([parentStreamID,]) => parentStreamID).map(([
-      groupHeader,
-      mapping,
-    ]) => ({
-      groupHeader,
-      streams: sortByKey(Object.values(mapping), (stream: StreamType) => getStreamID(stream)),
-    })),
-  ], [
-    noParents,
-    parents,
+  } = useMemo(() => groupStreamsForTables(streamMapping), [
+    streamMapping,
   ]);
 
   const {
@@ -169,15 +163,17 @@ function StreamsOverview({
       const blockInGroup = groupHeader ? blocksMapping?.[groupHeader] : null;
       if (blockInGroup) {
         rowGroupHeadersInner.push(
-          <Text
-            bold
-            color={getColorsForBlockType(blockInGroup?.type, {
-              blockColor: blockInGroup?.color,
-            }).accent}
-            monospace
-          >
-            {groupHeader}
-          </Text>
+          <Spacing p={PADDING_UNITS}>
+            <Text
+              bold
+              color={getColorsForBlockType(blockInGroup?.type, {
+                blockColor: blockInGroup?.color,
+              }).accent}
+              monospace
+            >
+              {groupHeader}
+            </Text>
+          </Spacing>
         );
       } else {
         rowGroupHeadersInner.push(groupHeader);
@@ -190,6 +186,7 @@ function StreamsOverview({
         rowCount += 1;
 
         const uuid = getStreamIDWithParentStream(stream);
+        const parentStream = getParentStreamID(stream);
         const streamID = getStreamID(stream);
         const {
           auto_add_new_fields: autoAddNewFields,
@@ -219,7 +216,8 @@ function StreamsOverview({
             monospace
             key={`${uuid}-name`}
             onClick={() => {
-
+              setSelectedMainNavigationTab(streamID);
+              setSelectedMainNavigationTabSub(parentStream);
             }}
             preventDefault
             sameColorAsText
@@ -336,13 +334,15 @@ function StreamsOverview({
   }, [
     blockType,
     blocksMapping,
+    setSelectedMainNavigationTab,
+    setSelectedMainNavigationTabSub,
     streamsGrouped,
     updateStreamsInCatalog,
   ]);
 
   return (
     <>
-      <Spacing mb={PADDING_UNITS}>
+      <Spacing p={PADDING_UNITS}>
         <Headline>
           Overview of streams
         </Headline>
@@ -352,6 +352,7 @@ function StreamsOverview({
         columnFlex={columnFlex}
         columns={columns}
         isSelectedRow={(rowIndex: number) => false}
+        groupsInline
         onClickRow={(rowIndex: number) => {
 
         }}

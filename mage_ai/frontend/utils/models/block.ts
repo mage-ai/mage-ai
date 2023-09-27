@@ -4,6 +4,7 @@ import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockTy
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BreadcrumbEnum,
+  COLUMN_TYPES,
   COLUMN_TYPE_CUSTOM_DATE_TIME,
   ColumnFormatEnum,
   ColumnFormatMapping,
@@ -14,8 +15,26 @@ import {
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { equals, indexBy, remove } from '@utils/array';
-import { isEmptyObject, isEqual } from '@utils/hash';
+import { equals, indexBy, remove, sortByKey } from '@utils/array';
+import { isEmptyObject, isEqual, selectEntriesWithValues } from '@utils/hash';
+
+export enum AttributeUUIDEnum {
+  BOOKMARK_PROPERTIES = 'bookmark_properties',
+  KEY_PROPERTIES = 'key_properties',
+  PARTITION_KEYS = 'partition_keys',
+  UNIQUE_CONSTRAINTS = 'unique_constraints',
+}
+
+export type AttributesMappingType = {
+  [attribute: string]: {
+    selected: boolean;
+    value?: boolean | number | string;
+  };
+};
+
+export type ColumnsMappingType = {
+  [column: string]: boolean;
+};
 
 export type PropertyColumnWithUUIDType = {
   uuid: string;
@@ -404,6 +423,16 @@ export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: S
   return mapping;
 }
 
+export function getAllStreamsFromStreamMapping(streamMapping: StreamMapping): StreamType[] {
+  const {
+    noParents = {},
+    parents = {},
+  } = streamMapping || {};
+  return Object.values(noParents || []).concat(
+    Object.values(parents || []).reduce((acc, mapping) => acc.concat(Object.values(mapping)), []),
+  );
+}
+
 export function getStreamFromStreamMapping(stream: StreamType, mapping: StreamMapping): StreamType {
   const parentStream = stream?.parent_stream;
   const id = getStreamID(stream);
@@ -566,8 +595,12 @@ export function addTypesToProperty(
     } else if (ColumnFormatEnum.UUID === td) {
       property2.format = ColumnFormatEnum.UUID;
     } else {
-      types2.push(td);
-      typesDerived2.push(td);
+      if (!types2?.includes(td)) {
+        types2.push(td);
+      }
+      if (!typesDerived2?.includes(td)) {
+        typesDerived2.push(td);
+      }
     }
   });
 
@@ -630,4 +663,177 @@ export function hydrateProperty(
     typesDerived,
     uuid,
   };
+}
+
+export function groupStreamsForTables(streamMapping: StreamMapping): {
+  groupHeader: string;
+  streams: StreamType[];
+} {
+  const {
+    noParents,
+    parents,
+  } = streamMapping || {};
+
+  return [
+    {
+      groupHeader: null,
+      streams: sortByKey(Object.values(noParents), (stream: StreamType) => getStreamID(stream)),
+    },
+    ...sortByKey(Object.entries(parents), ([parentStreamID,]) => parentStreamID).map(([
+      groupHeader,
+      mapping,
+    ]) => ({
+      groupHeader,
+      streams: sortByKey(Object.values(mapping), (stream: StreamType) => getStreamID(stream)),
+    })),
+  ];
+}
+
+export function updateStreamInStreamMapping(
+  stream: StreamType,
+  streamMapping: StreamMapping,
+  opts?: {
+    remove?: boolean;
+  },
+): StreamMapping {
+  const { remove } = opts || {};
+
+  const id = getStreamID(stream || {});
+  const idParent = getParentStreamID(stream || {});
+
+  const mapping = {
+    ...streamMapping,
+  };
+
+  if (idParent) {
+    if (remove) {
+      delete mapping?.parents?.[idParent]?.[id];
+    } else {
+      mapping.parents = {
+        ...mapping?.parents,
+        [idParent]: {
+          [id]: stream,
+        },
+      };
+    }
+  } else if (id) {
+    if (remove) {
+      delete mapping?.noParents?.[id];
+    } else {
+      mapping.noParents = {
+        ...mapping?.noParents,
+        [id]: stream,
+      };
+    }
+  }
+
+  return mapping;
+}
+
+export function updateStreamMappingWithPropertyAttributeValues(
+  streamMapping: StreamMapping,
+  highlightedColumnsMapping: ColumnsMappingType,
+  attributesMapping: AttributesMappingType,
+): StreamMapping {
+  const attributesOnStream = [
+    AttributeUUIDEnum.BOOKMARK_PROPERTIES,
+    AttributeUUIDEnum.KEY_PROPERTIES,
+    AttributeUUIDEnum.PARTITION_KEYS,
+    AttributeUUIDEnum.UNIQUE_CONSTRAINTS,
+  ];
+
+  const columnsHighlighted: string[] = Object
+    .entries(highlightedColumnsMapping || {})
+    .reduce((acc, [column, highlighted]) => highlighted ? acc.concat(column) : acc, []);
+  const selectedAttributesWithValues = Object
+    .entries(attributesMapping || {})
+    .reduce((acc, [attribute, { selected, value }]) => ({
+      ...acc,
+      ...(selected ? { [attribute]: value } : {}),
+    }), {});
+
+  const updateStreamColumnsWithAttributeValues = (
+    stream: StreamType,
+  ): StreamType => {
+    const streamUpdated = { ...stream };
+    const schemaProperties = streamUpdated?.schema?.properties || {};
+
+    columnsHighlighted?.forEach((column: string) => {
+      if (schemaProperties?.[column]) {
+        Object.entries(selectedAttributesWithValues || {}).forEach(([
+          attribute,
+          value,
+        ]) => {
+          if (attributesOnStream.includes(attribute)) {
+            if (!streamUpdated?.[attribute]) {
+              streamUpdated[attribute] = [];
+            }
+
+            const columnIsInAttribute = streamUpdated[attribute]?.includes(column);
+
+            // Add the column if it’s not already there.
+            if (value && !columnIsInAttribute) {
+              streamUpdated[attribute].push(column);
+            } else if (!value && columnIsInAttribute) {
+              // Remove the column if it’s already there.
+              streamUpdated[attribute] = remove(streamUpdated[attribute], i => i === column);
+            }
+
+          } else if (COLUMN_TYPES.includes(attribute)) {
+            const propertyForColumn = {
+              ...(schemaProperties?.[column] || {}),
+            };
+            const p1 = hydrateProperty(column, propertyForColumn);
+            console.log('wtf0', attribute, p1.types)
+
+            const mutateFunc = value ? addTypesToProperty : removeTypesFromProperty;
+
+            const {
+              anyOf,
+              format,
+              type,
+            } = mutateFunc([attribute], p1);
+
+            console.log('wtf1', attribute, type)
+
+            if (!streamUpdated?.schema) {
+              streamUpdated.schema = {
+                properties: {},
+              };
+            }
+
+            if (!streamUpdated?.schema?.properties) {
+              streamUpdated.schema = {
+                ...streamUpdated?.schema,
+                properties: {},
+              };
+            }
+
+            const p2 = selectEntriesWithValues({
+              anyOf,
+              format,
+              type,
+            });
+            streamUpdated.schema.properties[column] = p2;
+          }
+        });
+      }
+    });
+
+    return streamUpdated;
+  };
+
+  let streamMappingUpdated = {
+    ...streamMapping,
+  };
+  const streams: StreamType = getAllStreamsFromStreamMapping(streamMapping || {}) || [];
+
+  streams?.forEach((stream: StreamType) => {
+    streamMappingUpdated = updateStreamInStreamMapping(
+      updateStreamColumnsWithAttributeValues(stream),
+      streamMappingUpdated,
+    );
+  });
+
+  return streamMappingUpdated;
 }

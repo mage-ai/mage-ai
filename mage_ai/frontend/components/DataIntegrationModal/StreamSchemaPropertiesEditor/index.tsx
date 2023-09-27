@@ -1,43 +1,81 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
+import StreamTableSelector from '../StreamTableSelector';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import {
   AttributeType,
-  AttributeUUIDEnum,
   InputTypeEnum,
 } from './constants';
+import { StreamDetailProps } from './StreamDetail/constants';
 import { COLUMN_TYPES } from '@interfaces/IntegrationSourceType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { StreamDetailProps } from './StreamDetail/constants';
+import {
+  AttributeUUIDEnum,
+  AttributesMappingType,
+  StreamMapping,
+  getParentStreamID,
+  getStreamID,
+} from '@utils/models/block';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { ignoreKeys } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
-import { remove, sortByKey } from '@utils/array';
+import { remove, sortByKey, sum } from '@utils/array';
+
+type StreamSchemaPropertiesEditorProps = {
+  attributesMapping: AttributesMappingType;
+  selectedStreamMapping: StreamMapping;
+  setAttributesMapping: (prev: (v: AttributesMappingType) => void) => void;
+  setSelectedStreamMapping: (prev: (v: StreamMapping) => void) => void;
+};
 
 function StreamSchemaPropertiesEditor({
+  attributesMapping,
   block,
   blocksMapping,
   highlightedColumnsMapping,
+  selectedStreamMapping,
+  setAttributesMapping,
   setBlockAttributes,
   setHighlightedColumnsMapping,
+  setSelectedStreamMapping,
   stream,
   streamMapping,
   updateStreamsInCatalog,
-}: StreamDetailProps) {
-  const [attributesMapping, setAttributesMapping] =
-    useState<{
-      [attribute: string]: {
-        selected: boolean;
-        value?: boolean | number | string | {
-          [columnType]: string;
-        };
-      };
-    }>({});
+}: StreamSchemaPropertiesEditorProps & StreamDetailProps) {
+  useEffect(() => {
+    if (stream && !selectedStreamMapping) {
+      const id = getStreamID(stream || {});
+      const idParent = getParentStreamID(stream || {});
+
+      if (idParent) {
+        setSelectedStreamMapping({
+          noParents: {},
+          parents: {
+            [idParent]: {
+              [id]: stream,
+            },
+          },
+        });
+      } else if (id) {
+        setSelectedStreamMapping({
+          noParents: {
+            [id]: stream,
+          },
+          parents: {},
+        });
+      }
+    }
+  }, [
+    selectedStreamMapping,
+    setSelectedStreamMapping,
+    stream,
+  ]);
 
   const columns = useMemo(() => {
     const arr = Object.entries(highlightedColumnsMapping || {})?.reduce((acc, [
@@ -100,9 +138,11 @@ function StreamSchemaPropertiesEditor({
       inputEl = (
         <Checkbox
           checked={!!value}
-          disabled={!isSelected}
           onClick={(e) => {
-            pauseEvent(e);
+            if (isSelected) {
+              pauseEvent(e);
+            }
+
             setAttributesMapping(prev => ({
               ...prev,
               [uuid]: {
@@ -197,18 +237,50 @@ function StreamSchemaPropertiesEditor({
     renderRow,
   ]);
 
+  const streamsTableMemo = useMemo(() => {
+    return (
+      <StreamTableSelector
+        selectedStreamMapping={selectedStreamMapping}
+        setSelectedStreamMapping={setSelectedStreamMapping}
+        streamMapping={streamMapping}
+      />
+    );
+  }, [
+    selectedStreamMapping,
+    setSelectedStreamMapping,
+    streamMapping,
+  ]);
+
+  const numberOfStreamsSelected = useMemo(() =>
+    Object.values(selectedStreamMapping?.noParents || {})?.length
+      + sum(
+        Object.values(
+          selectedStreamMapping?.parents || {},
+        )?.map(mapping => Object.values(mapping || {})?.length)
+      )
+  , [
+    selectedStreamMapping,
+  ]);
+
   return (
     <>
       <Spacing p={PADDING_UNITS}>
         <div>
-          <Text bold large>
-            {pluralize('property', columns?.length || 0)} to apply changes on
-          </Text>
+          <Headline>
+            {!columns?.length && 'Choose at least 1 property'}
+            {columns?.length >= 1 && `${pluralize('property', columns?.length || 0)} chosen`}
+          </Headline>
 
           <Spacing mt={1}>
             <Text default>
               {!columns?.length && 'Click 1 or more rows in the table to select which schema properties to apply bulk changes to.'}
-              {columns?.length >= 1 && 'The properties chosen below can have bulk changes applied to it.'}
+              {columns?.length >= 1 && (
+                <>
+                  Clicking the Apply button below will use the values from the selected
+                  properties below and change the values of those properties in all the selected
+                  columns for all the selected streams.
+                </>
+              )}
             </Text>
           </Spacing>
         </div>
@@ -252,6 +324,25 @@ function StreamSchemaPropertiesEditor({
       </Spacing>
 
       {tableMemo}
+
+      <Spacing p={PADDING_UNITS}>
+        <div>
+          <Headline>
+            {pluralize('stream', numberOfStreamsSelected || 0)} chosen
+          </Headline>
+
+          <Spacing mt={1}>
+            <Text default>
+              Clicking the Apply button below will use the values from the selected
+              properties below and change the values of those properties in all the selected
+              columns for all the selected streams.
+            </Text>
+          </Spacing>
+        </div>
+
+      </Spacing>
+
+      {streamsTableMemo}
     </>
   );
 }
