@@ -177,8 +177,7 @@ function SampleData({
           onClick={() => fetchOutputs()}
           primary
         >
-          {output && 'Refresh sample data'}
-          {!output && 'Fetch sample data'}
+          {output ? 'Refresh sample data' : 'Fetch sample data'}
         </Button>
       </Spacing>
 

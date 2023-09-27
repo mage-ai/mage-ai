@@ -1,5 +1,7 @@
 from typing import Dict
 
+import pandas as pd
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     fetch_data,
@@ -48,53 +50,66 @@ class OutputResource(GenericResource):
 
             if block.is_data_integration():
                 streams = payload.get('streams')
+                outputs_by_stream = {}
+                outputs_by_stream_serialized = {}
 
-                if block.is_source():
-                    outputs_by_stream = {}
-                    outputs_by_stream_serialized = {}
-                    # 1. Try to get the sample data that is stored as block outputs
-                    if not refresh:
-                        for stream in streams:
-                            stream_id = stream.get('stream')
-                            # This data is already serialized
-                            outputs = read_data_from_cache(
-                                block,
-                                stream_id,
-                                partition=partition,
-                                sample_count=sample_count,
-                            )
-                            if outputs:
-                                outputs_by_stream[stream_id] = outputs[0]
-                                outputs_by_stream_serialized[stream_id] = outputs[0]
-
-                    # 2. If no block outputs exist, invoke the sample data function
-                    if len(outputs_by_stream) == 0 or refresh:
-                        # This data is not yet serialized
-                        outputs_by_stream = fetch_data(
+                # 1. Try to get the sample data that is stored as block outputs
+                if not refresh:
+                    for stream in streams:
+                        parent_stream = stream.get('parent_stream')
+                        stream_id = stream.get('stream')
+                        # This data is already serialized
+                        outputs = read_data_from_cache(
                             block,
-                            selected_streams=streams,
+                            stream_id,
+                            parent_stream=parent_stream,
+                            partition=partition,
+                            sample_count=sample_count,
                         )
+                        if outputs:
+                            outputs_by_stream[stream_id] = outputs[0]
+                            outputs_by_stream_serialized[stream_id] = outputs[0]
 
-                    # 3. Store the sample data as block outputs for repeat reads
-                    if len(outputs_by_stream) >= 1:
-                        for stream_id, output in outputs_by_stream.items():
-                            output_serialized = outputs_by_stream_serialized.get(stream_id)
-                            if not output_serialized:
+                # 2. If no block outputs exist, invoke the sample data function
+                if refresh:
+                    # This data is not yet serialized
+                    outputs_by_stream = fetch_data(
+                        block,
+                        partition=partition,
+                        sample_count=sample_count,
+                        selected_streams=streams,
+                    )
+
+                # 3. Store the sample data as block outputs for repeat reads
+                if outputs_by_stream and len(outputs_by_stream) >= 1:
+                    for stream_id, output in outputs_by_stream.items():
+                        output_serialized = outputs_by_stream_serialized.get(stream_id)
+                        if not output_serialized:
+                            should_map_serialize_output = False
+                            if isinstance(output, list) and len(output) >= 1:
+                                if isinstance(output[0], pd.DataFrame):
+                                    if len(output) >= 2:
+                                        should_map_serialize_output = True
+                                    else:
+                                        output = output[0]
+
+                            if should_map_serialize_output:
+                                output_serialized = [serialize_output(block, o) for o in output]
+                            else:
                                 output_serialized = serialize_output(block, output)
 
-                            model['outputs'].append(dict(
-                                data=output_serialized,
-                                uuid=stream_id,
-                            ))
+                        model['outputs'].append(dict(
+                            data=output_serialized,
+                            uuid=stream_id,
+                        ))
 
-                            if refresh and persist:
-                                persist_data_for_stream(
-                                    block,
-                                    stream_id,
-                                    output,
-                                    partition=partition,
-                                )
-
+                        if refresh and persist:
+                            persist_data_for_stream(
+                                block,
+                                stream_id,
+                                output,
+                                partition=partition,
+                            )
         return self(model, user, **kwargs)
 
     @classmethod

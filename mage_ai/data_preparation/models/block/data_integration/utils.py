@@ -1172,8 +1172,61 @@ def test_connection(block) -> None:
 
 def fetch_data(
     block,
+    partition: str = None,
     selected_streams: List[StreamWithIDAndParentStream] = None,
-) -> List[pd.DataFrame]:
+    sample_count: int = None,
+) -> Dict:
+    if not selected_streams:
+        return
+
+    if block.is_source():
+        return __fetch_data_from_source_block(block, selected_streams=selected_streams)
+
+    outputs = {}
+
+    # If the block is a destination block, it doesn’t produce any data so it must read
+    # the data from an upstream block by executing it.
+    for stream in selected_streams:
+        parent_stream = stream.get('parent_stream')
+        stream_id = stream.get('stream')
+        if not parent_stream:
+            continue
+
+        upstream_block = block.pipeline.get_block(parent_stream)
+
+        if not upstream_block:
+            continue
+
+        if upstream_block.is_source():
+            outputs.update(
+                __fetch_data_from_source_block(
+                    upstream_block,
+                    selected_streams=[stream],
+                ),
+            )
+        else:
+            block_output = upstream_block.execute_sync(
+                execution_partition=partition,
+                from_notebook=False if sample_count is None else True,
+                global_vars=block.pipeline.variables if block.pipeline else None,
+                store_variables=False,
+            )
+            if block_output.get('output'):
+                output = block_output.get('output')
+                if isinstance(output, Dict) and output.get(stream_id):
+                    outputs[stream_id] = output.get(stream_id)
+                else:
+                    outputs[stream_id] = output
+            else:
+                outputs[stream_id] = block_output
+
+    return outputs
+
+
+def __fetch_data_from_source_block(
+    block,
+    selected_streams: List[StreamWithIDAndParentStream] = None,
+) -> Dict:
     data_integration_settings = block.get_data_integration_settings(
         from_notebook=True,
         global_vars=block.pipeline.variables if block.pipeline else None,
@@ -1265,16 +1318,29 @@ def fetch_data(
 def read_data_from_cache(
     block,
     stream_id: str,
+    parent_stream: str = None,
     partition: str = None,
     sample: bool = True,
     sample_count: int = None,
 ) -> List[Union[Dict, List, pd.DataFrame]]:
-    return block.get_outputs(
+    data = block.get_outputs(
         execution_partition=partition,
         sample=sample,
         sample_count=sample_count,
         selected_variables=[stream_id],
     )
+
+    if data is None and block.is_destination():
+        upstream_block = block.pipeline.get_block(parent_stream)
+
+        data = upstream_block.get_outputs(
+            execution_partition=partition,
+            sample=sample,
+            sample_count=sample_count,
+            selected_variables=[stream_id],
+        )
+
+    return data
 
 
 def persist_data_for_stream(
