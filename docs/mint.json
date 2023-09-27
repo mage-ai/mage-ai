@@ -493,7 +493,7 @@
         },
         "guides/ai/overview",
         "guides/docker/connecting-a-database",
-        "guides/community-examples"
+        "guides/community-examples",
         "guides/tips-and-tricks"
       ]
     },
@@ -700,8 +700,9 @@
           "group": "Version control",
           "icon": "code-branch",
           "pages": [
-            "production/data-sync/git",
-            "production/data-sync/github"
+            "production/data-sync/git-sync",
+            "production/data-sync/github",
+            "production/data-sync/git-integration"
           ]
         }
       ]
