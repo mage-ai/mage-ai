@@ -1,4 +1,5 @@
 import os
+
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 
 
