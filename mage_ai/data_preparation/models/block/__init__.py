@@ -1512,6 +1512,7 @@ class Block(DataIntegrationMixin):
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
+        selected_variables: List[str] = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -1534,6 +1535,9 @@ class Block(DataIntegrationMixin):
             )
 
         for v in all_variables:
+            if selected_variables and v not in selected_variables:
+                continue
+
             variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
                 block_uuid,
@@ -2397,6 +2401,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
+
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,

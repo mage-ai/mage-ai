@@ -3,13 +3,16 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, TypedDict, Union
 
 import pandas as pd
 import simplejson
 import yaml
 
-from mage_ai.data_integrations.logger.utils import print_log_from_line
+from mage_ai.data_integrations.logger.utils import (
+    print_log_from_line,
+    print_logs_from_output,
+)
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
@@ -47,6 +50,11 @@ from mage_ai.shared.hash import dig, extract, merge_dict
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
+
+
+class StreamWithIDAndParentStream(TypedDict):
+    parent_stream: int
+    stream: str
 
 
 def get_destination(block) -> str:
@@ -1160,6 +1168,128 @@ def test_connection(block) -> None:
         raise Exception(filter_out_config_values(error, config))
     except Exception as err:
         raise Exception(filter_out_config_values(str(err), config))
+
+
+def fetch_data(
+    block,
+    selected_streams: List[StreamWithIDAndParentStream] = None,
+) -> List[pd.DataFrame]:
+    data_integration_settings = block.get_data_integration_settings(
+        from_notebook=True,
+        global_vars=block.pipeline.variables if block.pipeline else None,
+    )
+
+    config = data_integration_settings.get('config')
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
+
+    is_source = block.is_source()
+
+    module_file_path = None
+    if is_source:
+        module_file_path = source_module_file_path(data_integration_uuid)
+    else:
+        module_file_path = destination_module_file_path(data_integration_uuid)
+
+    stream_ids = [d.get('stream') for d in selected_streams]
+
+    if not module_file_path:
+        return
+
+    outputs = {}
+
+    try:
+        run_args = [
+            PYTHON_COMMAND,
+            module_file_path,
+            '--config_json',
+            simplejson.dumps(
+                config,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
+            '--load_sample_data',
+            '--log_to_stdout',
+            '1',
+            '--catalog',
+            block.get_catalog_file_path(),
+            '--selected_streams_json',
+            json.dumps(stream_ids),
+        ]
+
+        proc = subprocess.run(
+            run_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        proc.check_returncode()
+
+        output = proc.stdout.decode()
+        print_logs_from_output(output, config=config)
+
+        for line in output.split('\n'):
+            try:
+                from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
+
+                data = json.loads(line)
+                if TYPE_SAMPLE_DATA == data.get('type'):
+                    sample_data_json = data.get('sample_data')
+                    stream_id = data.get('stream_id')
+                    outputs[stream_id] = pd.DataFrame.from_dict(json.loads(sample_data_json))
+
+            except json.decoder.JSONDecodeError:
+                pass
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode('utf-8').split('\n')
+
+        json_object = {}
+        error = ''
+        for line in stderr:
+            if line.startswith('ERROR'):
+                try:
+                    json_object = next(extract_json_objects(line))
+                    error = dig(json_object, 'tags.error')
+                except Exception:
+                    error = line
+        error = filter_out_config_values(error, config)
+        if not error:
+            raise Exception('The sample data was not able to be loaded. Please check if the ' +
+                            'stream still exists. If it does not, click the "View and select ' +
+                            'streams" button and confirm the valid streams. If it does, ' +
+                            'loading sample data for this source may not currently ' +
+                            'be supported.')
+        raise Exception(error)
+
+    return outputs
+
+
+def read_data_from_cache(
+    block,
+    stream_id: str,
+    partition: str = None,
+    sample: bool = True,
+    sample_count: int = None,
+) -> List[Union[Dict, List, pd.DataFrame]]:
+    return block.get_outputs(
+        execution_partition=partition,
+        sample=sample,
+        sample_count=sample_count,
+        selected_variables=[stream_id],
+    )
+
+
+def persist_data_for_stream(
+    block,
+    stream_id: str,
+    output: Union[Dict, List, pd.DataFrame],
+    partition: str = None,
+) -> None:
+    block.pipeline.variable_manager.add_variable(
+        block.pipeline.uuid,
+        block.uuid,
+        stream_id,
+        output,
+        partition=partition,
+    )
 
 
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:

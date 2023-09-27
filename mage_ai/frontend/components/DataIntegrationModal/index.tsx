@@ -381,10 +381,10 @@ function DataIntegrationModal({
       // TODO: remove this after done testing.
       setSelectedMainNavigationTab(
         'account_v2',
-        'source_pg_yaml',
+        // 'source_pg_yaml',
         // MainNavigationTabEnum.OVERVIEW,
       );
-      setSelectedSubTab(SubTabEnum.SETTINGS);
+      setSelectedSubTab(SubTabEnum.SAMPLE_DATA);
     }
   }, [
     selectedMainNavigationTab,
@@ -867,10 +867,13 @@ function DataIntegrationModal({
         <StreamDetail
           block={blockAttributes}
           blocksMapping={blocksMapping}
+          height={(heightModal - headerOffset) - (2 * UNIT)}
           highlightedColumnsMapping={highlightedColumnsMapping}
+          pipeline={pipeline}
           selectedSubTab={selectedSubTab}
           setBlockAttributes={setBlockAttributes}
           setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+          showError={showError}
           stream={stream}
           streamMapping={streamsFromCatalogMapping}
           updateStreamsInCatalog={updateStreamsInCatalog}
@@ -880,12 +883,16 @@ function DataIntegrationModal({
   }, [
     blockAttributes,
     blocksMapping,
+    headerOffset,
+    heightModal,
     highlightedColumnsMapping,
+    pipeline,
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
     selectedSubTab,
     setBlockAttributes,
     setHighlightedColumnsMapping,
+    showError,
     streamsFromCatalogMapping,
     updateStreamsInCatalog,
   ]);
