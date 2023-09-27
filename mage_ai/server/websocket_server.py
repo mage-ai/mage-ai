@@ -442,7 +442,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     upstream_blocks=upstream_blocks,
                     widget=widget,
                 )
-
+            elif BlockType.SCRATCHPAD == block_type:
+                # Initialize the db_connection session if it hasn't been initialized yet.
+                initialize_db_connection = """
+from mage_ai.orchestration.db import db_connection
+db_connection.start_session()
+"""
+                client.execute(initialize_db_connection)
             msg_id = client.execute(add_internal_output_info(code))
 
             WebSocketServer.running_executions_mapping[msg_id] = value
