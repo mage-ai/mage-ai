@@ -1,7 +1,7 @@
 from mage_ai.services.aws import (
-    get_aws_region_name,
     get_aws_access_key_id,
-    get_aws_secret_access_key
+    get_aws_region_name,
+    get_aws_secret_access_key,
 )
 
 
