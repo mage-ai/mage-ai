@@ -369,9 +369,9 @@ function SyncData() {
             <Text bold>
               Use <Link
                 bold
-                href="https://docs.mage.ai/production/data-sync/git#optional-one-way-sync"
+                href="https://docs.mage.ai/production/data-sync/git-sync"
                 openNewWindow>
-                One-way sync
+                One-way git sync
               </Link> (Click link for more info)
             </Text>
           </FlexContainer>
