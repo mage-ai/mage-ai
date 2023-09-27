@@ -1,4 +1,24 @@
+import { AttributeUUIDEnum } from '@utils/modles/block';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+
+export enum InputTypeEnum {
+  CHECKBOX = 'checkbox',
+  CUSTOM = 'custom',
+  SELECT = 'select',
+  TOGGLE = 'toggle',
+}
+
+export interface OptionType {
+  label?: () => string;
+  value: string | number;
+}
+
+export interface AttributeType {
+  inputType: InputTypeEnum;
+  label: () => string;
+  options?: OptionType[];
+  uuid: AttributeUUIDEnum;
+}
 
 export enum MainNavigationTabEnum {
   CONFIGURATION = 'configuration',
@@ -6,6 +26,13 @@ export enum MainNavigationTabEnum {
   STREAMS = 'streams',
   SYNC = 'sync',
 }
+
+export const MAIN_TABS_EXCEPT_STREAM_DETAIL = {
+  [MainNavigationTabEnum.CONFIGURATION]: MainNavigationTabEnum.CONFIGURATION,
+  [MainNavigationTabEnum.OVERVIEW]: MainNavigationTabEnum.OVERVIEW,
+  [MainNavigationTabEnum.STREAMS]: MainNavigationTabEnum.STREAMS,
+  [MainNavigationTabEnum.SYNC]: MainNavigationTabEnum.SYNC,
+};
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CONFIGURATION]: 'Configuration',

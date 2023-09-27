@@ -348,7 +348,7 @@ function TripleLayout({
         {!afterHidden && after}
       </AfterInnerStyle>
 
-      {afterFooter && (
+      {afterFooter && !afterHidden && (
         <AsideFooterStyle
           bottom={inline
             ? afterFooterBottomOffset

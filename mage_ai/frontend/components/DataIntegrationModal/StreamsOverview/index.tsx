@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Select from '@oracle/elements/Inputs/Select';
@@ -31,8 +32,9 @@ export type StreamsOverviewProps = {
   blocksMapping: {
     [blockUUID: string]: BlockType;
   };
-  setSelectedMainNavigationTab: (prev: (tab: MainNavigationTabEnum) => void) => void;
-  setSelectedMainNavigationTabSub: (prev: (subtab: string) => void) => void;
+  setSelectedMainNavigationTab: (
+    prev: (tab: MainNavigationTabEnum, subtab: string) => void,
+  ) => void;
   streamMapping: StreamMapping;
   updateStreamsInCatalog: (streams: StreamType[]) => any;
 };
@@ -46,7 +48,6 @@ function StreamsOverview({
   block,
   blocksMapping,
   setSelectedMainNavigationTab,
-  setSelectedMainNavigationTabSub,
   streamMapping,
   updateStreamsInCatalog,
 }: StreamsOverviewProps) {
@@ -72,7 +73,7 @@ function StreamsOverview({
     columnFlex: number[];
     columns: ColumnType[];
   } = useMemo(() => {
-    const cf = [null, 1, 1, 1, null, null]
+    const cf = [null, 4, 4, 3, 3, null]
     const c = [
       {
         label: ({
@@ -216,8 +217,7 @@ function StreamsOverview({
             monospace
             key={`${uuid}-name`}
             onClick={() => {
-              setSelectedMainNavigationTab(streamID);
-              setSelectedMainNavigationTabSub(parentStream);
+              setSelectedMainNavigationTab(streamID, parentStream);
             }}
             preventDefault
             sameColorAsText
@@ -274,49 +274,64 @@ function StreamsOverview({
               </option>
             ))}
           </Select>,
-          <ToggleSwitch
-            checked={!!runInParallel}
-            compact
+          <FlexContainer
+            alignItems="center"
+            justifyContent="center"
             key={`${uuid}-runInParallel`}
-            onCheck={(valFunc: (val: boolean) => boolean) => {
-              updateStreamsInCatalog([
-                {
-                  ...stream,
-                  run_in_parallel: valFunc(runInParallel),
-                },
-              ]);
-            }}
-          />,
+          >
+            <ToggleSwitch
+              checked={!!runInParallel}
+              compact
+              onCheck={(valFunc: (val: boolean) => boolean) => {
+                updateStreamsInCatalog([
+                  {
+                    ...stream,
+                    run_in_parallel: valFunc(runInParallel),
+                  },
+                ]);
+              }}
+            />
+          </FlexContainer>,
         ];
 
         if (BlockTypeEnum.DATA_EXPORTER === blockType) {
           row.push(...[
-            <ToggleSwitch
-              checked={!!autoAddNewFields}
-              compact
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
               key={`${uuid}-autoAddNewFields`}
-              onCheck={(valFunc: (val: boolean) => boolean) => {
-                updateStreamsInCatalog([
-                  {
-                    ...stream,
-                    auto_add_new_fields: valFunc(autoAddNewFields),
-                  },
-                ]);
-              }}
-            />,
-            <ToggleSwitch
-              checked={!!disableColumnTypeCheck}
-              compact
+            >
+              <ToggleSwitch
+                checked={!!autoAddNewFields}
+                compact
+                onCheck={(valFunc: (val: boolean) => boolean) => {
+                  updateStreamsInCatalog([
+                    {
+                      ...stream,
+                      auto_add_new_fields: valFunc(autoAddNewFields),
+                    },
+                  ]);
+                }}
+              />
+            </FlexContainer>,
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
               key={`${uuid}-disableColumnTypeCheck`}
-              onCheck={(valFunc: (val: boolean) => boolean) => {
-                updateStreamsInCatalog([
-                  {
-                    ...stream,
-                    disable_column_type_check: valFunc(disableColumnTypeCheck),
-                  },
-                ]);
-              }}
-            />,
+            >
+              <ToggleSwitch
+                checked={!!disableColumnTypeCheck}
+                compact
+                onCheck={(valFunc: (val: boolean) => boolean) => {
+                  updateStreamsInCatalog([
+                    {
+                      ...stream,
+                      disable_column_type_check: valFunc(disableColumnTypeCheck),
+                    },
+                  ]);
+                }}
+              />
+            </FlexContainer>,
           ]);
         }
 
@@ -335,7 +350,6 @@ function StreamsOverview({
     blockType,
     blocksMapping,
     setSelectedMainNavigationTab,
-    setSelectedMainNavigationTabSub,
     streamsGrouped,
     updateStreamsInCatalog,
   ]);

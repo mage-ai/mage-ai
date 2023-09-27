@@ -237,3 +237,13 @@ export function standardDeviation(arr, usePopulation = false) {
 export function randomSample(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
+
+export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => any): any[] {
+  const arr3 = parser ? arr2.map(parser) : arr2;
+
+  return arr1.filter((item: any) => {
+    const i = parser ? parser(item) : item;
+
+    return arr3.includes(i);
+  });
+}

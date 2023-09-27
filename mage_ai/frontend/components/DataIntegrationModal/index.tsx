@@ -21,6 +21,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import StreamDetail from './StreamDetail';
 import StreamGrid from './StreamGrid';
+import StreamOverviewEditor from './StreamOverviewEditor';
 import StreamSchemaPropertiesEditor from './StreamSchemaPropertiesEditor';
 import StreamsOverview from './StreamsOverview';
 import Table from '@components/shared/Table';
@@ -56,6 +57,7 @@ import {
 import { DataIntegrationTypeEnum } from '@interfaces/BlockTemplateType';
 import {
   MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING,
+  MAIN_TABS_EXCEPT_STREAM_DETAIL,
   MainNavigationTabEnum,
   SUB_TABS_BY_MAIN_NAVIGATION_TAB,
   SUB_TABS_FOR_STREAM_DETAIL,
@@ -85,13 +87,14 @@ import {
   noStreamsAnywhere as noStreamsAnywhereFunc,
   updateStreamInBlock,
   updateStreamMappingWithPropertyAttributeValues,
+  updateStreamMappingWithStreamAttributes,
   updateStreamMetadata,
 } from '@utils/models/block';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { equals, groupBy, indexBy, remove, sortByKey } from '@utils/array';
-import { ignoreKeys, isEmptyObject } from '@utils/hash';
+import { equals, groupBy, indexBy, intersection, remove, sortByKey } from '@utils/array';
+import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
@@ -272,6 +275,10 @@ function DataIntegrationModal({
   const streams = useMemo(() => getSelectedStreams(blockAttributes, { getAll: true }), [
     blockAttributes,
   ]);
+  const streamsFromCatalogMapping: StreamMapping =
+    useMemo(() => buildStreamMapping(streams), [
+      streams,
+    ]);
 
   const {
     destination,
@@ -306,7 +313,7 @@ function DataIntegrationModal({
   const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
     useState<ColumnsMappingType>({});
 
-  const setSelectedMainNavigationTab = useCallback((prev1) => {
+  const setSelectedMainNavigationTab = useCallback((prev1, subtabNew: string) => {
     setSelectedMainNavigationTabState((prev2) => {
       const val1 = typeof prev1 === 'function' ? prev1(prev2) : prev1
 
@@ -314,30 +321,61 @@ function DataIntegrationModal({
         ? SUB_TABS_BY_MAIN_NAVIGATION_TAB[val1]
         : SUB_TABS_FOR_STREAM_DETAIL;
 
-      setSelectedSubTab(tabs?.[0]?.uuid);
-
       const valOld = typeof prev2 === 'function' ? prev2() : prev2;
 
-      if (val1 !== valOld) {
-        setHighlightedColumnsMapping({});
+      // If changing main tabs between stream detail tabs, persist the subtab.
+      if (MAIN_TABS_EXCEPT_STREAM_DETAIL[val1] || MAIN_TABS_EXCEPT_STREAM_DETAIL[valOld]) {
+        setSelectedSubTab(tabs?.[0]?.uuid);
+        if (val1 !== valOld) {
+          setHighlightedColumnsMapping({});
+        }
+      } else {
+        // Only unhighlight the columns that don’t exist in the newly selected stream.
+        setSelectedMainNavigationTabSub((subtabPrev) => {
+          const streamOld = getStreamFromStreamMapping({
+            parent_stream: subtabPrev,
+            stream: valOld,
+            tap_stream_id: valOld,
+          }, streamsFromCatalogMapping);
+
+          const streamNew = getStreamFromStreamMapping({
+            parent_stream: subtabNew,
+            stream: val1,
+            tap_stream_id: val1,
+          }, streamsFromCatalogMapping);
+
+          const columnsSame = intersection(
+            Object.keys(streamOld?.schema?.properties || {}),
+            Object.keys(streamNew?.schema?.properties || {}),
+          );
+
+          setHighlightedColumnsMapping(mappingPrev => ({
+            ...selectKeys(mappingPrev, columnsSame || []),
+          }));
+
+          return subtabNew;
+        });
       }
 
       return val1;
     });
   }, [
+    selectedMainNavigationTabSub,
+    selectedSubTab,
     setHighlightedColumnsMapping,
     setSelectedMainNavigationTabState,
+    setSelectedMainNavigationTabSub,
     setSelectedSubTab,
+    streamsFromCatalogMapping,
   ]);
 
   useEffect(() => {
     if (!selectedMainNavigationTab) {
       // TODO: remove this after done testing.
       setSelectedMainNavigationTab(
-        'account_v2',
-        MainNavigationTabEnum.STREAMS,
+        // 'account_v2',
+        MainNavigationTabEnum.OVERVIEW,
       );
-      setSelectedMainNavigationTabSub('source_pg_yaml');
     }
   }, [
     selectedMainNavigationTab,
@@ -490,8 +528,7 @@ function DataIntegrationModal({
               noHoverUnderline
               noOutline
               onClick={() => {
-                setSelectedMainNavigationTab(streamID);
-                setSelectedMainNavigationTabSub(parentStreamID);
+                setSelectedMainNavigationTab(streamID, parentStreamID);
               }}
               preventDefault
             >
@@ -529,15 +566,10 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
     setSelectedMainNavigationTab,
-    setSelectedMainNavigationTabSub,
     streams,
   ]);
 
   const [streamsFetched, setStreamsFetched] = useState<StreamType[]>(null);
-  const streamsFromCatalogMapping: StreamMapping =
-    useMemo(() => buildStreamMapping(streams), [
-      streams,
-    ]);
 
   const noStreamsAnywhere = useMemo(() => noStreamsAnywhereFunc(
     streamsFromCatalogMapping,
@@ -794,8 +826,13 @@ function DataIntegrationModal({
       selectedSubTab,
     ]);
 
+  const isOnStreamsOverview = useMemo(() =>
+    MainNavigationTabEnum.OVERVIEW === selectedMainNavigationTab, [
+      selectedMainNavigationTab,
+    ]);
+
   const afterHidden: boolean = useMemo(() => {
-    if (isOnConfigurationCredentials || isOnStreamDetailSchemaProperties) {
+    if (isOnConfigurationCredentials || isOnStreamDetailSchemaProperties || isOnStreamsOverview) {
       return afterHiddenState;
     }
 
@@ -804,6 +841,7 @@ function DataIntegrationModal({
     afterHiddenState,
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
+    isOnStreamsOverview,
     selectedMainNavigationTab,
     selectedSubTab,
   ]);
@@ -1346,7 +1384,6 @@ function DataIntegrationModal({
           height={heightModal - headerOffset}
           searchText={searchText}
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
-          setSelectedMainNavigationTabSub={setSelectedMainNavigationTabSub}
           streamsFetched={streamsFetched}
           updateStreamsInCatalog={updateStreamsInCatalog}
           width={widthModal - (beforeWidth + (afterHidden ? 0 : afterWidth))}
@@ -1366,7 +1403,6 @@ function DataIntegrationModal({
           block={blockAttributes}
           blocksMapping={blocksMapping}
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
-          setSelectedMainNavigationTabSub={setSelectedMainNavigationTabSub}
           streamMapping={streamsFromCatalogMapping}
           updateStreamsInCatalog={updateStreamsInCatalog}
         />
@@ -1403,7 +1439,6 @@ function DataIntegrationModal({
     setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
     setSelectedMainNavigationTab,
-    setSelectedMainNavigationTabSub,
     streamsFetched,
     streamsFromCatalogMapping,
     testConnection,
@@ -1421,31 +1456,47 @@ function DataIntegrationModal({
     } else if (isOnStreamDetailSchemaProperties) {
       return (
         <Text bold>
-          Mass editing
+          Bulk edit stream properties
+        </Text>
+      );
+    } else if (isOnStreamsOverview) {
+      return (
+        <Text bold>
+          Bulk edit streams
         </Text>
       );
     }
   }, [
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
+    isOnStreamsOverview,
   ]);
 
   const [attributesMapping, setAttributesMapping] = useState<AttributesMappingType>({});
   const [selectedStreamMapping, setSelectedStreamMapping] = useState<StreamMapping>(null);
 
   const afterFooter = useMemo(() => {
-    if (isOnStreamDetailSchemaProperties) {
+    if (isOnStreamDetailSchemaProperties || isOnStreamsOverview) {
       return (
         <Spacing p={PADDING_UNITS} ref={refAfterFooter}>
           <FlexContainer>
             <Button
               fullWidth
               onClick={() => {
-                const streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
-                  selectedStreamMapping,
-                  highlightedColumnsMapping,
-                  attributesMapping,
-                );
+                let streamMappingUpdated = {};
+
+                if (isOnStreamDetailSchemaProperties) {
+                  streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
+                    selectedStreamMapping,
+                    highlightedColumnsMapping,
+                    attributesMapping,
+                  );
+                } else if (isOnStreamsOverview) {
+                  streamMappingUpdated = updateStreamMappingWithStreamAttributes(
+                    selectedStreamMapping,
+                    attributesMapping,
+                  )
+                }
 
                 updateStreamsInCatalog(getAllStreamsFromStreamMapping(streamMappingUpdated));
               }}
@@ -1475,6 +1526,7 @@ function DataIntegrationModal({
     attributesMapping,
     highlightedColumnsMapping,
     isOnStreamDetailSchemaProperties,
+    isOnStreamsOverview,
     refAfterFooter,
     selectedStreamMapping,
     setAttributesMapping,
@@ -1520,6 +1572,16 @@ function DataIntegrationModal({
           updateStreamsInCatalog={updateStreamsInCatalog}
         />
       );
+    } else if (isOnStreamsOverview) {
+      return (
+        <StreamOverviewEditor
+          attributesMapping={attributesMapping}
+          selectedStreamMapping={selectedStreamMapping}
+          setAttributesMapping={setAttributesMapping}
+          setSelectedStreamMapping={setSelectedStreamMapping}
+          streamMapping={streamsFromCatalogMapping}
+        />
+      );
     }
   }, [
     attributesMapping,
@@ -1530,6 +1592,7 @@ function DataIntegrationModal({
     highlightedColumnsMapping,
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
+    isOnStreamsOverview,
     selectedStreamMapping,
     setAttributesMapping,
     setHighlightedColumnsMapping,

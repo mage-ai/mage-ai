@@ -46,7 +46,6 @@ type StreamGridPros = {
   height: number;
   searchText?: string;
   setSelectedMainNavigationTab: (id: string) => void;
-  setSelectedMainNavigationTabSub: (id: string) => void;
   streamsFetched?: StreamType[];
   updateStreamsInCatalog: (streams: StreamType[]) => any;
   width: number;
@@ -84,7 +83,6 @@ function StreamGrid({
   height,
   searchText,
   setSelectedMainNavigationTab,
-  setSelectedMainNavigationTabSub,
   streamsFetched,
   updateStreamsInCatalog,
   width,
@@ -313,8 +311,7 @@ function StreamGrid({
                                   <Button
                                     compact
                                     onClick={() => {
-                                      setSelectedMainNavigationTab(streamID);
-                                      setSelectedMainNavigationTabSub(parentStream);
+                                      setSelectedMainNavigationTab(streamID, parentStream);
                                     }}
                                     small
                                     warning

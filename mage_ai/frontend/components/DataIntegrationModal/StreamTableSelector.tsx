@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
 
 import Checkbox from '@oracle/elements/Checkbox';
+import Headline from '@oracle/elements/Headline';
+import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import {
@@ -12,10 +15,12 @@ import {
   groupStreamsForTables,
   updateStreamInStreamMapping,
 } from '@utils/models/block';
+import { pluralize } from '@utils/string';
+import { sum } from '@utils/array';
 
 type StreamTableSelectorProps = {
   selectedStreamMapping: StreamMapping;
-  setSelectedStreamMapping: (prev: (mapping: StreamMapping) => void) => void;
+  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
   streamMapping: StreamMapping;
 };
 
@@ -92,36 +97,66 @@ function StreamTableSelector({
     streamsGrouped,
   ]);
 
-  return (
-    <Table
-      columnFlex={[null, 1]}
-      columns={[
-        {
-          uuid: 'Use',
-        },
-        {
-          uuid: 'Stream',
-        },
-      ]}
-      groupsInline
-      onClickRow={(rowIndex: number) => {
-        const stream = streamsArray?.[rowIndex];
-        const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
+  const numberOfStreamsSelected = useMemo(() =>
+    Object.values(selectedStreamMapping?.noParents || {})?.length
+      + sum(
+        Object.values(
+          selectedStreamMapping?.parents || {},
+        )?.map(mapping => Object.values(mapping || {})?.length)
+      )
+  , [
+    selectedStreamMapping,
+  ]);
 
-        setSelectedStreamMapping(prev => updateStreamInStreamMapping(
-          stream,
-          prev,
+  return (
+    <>
+      <Spacing p={PADDING_UNITS}>
+        <div>
+          <Headline>
+            {pluralize('stream', numberOfStreamsSelected || 0)} chosen
+          </Headline>
+
+          <Spacing mt={1}>
+            <Text default>
+              Clicking the Apply button below will use the values from the selected
+              properties below and change the values of those properties in all the selected
+              columns for all the selected streams.
+            </Text>
+          </Spacing>
+        </div>
+
+      </Spacing>
+
+      <Table
+        columnFlex={[null, 1]}
+        columns={[
           {
-            remove: isSelected,
+            uuid: 'Use',
           },
-        ));
-      }}
-      rowGroupHeaders={rowGroupHeaders}
-      rows={rows}
-      rowsGroupedByIndex={rowsGroupedByIndex}
-      stickyHeader
-    />
+          {
+            uuid: 'Stream',
+          },
+        ]}
+        groupsInline
+        onClickRow={(rowIndex: number) => {
+          const stream = streamsArray?.[rowIndex];
+          const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
+
+          setSelectedStreamMapping(prev => updateStreamInStreamMapping(
+            stream,
+            prev,
+            {
+              remove: isSelected,
+            },
+          ));
+        }}
+        rowGroupHeaders={rowGroupHeaders}
+        rows={rows}
+        rowsGroupedByIndex={rowsGroupedByIndex}
+        stickyHeader
+      />
+    </>
   );
 }
 
-export  default StreamTableSelector;
+export default StreamTableSelector;

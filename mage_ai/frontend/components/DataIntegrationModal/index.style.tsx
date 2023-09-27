@@ -96,3 +96,9 @@ export const StreamGridStyle = styled.div<{
     border: 1px solid ${(props.theme.borders || dark.borders).contrast};
   `}
 `;
+
+export const BackgroundStyle = styled.div`
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+  `}
+`;

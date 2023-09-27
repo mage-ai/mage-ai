@@ -19,9 +19,14 @@ import { equals, indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject, isEqual, selectEntriesWithValues } from '@utils/hash';
 
 export enum AttributeUUIDEnum {
+  AUTO_ADD_NEW_FIELDS = 'auto_add_new_fields',
   BOOKMARK_PROPERTIES = 'bookmark_properties',
+  DISABLE_COLUMN_TYPE_CHECK = 'disable_column_type_check',
   KEY_PROPERTIES = 'key_properties',
   PARTITION_KEYS = 'partition_keys',
+  REPLICATION_METHOD = 'replication_method',
+  RUN_IN_PARALLEL = 'run_in_parallel',
+  UNIQUE_CONFLICT_METHOD = 'unique_conflict_method',
   UNIQUE_CONSTRAINTS = 'unique_constraints',
 }
 
@@ -737,6 +742,55 @@ export function updateStreamInStreamMapping(
   }
 
   return mapping;
+}
+
+export function updateStreamMappingWithStreamAttributes(
+  streamMapping: StreamMapping,
+  attributesMapping: AttributesMappingType,
+): StreamMapping {
+  const attributesOnStream = [
+    AttributeUUIDEnum.AUTO_ADD_NEW_FIELDS,
+    AttributeUUIDEnum.DISABLE_COLUMN_TYPE_CHECK,
+    AttributeUUIDEnum.REPLICATION_METHOD,
+    AttributeUUIDEnum.RUN_IN_PARALLEL,
+    AttributeUUIDEnum.UNIQUE_CONFLICT_METHOD,
+  ];
+
+  const selectedAttributesWithValues = Object
+    .entries(attributesMapping || {})
+    .reduce((acc, [attribute, { selected, value }]) => ({
+      ...acc,
+      ...(selected ? { [attribute]: value } : {}),
+    }), {});
+
+  const updateStreamColumnsWithAttributeValues = (
+    stream: StreamType,
+  ): StreamType => {
+    const streamUpdated = { ...stream };
+    const schemaProperties = streamUpdated?.schema?.properties || {};
+
+    Object.entries(selectedAttributesWithValues || {}).forEach(([attribute, value]) => {
+      if (attributesOnStream.includes(attribute)) {
+        streamUpdated[attribute] = value;
+      }
+    });
+
+    return streamUpdated;
+  };
+
+  let streamMappingUpdated = {
+    ...streamMapping,
+  };
+  const streams: StreamType = getAllStreamsFromStreamMapping(streamMapping || {}) || [];
+
+  streams?.forEach((stream: StreamType) => {
+    streamMappingUpdated = updateStreamInStreamMapping(
+      updateStreamColumnsWithAttributeValues(stream),
+      streamMappingUpdated,
+    );
+  });
+
+  return streamMappingUpdated;
 }
 
 export function updateStreamMappingWithPropertyAttributeValues(
