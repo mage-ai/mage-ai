@@ -32,7 +32,7 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
-import { CHART_TYPES } from '@interfaces/ChartBlockType';
+import { ChartTypeEnum, CHART_TYPES } from '@interfaces/ChartBlockType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -690,7 +690,7 @@ function BlockLayout({
           primary
           value={objectAttributes?.configuration?.chart_type || ''}
         >
-          {CHART_TYPES.map(val => (
+          {CHART_TYPES.concat(ChartTypeEnum.CUSTOM).map(val => (
             <option key={val} value={val}>
               {capitalize(val)}
             </option>

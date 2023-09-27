@@ -1,6 +1,11 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    PipelineType,
+)
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 
 
 class PipelinePresenter(BasePresenter):
@@ -51,7 +56,13 @@ class PipelinePresenter(BasePresenter):
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
 
+            include_block_catalog = PipelineType.PYTHON == self.model.type and \
+                Project(self.model.repo_config).is_feature_enabled(
+                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                )
+
             return await self.model.to_dict_async(
+                include_block_catalog=include_block_catalog,
                 include_block_metadata=include_block_metadata,
                 include_block_pipelines=include_block_pipelines,
                 include_block_tags=True,

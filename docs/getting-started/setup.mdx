@@ -72,9 +72,8 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 
    </Accordion>
    <Accordion title="pip/conda" icon="python">
-
-      1. Install Mage
-
+   <Steps>
+      <Step title="Install Mage">
          <CodeGroup>
             ```bash pip
             pip install mage-ai
@@ -84,39 +83,38 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
             conda install -c conda-forge mage-ai
             ```
          </CodeGroup>
+         
          <sub>If you're installing on Linux and need help, check out this [community provided video walkthrough](https://www.youtube.com/watch?v=WVH7LHqND1I).</sub>
 
-      2. Create new project and launch tool
-
+      </Step>
+      <Step title="Create new project and launch tool">
          ```bash
          mage start [project_name]
          ```
-
-      3. Open http://localhost:6789 in your browser.
-
+      </Step>
+      <Step title="Open Mage">
+         Open http://localhost:6789 in your browser.
+      </Step>
+   </Steps>
    </Accordion>
    <Accordion title="Kubernetes" icon="network-wired">
-      1. Start a Kubernetes cluster locally
-
-         [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
-
-         Other options for starting a Kubernetes cluster locally:
-         * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-         * [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-
-      2. Download and update Kubernetes config file
-
-         * Download Mage Kubernetes config file. https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml
-         * Replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
-
-      3. Run Mage app in Kubernetes cluster
-
-         * Install command line tool [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) if you haven't.
-         * Run command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod.
-         * You can check the pod status with command `kubectl get pods -o wide`.
-         * Set up port forwarding with command `kubectl port-forward mage-server 6789:6789`.
-
-      4. Open http://localhost:6789 in your browser.
+      <Steps>
+      <Step title="Start a Kubernetes cluster locally">
+         [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a Kubernetes cluster locally. Other options for starting a Kubernetes cluster locally are [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) and [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+      </Step>
+      <Step title="Download and update Kubernetes config file">
+         First, download the Mage Kubernetes config file [here](https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml).
+         Then, replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
+      </Step>
+      <Step title="Run Mage app in Kubernetes cluster">
+         Install the command line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl), if you haven't already. 
+         Run the command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod. You can check the pod status with command `kubectl get pods -o wide`.
+         Set up port forwarding with command `kubectl port-forward mage-server 6789:6789`.
+      </Step>
+      <Step title="Open Mage">
+         Open http://localhost:6789 in your browser.
+      </Step>
+   </Steps>
    </Accordion>
 </AccordionGroup>
 
@@ -169,3 +167,5 @@ read more about installing from `requirements.txt` [here](/development/dependenc
 ## 🧭 Journey on
 
 Navigate to our [tutorials](/guides/overview) to learn more about Mage and how to build your own pipelines or continue exploring our docs for advanced configuration and deployment options.
+
+If you're interested in connecting a database in Docker, check out our [guide](/guides/docker/connecting-a-database) for more information.

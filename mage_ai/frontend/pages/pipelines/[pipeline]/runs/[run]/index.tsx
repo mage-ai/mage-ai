@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -31,7 +31,6 @@ import buildTableSidekick, {
   TAB_TREE,
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
-import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
@@ -41,8 +40,6 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
-
-const MAX_COLUMNS = 40;
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
@@ -61,6 +58,10 @@ function PipelineBlockRuns({
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
+
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
+    refreshInterval: 5000,
+  });
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -138,20 +139,11 @@ function PipelineBlockRuns({
     loading: loadingOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
 
-  const {
-    sample_data: blockSampleData,
-    text_data: textData,
-    type: dataType,
-  }: OutputType = dataOutput?.outputs?.[0] || {};
-
   useEffect(() => {
     if (!selectedRun && selectedTabSidekick?.uuid === TAB_OUTPUT.uuid) {
       setSelectedTabSidekick(TAB_TREE);
     }
   }, [selectedRun, selectedTabSidekick?.uuid]);
-
-  const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
-  const rows = blockSampleData?.rows || [];
 
   const tableBlockRuns = useMemo(() => (
     <BlockRunsTable
@@ -218,6 +210,26 @@ function PipelineBlockRuns({
     </Spacing>
   ), [page, pipelineRunId, pipelineUUID, q, router, totalBlockRuns]);
 
+  const buildSidekick = useCallback(props => buildTableSidekick({
+    ...props,
+    blockRuns,
+    blocksOverride: dataBlocks?.blocks,
+    loadingData: loadingOutput,
+    outputs: dataOutput?.outputs,
+    selectedRun,
+    selectedTab: selectedTabSidekick,
+    setSelectedTab: setSelectedTabSidekick,
+    showDynamicBlocks: true,
+  }), [
+    blockRuns,
+    dataBlocks,
+    dataOutput,
+    loadingOutput,
+    selectedRun,
+    selectedTabSidekick,
+    setSelectedTabSidekick,
+  ]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -235,19 +247,7 @@ function PipelineBlockRuns({
           ),
         },
       ]}
-      buildSidekick={props => buildTableSidekick({
-        ...props,
-        blockRuns,
-        columns,
-        dataType,
-        loadingData: loadingOutput,
-        rows,
-        selectedRun,
-        selectedTab: selectedTabSidekick,
-        setSelectedTab: setSelectedTabSidekick,
-        showDynamicBlocks: true,
-        textData,
-      })}
+      buildSidekick={buildSidekick}
       errors={errors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}

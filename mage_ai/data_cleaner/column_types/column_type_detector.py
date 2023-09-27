@@ -1,13 +1,15 @@
 # flake8: noqa
+import re
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
-from mage_ai.shared.multi import run_parallel_multiple_args
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,
     INVALID_VALUE_PLACEHOLDERS,
 )
-import numpy as np
-import pandas as pd
-import re
+from mage_ai.shared.multi import run_parallel_multiple_args
 
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
@@ -176,7 +178,7 @@ def infer_object_type(series, column_name, kwargs):
             else:
                 clean_series = clean_series.str.replace(r'\.0*', '', regex=True)
                 try:
-                    clean_series.astype(int)
+                    clean_series.astype(np.int64)
                     return ColumnType.NUMBER
                 except OverflowError:
                     if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):

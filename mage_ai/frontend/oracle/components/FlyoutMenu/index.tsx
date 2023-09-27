@@ -50,12 +50,13 @@ export type FlyoutMenuProps = {
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
+  multipleConfirmDialogues?: boolean;
   onClickCallback?: () => void;
   open: boolean;
   parentRef: any;
   rightOffset?: number;
   roundedStyle?: boolean;
-  setConfirmationDialogueOpen?: (open: boolean) => void;
+  setConfirmationDialogueOpen?: (open: any) => void;   // "open" arg can be boolean or string (uuid)
   setConfirmationAction?: (action: any) => void;
   topOffset?: number;
   uuid: string;
@@ -67,6 +68,7 @@ function FlyoutMenu({
   disableKeyboardShortcuts,
   items,
   left,
+  multipleConfirmDialogues,
   onClickCallback,
   open,
   parentRef,
@@ -246,7 +248,7 @@ function FlyoutMenu({
                 }
 
                 if (openConfirmationDialogue && !disabled) {
-                  setConfirmationDialogueOpen?.(true);
+                  setConfirmationDialogueOpen?.(multipleConfirmDialogues ? uuid : true);
                   setConfirmationAction?.(() => onClick);
                   onClickCallback?.();
                 } else if (onClick && !disabled) {

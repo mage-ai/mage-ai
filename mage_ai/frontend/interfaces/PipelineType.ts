@@ -44,6 +44,8 @@ export enum PipelineStatusEnum {
   INACTIVE = 'inactive',    // All inactive triggers
   NO_SCHEDULES = 'no_schedules',    // No triggers
   RETRY = 'retry',
+  // Retry incomplete block runs for failed pipeline runs specifically
+  RETRY_INCOMPLETE_BLOCK_RUNS = 'retry_incomplete_block_runs',
 }
 
 export enum PipelineQueryEnum {

@@ -24,6 +24,7 @@ class GitConfig(BaseConfig):
     sync_on_pipeline_run: bool = False
     sync_on_start: bool = False
     sync_on_executor_start: bool = False
+    sync_submodules: bool = False
     auth_type: AuthType = None
     # User settings moved to UserGitConfig, these will be used for Git syncs
     username: str = ''

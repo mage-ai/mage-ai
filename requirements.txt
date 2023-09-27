@@ -29,7 +29,7 @@ polars<=0.19.2
 protobuf
 pyarrow==10.0.1
 python-dateutil==2.8.2
-pytz==2022.1
+pytz==2022.2.1
 pyyaml~=6.0
 redis
 requests==2.27.1
@@ -51,6 +51,7 @@ boto3==1.26.60
 botocore==1.29.60
 clickhouse-connect==0.5.20
 db-dtypes==1.0.5
+duckdb==0.8.1
 google-api-core==2.11.0
 google-api-python-client==2.70.0
 google-cloud-bigquery~=3.0
@@ -75,7 +76,7 @@ trino==0.321.0
 
 # Azure
 azure-eventhub==5.11.2
-azure-identity==1.11.0
+azure-identity==1.12.0
 azure-keyvault-secrets==4.6.0
 azure-keyvault-certificates==4.6.0
 azure-mgmt-containerinstance==10.1.0
@@ -93,11 +94,12 @@ elasticsearch==8.9.0
 
 # DBT
 dbt-bigquery==1.4.3
-dbt-core==1.4.6
-dbt-postgres==1.4.6
-dbt-redshift==1.4.0
-dbt-snowflake==1.4.0
-dbt-spark==1.4.0
-dbt-sqlserver==1.3.1
-dbt-trino==1.4.0
 dbt-clickhouse==1.4.0
+dbt-core==1.4.8
+dbt-duckdb==1.4.2
+dbt-postgres==1.4.8
+dbt-redshift==1.4.0
+dbt-snowflake==1.4.1
+dbt-spark==1.4.0
+dbt-sqlserver==1.4.3
+dbt-trino==1.4.0

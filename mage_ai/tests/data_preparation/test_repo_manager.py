@@ -69,7 +69,7 @@ class RepoManagerTest(DBTestCase):
     def test_variables_dir_expanduser(self):
         dir_name = uuid.uuid4().hex
         metadata_dict = dict(
-            variables_dir=f'~/{dir_name}',
+            variables_dir=os.path.join('~', dir_name),
         )
         test_repo_path = os.path.join(self.repo_path, 'repo_manager_test')
         os.makedirs(test_repo_path, exist_ok=True)
@@ -78,9 +78,9 @@ class RepoManagerTest(DBTestCase):
         test = RepoConfig(repo_path=test_repo_path)
         self.assertEqual(
             test.variables_dir,
-            os.path.expanduser(os.path.join(f'~/{dir_name}', 'repo_manager_test'))
+            os.path.expanduser(os.path.join('~', dir_name, 'repo_manager_test'))
         )
-        test_dir = os.path.expanduser(f'~/{dir_name}')
+        test_dir = os.path.expanduser(os.path.join('~', dir_name))
         shutil.rmtree(test_dir)
 
     def test_set_project_uuid_from_metadata(self):

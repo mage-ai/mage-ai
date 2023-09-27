@@ -2,6 +2,7 @@ import {
   GlobalDataProductOutdatedAfterType,
   GlobalDataProductOutdatedStartingAtType,
 } from './GlobalDataProductType';
+import { IngestModeEnum } from './DataIntegrationBlockType';
 
 export const VARIABLE_NAME_BUCKETS = 'buckets';
 export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
@@ -41,6 +42,7 @@ export const VARIABLE_NAMES = [
 
 export enum ChartTypeEnum {
   BAR_CHART = 'bar chart',
+  CUSTOM = 'custom',
   HISTOGRAM = 'histogram',
   LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',
@@ -96,6 +98,18 @@ export enum SortOrderEnum {
   DESCENDING = 'descending',
 }
 
+export interface ConfigurationDataIntegrationType {
+  ingest_mode?: {
+    [block_uuid: string]: IngestModeEnum;
+  };
+  inputs?: {
+    [block_uuid: string]: {
+      catalog?: boolean;
+      streams?: string[];
+    };
+  };
+}
+
 export interface ConfigurationType {
   [CONFIG_KEY_DATA_PROVIDER]?: string;
   [CONFIG_KEY_DATA_PROVIDER_DATABASE]?: string;
@@ -116,6 +130,7 @@ export interface ConfigurationType {
   [VARIABLE_NAME_Y]?: string;
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
+  data_integration?: ConfigurationDataIntegrationType;
   dbt?: {
     command?: string;
     disable_tests?: boolean;
