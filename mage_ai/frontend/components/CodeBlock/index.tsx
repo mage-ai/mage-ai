@@ -212,6 +212,9 @@ type CodeBlockProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showDataIntegrationModal?: (block: BlockType, opts?: {
+    onChangeBlock?: (block: BlockType) => void;
+  }) => void;
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
@@ -277,6 +280,7 @@ function CodeBlock({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
   textareaFocused,
@@ -955,7 +959,11 @@ function CodeBlock({
           block={block}
           codeEditor={editorEl}
           callbackEl={callbackEl}
+          onChangeBlock={(blockUpdated: BlockType) => updateBlock({
+            block: blockUpdated,
+          })}
           openSidekickView={openSidekickView}
+          showDataIntegrationModal={showDataIntegrationModal}
         />
       );
     }

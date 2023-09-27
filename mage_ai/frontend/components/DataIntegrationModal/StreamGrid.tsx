@@ -44,6 +44,7 @@ type StreamGridPros = {
     [blockUUID: string]: BlockType;
   };
   height: number;
+  onChangeBlock?: (block: BlockType) => void;
   searchText?: string;
   setSelectedMainNavigationTab: (id: string) => void;
   streamsFetched?: StreamType[];
@@ -81,6 +82,7 @@ function StreamGrid({
   block,
   blocksMapping,
   height,
+  onChangeBlock,
   searchText,
   setSelectedMainNavigationTab,
   streamsFetched,
@@ -276,11 +278,12 @@ function StreamGrid({
                             ? () => false
                             : (e) => {
                               e.preventDefault();
+
                               updateStreamsInCatalog([
                                 updateStreamMetadata(stream, {
                                   selected: !selected,
                                 }),
-                              ]);
+                              ], b => onChangeBlock?.(b));
                             }
                           }
                           selected={selected}
@@ -338,7 +341,7 @@ function StreamGrid({
                                       updateStreamMetadata(stream, {
                                         selected: valFunc(selected),
                                       }),
-                                    ])}
+                                    ], b => onChangeBlock?.(b))}
                                   />
                                 </Flex>
                               </>

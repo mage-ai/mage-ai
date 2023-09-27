@@ -444,11 +444,11 @@ class Block(DataIntegrationMixin):
 
                     settings = yaml.safe_load(text)
                     uuid = settings.get('source') or settings.get('destination')
-                    mapping = get_templates(group_templates=True).get(uuid)
+                    mapping = get_templates(group_templates=True).get(uuid) or {}
 
                     return dict(
                         data_integration=merge_dict(
-                            extract(mapping, ['name']),
+                            extract(mapping or {}, ['name']),
                             settings,
                         ),
                     )

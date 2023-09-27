@@ -25,6 +25,7 @@ import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
+import DataIntegrationModal from '@components/DataIntegrationModal';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
@@ -83,6 +84,7 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
@@ -940,6 +942,35 @@ function PipelineDetailPage({
     updatePipeline,
     widgets,
   ]);
+
+  // Data integration modal
+  const [showDataIntegrationModal, hideDataIntegrationModal] = useModal((
+    opts: {
+      block: BlockType,
+      defaultMainNavigationTab?: MainNavigationTabEnum;
+      onChangeBlock?: (block: BlockType) => void;
+    },
+  ) => (
+    <ErrorProvider>
+      <DataIntegrationModal
+        block={opts?.block}
+        defaultMainNavigationTab={opts?.defaultMainNavigationTab}
+        onChangeBlock={opts?.onChangeBlock}
+        // onChangeCodeBlock={onChangeCodeBlock}
+        onClose={hideDataIntegrationModal}
+        pipeline={pipeline}
+      />
+    </ErrorProvider>
+  ), {}, [
+    onChangeCodeBlock,
+    pipeline,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    disableCloseButton: true,
+    disableEscape: true,
+    uuid: `DataIntegrationModal/${pipelineUUID}`,
+  });
 
   // Files
   const openFile = useCallback((filePath: string) => {
@@ -2342,6 +2373,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
+      showDataIntegrationModal={showDataIntegrationModal}
       showGlobalDataProducts={showGlobalDataProducts}
       showUpdateBlockModal={(
         block,
@@ -2400,6 +2432,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showDataIntegrationModal,
     showGlobalDataProducts,
     textareaFocused,
     widgets,

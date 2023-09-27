@@ -162,6 +162,9 @@ type PipelineDetailProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  showDataIntegrationModal?: (block: BlockType, opts?: {
+    onChangeBlock?: (block: BlockType) => void;
+  }) => void;
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
@@ -222,6 +225,7 @@ function PipelineDetail({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
   textareaFocused,
@@ -539,8 +543,6 @@ function PipelineDetail({
         key = `${key}:${refreshTimestamp}`;
       }
 
-      // console.log(key)
-
       if (isHidden) {
         el = (
           <HiddenBlock
@@ -634,6 +636,7 @@ function PipelineDetail({
             setTextareaFocused={setTextareaFocused}
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
+            showDataIntegrationModal={showDataIntegrationModal}
             showGlobalDataProducts={showGlobalDataProducts}
             showUpdateBlockModal={showUpdateBlockModal}
             textareaFocused={selected && textareaFocused}
@@ -695,6 +698,7 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showDataIntegrationModal,
     showGlobalDataProducts,
     showUpdateBlockModal,
     textareaFocused,

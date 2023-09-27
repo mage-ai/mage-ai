@@ -102,6 +102,8 @@ import { useWindowSize } from '@utils/sizes';
 
 type DataIntegrationModal = {
   block: BlockType;
+  defaultMainNavigationTab?: MainNavigationTabEnum;
+  onChangeBlock?: (block: BlockType) => void;
   onChangeCodeBlock?: (type: string, uuid: string, value: string) => void;
   onClose?: () => void;
   onSaveBlock?: () => void;
@@ -112,6 +114,8 @@ const MODAL_VERTICAL_PADDING_TOTAL = 3 * UNIT * 2;
 
 function DataIntegrationModal({
   block: blockProp,
+  defaultMainNavigationTab,
+  onChangeBlock,
   onChangeCodeBlock,
   onClose,
   pipeline,
@@ -191,27 +195,35 @@ function DataIntegrationModal({
       blockAttributes,
     ]);
 
-  const setDataIntegrationConfiguration = useCallback(prev1 => setBlockAttributes(prev2 => ({
-    ...prev2,
-    configuration: {
-      ...prev2?.configuration,
-      data_integration: prev1(prev2?.configuration?.data_integration || {}),
-    },
-  })), [
+  const setDataIntegrationConfiguration = useCallback(prev1 => setBlockAttributes(prev2 => {
+    const updated = {
+      ...prev2,
+      configuration: {
+        ...prev2?.configuration,
+        data_integration: prev1(prev2?.configuration?.data_integration || {}),
+      },
+    };
+
+    onChangeBlock?.(updated);
+
+    return updated;
+  }), [
+    onChangeBlock,
     setBlockAttributes,
   ]);
 
-  const setDataIntegrationConfigurationForInputs = useCallback(prev => setDataIntegrationConfiguration((
-    dataIntegrationConfigurationPrev: ConfigurationDataIntegrationType,
-  ) => ({
-    ...dataIntegrationConfigurationPrev,
-    inputs: prev(dataIntegrationConfigurationPrev?.inputs || {}),
-  })), [
-    setDataIntegrationConfiguration,
-  ]);
+  const setDataIntegrationConfigurationForInputs =
+    useCallback(prev => setDataIntegrationConfiguration((
+      dataIntegrationConfigurationPrev: ConfigurationDataIntegrationType,
+    ) => ({
+      ...dataIntegrationConfigurationPrev,
+      inputs: prev(dataIntegrationConfigurationPrev?.inputs || {}),
+    })), [
+      setDataIntegrationConfiguration,
+    ]);
 
   const updateStreamsInCatalog =
-    useCallback((streams: StreamType[]) => setBlockAttributes(prev => {
+    useCallback((streams: StreamType[], callback) => setBlockAttributes(prev => {
       const catalog = prev?.catalog || {};
       const streamsTemp = [...(catalog?.streams || [])];
 
@@ -243,13 +255,17 @@ function DataIntegrationModal({
         }
       });
 
-      return {
+      const updated = {
         ...prev,
         catalog: {
           ...catalog,
           streams: streamsTemp,
         },
       };
+
+      callback?.(updated);
+
+      return updated;;
     }), [
       setBlockAttributes,
     ]);
@@ -313,7 +329,7 @@ function DataIntegrationModal({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
   const [selectedMainNavigationTab, setSelectedMainNavigationTabState] =
-    useState<MainNavigationTabEnum>();
+    useState<MainNavigationTabEnum>(defaultMainNavigationTab);
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
   const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(null);
 
@@ -378,13 +394,7 @@ function DataIntegrationModal({
 
   useEffect(() => {
     if (!selectedMainNavigationTab) {
-      // TODO: remove this after done testing.
-      setSelectedMainNavigationTab(
-        'account_v2',
-        // 'source_pg_yaml',
-        // MainNavigationTabEnum.OVERVIEW,
-      );
-      setSelectedSubTab(SubTabEnum.SAMPLE_DATA);
+      setSelectedMainNavigationTab(MainNavigationTabEnum.CONFIGURATION);
     }
   }, [
     selectedMainNavigationTab,
@@ -407,10 +417,10 @@ function DataIntegrationModal({
         Icon: SettingsWithKnobs,
         uuid: MainNavigationTabEnum.CONFIGURATION,
       },
-      {
-        Icon: Lightning,
-        uuid: MainNavigationTabEnum.SYNC,
-      },
+      // {
+      //   Icon: Lightning,
+      //   uuid: MainNavigationTabEnum.SYNC,
+      // },
       {
         Icon: Sun,
         uuid: MainNavigationTabEnum.STREAMS,
@@ -908,6 +918,7 @@ function DataIntegrationModal({
                 autoHeight
                 language={blockLanguage}
                 onChange={(val: string) => {
+                  console.log(parse(val));
                   onChangeCodeBlock?.(blockType, blockUUID, stringify({
                     ...blockContent,
                     config: parse(val),
@@ -1398,6 +1409,7 @@ function DataIntegrationModal({
           block={blockAttributes}
           blocksMapping={blocksMapping}
           height={heightModal - headerOffset}
+          onChangeBlock={onChangeBlock}
           searchText={searchText}
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
           streamsFetched={streamsFetched}
@@ -1418,6 +1430,7 @@ function DataIntegrationModal({
         <StreamsOverview
           block={blockAttributes}
           blocksMapping={blocksMapping}
+          onChangeBlock={onChangeBlock}
           selectedStreamMapping={selectedStreamMapping}
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
           setSelectedStreamMapping={setSelectedStreamMapping}
@@ -1447,6 +1460,7 @@ function DataIntegrationModal({
     isLoadingFetchIntegrationSource,
     isLoadingTestConnection,
     noStreamsAnywhere,
+    onChangeBlock,
     pipelineUUID,
     searchText,
     selectedMainNavigationTab,
@@ -1524,7 +1538,10 @@ function DataIntegrationModal({
                     )
                   }
 
-                  updateStreamsInCatalog(getAllStreamsFromStreamMapping(streamMappingUpdated));
+                  updateStreamsInCatalog(
+                    getAllStreamsFromStreamMapping(streamMappingUpdated),
+                    b => onChangeBlock?.(b),
+                  );
 
                   if (clearSelectionAndValues) {
                     setAttributesMapping({});
@@ -1561,6 +1578,7 @@ function DataIntegrationModal({
     highlightedColumnsMapping,
     isOnStreamDetailSchemaProperties,
     isOnStreamsOverview,
+    onChangeBlock,
     refAfterFooter,
     selectedStreamMapping,
     setAttributesMapping,
@@ -1733,7 +1751,8 @@ function DataIntegrationModal({
         afterHeaderOffset={0}
         afterHidden={afterHidden}
         afterInnerHeightMinus={
-          (headerOffset - afterInnerTopOffset) + (afterFooterBottomOffset || 0)
+          // After header is always 48
+          48 + (afterFooter ? (afterFooterBottomOffset || 0) : 0)
         }
         afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}

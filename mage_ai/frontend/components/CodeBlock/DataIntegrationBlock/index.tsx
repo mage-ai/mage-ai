@@ -12,6 +12,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Check, Close } from '@oracle/icons';
 import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
@@ -22,8 +23,12 @@ type DataIntegrationBlockProps = {
   block: BlockType,
   codeEditor?: any;
   callbackEl?: any;
+  onChangeBlock?: (block: BlockType) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     blockUUID: string;
+  }) => void;
+  showDataIntegrationModal?: (block: BlockType, opts?: {
+    onChangeBlock?: (block: BlockType) => void;
   }) => void;
 };
 
@@ -31,7 +36,9 @@ function DataIntegrationBlock({
   block,
   codeEditor,
   callbackEl,
+  onChangeBlock,
   openSidekickView,
+  showDataIntegrationModal,
 }: DataIntegrationBlockProps) {
   const {
     catalog,
@@ -171,7 +178,11 @@ function DataIntegrationBlock({
 
               <Button
                 compact
-                onClick={() => alert('OPEN MODAL')}
+                onClick={() => showDataIntegrationModal({
+                  block,
+                  defaultMainNavigationTab: MainNavigationTabEnum.OVERVIEW,
+                  onChangeBlock,
+                })}
                 secondary
               >
                 Configure {displayTypeText}
@@ -201,7 +212,11 @@ function DataIntegrationBlock({
 
             <Button
               compact
-              onClick={() => alert('OPEN MODAL')}
+              onClick={() => showDataIntegrationModal({
+                block,
+                defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
+                onChangeBlock,
+              })}
               secondary
             >
               Edit streams

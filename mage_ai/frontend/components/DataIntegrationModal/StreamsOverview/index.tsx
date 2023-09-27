@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -35,6 +35,7 @@ export type StreamsOverviewProps = {
   blocksMapping: {
     [blockUUID: string]: BlockType;
   };
+  onChangeBlock?: (block: BlockType) => void;
   selectedStreamMapping: StreamMapping;
   setSelectedMainNavigationTab: (
     prev: (tab: MainNavigationTabEnum, subtab: string) => void,
@@ -52,12 +53,22 @@ const INPUT_SHARED_PROPS = {
 function StreamsOverview({
   block,
   blocksMapping,
+  onChangeBlock,
   selectedStreamMapping,
   setSelectedMainNavigationTab,
   setSelectedStreamMapping,
   streamMapping,
-  updateStreamsInCatalog,
+  updateStreamsInCatalog: updateStreamsInCatalogProp,
 }: StreamsOverviewProps) {
+  const updateStreamsInCatalog =
+    useCallback((streams: StreamType[]) => updateStreamsInCatalogProp(
+      streams,
+      b => onChangeBlock?.(b),
+    ),
+    [
+      updateStreamsInCatalogProp,
+    ]);
+
   const {
     type: blockType,
   } = block || {};
