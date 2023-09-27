@@ -34,6 +34,7 @@ class ScheduleInterval(str, enum.Enum):
     DAILY = '@daily'
     WEEKLY = '@weekly'
     MONTHLY = '@monthly'
+    ALWAYS_ON = '@always_on'
 
 
 @dataclass

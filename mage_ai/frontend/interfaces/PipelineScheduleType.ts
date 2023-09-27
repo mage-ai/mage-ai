@@ -24,6 +24,7 @@ export enum ScheduleIntervalEnum {
   DAILY = '@daily',
   WEEKLY = '@weekly',
   MONTHLY = '@monthly',
+  ALWAYS_ON = '@always_on'
 }
 
 export interface SelectedScheduleType {
