@@ -49,6 +49,7 @@ import {
   ConfigurationDataIntegrationType,
 } from '@interfaces/ChartBlockType';
 import {
+  AfterFooterStyle,
   ContainerStyle,
   HeaderStyle,
   MODAL_PADDING,
@@ -107,6 +108,8 @@ type DataIntegrationModal = {
   pipeline: PipelineType;
 };
 
+const MODAL_VERTICAL_PADDING_TOTAL = 3 * UNIT * 2;
+
 function DataIntegrationModal({
   block: blockProp,
   onChangeCodeBlock,
@@ -121,6 +124,7 @@ function DataIntegrationModal({
 
   const [attributesMapping, setAttributesMapping] = useState<AttributesMappingType>({});
   const [selectedStreamMapping, setSelectedStreamMapping] = useState<StreamMapping>(null);
+  const [clearSelectionAndValues, setClearSelectionAndValues] = useState<boolean>(false);
 
   const {
     height: heightWindow,
@@ -376,9 +380,11 @@ function DataIntegrationModal({
     if (!selectedMainNavigationTab) {
       // TODO: remove this after done testing.
       setSelectedMainNavigationTab(
-        // 'account_v2',
-        MainNavigationTabEnum.OVERVIEW,
+        'account_v2',
+        'source_pg_yaml',
+        // MainNavigationTabEnum.OVERVIEW,
       );
+      setSelectedSubTab(SubTabEnum.SETTINGS);
     }
   }, [
     selectedMainNavigationTab,
@@ -1482,52 +1488,69 @@ function DataIntegrationModal({
   const afterFooter = useMemo(() => {
     if (isOnStreamDetailSchemaProperties || isOnStreamsOverview) {
       return (
-        <Spacing p={PADDING_UNITS} ref={refAfterFooter}>
-          <FlexContainer>
-            <Button
-              fullWidth
-              onClick={() => {
-                let streamMappingUpdated = {};
+        <AfterFooterStyle ref={refAfterFooter}>
+          <Spacing p={PADDING_UNITS}>
+            <Spacing mb={PADDING_UNITS}>
+              <Checkbox
+                checked={clearSelectionAndValues}
+                label="Clear selection and values after applying changes"
+                onClick={() => setClearSelectionAndValues(prev => !prev)}
+              />
+            </Spacing>
 
-                if (isOnStreamDetailSchemaProperties) {
-                  streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
-                    selectedStreamMapping,
-                    highlightedColumnsMapping,
-                    attributesMapping,
-                  );
-                } else if (isOnStreamsOverview) {
-                  streamMappingUpdated = updateStreamMappingWithStreamAttributes(
-                    selectedStreamMapping,
-                    attributesMapping,
-                  )
-                }
+            <FlexContainer>
+              <Button
+                fullWidth
+                onClick={() => {
+                  let streamMappingUpdated = {};
 
-                updateStreamsInCatalog(getAllStreamsFromStreamMapping(streamMappingUpdated));
-              }}
-              primary
-            >
-              Apply changes
-            </Button>
+                  if (isOnStreamDetailSchemaProperties) {
+                    streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
+                      selectedStreamMapping,
+                      highlightedColumnsMapping,
+                      attributesMapping,
+                    );
+                  } else if (isOnStreamsOverview) {
+                    streamMappingUpdated = updateStreamMappingWithStreamAttributes(
+                      selectedStreamMapping,
+                      attributesMapping,
+                    )
+                  }
 
-            <Spacing mr={1} />
+                  updateStreamsInCatalog(getAllStreamsFromStreamMapping(streamMappingUpdated));
 
-            <Button
-              fullWidth
-              onClick={() => {
-                setAttributesMapping({});
-                setHighlightedColumnsMapping({});
-                setSelectedStreamMapping(null);
-              }}
-              secondary
-            >
-              Clear
-            </Button>
-          </FlexContainer>
-        </Spacing>
+                  if (clearSelectionAndValues) {
+                    setAttributesMapping({});
+                    setHighlightedColumnsMapping({});
+                    setSelectedStreamMapping(null);
+                  }
+                }}
+                primary
+              >
+                Apply changes
+              </Button>
+
+              <Spacing mr={1} />
+
+              <Button
+                fullWidth
+                onClick={() => {
+                  setAttributesMapping({});
+                  setHighlightedColumnsMapping({});
+                  setSelectedStreamMapping(null);
+                }}
+                secondary
+              >
+                Clear
+              </Button>
+            </FlexContainer>
+          </Spacing>
+        </AfterFooterStyle>
       );
     }
   }, [
     attributesMapping,
+    clearSelectionAndValues,
     highlightedColumnsMapping,
     isOnStreamDetailSchemaProperties,
     isOnStreamsOverview,
@@ -1639,6 +1662,12 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
   ]);
 
+  const afterFooterBottom =
+    useMemo(() => ((heightWindow - heightModal) - MODAL_VERTICAL_PADDING_TOTAL) / 2, [
+      heightModal,
+      heightWindow,
+    ]);
+
   return (
     <ContainerStyle
       maxWidth={widthModal}
@@ -1687,7 +1716,7 @@ function DataIntegrationModal({
       <TripleLayout
         after={after}
         afterFooter={afterFooter}
-        afterFooterBottomOffset={afterFooterBottomOffset - (MODAL_PADDING / 2)}
+        afterFooterBottomOffset={afterFooterBottom}
         afterHeader={(
           <Spacing ref={refAfterHeader} px={1}>
             {afterHeader}
