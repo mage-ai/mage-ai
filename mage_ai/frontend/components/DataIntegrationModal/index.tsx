@@ -674,7 +674,7 @@ function DataIntegrationModal({
   const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
 
   useEffect(() => {
-    if (selectedMainNavigationTab) {
+    if (selectedMainNavigationTab || selectedSubTab) {
       if (refSubheader?.current) {
         setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
       }
@@ -686,10 +686,11 @@ function DataIntegrationModal({
       }
     }
   }, [
-    selectedMainNavigationTab,
-    refAfterHeader,
     refAfterFooter,
+    refAfterHeader,
     refSubheader,
+    selectedMainNavigationTab,
+    selectedSubTab,
   ]);
 
   const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
