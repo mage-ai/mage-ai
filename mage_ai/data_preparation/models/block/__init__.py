@@ -499,14 +499,13 @@ class Block(DataIntegrationMixin):
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
                     for block in block.upstream_dbt_blocks()
@@ -525,7 +524,6 @@ class Block(DataIntegrationMixin):
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             DestinationBlock,
             SourceBlock,
@@ -538,6 +536,8 @@ class Block(DataIntegrationMixin):
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             return DBTBlock
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
@@ -1198,12 +1198,13 @@ class Block(DataIntegrationMixin):
             )
 
             # If block has downstream dbt block, then materialize output
-            from mage_ai.data_preparation.models.block.dbt import DBTBlock
             if (
-                not isinstance(self, DBTBlock) and
+                BlockType.DBT != self.type and
                 self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
-                any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
+                any(BlockType.DBT == block.type for block in self.downstream_blocks)
             ):
+                from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
                 # project_path and target sets
                 DBTBlock.materialize_df(
                     df=outputs[0],

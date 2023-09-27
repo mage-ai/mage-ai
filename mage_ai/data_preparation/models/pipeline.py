@@ -14,7 +14,6 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.errors import (
     HasDownstreamDependencies,
     NoMultipleDynamicUpstreamBlocks,
@@ -979,15 +978,17 @@ class Pipeline:
         # we need to update mage_sources.yml
         if any(
             (
-                not isinstance(block, DBTBlock) and
+                BlockType.DBT != block.type and
                 block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
                 any(
-                    isinstance(downstream_block, DBTBlock)
+                    BlockType.DBT != downstream_block.type
                     for downstream_block in block.downstream_blocks
                 )
             )
             for _uuid, block in self.blocks_by_uuid.items()
         ):
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             DBTBlock.update_sources(self.blocks_by_uuid, variables=self.variables)
 
         if should_update_block_cache:
