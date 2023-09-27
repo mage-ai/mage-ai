@@ -17,13 +17,16 @@ import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 import {
   getParentStreamID,
+  getStreamFromStreamMapping,
   getStreamID,
   getStreamIDWithParentStream,
   groupStreamsForTables,
   isStreamSelected,
+  updateStreamInStreamMapping,
   updateStreamMetadata,
 } from '@utils/models/block';
 
@@ -32,9 +35,11 @@ export type StreamsOverviewProps = {
   blocksMapping: {
     [blockUUID: string]: BlockType;
   };
+  selectedStreamMapping: StreamMapping;
   setSelectedMainNavigationTab: (
     prev: (tab: MainNavigationTabEnum, subtab: string) => void,
   ) => void;
+  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
   streamMapping: StreamMapping;
   updateStreamsInCatalog: (streams: StreamType[]) => any;
 };
@@ -47,7 +52,9 @@ const INPUT_SHARED_PROPS = {
 function StreamsOverview({
   block,
   blocksMapping,
+  selectedStreamMapping,
   setSelectedMainNavigationTab,
+  setSelectedStreamMapping,
   streamMapping,
   updateStreamsInCatalog,
 }: StreamsOverviewProps) {
@@ -147,11 +154,14 @@ function StreamsOverview({
     rowGroupHeaders,
     rows,
     rowsGroupedByIndex,
+    streamsInRows,
   }: {
     rowGroupHeaders?: string[] | any[];
     rows: any[][];
     rowsGroupedByIndex?: number[][] | string[][];
+    streamsInRows: StreamType[];
   } = useMemo(() => {
+    const streamsInRowsInner = [];
     const rowGroupHeadersInner = [];
     const rowsInner = [];
     const rowsGroupedByIndexInner = [];
@@ -183,6 +193,7 @@ function StreamsOverview({
       const groupIndexes = [];
 
       streams?.forEach((stream: StreamType) => {
+        streamsInRowsInner.push(stream);
         groupIndexes.push(rowCount);
         rowCount += 1;
 
@@ -235,6 +246,7 @@ function StreamsOverview({
                 destination_table: e?.target?.value,
               },
             ])}
+            onClick={pauseEvent}
             paddingHorizontal={0}
             value={destinationTable || ''}
           />,
@@ -247,6 +259,7 @@ function StreamsOverview({
                 replication_method: e?.target?.value,
               },
             ])}
+            onClick={pauseEvent}
             placeholder="Replication method"
             value={replicationMethod}
           >
@@ -265,6 +278,7 @@ function StreamsOverview({
                 unique_conflict_method: e?.target?.value,
               },
             ])}
+            onClick={pauseEvent}
             placeholder="Unique conflict method"
             value={uniqueConflictMethod}
           >
@@ -345,7 +359,8 @@ function StreamsOverview({
       rowGroupHeaders: rowGroupHeadersInner,
       rows: rowsInner,
       rowsGroupedByIndex: rowsGroupedByIndexInner,
-    }
+      streamsInRows: streamsInRowsInner,
+    };
   }, [
     blockType,
     blocksMapping,
@@ -365,10 +380,24 @@ function StreamsOverview({
       <Table
         columnFlex={columnFlex}
         columns={columns}
-        isSelectedRow={(rowIndex: number) => false}
-        groupsInline
-        onClickRow={(rowIndex: number) => {
+        isSelectedRow={(index: number) => {
+          const stream = streamsInRows?.[index];
+          const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
 
+          return isSelected;
+        }}
+        groupsInline
+        onClickRow={(index: number) => {
+          const stream = streamsInRows?.[index];
+          const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
+
+          setSelectedStreamMapping(prev => updateStreamInStreamMapping(
+            stream,
+            prev,
+            {
+              remove: isSelected,
+            },
+          ));
         }}
         rowGroupHeaders={rowGroupHeaders}
         rows={rows}

@@ -119,6 +119,9 @@ function DataIntegrationModal({
   const refAfterFooter = useRef(null);
   const refSubheader = useRef(null);
 
+  const [attributesMapping, setAttributesMapping] = useState<AttributesMappingType>({});
+  const [selectedStreamMapping, setSelectedStreamMapping] = useState<StreamMapping>(null);
+
   const {
     height: heightWindow,
     width: widthWindow,
@@ -1402,7 +1405,9 @@ function DataIntegrationModal({
         <StreamsOverview
           block={blockAttributes}
           blocksMapping={blocksMapping}
+          selectedStreamMapping={selectedStreamMapping}
           setSelectedMainNavigationTab={setSelectedMainNavigationTab}
+          setSelectedStreamMapping={setSelectedStreamMapping}
           streamMapping={streamsFromCatalogMapping}
           updateStreamsInCatalog={updateStreamsInCatalog}
         />
@@ -1433,12 +1438,14 @@ function DataIntegrationModal({
     searchText,
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
+    selectedStreamMapping,
     selectedSubTab,
     setBlockAttributes,
     setBlockConfig,
     setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
     setSelectedMainNavigationTab,
+    setSelectedStreamMapping,
     streamsFetched,
     streamsFromCatalogMapping,
     testConnection,
@@ -1471,9 +1478,6 @@ function DataIntegrationModal({
     isOnStreamDetailSchemaProperties,
     isOnStreamsOverview,
   ]);
-
-  const [attributesMapping, setAttributesMapping] = useState<AttributesMappingType>({});
-  const [selectedStreamMapping, setSelectedStreamMapping] = useState<StreamMapping>(null);
 
   const afterFooter = useMemo(() => {
     if (isOnStreamDetailSchemaProperties || isOnStreamsOverview) {
