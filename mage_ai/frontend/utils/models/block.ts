@@ -631,8 +631,12 @@ export function removeTypesFromProperty(
     if (format && ColumnFormatMapping[format] === td) {
       delete property2.format;
     } else {
-      types2 = remove(types2, i => i === td);
-      typesDerived2 = remove(typesDerived2, i => i === td);
+      if (types2?.includes(td)) {
+        types2 = [...types2?.filter(i => i !== td)];
+      }
+      if (typesDerived2?.includes(td)) {
+        typesDerived2 = [...typesDerived2?.filter(i => i !== td)];
+      }
     }
   });
 
@@ -652,10 +656,15 @@ export function hydrateProperty(
     type: types = [],
   } = property || {};
 
-  const typesDerived = [...types];
+  const typesDerived = types?.filter(i => ![
+    COLUMN_TYPE_CUSTOM_DATE_TIME,
+    ColumnFormatEnum.UUID,
+  ]?.includes(i))
 
-  if (ColumnFormatEnum.DATE_TIME === format || ColumnFormatEnum.UUID === format) {
-    typesDerived.push(ColumnFormatMapping[format]);
+  if (ColumnFormatMapping[format]) {
+    if (!typesDerived?.includes(ColumnFormatMapping[format])) {
+      typesDerived.push(ColumnFormatMapping[format]);
+    }
   }
 
   return {
@@ -784,7 +793,6 @@ export function updateStreamMappingWithPropertyAttributeValues(
               ...(schemaProperties?.[column] || {}),
             };
             const p1 = hydrateProperty(column, propertyForColumn);
-            console.log('wtf0', attribute, p1.types)
 
             const mutateFunc = value ? addTypesToProperty : removeTypesFromProperty;
 
@@ -793,8 +801,6 @@ export function updateStreamMappingWithPropertyAttributeValues(
               format,
               type,
             } = mutateFunc([attribute], p1);
-
-            console.log('wtf1', attribute, type)
 
             if (!streamUpdated?.schema) {
               streamUpdated.schema = {
