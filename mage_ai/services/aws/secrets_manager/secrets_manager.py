@@ -18,8 +18,8 @@ class SecretsManager:
         config = Config(region_name=region_name)
 
         client = boto3.client('secretsmanager',
-                              access_key=aws_access_key,
-                              secret_key=aws_secret_key,
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
                               config=config)
 
         cache_config = SecretCacheConfig()
@@ -47,8 +47,8 @@ def get_secret_force(secret_id: str) -> str:
     config = Config(region_name=region_name)
 
     client = boto3.client('secretsmanager',
-                          access_key=aws_access_key,
-                          secret_key=aws_secret_key,
+                          aws_access_key_id=aws_access_key,
+                          aws_secret_access_key=aws_secret_key,
                           config=config)
 
     return client.get_secret_value(
