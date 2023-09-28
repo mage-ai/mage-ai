@@ -36,10 +36,9 @@ import usePrevious from '@utils/usePrevious';
 import { Add, DiamondShared, Edit } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
-import {
-  ICON_SIZE_SMALL,
-  ICON_SIZE_LARGE,
-} from '@oracle/styles/units/icons';
+import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
+import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import {
   PADDING_UNITS,
   UNIT,
@@ -85,7 +84,7 @@ type BlockSettingsProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
-};
+} & OpenDataIntegrationModalType;
 
 function BlockSettings({
   block,
@@ -94,6 +93,7 @@ function BlockSettings({
   globalDataProducts,
   pipeline,
   setSelectedBlock,
+  showDataIntegrationModal,
   showUpdateBlockModal,
 }: BlockSettingsProps) {
   const refExecutorTypeSelect = useRef(null);
@@ -237,6 +237,10 @@ function BlockSettings({
       ),
     },
   );
+
+  const onChangeBlock = useCallback((blockUpdated: BlockType) => updateBlock({
+    block: blockUpdated,
+  }), [updateBlock]);
 
   const pipelinesTable = useMemo(() => blockPipelinesCount >= 1 && (
     <TableContainerStyle>
@@ -454,7 +458,11 @@ function BlockSettings({
 
                   <Button
                     {...SHARED_BUTTON_PROPS}
-                    onClick={() => alert('OPEN MODAL')}
+                    onClick={() => showDataIntegrationModal({
+                      block,
+                      defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
+                      onChangeBlock,
+                    })}
                   >
                     <Edit size={ICON_SIZE_SMALL} />
                   </Button>
@@ -473,7 +481,11 @@ function BlockSettings({
                   <Button
                     {...SHARED_BUTTON_PROPS}
                     afterIcon={<Edit size={ICON_SIZE_SMALL} />}
-                    onClick={() => alert('OPEN MODAL')}
+                    onClick={() => showDataIntegrationModal({
+                      block,
+                      defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
+                      onChangeBlock,
+                    })}
                   >
                     <Text bold>
                       {streams?.length || 0} selected

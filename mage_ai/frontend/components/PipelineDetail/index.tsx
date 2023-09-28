@@ -67,6 +67,7 @@ import {
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
@@ -162,9 +163,6 @@ type PipelineDetailProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
-  showDataIntegrationModal?: (block: BlockType, opts?: {
-    onChangeBlock?: (block: BlockType) => void;
-  }) => void;
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
@@ -174,7 +172,7 @@ type PipelineDetailProps = {
   ) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
-} & SetEditingBlockType;
+} & SetEditingBlockType & OpenDataIntegrationModalType;
 
 function PipelineDetail({
   addNewBlockAtIndex,

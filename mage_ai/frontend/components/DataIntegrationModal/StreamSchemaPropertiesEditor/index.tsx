@@ -35,7 +35,6 @@ function StreamSchemaPropertiesEditor({
   highlightedColumnsMapping,
   selectedStreamMapping,
   setAttributesMapping,
-  setBlockAttributes,
   setHighlightedColumnsMapping,
   setSelectedStreamMapping,
   stream,
@@ -74,6 +73,11 @@ function StreamSchemaPropertiesEditor({
   const tableMemo = useMemo(() => (
     <StreamSettingsEditorTable
       attributes={[
+        {
+          label: () => 'Include property when syncing',
+          inputType: InputTypeEnum.CHECKBOX,
+          uuid: AttributeUUIDEnum.PROPERTY_SELECTED,
+        },
         {
           label: () => 'Unique constraint',
           inputType: InputTypeEnum.CHECKBOX,

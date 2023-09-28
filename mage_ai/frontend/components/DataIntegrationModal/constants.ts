@@ -1,4 +1,6 @@
-import { AttributeUUIDEnum } from '@utils/modles/block';
+import BlockType from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
+import { AttributeUUIDEnum } from '@utils/models/block';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 
 export enum InputTypeEnum {
@@ -26,6 +28,20 @@ export enum MainNavigationTabEnum {
   STREAMS = 'streams',
   SYNC = 'sync',
 }
+
+export type OpenDataIntegrationModalOptionsType = {
+  block: BlockType,
+  defaultMainNavigationTab?: MainNavigationTabEnum;
+  onChangeBlock?: (block: BlockType) => void;
+  savePipelineContent?: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
+}
+
+export type OpenDataIntegrationModalType = {
+  showDataIntegrationModal?: (opts?: OpenDataIntegrationModalOptionsType) => void;
+};
 
 export const MAIN_TABS_EXCEPT_STREAM_DETAIL = {
   [MainNavigationTabEnum.CONFIGURATION]: MainNavigationTabEnum.CONFIGURATION,

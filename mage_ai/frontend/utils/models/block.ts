@@ -24,6 +24,7 @@ export enum AttributeUUIDEnum {
   DISABLE_COLUMN_TYPE_CHECK = 'disable_column_type_check',
   KEY_PROPERTIES = 'key_properties',
   PARTITION_KEYS = 'partition_keys',
+  PROPERTY_SELECTED = 'property_selected',
   REPLICATION_METHOD = 'replication_method',
   RUN_IN_PARALLEL = 'run_in_parallel',
   UNIQUE_CONFLICT_METHOD = 'unique_conflict_method',
@@ -259,7 +260,7 @@ export function updateStreamInBlock(stream: StreamType, block: BlockType) {
   };
 }
 
-export function updateStreamMetadata(streamInit: StreamType, payload): StreamType {
+export function updateStreamMetadata(streamInit: StreamType, payload: MetadataType): StreamType {
   const stream = { ...streamInit };
   if (!stream?.metadata) {
     stream.metadata = [];
@@ -820,6 +821,7 @@ export function updateStreamMappingWithPropertyAttributeValues(
   ): StreamType => {
     const streamUpdated = { ...stream };
     const schemaProperties = streamUpdated?.schema?.properties || {};
+    const metadataByColumn = getStreamMetadataByColumn(stream);
 
     columnsHighlighted?.forEach((column: string) => {
       if (schemaProperties?.[column]) {
@@ -827,7 +829,22 @@ export function updateStreamMappingWithPropertyAttributeValues(
           attribute,
           value,
         ]) => {
-          if (attributesOnStream.includes(attribute)) {
+          if (AttributeUUIDEnum.PROPERTY_SELECTED === attribute) {
+            const metadataForColumn =
+              metadataByColumn?.[column] || buildMetadataForColumn(column) || {};
+
+            const md = {
+              ...metadataForColumn,
+              metadata: {
+                ...metadataForColumn?.metadata,
+                selected: value,
+              },
+            };
+
+            console.log('wtf', md)
+
+            metadataByColumn[column] = md
+          } else if (attributesOnStream.includes(attribute)) {
             if (!streamUpdated?.[attribute]) {
               streamUpdated[attribute] = [];
             }
@@ -841,7 +858,6 @@ export function updateStreamMappingWithPropertyAttributeValues(
               // Remove the column if it’s already there.
               streamUpdated[attribute] = remove(streamUpdated[attribute], i => i === column);
             }
-
           } else if (COLUMN_TYPES.includes(attribute)) {
             const propertyForColumn = {
               ...(schemaProperties?.[column] || {}),
@@ -880,7 +896,7 @@ export function updateStreamMappingWithPropertyAttributeValues(
       }
     });
 
-    return streamUpdated;
+    return updateStreamMetadataForColumns(streamUpdated, metadataByColumn);
   };
 
   let streamMappingUpdated = {

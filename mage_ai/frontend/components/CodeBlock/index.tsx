@@ -108,6 +108,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import {
@@ -212,9 +213,6 @@ type CodeBlockProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
-  showDataIntegrationModal?: (block: BlockType, opts?: {
-    onChangeBlock?: (block: BlockType) => void;
-  }) => void;
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
@@ -223,7 +221,11 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   widgets?: BlockType[];
-} & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
+}
+  & CodeEditorSharedProps
+  & CommandButtonsSharedProps
+  & SetEditingBlockType
+  & OpenDataIntegrationModalType;
 
 function CodeBlock({
   addNewBlock,
@@ -963,6 +965,7 @@ function CodeBlock({
             block: blockUpdated,
           })}
           openSidekickView={openSidekickView}
+          savePipelineContent={savePipelineContent}
           showDataIntegrationModal={showDataIntegrationModal}
         />
       );

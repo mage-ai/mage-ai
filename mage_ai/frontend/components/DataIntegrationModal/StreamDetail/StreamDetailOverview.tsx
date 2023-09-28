@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -44,15 +44,22 @@ type StreamDetailOverviewProps = {
 function StreamDetailOverview({
   block,
   blocksMapping,
+  onChangeBlock,
   setBlockAttributes,
   stream,
   streamMapping,
-  updateStreamsInCatalog,
+  updateStreamsInCatalog: updateStreamsInCatalogProp,
 }: StreamDetailOverviewProps) {
+  const timeout = useRef(null);
+
+  const [destinationTablesByStreamUUID, setDestinationTablesByStreamUUID] = useState<{
+    [uuid: string]: string;
+  }>({});
+
   const {
     auto_add_new_fields: autoAddNewFields,
     bookmark_properties: bookmarkProperties,
-    destination_table: destinationTable,
+    destination_table: destinationTableInit,
     disable_column_type_check: disableColumnTypeCheck,
     key_properties: keyProperties,
     partition_keys: partitionKeys,
@@ -66,6 +73,16 @@ function StreamDetailOverview({
   const isSelected = isStreamSelected(stream);
   const dataIntegration = block?.metadata?.data_integration;
   const dataIntegrationUUID = dataIntegration?.source || dataIntegration?.destination;
+
+  const updateStreamsInCatalog =
+    useCallback((streams: StreamType[]) => updateStreamsInCatalogProp(
+      streams,
+      b => onChangeBlock?.(b),
+    ),
+    [
+      onChangeBlock,
+      updateStreamsInCatalogProp,
+    ]);
 
   const updateValue = useCallback((column: string, value: any) => {
     updateStreamsInCatalog([
@@ -180,6 +197,16 @@ function StreamDetailOverview({
     updateValue,
   ]);
 
+  const destinationTable =
+    useMemo(() => streamUUID in destinationTablesByStreamUUID
+      ? destinationTablesByStreamUUID?.[streamUUID]
+      : destinationTableInit
+     , [
+        destinationTableInit,
+        destinationTablesByStreamUUID,
+        streamUUID,
+      ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={PADDING_UNITS}>
@@ -190,31 +217,47 @@ function StreamDetailOverview({
 
           <Spacing mt={PADDING_UNITS}>
             <FlexContainer alignItems="center">
-              <Text large>
-                Destination table
-              </Text>
+              <FlexContainer alignItems="center">
+                <Text large>
+                  Destination table
+                </Text>
 
-              <Spacing mr={1} />
+                <Spacing mr={1} />
 
-              <Tooltip
-                label={(
-                  <Text>
-                    By default, this stream will be saved to your destination under the
-                    table named <Text bold inline monospace>
-                      {streamID}
-                    </Text>. To change the table name, enter in a different value.
-                  </Text>
-                )}
-                lightBackground
-              />
+                <Tooltip
+                  label={(
+                    <Text>
+                      By default, this stream will be saved to your destination under the
+                      table named <Text bold inline monospace>
+                        {streamID}
+                      </Text>. To change the table name, enter in a different value.
+                    </Text>
+                  )}
+                  lightBackground
+                />
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
+              </FlexContainer>
 
-              <TextInput
-                defaultColor
-                onChange={e => updateValue('destination_table', e.target.value)}
-                value={destinationTable || ''}
-              />
+              <Flex flex={1}>
+                <TextInput
+                  defaultColor
+                  fullWidth
+                  monospace
+                  onChange={(e) => {
+                    const val = e?.target?.value;
+
+                    setDestinationTablesByStreamUUID(prev => ({
+                      ...prev,
+                      [streamUUID]: val,
+                    }));
+
+                    clearTimeout(timeout.current);
+                    timeout.current = setTimeout(() => updateValue('destination_table', val), 300);
+                  }}
+                  value={destinationTable || ''}
+                />
+              </Flex>
             </FlexContainer>
           </Spacing>
         </SectionStyle>

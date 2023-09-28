@@ -1,4 +1,3 @@
-import { parse, stringify } from 'yaml';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -8,7 +7,7 @@ import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
-import CodeEditor from '@components/CodeEditor';
+import Credentials, { CredentialsProps } from './Credentials';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
@@ -34,6 +33,7 @@ import { CatalogType, StreamType } from '@interfaces/IntegrationSourceType';
 import {
   Check,
   Close,
+  CubeWithArrowDown,
   DocumentIcon,
   Lightning,
   PlugAPI,
@@ -43,7 +43,6 @@ import {
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
-import { CodeEditorStyle} from '@components/IntegrationPipeline/index.style';
 import {
   ConfigurationDataIntegrationInputsType,
   ConfigurationDataIntegrationType,
@@ -104,13 +103,20 @@ type DataIntegrationModal = {
   block: BlockType;
   defaultMainNavigationTab?: MainNavigationTabEnum;
   onChangeBlock?: (block: BlockType) => void;
-  onChangeCodeBlock?: (type: string, uuid: string, value: string) => void;
   onClose?: () => void;
   onSaveBlock?: () => void;
   pipeline: PipelineType;
-};
+} & CredentialsProps;
 
 const MODAL_VERTICAL_PADDING_TOTAL = 3 * UNIT * 2;
+
+function getSubTabForMainNavigationTab(mainNavigationTab: MainNavigationTabEnum): SubTabEnum {
+  if (mainNavigationTab in SUB_TABS_BY_MAIN_NAVIGATION_TAB) {
+    return SUB_TABS_BY_MAIN_NAVIGATION_TAB[mainNavigationTab];
+  }
+
+  return SUB_TABS_FOR_STREAM_DETAIL
+};
 
 function DataIntegrationModal({
   block: blockProp,
@@ -118,8 +124,9 @@ function DataIntegrationModal({
   onChangeBlock,
   onChangeCodeBlock,
   onClose,
-  pipeline,
   onSaveBlock,
+  pipeline,
+  savePipelineContent,
 }) {
   const mainContainerRef = useRef(null);
   const refAfterHeader = useRef(null);
@@ -331,7 +338,10 @@ function DataIntegrationModal({
   const [selectedMainNavigationTab, setSelectedMainNavigationTabState] =
     useState<MainNavigationTabEnum>(defaultMainNavigationTab);
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
-  const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(null);
+  const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(defaultMainNavigationTab
+    ? getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
+    : null
+  );
 
   const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
     useState<ColumnsMappingType>({});
@@ -401,15 +411,10 @@ function DataIntegrationModal({
     setSelectedMainNavigationTab,
   ]);
 
-  const subtabs: TabType[] = useMemo(() => {
-    if (selectedMainNavigationTab in SUB_TABS_BY_MAIN_NAVIGATION_TAB) {
-      return SUB_TABS_BY_MAIN_NAVIGATION_TAB[selectedMainNavigationTab];
-    }
-
-    return SUB_TABS_FOR_STREAM_DETAIL
-  }, [
-    selectedMainNavigationTab,
-  ]);
+  const subtabs: TabType[] =
+    useMemo(() => getSubTabForMainNavigationTab(selectedMainNavigationTab), [
+      selectedMainNavigationTab,
+    ]);
 
   const before = useMemo(() => {
     const arr = [
@@ -688,6 +693,7 @@ function DataIntegrationModal({
             {!noStreamsAnywhere && (
               <Spacing px={PADDING_UNITS}>
                 <Button
+                  beforeIcon={<CubeWithArrowDown size={2 * UNIT} />}
                   compact
                   loading={isLoadingFetchIntegrationSource}
                   onClick={() => fetchIntegrationSource()}
@@ -746,28 +752,6 @@ function DataIntegrationModal({
 
   const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
 
-  const blockContentParsed = useMemo(() => {
-    if (BlockLanguageEnum.YAML === blockLanguage && blockContent) {
-      return parse(blockContent);
-    }
-
-    return {};
-  }, [
-    blockContent,
-    blockLanguage,
-  ]);
-
-  const [blockConfig, setBlockConfig] = useState<string>(null);
-
-  useEffect(() => {
-    if (blockContentParsed && !blockConfig) {
-      setBlockConfig(stringify(blockContentParsed?.config));
-    }
-  }, [
-    blockConfig,
-    blockContentParsed,
-  ]);
-
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
@@ -775,39 +759,6 @@ function DataIntegrationModal({
         response, {
           callback: (resp) => {
             onSaveBlock?.(resp?.block);
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const [connectionSuccessful, setConnectionSuccessful] = useState<boolean>(false);
-  const [testConnection, { isLoading: isLoadingTestConnection }] = useMutation(
-    api.integration_sources.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response,
-        {
-          callback: (resp) => {
-            const {
-              integration_source: integrationSource,
-            } = resp;
-
-            if (integrationSource?.error_message) {
-              showError({
-                response: {
-                  error: {
-                    exception: integrationSource?.error_message,
-                  },
-                },
-              });
-            } else if (integrationSource?.success) {
-              setConnectionSuccessful(true);
-            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -879,6 +830,7 @@ function DataIntegrationModal({
           blocksMapping={blocksMapping}
           height={(heightModal - headerOffset) - (2 * UNIT)}
           highlightedColumnsMapping={highlightedColumnsMapping}
+          onChangeBlock={onChangeBlock}
           pipeline={pipeline}
           selectedSubTab={selectedSubTab}
           setBlockAttributes={setBlockAttributes}
@@ -897,6 +849,7 @@ function DataIntegrationModal({
     heightModal,
     highlightedColumnsMapping,
     pipeline,
+    onChangeBlock,
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
     selectedSubTab,
@@ -907,210 +860,31 @@ function DataIntegrationModal({
     updateStreamsInCatalog,
   ]);
 
+  const credentialsMemo = useMemo(() => (
+    <Credentials
+      block={blockAttributes}
+      blockUpstreamBlocks={blockUpstreamBlocks}
+      dataIntegrationConfiguration={dataIntegrationConfiguration}
+      onChangeCodeBlock={onChangeCodeBlock}
+      pipeline={pipeline}
+      savePipelineContent={savePipelineContent}
+      setSelectedSubTab={setSelectedSubTab}
+      showError={showError}
+    />
+  ), [
+    blockAttributes,
+    blockUpstreamBlocks,
+    dataIntegrationConfiguration,
+    onChangeCodeBlock,
+    savePipelineContent,
+    pipeline,
+    setSelectedSubTab,
+    showError,
+  ]);
+
   const mainContentEl = useMemo(() => {
     if (MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab) {
-      if (SubTabEnum.CREDENTIALS === selectedSubTab) {
-        let codeEl;
-        if (BlockLanguageEnum.YAML === blockLanguage) {
-          codeEl = (
-            <CodeEditorStyle>
-              <CodeEditor
-                autoHeight
-                language={blockLanguage}
-                onChange={(val: string) => {
-                  console.log(parse(val));
-                  onChangeCodeBlock?.(blockType, blockUUID, stringify({
-                    ...blockContent,
-                    config: parse(val),
-                  }));
-                  setBlockConfig(val);
-                }}
-                tabSize={2}
-                value={blockConfig || undefined}
-                width="100%"
-              />
-            </CodeEditorStyle>
-          );
-        } else if (BlockLanguageEnum.PYTHON === blockLanguage) {
-          codeEl = (
-            <CodeEditorStyle>
-              <CodeEditor
-                autoHeight
-                language={blockLanguage}
-                onChange={(val: string) => {
-                  onChangeCodeBlock?.(blockType, blockUUID, val);
-                }}
-                tabSize={4}
-                value={blockContent}
-                width="100%"
-              />
-            </CodeEditorStyle>
-          );
-        }
-
-        const inputs = dataIntegrationConfiguration?.inputs || {};
-        const inputsBlocks = blockUpstreamBlocks?.reduce((acc, b) => {
-          const {
-            uuid,
-          } = b;
-          const input = inputs?.[uuid];
-          if (!input) {
-            return acc;
-          }
-
-          return acc.concat({
-            block: b,
-            input,
-          })
-        }, []);
-
-        return (
-          <>
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <Button
-                  beforeIcon={<PlugAPI success />}
-                  loading={isLoadingTestConnection}
-                  onClick={() => {
-                    setConnectionSuccessful(false);
-                    testConnection({
-                      integration_source: {
-                        action_type: 'test_connection',
-                        block_uuid: blockUUID,
-                        pipeline_uuid: pipelineUUID,
-                      },
-                    });
-                  }}
-                  secondary
-                  compact
-                >
-                  Test connection
-                </Button>
-
-                {connectionSuccessful && (
-                  <>
-                    <Spacing mr={PADDING_UNITS} />
-
-                    <FlexContainer alignItems="center">
-                      <Circle
-                        size={UNIT * 1}
-                        success
-                      />
-
-                      <Spacing mr={1} />
-
-                      <Text success>
-                        Connection successful
-                      </Text>
-                    </FlexContainer>
-                  </>
-                )}
-              </FlexContainer>
-            </Spacing>
-
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <Text bold default large>
-                Inputs from upstream blocks
-              </Text>
-
-              {inputsBlocks?.length === 0 && (
-                <Spacing mt={1}>
-                  <Text muted>
-                    No inputs are selected.
-                    Toggle the upstream blocks in the <Link
-                      bold
-                      onClick={() => setSelectedSubTab(SubTabEnum.UPSTREAM_BLOCK_SETTINGS)}
-                      preventDefault
-                    >
-                      Upstream block settings
-                    </Link> to enable its output data as an input.
-                  </Text>
-                </Spacing>
-              )}
-            </Spacing>
-
-            {inputsBlocks?.length >= 1 && (
-              <Table
-                columnFlex={[1, null, 1, null, null]}
-                columns={[
-                  {
-                    uuid: 'Block',
-                  },
-                  {
-                    center: true,
-                    uuid: 'Catalog',
-                  },
-                  {
-                    center: true,
-                    uuid: 'Streams',
-                  },
-                  {
-                    center: true,
-                    uuid: 'Argument shape',
-                  },
-                  {
-                    center: true,
-                    uuid: 'Order',
-                  },
-                ]}
-                rows={inputsBlocks?.map(({
-                  block: {
-                    color,
-                    type: bType,
-                    uuid,
-                  },
-                  input: {
-                    catalog,
-                    streams,
-                  },
-                }, idx: number) => {
-                  const hasStreams = streams?.length >= 1;
-                  const {
-                    accent,
-                  } = getColorsForBlockType(bType, {
-                    blockColor: color,
-                  });
-
-                  return [
-                    <Text color={accent} key={`block-${uuid}`} monospace>
-                      {uuid}
-                    </Text>,
-                    <FlexContainer justifyContent="center" key={`catalog-${uuid}`}>
-                      {catalog
-                        ? <Check success />
-                        : <Close muted />
-                      }
-                    </FlexContainer>,
-                    <FlexContainer justifyContent="center" key={`selected-streams-${uuid}`}>
-                      {!hasStreams && <Close key={`catalog-${uuid}`} muted />}
-                      {hasStreams && streams?.includes(uuid)
-                        ? <Check success />
-                        : (
-                          <Text center default monospace small>
-                            {streams?.join(', ')}
-                          </Text>
-                        )
-                      }
-                    </FlexContainer>,
-                    <Text center default key={`shape-${uuid}`} monospace>
-                      {catalog && !hasStreams && 'Dict'}
-                      {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
-                      {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}
-                    </Text>,
-                    <Text center default key={`position-${uuid}`} monospace>
-                      {idx}
-                    </Text>,
-                  ];
-                })}
-              />
-            )}
-
-            {codeEl}
-          </>
-        );
-      } else if (SubTabEnum.UPSTREAM_BLOCK_SETTINGS === selectedSubTab) {
+      if (SubTabEnum.UPSTREAM_BLOCK_SETTINGS === selectedSubTab) {
         const rows = blockUpstreamBlocks?.map(({
           uuid,
         }): BlockType => {
@@ -1392,7 +1166,21 @@ function DataIntegrationModal({
       if (noStreamsAnywhere) {
         return (
           <Spacing p={PADDING_UNITS}>
+            <Spacing mb={PADDING_UNITS}>
+              <Headline>
+                Fetch streams to start set up
+              </Headline>
+
+              <Spacing mt={1}>
+                <Text default>
+                  Add streams and configure them by first fetching the available streams
+                  from {dataIntegrationUUID}.
+                </Text>
+              </Spacing>
+            </Spacing>
+
             <Button
+              beforeIcon={<CubeWithArrowDown size={2 * UNIT} />}
               large
               loading={isLoadingFetchIntegrationSource}
               onClick={() => fetchIntegrationSource()}
@@ -1444,21 +1232,19 @@ function DataIntegrationModal({
     afterWidth,
     beforeWidth,
     blockAttributes,
-    blockConfig,
     blockContent,
     blockLanguage,
     blockType,
     blockUUID,
     blockUpstreamBlocks,
     blocksMapping,
-    connectionSuccessful,
     dataIntegrationConfiguration,
     dataIntegrationType,
+    dataIntegrationUUID,
     fetchIntegrationSource,
     headerOffset,
     heightModal,
     isLoadingFetchIntegrationSource,
-    isLoadingTestConnection,
     noStreamsAnywhere,
     onChangeBlock,
     pipelineUUID,
@@ -1467,15 +1253,11 @@ function DataIntegrationModal({
     selectedMainNavigationTabSub,
     selectedStreamMapping,
     selectedSubTab,
-    setBlockAttributes,
-    setBlockConfig,
-    setConnectionSuccessful,
     setDataIntegrationConfigurationForInputs,
     setSelectedMainNavigationTab,
     setSelectedStreamMapping,
     streamsFetched,
     streamsFromCatalogMapping,
-    testConnection,
     updateStreamsInCatalog,
     widthModal,
   ]);
@@ -1616,7 +1398,6 @@ function DataIntegrationModal({
           highlightedColumnsMapping={highlightedColumnsMapping}
           selectedStreamMapping={selectedStreamMapping}
           setAttributesMapping={setAttributesMapping}
-          setBlockAttributes={setBlockAttributes}
           setHighlightedColumnsMapping={setHighlightedColumnsMapping}
           setSelectedStreamMapping={setSelectedStreamMapping}
           stream={stream}
@@ -1777,9 +1558,13 @@ function DataIntegrationModal({
       >
         {isOnStreamDetail && streamDetailMemo}
         {!isOnStreamDetail && mainContentEl}
+        {MainNavigationTabEnum.CONFIGURATION === selectedMainNavigationTab
+          && SubTabEnum.CREDENTIALS === selectedSubTab
+          && credentialsMemo
+        }
       </TripleLayout>
     </ContainerStyle>
   );
-}
+};
 
 export default DataIntegrationModal;

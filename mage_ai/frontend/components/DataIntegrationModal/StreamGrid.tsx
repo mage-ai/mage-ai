@@ -36,7 +36,7 @@ import {
 } from '@utils/models/block';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { pluralize } from '@utils/string';
-import { sum } from '@utils/array';
+import { sortByKey, sum } from '@utils/array';
 
 type StreamGridPros = {
   block: BlockType;
@@ -73,8 +73,14 @@ function filterStreams(searchText: string, arr: StreamType[]): StreamType[] {
 
     return !searchText
       || id?.match(re)
-      || id?.replace('_', ' ').match(re)
       || id?.replace('-', ' ').match(re)
+      || id?.replace('-', '').match(re)
+      || id?.replace('_', ' ').match(re)
+      || id?.replace('_', '').match(re)
+      || id?.replaceAll('-', ' ').match(re)
+      || id?.replaceAll('-', '').match(re)
+      || id?.replaceAll('_', ' ').match(re)
+      || id?.replaceAll('_', '').match(re)
   });
 }
 
@@ -149,7 +155,7 @@ function StreamGrid({
       const arrNoParents2 = filterStreams(searchText, arrNoParents1);
       if (arrNoParents2?.length >= 1) {
         subgroups.push({
-          streams: arrNoParents2,
+          streams: sortByKey(arrNoParents2 || [], getStreamID),
         });
       }
 
@@ -159,7 +165,7 @@ function StreamGrid({
         if (arrParents1?.length >= 1) {
           subgroups.push({
             block: blocksMapping?.[parentStream],
-            streams: arrParents1,
+            streams: sortByKey(arrParents1 || [], getStreamID),
           });
         }
       });

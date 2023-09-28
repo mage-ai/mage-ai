@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -60,12 +60,19 @@ function StreamsOverview({
   streamMapping,
   updateStreamsInCatalog: updateStreamsInCatalogProp,
 }: StreamsOverviewProps) {
+  const timeout = useRef(null);
+
+  const [destinationTablesByStreamUUID, setDestinationTablesByStreamUUID] = useState<{
+    [uuid: string]: string;
+  }>({});
+
   const updateStreamsInCatalog =
     useCallback((streams: StreamType[]) => updateStreamsInCatalogProp(
       streams,
       b => onChangeBlock?.(b),
     ),
     [
+      onChangeBlock,
       updateStreamsInCatalogProp,
     ]);
 
@@ -91,7 +98,7 @@ function StreamsOverview({
     columnFlex: number[];
     columns: ColumnType[];
   } = useMemo(() => {
-    const cf = [null, 4, 4, 3, 3, null]
+    const cf = [null, 2, 4, 2, 2, null]
     const c = [
       {
         label: ({
@@ -213,13 +220,16 @@ function StreamsOverview({
         const streamID = getStreamID(stream);
         const {
           auto_add_new_fields: autoAddNewFields,
-          destination_table: destinationTable,
+          destination_table: destinationTableInit,
           disable_column_type_check: disableColumnTypeCheck,
           replication_method: replicationMethod,
           run_in_parallel: runInParallel,
           unique_conflict_method: uniqueConflictMethod,
         } = stream;
         const isSelected = isStreamSelected(stream);
+        const destinationTable = uuid in destinationTablesByStreamUUID
+          ? destinationTablesByStreamUUID?.[uuid]
+          : destinationTableInit;
 
         const row = [
           <ToggleSwitch
@@ -249,16 +259,28 @@ function StreamsOverview({
           <TextInput
             compact
             key={`${uuid}-destinationTable`}
+            monospace
             noBackground
             noBorder
-            onChange={e => updateStreamsInCatalog([
-              {
-                ...stream,
-                destination_table: e?.target?.value,
-              },
-            ])}
+            onChange={(e) => {
+              const val = e?.target?.value;
+
+              setDestinationTablesByStreamUUID(prev => ({
+                ...prev,
+                [uuid]: val,
+              }));
+
+              clearTimeout(timeout.current);
+              timeout.current = setTimeout(() => updateStreamsInCatalog([
+                {
+                  ...stream,
+                  destination_table: val,
+                },
+              ]), 300);
+            }}
             onClick={pauseEvent}
             paddingHorizontal={0}
+            placeholder={streamID}
             value={destinationTable || ''}
           />,
           <Select
@@ -375,8 +397,11 @@ function StreamsOverview({
   }, [
     blockType,
     blocksMapping,
+    destinationTablesByStreamUUID,
+    setDestinationTablesByStreamUUID,
     setSelectedMainNavigationTab,
     streamsGrouped,
+    timeout,
     updateStreamsInCatalog,
   ]);
 

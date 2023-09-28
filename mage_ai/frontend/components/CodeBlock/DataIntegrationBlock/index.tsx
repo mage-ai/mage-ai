@@ -13,6 +13,7 @@ import Text from '@oracle/elements/Text';
 import { Check, Close } from '@oracle/icons';
 import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
@@ -27,10 +28,7 @@ type DataIntegrationBlockProps = {
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     blockUUID: string;
   }) => void;
-  showDataIntegrationModal?: (block: BlockType, opts?: {
-    onChangeBlock?: (block: BlockType) => void;
-  }) => void;
-};
+} & OpenDataIntegrationModalType;
 
 function DataIntegrationBlock({
   block,
@@ -180,7 +178,7 @@ function DataIntegrationBlock({
                 compact
                 onClick={() => showDataIntegrationModal({
                   block,
-                  defaultMainNavigationTab: MainNavigationTabEnum.OVERVIEW,
+                  defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                   onChangeBlock,
                 })}
                 secondary

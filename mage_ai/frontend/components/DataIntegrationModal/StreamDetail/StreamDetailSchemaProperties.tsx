@@ -46,12 +46,25 @@ function StreamDetailSchemaProperties({
   block,
   blocksMapping,
   highlightedColumnsMapping,
-  setBlockAttributes,
+  onChangeBlock,
+  setBlockAttributes: setBlockAttributesProp,
   setHighlightedColumnsMapping,
   stream,
   streamMapping,
-  updateStreamsInCatalog,
 }: StreamDetailProps) {
+  const setBlockAttributes = useCallback((prev1) => {
+    setBlockAttributesProp((prev2) => {
+      const blockUpdated = prev1(prev2);
+
+      onChangeBlock?.(blockUpdated);
+
+      return blockUpdated;
+    });
+  }, [
+    onChangeBlock,
+    setBlockAttributesProp,
+  ]);
+
   const schemaProperties:{
     [column: string]: SchemaPropertyType;
   } = useMemo(() => getSchemaPropertiesWithMetadata(stream) || {}, [
@@ -195,7 +208,7 @@ function StreamDetailSchemaProperties({
         uuid: 'action',
       },
       {
-        uuid: 'Column',
+        uuid: 'Property',
       },
       {
         uuid: 'Types',
@@ -296,7 +309,7 @@ function StreamDetailSchemaProperties({
           }}
         />
       </div>,
-      <Text key={`${column}-column`}>
+      <Text key={`${column}-column`} monospace>
         {column}
       </Text>,
       <FlexContainer

@@ -89,6 +89,7 @@ import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
+import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import {
@@ -945,25 +946,31 @@ function PipelineDetailPage({
 
   // Data integration modal
   const [showDataIntegrationModal, hideDataIntegrationModal] = useModal((
-    opts: {
-      block: BlockType,
-      defaultMainNavigationTab?: MainNavigationTabEnum;
-      onChangeBlock?: (block: BlockType) => void;
-    },
-  ) => (
-    <ErrorProvider>
-      <DataIntegrationModal
-        block={opts?.block}
-        defaultMainNavigationTab={opts?.defaultMainNavigationTab}
-        onChangeBlock={opts?.onChangeBlock}
-        // onChangeCodeBlock={onChangeCodeBlock}
-        onClose={hideDataIntegrationModal}
-        pipeline={pipeline}
-      />
-    </ErrorProvider>
-  ), {}, [
+    opts: OpenDataIntegrationModalOptionsType,
+  ) => {
+    const {
+      block,
+      defaultMainNavigationTab,
+      onChangeBlock,
+    } = opts || {};
+
+    return (
+      <ErrorProvider>
+        <DataIntegrationModal
+          block={block}
+          defaultMainNavigationTab={defaultMainNavigationTab}
+          onChangeBlock={onChangeBlock}
+          onChangeCodeBlock={onChangeCodeBlock}
+          onClose={hideDataIntegrationModal}
+          pipeline={pipeline}
+          savePipelineContent={savePipelineContent}
+        />
+      </ErrorProvider>
+    );
+  }, {}, [
     onChangeCodeBlock,
     pipeline,
+    savePipelineContent,
   ], {
     background: true,
     disableClickOutside: true,
@@ -2213,6 +2220,7 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showDataIntegrationModal={showDataIntegrationModal}
       showUpdateBlockModal={(
         block,
         name = randomNameGenerator(),
@@ -2279,6 +2287,7 @@ function PipelineDetailPage({
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
+    showDataIntegrationModal,
     statistics,
     textareaFocused,
     updatePipelineMetadata,

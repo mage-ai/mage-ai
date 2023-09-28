@@ -28,11 +28,22 @@ def get_templates(group_templates: bool = False) -> Union[List[Dict], Dict]:
         (DESTINATIONS, BlockType.DATA_EXPORTER, DATA_INTEGRATION_TYPE_DESTINATIONS),
     ]:
         for data_dict in items:
-            display_name = data_dict['name']
+            display_name = data_dict.get('name')
+            module_name = data_dict.get('module_name')
+            uuid = data_dict.get('uuid')
+
+            block_type_display = str(block_type.replace('_', ' '))
+            description = \
+                f'Data integration {block_type_display} block for {display_name} {di_type}'
+            if module_name:
+                description = f'{description} ({module_name}).'
+            else:
+                description = f'{description}.'
 
             template = dict(
                 block_type=block_type,
                 configuration=dict(data_integration={}),
+                description=description,
                 language=di_type,
                 name=display_name,
                 path=f'data_integrations/{di_type}/base',
