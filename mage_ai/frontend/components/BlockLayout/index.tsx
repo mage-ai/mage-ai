@@ -65,6 +65,9 @@ function BlockLayout({
     uuid: `BlockLayout/${uuid}`,
   });
 
+  const [touchedAttributes, setTouchedAttributes] = useState<{
+    [attribute: string]: boolean;
+  }>({});
   const [objectAttributes, setObjectAttributesState] = useState<{
     content?: string;
     name_new?: string;
@@ -131,9 +134,20 @@ function BlockLayout({
     setObjectAttributesState,
   ]);
 
-  const setSelectedBlockItem = useCallback((prev) => {
-    setObjectAttributes(prev);
-    setSelectedBlockItemState(prev);
+  const setSelectedBlockItem = useCallback((prev1) => {
+    setObjectAttributes((prev2) => {
+      const data = {
+        ...prev2,
+        ...prev1,
+      };
+
+      if (typeof data?.name_new === 'undefined') {
+        data.name_new = data?.name;
+      }
+
+      return data;
+    });
+    setSelectedBlockItemState(prev1);
   }, [
     setObjectAttributes,
     setSelectedBlockItemState,
@@ -665,7 +679,7 @@ function BlockLayout({
           placeholder="Type name for chart..."
           primary
           setContentOnMount
-          value={objectAttributes?.name_new || objectAttributes?.name || ''}
+          value={objectAttributes?.name_new || ''}
         />
       </Spacing>
 
