@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import simplejson
@@ -50,11 +50,6 @@ from mage_ai.shared.hash import dig, extract, merge_dict
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
-
-
-class StreamWithIDAndParentStream(TypedDict):
-    parent_stream: int
-    stream: str
 
 
 def get_destination(block) -> str:
@@ -1173,7 +1168,7 @@ def test_connection(block) -> None:
 def fetch_data(
     block,
     partition: str = None,
-    selected_streams: List[StreamWithIDAndParentStream] = None,
+    selected_streams: List[Dict] = None,
     sample_count: int = None,
 ) -> Dict:
     if not selected_streams:
@@ -1225,7 +1220,7 @@ def fetch_data(
 
 def __fetch_data_from_source_block(
     block,
-    selected_streams: List[StreamWithIDAndParentStream] = None,
+    selected_streams: List[Dict] = None,
 ) -> Dict:
     data_integration_settings = block.get_data_integration_settings(
         from_notebook=True,
