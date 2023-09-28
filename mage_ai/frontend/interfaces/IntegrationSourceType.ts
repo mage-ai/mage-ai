@@ -64,7 +64,7 @@ export interface PropertyMetadataType {
   [MetadataKeyEnum.REPLICATION_KEYS]?: string[];
   [MetadataKeyEnum.SCHEMA_NAME]?: string;
   inclusion?: InclusionEnum;
-  selected: boolean;
+  selected?: boolean;
 }
 
 export interface SchemaPropertyType {
@@ -89,7 +89,7 @@ export enum MetadataKeyEnum {
 }
 
 export interface MetadataType {
-  breadcrumb: BreadcrumbEnum | string;
+  breadcrumb: BreadcrumbEnum[] | string[];
   metadata: PropertyMetadataType;
 }
 

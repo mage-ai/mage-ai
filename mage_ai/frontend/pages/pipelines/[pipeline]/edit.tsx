@@ -949,6 +949,7 @@ function PipelineDetailPage({
     opts: OpenDataIntegrationModalOptionsType,
   ) => (
     <ErrorProvider>
+      {/* @ts-ignore */}
       <DataIntegrationModal
         {...opts}
         onChangeCodeBlock={onChangeCodeBlock}

@@ -218,7 +218,7 @@ export function getStreamID(stream: StreamType) {
   return stream?.stream || stream?.tap_stream_id;
 }
 
-export function getParentStreamID(stream: Stream): string {
+export function getParentStreamID(stream: StreamType): string {
   return stream?.parent_stream;
 }
 
@@ -234,11 +234,16 @@ export function isMetadataForStreamFromMetadataArray(metadata: MetadataType): bo
 }
 
 export function getStreamMetadataFromMetadataArray(stream: StreamType): MetadataType {
-  return stream?.metadata?.find(isMetadataForStreamFromMetadataArray) || {};
+  return stream?.metadata?.find(isMetadataForStreamFromMetadataArray) || {
+    breadcrumb: [],
+    metadata: {},
+  };
 }
 
 export function updateStreamInBlock(stream: StreamType, block: BlockType) {
-  const catalog = block?.catalog || {};
+  const catalog = block?.catalog || {
+    streams: [],
+  };
   const streams = [...(catalog?.streams || [])];
 
   const index = streams?.findIndex(
@@ -272,7 +277,9 @@ export function updateStreamMetadata(streamInit: StreamType, payload: PropertyMe
     breadcrumb: [],
   };
   if (index >= 0) {
-    metadata = getStreamMetadataFromMetadataArray(stream) || {};
+    metadata = getStreamMetadataFromMetadataArray(stream) || {
+      breadcrumb: [],
+    };
   }
 
   const metadataUpdated = {
