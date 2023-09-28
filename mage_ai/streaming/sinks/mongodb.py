@@ -23,21 +23,21 @@ class MongoDbSink(BaseSink):
         self.database = self.client[self.config.database_name]
         self.collection = self.database[self.config.collection_name]
 
-    def write(self, data: Dict):
-        if type(data) is dict:
-            self.collection.insert_one(data)
+    def write(self, message: Dict):
+        if type(message) is dict:
+            self.collection.insert_one(message)
         else:
-            self.collection.insert_one({"data": data})
-        self._print(f'Ingest data {data}, time={time.time()}')
+            self.collection.insert_one({"data": message})
+        self._print(f'Ingest data {message}, time={time.time()}')
 
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             return
         output_docs = []
-        for doc in data:
+        for doc in messages:
             if type(doc) is dict:
                 output_docs.append(doc)
             else:
                 output_docs.append({"data": doc})
         self.collection.insert_many(output_docs)
-        self._print(f'Batch ingest {len(data)} records, time={time.time()}.')
+        self._print(f'Batch ingest {len(messages)} records, time={time.time()}.')

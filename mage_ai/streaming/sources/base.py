@@ -23,8 +23,11 @@ class BaseSource(ABC):
         self.checkpoint = self.read_checkpoint()
         self.init_client()
 
+    @abstractmethod
     def init_client(self):
-        pass
+        """
+        Intialize the client for the source.
+        """
 
     def destroy(self):
         """
@@ -34,15 +37,28 @@ class BaseSource(ABC):
 
     @abstractmethod
     def read(self, handler: Callable):
-        pass
+        """
+        Read the message from the source and use handler to process the message.
+
+        This method only needs to be implemented when consume_method is 'READ'.
+        """
 
     async def read_async(self, handler: Callable):
+        """
+        Read the message asynchronously from the source and use handler to process the message.
+
+        This method only needs to be implemented when consume_method is 'READ_ASYNC'.
+        """
         self._print('Start consuming messages asynchronously.')
         return self.read(handler)
 
     @abstractmethod
     def batch_read(self, handler: Callable):
-        pass
+        """
+        Batch read the messages from the source and use handler to process the messages.
+
+        This method only needs to be implemented when consume_method is 'BATCH_READ'.
+        """
 
     def read_checkpoint(self):
         checkpoint = None
