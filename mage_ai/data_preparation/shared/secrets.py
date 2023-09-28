@@ -166,10 +166,7 @@ def get_secret_value(
     if key:
         fernet = Fernet(key)
         if key_uuid:
-            secret = Secret.query.filter(
-                Secret.name == name,
-                Secret.key_uuid == key_uuid,
-            ).one_or_none()
+            secret = Secret.get_secret(name, key_uuid)
 
         if secret:
             try:
@@ -211,10 +208,7 @@ def delete_secret(
         pipeline_uuid=pipeline_uuid,
     )
     if key_uuid:
-        secret = Secret.query.filter(
-            Secret.name == name,
-            Secret.key_uuid == key_uuid,
-        ).one_or_none()
+        secret = Secret.get_secret(name, key_uuid)
 
     if entity == Entity.GLOBAL and not secret:
         secret = Secret.query.filter(
@@ -289,5 +283,8 @@ def _get_encryption_key(
             key_uuid = f.read()
     except Exception:
         key_uuid = None
+
+    if key is not None:
+        key = key.strip()
 
     return key, key_uuid
