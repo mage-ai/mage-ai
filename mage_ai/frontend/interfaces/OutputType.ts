@@ -1,6 +1,4 @@
-import { OutputType as OutputTypeInit } from './BlockType';
-
-export interface DataType extends OutputTypeInit;
+import { OutputType as DataType } from '@interfaces/BlockType';
 
 export interface DataOutputType {
   data: DataType[];

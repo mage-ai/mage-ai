@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { OutputType as DataType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
 import Link from '@oracle/elements/Link';
-import OutputType, { DataOutputType, DataType } from '@interfaces/OutputType';
+import OutputType, { DataOutputType } from '@interfaces/OutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
