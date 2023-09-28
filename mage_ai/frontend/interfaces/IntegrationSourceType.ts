@@ -71,14 +71,14 @@ export interface SchemaPropertyType {
   anyOf?: SchemaPropertyAnyOfType[];
   format?: ColumnFormatEnum;
   metadata?: MetadataType;
-  type?: ColumnTypeEnum[];
+  type?: ColumnTypeEnum[] | string[];
 }
 
 interface SchemaType {
   properties: {
     [columnName: string]: SchemaPropertyType;
   };
-  type: ColumnTypeEnum;
+  type?: ColumnTypeEnum;
 }
 
 export enum MetadataKeyEnum {

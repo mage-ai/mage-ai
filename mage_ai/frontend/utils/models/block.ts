@@ -275,10 +275,12 @@ export function updateStreamMetadata(streamInit: StreamType, payload: PropertyMe
 
   let metadata = {
     breadcrumb: [],
+    metadata: {},
   };
   if (index >= 0) {
     metadata = getStreamMetadataFromMetadataArray(stream) || {
       breadcrumb: [],
+      metadata: {},
     };
   }
 
@@ -778,7 +780,7 @@ export function updateStreamMappingWithStreamAttributes(
     const schemaProperties = streamUpdated?.schema?.properties || {};
 
     Object.entries(selectedAttributesWithValues || {}).forEach(([attribute, value]) => {
-      if (attributesOnStream.includes(attribute)) {
+      if (attributesOnStream.includes(attribute as AttributeUUIDEnum)) {
         streamUpdated[attribute] = value;
       }
     });
@@ -789,7 +791,9 @@ export function updateStreamMappingWithStreamAttributes(
   let streamMappingUpdated = {
     ...streamMapping,
   };
-  const streams: StreamType = getAllStreamsFromStreamMapping(streamMapping || {}) || [];
+  const streams: StreamType[] = streamMapping
+    ? (getAllStreamsFromStreamMapping(streamMapping) || [])
+    : [];
 
   streams?.forEach((stream: StreamType) => {
     streamMappingUpdated = updateStreamInStreamMapping(
@@ -828,7 +832,9 @@ export function updateStreamMappingWithPropertyAttributeValues(
   ): StreamType => {
     const streamUpdated = { ...stream };
     const schemaProperties = streamUpdated?.schema?.properties || {};
-    const metadataByColumn = getStreamMetadataByColumn(stream);
+    const metadataByColumn: {
+      [column: string]: MetadataType;
+    } = getStreamMetadataByColumn(stream);
 
     columnsHighlighted?.forEach((column: string) => {
       if (schemaProperties?.[column]) {
@@ -838,20 +844,21 @@ export function updateStreamMappingWithPropertyAttributeValues(
         ]) => {
           if (AttributeUUIDEnum.PROPERTY_SELECTED === attribute) {
             const metadataForColumn =
-              metadataByColumn?.[column] || buildMetadataForColumn(column) || {};
+              metadataByColumn?.[column] || buildMetadataForColumn(column) || {
+                breadcrumb: [],
+                metadata: {},
+              };
 
             const md = {
               ...metadataForColumn,
               metadata: {
                 ...metadataForColumn?.metadata,
-                selected: value,
+                selected: value as boolean,
               },
             };
 
-            console.log('wtf', md)
-
             metadataByColumn[column] = md
-          } else if (attributesOnStream.includes(attribute)) {
+          } else if (attributesOnStream.includes(attribute as AttributeUUIDEnum)) {
             if (!streamUpdated?.[attribute]) {
               streamUpdated[attribute] = [];
             }
@@ -909,7 +916,9 @@ export function updateStreamMappingWithPropertyAttributeValues(
   let streamMappingUpdated = {
     ...streamMapping,
   };
-  const streams: StreamType = getAllStreamsFromStreamMapping(streamMapping || {}) || [];
+  const streams: StreamType[] = streamMapping
+    ? (getAllStreamsFromStreamMapping(streamMapping) || [])
+    : [];
 
   streams?.forEach((stream: StreamType) => {
     streamMappingUpdated = updateStreamInStreamMapping(
