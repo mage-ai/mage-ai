@@ -105,7 +105,7 @@ export function pascalize(word) {
     .join('');
 }
 
-export function pluralize(string, n, withCommas = false) {
+export function pluralize(string, n, withCommas = false, wordOnly = false) {
   let number = n;
   const hasNumber = number !== undefined && number !== null;
   if (!hasNumber) {
@@ -126,7 +126,7 @@ export function pluralize(string, n, withCommas = false) {
     }
   }
 
-  if (hasNumber) {
+  if (hasNumber && !wordOnly) {
     const numberText = withCommas ? numberWithCommas(number) : number;
     return `${numberText} ${word}`;
   }

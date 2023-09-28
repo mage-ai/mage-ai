@@ -67,6 +67,7 @@ import {
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
@@ -171,7 +172,7 @@ type PipelineDetailProps = {
   ) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
-} & SetEditingBlockType;
+} & SetEditingBlockType & OpenDataIntegrationModalType;
 
 function PipelineDetail({
   addNewBlockAtIndex,
@@ -222,6 +223,7 @@ function PipelineDetail({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
   textareaFocused,
@@ -539,8 +541,6 @@ function PipelineDetail({
         key = `${key}:${refreshTimestamp}`;
       }
 
-      // console.log(key)
-
       if (isHidden) {
         el = (
           <HiddenBlock
@@ -634,6 +634,7 @@ function PipelineDetail({
             setTextareaFocused={setTextareaFocused}
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
+            showDataIntegrationModal={showDataIntegrationModal}
             showGlobalDataProducts={showGlobalDataProducts}
             showUpdateBlockModal={showUpdateBlockModal}
             textareaFocused={selected && textareaFocused}
@@ -695,6 +696,7 @@ function PipelineDetail({
     setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showDataIntegrationModal,
     showGlobalDataProducts,
     showUpdateBlockModal,
     textareaFocused,

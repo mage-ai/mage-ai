@@ -105,12 +105,29 @@ class DataIntegrationMixin:
             BLOCK_CATALOG_FILENAME,
         )
 
+    def get_catalog_from_file(self) -> Dict:
+        catalog_full_path = self.get_catalog_file_path()
+
+        if os.path.exists(catalog_full_path):
+            with open(catalog_full_path, mode='r') as f:
+                t = f.read()
+                if t:
+                    try:
+                        return json.loads(t)
+                    except json.decoder.JSONDecodeError:
+                        return
+
     async def get_catalog_from_file_async(self) -> Dict:
         catalog_full_path = self.get_catalog_file_path()
 
         if os.path.exists(catalog_full_path):
             async with aiofiles.open(catalog_full_path, mode='r') as f:
-                return json.loads(await f.read() or '')
+                t = await f.read()
+                if t:
+                    try:
+                        return json.loads(t)
+                    except json.decoder.JSONDecodeError:
+                        return
 
     def update_catalog_file(self, catalog: Dict = None) -> Dict:
         catalog_full_path = self.get_catalog_file_path()
@@ -243,7 +260,7 @@ class DataIntegrationMixin:
 
             settings = yaml.safe_load(text)
 
-            catalog = self.__get_catalog_from_file()
+            catalog = self.get_catalog_from_file()
             config = settings.get('config')
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
@@ -284,14 +301,18 @@ class DataIntegrationMixin:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         from_notebook: bool = False,
+        upstream_block_uuids: List[str] = None,
+        all_catalogs: bool = False,
+        all_streams: bool = False,
     ) -> Tuple[List, List, List]:
-        block_uuids_to_fetch = self.upstream_block_uuids_for_inputs
+        block_uuids_to_fetch = upstream_block_uuids or self.upstream_block_uuids_for_inputs
 
         catalog_by_upstream_block_uuid = {}
         data_integration_settings_mapping = {}
 
-        for up_uuid, settings in self.data_integration_inputs.items():
-            input_catalog = settings.get('catalog', False)
+        for up_uuid in (upstream_block_uuids or self.data_integration_inputs.keys()):
+            settings = self.data_integration_inputs.get(up_uuid) or {}
+            input_catalog = all_catalogs or settings.get('catalog', False)
 
             upstream_block = self.pipeline.get_block(up_uuid)
             if input_catalog and upstream_block.is_source():
@@ -307,7 +328,7 @@ class DataIntegrationMixin:
                 catalog = di_settings.get('catalog') or {}
 
                 streams = settings.get('streams')
-                if streams:
+                if streams and not all_streams:
                     catalog['streams'] = get_streams_from_catalog(catalog, streams)
 
                 catalog_by_upstream_block_uuid[up_uuid] = catalog
@@ -333,21 +354,24 @@ class DataIntegrationMixin:
                 f'block UUIDS {uuids}: {inputs_count} inputs fetched.',
             )
 
-        if self.data_integration_inputs:
+        if upstream_block_uuids or self.data_integration_inputs:
             input_vars_updated = []
             kwargs_vars_updated = []
             up_block_uuids_updated = []
 
             for up_uuid in self.upstream_block_uuids:
-                if up_uuid not in self.data_integration_inputs:
+                if upstream_block_uuids and up_uuid not in upstream_block_uuids:
+                    continue
+
+                if not upstream_block_uuids and up_uuid not in self.data_integration_inputs:
                     continue
 
                 upstream_block = self.pipeline.get_block(up_uuid)
                 is_source = upstream_block.is_source()
 
                 settings = self.data_integration_inputs.get(up_uuid)
-                input_catalog = settings.get('catalog', False)
-                input_streams = settings.get('streams')
+                input_catalog = all_catalogs or settings.get('catalog', False)
+                input_streams = all_streams or settings.get('streams')
 
                 input_var_to_add = []
                 kwargs_var_to_add = None
@@ -363,6 +387,7 @@ class DataIntegrationMixin:
                 if input_streams:
                     if idx is not None:
                         input_data = input_vars_fetched[idx]
+                    # This has to come first before catalog.
                     input_var_to_add.append(input_data)
 
                 if input_catalog:
@@ -390,7 +415,7 @@ class DataIntegrationMixin:
                             kwargs_var_to_add = kwargs_vars_inner[0]
 
                     if not catalog and input_data is not None:
-                        catalog = build_schema(input_data, up_uuid)
+                        catalog = dict(streams=[build_schema(input_data, up_uuid)])
 
                     input_var_to_add.append(catalog)
 
@@ -541,13 +566,6 @@ class DataIntegrationMixin:
             print(f'[Block.__execute_data_integration_block_code]: {seconds} | {self.uuid}')
 
         return self._data_integration
-
-    def __get_catalog_from_file(self) -> Dict:
-        catalog_full_path = self.get_catalog_file_path()
-
-        if os.path.exists(catalog_full_path):
-            with open(catalog_full_path, mode='r') as f:
-                return json.loads(f.read() or '')
 
     def __block_decorator_catalog(self, decorated_functions):
         def custom_code(

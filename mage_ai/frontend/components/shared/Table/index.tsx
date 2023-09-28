@@ -8,8 +8,10 @@ import React, {
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -21,6 +23,7 @@ import {
   SortDirectionEnum,
   SortQueryEnum,
 } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
   SortIconContainerStyle,
@@ -29,7 +32,6 @@ import {
   TableRowStyle,
   TableStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
@@ -37,7 +39,10 @@ import { sortByKey } from '@utils/array';
 export type ColumnType = {
   center?: boolean;
   fitTooltipContentWidth?: boolean;
-  label?: () => any | string;
+  label?: (opts?: {
+    columnIndex?: number;
+    groupIndex?: number;
+  }) => any | string;
   tooltipAppearAfter?: boolean;
   tooltipMessage?: string
   tooltipWidth?: number;
@@ -68,10 +73,12 @@ type TableProps = {
   defaultSortColumnIndex?: number;
   getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
+  groupsInline?: boolean;
   highlightRowOnHover?: boolean;
   localStorageKeySortColIdx?: string;
   localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
+  menu?: any;
   noBorder?: boolean;
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
@@ -80,10 +87,10 @@ type TableProps = {
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
   rightClickMenuWidth?: number;
-  rowGroupHeaders?: string[];
+  rowGroupHeaders?: string[] | any[];
   rowVerticalPadding?: number;
   rows: any[][];
-  rowsGroupedByIndex?: string[][];
+  rowsGroupedByIndex?: number[][] | string[][];
   setRowsSorted?: (rows: React.ReactElement[][]) => void;
   sortableColumnIndexes?: number[];
   sortedColumn?: SortedColumnType;
@@ -107,10 +114,12 @@ function Table({
   defaultSortColumnIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
+  groupsInline,
   highlightRowOnHover,
   isSelectedRow,
   localStorageKeySortColIdx,
   localStorageKeySortDirection,
+  menu,
   noBorder,
   noHeader,
   onClickRow,
@@ -454,7 +463,11 @@ function Table({
     wrapColumns,
   ]);
 
-  const headerRowEl = useMemo(() => (
+  const renderHeaderRow = useCallback(({
+    groupIndex,
+  }: {
+    groupIndex?: number;
+  } = {}) => (
     <TableRowStyle noHover>
       {columns?.map((col, idx) => {
         const {
@@ -476,7 +489,10 @@ function Table({
               monospace
               muted
             >
-              {label ? label() : columnUUID}
+              {label ? label({
+                columnIndex: idx,
+                groupIndex,
+              }) : columnUUID}
             </Text>
             {tooltipMessage && (
               <Spacing ml="4px">
@@ -579,32 +595,73 @@ function Table({
         const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
         if (els?.length >= 1) {
           const header = rowGroupHeaders[idx];
+          const key = `table-group-${idx}`;
 
-          acc.push(
-            // @ts-ignore
-            <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
-              <Accordion
-                visibleMapping={{
-                  '0': true,
-                }}
+          if (groupsInline) {
+            acc.push(
+              <div
+                key={key}
               >
-                <AccordionPanel
-                  noPaddingContent
-                  title={header}
+                {header && (
+                  <>
+                    {typeof header === 'string' && (
+                      <>
+                        <Spacing p={PADDING_UNITS}>
+                          <Headline level={5}>
+                            {header}
+                          </Headline>
+                        </Spacing>
+
+                        <Divider light />
+                      </>
+                    )}
+
+                    {typeof header !== 'string' && header}
+                  </>
+                )}
+
+                <TableStyle
+                  borderCollapseSeparate={borderCollapseSeparate}
+                  columnBorders={columnBorders}
                 >
-                  <TableStyle
-                    borderCollapseSeparate={borderCollapseSeparate}
-                    columnBorders={columnBorders}
+                  <>
+                    {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                      groupIndex: idx,
+                    })}
+                    {els}
+                  </>
+                </TableStyle>
+              </div>
+            );
+          } else {
+            acc.push(
+              // @ts-ignore
+              <Spacing key={key} mt={idx >= 1 ? 2 : 0}>
+                <Accordion
+                  visibleMapping={{
+                    '0': true,
+                  }}
+                >
+                  <AccordionPanel
+                    noPaddingContent
+                    title={header}
                   >
-                    <>
-                      {(columns?.length >= 1 && !noHeader) && headerRowEl}
-                      {els}
-                    </>
-                  </TableStyle>
-                </AccordionPanel>
-              </Accordion>
-            </Spacing>,
-          );
+                    <TableStyle
+                      borderCollapseSeparate={borderCollapseSeparate}
+                      columnBorders={columnBorders}
+                    >
+                      <>
+                        {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                          groupIndex: idx,
+                        })}
+                        {els}
+                      </>
+                    </TableStyle>
+                  </AccordionPanel>
+                </Accordion>
+              </Spacing>,
+            );
+          }
         }
 
         return acc;
@@ -616,7 +673,7 @@ function Table({
         borderCollapseSeparate={borderCollapseSeparate}
         columnBorders={columnBorders}
       >
-        {(columns?.length >= 1 && !noHeader) && headerRowEl}
+        {(columns?.length >= 1 && !noHeader) && renderHeaderRow()}
         {rowEls}
       </TableStyle>
     );
@@ -624,8 +681,9 @@ function Table({
     borderCollapseSeparate,
     columnBorders,
     columns?.length,
-    headerRowEl,
+    groupsInline,
     noHeader,
+    renderHeaderRow,
     rowEls,
     rowGroupHeaders,
     rowsGroupedByIndex,
@@ -634,7 +692,7 @@ function Table({
   return (
     <div style={{ position: 'relative' }}>
       {tableEl}
-
+      {menu}
       {hasRightClickMenu && coordinates && rightClickMenu}
     </div>
   );

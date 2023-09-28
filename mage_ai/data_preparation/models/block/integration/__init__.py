@@ -434,6 +434,25 @@ class DestinationBlock(IntegrationBlock):
             data,
         )
 
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+        destination_table: str = None,
+        state_stream: str = None,
+        **kwargs,
+    ) -> Dict:
+        return self.to_dict(
+            include_content=include_content,
+            include_outputs=include_outputs,
+            sample_count=sample_count,
+            check_if_file_exists=check_if_file_exists,
+            destination_table=destination_table,
+            state_stream=state_stream,
+        )
+
     def update(self, data, update_state=False):
         if update_state:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (

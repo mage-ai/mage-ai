@@ -108,6 +108,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import {
@@ -220,7 +221,11 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   widgets?: BlockType[];
-} & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
+}
+  & CodeEditorSharedProps
+  & CommandButtonsSharedProps
+  & SetEditingBlockType
+  & OpenDataIntegrationModalType;
 
 function CodeBlock({
   addNewBlock,
@@ -277,6 +282,7 @@ function CodeBlock({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
   textareaFocused,
@@ -671,7 +677,7 @@ function CodeBlock({
   );
   const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
 
-  const [updateBlock] = useMutation(
+  const [updateBlock]: [any, any] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
     {
       onError: (response: any) => {
@@ -817,7 +823,7 @@ function CodeBlock({
     ]);
 
   const codeEditorEl = useMemo(() => {
-    if (replicatedBlockUUID) {
+    if (replicatedBlockUUID && !isDataIntegration) {
       return null;
     }
 
@@ -955,7 +961,12 @@ function CodeBlock({
           block={block}
           codeEditor={editorEl}
           callbackEl={callbackEl}
+          onChangeBlock={(blockUpdated: BlockType) => updateBlock({
+            block: blockUpdated,
+          })}
           openSidekickView={openSidekickView}
+          savePipelineContent={savePipelineContent}
+          showDataIntegrationModal={showDataIntegrationModal}
         />
       );
     }
@@ -2081,26 +2092,31 @@ function CodeBlock({
               )}
 
               {tags.length >= 1 && (
-                <CodeHelperStyle normalPadding>
-                  <FlexContainer>
-                    {tags.map(({
-                      description,
-                      title,
-                    }, idx) => (
-                      <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
-                        <Tooltip
-                          block
-                          description={description}
-                          size={null}
-                          widthFitContent
-                        >
-                          <Badge>
-                            {title}
-                          </Badge>
-                        </Tooltip>
-                      </Spacing>
-                    ))}
-                  </FlexContainer>
+                <CodeHelperStyle
+                  noMargin={isDataIntegration}
+                  normalPadding
+                >
+                  <Spacing py={isDataIntegration ? 1 : 0}>
+                    <FlexContainer>
+                      {tags.map(({
+                        description,
+                        title,
+                      }, idx) => (
+                        <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                          <Tooltip
+                            block
+                            description={description}
+                            size={null}
+                            widthFitContent
+                          >
+                            <Badge>
+                              {title}
+                            </Badge>
+                          </Tooltip>
+                        </Spacing>
+                      ))}
+                    </FlexContainer>
+                  </Spacing>
                 </CodeHelperStyle>
               )}
 
@@ -2109,6 +2125,7 @@ function CodeBlock({
                 && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
                 && !isStreamingPipeline
                 && !replicatedBlockUUID
+                && !isDataIntegration
                 && (
                 <CodeHelperStyle normalPadding>
                   <Spacing mr={1}>
@@ -2218,7 +2235,7 @@ function CodeBlock({
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
-                      ? replicatedBlock
+                      ? (replicatedBlock && !isDataIntegration)
                         ? (<Spacing px={1}>
                           <Text monospace muted>
                             Replicated from block <Link
