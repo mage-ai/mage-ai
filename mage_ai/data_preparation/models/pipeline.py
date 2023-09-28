@@ -430,6 +430,7 @@ class Pipeline:
             )
             StreamingPipelineExecutor(self).execute(
                 build_block_output_stdout=build_block_output_stdout,
+                global_vars=global_vars,
             )
         else:
             root_blocks = []
