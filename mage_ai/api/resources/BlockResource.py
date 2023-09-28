@@ -12,7 +12,6 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     is_dynamic_block,
@@ -565,6 +564,8 @@ class BlockResource(GenericResource):
         whereas creating blocks from existing DBT model files do not.
         """
         if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             dbt_block = DBTBlock(
                 name,
                 clean_name(name),
@@ -703,6 +704,8 @@ class BlockResource(GenericResource):
             language = block_language
 
         if BlockType.DBT == block_type:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             block = DBTBlock(
                 block_uuid,
                 block_uuid,

@@ -6,9 +6,13 @@ from logging import Logger
 from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
+import simplejson
 import yaml
 
-from mage_ai.data_integrations.logger.utils import print_log_from_line
+from mage_ai.data_integrations.logger.utils import (
+    print_log_from_line,
+    print_logs_from_output,
+)
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
@@ -42,7 +46,8 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import dig, extract, merge_dict
+from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from mage_ai.shared.security import filter_out_config_values
 from mage_ai.shared.utils import clean_name
 
@@ -142,18 +147,43 @@ def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
     ))
 
 
+def get_metadata_from_stream(stream: Dict) -> Dict:
+    md = stream.get('metadata', [])
+    return find(
+        lambda x: len(x.get('breadcrumb') or []) == 0,
+        md,
+    )
+
+
+def update_metadata_in_stream(stream: Dict, metadata_payload: Dict) -> Dict:
+    stream_use = stream.copy()
+
+    metadata = (get_metadata_from_stream(stream_use) or {}).copy()
+    if metadata:
+        md1 = metadata.get('metadata') or {}
+        metadata['metadata'] = merge_dict(
+            md1,
+            metadata_payload,
+        )
+        md_index = None
+        for idx, md in enumerate(stream_use.get('metadata') or []):
+            if len(md.get('breadcrumb') or []) == 0:
+                md_index = idx
+                break
+
+        stream_use['metadata'][md_index] = metadata
+
+    return stream_use
+
+
 def get_selected_streams(catalog: Dict) -> List[Dict]:
     streams = []
 
     if catalog:
         for stream in catalog.get('streams', []):
-            md = stream.get('metadata', [])
-            md_find = find(
-                lambda x: len(x.get('breadcrumb') or []) == 0,
-                md,
-            )
+            md_find = get_metadata_from_stream(stream)
 
-            if md_find.get('metadata', {}).get('selected'):
+            if not md_find or md_find.get('metadata', {}).get('selected'):
                 streams.append(stream)
 
     return streams
@@ -1076,6 +1106,251 @@ def count_records(
         arr += json.loads(__run_in_subprocess(args, config=config))
 
     return arr
+
+
+def test_connection(block) -> None:
+    data_integration_settings = block.get_data_integration_settings(
+        from_notebook=True,
+        global_vars=block.pipeline.variables if block.pipeline else None,
+    )
+
+    config = data_integration_settings.get('config')
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
+
+    is_source = block.is_source()
+
+    module_file_path = None
+    if is_source:
+        module_file_path = source_module_file_path(data_integration_uuid)
+    else:
+        module_file_path = destination_module_file_path(data_integration_uuid)
+
+    try:
+        if module_file_path:
+            run_args = [
+                PYTHON_COMMAND,
+                module_file_path,
+                '--config_json',
+                simplejson.dumps(
+                    config,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
+                '--test_connection',
+            ]
+
+            proc = subprocess.run(
+                run_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+            )
+            proc.check_returncode()
+    except subprocess.CalledProcessError as err:
+        stderr = err.stderr.decode('utf-8')
+
+        json_object = {}
+        error = stderr
+        for line in stderr.split('\n'):
+            if line.startswith('ERROR'):
+                try:
+                    json_object = next(extract_json_objects(line))
+                    error = dig(json_object, 'tags.error')
+                except Exception:
+                    error = line
+            elif not error and line.startswith('CRITICAL'):
+                error = line
+        raise Exception(filter_out_config_values(error, config))
+    except Exception as err:
+        raise Exception(filter_out_config_values(str(err), config))
+
+
+def fetch_data(
+    block,
+    partition: str = None,
+    selected_streams: List[Dict] = None,
+    sample_count: int = None,
+) -> Dict:
+    if not selected_streams:
+        return
+
+    if block.is_source():
+        return __fetch_data_from_source_block(block, selected_streams=selected_streams)
+
+    outputs = {}
+
+    # If the block is a destination block, it doesn’t produce any data so it must read
+    # the data from an upstream block by executing it.
+    for stream in selected_streams:
+        parent_stream = stream.get('parent_stream')
+        stream_id = stream.get('stream')
+        if not parent_stream:
+            continue
+
+        upstream_block = block.pipeline.get_block(parent_stream)
+
+        if not upstream_block:
+            continue
+
+        if upstream_block.is_source():
+            outputs.update(
+                __fetch_data_from_source_block(
+                    upstream_block,
+                    selected_streams=[stream],
+                ),
+            )
+        else:
+            block_output = upstream_block.execute_sync(
+                execution_partition=partition,
+                from_notebook=False if sample_count is None else True,
+                global_vars=block.pipeline.variables if block.pipeline else None,
+                store_variables=False,
+            )
+            if block_output.get('output'):
+                output = block_output.get('output')
+                if isinstance(output, Dict) and output.get(stream_id):
+                    outputs[stream_id] = output.get(stream_id)
+                else:
+                    outputs[stream_id] = output
+            else:
+                outputs[stream_id] = block_output
+
+    return outputs
+
+
+def __fetch_data_from_source_block(
+    block,
+    selected_streams: List[Dict] = None,
+) -> Dict:
+    data_integration_settings = block.get_data_integration_settings(
+        from_notebook=True,
+        global_vars=block.pipeline.variables if block.pipeline else None,
+    )
+
+    config = data_integration_settings.get('config')
+    data_integration_uuid = data_integration_settings.get('data_integration_uuid')
+
+    is_source = block.is_source()
+
+    module_file_path = None
+    if is_source:
+        module_file_path = source_module_file_path(data_integration_uuid)
+    else:
+        module_file_path = destination_module_file_path(data_integration_uuid)
+
+    stream_ids = [d.get('stream') for d in selected_streams]
+
+    if not module_file_path:
+        return
+
+    outputs = {}
+
+    try:
+        run_args = [
+            PYTHON_COMMAND,
+            module_file_path,
+            '--config_json',
+            simplejson.dumps(
+                config,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
+            '--load_sample_data',
+            '--log_to_stdout',
+            '1',
+            '--catalog',
+            block.get_catalog_file_path(),
+            '--selected_streams_json',
+            json.dumps(stream_ids),
+        ]
+
+        proc = subprocess.run(
+            run_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        proc.check_returncode()
+
+        output = proc.stdout.decode()
+        print_logs_from_output(output, config=config)
+
+        for line in output.split('\n'):
+            try:
+                from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
+
+                data = json.loads(line)
+                if TYPE_SAMPLE_DATA == data.get('type'):
+                    sample_data_json = data.get('sample_data')
+                    stream_id = data.get('stream_id')
+                    outputs[stream_id] = pd.DataFrame.from_dict(json.loads(sample_data_json))
+
+            except json.decoder.JSONDecodeError:
+                pass
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode('utf-8').split('\n')
+
+        json_object = {}
+        error = ''
+        for line in stderr:
+            if line.startswith('ERROR'):
+                try:
+                    json_object = next(extract_json_objects(line))
+                    error = dig(json_object, 'tags.error')
+                except Exception:
+                    error = line
+        error = filter_out_config_values(error, config)
+        if not error:
+            raise Exception('The sample data was not able to be loaded. Please check if the ' +
+                            'stream still exists. If it does not, click the "View and select ' +
+                            'streams" button and confirm the valid streams. If it does, ' +
+                            'loading sample data for this source may not currently ' +
+                            'be supported.')
+        raise Exception(error)
+
+    return outputs
+
+
+def read_data_from_cache(
+    block,
+    stream_id: str,
+    parent_stream: str = None,
+    partition: str = None,
+    sample: bool = True,
+    sample_count: int = None,
+) -> List[Union[Dict, List, pd.DataFrame]]:
+    data = block.get_outputs(
+        execution_partition=partition,
+        sample=sample,
+        sample_count=sample_count,
+        selected_variables=[stream_id],
+    )
+
+    if data is None and block.is_destination():
+        upstream_block = block.pipeline.get_block(parent_stream)
+
+        data = upstream_block.get_outputs(
+            execution_partition=partition,
+            sample=sample,
+            sample_count=sample_count,
+            selected_variables=[stream_id],
+        )
+
+    return data
+
+
+def persist_data_for_stream(
+    block,
+    stream_id: str,
+    output: Union[Dict, List, pd.DataFrame],
+    partition: str = None,
+) -> None:
+    block.pipeline.variable_manager.add_variable(
+        block.pipeline.uuid,
+        block.uuid,
+        stream_id,
+        output,
+        partition=partition,
+    )
 
 
 def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:

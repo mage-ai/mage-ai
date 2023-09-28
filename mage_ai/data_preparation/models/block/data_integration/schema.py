@@ -127,7 +127,29 @@ def build_schema(
 
             properties[column] = props
 
+    metadata_arr = [
+        dict(
+            breadcrumb=[],
+            metadata=dict(
+                selected=True,
+            ),
+        ),
+    ]
+
+    for column in properties.keys():
+        metadata_arr.append(dict(
+            breadcrumb=[
+                'properties',
+                column,
+            ],
+            metadata=dict(
+                inclusion='available',
+                selected=True,
+            ),
+        ))
+
     return merge_dict({
+        'metadata': metadata_arr,
         'schema': dict(
             properties=properties,
             type=TYPE_OBJECT,

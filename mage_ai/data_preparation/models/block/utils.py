@@ -1,12 +1,19 @@
 import json
+from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
+import simplejson
 
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     get_selected_streams,
 )
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    BlockType,
+)
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
@@ -811,3 +818,70 @@ def fetch_input_variables(
                 input_vars[idx] = final_value
 
     return input_vars, kwargs_vars, upstream_block_uuids_final
+
+
+def serialize_output(
+    block,
+    data: Any,
+    csv_lines_only: bool = False,
+    variable_uuid: str = None,
+):
+    if type(data) is pd.DataFrame:
+        if csv_lines_only:
+            data = dict(
+                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+            )
+        else:
+            row_count, column_count = data.shape
+
+            columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+            data = dict(
+                sample_data=dict(
+                    columns=columns_to_display,
+                    rows=json.loads(
+                        data[columns_to_display].to_json(orient='split')
+                    )['data']
+                ),
+                shape=[row_count, column_count],
+                type=DataType.TABLE,
+                variable_uuid=variable_uuid,
+            )
+    elif is_geo_dataframe(data):
+        data = dict(
+            text_data=f'''Use the code in a scratchpad to get the output of the block:
+
+from mage_ai.data_preparation.variable_manager import get_variable
+df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
+''',
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif type(data) is str:
+        data = dict(
+            text_data=data,
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif type(data) is dict or type(data) is list:
+        data = dict(
+            text_data=simplejson.dumps(
+                data,
+                default=datetime.isoformat,
+                ignore_nan=True,
+            ),
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif is_spark_dataframe(data):
+        df = data.toPandas()
+        columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+        data = dict(
+            sample_data=dict(
+                columns=columns_to_display,
+                rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+            ),
+            type=DataType.TABLE,
+            variable_uuid=variable_uuid,
+        )
+
+    return data

@@ -10,7 +10,6 @@ from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -288,7 +287,7 @@ class PipelineResource(BaseResource):
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']
             block = self.model.get_block(block_uuid, widget=False)
-            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
                     for block in block.upstream_dbt_blocks()

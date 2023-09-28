@@ -75,6 +75,12 @@ export type ButtonProps = {
   selected?: boolean;
   selectedAlt?: boolean;
   small?: boolean;
+  style?: {
+    position?: string;
+    right?: number;
+    top?: number;
+    zIndex?: number;
+  };
   success?: boolean;
   tabIndex?: number;
   target?: string;

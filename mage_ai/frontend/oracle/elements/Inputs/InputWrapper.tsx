@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 import Text, { SHARED_LARGE_TEXT_RESPONSIVE_STYLES } from '../Text';
 import dark from '@oracle/styles/themes/dark';
 import {
+  BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
@@ -72,6 +73,7 @@ export type InputWrapperProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRadiusBottom?: boolean;
+  noBorderRadiusTop?: boolean;
   noBorderUntilFocus?: boolean;
   noBorderUntilHover?: boolean;
   noBlinkingCursor?: boolean;
@@ -97,7 +99,7 @@ export type InputWrapperProps = {
   spellCheck?: boolean;
   topPosition?: boolean;
   type?: string;
-  value?: string | number | string[];
+  value?: string | number | string[] | boolean;
   borderTheme?: boolean;
   visible?: boolean;
   warning?: boolean;
@@ -122,6 +124,9 @@ const ContainerStyle = styled.div<{
   maxWidth?: number;
   visible?: boolean;
 }>`
+  display: flex;
+  align-items: center;
+
   .label-enter {
     opacity: 0;
     transform: translate(0, ${UNIT}px);
@@ -237,7 +242,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => !props.borderless && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
     border-style: ${BORDER_STYLE};
     border-width: ${BORDER_WIDTH}px};
   `}
@@ -245,6 +250,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${props => props.noBorderRadiusBottom && `
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+  `}
+
+  ${props => props.noBorderRadiusBottom && `
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   `}
 
   ${props => props.borderRadius && `
@@ -746,7 +756,12 @@ const InputWrapper = ({
           {React.cloneElement(
             beforeIcon,
             {
-              ...(beforeIconSize ? { ...iconProps, size: beforeIconSize } : iconProps),
+              ...(beforeIconSize
+                ? {
+                  ...iconProps,
+                  ...beforeIcon?.props,
+                  size: beforeIconSize,
+                } : iconProps),
               ...beforeIcon?.props,
             },
           )}

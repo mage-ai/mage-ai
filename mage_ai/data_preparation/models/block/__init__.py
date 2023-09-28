@@ -388,18 +388,67 @@ class Block(DataIntegrationMixin):
                     if self.pipeline and self.pipeline.variables:
                         variables.update(self.pipeline.variables)
 
+                    def _block_output(
+                        block_uuid: str,
+                        parse: str = None,
+                        current_block=self,
+                        global_vars=variables,
+                    ) -> Any:
+                        data = None
+
+                        if not self.fetched_inputs_from_blocks:
+                            input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+                                self.fetch_input_variables_and_catalog(
+                                    None,
+                                    None,
+                                    global_vars=global_vars,
+                                    from_notebook=True,
+                                )
+                            self.fetched_inputs_from_blocks = input_vars_fetched
+
+                        if block_uuid in self.upstream_block_uuids and \
+                                self.data_integration_inputs and \
+                                block_uuid in self.data_integration_inputs:
+
+                            index = self.upstream_block_uuids.index(block_uuid)
+                            data = self.fetched_inputs_from_blocks[index]
+
+                        if parse:
+                            results = {}
+                            exec(f'_parse_func = {parse}', results)
+                            return results['_parse_func'](data)
+
+                        return data
+
+                    def _get_variable(
+                        var_name: str,
+                        parse: str = None,
+                        global_vars=variables,
+                    ) -> Any:
+                        if not global_vars:
+                            return None
+
+                        val = global_vars.get(var_name)
+                        if parse:
+                            results = {}
+                            exec(f'_parse_func = {parse}', results)
+                            return results['_parse_func'](val)
+
+                        return val
+
                     text = Template(content).render(
-                        variables=lambda x: variables.get(x) if variables else None,
+                        block_output=_block_output,
+                        variables=_get_variable,
                         **get_template_vars(),
                     )
 
                     settings = yaml.safe_load(text)
                     uuid = settings.get('source') or settings.get('destination')
-                    mapping = get_templates(group_templates=True).get(uuid)
+                    mapping = get_templates(group_templates=True).get(uuid) or {}
 
                     return dict(
                         data_integration=merge_dict(
-                            extract(mapping, ['name']),
+                            extract(mapping or {}, ['name']),
                             settings,
                         ),
                     )
@@ -499,14 +548,13 @@ class Block(DataIntegrationMixin):
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if isinstance(block, DBTBlock) and block.language == BlockLanguage.SQL:
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
                     for block in block.upstream_dbt_blocks()
@@ -525,7 +573,6 @@ class Block(DataIntegrationMixin):
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             DestinationBlock,
             SourceBlock,
@@ -538,6 +585,8 @@ class Block(DataIntegrationMixin):
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             return DBTBlock
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
@@ -1198,12 +1247,13 @@ class Block(DataIntegrationMixin):
             )
 
             # If block has downstream dbt block, then materialize output
-            from mage_ai.data_preparation.models.block.dbt import DBTBlock
             if (
-                not isinstance(self, DBTBlock) and
+                BlockType.DBT != self.type and
                 self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
-                any(isinstance(block, DBTBlock) for block in self.downstream_blocks)
+                any(BlockType.DBT == block.type for block in self.downstream_blocks)
             ):
+                from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
                 # project_path and target sets
                 DBTBlock.materialize_df(
                     df=outputs[0],
@@ -1462,6 +1512,7 @@ class Block(DataIntegrationMixin):
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
+        selected_variables: List[str] = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -1484,6 +1535,9 @@ class Block(DataIntegrationMixin):
             )
 
         for v in all_variables:
+            if selected_variables and v not in selected_variables:
+                continue
+
             variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
                 block_uuid,
@@ -1772,6 +1826,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def to_dict(
         self,
+        include_block_catalog: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
@@ -1785,6 +1840,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['content'] = self.content
             if self.callback_block is not None:
                 data['callback_content'] = self.callback_block.content
+
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = self.get_catalog_from_file()
 
         if include_outputs:
             data['outputs'] = self.outputs
@@ -1816,6 +1874,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_outputs: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
+        **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
             include_callback_blocks=include_callback_blocks,
@@ -2342,6 +2401,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
+
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,

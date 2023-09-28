@@ -39,7 +39,10 @@ BlockPolicy.allow_actions([
 
 BlockPolicy.allow_read([
     'catalog',
+    'configuration',
     'content',
+    'documenation',
+    'metadata',
 ] + BlockPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -55,8 +58,12 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 
 BlockPolicy.allow_read([
     'bookmarks',
+    'catalog',
+    'configuration',
     'content',
     'description',
+    'documentation',
+    'metadata',
     'outputs',
     'pipelines',
     'runtime',
@@ -103,6 +110,7 @@ BlockPolicy.allow_write([
     'conditional_blocks',
     'configuration',
     'content',
+    'documentation',
     'destination_table',
     'downstream_blocks',
     'executor_config',
@@ -130,7 +138,12 @@ BlockPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 BlockPolicy.allow_query([
+    'data_integration_type',
+    'data_integration_uuid',
     'destination_table',
+    'include_block_catalog',
+    'include_block_metadata',
+    'include_documentation',
     'state_stream',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -151,6 +164,7 @@ BlockPolicy.allow_query([
     'block_language',
     'block_type',
     'extension_uuid',
+    'include_block_catalog',
     'update_state',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
