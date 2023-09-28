@@ -14,6 +14,9 @@ class DummyConfig(BaseConfig):
 class DummySink(BaseSink):
     config_class = DummyConfig
 
+    def init_client(self):
+        pass
+
     def write(self, message: Dict):
         if self.config.print_msg:
             self._print(f'Ingest data {message}, time={time.time()}')
