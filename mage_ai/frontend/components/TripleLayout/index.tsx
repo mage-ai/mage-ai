@@ -74,7 +74,7 @@ type TripleLayoutProps = {
   beforeHeader?: any;
   beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
-  beforeHidden: boolean;
+  beforeHidden?: boolean;
   beforeMousedownActive: boolean;
   beforeNavigationItems?: NavigationItem[];
   beforeWidth?: number;

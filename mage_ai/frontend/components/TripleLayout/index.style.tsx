@@ -219,6 +219,7 @@ export const AsideSubheaderStyle = styled.div<{
 `;
 
 export const BeforeStyle = styled.aside<{
+  heightOffset?: number;
   inline?: boolean;
 }>`
   ${ASIDE_STYLE}
@@ -244,6 +245,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 `;
 
 export const AfterStyle = styled.aside<{
+  heightOffset?: number;
   inline?: boolean;
 }>`
   ${ASIDE_STYLE}

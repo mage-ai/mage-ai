@@ -1565,7 +1565,6 @@ function DataIntegrationModal({
         height={heightModal}
         hideAfterCompletely={!after || (isOnStreamsOverview && !streams?.length)}
         inline
-        aside
         mainContainerHeader={subheaderEl}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ErrorType, ErrorResponseType } from '@interfaces/ErrorsType';
+import { ErrorType as ApiErrorType, ErrorResponseType } from '@interfaces/ErrorsType';
 
 export type ErrorProps = {};
 export type ErrorRunTimeProps = {
