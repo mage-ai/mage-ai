@@ -124,6 +124,7 @@ export default interface PipelineRunType {
   pipeline_schedule_token?: string;
   pipeline_schedule_type?: ScheduleTypeEnum;
   pipeline_uuid?: string;
+  started_at?: string;
   status?: RunStatusEnum;
   updated_at?: string;
   variables?: Obj;
