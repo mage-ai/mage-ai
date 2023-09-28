@@ -23,6 +23,9 @@ class AzureDataLakeConfig(BaseConfig):
 class AzureDataLakeSink(BaseSink):
     config_class = AzureDataLakeConfig
 
+    def init_client(self):
+        pass
+
     def write(self, message: Dict):
         self._print(f'Ingest data {message}, time={time.time()}')
         self.write_buffer(message)

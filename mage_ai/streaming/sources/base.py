@@ -29,7 +29,7 @@ class BaseSource(ABC):
         Intialize the client for the source.
         """
 
-    def destroy(self):
+    def destroy(self):      # noqa: B027
         """
         Close connections and destroy threads
         """
