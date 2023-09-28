@@ -493,6 +493,7 @@
             "guides/train-model"
           ]
         },
+        "guides/dbt/developing-dbt-in-mage",
         "guides/ai/overview",
         "guides/docker/connecting-a-database",
         "guides/community-examples",
