@@ -20,7 +20,7 @@ import { sum } from '@utils/array';
 
 type StreamTableSelectorProps = {
   selectedStreamMapping: StreamMapping;
-  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
+  setSelectedStreamMapping: (prev: StreamMapping) => StreamMapping;
   streamMapping: StreamMapping;
 };
 
@@ -32,7 +32,7 @@ function StreamTableSelector({
   const streamsGrouped: {
     groupHeader: string;
     streams: StreamType[];
-  } = useMemo(() => groupStreamsForTables(streamMapping), [
+  }[] = useMemo(() => groupStreamsForTables(streamMapping), [
     streamMapping,
   ]);
 
@@ -142,7 +142,8 @@ function StreamTableSelector({
           const stream = streamsArray?.[rowIndex];
           const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
 
-          setSelectedStreamMapping(prev => updateStreamInStreamMapping(
+          // @ts-ignore
+          setSelectedStreamMapping((prev: StreamMapping) => updateStreamInStreamMapping(
             stream,
             prev,
             {

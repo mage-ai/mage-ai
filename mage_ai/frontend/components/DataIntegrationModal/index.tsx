@@ -101,7 +101,7 @@ import { useWindowSize } from '@utils/sizes';
 
 type DataIntegrationModal = {
   block: BlockType;
-  defaultMainNavigationTab?: MainNavigationTabEnum;
+  defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
   onChangeBlock?: (block: BlockType) => void;
   onClose?: () => void;
@@ -111,7 +111,7 @@ type DataIntegrationModal = {
 
 const MODAL_VERTICAL_PADDING_TOTAL = 3 * UNIT * 2;
 
-function getSubTabForMainNavigationTab(mainNavigationTab: MainNavigationTabEnum): SubTabEnum {
+function getSubTabForMainNavigationTab(mainNavigationTab: MainNavigationTabEnum): TabType[] {
   if (mainNavigationTab in SUB_TABS_BY_MAIN_NAVIGATION_TAB) {
     return SUB_TABS_BY_MAIN_NAVIGATION_TAB[mainNavigationTab];
   }
@@ -162,6 +162,21 @@ function DataIntegrationModal({
     blockType,
   ]);
 
+  const [blockAttributes, setBlockAttributes] = useState<BlockType>(null);
+
+  const {
+    configuration,
+    content: blockContent,
+    metadata,
+  } = blockAttributes || {};
+
+  const {
+    destination,
+    name: nameDisplay,
+    source,
+  } = useMemo(() => metadata?.data_integration || {}, [metadata]);
+  const dataIntegrationUUID = useMemo(() => destination || source || null, [destination, source]);
+
   const blockDetailQuery: {
     data_integration_uuid?: string;
     include_block_catalog: boolean;
@@ -198,7 +213,6 @@ function DataIntegrationModal({
     }
   );
 
-  const [blockAttributes, setBlockAttributes] = useState<BlockType>(null);
   const dataIntegrationConfiguration: ConfigurationDataIntegrationType =
     useMemo(() => blockAttributes?.configuration?.data_integration || {}, [
       blockAttributes,
@@ -232,8 +246,13 @@ function DataIntegrationModal({
     ]);
 
   const updateStreamsInCatalog =
-    useCallback((streams: StreamType[], callback) => setBlockAttributes(prev => {
-      const catalog = prev?.catalog || {};
+    useCallback((
+      streams: StreamType[],
+      callback?: (b: BlockType) => void,
+    ) => setBlockAttributes(prev => {
+      const catalog = prev?.catalog || {
+        streams: [],
+      };
       const streamsTemp = [...(catalog?.streams || [])];
 
       streams?.forEach((stream: StreamType) => {
@@ -290,12 +309,6 @@ function DataIntegrationModal({
     dataBlock,
   ]);
 
-  const {
-    configuration,
-    content: blockContent,
-    metadata,
-  } = blockAttributes || {};
-
   const blocksMapping = useMemo(() => indexBy(blocks || [], ({ uuid }) => uuid), [blocks]);
   const blockUpstreamBlocks =
     useMemo(() => blockAttributes?.upstream_blocks?.map(uuid => blocksMapping?.[uuid]), [
@@ -311,13 +324,6 @@ function DataIntegrationModal({
     useMemo(() => buildStreamMapping(streams), [
       streams,
     ]);
-
-  const {
-    destination,
-    name: nameDisplay,
-    source,
-  } = useMemo(() => metadata?.data_integration || {}, [metadata]);
-  const dataIntegrationUUID = useMemo(() => destination || source || null, [destination, source]);
 
   const componentUUID = useMemo(() => `DataIntegrationModal/${blockUUID}`, blockUUID);
   const localStorageKeyAfter =
@@ -341,15 +347,16 @@ function DataIntegrationModal({
     useState<MainNavigationTabEnum>(defaultMainNavigationTab);
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] =
     useState<string>(defaultMainNavigationTabSub || null);
-  const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(defaultMainNavigationTab
-    ? getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
-    : null
-  );
+  const [selectedSubTab, setSelectedSubTab] =
+    useState<SubTabEnum | string>(defaultMainNavigationTab
+      ? getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
+      : null
+    );
 
   const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
     useState<ColumnsMappingType>({});
 
-  const setSelectedMainNavigationTab = useCallback((prev1, mainNavigationTabSub: string) => {
+  const setSelectedMainNavigationTab = useCallback((prev1, mainNavigationTabSub?: string) => {
     setSelectedMainNavigationTabState((prev2) => {
       const val1 = typeof prev1 === 'function' ? prev1(prev2) : prev1
 
@@ -357,12 +364,10 @@ function DataIntegrationModal({
         ? SUB_TABS_BY_MAIN_NAVIGATION_TAB[val1]
         : SUB_TABS_FOR_STREAM_DETAIL;
 
-      const valOld = typeof prev2 === 'function' ? prev2() : prev2;
-
       // If changing main tabs between stream detail tabs, persist the subtab.
-      if (MAIN_TABS_EXCEPT_STREAM_DETAIL[val1] || MAIN_TABS_EXCEPT_STREAM_DETAIL[valOld]) {
+      if (MAIN_TABS_EXCEPT_STREAM_DETAIL[val1] || MAIN_TABS_EXCEPT_STREAM_DETAIL[prev2]) {
         setSelectedSubTab(tabs?.[0]?.uuid);
-        if (val1 !== valOld) {
+        if (val1 !== prev2) {
           setHighlightedColumnsMapping({});
         }
 
@@ -370,8 +375,8 @@ function DataIntegrationModal({
         setSelectedMainNavigationTabSub((subtabPrev) => {
           const streamOld = getStreamFromStreamMapping({
             parent_stream: subtabPrev,
-            stream: valOld,
-            tap_stream_id: valOld,
+            stream: prev2,
+            tap_stream_id: prev2,
           }, streamsFromCatalogMapping);
 
           const streamNew = getStreamFromStreamMapping({
@@ -611,7 +616,7 @@ function DataIntegrationModal({
     {
       isLoading: isLoadingFetchIntegrationSource,
     },
-  ] = useMutation(
+  ]: [any, { isLoading: boolean }] = useMutation(
     api.integration_sources.useUpdate(pipelineUUID),
     {
       onSuccess: (response: any) => onSuccess(
@@ -1099,7 +1104,7 @@ function DataIntegrationModal({
                           <Spacing mr={1} />
 
                           <Checkbox
-                            checked={inputSettings?.input_only}
+                            checked={!!inputSettings?.input_only}
                             onClick={() => setDataIntegrationConfigurationForInputs((
                               inputsPrev: ConfigurationDataIntegrationInputsType,
                             ) => ({
@@ -1123,7 +1128,7 @@ function DataIntegrationModal({
         });
 
         return (
-          <div>
+          <>
             <Spacing p={PADDING_UNITS}>
               <Headline>
                 Inputs
@@ -1168,7 +1173,7 @@ function DataIntegrationModal({
             <Divider light />
 
             {rows}
-          </div>
+          </>
         );
       }
     } else if (MainNavigationTabEnum.STREAMS === selectedMainNavigationTab) {
@@ -1314,7 +1319,10 @@ function DataIntegrationModal({
               <Button
                 fullWidth
                 onClick={() => {
-                  let streamMappingUpdated = {};
+                  let streamMappingUpdated: StreamMapping = {
+                    noParents: {},
+                    parents: {},
+                  };
 
                   if (isOnStreamDetailSchemaProperties) {
                     streamMappingUpdated = updateStreamMappingWithPropertyAttributeValues(
@@ -1408,6 +1416,7 @@ function DataIntegrationModal({
           selectedStreamMapping={selectedStreamMapping}
           setAttributesMapping={setAttributesMapping}
           setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+          // @ts-ignore
           setSelectedStreamMapping={setSelectedStreamMapping}
           stream={stream}
           streamMapping={streamsFromCatalogMapping}
@@ -1420,6 +1429,7 @@ function DataIntegrationModal({
           attributesMapping={attributesMapping}
           selectedStreamMapping={selectedStreamMapping}
           setAttributesMapping={setAttributesMapping}
+          // @ts-ignore
           setSelectedStreamMapping={setSelectedStreamMapping}
           streamMapping={streamsFromCatalogMapping}
         />
@@ -1444,7 +1454,10 @@ function DataIntegrationModal({
   ]);
 
   const breadcrumbsEl = useMemo(() => {
-    const arr = [
+    const arr: {
+      bold?: boolean;
+      label: () => string;
+    }[] = [
       {
         label: () => blockUUID,
       },
@@ -1502,10 +1515,7 @@ function DataIntegrationModal({
             <Link
               href="https://docs.mage.ai"
               inline
-              noBackground
-              noBorder
               noOutline
-              noPadding
               openNewWindow
             >
               <DocumentIcon default size={UNIT * 2} />

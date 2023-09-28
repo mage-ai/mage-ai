@@ -21,6 +21,7 @@ import {
   ConfigurationDataIntegrationInputsType,
   ConfigurationDataIntegrationType,
 } from '@interfaces/ChartBlockType';
+import { ErrorRunTimeProps } from '@context/Error/ErrorContext';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PlugAPI } from '@oracle/icons';
 import { SubTabEnum } from './constants';
@@ -41,14 +42,7 @@ type CredentialsInternalProps = {
     pipeline?: PipelineType;
   }) => Promise<any>;
   setSelectedSubTab: (subTab: SubTabEnum) => void;
-  showError: (opts: {
-    errors: {
-      [key: string]: any;
-    };
-    response: {
-      [key: string]: any;
-    };
-  }) => void;
+  showError: (opts: ErrorRunTimeProps) => void;
 } & CredentialsProps;
 
 function Credentials({
@@ -94,7 +88,10 @@ function Credentials({
   ]);
 
   const [connectionSuccessful, setConnectionSuccessful] = useState<boolean>(false);
-  const [createTestConnection, { isLoading: isLoadingTestConnection }] = useMutation(
+  const [
+    createTestConnection, {
+      isLoading: isLoadingTestConnection,
+    }]: [any, { isLoading: boolean }] = useMutation(
     api.integration_sources.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -358,7 +355,7 @@ function Credentials({
           <Divider light />
           <Spacing p={PADDING_UNITS}>
             <Spacing mb={1}>
-              <Headline danger level={5} uppercase>
+              <Headline danger level={5}>
                 ERROR
               </Headline>
             </Spacing>

@@ -1,4 +1,4 @@
-import { ColumnsMappingType } from '@utils/block';
+import { ColumnsMappingType } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { StreamsOverviewProps } from '../StreamsOverview';
 

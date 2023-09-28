@@ -238,6 +238,7 @@ function BlockSettings({
     },
   );
 
+  // @ts-ignore
   const onChangeBlock = useCallback((blockUpdated: BlockType) => updateBlock({
     block: blockUpdated,
   }), [updateBlock]);

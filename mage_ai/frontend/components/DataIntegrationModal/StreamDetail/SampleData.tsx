@@ -89,7 +89,12 @@ function SampleData({
       revalidateOnFocus: false,
     },
   );
-  const [createOutputs, { isLoading: isLoadingCreateOutputs }] = useMutation(
+  const [
+    createOutputs,
+    {
+      isLoading: isLoadingCreateOutputs,
+    },
+  ]: [any, { isLoading: boolean }] = useMutation(
     api.outputs.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(

@@ -269,15 +269,13 @@ function StreamDetailSchemaProperties({
       unique_constraints: uniqueConstraints,
     } = stream;
     const {
-      any,
+      anyOf,
       format,
       metadata,
       type: columnTypes,
     }: SchemaPropertyType = property;
-    const p2 = hydrateProperty(column, property) || {};
-    const {
-      typesDerived,
-    }  = p2 || {}
+    const p2: PropertyColumnMoreType = hydrateProperty(column, property);
+    const typesDerived = p2?.typesDerived || [];
 
     const isSelected = !metadata || !metadata?.metadata || metadata?.metadata?.selected;
     const isUnique = uniqueConstraintsMapping?.[column];
@@ -338,7 +336,7 @@ function StreamDetailSchemaProperties({
                   : addTypesToProperty([columnType], p2);
 
                 const propUpdated2 = {
-                  any: propUpdated1?.any,
+                  anyOf: propUpdated1?.anyOf,
                   format: propUpdated1?.format,
                   type: propUpdated1?.type,
                 };
@@ -362,7 +360,9 @@ function StreamDetailSchemaProperties({
           onClick={(e) => {
             pauseEvent(e);
             setCoordinates({
+              // @ts-ignore
               x: e.pageX,
+              // @ts-ignore
               y: e.pageY,
             });
             setPropertyFocused(p2);
@@ -559,7 +559,7 @@ function StreamDetailSchemaProperties({
                           : addTypesToProperty([columnType], p2);
 
                         const propUpdated2 = {
-                          any: propUpdated1?.any,
+                          anyOf: propUpdated1?.anyOf,
                           format: propUpdated1?.format,
                           type: propUpdated1?.type,
                         };

@@ -94,22 +94,22 @@ export interface MetadataType {
 }
 
 export interface StreamType {
-  auto_add_new_fields: boolean;
-  bookmark_properties: string[];
+  auto_add_new_fields?: boolean;
+  bookmark_properties?: string[];
   destination_table?: string;
   disable_column_type_check?: boolean;
-  key_properties: string[];
-  metadata: MetadataType[];
+  key_properties?: string[];
+  metadata?: MetadataType[];
   parent_stream?: string;
-  partition_keys: string[];
-  replication_key: string;
-  replication_method: ReplicationMethodEnum;
+  partition_keys?: string[];
+  replication_key?: string;
+  replication_method?: ReplicationMethodEnum;
   run_in_parallel?: boolean;
-  schema: SchemaType;
-  stream: string;
-  tap_stream_id: string;
-  unique_conflict_method: UniqueConflictMethodEnum;
-  unique_constraints: string[];
+  schema?: SchemaType;
+  stream?: string;
+  tap_stream_id?: string;
+  unique_conflict_method?: UniqueConflictMethodEnum;
+  unique_constraints?: string[];
 }
 
 export interface CatalogType {

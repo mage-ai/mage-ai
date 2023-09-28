@@ -37,14 +37,15 @@ export type StreamsOverviewProps = {
     [blockUUID: string]: BlockType;
   };
   onChangeBlock?: (block: BlockType) => void;
-  selectedStreamMapping: StreamMapping;
-  setSelectedMainNavigationTab: (
-    prev: (tab: MainNavigationTabEnum, subtab: string) => void,
-  ) => void;
-  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
   streamMapping: StreamMapping;
-  updateStreamsInCatalog: (streams: StreamType[]) => any;
+  updateStreamsInCatalog: (streams: StreamType[], callback?: (block: BlockType) => void) => any;
 };
+
+type StreamsOverviewInternalProps = {
+  selectedStreamMapping: StreamMapping;
+  setSelectedMainNavigationTab: (tab: MainNavigationTabEnum | string, subtab?: string) => void;
+  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
+} & StreamsOverviewProps;
 
 const INPUT_SHARED_PROPS = {
   compact: true,
@@ -60,7 +61,7 @@ function StreamsOverview({
   setSelectedStreamMapping,
   streamMapping,
   updateStreamsInCatalog: updateStreamsInCatalogProp,
-}: StreamsOverviewProps) {
+}: StreamsOverviewInternalProps) {
   const timeout = useRef(null);
 
   const [destinationTablesByStreamUUID, setDestinationTablesByStreamUUID] = useState<{
@@ -94,7 +95,7 @@ function StreamsOverview({
   const streamsGrouped: {
     groupHeader: string;
     streams: StreamType[];
-  } = useMemo(() => groupStreamsForTables(streamMapping), [
+  }[] = useMemo(() => groupStreamsForTables(streamMapping), [
     streamMapping,
   ]);
 

@@ -157,7 +157,7 @@ function StreamDetailOverview({
             arr,
             key,
           ]) => [
-            <Text key={attributeName}>
+            <Text key={attributeName as string}>
               {attributeName}
             </Text>,
             <FlexContainer
@@ -176,7 +176,7 @@ function StreamDetailOverview({
                   <Chip
                     label={column}
                     onClick={() => updateValue(
-                      key,
+                      key as string,
                       remove(arr, i => i === column),
                     )}
                     xsmall

@@ -7,6 +7,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -34,6 +35,10 @@ type DataIntegrationBlockProps = {
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     blockUUID: string;
   }) => void;
+  savePipelineContent?: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
 } & OpenDataIntegrationModalType;
 
 function DataIntegrationBlock({
@@ -291,6 +296,8 @@ function DataIntegrationBlock({
         </Spacing>
 
         {streamsCount >= 1 && tableEl}
+
+        {streamsCount >= 1 && <Spacing mb={PADDING_UNITS} />}
       </StreamSectionStyle>
     </>
   );

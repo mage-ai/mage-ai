@@ -8,8 +8,8 @@ import { SubTabEnum } from '../constants';
 type StreamDetailPropsInner = {
   height?: number;
   pipeline: PipelineType;
-  selectedSubTab?: SubTabEnum;
-  setSelectedSubTab?: (subTab: SubTabEnum) => void;
+  selectedSubTab?: SubTabEnum | string;
+  setSelectedSubTab?: (subTab: SubTabEnum | string) => void;
   showError: (opts: any) => void;
 } & StreamDetailProps;
 

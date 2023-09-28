@@ -47,7 +47,7 @@ export type PropertyColumnWithUUIDType = {
 } & SchemaPropertyType;
 
 export type PropertyColumnMoreType = {
-  typesDerived: string | ColumnFormatEnum | ColumnTypeEnum;
+  typesDerived: string[] | ColumnFormatEnum[] | ColumnTypeEnum[];
 } & PropertyColumnWithUUIDType;
 
 export interface StreamDifferencesType {
@@ -233,7 +233,7 @@ export function isMetadataForStreamFromMetadataArray(metadata: MetadataType): bo
   return metadata?.breadcrumb?.length === 0;
 }
 
-export function getStreamMetadataFromMetadataArray(stream: StreamType): StreamType {
+export function getStreamMetadataFromMetadataArray(stream: StreamType): MetadataType {
   return stream?.metadata?.find(isMetadataForStreamFromMetadataArray) || {};
 }
 
@@ -260,7 +260,7 @@ export function updateStreamInBlock(stream: StreamType, block: BlockType) {
   };
 }
 
-export function updateStreamMetadata(streamInit: StreamType, payload: MetadataType): StreamType {
+export function updateStreamMetadata(streamInit: StreamType, payload: PropertyMetadataType): StreamType {
   const stream = { ...streamInit };
   if (!stream?.metadata) {
     stream.metadata = [];
@@ -683,7 +683,7 @@ export function hydrateProperty(
 export function groupStreamsForTables(streamMapping: StreamMapping): {
   groupHeader: string;
   streams: StreamType[];
-} {
+}[] {
   const {
     noParents,
     parents,

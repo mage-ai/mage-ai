@@ -101,6 +101,7 @@ export enum SortOrderEnum {
 export interface ConfigurationDataIntegrationInputsType {
   [block_uuid: string]: {
     catalog?: boolean;
+    input_only?: boolean;
     streams?: string[];
   };
 }

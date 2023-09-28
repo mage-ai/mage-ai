@@ -9,7 +9,7 @@ import StreamTableSelector from '../StreamTableSelector';
 import Text from '@oracle/elements/Text';
 import { BackgroundStyle } from '../index.style';
 import { InputTypeEnum } from '../constants';
-import { StreamDetailProps } from './StreamDetail/constants';
+import { StreamDetailProps } from '../StreamDetail/constants';
 import { COLUMN_TYPES } from '@interfaces/IntegrationSourceType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
@@ -27,7 +27,7 @@ type StreamSchemaPropertiesEditorProps = {
   attributesMapping: AttributesMappingType;
   selectedStreamMapping: StreamMapping;
   setAttributesMapping: (prev: (v: AttributesMappingType) => AttributesMappingType) => void;
-  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
+  setSelectedStreamMapping: (prev: StreamMapping) => StreamMapping | StreamMapping;
 };
 
 function StreamSchemaPropertiesEditor({

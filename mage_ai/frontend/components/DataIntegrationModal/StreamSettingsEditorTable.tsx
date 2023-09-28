@@ -98,14 +98,14 @@ function StreamSettingsEditorTable({
     } else if (InputTypeEnum.TOGGLE === inputType) {
       inputEl = (
         <ToggleSwitch
-          checked={value}
+          checked={value as boolean}
           compact
           onCheck={(valFunc: (val: boolean) => boolean) => {
             setAttributesMapping(prev => ({
               ...prev,
               [uuid]: {
                 ...prev?.[uuid],
-                value: valFunc(value),
+                value: valFunc(value as boolean),
               },
             }));
           }}

@@ -22,7 +22,7 @@ type StreamOverviewEditorProps = {
   attributesMapping: AttributesMappingType;
   selectedStreamMapping: StreamMapping;
   setAttributesMapping: (prev: (v: AttributesMappingType) => AttributesMappingType) => void;
-  setSelectedStreamMapping: (prev: (v: StreamMapping) => StreamMapping) => void;
+  setSelectedStreamMapping: (prev: StreamMapping) => StreamMapping | StreamMapping;
   streamMapping: StreamMapping;
 };
 

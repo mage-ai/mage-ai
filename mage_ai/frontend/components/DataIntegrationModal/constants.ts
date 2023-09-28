@@ -19,7 +19,7 @@ export interface AttributeType {
   inputType: InputTypeEnum;
   label: () => string;
   options?: OptionType[];
-  uuid: AttributeUUIDEnum;
+  uuid: AttributeUUIDEnum | string;
 }
 
 export enum MainNavigationTabEnum {
@@ -31,7 +31,7 @@ export enum MainNavigationTabEnum {
 
 export type OpenDataIntegrationModalOptionsType = {
   block: BlockType,
-  defaultMainNavigationTab?: MainNavigationTabEnum;
+  defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
   onChangeBlock?: (block: BlockType) => void;
   savePipelineContent?: (payload?: {
@@ -68,7 +68,7 @@ export enum SubTabEnum {
 }
 
 export const SUB_TABS_BY_MAIN_NAVIGATION_TAB: {
-  [key: SubTabEnum]: TabType;
+  [key: string]: TabType[];
 } = {
   [MainNavigationTabEnum.CONFIGURATION]: [
     {
