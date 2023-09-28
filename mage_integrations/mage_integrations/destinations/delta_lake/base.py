@@ -86,7 +86,7 @@ class DeltaLake(BaseDestination):
 
             non_null = df[column_name].notnull()
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
-                lambda x: str(column_type_df(x)),
+                lambda x, column_type_df=column_type_df: str(column_type_df(x)),
             )
 
             if df[column_name].dropna().count() != number_of_rows:
