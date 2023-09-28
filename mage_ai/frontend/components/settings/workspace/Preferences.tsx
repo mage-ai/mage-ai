@@ -54,6 +54,11 @@ function Preferences({
     project_uuid: projectUUID,
   } = project || {};
 
+  const isDemoApp = useMemo(() =>
+    typeof window !== 'undefined' && window.location.hostname === 'demo.mage.ai',
+    [],
+  );
+
   useEffect(() => {
     if (!projectAttributes) {
       setProjectAttributes(project);
@@ -267,7 +272,8 @@ function Preferences({
               </FlexContainer>
             :
               <TextInput
-                label="API key"
+                disabled={isDemoApp}
+                label={isDemoApp ? 'Entering API key is disabled on demo' : 'API key'}
                 monospace
                 onChange={e => setProjectAttributes(prev => ({
                   ...prev,

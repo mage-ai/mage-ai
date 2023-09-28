@@ -24,6 +24,7 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import Widget from '@components/PipelineRun/Widget';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -52,6 +53,7 @@ import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { MonitorStatsEnum, RunCountStatsType } from '@interfaces/MonitorStatsType';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { RunStatus } from '@interfaces/BlockRunType';
+import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
@@ -224,7 +226,7 @@ function OverviewPage() {
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
-  const _ = useMemo(
+  const displayLocalTimezone = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
@@ -363,6 +365,18 @@ function OverviewPage() {
       onClickCallback={() => setAddButtonMenuOpen(false)}
     />
   ), [addButtonMenuOpen, isLoadingCreatePipeline, newPipelineButtonMenuItems]);
+
+  const utcTooltipEl = useMemo(() => (
+    displayLocalTimezone
+      ? (
+        <Spacing ml="4px">
+          <Tooltip
+            {...SHARED_UTC_TOOLTIP_PROPS}
+            label="Please note that these counts are based on UTC time."
+          />
+        </Spacing>
+      ) : null
+  ), [displayLocalTimezone]);
 
   const pageBlockLayoutTemplate = useMemo(() => {
     const name0 = 'Pipelines';
@@ -602,9 +616,9 @@ def d(df):
           <Spacing mx={3} my={2}>
             <Headline level={4}>
               {timePeriod === TimePeriodEnum.TODAY &&
-                `${capitalize(TimePeriodEnum.TODAY)}: ${selectedDateRange}`}
+                `${capitalize(TimePeriodEnum.TODAY)} (UTC): ${selectedDateRange}`}
               {timePeriod !== TimePeriodEnum.TODAY &&
-                `${capitalize(TIME_PERIOD_DISPLAY_MAPPING[timePeriod])}: ${selectedDateRange}`}
+                `${capitalize(TIME_PERIOD_DISPLAY_MAPPING[timePeriod])} (UTC): ${selectedDateRange}`}
             </Headline>
 
             <Spacing mt={2}>
@@ -623,9 +637,12 @@ def d(df):
 
             <Spacing mt={2}>
               <Spacing ml={2}>
-                <Text bold large>
-                  {isValidatingMonitorStats ? '--' : totalPipelineRunCount} total pipeline runs
-                </Text>
+                <FlexContainer alignItems="center">
+                  <Text bold large>
+                    {isValidatingMonitorStats ? '--' : totalPipelineRunCount} total pipeline runs
+                  </Text>
+                  {utcTooltipEl}
+                </FlexContainer>
               </Spacing>
               <Spacing mt={1}>
                 <BarStackChart
