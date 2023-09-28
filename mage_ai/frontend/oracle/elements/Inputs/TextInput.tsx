@@ -12,6 +12,7 @@ const TextInputStyle = styled.input<TextInputProps>`
 const TextInput = ({ ...props }: TextInputProps, ref) => (
   <InputWrapper
     {...props}
+    // @ts-ignore
     input={<TextInputStyle {...props} />}
     ref={ref}
   />

@@ -37,6 +37,7 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
+import DataIntegrationBlock from './DataIntegrationBlock';
 import DataProviderType, {
   DataProviderEnum,
   EXPORT_WRITE_POLICIES,
@@ -107,6 +108,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import {
@@ -131,11 +133,11 @@ import { find, indexBy } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
+import { isDataIntegrationBlock, useDynamicUpstreamBlocks } from '@utils/models/block';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
-import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
@@ -219,7 +221,11 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   widgets?: BlockType[];
-} & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
+}
+  & CodeEditorSharedProps
+  & CommandButtonsSharedProps
+  & SetEditingBlockType
+  & OpenDataIntegrationModalType;
 
 function CodeBlock({
   addNewBlock,
@@ -276,6 +282,7 @@ function CodeBlock({
   setTextareaFocused,
   showBrowseTemplates,
   showConfigureProjectModal,
+  showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
   textareaFocused,
@@ -322,6 +329,11 @@ function CodeBlock({
   const isSQLBlock = BlockLanguageEnum.SQL === blockLanguage;
   const isRBlock = BlockLanguageEnum.R === blockLanguage;
   const isMarkdown = BlockTypeEnum.MARKDOWN === blockType;
+
+  const isDataIntegration: boolean = useMemo(() => isDataIntegrationBlock(block, pipeline), [
+    block,
+    pipeline,
+  ]);
 
   let defaultLimitValue = blockConfiguration[CONFIG_KEY_LIMIT];
   if (isSQLBlock && defaultLimitValue === undefined) {
@@ -665,7 +677,7 @@ function CodeBlock({
   );
   const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
 
-  const [updateBlock] = useMutation(
+  const [updateBlock]: [any, any] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
     {
       onError: (response: any) => {
@@ -811,7 +823,7 @@ function CodeBlock({
     ]);
 
   const codeEditorEl = useMemo(() => {
-    if (replicatedBlockUUID) {
+    if (replicatedBlockUUID && !isDataIntegration) {
       return null;
     }
 
@@ -862,8 +874,11 @@ function CodeBlock({
       );
     }
 
-    return (
-      <>
+    let editorEl;
+    let callbackEl;
+
+    if (!isDataIntegration || BlockLanguageEnum.PYTHON === blockLanguage) {
+      editorEl = (
         <CodeEditor
           autoHeight
           autocompleteProviders={autocompleteProviders}
@@ -903,39 +918,63 @@ function CodeBlock({
           value={content}
           width="100%"
         />
-        {hasCallback && (
-          <>
-            <Divider />
-            <Spacing mt={1}>
-              <CodeHelperStyle normalPadding>
-                <Text small>
-                  Callback block: define @on_success or @on_failure callbacks for this block.
-                </Text>
-                <Text monospace muted small>
-                  kwargs<Text inline monospace muted small> → </Text>
-                  global variables
-                </Text>
-              </CodeHelperStyle>
-              <CodeEditor
-                autoHeight
-                autocompleteProviders={autocompleteProviders}
-                language="python"
-                onChange={(val: string) => {
-                  setCallbackContent(val);
-                  onCallbackChange?.(val);
-                }}
-                onDidChangeCursorPosition={onDidChangeCursorPosition}
-                placeholder="Start typing here..."
-                selected={selected}
-                setSelected={setSelected}
-                setTextareaFocused={setTextareaFocused}
-                textareaFocused={textareaFocused}
-                value={callbackContent}
-                width="100%"
-              />
-            </Spacing>
-          </>
-        )}
+      );
+
+      callbackEl = hasCallback && (
+        <>
+          <Divider />
+          <Spacing mt={1}>
+            <CodeHelperStyle normalPadding>
+              <Text small>
+                Callback block: define @on_success or @on_failure callbacks for this block.
+              </Text>
+              <Text monospace muted small>
+                kwargs<Text inline monospace muted small> → </Text>
+                global variables
+              </Text>
+            </CodeHelperStyle>
+            <CodeEditor
+              autoHeight
+              autocompleteProviders={autocompleteProviders}
+              language="python"
+              onChange={(val: string) => {
+                setCallbackContent(val);
+                onCallbackChange?.(val);
+              }}
+              onDidChangeCursorPosition={onDidChangeCursorPosition}
+              placeholder="Start typing here..."
+              selected={selected}
+              setSelected={setSelected}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+              value={callbackContent}
+              width="100%"
+            />
+          </Spacing>
+        </>
+      );
+    }
+
+    if (isDataIntegration) {
+      return (
+        <DataIntegrationBlock
+          block={block}
+          codeEditor={editorEl}
+          callbackEl={callbackEl}
+          onChangeBlock={(blockUpdated: BlockType) => updateBlock({
+            block: blockUpdated,
+          })}
+          openSidekickView={openSidekickView}
+          savePipelineContent={savePipelineContent}
+          showDataIntegrationModal={showDataIntegrationModal}
+        />
+      );
+    }
+
+    return (
+      <>
+        {editorEl}
+        {callbackEl}
       </>
     );
   }, [
@@ -951,6 +990,7 @@ function CodeBlock({
     hasCallback,
     height,
     hideRunButton,
+    isDataIntegration,
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
@@ -1431,6 +1471,7 @@ function CodeBlock({
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
               lightBackground={isMarkdown && !isEditingBlock}
+              noPadding={isDataIntegration}
               onClick={onClickSelectBlock}
               onDoubleClick={() => {
                 if (isMarkdown && !isEditingBlock) {
@@ -2051,26 +2092,31 @@ function CodeBlock({
               )}
 
               {tags.length >= 1 && (
-                <CodeHelperStyle normalPadding>
-                  <FlexContainer>
-                    {tags.map(({
-                      description,
-                      title,
-                    }, idx) => (
-                      <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
-                        <Tooltip
-                          block
-                          description={description}
-                          size={null}
-                          widthFitContent
-                        >
-                          <Badge>
-                            {title}
-                          </Badge>
-                        </Tooltip>
-                      </Spacing>
-                    ))}
-                  </FlexContainer>
+                <CodeHelperStyle
+                  noMargin={isDataIntegration}
+                  normalPadding
+                >
+                  <Spacing py={isDataIntegration ? 1 : 0}>
+                    <FlexContainer>
+                      {tags.map(({
+                        description,
+                        title,
+                      }, idx) => (
+                        <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                          <Tooltip
+                            block
+                            description={description}
+                            size={null}
+                            widthFitContent
+                          >
+                            <Badge>
+                              {title}
+                            </Badge>
+                          </Tooltip>
+                        </Spacing>
+                      ))}
+                    </FlexContainer>
+                  </Spacing>
                 </CodeHelperStyle>
               )}
 
@@ -2079,6 +2125,7 @@ function CodeBlock({
                 && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
                 && !isStreamingPipeline
                 && !replicatedBlockUUID
+                && !isDataIntegration
                 && (
                 <CodeHelperStyle normalPadding>
                   <Spacing mr={1}>
@@ -2188,7 +2235,7 @@ function CodeBlock({
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
-                      ? replicatedBlock
+                      ? (replicatedBlock && !isDataIntegration)
                         ? (<Spacing px={1}>
                           <Text monospace muted>
                             Replicated from block <Link

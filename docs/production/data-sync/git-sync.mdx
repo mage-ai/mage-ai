@@ -1,0 +1,111 @@
+---
+title: "Git sync"
+description: "One way sync with a specified git repository."
+---
+
+`Git sync` is a Git feature that allows you to tie your local project to a remote repo. When Git sync is enabled, you will only be able to pull in changes from the remote repository.
+Git sync is particularly useful for deployment— for example if you'd like a hosted Mage instance to stay up-to-date with a repo.
+
+<Warning>
+    Enabling Git sync limits Git to a _unidirectional_ sync. This means that changes made to your local repo will be
+    *overwritten* by the remote repo. To sync both ways, use a different Git integration.
+</Warning>
+
+Running a Git sync will ***overwrite all local changes***
+and replace them with the code in the specified remote branch. Git syncs can be run either from the
+Git settings page, or before every trigger run if you selected the `Sync before each trigger run` field.
+
+To enable Git Sync, navigate to the settings page _after_ you've configured your Git settings and tick the `Git Sync` box.
+
+<Steps>
+    <Step title="Fill out the form">
+        <div align="center">
+        <img src="/media/github-url.png" width="50%"/>
+        </div>
+        - `Authentication type`: Select which kind of authentication to use for the Git Sync
+        - `Remote repo url`: Your Github repository's remote url. Use the SSH link or HTTPS link depending on the authentication type.
+        - `Local directory path`: The directory in your machine that will be synced with the Github repository. If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can check what your current working directory is in a Scratchpad block.
+    </Step>
+    <Step title="Fill out the sync fields">
+        - `Include submodules`: Include git submodules in the sync. See the `Syncing git submodules` section for more information.
+        - `Branch name`: Specify branch to sync with.
+        - `Sync before each trigger run`: If this field is checked, then Mage will sync with Github before each trigger is run.
+        - `Sync on server start up`: If this field is checked, then Mage will sync with the Git repo when Mage is started.
+    </Step>
+    <Step title="Fill out git credentials">
+        <AccordionGroup>
+        <Accordion title="SSH" icon="terminal">
+        <Warning>
+        **SSH keys with passphrase are not supported**
+
+        The Git integration currently does not support repositories that require an SSH key with a passphrase.
+
+        You can, however, use the Mage terminal and the git CLI to perform your git actions.
+        You'll still need to generate your SSH keys as normal. You can start a ssh-agent in the terminal so that
+        you don't have to enter your SSH key passphrase every time you perform an action.
+
+        `eval $(ssh-agent -s) && ssh-add ~/.ssh/id_rsa`
+
+        </Warning>
+        <Steps>
+        <Step title="Set up your SSH key">
+        This will allow your machine to access GitHub. 
+        Check out this sections this [guide](/production/data-sync/git#configure-git-settings) to set up your SSH key.
+        </Step>
+        <Step title="Fill out the remaining fields.">
+        Filling out these fields will allow Mage to recreate your git and SSH settings if they are deleted (i.e. if your container restarts):
+            - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
+            - `Email`: Your git email. Used for the same purpose as your username.
+            - `SSH public key in base64`, `SSH public key in base64`: Enter your SSH public and private key encoded in base64. You can follow the instructions in the field description if you want to Mage to save your SSH keys.
+        </Step>
+        </Steps>
+        </Accordion>
+
+        <Accordion title="HTTPS/Token" icon="coin">
+        <Steps>
+            <Step title="Create a Git access token if you haven't already">
+                - [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+                - [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
+            </Step>
+            <Step title="Fill out the remaining fields.">
+                - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
+                - `Email`: Your git email. Used for the same purpose as your username.
+                - `Access token`: Enter the Git access token that you created in step 4.
+            </Step>
+        </Steps>
+        </Accordion>
+        </AccordionGroup>
+    </Step>
+    <Step title="Save your Git settings">
+    </Step>
+</Steps>
+
+### Syncing git submodules
+
+<Warning>
+    Repositories synced through Mage will only update 1 level of submodules. If your submodule
+    contains other submodules, you will need to manually update them or reformat your submodules.
+</Warning>
+
+If your repo contains git submodules, you can enable syncing for them by ticking the `Include submodules` box. Mage will
+use the same credentials that are provided for the main repository to update the submodules.
+
+## Git sync settings as environment variables
+
+You can choose to pass in Git settings as environment variables. Mage will read from these environment
+variables to configure your Git repo.
+
+| Setting                              | Variable                       | Description                                                                                    | Required |
+|--------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------|----------|
+| Git settings                         | `GIT_REPO_LINK`              |  corresponds to `Remote repo url`                                                              | ✅        |
+| Git settings                         | `GIT_REPO_PATH`              |  corresponds to `Local directory path`                                                         | ✅        |
+| Git settings                         | `GIT_USERNAME`               |  corresponds to `Username`                                                                     | ✅        |
+| Git settings                         | `GIT_EMAIL`                  |  corresponds to `Email`                                                                        | ✅        |
+| Git settings                         | `GIT_AUTH_TYPE`              |  Authentication type, options                                                                  | ✅        |
+| Git sync settings                    | `GIT_BRANCH`                 |  corresponds to `Branch name`                                                                  | 🚫        |
+| Git sync settings                    | `GIT_SYNC_ON_PIPELINE_RUN`   |  corresponds to `Sync before each trigger run`, options                                        | 🚫        |
+| Git sync settings                    | `GIT_SYNC_ON_START`          |  corresponds to `Sync on server start up`, options                                             | 🚫        |
+| Git sync settings                    | `GIT_SYNC_ON_EXECUTOR_START` |  If set to "1", Mage will attempt to run a git sync every time an executor is started, options | 🚫        |
+| Authentication environment variables | `GIT_SSH_PUBLIC_KEY`         |  SSH public key encoded in base64, used for ssh auth type                                      | 🚫        |
+| Authentication environment variables | `GIT_SSH_PRIVATE_KEY`        |  SSH private key encoded in base64, used for ssh auth type                                     | 🚫        |
+| Authentication environment variables | `GIT_ACCESS_TOKEN`           |  Git access token, used for https auth type                                                    | 🚫        |

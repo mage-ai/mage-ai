@@ -64,8 +64,10 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
   TIME_UNIT_TO_SECONDS,
+  checkIfCustomInterval,
   convertSeconds,
   convertToSeconds,
+  convertUtcCronExpressionToLocalTimezone,
   getDatetimeFromDateAndTime,
   getTriggerApiEndpoint,
   getTriggerTypes,
@@ -246,8 +248,7 @@ function Edit({
   );
 
   const isCustomInterval = useMemo(
-    () => scheduleInterval &&
-      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    () => checkIfCustomInterval(scheduleInterval),
     [scheduleInterval],
   );
   const readableCronExpression = useMemo(() => (
@@ -266,11 +267,13 @@ function Edit({
     () => {
       if (pipelineSchedule && !schedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        const custom = pipelineSchedule?.schedule_interval &&
-          !Object.values(ScheduleIntervalEnum).includes(pipelineSchedule?.schedule_interval as ScheduleIntervalEnum);
+        const custom = checkIfCustomInterval(pipelineSchedule?.schedule_interval);
 
         if (custom) {
-          setCustomInterval(pipelineSchedule?.schedule_interval);
+          const customIntervalInit = displayLocalTimezone
+            ? convertUtcCronExpressionToLocalTimezone(pipelineSchedule?.schedule_interval)
+            : pipelineSchedule?.schedule_interval;
+          setCustomInterval(customIntervalInit);
           setSchedule({
             ...pipelineSchedule,
             schedule_interval: 'custom',
@@ -301,6 +304,7 @@ function Edit({
       }
     },
     [
+      displayLocalTimezone,
       isStreamingPipeline,
       pipelineSchedule,
       schedule,
@@ -372,7 +376,12 @@ function Edit({
     } else if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
       data.event_matchers = eventMatchers;
     } else {
-      data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
+      data.schedule_interval = isCustomInterval
+        ? ((displayLocalTimezone && !cronExpressionInvalid && !!customInterval)
+          ? convertUtcCronExpressionToLocalTimezone(customInterval, true)
+          : customInterval
+        )
+        : schedule.schedule_interval;
       data.start_time = (date && time?.hour && time?.minute)
         ? getDatetimeFromDateAndTime(
           date,
@@ -411,6 +420,7 @@ function Edit({
       pipeline_schedule: data,
     });
   }, [
+    cronExpressionInvalid,
     customInterval,
     date,
     displayLocalTimezone,
@@ -907,6 +917,8 @@ function Edit({
                 [minute] [hour] [day(month)] [month] [day(week)]
               </Text>
 
+              <Spacing mb="2px" />
+
               {!customInterval
                 ? null
                 : (
@@ -922,6 +934,24 @@ function Edit({
                   </Text>
                 )
               }
+
+              {displayLocalTimezone && (
+                <>
+                  <Text bold inline small warning>
+                    Note:&nbsp;
+                  </Text>
+                  <Text inline small>
+                    If you have the display_local_timezone setting enabled, the local cron expression
+                    above will match your local timezone only
+                    <br />
+                    if the minute and hour values are single
+                    values without any special characters, such as the comma, hyphen, or slash.
+                    <br />
+                    You can still use cron expressions with special characters for the minute/hour
+                    values, but it will be based in UTC time.
+                  </Text>
+                </>
+              )}
             </Spacing>
           </div>,
         ],
@@ -1295,7 +1325,7 @@ function Edit({
           {!isStreamingPipeline && (
             <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <Text>
-                Set a timeout for each run of this trigger (optional) 
+                Set a timeout for each run of this trigger (optional)
               </Text>
               <Spacing mb={1} />
               <TextInput

@@ -262,6 +262,7 @@
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis"
               ]
@@ -317,6 +318,7 @@
                 "development/dependencies/custom-files"
               ]
             },
+            "development/io_config",
             {
               "group": "Storage",
               "pages": [
@@ -333,14 +335,7 @@
                 "integrations/databases/trino"
               ]
             },
-            "getting-started/kernels",
-            {
-              "group": "Versioning",
-              "pages": [
-                "getting-started/setting-up-git",
-                "getting-started/file-versions"
-              ]
-            }
+            "getting-started/kernels"
           ]
         },
         {
@@ -348,6 +343,9 @@
           "icon": "flask",
           "pages": [
             "development/project/setup",
+            "getting-started/setting-up-git",
+            "development/git/generate-an-ssh-token",
+            "getting-started/file-versions",
             "development/text-editor"
           ]
         },
@@ -440,7 +438,9 @@
           "pages": [
             "visualizations/dashboards"
           ]
-        }
+        },
+        "development/ai/overview",
+        "development/updating-mage"
       ]
     },
     {
@@ -448,7 +448,8 @@
       "icon": "info",
       "pages": [
         "about/code-of-conduct",
-        "about/statistics"
+        "about/statistics",
+        "about/frequently-asked-questions"
       ]
     },
     {
@@ -493,7 +494,9 @@
           ]
         },
         "guides/ai/overview",
-        "guides/community-examples"
+        "guides/docker/connecting-a-database",
+        "guides/community-examples",
+        "guides/tips-and-tricks"
       ]
     },
     {
@@ -699,8 +702,9 @@
           "group": "Version control",
           "icon": "code-branch",
           "pages": [
-            "production/data-sync/git",
-            "production/data-sync/github"
+            "production/data-sync/git-sync",
+            "production/data-sync/github",
+            "production/data-sync/git-integration"
           ]
         }
       ]

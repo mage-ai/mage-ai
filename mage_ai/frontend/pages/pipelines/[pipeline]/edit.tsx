@@ -25,6 +25,7 @@ import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
+import DataIntegrationModal from '@components/DataIntegrationModal';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
@@ -83,10 +84,12 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
+import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import {
@@ -239,19 +242,33 @@ function PipelineDetailPage({
     ) || kernels?.[0];
 
   // Pipeline
+  let pipeline;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
     data,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID, {
-    include_block_pipelines: true,
-    includes_outputs: isEmptyObject(messages),
-  }, {
-    refreshInterval: 60000,
-  });
+  } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      include_block_pipelines: true,
+      includes_outputs: isEmptyObject(messages)
+        || typeof pipeline === 'undefined'
+        || pipeline === null
+        || typeof pipeline?.blocks === 'undefined'
+        || pipeline?.blocks === null
+        || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+    },
+    {
+      refreshInterval: 60000,
+    },
+    {
+      key: `/pipelines/${pipelineUUID}/edit`,
+    },
+  );
+
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
-  const pipeline = data?.pipeline;
+  pipeline = useMemo(() => data?.pipeline, [data]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -926,6 +943,32 @@ function PipelineDetailPage({
     updatePipeline,
     widgets,
   ]);
+
+  // Data integration modal
+  const [showDataIntegrationModal, hideDataIntegrationModal] = useModal((
+    opts: OpenDataIntegrationModalOptionsType,
+  ) => (
+    <ErrorProvider>
+      {/* @ts-ignore */}
+      <DataIntegrationModal
+        {...opts}
+        onChangeCodeBlock={onChangeCodeBlock}
+        onClose={hideDataIntegrationModal}
+        pipeline={pipeline}
+        savePipelineContent={savePipelineContent}
+      />
+    </ErrorProvider>
+  ), {}, [
+    onChangeCodeBlock,
+    pipeline,
+    savePipelineContent,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    disableCloseButton: true,
+    disableEscape: true,
+    uuid: `DataIntegrationModal/${pipelineUUID}`,
+  });
 
   // Files
   const openFile = useCallback((filePath: string) => {
@@ -1663,6 +1706,7 @@ function PipelineDetailPage({
               blocksPrevious?.map(({ uuid }) => uuid).sort(),
               blocks?.map(({ uuid }) => uuid).sort(),
             )
+            || isEmptyObject(messages)
           )
     ) {
       const {
@@ -1671,14 +1715,17 @@ function PipelineDetailPage({
       } = initializeContentAndMessages(pipeline.blocks);
       contentByBlockUUID.current = contentByBlockUUIDResults;
 
-      setMessages((messagesPrev) => ({
-        ...messagesInit,
-        ...messagesPrev,
-      }));
+      if (!isEmptyObject(messagesInit)) {
+        setMessages((messagesPrev) => ({
+          ...messagesInit,
+          ...messagesPrev,
+        }));
+      }
     }
   }, [
     blocks,
     blocksPrevious,
+    messages,
     pipeline?.blocks,
     setMessages,
   ]);
@@ -2164,6 +2211,7 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
+      showDataIntegrationModal={showDataIntegrationModal}
       showUpdateBlockModal={(
         block,
         name = randomNameGenerator(),
@@ -2230,6 +2278,7 @@ function PipelineDetailPage({
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
+    showDataIntegrationModal,
     statistics,
     textareaFocused,
     updatePipelineMetadata,
@@ -2324,6 +2373,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
+      showDataIntegrationModal={showDataIntegrationModal}
       showGlobalDataProducts={showGlobalDataProducts}
       showUpdateBlockModal={(
         block,
@@ -2382,6 +2432,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showDataIntegrationModal,
     showGlobalDataProducts,
     textareaFocused,
     widgets,

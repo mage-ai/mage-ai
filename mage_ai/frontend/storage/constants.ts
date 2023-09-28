@@ -14,3 +14,5 @@ export const LOCAL_STORAGE_KEY_SETUP_AI_LATER = 'setup_ai_later';
 export const LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS = 'auto_scroll_logs';
 
 export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_TIMEZONE = 'display_local_timezone';
+
+export const LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING = 'hide_public_demo_warning';

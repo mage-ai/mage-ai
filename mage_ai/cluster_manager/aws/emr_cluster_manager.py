@@ -64,7 +64,7 @@ class EmrClusterManager(ClusterManager):
 
         # Get cluster information and update cluster url in sparkmagic config
         home_dir = str(Path.home())
-        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic/config.json')
+        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic', 'config.json')
         with open(sparkmagic_config_path) as f:
             fcontent = f.read()
 

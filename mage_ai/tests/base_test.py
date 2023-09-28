@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import unittest
+from pathlib import Path
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.db import TEST_DB, db_connection
@@ -23,10 +24,10 @@ else:
         @classmethod
         def setUpClass(self):
             super().setUpClass()
-            self.repo_path = os.getcwd() + '/test'
+            self.repo_path = os.path.join(os.getcwd(), 'test')
             set_repo_path(self.repo_path)
-            if not os.path.exists(self.repo_path):
-                os.mkdir(self.repo_path)
+            if not Path(self.repo_path).exists():
+                Path(self.repo_path).mkdir()
             database_manager.run_migrations(log_level=LoggingLevel.ERROR)
             db_connection.start_session()
 
@@ -35,8 +36,8 @@ else:
             shutil.rmtree(self.repo_path)
             db_connection.close_session()
 
-            if os.path.isfile(TEST_DB):
-                os.remove(TEST_DB)
+            if Path(TEST_DB).is_file():
+                Path(TEST_DB).unlink()
 
             super().tearDownClass()
 
@@ -51,10 +52,10 @@ class DBTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.getcwd() + '/test'
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
+        if not Path(self.repo_path).exists():
+            Path(self.repo_path).mkdir()
         database_manager.run_migrations(log_level=LoggingLevel.ERROR)
         db_connection.start_session()
 
@@ -67,8 +68,8 @@ class DBTestCase(unittest.TestCase):
             pass
         db_connection.close_session()
 
-        if os.path.isfile(TEST_DB):
-            os.remove(TEST_DB)
+        if Path(TEST_DB).is_file():
+            Path(TEST_DB).unlink()
 
         super().tearDownClass()
 
@@ -83,10 +84,10 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.getcwd() + '/test'
+        self.repo_path = os.path.join(os.getcwd(), 'test')
         set_repo_path(self.repo_path)
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
+        if not Path(self.repo_path).exists():
+            Path(self.repo_path).mkdir()
 
     @classmethod
     def tearDownClass(self):

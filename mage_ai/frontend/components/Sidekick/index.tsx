@@ -44,10 +44,8 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import {
-  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
-  get,
-} from '@storage/localStorage';
+import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
@@ -122,7 +120,7 @@ export type SidekickProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
-} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & OpenDataIntegrationModalType;
 
 function Sidekick({
   activeView,
@@ -176,6 +174,7 @@ function Sidekick({
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showDataIntegrationModal,
   showUpdateBlockModal,
   statistics,
   textareaFocused,
@@ -459,6 +458,7 @@ function Sidekick({
       globalDataProducts={globalDataProducts}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
+      showDataIntegrationModal={showDataIntegrationModal}
       showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
@@ -468,6 +468,7 @@ function Sidekick({
     pipeline,
     selectedBlock,
     setSelectedBlock,
+    showDataIntegrationModal,
     showUpdateBlockModal,
   ]);
 

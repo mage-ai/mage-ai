@@ -35,8 +35,8 @@ demo_project/
 |   dbt/
 |   |   demo/
 |   |   |   models/
+|   |   |   |   mage_sources.yml
 |   |   |   |   example/
-|   |   |   |   |   mage_sources.yml
 |   |   |   |   |   my_first_dbt_model.sql
 |   |   |   |   |   my_second_dbt_model.sql
 ```
@@ -47,13 +47,19 @@ The contents of the `mage_sources.yml` could look like this:
 
 ```yaml
 sources:
-  - name: mage_demo_project
-    tables:
-      - name: demo_pipeline_load_data
+- loader: mage
+  name: mage_demo
+  schema: public
+  tables:
+  - identifier: mage_dbt_demo_pipeline_load_data
+    meta:
+      block_uuid: load_data
+      pipeline_uuid: dbt_demo_pipeline
+    name: dbt_demo_pipeline_load_data
 version: 2
 ```
 
-The source name follows this convention: `mage_[Mage_project_name]`.
+The source name follows this convention: `mage_[DBT_project_name]`.
 
 The table names under the source follow this convention:
 `[pipeline_uuid]_[block_uuid]`.

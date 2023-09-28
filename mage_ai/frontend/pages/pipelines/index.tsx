@@ -133,7 +133,12 @@ function PipelineListPage() {
         return uuidToPipelineMapping?.[pipelineUUIDFromRow];
       })
     ) : pipelines
-  ), [getUniqueRowIdentifier, pipelineRowsSorted, pipelines, uuidToPipelineMapping]);
+  ), [
+    getUniqueRowIdentifier,
+    pipelineRowsSorted,
+    pipelines,
+    uuidToPipelineMapping,
+  ]);
   const sortableColumnIndexes = useMemo(() => [1, 2, 3, 4, 5, 6, 8, 9], []);
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
@@ -954,309 +959,309 @@ function PipelineListPage() {
                 </Text>
             }
           </Spacing>
-        ): (
-          <TableContainerStyle
-            includePadding={!!groupByQuery}
-            // Height of table = viewport height - (header height + subheader height)
-            maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
-          >
-            <Table
-              columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
-              columns={[
-                {
-                  label: () => '',
-                  uuid: 'action',
-                },
-                {
-                  uuid: capitalize(PipelineGroupingEnum.STATUS),
-                },
-                {
-                  uuid: 'Name',
-                },
-                {
-                  uuid: 'Description',
-                },
-                {
-                  uuid: capitalize(PipelineGroupingEnum.TYPE),
-                },
-                {
-                  ...timezoneTooltipProps,
-                  uuid: 'Updated at',
-                },
-                {
-                  ...timezoneTooltipProps,
-                  uuid: 'Created at',
-                },
-                {
-                  uuid: 'Tags',
-                },
-                {
-                  uuid: 'Blocks',
-                },
-                {
-                  uuid: 'Triggers',
-                },
-                {
-                  center: true,
-                  label: () => '',
-                  uuid: 'Actions',
-                },
-              ]}
-              defaultSortColumnIndex={2}
-              getUniqueRowIdentifier={getUniqueRowIdentifier}
-              isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
-              localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
-              localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
-              onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-                const pipeline = pipelinesSorted[rowIndex];
+        ): null
+      }
+      <TableContainerStyle
+        hide={pipelines?.length === 0}
+        includePadding={!!groupByQuery}
+        // Height of table = viewport height - (header height + subheader height)
+        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
+      >
+        <Table
+          columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
+          columns={[
+            {
+              label: () => '',
+              uuid: 'action',
+            },
+            {
+              uuid: capitalize(PipelineGroupingEnum.STATUS),
+            },
+            {
+              uuid: 'Name',
+            },
+            {
+              uuid: 'Description',
+            },
+            {
+              uuid: capitalize(PipelineGroupingEnum.TYPE),
+            },
+            {
+              ...timezoneTooltipProps,
+              uuid: 'Updated at',
+            },
+            {
+              ...timezoneTooltipProps,
+              uuid: 'Created at',
+            },
+            {
+              uuid: 'Tags',
+            },
+            {
+              uuid: 'Blocks',
+            },
+            {
+              uuid: 'Triggers',
+            },
+            {
+              center: true,
+              label: () => '',
+              uuid: 'Actions',
+            },
+          ]}
+          defaultSortColumnIndex={2}
+          getUniqueRowIdentifier={getUniqueRowIdentifier}
+          isSelectedRow={(rowIndex: number) => pipelinesSorted[rowIndex]?.uuid === selectedPipeline?.uuid}
+          localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
+          localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
+          onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
+            const pipeline = pipelinesSorted[rowIndex];
 
-                return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
-              })}
-              onDoubleClickRow={(rowIndex: number) => {
-                router.push(
-                    '/pipelines/[pipeline]/edit',
-                    `/pipelines/${pipelinesSorted[rowIndex].uuid}/edit`,
-                );
-              }}
-              ref={refTable}
-              renderRightClickMenuItems={(rowIndex: number) => {
-                const selectedPipeline = pipelinesSorted[rowIndex];
+            return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
+          })}
+          onDoubleClickRow={(rowIndex: number) => {
+            router.push(
+                '/pipelines/[pipeline]/edit',
+                `/pipelines/${pipelinesSorted[rowIndex].uuid}/edit`,
+            );
+          }}
+          ref={refTable}
+          renderRightClickMenuItems={(rowIndex: number) => {
+            const selectedPipeline = pipelinesSorted[rowIndex];
 
-                return [
-                  {
-                    label: () => 'Edit description',
-                    onClick: () => showInputModal({
-                      pipeline: selectedPipeline,
-                      pipelineDescription: selectedPipeline?.description,
-                    }),
-                    uuid: 'edit_description',
+            return [
+              {
+                label: () => 'Edit description',
+                onClick: () => showInputModal({
+                  pipeline: selectedPipeline,
+                  pipelineDescription: selectedPipeline?.description,
+                }),
+                uuid: 'edit_description',
+              },
+              {
+                label: () => 'Rename',
+                onClick: () => showInputModal({
+                  pipeline: selectedPipeline,
+                  pipelineName: selectedPipeline?.name,
+                }),
+                uuid: 'rename',
+              },
+              {
+                label: () => 'Clone',
+                onClick: () => clonePipeline({
+                  pipeline: {
+                    clone_pipeline_uuid: selectedPipeline?.uuid,
                   },
-                  {
-                    label: () => 'Rename',
-                    onClick: () => showInputModal({
-                      pipeline: selectedPipeline,
-                      pipelineName: selectedPipeline?.name,
-                    }),
-                    uuid: 'rename',
-                  },
-                  {
-                    label: () => 'Clone',
-                    onClick: () => clonePipeline({
-                      pipeline: {
-                        clone_pipeline_uuid: selectedPipeline?.uuid,
-                      },
-                    }),
-                    uuid: 'clone',
-                  },
-                  {
-                    label: () => 'Add/Remove tags',
-                    onClick: () => {
-                      router.push(
-                        '/pipelines/[pipeline]/settings',
-                        `/pipelines/${selectedPipeline?.uuid}/settings`,
-                      );
-                    },
-                    uuid: 'add_tags',
-                  },
-                  {
-                    label: () => 'Create template',
-                    onClick: () => {
-                      router.push(
-                        `/templates?object_type=${OBJECT_TYPE_PIPELINES}&new=1&pipeline_uuid=${selectedPipeline?.uuid}`,
-                      );
-                    },
-                    uuid: 'create_custom_template',
-                  },
-                  {
-                    label: () => 'Create global data product',
-                    onClick: () => {
-                      router.push(
-                        `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
-                      );
-                    },
-                    uuid: 'create_global_data_product',
-                  },
-                  {
-                    label: () => 'Delete',
-                    onClick: () => {
-                      if (typeof window !== 'undefined'
-                        && window.confirm(
-                          `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
-                        )
-                      ) {
-                        deletePipeline(selectedPipeline?.uuid);
-                      }
-                    },
-                    uuid: 'delete',
-                  },
-                ];
-              }}
-              rightClickMenuWidth={UNIT * 25}
-              rowGroupHeaders={rowGroupHeaders}
-              rows={pipelines.map((pipeline, idx) => {
-                const {
-                  blocks,
-                  created_at: createdAt,
-                  description,
-                  schedules,
-                  tags,
-                  type,
-                  updated_at: updatedAt,
-                  uuid,
-                } = pipeline;
-                const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
-                const schedulesCount = schedules.length;
-                const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
-
-                const tagsEl = (
-                  <div key={`pipeline_tags_${idx}`}>
-                    <TagsContainer
-                      tags={tags?.map(tag => ({ uuid: tag }))}
-                    />
-                  </div>
-                );
-
-                return [
-                  (schedulesCount >= 1 || !!pipelinesEditing[uuid])
-                    ? (
-                      <Button
-                        iconOnly
-                        loading={!!pipelinesEditing[uuid]}
-                        noBackground
-                        noBorder
-                        noPadding
-                        onClick={(e) => {
-                          pauseEvent(e);
-                          setPipelinesEditing(prev => ({
-                            ...prev,
-                            [uuid]: true,
-                          }));
-                          updatePipeline({
-                            ...pipeline,
-                            status: isActive
-                              ? ScheduleStatusEnum.INACTIVE
-                              : ScheduleStatusEnum.ACTIVE,
-                          });
-                        }}
-                      >
-                        {isActive
-                          ? <Pause muted size={2 * UNIT} />
-                          : <PlayButtonFilled default size={2 * UNIT} />
-                        }
-                      </Button>
+                }),
+                uuid: 'clone',
+              },
+              {
+                label: () => 'Add/Remove tags',
+                onClick: () => {
+                  router.push(
+                    '/pipelines/[pipeline]/settings',
+                    `/pipelines/${selectedPipeline?.uuid}/settings`,
+                  );
+                },
+                uuid: 'add_tags',
+              },
+              {
+                label: () => 'Create template',
+                onClick: () => {
+                  router.push(
+                    `/templates?object_type=${OBJECT_TYPE_PIPELINES}&new=1&pipeline_uuid=${selectedPipeline?.uuid}`,
+                  );
+                },
+                uuid: 'create_custom_template',
+              },
+              {
+                label: () => 'Create global data product',
+                onClick: () => {
+                  router.push(
+                    `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
+                  );
+                },
+                uuid: 'create_global_data_product',
+              },
+              {
+                label: () => 'Delete',
+                onClick: () => {
+                  if (typeof window !== 'undefined'
+                    && window.confirm(
+                      `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
                     )
-                    : null
-                  ,
-                  <Text
-                    default={!isActive}
-                    key={`pipeline_status_${idx}`}
-                    monospace
-                    success={!!isActive}
+                  ) {
+                    deletePipeline(selectedPipeline?.uuid);
+                  }
+                },
+                uuid: 'delete',
+              },
+            ];
+          }}
+          rightClickMenuWidth={UNIT * 25}
+          rowGroupHeaders={rowGroupHeaders}
+          rows={pipelines.map((pipeline, idx) => {
+            const {
+              blocks,
+              created_at: createdAt,
+              description,
+              schedules,
+              tags,
+              type,
+              updated_at: updatedAt,
+              uuid,
+            } = pipeline;
+            const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+            const schedulesCount = schedules.length;
+            const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+
+            const tagsEl = (
+              <div key={`pipeline_tags_${idx}`}>
+                <TagsContainer
+                  tags={tags?.map(tag => ({ uuid: tag }))}
+                />
+              </div>
+            );
+
+            return [
+              (schedulesCount >= 1 || !!pipelinesEditing[uuid])
+                ? (
+                  <Button
+                    iconOnly
+                    loading={!!pipelinesEditing[uuid]}
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={(e) => {
+                      pauseEvent(e);
+                      setPipelinesEditing(prev => ({
+                        ...prev,
+                        [uuid]: true,
+                      }));
+                      updatePipeline({
+                        ...pipeline,
+                        status: isActive
+                          ? ScheduleStatusEnum.INACTIVE
+                          : ScheduleStatusEnum.ACTIVE,
+                      });
+                    }}
                   >
                     {isActive
-                      ? ScheduleStatusEnum.ACTIVE
-                      : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
+                      ? <Pause muted size={2 * UNIT} />
+                      : <PlayButtonFilled default size={2 * UNIT} />
                     }
-                  </Text>,
-                  <NextLink
-                    as={`/pipelines/${uuid}`}
-                    href="/pipelines/[pipeline]"
-                    key={`pipeline_name_${idx}`}
-                    passHref
-                  >
-                    <Link sameColorAsText>
-                      {uuid}
-                    </Link>
-                  </NextLink>,
-                  <Text
-                    default
-                    key={`pipeline_description_${idx}`}
-                    title={description}
-                    width={UNIT * 90}
-                  >
-                    {description}
-                  </Text>,
-                  <Text
-                    key={`pipeline_type_${idx}`}
-                  >
-                    {PIPELINE_TYPE_LABEL_MAPPING[type]}
-                  </Text>,
-                  <Text
-                    key={`pipeline_updated_at_${idx}`}
-                    monospace
-                    small
-                    title={updatedAt ? `UTC: ${updatedAt}` : null}
-                  >
-                    {updatedAt
-                      ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
-                      : <>&#8212;</>}
-                  </Text>,
-                  <Text
-                    key={`pipeline_created_at_${idx}`}
-                    monospace
-                    small
-                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
-                  >
-                    {createdAt
-                      ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
-                      : <>&#8212;</>}
-                  </Text>,
-                  tagsEl,
-                  <Text
-                    default={blocksCount === 0}
-                    key={`pipeline_block_count_${idx}`}
-                    monospace
-                  >
-                    {blocksCount}
-                  </Text>,
-                  <Text
-                    default={schedulesCount === 0}
-                    key={`pipeline_trigger_count_${idx}`}
-                    monospace
-                  >
-                    {schedulesCount}
-                  </Text>,
-                  <Flex
-                    flex={1} justifyContent="flex-end"
-                    key={`chevron_icon_${idx}`}
-                  >
-                    <Button
-                      {...sharedOpenButtonProps}
-                      onClick={() => {
-                        router.push(
-                          '/pipelines/[pipeline]',
-                          `/pipelines/${uuid}`,
-                        );
-                      }}
-                      title="Detail"
-                    >
-                      <Open default size={2 * UNIT} />
-                    </Button>
-                    <Spacing mr={1} />
-                    <Button
-                      {...sharedOpenButtonProps}
-                      onClick={() => {
-                        router.push(
-                          '/pipelines/[pipeline]/logs',
-                          `/pipelines/${uuid}/logs`,
-                        );
-                      }}
-                      title="Logs"
-                    >
-                      <File default size={2 * UNIT} />
-                    </Button>
-                  </Flex>,
-                ];
-              })}
-              rowsGroupedByIndex={rowsGroupedByIndex}
-              setRowsSorted={setPipelineRowsSorted}
-              sortableColumnIndexes={sortableColumnIndexes}
-              sortedColumn={sortedColumnInit}
-              stickyHeader
-            />
-          </TableContainerStyle>
-        )
-      }
+                  </Button>
+                )
+                : null
+              ,
+              <Text
+                default={!isActive}
+                key={`pipeline_status_${idx}`}
+                monospace
+                success={!!isActive}
+              >
+                {isActive
+                  ? ScheduleStatusEnum.ACTIVE
+                  : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
+                }
+              </Text>,
+              <NextLink
+                as={`/pipelines/${uuid}`}
+                href="/pipelines/[pipeline]"
+                key={`pipeline_name_${idx}`}
+                passHref
+              >
+                <Link sameColorAsText>
+                  {uuid}
+                </Link>
+              </NextLink>,
+              <Text
+                default
+                key={`pipeline_description_${idx}`}
+                preWrap
+                title={description}
+              >
+                {description}
+              </Text>,
+              <Text
+                key={`pipeline_type_${idx}`}
+              >
+                {PIPELINE_TYPE_LABEL_MAPPING[type]}
+              </Text>,
+              <Text
+                key={`pipeline_updated_at_${idx}`}
+                monospace
+                small
+                title={updatedAt ? `UTC: ${updatedAt}` : null}
+              >
+                {updatedAt
+                  ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
+                  : <>&#8212;</>}
+              </Text>,
+              <Text
+                key={`pipeline_created_at_${idx}`}
+                monospace
+                small
+                title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
+              >
+                {createdAt
+                  ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
+                  : <>&#8212;</>}
+              </Text>,
+              tagsEl,
+              <Text
+                default={blocksCount === 0}
+                key={`pipeline_block_count_${idx}`}
+                monospace
+              >
+                {blocksCount}
+              </Text>,
+              <Text
+                default={schedulesCount === 0}
+                key={`pipeline_trigger_count_${idx}`}
+                monospace
+              >
+                {schedulesCount}
+              </Text>,
+              <Flex
+                flex={1} justifyContent="flex-end"
+                key={`chevron_icon_${idx}`}
+              >
+                <Button
+                  {...sharedOpenButtonProps}
+                  onClick={() => {
+                    router.push(
+                      '/pipelines/[pipeline]',
+                      `/pipelines/${uuid}`,
+                    );
+                  }}
+                  title="Detail"
+                >
+                  <Open default size={2 * UNIT} />
+                </Button>
+                <Spacing mr={1} />
+                <Button
+                  {...sharedOpenButtonProps}
+                  onClick={() => {
+                    router.push(
+                      '/pipelines/[pipeline]/logs',
+                      `/pipelines/${uuid}/logs`,
+                    );
+                  }}
+                  title="Logs"
+                >
+                  <File default size={2 * UNIT} />
+                </Button>
+              </Flex>,
+            ];
+          })}
+          rowsGroupedByIndex={rowsGroupedByIndex}
+          setRowsSorted={setPipelineRowsSorted}
+          sortableColumnIndexes={sortableColumnIndexes}
+          sortedColumn={sortedColumnInit}
+          stickyHeader
+        />
+      </TableContainerStyle>
     </Dashboard>
   );
 }

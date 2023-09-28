@@ -78,14 +78,13 @@ function BlockNode({
   hideStatus,
   pipeline,
   selected,
-
   hasFailed,
   isCancelled,
   isConditionFailed,
   isInProgress,
   isQueued,
   isSuccessful,
-  runtime,
+  runtime: runtimeFromBlockRun,
 }: BlockNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
@@ -115,6 +114,7 @@ function BlockNode({
 
   const {
     color,
+    runtime: runtimeFromBlock,
     type,
   } = block;
   const {
@@ -282,14 +282,14 @@ function BlockNode({
           return;
         })}
 
-        {runtime && (
+        {(runtimeFromBlock || runtimeFromBlockRun) && (
           <Spacing mt={1}>
             <Text
               monospace
               muted
               small
             >
-              {getRuntimeText(runtime)}
+              {getRuntimeText(runtimeFromBlock || runtimeFromBlockRun)}
             </Text>
           </Spacing>
         )}

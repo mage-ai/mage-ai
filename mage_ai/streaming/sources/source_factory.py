@@ -1,5 +1,6 @@
-from mage_ai.streaming.constants import SourceType
 from typing import Dict
+
+from mage_ai.streaming.constants import SourceType
 
 
 class SourceFactory:
@@ -10,6 +11,20 @@ class SourceFactory:
             from mage_ai.streaming.sources.amazon_sqs import AmazonSqsSource
 
             return AmazonSqsSource(config, **kwargs)
+        elif connector_type == SourceType.AZURE_EVENT_HUB:
+            from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
+
+            return AzureEventHubSource(config, **kwargs)
+        elif connector_type == SourceType.GOOGLE_CLOUD_PUBSUB:
+            from mage_ai.streaming.sources.google_cloud_pubsub import (
+                GoogleCloudPubSubSource,
+            )
+
+            return GoogleCloudPubSubSource(config, **kwargs)
+        elif connector_type == SourceType.INFLUXDB:
+            from mage_ai.streaming.sources.influxdb import InfluxDbSource
+
+            return InfluxDbSource(config, **kwargs)
         elif connector_type == SourceType.KAFKA:
             from mage_ai.streaming.sources.kafka import KafkaSource
 
@@ -18,14 +33,6 @@ class SourceFactory:
             from mage_ai.streaming.sources.kinesis import KinesisSource
 
             return KinesisSource(config, **kwargs)
-        elif connector_type == SourceType.AZURE_EVENT_HUB:
-            from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
-
-            return AzureEventHubSource(config, **kwargs)
-        elif connector_type == SourceType.GOOGLE_CLOUD_PUBSUB:
-            from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
-
-            return GoogleCloudPubSubSource(config, **kwargs)
         elif connector_type == SourceType.RABBITMQ:
             from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 

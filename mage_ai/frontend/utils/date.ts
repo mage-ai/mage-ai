@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+import { rangeSequential } from '@utils/array';
+
 export enum TimePeriodEnum {
   TODAY = 'today',
   WEEK = 'week',
@@ -203,6 +205,15 @@ export function getDateRange(
   }
 
   return dateRange;
+}
+
+export function getDayRangeForCurrentMonth() {
+  const currentDate = new Date();
+  const monthNumber = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  const daysInMonth = moment(`${year}-${monthNumber}`, 'YYYY-MM').daysInMonth();
+
+  return rangeSequential(daysInMonth, 1);
 }
 
 export function padTime(time: string) {

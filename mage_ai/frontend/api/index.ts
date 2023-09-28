@@ -91,6 +91,7 @@ const RESOURCES: any[][] = [
   [BACKFILLS],
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCKS, PIPELINES],
+  [BLOCKS, PIPELINE_RUNS],
   [BLOCKS],
   [BLOCK_LAYOUT_ITEMS, PAGE_BLOCK_LAYOUTS],
   [BLOCK_OUTPUTS, PIPELINES, DOWNLOADS],
@@ -127,10 +128,12 @@ const RESOURCES: any[][] = [
   [MONITOR_STATS],
   [OAUTHS],
   [OUTPUTS, BLOCK_RUNS],
+  [OUTPUTS, PIPELINES],
+  [OUTPUTS],
   [PAGE_BLOCK_LAYOUTS],
   [PIPELINES],
-  [PIPELINE_RUNS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
+  [PIPELINE_RUNS],
   [PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES, PIPELINES],
   [PIPELINE_TRIGGERS, PIPELINES],
@@ -164,6 +167,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         id: string,
         query: any = {},
         swrOptionsRuntime?: any,
+        customOptions?: {
+          key?: string;
+        },
       ) => useDetail(
         resource,
         id,
@@ -172,6 +178,7 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
           ...swrOptions,
           ...swrOptionsRuntime,
         },
+        customOptions,
       ),
       detailAsync: async (ctx: any, id: string, query: any = {}) => {
         const response = await fetchDetailAsync(ctx, resource, id, query);
@@ -198,6 +205,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       id: string,
       query?: any,
       swrOptionsRuntime?: any,
+      customOptions?: {
+        key?: string;
+      },
     ) => useDetailWithParent(
       resource,
       id,
@@ -209,6 +219,7 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         ...swrOptionsRuntime,
       },
       grandchildResource,
+      customOptions,
     );
     apis[resource][parentResource][grandchildResource].detailAsync = async (
       parentId: string,
@@ -277,6 +288,9 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       id: string,
       query?: any,
       swrOptionsRuntime?: any,
+      customOptions?: {
+        key?: string;
+      },
     ) => useDetailWithParent(
       resource,
       id,
@@ -287,6 +301,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         ...swrOptions,
         ...swrOptionsRuntime,
       },
+      null,
+      customOptions,
     );
   } else {
     apis[resource].create = async (body: any, opts?: any) => {

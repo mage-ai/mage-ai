@@ -5,7 +5,7 @@ from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST
 
 
 def is_debug():
-    return int(os.getenv('DEBUG', 0)) == 1
+    return int(os.getenv('DEBUG', 0) or 0) == 1
 
 
 def is_dev():

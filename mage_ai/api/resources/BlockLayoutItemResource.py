@@ -8,6 +8,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.widget.constants import ChartType
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.presenters.charts.data_sources.block import ChartDataSourceBlock
 from mage_ai.presenters.charts.data_sources.block_runs import ChartDataSourceBlockRuns
@@ -59,14 +60,16 @@ class BlockLayoutItemResource(GenericResource):
         block_type = block_config.get('type')
 
         if BlockType.CHART == block_type:
-            data_source_config = block_config.get('data_source')
+            data_source_config = block_config.get('data_source') or {}
             if data_source_override:
                 if data_source_config:
                     data_source_config.update(data_source_override)
                 else:
                     data_source_config = data_source_override
 
-            if data_source_config:
+            configuration_to_use = configuration_override or block_config.get('configuration')
+
+            if data_source_config or ChartType.CUSTOM == configuration_to_use.get('chart_type'):
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
@@ -74,7 +77,7 @@ class BlockLayoutItemResource(GenericResource):
                     block_config.get('name') or file_path or uuid,
                     block_uuid,
                     block_type,
-                    configuration=configuration_override or block_config.get('configuration'),
+                    configuration=configuration_to_use,
                     **extract(block_config, [
                         'language',
                     ]),

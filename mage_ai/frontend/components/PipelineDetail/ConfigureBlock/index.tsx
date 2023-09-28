@@ -36,6 +36,7 @@ import {
   HeaderStyle,
   RowStyle,
 } from './index.style';
+import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import {
@@ -109,6 +110,27 @@ function ConfigureBlock({
     blockActionObject,
     isGenerateBlock,
   ]);
+
+  const isDataIntegration: boolean = useMemo(() => {
+    // @ts-ignore
+    if (TemplateTypeEnum.DATA_INTEGRATION === block?.config?.template_type) {
+      return true;
+    }
+
+    if (
+      [
+        DataIntegrationTypeEnum.DESTINATIONS,
+        DataIntegrationTypeEnum.SOURCES,
+      ].includes(blockActionObject?.language)
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [
+      block,
+      blockActionObject,
+    ]);
 
   const [llm, setLLM] = useState<LLMType>(null);
   const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
@@ -335,12 +357,24 @@ function ConfigureBlock({
               BlockLanguageEnum.PYTHON,
               BlockLanguageEnum.SQL,
               BlockLanguageEnum.R,
+              BlockLanguageEnum.YAML,
             ].reduce((acc, v: string) => {
               const language =
                 customTemplate ? customTemplate?.language : blockAttributes?.language;
               const selected = language === v;
 
-              if ((!isCustomBlock || isUpdatingBlock) && !selected) {
+              if (
+                (
+                  (!isCustomBlock || isUpdatingBlock)
+                  && !selected
+                  && (
+                    (!isDataIntegration || BlockLanguageEnum.R === v)
+                      || (!isDataIntegration || BlockLanguageEnum.SQL === v)
+                  )
+                ) || (
+                  !isDataIntegration && BlockLanguageEnum.YAML === v
+                )
+              ) {
                 return acc;
               }
 
@@ -349,11 +383,11 @@ function ConfigureBlock({
                   <Button
                     borderColor={!selected ? 'transparent' : null}
                     compact
-                    default={!isCustomBlock && !selected}
-                    disabled={!isCustomBlock && !selected}
+                    default={!isCustomBlock && !selected && !isDataIntegration}
+                    disabled={!isCustomBlock && !selected && !isDataIntegration}
                     noBackground
-                    notClickable={(!isCustomBlock || isUpdatingBlock) && selected}
-                    onClick={customTemplate
+                    notClickable={(!isCustomBlock || isUpdatingBlock || !isDataIntegration) && selected}
+                    onClick={(customTemplate && !isDataIntegration)
                       ? null
                       // @ts-ignore
                       : () => setBlockAttributes(prev => ({
@@ -371,14 +405,14 @@ function ConfigureBlock({
               return acc;
             }, [])}
 
-            {!isCustomBlock && (
+            {!isCustomBlock && !isDataIntegration && (
               <>
                 <Spacing mr={1} />
                 <Locked muted />
               </>
             )}
 
-            <Spacing mr={isCustomBlock ? 1 : 2} />
+            <Spacing mr={(isCustomBlock || isDataIntegration) ? 1 : 2} />
           </FlexContainer>
         </RowStyle>
       )}

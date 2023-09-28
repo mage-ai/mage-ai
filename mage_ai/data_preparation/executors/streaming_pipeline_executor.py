@@ -86,6 +86,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 with redirect_stderr(stdout):
                     self.__execute_in_python(
                         build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
                     )
         except Exception as e:
             if not build_block_output_stdout:
@@ -95,12 +96,21 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     )
             raise e
 
-    def __execute_in_python(self, build_block_output_stdout: Callable[..., object] = None):
+    def __execute_in_python(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        global_vars: Dict = None
+    ):
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         from mage_ai.streaming.sources.base import SourceConsumeMethod
         from mage_ai.streaming.sources.source_factory import SourceFactory
-        source_config = self.__interpolate_vars(self.source_block.content)
 
+        if global_vars is None:
+            global_vars = dict()
+        source_config = self.__interpolate_vars(
+            self.source_block.content,
+            global_vars=global_vars,
+        )
         source = SourceFactory.get_source(
             source_config,
             checkpoint_path=os.path.join(
@@ -112,7 +122,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         sinks_by_uuid = dict()
         for sink_block in self.sink_blocks:
             sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
-                self.__interpolate_vars(sink_block.content),
+                self.__interpolate_vars(sink_block.content, global_vars=global_vars),
                 buffer_path=os.path.join(
                     self.pipeline.pipeline_variables_dir,
                     'buffer',
@@ -164,13 +174,21 @@ class StreamingPipelineExecutor(PipelineExecutor):
             outputs_by_block = dict()
             outputs_by_block[self.source_block.uuid] = messages
 
-            handle_batch_events_recursively(self.source_block, outputs_by_block, **kwargs)
+            handle_batch_events_recursively(
+                self.source_block,
+                outputs_by_block,
+                **merge_dict(global_vars, kwargs),
+            )
 
         async def handle_event_async(message, **kwargs):
             outputs_by_block = dict()
             outputs_by_block[self.source_block.uuid] = [message]
 
-            handle_batch_events_recursively(self.source_block, outputs_by_block, **kwargs)
+            handle_batch_events_recursively(
+                self.source_block,
+                outputs_by_block,
+                **merge_dict(global_vars, kwargs),
+            )
 
         # Long running method
         try:
@@ -193,8 +211,11 @@ class StreamingPipelineExecutor(PipelineExecutor):
         """
         pass
 
-    def __interpolate_vars(self, content):
+    def __interpolate_vars(self, content: str, global_vars: Dict = None):
+        if global_vars is None:
+            global_vars = dict()
         config_file = Template(content).render(
+            variables=lambda x: global_vars.get(x) if global_vars else None,
             **get_template_vars()
         )
         return yaml.safe_load(config_file)

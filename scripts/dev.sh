@@ -77,8 +77,18 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --database_connection_url)
+    DATABASE_CONNECTION_URL="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --require-user-authentication)
     REQUIRE_USER_AUTHENTICATION=1
+    shift # past argument
+    shift # past value
+    ;;
+    --debug)
+    DEBUG=1
     shift # past argument
     shift # past value
     ;;
@@ -112,6 +122,7 @@ export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+export DEBUG=$DEBUG
 
 if command -v docker-compose &> /dev/null
 then

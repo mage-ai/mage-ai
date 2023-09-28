@@ -10,9 +10,6 @@ from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-from mage_ai.data_preparation.models.block.dbt.utils import (
-    add_blocks_upstream_from_refs,
-)
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -28,7 +25,11 @@ from mage_ai.data_preparation.models.triggers import (
     update_triggers_for_pipeline_and_persist,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     retry_pipeline_run,
@@ -173,6 +174,7 @@ class PipelineResource(BaseResource):
         name = payload.get('name')
         pipeline_type = payload.get('type')
         llm_payload = payload.get('llm')
+        pipeline = None
 
         if template_uuid:
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
@@ -234,13 +236,21 @@ class PipelineResource(BaseResource):
                             upstream_block_uuids=upstream_block_uuids,
                         )
 
-                    for block_number, config in blocks_mapping.items():
+                    for _block_number, config in blocks_mapping.items():
                         upstream_block_uuids = config['upstream_block_uuids']
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
                             block = config['block']
                             arr = [f'{pipeline.uuid}_block_{bn}' for bn in upstream_block_uuids]
                             block.update(dict(upstream_blocks=arr))
+
+        if pipeline:
+            await UsageStatisticLogger().pipeline_create(
+                pipeline,
+                clone_pipeline_uuid=clone_pipeline_uuid,
+                llm_payload=llm_payload,
+                template_uuid=template_uuid,
+            )
 
         return self(pipeline, user, **kwargs)
 
@@ -277,19 +287,14 @@ class PipelineResource(BaseResource):
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']
             block = self.model.get_block(block_uuid, widget=False)
-            arr = add_blocks_upstream_from_refs(block)
-            upstream_block_uuids = [b.uuid for b in arr]
-
-            for b in block.upstream_blocks:
-                upstream_block_uuids.append(b.uuid)
-
-            self.model.add_block(
-                block,
-                upstream_block_uuids,
-                priority=len(upstream_block_uuids),
-                widget=False,
-            )
-
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks()
+                }
+                self.model.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                self.model.validate('A cycle was formed while adding a block')
+                self.model.save()
             return self
 
         query = kwargs.get('query', {})
@@ -412,6 +417,44 @@ class PipelineResource(BaseResource):
             for run in pipeline_runs:
                 retry_pipeline_run(run)
 
+        @safe_db_query
+        def query_incomplete_block_runs(pipeline_uuid: str):
+            a = aliased(PipelineRun, name='a')
+            b = aliased(BlockRun, name='b')
+            columns = [
+                b.id,
+                b.status,
+                b.pipeline_run_id,
+                a.status,
+                a.pipeline_uuid,
+            ]
+            result = (
+                PipelineRun.
+                select(*columns).
+                join(b, a.id == b.pipeline_run_id).
+                filter(a.pipeline_uuid == pipeline_uuid).
+                filter(a.status == PipelineRun.PipelineRunStatus.FAILED).
+                filter(b.status.not_in([
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.CONDITION_FAILED,
+                ]))
+            ).all()
+
+            return result
+
+        def retry_incomplete_block_runs(pipeline_uuid: str):
+            incomplete_block_run_results = query_incomplete_block_runs(pipeline_uuid)
+            block_run_ids = [r[0] for r in incomplete_block_run_results]
+            pipeline_run_ids = list(set([r[2] for r in incomplete_block_run_results]))
+            BlockRun.batch_update_status(
+                block_run_ids,
+                BlockRun.BlockRunStatus.INITIAL,
+            )
+            PipelineRun.batch_update_status(
+                pipeline_run_ids,
+                PipelineRun.PipelineRunStatus.INITIAL,
+            )
+
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
 
@@ -430,6 +473,8 @@ class PipelineResource(BaseResource):
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
                 elif status == 'retry' and pipeline_runs:
                     retry_pipeline_runs(pipeline_runs)
+                elif status == 'retry_incomplete_block_runs':
+                    retry_incomplete_block_runs(pipeline_uuid)
 
         self.on_update_callback = _update_callback
 

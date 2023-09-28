@@ -1,8 +1,15 @@
+import json
+from typing import Mapping, Union
+
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
     PipelineType,
+)
+from mage_ai.data_preparation.templates.data_integrations.utils import (
+    TEMPLATE_TYPE_DATA_INTEGRATION,
+    render_template,
 )
 from mage_ai.data_preparation.templates.utils import (
     read_template_file,
@@ -11,8 +18,6 @@ from mage_ai.data_preparation.templates.utils import (
     write_template,
 )
 from mage_ai.io.base import DataSource
-from typing import Mapping, Union
-import json
 
 
 MAP_DATASOURCE_TO_HANDLER = {
@@ -59,6 +64,14 @@ def fetch_template_source(
         return template_source
 
     if 'template_path' in config:
+        if TEMPLATE_TYPE_DATA_INTEGRATION == config.get('template_type'):
+            return render_template(
+                block_type=block_type,
+                config=config,
+                language=language,
+                pipeline_type=pipeline_type,
+            )
+
         template_variables_to_render = dict(
             code=config.get('existing_code', ''),
         )

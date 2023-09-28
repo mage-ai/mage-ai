@@ -1,6 +1,7 @@
 import FeatureType from '@interfaces/FeatureType';
 import SuggestionType from './SuggestionType';
 import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
+import { CatalogType } from './IntegrationSourceType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
@@ -249,12 +250,15 @@ export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
   callback_content?: string;
+  catalog?: CatalogType;
   conditional_blocks?: string[];
   color?: BlockColorEnum;
   config?: BlockRequestConfigType;
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  description?: string;
+  documentation?: string;
   downstream_blocks?: string[];
   error?: {
     error: string;
@@ -266,6 +270,14 @@ export default interface BlockType {
   has_callback?: boolean;
   language?: BlockLanguageEnum;
   metadata?: {
+    data_integration?: {
+      config?: {
+        [key: string]: number | string;
+      };
+      destination?: string;
+      name?: string;
+      source?: string;
+    };
     dbt?: {
       block?: {
         snapshot?: boolean;
@@ -289,6 +301,7 @@ export default interface BlockType {
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;
+  runtime?: number;
   status?: StatusTypeEnum;
   tags?: TagEnum[];
   timeout?: number;

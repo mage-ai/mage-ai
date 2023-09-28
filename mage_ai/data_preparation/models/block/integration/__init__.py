@@ -11,8 +11,8 @@ import pandas as pd
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from mage_ai.data_integrations.logger.utils import print_log_from_line
 from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
-from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PYTHON_COMMAND, BlockType
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_config_values
@@ -432,6 +432,25 @@ class DestinationBlock(IntegrationBlock):
                 check_if_file_exists,
             ),
             data,
+        )
+
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+        destination_table: str = None,
+        state_stream: str = None,
+        **kwargs,
+    ) -> Dict:
+        return self.to_dict(
+            include_content=include_content,
+            include_outputs=include_outputs,
+            sample_count=sample_count,
+            check_if_file_exists=check_if_file_exists,
+            destination_table=destination_table,
+            state_stream=state_stream,
         )
 
     def update(self, data, update_state=False):

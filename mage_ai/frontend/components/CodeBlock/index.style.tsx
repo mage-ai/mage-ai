@@ -170,6 +170,7 @@ export const BlockHeaderStyle = styled.div<{
 export const CodeContainerStyle = styled.div<{
   hasOutput: boolean;
   lightBackground?: boolean;
+  noPadding?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
@@ -177,12 +178,15 @@ export const CodeContainerStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  padding-bottom: ${UNIT}px;
-  padding-top: ${UNIT}px;
   position: relative;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+
+  ${props => !props.noPadding && `
+    padding-bottom: ${UNIT}px;
+    padding-top: ${UNIT}px;
   `}
 
   ${props => props.lightBackground && `
@@ -240,14 +244,17 @@ export const BlockDividerInner = styled.div`
 `;
 
 export const CodeHelperStyle = styled.div<{
+  noMargin?: boolean;
   normalPadding?: boolean;
 }>`
-  margin-bottom: ${1 * UNIT}px;
-  padding-bottom: ${1 * UNIT}px;
-
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
     padding-left: ${props.normalPadding ? UNIT : LEFT_PADDING}px;
+  `}
+
+  ${props => !props.noMargin && `
+    margin-bottom: ${1 * UNIT}px;
+    padding-bottom: ${1 * UNIT}px;
   `}
 `;
 

@@ -1,8 +1,19 @@
 import json
-import pandas as pd
+from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from mage_ai.data_preparation.models.constants import BlockType
+import pandas as pd
+import simplejson
+
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    get_selected_streams,
+)
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    BlockType,
+)
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
@@ -115,15 +126,13 @@ def dynamic_block_values_and_metadata(
     output_vars = block.output_variables(execution_partition=execution_partition)
     for idx, output_name in enumerate(output_vars):
         if idx == 0:
-            values = block.pipeline.variable_manager.get_variable(
-                block.pipeline.uuid,
+            values = block.pipeline.get_block_variable(
                 block_uuid,
                 output_name,
                 partition=execution_partition,
             )
         elif idx == 1:
-            block_metadata = block.pipeline.variable_manager.get_variable(
-                block.pipeline.uuid,
+            block_metadata = block.pipeline.get_block_variable(
                 block_uuid,
                 output_name,
                 partition=execution_partition,
@@ -451,6 +460,12 @@ def output_variables(
     pipeline,
     block_uuid: str,
     execution_partition: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_args: List[Any] = None,
+    data_integration_settings_mapping: Dict = None,
 ) -> List[str]:
     """
     Retrieves the output variables of a block.
@@ -473,12 +488,35 @@ def output_variables(
     Returns:
         List[str]: List of variable names.
     """
-    all_variables = pipeline.variable_manager.get_variables_by_block(
-        pipeline.uuid,
-        block_uuid,
-        partition=execution_partition,
-    )
-    output_variables = [v for v in all_variables if is_output_variable(v)]
+
+    block = pipeline.get_block(block_uuid)
+
+    di_settings = None
+    if data_integration_settings_mapping:
+        di_settings = data_integration_settings_mapping.get(block_uuid) or \
+            data_integration_settings_mapping.get(block.uuid)
+
+    if block and not di_settings:
+        di_settings = block.get_data_integration_settings(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_vars=input_args,
+            partition=execution_partition,
+        )
+
+    if block and di_settings:
+        streams = get_selected_streams(di_settings.get('catalog'))
+        output_variables = [s.get('tap_stream_id') for s in streams]
+    else:
+        all_variables = pipeline.variable_manager.get_variables_by_block(
+            pipeline.uuid,
+            block_uuid,
+            partition=execution_partition,
+        )
+        output_variables = [v for v in all_variables if is_output_variable(v)]
+
     output_variables.sort()
 
     return output_variables
@@ -531,6 +569,12 @@ def input_variables(
     pipeline,
     upstream_block_uuids: List[str],
     execution_partition: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
+    global_vars: Dict = None,
+    input_args: List[Any] = None,
+    data_integration_settings_mapping: Dict = None,
 ) -> Dict[str, List[str]]:
     """
     Retrieves the input variables from the output variables of upstream blocks.
@@ -543,8 +587,24 @@ def input_variables(
     Returns:
         Dict[str, List[str]]: A mapping from upstream block UUID to a list of variable names.
     """
-    return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
-            for block_uuid in upstream_block_uuids}
+
+    mapping = {}
+
+    for block_uuid in upstream_block_uuids:
+        out_vars = output_variables(
+            pipeline,
+            block_uuid,
+            execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+            data_integration_settings_mapping=data_integration_settings_mapping,
+        )
+        mapping[block_uuid] = out_vars
+
+    return mapping
 
 
 def fetch_input_variables(
@@ -555,6 +615,8 @@ def fetch_input_variables(
     global_vars: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    from_notebook: bool = False,
+    data_integration_settings_mapping: Dict = None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -581,12 +643,20 @@ def fetch_input_variables(
     input_vars = []
     if input_args is not None:
         input_vars = input_args
+        if upstream_block_uuids:
+            upstream_block_uuids_final = upstream_block_uuids
     elif pipeline is not None:
         input_vars = [None for i in range(len(upstream_block_uuids))]
         input_variables_by_uuid = input_variables(
             pipeline,
             upstream_block_uuids,
             execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_args=input_args,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
         keys = input_variables_by_uuid.keys()
         reduce_output_indexes = []
@@ -603,20 +673,25 @@ def fetch_input_variables(
 
             variables = input_variables_by_uuid[upstream_block_uuid]
             variable_values = [
-                pipeline.variable_manager.get_variable(
-                    pipeline.uuid,
+                pipeline.get_block_variable(
                     upstream_block_uuid,
                     var,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    input_args=input_args,
                     partition=execution_partition,
                     spark=spark,
                 )
                 for var in variables
             ]
 
-            upstream_in_dynamic_upstream = dynamic_upstream_block_uuids and find(
-                lambda x: upstream_block_uuid in x,
-                dynamic_upstream_block_uuids or [],
-            )
+            upstream_in_dynamic_upstream = False
+            if dynamic_upstream_block_uuids:
+                for uuids in dynamic_upstream_block_uuids:
+                    if upstream_in_dynamic_upstream:
+                        continue
+                    elif upstream_block_uuid in uuids:
+                        upstream_in_dynamic_upstream = True
 
             if dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
                 reduce_output_indexes.append((idx, upstream_block_uuid))
@@ -668,16 +743,24 @@ def fetch_input_variables(
                     pipeline,
                     uuids,
                     execution_partition,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    input_args=input_args,
+                    data_integration_settings_mapping=data_integration_settings_mapping,
                 )
 
                 final_value = []
                 for upstream_block_uuid, variables in input_variables_by_uuid.items():
                     end_idx = 1 if upstream_is_dynamic else len(variables)
                     for var in variables[:end_idx]:
-                        variable_values = pipeline.variable_manager.get_variable(
-                            pipeline.uuid,
+                        variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
+                            from_notebook=from_notebook,
+                            global_vars=global_vars,
+                            input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
                         )
@@ -698,10 +781,12 @@ def fetch_input_variables(
                             len(variables) >= 2:
 
                         var = variables[1]
-                        variable_values = pipeline.variable_manager.get_variable(
-                            pipeline.uuid,
+                        variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
                             var,
+                            from_notebook=from_notebook,
+                            global_vars=global_vars,
+                            input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
                         )
@@ -709,7 +794,10 @@ def fetch_input_variables(
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)
 
-                if len(final_value) >= 1 and all([type(v) is pd.DataFrame for v in final_value]):
+                if ((upstream_is_dynamic and dynamic_block_index is not None)
+                    or should_reduce) and \
+                        len(final_value) >= 1 and \
+                        all([type(v) is pd.DataFrame for v in final_value]):
                     final_value = pd.concat(final_value)
 
                 if not should_reduce:
@@ -730,3 +818,70 @@ def fetch_input_variables(
                 input_vars[idx] = final_value
 
     return input_vars, kwargs_vars, upstream_block_uuids_final
+
+
+def serialize_output(
+    block,
+    data: Any,
+    csv_lines_only: bool = False,
+    variable_uuid: str = None,
+):
+    if type(data) is pd.DataFrame:
+        if csv_lines_only:
+            data = dict(
+                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+            )
+        else:
+            row_count, column_count = data.shape
+
+            columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+            data = dict(
+                sample_data=dict(
+                    columns=columns_to_display,
+                    rows=json.loads(
+                        data[columns_to_display].to_json(orient='split')
+                    )['data']
+                ),
+                shape=[row_count, column_count],
+                type=DataType.TABLE,
+                variable_uuid=variable_uuid,
+            )
+    elif is_geo_dataframe(data):
+        data = dict(
+            text_data=f'''Use the code in a scratchpad to get the output of the block:
+
+from mage_ai.data_preparation.variable_manager import get_variable
+df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
+''',
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif type(data) is str:
+        data = dict(
+            text_data=data,
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif type(data) is dict or type(data) is list:
+        data = dict(
+            text_data=simplejson.dumps(
+                data,
+                default=datetime.isoformat,
+                ignore_nan=True,
+            ),
+            type=DataType.TEXT,
+            variable_uuid=variable_uuid,
+        )
+    elif is_spark_dataframe(data):
+        df = data.toPandas()
+        columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+        data = dict(
+            sample_data=dict(
+                columns=columns_to_display,
+                rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+            ),
+            type=DataType.TABLE,
+            variable_uuid=variable_uuid,
+        )
+
+    return data

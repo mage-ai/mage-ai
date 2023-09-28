@@ -278,7 +278,7 @@ def get_variables_dir(
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)
 
-    if not variables_dir.startswith('s3'):
+    if not variables_dir.startswith('s3') and not variables_dir.startswith('gs'):
         if os.path.isabs(variables_dir) and variables_dir != repo_path:
             # If the variables_dir is an absolute path and not same as repo_path
             variables_dir = os.path.join(variables_dir, repo_name)

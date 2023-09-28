@@ -226,6 +226,13 @@ def convert_column_to_type(value, column_type) -> str:
     return f"CAST('{value}' AS {column_type})"
 
 
+def build_insert_columns(
+    columns: List[str],
+    column_identifier: str = '',
+):
+    return [f'{column_identifier}{clean_column_name(col)}{column_identifier}' for col in columns]
+
+
 def build_insert_command(
     column_type_mapping: Dict,
     columns: List[str],
@@ -284,6 +291,6 @@ def build_insert_command(
         values.append(vals)
 
     return [
-        [f'{column_identifier}{clean_column_name(col)}{column_identifier}' for col in columns],
+        build_insert_columns(columns, column_identifier=column_identifier),
         values,
     ]

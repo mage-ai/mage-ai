@@ -1,7 +1,9 @@
 import uuid
 
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.shared.hash import merge_dict
@@ -85,5 +87,10 @@ class ProjectResource(GenericResource):
 
         if should_log_project:
             await UsageStatisticLogger().project_impression()
+
+        if Project(repo_config=repo_config).is_feature_enabled(
+            FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+        ):
+            await BlockActionObjectCache.initialize_cache(replace=True)
 
         return self
