@@ -271,15 +271,22 @@
               "group": "Destinations",
               "pages": [
                 "streaming/destinations/amazon-s3",
+                "streaming/destinations/bigquery",
+                "streaming/destinations/clickhouse",
+                "streaming/destinations/duckdb",
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
                 "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
+                "streaming/destinations/mssql",
+                "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
                 "streaming/destinations/postgres",
-                "streaming/destinations/redshift"
+                "streaming/destinations/redshift",
+                "streaming/destinations/snowflake",
+                "streaming/destinations/trino"
               ]
             }
           ]

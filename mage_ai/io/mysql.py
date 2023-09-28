@@ -2,13 +2,15 @@ from typing import IO, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
+import simplejson
 from mysql.connector import connect
 from mysql.connector.cursor import MySQLCursor
 from pandas import DataFrame, Series
 
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import BadConversionError, PandasTypes
+from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
 
 QUERY_ROW_LIMIT = 10_000_000
@@ -84,9 +86,41 @@ class MySQL(BaseSQL):
         buffer: Union[IO, None] = None,
         **kwargs,
     ) -> None:
+        def serialize_obj(val):
+            if type(val) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
         values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
         values = []
-        for _, row in df.iterrows():
+        df_ = df.copy()
+        columns = df_.columns
+        for col in columns:
+            dtype = df_[col].dtype
+            if dtype == PandasTypes.OBJECT:
+                df_[col] = df_[col].apply(lambda x: serialize_obj(x))
+            elif dtype in (
+                PandasTypes.MIXED,
+                PandasTypes.UNKNOWN_ARRAY,
+                PandasTypes.COMPLEX,
+            ):
+                df_[col] = df_[col].astype('string')
+
+            # Remove extraneous surrounding double quotes
+            # that get added while performing conversion to string.
+            df_[col] = df_[col].apply(lambda x: x.strip('"') if x and isinstance(x, str) else x)
+        df_.replace({np.NaN: None}, inplace=True)
+
+        for _, row in df_.iterrows():
             values.append(tuple([str(val) if type(val) is pd.Timestamp else val for val in row]))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
@@ -98,10 +132,7 @@ class MySQL(BaseSQL):
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
         ):
-            raise BadConversionError(
-                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
-                'a MySQL datatype.'
-            )
+            return 'TEXT'
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:
                 if column.dt.tz:

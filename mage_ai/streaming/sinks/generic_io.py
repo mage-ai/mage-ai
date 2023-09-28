@@ -31,9 +31,6 @@ IO_CLASS_MAP = {
     SinkType.MSSQL: {
         'class_name': 'MSSQL',
     },
-    SinkType.ORACLEDB: {
-        'class_name': 'OracleDB',
-    }
 }
 
 
@@ -52,7 +49,6 @@ class GenericIOSink(BaseSink):
         config_path = os.path.join(get_repo_path(), 'io_config.yaml')
         config_file_loader = ConfigFileLoader(config_path, self.config.profile)
 
-        print(self.__io_class())
         self.io_client = self.__io_class().with_config(config_file_loader)
         if hasattr(self.io_client, 'open') and callable(self.io_client.open):
             self.io_client.open()
@@ -61,6 +57,8 @@ class GenericIOSink(BaseSink):
         self.batch_write([message])
 
     def batch_write(self, messages: List[Dict]):
+        if not messages:
+            return
         self._print(
             f'Batch ingest {len(messages)} records, time={time.time()}. Sample: {messages[0]}')
 
@@ -69,7 +67,8 @@ class GenericIOSink(BaseSink):
             if self._is_message_format_v2(m):
                 formatted_messages.append(
                     merge_dict(m.get('data'), dict(metadata=m.get('metadata'))))
-
+            else:
+                formatted_messages.append(m)
         df = pd.DataFrame.from_records(formatted_messages)
         self.io_client.export(df, **self.config.config)
 

@@ -44,7 +44,6 @@ GENERIC_IO_SINK_TYPES = frozenset([
     SinkType.DUCKDB,
     SinkType.MSSQL,
     SinkType.MYSQL,
-    SinkType.ORACLEDB,
     SinkType.REDSHIFT,
     SinkType.SNOWFLAKE,
     SinkType.TRINO,
