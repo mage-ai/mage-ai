@@ -1,0 +1,19 @@
+connector_type: kafka
+bootstrap_server: "localhost:9092"
+topic: topic_name
+
+# Uncomment the config below to use SSL config
+# security_protocol: "SSL"
+# ssl_config:
+#   cafile: "CARoot.pem"
+#   certfile: "certificate.pem"
+#   keyfile: "key.pem"
+#   password: password
+#   check_hostname: true
+
+# Uncomment the config below to use SASL_SSL config
+# security_protocol: "SASL_SSL"
+# sasl_config:
+#   mechanism: "PLAIN"
+#   username: username
+#   password: password

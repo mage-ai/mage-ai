@@ -1,0 +1,16 @@
+{% block imports %}
+if 'callback' not in globals():
+    from mage_ai.data_preparation.decorators import callback
+{% endblock %}
+
+
+{% block content %}
+@callback('success')
+def success_callback(parent_block_data, **kwargs):
+    pass
+
+
+@callback('failure')
+def failure_callback(parent_block_data, **kwargs):
+    pass
+{% endblock %}

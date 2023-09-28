@@ -1,0 +1,81 @@
+from contextlib import contextmanager
+from pyspark.sql.types import StringType
+from pyspark.sql import SparkSession
+from mage_ai.data_preparation.models.pipeline import Pipeline
+import asyncio
+import datetime
+import logging
+import traceback
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+
+class ErrorLogging(object):
+    def __init__(self, spark, output_directory):
+        self.output_directory = output_directory
+        self.spark = spark
+
+    @contextmanager
+    def attempt(self):
+        try:
+            yield
+        except Exception as error:
+            df = self.spark.createDataFrame([
+                str(error),
+                traceback.format_exc(),
+            ], StringType())
+            (
+                df.repartition(1)
+                .write
+                .format('text')
+                .mode('overwrite')
+                .option('header', 'False')
+                .save(self.output_directory)
+            )
+            raise error
+        finally:
+            print('ErrorLogging attempt complete.')
+
+
+if __name__ == '__main__':
+    logger.info('Building...')
+
+    with SparkSession.builder.appName('My PyPi').getOrCreate() as spark:
+        # Enable Arrow optimization and fallback to improve performance
+        spark.conf.set("spark.sql.execution.arrow.enabled", "true")
+        spark.conf.set("spark.sql.execution.arrow.fallback.enabled", "true")
+        spark.conf.set("spark.sql.adaptive.enabled", "true")
+        spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
+
+        with ErrorLogging(spark, '{{ spark_log_path }}').attempt():
+            pipeline = Pipeline(
+                uuid='{{ pipeline_uuid }}',
+                config={{ pipeline_config }},
+                repo_config={{ repo_config }},
+            )
+
+            global_vars = {{ global_vars }} or dict()
+            global_vars['spark'] = spark
+
+            block_uuid = {{ block_uuid }}
+
+            if block_uuid is None:
+                asyncio.run(pipeline.execute(
+                    analyze_outputs=False,
+                    global_vars=global_vars,
+                    update_status=False,
+                ))
+            else:
+                block = pipeline.get_block(block_uuid)
+                block.execute_sync(
+                    analyze_outputs=False,
+                    execution_partition={{ execution_partition_str }},
+                    global_vars=global_vars,
+                    update_status=False,
+                )
+                block.run_tests(
+                    global_vars=global_vars,
+                    update_tests=False,
+                )

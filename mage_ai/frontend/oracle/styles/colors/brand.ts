@@ -1,0 +1,14 @@
+export const LIGHT: '#FFFFFF' = '#FFFFFF'; // white
+export const SHADE: '#A1A1A1' = '#A1A1A1'; // gray
+export const SHADOW: '#000000' = '#000000'; // black
+export const FIRE: '#FF144D' = '#FF144D'; // red
+export const SPARK: '#C72400' = '#C72400'; // burnt orange
+export const PSYCHIC: '#9B6CA7' = '#9B6CA7'; // purple
+export const PSYCHIC_LIGHT: string = 'rgb(155, 108, 167, 0.3)'; // purple
+export const EARTH: '#DEBB92' = '#DEBB92'; // tan
+export const LIGHTNING: '#CBFE00' = '#CBFE00'; // volt
+export const ICE: '#95ECE2' = '#95ECE2'; // light blue
+export const ICE_LIGHT: string = 'rgb(149, 236, 226, 0.1)';
+export const WATER: '#2A60FE' = '#2A60FE'; // blue
+export const STONE: '#C7CDDA' = '#C7CDDA'; // cool gray
+export const WIND: '#6B50D7' = '#6B50D7';

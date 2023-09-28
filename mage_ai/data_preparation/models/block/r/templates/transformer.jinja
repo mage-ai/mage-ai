@@ -1,0 +1,15 @@
+# Read data
+{% for input_path in input_paths %}
+df_{{loop.index}} = read.csv(file="{{input_path}}")
+{% endfor %}
+
+{{ global_vars }}
+
+# Define transform function
+{{ code }}
+
+# Execute transform function
+df = transform({{input_vars_str}})
+
+# Write output
+write.csv(df, "{{ output_path }}", row.names = FALSE)

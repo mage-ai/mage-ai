@@ -1,0 +1,17 @@
+connector_type: 'rabbitmq'
+connection_host: 'localhost'
+connection_port: 5672
+queue_name: 'default'
+username: 'guest'
+password: 'guest'
+amqp_url_virtual_host: '%2f'
+
+
+
+##Uncomment this to set consume configuration 
+#configure_consume: True
+
+#auto_ack: False
+#exclusive: False
+#inactivity_timeout: 10.0
+

@@ -1,0 +1,4 @@
+connector_type: mongodb
+connection_string: "mongodb://mongodb_container_name:27017/"
+database_name: database_name
+collection_name: collection_name

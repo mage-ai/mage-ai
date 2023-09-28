@@ -1,0 +1,15 @@
+# Read data
+{% for input_path in input_paths %}
+df_{{loop.index}} = read.csv(file="{{input_path}}")
+{% endfor %}
+
+{{ global_vars }}
+
+# Define data loader function
+{{ code }}
+
+# Execute data loader function
+df <- load_data({{input_vars_str}})
+
+# Write output
+write.csv(df, "{{ output_path }}", row.names = FALSE)

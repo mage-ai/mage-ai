@@ -1,0 +1,34 @@
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.{{ data_source }} import {{ data_source_handler }}
+from os import path
+from pandas import DataFrame
+
+{{ super() -}}
+{% endblock %}
+
+
+{% block content %}
+@transformer
+def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
+    """
+    Performs a transformation in {{ data_source_handler }}
+    """
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    # Specify your SQL transformation query
+    query = 'your transformation_query'
+
+    # Specify table to sample data from. Use to visualize changes to table.
+    sample_table = 'table_to_sample_data_from'
+    sample_schema = 'schema_of_table_to_sample'
+    sample_size = 10_000
+
+    with {{ data_source_handler }}.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        # Write queries to transform your dataset with
+        loader.execute(query){{ additional_args }}
+        return loader.sample(sample_schema, sample_size, sample_table)
+{% endblock %}
