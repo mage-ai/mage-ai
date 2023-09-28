@@ -707,11 +707,20 @@
       "group": "Get Started",
       "pages": [
         "contributing/overview",
+        "contributing/development-environment",
         {
           "group": "Backend",
           "icon": "server",
           "pages": [
             "contributing/backend/overview",
+            {
+              "group": "Data integration",
+              "pages": [
+                "contributing/data-integrations/adapt-existing-source",
+                "contributing/data-integrations/add-new-source",
+                "contributing/data-integrations/add-new-destination"
+              ]
+            },
             {
               "group": "Streaming",
               "pages": [
@@ -997,6 +1006,18 @@
     {
       "source": "/guides/streaming/sources/kinesis",
       "destination": "/streaming/sources/kinesis"
+    },
+    {
+      "source": "/data-integrations/sources/adapt-existing-source",
+      "destination": "/contributing/data-integrations/adapt-existing-source"
+    },
+    {
+      "source": "/data-integrations/sources/add-new-source",
+      "destination": "/contributing/data-integrations/add-new-source"
+    },
+    {
+      "source": "/data-integrations/destination/add-new-destination",
+      "destination": "/contributing/data-integrations/add-new-destination"
     }
   ]
 }
