@@ -109,10 +109,14 @@ if db_connection_url.startswith('postgresql'):
         db_connection.session.execute(f'CREATE SCHEMA IF NOT EXISTS {db_schema};')
         # Get the current database name from the query fetchall() result, e.g., [('test_database',)]
         db_current = db_connection.session.execute('SELECT current_database()').fetchall()[0][0]
-        db_connection.session.execute(f'ALTER DATABASE {db_current} SET search_path TO {db_schema}')
-        db_connection.session.commit()
-        db_connection.close_session()
-        print(f'Set the default PostgreSQL schema for {db_current} to {db_schema}')
+        username, _ = get_user_info_from_db_connection_url(db_connection_url)
+        if username:
+            db_connection.session.execute(
+                f'ALTER ROLE {username} IN DATABASE {db_current} SET search_path TO {db_schema}')
+            db_connection.session.commit()
+            db_connection.close_session()
+            print(f'Set the default PostgreSQL schema for role {username} ',
+                  f'in database {db_current} to {db_schema}')
 
 
 def safe_db_query(func):
