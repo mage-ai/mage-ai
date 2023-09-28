@@ -10,14 +10,20 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import { Check, Close } from '@oracle/icons';
+import { Check, Settings } from '@oracle/icons';
 import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { StreamType } from '@interfaces/IntegrationSourceType';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
-import { getSelectedStreams } from '@utils/models/block';
+import {
+  getParentStreamID,
+  getSelectedStreams,
+  getStreamID,
+  isStreamSelected,
+} from '@utils/models/block';
 import { pushAtIndex } from '@utils/array';
 
 type DataIntegrationBlockProps = {
@@ -49,9 +55,17 @@ function DataIntegrationBlock({
     name: dataIntegrationName,
   } = metadata?.data_integration || {}
 
-  const streams = useMemo(() => getSelectedStreams(block), [
+  const allStreams = useMemo(() => getSelectedStreams(block, {
+    getAll: true,
+  }), [
     block,
-  ])
+  ]);
+  const streams = useMemo(() => allStreams?.filter(isStreamSelected), [
+    allStreams,
+  ]);
+
+  const allStreamsCount = useMemo(() => allStreams?.length || 0, [allStreams]);
+  const streamsCount = useMemo(() => streams?.length || 0, [streams]);
 
   const isSource = BlockTypeEnum.DATA_LOADER === blockType;
   const displayTypeText: string = isSource ? 'source' : 'destination'
@@ -63,6 +77,7 @@ function DataIntegrationBlock({
         uuid: 'Stream',
       },
       {
+        center: true,
         uuid: 'Columns',
       },
       {
@@ -85,15 +100,17 @@ function DataIntegrationBlock({
       <Table
         columnFlex={columnFlex}
         columns={columnsToShow}
-        rows={streams?.map(({
-          destination_table: tableName,
-          metadata: metadataArray,
-          replication_method: replicationMethod,
-          run_in_parallel: runInParallel,
-          stream,
-          tap_stream_id: tapStreamID,
-        }) => {
-          const streamName = stream || tapStreamID;
+        rows={streams?.map((stream: StreamType) => {
+          const {
+            destination_table: tableName,
+            metadata: metadataArray,
+            replication_method: replicationMethod,
+            run_in_parallel: runInParallel,
+            tap_stream_id: tapStreamID,
+          } = stream || {};
+
+          const streamName = getStreamID(stream);
+          const parentStream = getParentStreamID(stream);
           let columnsCount = 0;
           let columnsCountSelected = 0;
 
@@ -109,32 +126,60 @@ function DataIntegrationBlock({
             }
           });
 
-          let row = [
+
+          let columnsCountEl;
+          let streamNameEl = (
             <Link
+              danger={!columnsCountSelected}
               key="stream"
               monospace
-              onClick={() => alert('OPEN MODAL')}
+              onClick={() => showDataIntegrationModal({
+                block,
+                defaultMainNavigationTab: streamName,
+                defaultMainNavigationTabSub: parentStream,
+                onChangeBlock,
+              })}
               preventDefault
-              sameColorAsText
+              sameColorAsText={columnsCountSelected >= 1}
             >
-              {streamName}
-            </Link>,
-            <Text default monospace key="columns">
-              {columnsCountSelected} <Text
-                inline
-                monospace
-                muted
-              >
-                /
-              </Text> {columnsCount}
-            </Text>,
+              {streamName} {!columnsCountSelected && (
+                <Text inline default monospace>
+                  will fail unless a column is selcted
+                </Text>
+              )}
+            </Link>
+          );
+
+          if (columnsCountSelected >= 1) {
+            columnsCountEl = (
+              <Text center default monospace key="columns">
+                {columnsCountSelected} <Text
+                  inline
+                  monospace
+                  muted
+                >
+                  /
+                </Text> {columnsCount}
+              </Text>
+            );
+          } else {
+            columnsCountEl = (
+              <Text center danger key="columns">
+                No columns selected
+              </Text>
+            );
+          }
+
+          let row = [
+            streamNameEl,
+            columnsCountEl,
             <Text center default key="replicationMethod">
               {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
             </Text>,
             <FlexContainer justifyContent="flex-end" key="runInParallel">
               {runInParallel
                 ? <Check size={UNIT * 2} success />
-                : <Close muted size={UNIT * 2} />
+                : <Text monospace muted>-</Text>
               }
             </FlexContainer>,
           ];
@@ -152,7 +197,9 @@ function DataIntegrationBlock({
       />
     );
   }, [
+    block,
     isSource,
+    showDataIntegrationModal,
     streams,
   ]);
 
@@ -202,27 +249,48 @@ function DataIntegrationBlock({
       <StreamSectionStyle>
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center" justifyContent="space-between">
-            <Flex flex={1} flexDirection="column">
-              <Text bold default large>
-                {pluralize('stream', streams?.length)}
-              </Text>
-            </Flex>
+            {streamsCount >= 1 && (
+              <>
+                <Flex flex={1} flexDirection="column">
+                  <Text bold default large>
+                    {streamsCount} <Text
+                      bold
+                      inline
+                      monospace
+                      muted
+                    >
+                      /
+                    </Text> {allStreamsCount} {pluralize(
+                      'stream',
+                      allStreamsCount,
+                      false,
+                      true,
+                    )} selected
+                  </Text>
+                </Flex>
+
+                <Spacing mr={1} />
+              </>
+            )}
 
             <Button
-              compact
+              beforeIcon={!streamsCount && <Settings size={2 * UNIT} />}
+              compact={streamsCount >= 1}
               onClick={() => showDataIntegrationModal({
                 block,
                 defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
                 onChangeBlock,
               })}
-              secondary
+              primary={!streamsCount}
+              secondary={streamsCount >= 1}
             >
-              Edit streams
+              {streamsCount >= 1 && 'Edit streams'}
+              {!streamsCount && 'Set up streams'}
             </Button>
           </FlexContainer>
         </Spacing>
 
-        {tableEl}
+        {streamsCount >= 1 && tableEl}
       </StreamSectionStyle>
     </>
   );

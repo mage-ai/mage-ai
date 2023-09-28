@@ -9,6 +9,7 @@ type StreamDetailPropsInner = {
   height?: number;
   pipeline: PipelineType;
   selectedSubTab?: SubTabEnum;
+  setSelectedSubTab?: (subTab: SubTabEnum) => void;
   showError: (opts: any) => void;
 } & StreamDetailProps;
 
@@ -17,6 +18,7 @@ function StreamDetail({
   height,
   pipeline,
   selectedSubTab,
+  setSelectedSubTab,
   showError,
   stream,
   ...propsRest
@@ -44,6 +46,7 @@ function StreamDetail({
         height={height}
         pipeline={pipeline}
         showError={showError}
+        setSelectedSubTab={setSelectedSubTab}
         stream={stream}
       />
     )

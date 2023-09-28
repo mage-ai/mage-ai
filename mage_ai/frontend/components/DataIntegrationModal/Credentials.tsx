@@ -14,6 +14,8 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import api from '@api';
+import { Check, Close } from '@oracle/icons';
 import { CodeEditorStyle} from '@components/IntegrationPipeline/index.style';
 import {
   ConfigurationDataIntegrationInputsType,
@@ -22,8 +24,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PlugAPI } from '@oracle/icons';
 import { SubTabEnum } from './constants';
-
-import api from '@api';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onSuccess } from '@api/utils/response';
 
 export type CredentialsProps = {

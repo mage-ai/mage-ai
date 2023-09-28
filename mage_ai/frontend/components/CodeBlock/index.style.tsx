@@ -244,14 +244,17 @@ export const BlockDividerInner = styled.div`
 `;
 
 export const CodeHelperStyle = styled.div<{
+  noMargin?: boolean;
   normalPadding?: boolean;
 }>`
-  margin-bottom: ${1 * UNIT}px;
-  padding-bottom: ${1 * UNIT}px;
-
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
     padding-left: ${props.normalPadding ? UNIT : LEFT_PADDING}px;
+  `}
+
+  ${props => !props.noMargin && `
+    margin-bottom: ${1 * UNIT}px;
+    padding-bottom: ${1 * UNIT}px;
   `}
 `;
 

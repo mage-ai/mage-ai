@@ -17,6 +17,7 @@ import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 import {
@@ -84,6 +85,12 @@ function StreamsOverview({
     parents,
   } = streamMapping || {};
 
+  const noStreamsExist =
+    useMemo(() => isEmptyObject(noParents || {}) && isEmptyObject(parents || {}), [
+      noParents,
+      parents,
+    ]);
+
   const streamsGrouped: {
     groupHeader: string;
     streams: StreamType[];
@@ -98,7 +105,7 @@ function StreamsOverview({
     columnFlex: number[];
     columns: ColumnType[];
   } = useMemo(() => {
-    const cf = [null, 2, 4, 2, 2, null]
+    const cf = [null, 1, 3, 2, 2, null]
     const c = [
       {
         label: ({
@@ -411,35 +418,56 @@ function StreamsOverview({
         <Headline>
           Overview of streams
         </Headline>
+
+        {noStreamsExist && (
+          <Spacing mt={1}>
+            <Text default>
+              Fetch and add at least 1 stream to the catalog in
+              order to see an overview of all the configured stream.
+            </Text>
+
+            <Spacing mt={1}>
+              <Link
+                bold
+                onClick={() => setSelectedMainNavigationTab(MainNavigationTabEnum.STREAMS)}
+                preventDefault
+              >
+                Go and fetch Streams
+              </Link>
+            </Spacing>
+          </Spacing>
+        )}
       </Spacing>
 
-      <Table
-        columnFlex={columnFlex}
-        columns={columns}
-        isSelectedRow={(index: number) => {
-          const stream = streamsInRows?.[index];
-          const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
+      {!noStreamsExist && (
+        <Table
+          columnFlex={columnFlex}
+          columns={columns}
+          isSelectedRow={(index: number) => {
+            const stream = streamsInRows?.[index];
+            const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
 
-          return isSelected;
-        }}
-        groupsInline
-        onClickRow={(index: number) => {
-          const stream = streamsInRows?.[index];
-          const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
+            return isSelected;
+          }}
+          groupsInline
+          onClickRow={(index: number) => {
+            const stream = streamsInRows?.[index];
+            const isSelected = !!getStreamFromStreamMapping(stream, selectedStreamMapping);
 
-          setSelectedStreamMapping(prev => updateStreamInStreamMapping(
-            stream,
-            prev,
-            {
-              remove: isSelected,
-            },
-          ));
-        }}
-        rowGroupHeaders={rowGroupHeaders}
-        rows={rows}
-        rowsGroupedByIndex={rowsGroupedByIndex}
-        stickyHeader
-      />
+            setSelectedStreamMapping(prev => updateStreamInStreamMapping(
+              stream,
+              prev,
+              {
+                remove: isSelected,
+              },
+            ));
+          }}
+          rowGroupHeaders={rowGroupHeaders}
+          rows={rows}
+          rowsGroupedByIndex={rowsGroupedByIndex}
+          stickyHeader
+        />
+      )}
     </>
   );
 }

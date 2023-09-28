@@ -947,27 +947,17 @@ function PipelineDetailPage({
   // Data integration modal
   const [showDataIntegrationModal, hideDataIntegrationModal] = useModal((
     opts: OpenDataIntegrationModalOptionsType,
-  ) => {
-    const {
-      block,
-      defaultMainNavigationTab,
-      onChangeBlock,
-    } = opts || {};
-
-    return (
-      <ErrorProvider>
-        <DataIntegrationModal
-          block={block}
-          defaultMainNavigationTab={defaultMainNavigationTab}
-          onChangeBlock={onChangeBlock}
-          onChangeCodeBlock={onChangeCodeBlock}
-          onClose={hideDataIntegrationModal}
-          pipeline={pipeline}
-          savePipelineContent={savePipelineContent}
-        />
-      </ErrorProvider>
-    );
-  }, {}, [
+  ) => (
+    <ErrorProvider>
+      <DataIntegrationModal
+        {...opts}
+        onChangeCodeBlock={onChangeCodeBlock}
+        onClose={hideDataIntegrationModal}
+        pipeline={pipeline}
+        savePipelineContent={savePipelineContent}
+      />
+    </ErrorProvider>
+  ), {}, [
     onChangeCodeBlock,
     pipeline,
     savePipelineContent,

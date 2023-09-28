@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
+import Link from '@oracle/elements/Link';
 import OutputType, { DataOutputType, DataType } from '@interfaces/OutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -19,14 +20,21 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { StreamType } from '@interfaces/IntegrationSourceType';
+import { SubTabEnum } from '../constants';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
-import { getParentStreamID, getStreamID } from '@utils/models/block';
+import {
+  getParentStreamID,
+  getSelectedPropertiesByPropertyUUID,
+  getStreamID,
+} from '@utils/models/block';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
 type SampleDataProps = {
   block: BlockType;
   height?: number;
   pipeline: PipelineType;
+  setSelectedSubTab?: (subTab: SubTabEnum) => void;
   showError: (opts: any) => void;
   stream: StreamType;
 };
@@ -35,6 +43,7 @@ function SampleData({
   block,
   height,
   pipeline,
+  setSelectedSubTab,
   showError,
   stream,
 }: SampleDataProps) {
@@ -62,6 +71,11 @@ function SampleData({
   }), [
     stream,
   ]);
+
+  const propertiesSelectedFromStream =
+    useMemo(() => getSelectedPropertiesByPropertyUUID(stream || {}) || {}, [
+      stream,
+    ]);
 
   const { data: dataOutput } = api.outputs.pipelines.detail(
     !outputState && pipelineUUID,
@@ -171,14 +185,35 @@ function SampleData({
   return (
     <>
       <Spacing p={PADDING_UNITS} ref={refSubheader}>
-        <Button
-          compact
-          loading={isLoadingCreateOutputs}
-          onClick={() => fetchOutputs()}
-          primary
-        >
-          {output ? 'Refresh sample data' : 'Fetch sample data'}
-        </Button>
+        {isEmptyObject(propertiesSelectedFromStream)
+          ? (
+            <>
+              <Text default>
+                Please select at least 1 column in the stream in order to fetch sample data.
+              </Text>
+
+              <Spacing mt={1}>
+                <Link
+                  bold
+                  onClick={() => setSelectedSubTab(SubTabEnum.SETTINGS)}
+                  preventDefault
+                >
+                  Go to Schema properties to select a column
+                </Link>
+              </Spacing>
+            </>
+          )
+          : (
+            <Button
+              compact
+              loading={isLoadingCreateOutputs}
+              onClick={() => fetchOutputs()}
+              primary
+            >
+              {dataForStream ? 'Refresh sample data' : 'Fetch sample data'}
+            </Button>
+          )
+        }
       </Spacing>
 
       {tableMemos}

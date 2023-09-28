@@ -913,3 +913,33 @@ export function updateStreamMappingWithPropertyAttributeValues(
 
   return streamMappingUpdated;
 }
+
+export function getSelectedPropertiesByPropertyUUID(stream: StreamType): {
+  [uuid: string]: PropertyColumnWithUUIDType[];
+} {
+  const schemaProperties = stream?.schema?.properties || {};
+
+  return stream?.metadata?.reduce((acc, metadata: MetadataType) => {
+    if (isMetadataForStreamFromMetadataArray(metadata)) {
+      return acc;
+    }
+
+    const isSelected = metadata?.metadata?.selected;
+
+    if (!isSelected) {
+      return acc;
+    }
+
+    const uuid = getColumnFromMetadata(metadata);
+    const property = schemaProperties?.[uuid];
+
+    return {
+      ...acc,
+      [uuid]: {
+        ...property,
+        metadata,
+        uuid,
+      },
+    };
+  }, {});
+}

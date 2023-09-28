@@ -102,6 +102,7 @@ import { useWindowSize } from '@utils/sizes';
 type DataIntegrationModal = {
   block: BlockType;
   defaultMainNavigationTab?: MainNavigationTabEnum;
+  defaultMainNavigationTabSub?: string;
   onChangeBlock?: (block: BlockType) => void;
   onClose?: () => void;
   onSaveBlock?: () => void;
@@ -120,7 +121,8 @@ function getSubTabForMainNavigationTab(mainNavigationTab: MainNavigationTabEnum)
 
 function DataIntegrationModal({
   block: blockProp,
-  defaultMainNavigationTab,
+  defaultMainNavigationTab = null,
+  defaultMainNavigationTabSub = null,
   onChangeBlock,
   onChangeCodeBlock,
   onClose,
@@ -337,7 +339,8 @@ function DataIntegrationModal({
 
   const [selectedMainNavigationTab, setSelectedMainNavigationTabState] =
     useState<MainNavigationTabEnum>(defaultMainNavigationTab);
-  const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] = useState<string>(null);
+  const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] =
+    useState<string>(defaultMainNavigationTabSub || null);
   const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum>(defaultMainNavigationTab
     ? getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
     : null
@@ -346,7 +349,7 @@ function DataIntegrationModal({
   const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
     useState<ColumnsMappingType>({});
 
-  const setSelectedMainNavigationTab = useCallback((prev1, subtabNew: string) => {
+  const setSelectedMainNavigationTab = useCallback((prev1, mainNavigationTabSub: string) => {
     setSelectedMainNavigationTabState((prev2) => {
       const val1 = typeof prev1 === 'function' ? prev1(prev2) : prev1
 
@@ -362,7 +365,7 @@ function DataIntegrationModal({
         if (val1 !== valOld) {
           setHighlightedColumnsMapping({});
         }
-      } else {
+
         // Only unhighlight the columns that don’t exist in the newly selected stream.
         setSelectedMainNavigationTabSub((subtabPrev) => {
           const streamOld = getStreamFromStreamMapping({
@@ -372,7 +375,7 @@ function DataIntegrationModal({
           }, streamsFromCatalogMapping);
 
           const streamNew = getStreamFromStreamMapping({
-            parent_stream: subtabNew,
+            parent_stream: mainNavigationTabSub,
             stream: val1,
             tap_stream_id: val1,
           }, streamsFromCatalogMapping);
@@ -386,7 +389,7 @@ function DataIntegrationModal({
             ...selectKeys(mappingPrev, columnsSame || []),
           }));
 
-          return subtabNew;
+          return mainNavigationTabSub;
         });
       }
 
@@ -802,7 +805,10 @@ function DataIntegrationModal({
     ]);
 
   const afterHidden: boolean = useMemo(() => {
-    if (isOnConfigurationCredentials || isOnStreamDetailSchemaProperties || isOnStreamsOverview) {
+    if (isOnConfigurationCredentials
+      || isOnStreamDetailSchemaProperties
+      || (isOnStreamsOverview && streams?.length >= 1)
+    ) {
       return afterHiddenState;
     }
 
@@ -814,6 +820,7 @@ function DataIntegrationModal({
     isOnStreamsOverview,
     selectedMainNavigationTab,
     selectedSubTab,
+    streams,
   ]);
 
   const streamDetailMemo = useMemo(() => {
@@ -835,6 +842,7 @@ function DataIntegrationModal({
           selectedSubTab={selectedSubTab}
           setBlockAttributes={setBlockAttributes}
           setHighlightedColumnsMapping={setHighlightedColumnsMapping}
+          setSelectedSubTab={setSelectedSubTab}
           showError={showError}
           stream={stream}
           streamMapping={streamsFromCatalogMapping}
@@ -855,6 +863,7 @@ function DataIntegrationModal({
     selectedSubTab,
     setBlockAttributes,
     setHighlightedColumnsMapping,
+    setSelectedSubTab,
     showError,
     streamsFromCatalogMapping,
     updateStreamsInCatalog,
@@ -1544,7 +1553,7 @@ function DataIntegrationModal({
         contained
         headerOffset={headerOffset}
         height={heightModal}
-        hideAfterCompletely={!after}
+        hideAfterCompletely={!after || (isOnStreamsOverview && !streams?.length)}
         inline
         aside
         mainContainerHeader={subheaderEl}

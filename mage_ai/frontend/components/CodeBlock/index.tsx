@@ -823,7 +823,7 @@ function CodeBlock({
     ]);
 
   const codeEditorEl = useMemo(() => {
-    if (replicatedBlockUUID) {
+    if (replicatedBlockUUID && !isDataIntegration) {
       return null;
     }
 
@@ -2092,26 +2092,31 @@ function CodeBlock({
               )}
 
               {tags.length >= 1 && (
-                <CodeHelperStyle normalPadding>
-                  <FlexContainer>
-                    {tags.map(({
-                      description,
-                      title,
-                    }, idx) => (
-                      <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
-                        <Tooltip
-                          block
-                          description={description}
-                          size={null}
-                          widthFitContent
-                        >
-                          <Badge>
-                            {title}
-                          </Badge>
-                        </Tooltip>
-                      </Spacing>
-                    ))}
-                  </FlexContainer>
+                <CodeHelperStyle
+                  noMargin={isDataIntegration}
+                  normalPadding
+                >
+                  <Spacing py={isDataIntegration ? 1 : 0}>
+                    <FlexContainer>
+                      {tags.map(({
+                        description,
+                        title,
+                      }, idx) => (
+                        <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                          <Tooltip
+                            block
+                            description={description}
+                            size={null}
+                            widthFitContent
+                          >
+                            <Badge>
+                              {title}
+                            </Badge>
+                          </Tooltip>
+                        </Spacing>
+                      ))}
+                    </FlexContainer>
+                  </Spacing>
                 </CodeHelperStyle>
               )}
 
@@ -2230,7 +2235,7 @@ function CodeBlock({
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
-                      ? replicatedBlock
+                      ? (replicatedBlock && !isDataIntegration)
                         ? (<Spacing px={1}>
                           <Text monospace muted>
                             Replicated from block <Link

@@ -520,16 +520,22 @@ function StreamDetailOverview({
                       `Are you sure you want to remove stream ${streamID} from block ${block?.uuid}?`
                     )
                   ) {
-                    setBlockAttributes(prev => ({
-                      ...prev,
-                      catalog: {
+                    setBlockAttributes((prev) => {
+                      const updated = {
                         ...prev,
-                        streams: remove(
-                          prev?.catalog?.streams,
-                          (s: StreamType) => getStreamIDWithParentStream(s) === streamUUID,
-                        ),
-                      },
-                    }));
+                        catalog: {
+                          ...prev,
+                          streams: remove(
+                            prev?.catalog?.streams,
+                            (s: StreamType) => getStreamIDWithParentStream(s) === streamUUID,
+                          ),
+                        },
+                      };
+
+                      onChangeBlock?.(updated);
+
+                      return updated;
+                    });
                   }
                 }}
               >
