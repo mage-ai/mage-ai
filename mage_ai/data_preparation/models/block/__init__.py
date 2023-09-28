@@ -1205,20 +1205,33 @@ class Block(DataIntegrationMixin):
             ):
                 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
-                # project_path and target sets
-                DBTBlock.materialize_df(
-                    df=outputs[0],
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=self.uuid,
-                    targets=list(set(
-                        (block.project_path, block.target(variables=global_vars))
-                        for _uuid, block in self.pipeline.blocks_by_uuid.items()
-                        if isinstance(block, DBTBlock)
-                    )),
-                    logger=logger,
-                    global_vars=global_vars_copy,
-                    runtime_arguments=runtime_arguments,
-                )
+                # normalize output
+                output = outputs[0]
+                if isinstance(output, pd.DataFrame):
+                    df = output
+                elif isinstance(output, dict):
+                    df = pd.DataFrame([output])
+                elif isinstance(output, list):
+                    df = pd.DataFrame(output)
+                else:
+                    df = pd.DataFrame()
+
+                if df.empty:
+                    logger.info('No data for dbt to materialize.')
+                else:
+                    DBTBlock.materialize_df(
+                        df=df,
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=self.uuid,
+                        targets=list(set(
+                            (block.project_path, block.target(variables=global_vars))
+                            for _uuid, block in self.pipeline.blocks_by_uuid.items()
+                            if isinstance(block, DBTBlock)
+                        )),
+                        logger=logger,
+                        global_vars=global_vars_copy,
+                        runtime_arguments=runtime_arguments,
+                    )
 
         return dict(output=outputs)
 
