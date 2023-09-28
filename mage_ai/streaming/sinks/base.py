@@ -5,11 +5,14 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Dict, List
 
+MESSAGE_FORMAT_V2_KEYS = frozenset(['data', 'metadata'])
+
 
 class BaseSink(ABC):
     config_class = None
 
     def __init__(self, config: Dict, **kwargs):
+        self.connector_type = config.get('connector_type')
         if self.config_class is not None:
             if 'connector_type' in config:
                 config.pop('connector_type')
@@ -54,7 +57,7 @@ class BaseSink(ABC):
         with open(self.buffer_path, 'w'):
             pass
 
-    def destroy(self):
+    def destroy(self):  # noqa: B027
         """
         Close connections and destroy threads
         """
@@ -95,6 +98,15 @@ class BaseSink(ABC):
         with open(self.buffer_path, 'a') as fp:
             for record in data:
                 fp.write(json.dumps(record) + '\n')
+
+    def _is_message_format_v2(self, message: Dict):
+        """
+        Check whether the message is with the foramt {"data": {...}, "metadata": {...}}
+        """
+        if isinstance(message, dict):
+            if set(message.keys()) == MESSAGE_FORMAT_V2_KEYS:
+                return True
+        return False
 
     def _print(self, msg):
         print(f'[{self.__class__.__name__}] {msg}')

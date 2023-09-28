@@ -1,6 +1,6 @@
 from typing import Dict
 
-from mage_ai.streaming.constants import SinkType
+from mage_ai.streaming.constants import GENERIC_IO_SINK_TYPES, SinkType
 
 
 class SinkFactory:
@@ -47,6 +47,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.postgres import PostgresSink
 
             return PostgresSink(config, **kwargs)
+        elif connector_type in GENERIC_IO_SINK_TYPES:
+            from mage_ai.streaming.sinks.generic_io import GenericIOSink
+
+            return GenericIOSink(config, **kwargs)
         raise Exception(
             f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )
