@@ -153,7 +153,8 @@ function Widget({
                   Run created on&nbsp;
                   {displayLocalTimezone
                     ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
-                    : dateFormatLong(createdAt, { includeSeconds: true, utcFormat: true })}
+                    : createdAt
+                  }
                 </Link>
               </NextLink>
             </FlexContainer>
