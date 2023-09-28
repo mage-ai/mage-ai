@@ -1,9 +1,0 @@
-# https://docs.getdbt.com/docs/core/connect-data-platform/profiles.yml
-
-base:
-  outputs:
-
-    dev:
-      type: duckdb
-
-  target: dev

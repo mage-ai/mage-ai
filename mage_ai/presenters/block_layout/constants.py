@@ -1,1 +1,0 @@
-BLOCK_LAYOUT_FILENAME_WITH_EXTENSION = 'block_layout.yaml'

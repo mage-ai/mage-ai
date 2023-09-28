@@ -1,3 +1,0 @@
-connector_type: kinesis
-stream_name: stream_name
-partition_key: key

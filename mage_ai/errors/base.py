@@ -1,2 +1,0 @@
-class MageBaseException(Exception):
-    pass
