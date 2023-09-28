@@ -1,0 +1,155 @@
+---
+title: "Git integration"
+description: "Mage integrates with Git— you can use Git version control with Mage."
+---
+
+## Configure Git in Mage
+
+<Note>
+By using the Git integration through Mage, Mage will automatically set your local repo
+as a safe directory (i.e. `git config --global --add safe.directory <local repo path>`)
+
+</Note>
+
+To use the Mage Git integration, you will need to first configure Git settings.
+The following instructions are tailored to Github, but the Git integration can work with
+other Git providers as well, such as GitLab, BitBucket, or Azure DevOps: 
+<AccordionGroup>
+<Accordion title="SSH" icon="terminal">
+<Warning>
+**SSH keys with passphrase are not supported**
+
+The Git integration currently does not support repositories that require an SSH key with a passphrase.
+
+You can, however, use the Mage terminal and the git CLI to perform your git actions.
+You'll still need to generate your SSH keys as normal. You can start a ssh-agent in the terminal so that
+you don't have to enter your SSH key passphrase every time you perform an action.
+
+`eval $(ssh-agent -s) && ssh-add ~/.ssh/id_rsa`
+
+</Warning>
+<Steps>
+<Step title="Check preferences.yaml">
+ Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github, unless you want them to.
+</Step>
+<Step title="Navigate to your Mage settings">
+    Wizard > Settings
+    <div align="center">
+    <img src="/media/mage-settings.png" width="50%"/>
+    </div>
+</Step>
+<Step title="Navigate to the 'Git settings' section">
+</Step>
+<Step title="Set up your SSH key">
+  This will allow your machine to access GitHub. 
+  Check out this sections this [guide](/production/data-sync/git#configure-git-settings) to set up your SSH key.
+</Step>
+<Step title="Select SSH as the authentication type.">
+</Step>
+<Step title="Fill out the form">
+    <div align="center">
+    <img src="/media/github-url.png" width="50%"/>
+    </div>
+    - `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
+    - `Local directory path`: The directory in your machine that will be synced with the Github repository. If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can check what your current working directory is in a Scratchpad block.
+</Step>
+<Step title="Fill out the remaining optional, but recommended fields.">
+  Filling out these fields will allow Mage to recreate your git and SSH settings if they are deleted (i.e. if your container restarts):
+    - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
+    - `Email`: Your git email. Used for the same purpose as your username.
+    - `SSH public key in base64`, `SSH public key in base64`: Enter your SSH public and private key encoded in base64. You can follow the instructions in the field description if you want to Mage to save your SSH keys.
+</Step>
+<Step title="Save your Git settings">
+</Step>
+</Steps>
+</Accordion>
+
+<Accordion title="HTTPS/Token" icon="coin">
+<Steps>
+    <Step title="Check preferences.yaml">
+    Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github, unless you want them to.
+    </Step>
+    <Step title="Navigate to your Mage settings">
+        Wizard > Settings
+        <div align="center">
+        <img src="/media/mage-settings.png" width="50%"/>
+        </div>
+    </Step>
+    <Step title="Navigate to the 'Git settings' section">
+    </Step>
+    <Step title="Create a Git access token and save it for later">
+        - [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+        - [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
+    </Step>
+    <Step title="Fill out the form">
+        <div align="center">
+        <img src="/media/github-url.png" width="50%"/>
+        </div>
+        - `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
+        - `Local directory path`: The directory in your machine that will be synced with the Github repository. If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can check what your current working directory is in a Scratchpad block.
+    </Step>
+    <Step title="Fill out the remaining optional, but recommended fields.">
+        - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
+        - `Email`: Your git email. Used for the same purpose as your username.
+        - `Access token`: Enter the Git access token that you created in step 4.
+    </Step>
+    <Step title="Save your Git settings">
+    </Step>
+</Steps>
+</Accordion>
+</AccordionGroup>
+
+## Usage
+
+Once your git settings are configured, you can use the Git integration to perform git actions.
+To start, click the button at the top right with the name of the current branch.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/branch-button.png?raw=true" width="100%"/>
+
+Once the modal is open, you can start performing actions. Currently, the Git integration supports the following actions:
+<AccordionGroup>
+<Accordion title="Clone repository">
+Clone repository will allow you to clone the specified git repository to your local machine.
+_This operation will overwrite all local changes you have in the local git directory._
+</Accordion>
+<Accordion title="Create new branch">
+Create new branch will create a new branch in your local git directory. Specify the name of the branch and click `Create`. You will
+automatically be switched to the new branch.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/create-new-branch.png?raw=true" width="100%"/>
+</Accordion>
+<Accordion title="Switch branch">
+To switch your local branch, you can click the dropdown menu with the current active branch and select the branch you would like to switch to.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/switch-branch.png?raw=true" width="100%"/>
+</Accordion>
+<Accordion title="Commit & push">
+<Steps>
+<Step title="Select files">
+First, select the files you would like to commit. You can select all files by clicking the `Include all changes` button.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/select-files.png?raw=true" width="100%"/>
+</Step>
+<Step title="Commit your changes">
+Then, enter a descriptive commit message and click `Commit`. This will commit your changes to your local git directory.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/commit-changes.png?raw=true" width="100%"/>
+</Step>
+<Step title="Push to remote">
+Once your changes are commited, you can push your commit to the remote repository by clicking `Push`.
+
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/push-to-remote.png?raw=true" width="100%"/>
+</Step>
+</Steps>
+</Accordion>
+<Accordion title="Pull">
+Pull your changes from the remote branch to your local branch. This operation is equivalent to `git pull mage-repo <current-branch>`.
+</Accordion>
+<Accordion title="Hard reset">
+Hard reset your local branch with the remote branch. This operation is equivalent to `git reset --hard mage-repo/<current-branch>`.
+
+_This operation will overwrite your local changes._
+</Accordion>
+</AccordionGroup>
+
+For any other operations you may need, you can perform them through the terminal. You can open the terminal by clicking the terminal toggle in the top right of the modal.

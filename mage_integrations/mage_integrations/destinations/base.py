@@ -219,7 +219,7 @@ class Destination():
             tags=tags,
         )], stream)
 
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
         raise Exception('Subclasses must implement the export_batch_data method.')
 
     def process_record(
