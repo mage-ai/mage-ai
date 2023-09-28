@@ -34,10 +34,12 @@ import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
+export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 3, 4, 5];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
   0: 'status',
   1: 'block_uuid',
+  3: 'created_at',
+  4: 'started_at',
   5: 'completed_at',
 };
 
