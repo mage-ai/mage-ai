@@ -135,8 +135,9 @@ function PipelineSchedules({
     }), {})
   ), [globalVariables]);
 
+  const randomTriggerName = randomNameGenerator();
   const pipelineOnceSchedulePayload = useMemo(() => ({
-    name: randomNameGenerator(),
+    name: randomTriggerName,
     schedule_interval: ScheduleIntervalEnum.ONCE,
     schedule_type: ScheduleTypeEnum.TIME,
     start_time: dateFormatLong(
@@ -144,7 +145,7 @@ function PipelineSchedules({
       { dayAgo: true, utcFormat: true },
     ),
     status: ScheduleStatusEnum.ACTIVE,
-  }), []);
+  }), [randomTriggerName]);
   const [showModal, hideModal] = useModal(() => (
     <RunPipelinePopup
       initialPipelineSchedulePayload={pipelineOnceSchedulePayload}
