@@ -29,6 +29,7 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -38,9 +39,9 @@ import {
   AlertTriangle,
   ArrowDown,
   BlocksSeparated,
+  Close,
   PipeIcon,
   Refresh,
-
 } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
@@ -49,7 +50,7 @@ import {
   PageNameEnum,
 } from '@components/PipelineDetailPage/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
-import { POPUP_MENU_WIDTH } from '@components/shared/Table/Toolbar/constants';
+import { POPUP_MENU_WIDTH, SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
@@ -88,6 +89,7 @@ function PipelineRuns({
 }: PipelineRunsProp) {
   const router = useRouter();
   const refActionsMenu = useRef(null);
+  const variableSearchInputRef = useRef(null);
 
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [blockRunErrors, setBlockRunErrors] = useState<ErrorsType>(null);
@@ -95,6 +97,7 @@ function PipelineRuns({
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
+  const [variableSearchText, setVariableSearchText] = useState<string>(null);
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [confirmationDialogueOpenId, setConfirmationDialogueOpenId] = useState<string>(null);
   const [confirmationAction, setConfirmationAction] = useState(null);
@@ -208,7 +211,17 @@ function PipelineRuns({
       pauseFetch: !pipelineUUID,
     },
   );
-  const pipelineRuns: PipelineRunType[] = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+  const pipelineRuns: PipelineRunType[] = useMemo(() => {
+    let pipelineRunsFiltered: PipelineRunType[] = dataPipelineRuns?.pipeline_runs || [];
+    if (variableSearchText) {
+      const lowercaseSearchText = variableSearchText.toLowerCase();
+      pipelineRunsFiltered = pipelineRunsFiltered.filter(({ variables }) =>
+        JSON.stringify(variables || {}).toLowerCase().includes(lowercaseSearchText),
+      );
+    }
+
+    return pipelineRunsFiltered;
+  },[dataPipelineRuns?.pipeline_runs, variableSearchText]);
   const totalRuns: number = useMemo(() => isPipelineRunsTab
     ? dataPipelineRuns?.metadata?.count || []
     : dataBlockRuns?.metadata?.count || [],
@@ -398,6 +411,10 @@ function PipelineRuns({
         allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
         allowDelete
         deletePipelineRun={deletePipelineRun}
+        emptyMessage={variableSearchText
+          ? 'No runs on this page match your search.'
+          : undefined
+        }
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
@@ -420,6 +437,7 @@ function PipelineRuns({
     pipelineRuns,
     selectedRun,
     selectedRuns,
+    variableSearchText,
   ]);
 
   const tableBlockRuns = useMemo(() => (
@@ -532,6 +550,7 @@ function PipelineRuns({
                 <Select
                   compact
                   defaultColor
+                  greyBorder
                   onChange={e => {
                     e.preventDefault();
                     const updatedStatus = e.target.value;
@@ -560,6 +579,22 @@ function PipelineRuns({
                     </option>
                   ))}
                 </Select>
+
+                <Spacing ml={2} />
+
+                <TextInput
+                  {...SEARCH_INPUT_PROPS}
+                  afterIcon={variableSearchText ? <Close /> : null}
+                  afterIconClick={() => {
+                    setVariableSearchText('');
+                    variableSearchInputRef?.current?.focus();
+                  }}
+                  onChange={e => setVariableSearchText(e.target.value)}
+                  paddingVertical={6}
+                  placeholder="Search pipeline run variables"
+                  ref={variableSearchInputRef}
+                  value={variableSearchText}
+                />
               </>
             }
           </FlexContainer>
