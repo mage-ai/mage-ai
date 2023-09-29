@@ -13,15 +13,15 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import {
   BUTTON_PADDING,
   ConfirmDialogueOpenEnum,
   POPUP_MENU_WIDTH,
   POPUP_TOP_OFFSET,
+  SEARCH_INPUT_PROPS,
   SHARED_TOOLTIP_PROPS,
 } from './constants';
-import { Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
+import { Close, Ellipsis, Filter, Group, Trash } from '@oracle/icons';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -457,18 +457,12 @@ function Toolbar({
           <Spacing ml={BUTTON_PADDING} />
           <Flex flex={1}>
             <TextInput
+              {...SEARCH_INPUT_PROPS}
               afterIcon={searchValue ? <Close /> : null}
               afterIconClick={() => {
                 onSearchChange('');
                 searchInputRef?.current?.focus();
               }}
-              afterIconSize={UNIT * 1.5}
-              beforeIcon={<Search />}
-              borderRadius={BORDER_RADIUS}
-              defaultColor
-              fullWidth
-              greyBorder
-              maxWidth={UNIT * 40}
               onChange={e => onSearchChange(e.target.value)}
               paddingVertical={9}
               placeholder={searchPlaceholder ? searchPlaceholder : null}

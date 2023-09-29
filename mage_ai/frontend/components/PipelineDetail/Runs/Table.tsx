@@ -349,6 +349,10 @@ function PipelineRunsTable({
     },
     {
       ...timezoneTooltipProps,
+      uuid: 'Started at',
+    },
+    {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
     },
     {
@@ -433,6 +437,7 @@ function PipelineRunsTable({
                 pipeline_schedule_id: pipelineScheduleId,
                 pipeline_schedule_name: pipelineScheduleName,
                 pipeline_uuid: pipelineUUID,
+                started_at: startedAt,
                 status,
               } = pipelineRun;
               deleteButtonRefs.current[id] = createRef();
@@ -481,7 +486,22 @@ function PipelineRunsTable({
                   </Text>,
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
-                    key="row_completed"
+                    key="row_started_at"
+                    muted
+                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                  >
+                    {startedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                        : getTimeInUTCString(startedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    key="row_completed_at"
                     muted
                     title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
                   >
@@ -574,7 +594,22 @@ function PipelineRunsTable({
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
-                    key="row_completed"
+                    key="row_started_at"
+                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                  >
+                    {startedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                        : getTimeInUTCString(startedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_completed_at"
                     title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
                   >
                     {completedAt
