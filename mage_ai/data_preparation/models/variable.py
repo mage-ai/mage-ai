@@ -139,6 +139,7 @@ class Variable:
     def read_data(
         self,
         dataframe_analysis_keys: List[str] = None,
+        raise_exception: bool = False,
         sample: bool = False,
         sample_count: int = None,
         spark=None,
@@ -156,7 +157,11 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.variable_type == VariableType.DATAFRAME:
-            return self.__read_parquet(sample=sample, sample_count=sample_count)
+            return self.__read_parquet(
+                raise_exception=raise_exception,
+                sample=sample,
+                sample_count=sample_count,
+            )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
