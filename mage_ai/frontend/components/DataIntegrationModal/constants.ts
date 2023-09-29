@@ -34,6 +34,7 @@ export type OpenDataIntegrationModalOptionsType = {
   contentByBlockUUID?: any;
   defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
+  defaultSubTab?: string;
   onChangeBlock?: (block: BlockType) => void;
   savePipelineContent?: (payload?: {
     block?: BlockType;

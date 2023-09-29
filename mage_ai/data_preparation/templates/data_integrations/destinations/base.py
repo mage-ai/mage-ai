@@ -7,23 +7,25 @@ def destination(*args, **kwargs) -> str:
 
 
 @data_integration_config
-def config(destination: str, *args, **kwargs) -> Dict:
+def config(*args, **kwargs) -> Dict:
+    destination: str = kwargs.get('destination', None)
 {{ config }}
 
 
 @data_integration_selected_streams
-def selected_streams(config: Dict = None, source: str = None, *args, **kwargs) -> List[str]:
+def selected_streams(*args, **kwargs) -> List[str]:
+    config: Dict = kwargs.get('config', None)
+    destination: str = kwargs.get('destination', None)
+
     return []
 
 
 @data_integration_catalog
-def catalog(
-    config: Dict = None,
-    selected_streams: List[str] = None,
-    source: str = None,
-    *args,
-    **kwargs,
-) -> Dict:
+def catalog(*args, **kwargs) -> Dict:
+    config: Dict = kwargs.get('config', None)
+    selected_streams: List[str] = kwargs.get('selected_streams', None)
+    destination: str = kwargs.get('destination', None)
+
     return {
         'streams': [],
     }

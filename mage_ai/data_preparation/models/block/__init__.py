@@ -476,7 +476,7 @@ class Block(DataIntegrationMixin):
                     )
                 except Exception as err:
                     if is_debug():
-                        raise err
+                        print(f'[ERROR] Block.metadata_async: {err}')
 
         return {}
 

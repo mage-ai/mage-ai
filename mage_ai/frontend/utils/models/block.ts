@@ -15,6 +15,7 @@ import {
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
+import { ConfigurationDataIntegrationType } from '@interfaces/ChartBlockType';
 import { equals, indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject, isEqual, selectEntriesWithValues } from '@utils/hash';
 
@@ -958,4 +959,24 @@ export function getSelectedPropertiesByPropertyUUID(stream: StreamType): {
       },
     };
   }, {});
+}
+
+export function buildInputsFromUpstreamBlocks(
+  blockUpstreamBlocks: BlockType[],
+  dataIntegrationConfiguration: ConfigurationDataIntegrationType,
+) {
+  const inputs = dataIntegrationConfiguration?.inputs || {};
+
+  return blockUpstreamBlocks?.reduce((acc, b) => {
+    const uuid = b?.uuid;
+    const input = uuid && inputs?.[uuid];
+    if (!input) {
+      return acc;
+    }
+
+    return acc.concat({
+      block: b,
+      input,
+    })
+  }, []);
 }

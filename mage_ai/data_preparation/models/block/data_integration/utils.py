@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_DESTINATION_TABLE,
     KEY_DISABLE_COLUMN_TYPE_CHECK,
     KEY_KEY_PROPERTIES,
+    KEY_METADATA,
     KEY_PARTITION_KEYS,
     KEY_PROPERTIES,
     KEY_REPLICATION_METHOD,
@@ -887,7 +888,7 @@ def __execute_destination(
             schema_final.update(extract(schema_dict or {}, [KEY_TYPE]))
 
             if schema_dict and schema_dict.get(KEY_PROPERTIES):
-                schema_properties = schema_dict.get(KEY_PROPERTIES)
+                schema_properties = __select_selected_columns(stream_settings_inner, schema_dict)
 
         catalog_final = dict(streams=[
             merge_dict(
@@ -1365,3 +1366,21 @@ def __run_in_subprocess(run_args: List[str], config: Dict = None) -> str:
     except subprocess.CalledProcessError as e:
         message = e.stderr.decode('utf-8')
         raise Exception(filter_out_config_values(message, config))
+
+
+def __select_selected_columns(stream_settings: Dict, schema_dict: Dict) -> Dict:
+    properties = (schema_dict.get(KEY_PROPERTIES) or {}).copy()
+    metadata = stream_settings.get(KEY_METADATA)
+
+    if metadata:
+        for md in metadata:
+            breadcrumb = md.get('breadcrumb')
+            if not breadcrumb:
+                continue
+
+            column = breadcrumb[-1]
+            md_dict = md.get('metadata')
+            if md_dict and 'selected' in md_dict and not md_dict['selected']:
+                properties.pop(column, None)
+
+    return properties

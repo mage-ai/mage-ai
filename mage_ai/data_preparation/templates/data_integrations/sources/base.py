@@ -7,7 +7,8 @@ def source(*args, **kwargs) -> str:
 
 
 @data_integration_config
-def config(source: str = None, *args, **kwargs) -> Dict:
+def config(*args, **kwargs) -> Dict:
+    source: str = kwargs.get('source', None)
 {{ config }}
 
 
@@ -22,11 +23,15 @@ def selected_streams(*args, **kwargs) -> List[str]:
 
 @data_integration_catalog(discover=False, select_all=True)
 def catalog(*args, **kwargs) -> Dict:
-    catalog: Dict = kwargs.get('catalog', None)
     config: Dict = kwargs.get('config', None)
-    discover_func: Callable = kwargs.get('discover_func', None)
     selected_streams: List[str] = kwargs.get('selected_streams', None)
     source: str = kwargs.get('source', None)
+
+    # catalog_from_discover is None unless discover=True
+    catalog_from_discover: Dict = kwargs.get('catalog', None)
+
+    # Executing this function will fetch and return the catalog
+    discover_func: Callable = kwargs.get('discover_func', None)
 
     return {
         'streams': [],

@@ -959,6 +959,7 @@ function CodeBlock({
       return (
         <DataIntegrationBlock
           block={block}
+          blocksMapping={blocksMapping}
           blockContent={content}
           callbackEl={callbackEl}
           codeEditor={editorEl}
@@ -983,6 +984,7 @@ function CodeBlock({
     block,
     blockLanguage,
     blockType,
+    blocksMapping,
     callbackContent,
     content,
     dbtProjectName,

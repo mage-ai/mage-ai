@@ -103,6 +103,7 @@ type DataIntegrationModal = {
   block: BlockType;
   defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
+  defaultSubTab?: string;
   onChangeBlock?: (block: BlockType) => void;
   onClose?: () => void;
   onSaveBlock?: () => void;
@@ -120,9 +121,10 @@ function getSubTabForMainNavigationTab(mainNavigationTab: MainNavigationTabEnum)
 };
 
 function DataIntegrationModal({
-  block: blockProp,
+  block: blockProp = null,
   defaultMainNavigationTab = null,
   defaultMainNavigationTabSub = null,
+  defaultSubTab = null,
   onChangeBlock,
   onChangeCodeBlock,
   onClose,
@@ -150,6 +152,7 @@ function DataIntegrationModal({
   } = pipeline || {};
 
   const {
+    catalog: catalogProp,
     content: blockContentFromBlockProp,
     language: blockLanguage,
     type: blockType,
@@ -163,7 +166,7 @@ function DataIntegrationModal({
     blockType,
   ]);
 
-  const [blockAttributes, setBlockAttributes] = useState<BlockType>(null);
+  const [blockAttributes, setBlockAttributes] = useState<BlockType>(blockProp || null);
 
   const {
     configuration,
@@ -301,8 +304,10 @@ function DataIntegrationModal({
 
   const blockFromServer = useMemo(() => dataBlock?.block, [dataBlock]);
   useEffect(() => {
-    if (blockFromServer && (!blockAttributes || blockFromServer?.uuid !== blockAttributes?.uuid)) {
-      setBlockAttributes(blockFromServer)
+    if (blockFromServer) {
+      if (!blockAttributes || blockFromServer?.uuid !== blockAttributes?.uuid) {
+        setBlockAttributes(blockFromServer);
+      }
     }
   }, [
     blockAttributes,
@@ -349,7 +354,7 @@ function DataIntegrationModal({
     useState<string>(defaultMainNavigationTabSub || null);
   const [selectedSubTab, setSelectedSubTab] =
     useState<SubTabEnum | string>(defaultMainNavigationTab
-      ? getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
+      ? defaultSubTab || getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
       : null
     );
 
@@ -1549,7 +1554,10 @@ function DataIntegrationModal({
                 noBackground
                 noBorder
                 noPadding
-                onClick={onClose}
+                onClick={() => {
+                  onClose?.();
+                  setBlockAttributes(null);
+                }}
               >
                 <Close default size={UNIT * 2} />
               </Button>

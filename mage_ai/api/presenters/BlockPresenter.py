@@ -13,6 +13,7 @@ from mage_ai.data_preparation.templates.data_integrations.constants import (
 )
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.server.api.integration_sources import build_integration_module_info
+from mage_ai.shared.environments import is_debug
 
 
 class BlockPresenter(BasePresenter):
@@ -98,24 +99,30 @@ class BlockPresenter(BasePresenter):
 
             if include_documentation and self.model.is_data_integration():
                 if not data_integration_uuid:
-                    di_settings = self.model.get_data_integration_settings(
-                        from_notebook=True,
-                        global_vars=self.model.pipeline.variables if self.model.pipeline else None,
-                    )
-                    data_integration_uuid = di_settings.get('data_integration_uuid')
+                    try:
+                        global_vars = self.model.pipeline.variables if self.model.pipeline else None
+                        di_settings = self.model.get_data_integration_settings(
+                            from_notebook=True,
+                            global_vars=global_vars,
+                        )
+                        data_integration_uuid = di_settings.get('data_integration_uuid')
+                    except Exception as err:
+                        if is_debug():
+                            print(f'[ERROR] Block.metadata_async: {err}')
 
-                option = get_templates(group_templates=True).get(data_integration_uuid)
+                if data_integration_uuid:
+                    option = get_templates(group_templates=True).get(data_integration_uuid)
 
-                if option:
-                    if not data_integration_type:
-                        if BlockType.DATA_LOADER == self.model.type:
-                            data_integration_type = DATA_INTEGRATION_TYPE_SOURCES
-                        else:
-                            data_integration_type = DATA_INTEGRATION_TYPE_DESTINATIONS
+                    if option:
+                        if not data_integration_type:
+                            if BlockType.DATA_LOADER == self.model.type:
+                                data_integration_type = DATA_INTEGRATION_TYPE_SOURCES
+                            else:
+                                data_integration_type = DATA_INTEGRATION_TYPE_DESTINATIONS
 
-                    info = build_integration_module_info(data_integration_type, option)
-                    if info and info.get('docs'):
-                        data['documentation'] = info.get('docs')
+                        info = build_integration_module_info(data_integration_type, option)
+                        if info and info.get('docs'):
+                            data['documentation'] = info.get('docs')
 
             if 'dbt' == display_format:
                 query_string = None
