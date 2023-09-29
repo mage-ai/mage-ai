@@ -114,7 +114,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="docs/media/overview/mage-build.gif?raw=true" /> |
+| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="https://github.com/mage-ai/assets/blob/main/overview/mage-build.gif?raw=true" /> |
 
 <p align="center">
   ↓
@@ -130,7 +130,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="docs/media/overview/mage-preview.gif?raw=True" /> |
+| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/overview/mage-preview.gif?raw=True" /> |
 
 <p align="center">
   ↓
@@ -146,7 +146,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="docs/media/overview/observability.gif?raw=True" /> |
+| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="https://github.com/mage-ai/assets/blob/main/overview/observability.gif?raw=True" /> |
 
 <br />
 
