@@ -81,6 +81,13 @@ REQUESTS_BASE_PATH = os.getenv('MAGE_REQUESTS_BASE_PATH', BASE_PATH)
 # to the MAGE_BASE_PATH environment variable.
 ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
 
+# Sets the trigger interval of the scheduler to a numeric value, in seconds
+# Determines how often the scheduler gets invoked
+try:
+    SCHEDULER_TRIGGER_INTERVAL = float(os.getenv('SCHEDULER_TRIGGER_INTERVAL', '10'))
+except ValueError:
+    SCHEDULER_TRIGGER_INTERVAL = 10
+
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
 MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
@@ -104,4 +111,5 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'SENTRY_TRACES_SAMPLE_RATE',
     'MAGE_PUBLIC_HOST',
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
+    'SCHEDULER_TRIGGER_INTERVAL'
 ]
