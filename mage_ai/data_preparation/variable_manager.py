@@ -206,6 +206,7 @@ class VariableManager:
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
+            raise_exception=True,
             sample=sample,
             sample_count=sample_count,
             spark=spark,
