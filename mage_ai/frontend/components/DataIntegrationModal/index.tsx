@@ -349,14 +349,11 @@ function DataIntegrationModal({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
   const [selectedMainNavigationTab, setSelectedMainNavigationTabState] =
-    useState<MainNavigationTabEnum>(defaultMainNavigationTab);
+    useState<MainNavigationTabEnum>(null);
+
   const [selectedMainNavigationTabSub, setSelectedMainNavigationTabSub] =
-    useState<string>(defaultMainNavigationTabSub || null);
-  const [selectedSubTab, setSelectedSubTab] =
-    useState<SubTabEnum | string>(defaultMainNavigationTab
-      ? defaultSubTab || getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid
-      : null
-    );
+    useState<string>(defaultMainNavigationTabSub);
+  const [selectedSubTab, setSelectedSubTab] = useState<SubTabEnum | string>(null);
 
   const [highlightedColumnsMapping, setHighlightedColumnsMapping] =
     useState<ColumnsMappingType>({});
@@ -417,11 +414,23 @@ function DataIntegrationModal({
 
   useEffect(() => {
     if (!selectedMainNavigationTab) {
-      setSelectedMainNavigationTab(MainNavigationTabEnum.CONFIGURATION);
+      setSelectedMainNavigationTab(
+        defaultMainNavigationTab || MainNavigationTabEnum.CONFIGURATION,
+      );
+
+      if (defaultMainNavigationTab) {
+        setSelectedSubTab(
+          defaultSubTab || getSubTabForMainNavigationTab(defaultMainNavigationTab)?.[0]?.uuid,
+        );
+      }
     }
   }, [
+    defaultMainNavigationTab,
+    defaultMainNavigationTabSub,
+    defaultSubTab,
     selectedMainNavigationTab,
     setSelectedMainNavigationTab,
+    setSelectedSubTab,
   ]);
 
   const subtabs: TabType[] =
@@ -736,24 +745,11 @@ function DataIntegrationModal({
     subtabs,
   ]);
 
-  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
-  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
-
-  const [headerOffset, setHeaderOffset] = useState<number>(null);
-  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
-  const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
-
   useEffect(() => {
     if (selectedMainNavigationTab || selectedSubTab) {
-      if (refSubheader?.current) {
-        setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
-      }
-      if (refAfterHeader?.current) {
-        setAfterInnerTopOffset(refAfterHeader?.current?.getBoundingClientRect()?.height);
-      }
-      if (refAfterFooter?.current) {
-        setAfterFooterBottomOffset(refAfterFooter?.current?.getBoundingClientRect()?.height);
-      }
+      setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
+      setAfterInnerTopOffset(refAfterHeader?.current?.getBoundingClientRect()?.height);
+      setAfterFooterBottomOffset(refAfterFooter?.current?.getBoundingClientRect()?.height);
     }
   }, [
     refAfterFooter,
@@ -762,6 +758,13 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
     selectedSubTab,
   ]);
+
+  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
+  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
+
+  const [headerOffset, setHeaderOffset] = useState<number>(null);
+  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
+  const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
 
   const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
 
