@@ -437,6 +437,8 @@
             "development/testing/unit-tests"
           ]
         },
+        "development/updating-mage",
+        "development/ai/overview",
         {
           "group": "Visualizations",
           "icon": "chart-line-up-down",
@@ -498,6 +500,7 @@
             "guides/train-model"
           ]
         },
+        "guides/dbt/developing-dbt-in-mage",
         "guides/ai/overview",
         "guides/docker/connecting-a-database",
         "guides/community-examples",
