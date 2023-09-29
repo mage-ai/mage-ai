@@ -260,8 +260,8 @@ class Trino(BaseSQL):
     def export(
         self,
         df: DataFrame,
-        schema_name: str,
-        table_name: str,
+        schema_name: str = None,
+        table_name: str = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
@@ -287,6 +287,10 @@ class Trino(BaseSQL):
                             Defaults to False.
             **kwargs: Additional query parameters.
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+        if schema_name is None:
+            schema_name = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])

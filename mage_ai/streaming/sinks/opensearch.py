@@ -51,15 +51,15 @@ class OpenSearchSink(BaseSink):
     def test_connection(self):
         return True
 
-    def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
+    def write(self, message: Dict):
+        self._print(f'Ingest data {message}, time={time.time()}')
         self.client.index(
             index=self.config.index_name,
-            body=data,
+            body=message,
             refresh=True
         )
 
-    def batch_write(self, data: List[Dict]):
-        self._print(f'Batch ingest data {data}, time={time.time()}')
-        docs = [{'_index': self.config.index_name, '_source': doc} for doc in data]
+    def batch_write(self, messages: List[Dict]):
+        self._print(f'Batch ingest data {messages}, time={time.time()}')
+        docs = [{'_index': self.config.index_name, '_source': doc} for doc in messages]
         bulk(self.client, docs)

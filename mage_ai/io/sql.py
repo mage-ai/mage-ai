@@ -52,8 +52,10 @@ class BaseSQL(BaseSQLConnection):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
-        unique_constraints: List[str] = [],
+        unique_constraints: List[str] = None,
     ) -> str:
+        if unique_constraints is None:
+            unique_constraints = []
         return gen_table_creation_query(
             dtypes,
             schema_name,
@@ -202,8 +204,8 @@ class BaseSQL(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
-        schema_name: str,
-        table_name: str,
+        schema_name: str = None,
+        table_name: str = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
@@ -232,6 +234,11 @@ class BaseSQL(BaseSQLConnection):
                             Defaults to False.
             **kwargs: Additional query parameters.
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+
+        if schema_name is None:
+            schema_name = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])

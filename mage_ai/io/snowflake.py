@@ -192,9 +192,9 @@ class Snowflake(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
-        database: str,
-        schema: str,
+        table_name: str = None,
+        database: str = None,
+        schema: str = None,
         if_exists: str = 'append',
         query_string: Union[str, None] = None,
         verbose: bool = True,
@@ -216,6 +216,12 @@ class Snowflake(BaseSQLConnection):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+        if database is None:
+            database = self.default_database()
+        if schema is None:
+            schema = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])

@@ -7,8 +7,11 @@ export enum DataSourceTypeEnum {
   AZURE_DATA_LAKE = 'azure_data_lake',
   AZURE_EVENT_HUB = 'azure_event_hub',
   BIGQUERY = 'bigquery',
+  CLICKHOUSE = 'clickhouse',
   DRUID = 'druid',
+  DUCKDB = 'duckdb',
   DUMMY = 'dummy',
+  ELASTICSEARCH = 'elasticsearch',
   FILE = 'file',
   GENERIC = 'generic',
   GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub',
@@ -17,6 +20,7 @@ export enum DataSourceTypeEnum {
   KAFKA = 'kafka',
   KINESIS = 'kinesis',
   MONGODB = 'mongodb',
+  MSSQL = 'mssql',
   MYSQL = 'mysql',
   OPENSEARCH = 'opensearch',
   ORACLEDB = 'oracledb',
@@ -25,7 +29,7 @@ export enum DataSourceTypeEnum {
   REDSHIFT = 'redshift',
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
-  ELASTICSEARCH = 'elasticsearch',
+  TRINO = 'trino',
 }
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
@@ -35,8 +39,11 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.AZURE_DATA_LAKE]: 'Azure Data Lake',
   [DataSourceTypeEnum.AZURE_EVENT_HUB]: 'Azure Event Hub',
   [DataSourceTypeEnum.BIGQUERY]: 'Google BigQuery',
+  [DataSourceTypeEnum.CLICKHOUSE]: 'ClickHouse',
   [DataSourceTypeEnum.DRUID]: 'Druid',
+  [DataSourceTypeEnum.DUCKDB]: 'DuckDB',
   [DataSourceTypeEnum.DUMMY]: 'Dummy',
+  [DataSourceTypeEnum.ELASTICSEARCH]: 'ElasticSearch',
   [DataSourceTypeEnum.FILE]: 'Local file',
   [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
   [DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB]: 'Google Cloud PubSub',
@@ -45,6 +52,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.KAFKA]: 'Kafka',
   [DataSourceTypeEnum.KINESIS]: 'Kinesis',
   [DataSourceTypeEnum.MONGODB]: 'MongoDB',
+  [DataSourceTypeEnum.MSSQL]: 'Microsoft SQL Server',
   [DataSourceTypeEnum.MYSQL]: 'MySQL',
   [DataSourceTypeEnum.OPENSEARCH]: 'OpenSearch',
   [DataSourceTypeEnum.ORACLEDB]: 'OracleDB',
@@ -53,7 +61,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.REDSHIFT]: 'Amazon Redshift',
   [DataSourceTypeEnum.S3]: 'Amazon S3',
   [DataSourceTypeEnum.SNOWFLAKE]: 'Snowflake',
-  [DataSourceTypeEnum.ELASTICSEARCH]: 'ElasticSearch',
+  [DataSourceTypeEnum.TRINO]: 'Trino',
 };
 
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {

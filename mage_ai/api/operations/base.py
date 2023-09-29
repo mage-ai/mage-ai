@@ -26,10 +26,7 @@ from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import ignore_keys, merge_dict
-
-
-def classify(name):
-    return ''.join([n.capitalize() for n in name.split('_')])
+from mage_ai.shared.strings import classify
 
 
 def singularize(name):

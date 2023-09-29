@@ -1,13 +1,15 @@
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
+from typing import Dict, List, Union
+
+import clickhouse_connect
+from pandas import DataFrame, Series
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_clickhouse_type,
 )
-from pandas import DataFrame, Series
-from typing import Dict, List, Union
-import clickhouse_connect
 
 
 class ClickHouse(BaseSQLDatabase):
@@ -179,8 +181,8 @@ class ClickHouse(BaseSQLDatabase):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
-        database: str,
+        table_name: str = None,
+        database: str = None,
         if_exists: str = 'append',
         index: bool = False,
         query_string: Union[str, None] = None,
@@ -206,6 +208,10 @@ class ClickHouse(BaseSQLDatabase):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+        if database is None:
+            database = self.default_database()
 
         if type(df) is dict:
             df = DataFrame([df])

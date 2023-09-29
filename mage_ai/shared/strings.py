@@ -8,6 +8,10 @@ def camel_to_snake_case(name):
     return name.lower()
 
 
+def classify(name):
+    return ''.join([n.capitalize() for n in name.split('_')])
+
+
 def format_enum(v):
     return v.value if type(v) is not str else v
 

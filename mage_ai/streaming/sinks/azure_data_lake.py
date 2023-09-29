@@ -23,17 +23,20 @@ class AzureDataLakeConfig(BaseConfig):
 class AzureDataLakeSink(BaseSink):
     config_class = AzureDataLakeConfig
 
-    def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
-        self.write_buffer(data)
+    def init_client(self):
+        pass
 
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def write(self, message: Dict):
+        self._print(f'Ingest data {message}, time={time.time()}')
+        self.write_buffer(message)
+
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             self._print('No data')
             return
-        self._print(f'Batch ingest {len(data)} records, time={time.time()}. \
-                      Sample: {data[0]}')
-        self.write_buffer(data)
+        self._print(f'Batch ingest {len(messages)} records, time={time.time()}. \
+                      Sample: {messages[0]}')
+        self.write_buffer(messages)
 
         self.upload_data_to_adls()
 

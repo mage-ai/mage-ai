@@ -1,6 +1,6 @@
 from typing import Dict
 
-from mage_ai.streaming.constants import SinkType
+from mage_ai.streaming.constants import GENERIC_IO_SINK_TYPES, SinkType
 
 
 class SinkFactory:
@@ -11,10 +11,18 @@ class SinkFactory:
             from mage_ai.streaming.sinks.amazon_s3 import AmazonS3Sink
 
             return AmazonS3Sink(config, **kwargs)
+        elif connector_type == SinkType.AZURE_DATA_LAKE:
+            from mage_ai.streaming.sinks.azure_data_lake import AzureDataLakeSink
+
+            return AzureDataLakeSink(config, **kwargs)
         elif connector_type == SinkType.DUMMY:
             from mage_ai.streaming.sinks.dummy import DummySink
 
             return DummySink(config, **kwargs)
+        elif connector_type == SinkType.ELASTICSEARCH:
+            from mage_ai.streaming.sinks.elasticsearch import ElasticSearchSink
+
+            return ElasticSearchSink(config, **kwargs)
         elif connector_type == SinkType.INFLUXDB:
             from mage_ai.streaming.sinks.influxdb import InfluxDbSink
 
@@ -39,14 +47,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.postgres import PostgresSink
 
             return PostgresSink(config, **kwargs)
-        elif connector_type == SinkType.AZURE_DATA_LAKE:
-            from mage_ai.streaming.sinks.azure_data_lake import AzureDataLakeSink
+        elif connector_type in GENERIC_IO_SINK_TYPES:
+            from mage_ai.streaming.sinks.generic_io import GenericIOSink
 
-            return AzureDataLakeSink(config, **kwargs)
-        elif connector_type == SinkType.ELASTICSEARCH:
-            from mage_ai.streaming.sinks.elasticsearch import ElasticSearchSink
-
-            return ElasticSearchSink(config, **kwargs)
+            return GenericIOSink(config, **kwargs)
         raise Exception(
             f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )

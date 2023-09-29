@@ -125,7 +125,7 @@ class Redshift(BaseSQL):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
+        table_name: str = None,
         schema: Union[str, None] = None,
         schema_name: Union[str, None] = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.APPEND,
@@ -149,6 +149,8 @@ class Redshift(BaseSQL):
         # CREATE TABLE predictions_dev.test_v01 AS
         # SELECT *
         # FROM experimentation.assignments_dev
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
 
         if type(df) is dict:
             df = DataFrame([df])

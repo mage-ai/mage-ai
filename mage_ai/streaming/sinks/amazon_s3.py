@@ -42,15 +42,16 @@ class AmazonS3Sink(BaseSink):
         except Exception:
             traceback.print_exc()
 
-    def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
-        self.write_buffer([data])
+    def write(self, message: Dict):
+        self._print(f'Ingest data {message}, time={time.time()}')
+        self.write_buffer([message])
 
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             return
-        self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
-        self.write_buffer(data)
+        self._print(
+            f'Batch ingest {len(messages)} records, time={time.time()}. Sample: {messages[0]}')
+        self.write_buffer(messages)
 
         if self.config.buffer_size_mb and \
                 sys.getsizeof(self.buffer) >= self.config.buffer_size_mb * 1_000_000:
