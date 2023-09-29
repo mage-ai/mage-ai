@@ -3,12 +3,12 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Check, Close } from '@oracle/icons';
-import { ConfigurationDataIntegrationInputsType } from '@interfaces/ChartBlockType';
+import { ConfigurationDataIntegrationInputType } from '@interfaces/ChartBlockType';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 export type InputBlockType = {
   block: BlockType;
-  input: ConfigurationDataIntegrationInputsType;
+  input: ConfigurationDataIntegrationInputType;
 };
 
 type InputsTableProps = {
