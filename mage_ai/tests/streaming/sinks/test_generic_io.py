@@ -1,3 +1,4 @@
+import os
 from unittest.mock import ANY, MagicMock, call, patch
 
 import pandas as pd
@@ -61,7 +62,7 @@ class GenericIOTests(TestCase):
             # Assertions
             if first_db:
                 mock_config_loader.assert_called_once_with(
-                    '/home/src/test/io_config.yaml', 'test_profile')
+                    os.path.join(self.repo_path, 'io_config.yaml'), 'test_profile')
                 mock_import_module.assert_called_once_with(database['module_path'])
             mock_objects['io_class'].with_config.assert_called_once_with(
                 mock_objects['config_loader_instance'])
