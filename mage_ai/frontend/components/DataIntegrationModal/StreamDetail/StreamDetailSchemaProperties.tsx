@@ -36,6 +36,7 @@ import {
   getStreamMetadataFromMetadataArray,
   hydrateProperty,
   isStreamSelected,
+  mergeSchemaProperties,
   removeTypesFromProperty,
   updateStreamInBlock,
   updateStreamMetadataForColumns,
@@ -113,7 +114,6 @@ function StreamDetailSchemaProperties({
   }, [
     handleClick,
   ]);
-
 
   const {
     bookmarkPropertiesMapping,
@@ -654,6 +654,9 @@ function StreamDetailSchemaProperties({
   ]);
 
   const updateColumnsInSelectedPropertiesToMerge = useCallback((columns, value) => {
+    const streamDiffs = diffs?.stream;
+    const schemaPropertiesDiffs = streamDiffs?.schema?.properties;
+
     setSelectedPropertiesToMerge(prev => {
       const updated = {
         ...prev,
@@ -661,7 +664,7 @@ function StreamDetailSchemaProperties({
 
       columns?.forEach((column: string) => {
         if (value) {
-          updated[column] = true;
+          updated[column] = schemaPropertiesDiffs?.[column];
         } else {
           if (column in updated) {
             delete updated?.[column];
@@ -672,8 +675,9 @@ function StreamDetailSchemaProperties({
       return updated;
     });
   }, [
+    diffs,
     setSelectedPropertiesToMerge,
-  ])
+  ]);
 
   const renderConflictRow = useCallback((opts: {
     column: string;
@@ -788,16 +792,18 @@ function StreamDetailSchemaProperties({
     } = diffs;
 
     const schemaPropertiesDiffs = streamDiffs?.schema?.properties;
-    const rowsNewColumns = newColumns?.map((column: string) => {
-      const property = schemaPropertiesDiffs?.[column];
+    const rowsNewColumns = sortByKey(
+      newColumns,
+      column => column,
+    )?.map((column: string) => ({
+      column,
+      property: schemaPropertiesDiffs?.[column],
+    }));
 
-      return {
-        column,
-        property,
-      };
-    });
-
-    const rowsNewColumnsSettings = Object.entries(newColumnSettings).map(([
+    const rowsNewColumnsSettings = sortByKey(
+      Object.entries(newColumnSettings),
+      ([column,]) => column,
+    ).map(([
       column,
       property,
     ]) => ({
@@ -808,46 +814,54 @@ function StreamDetailSchemaProperties({
 
     return (
       <>
-        <Spacing p={PADDING_UNITS}>
-          <Headline level={5} warning>
-            New properties
-          </Headline>
-        </Spacing>
+        {rowsNewColumns?.length >= 1 && (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={5} warning>
+                New properties
+              </Headline>
+            </Spacing>
 
-        <Divider light />
+            <Divider light />
 
-        {renderTableConflict(rowsNewColumns, {
-          columnFlex: [1, 1],
-          columns: [
-            {
-              uuid: 'Types (new)',
-            },
-            {
-              label: () => '',
-              uuid: 'empty',
-            },
-          ],
-        })}
+            {renderTableConflict(rowsNewColumns, {
+              columnFlex: [1, 1],
+              columns: [
+                {
+                  uuid: 'Types (new)',
+                },
+                {
+                  label: () => '',
+                  uuid: 'empty',
+                },
+              ],
+            })}
+          </>
+        )}
 
-        <Spacing p={PADDING_UNITS}>
-          <Headline level={5} warning>
-            Properties with new types
-          </Headline>
-        </Spacing>
+        {rowsNewColumnsSettings?.length >= 1 && (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={5} warning>
+                Properties with new types
+              </Headline>
+            </Spacing>
 
-        <Divider light />
+            <Divider light />
 
-        {renderTableConflict(rowsNewColumnsSettings, {
-          columnFlex: [1, 1],
-          columns: [
-            {
-              uuid: 'Types (new)',
-            },
-            {
-              uuid: 'Types (current)',
-            },
-          ],
-        })}
+            {renderTableConflict(rowsNewColumnsSettings, {
+              columnFlex: [1, 1],
+              columns: [
+                {
+                  uuid: 'Types (new)',
+                },
+                {
+                  uuid: 'Types (current)',
+                },
+              ],
+            })}
+          </>
+        )}
       </>
     );
   }, [
@@ -923,7 +937,21 @@ function StreamDetailSchemaProperties({
               <Button
                 beforeIcon={<BranchAlt />}
                 onClick={() => {
-
+                  setBlockAttributes(prev => updateStreamInBlock(
+                    {
+                      ...stream,
+                      schema: {
+                        ...stream?.schema,
+                        properties: {
+                          ...stream?.schema?.properties,
+                          ...selectedPropertiesToMerge,
+                        },
+                      },
+                    },
+                    prev,
+                  ));
+                  setStreamsMappingConflicts({});
+                  setSelectedSubTab(SubTabEnum.SETTINGS);
                 }}
                 primary
               >
