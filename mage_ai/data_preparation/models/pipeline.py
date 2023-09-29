@@ -1472,6 +1472,11 @@ class Pipeline:
         is_conditional = BlockType.CONDITIONAL == block.type
         is_extension = BlockType.EXTENSION == block.type
 
+        catalog_file_path = None
+        is_data_integration = block.is_data_integration()
+        if is_data_integration:
+            catalog_file_path = block.get_catalog_file_path()
+
         mapping = {}
         if widget:
             mapping = self.widgets_by_uuid
@@ -1531,6 +1536,11 @@ class Pipeline:
 
         if commit:
             self.save()
+
+        if is_data_integration and catalog_file_path:
+            dir_name = os.path.dirname(catalog_file_path)
+            if os.path.exists(dir_name):
+                shutil.rmtree(dir_name)
 
         return block
 

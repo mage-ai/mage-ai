@@ -22,3 +22,9 @@ export const StreamSectionStyle = styled.div`
     background-color: ${(props.theme.background || dark.background).content};
   `}
 `;
+
+export const EmptyCodeSpace = styled.div`
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+`;

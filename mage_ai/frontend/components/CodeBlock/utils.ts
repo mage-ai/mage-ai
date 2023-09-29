@@ -14,10 +14,10 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
 import { getColorsForBlockType } from './index.style';
 import { goToWithQuery } from '@utils/routing';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 
 export const getUpstreamBlockUuids = (
   currentBlock: BlockType,

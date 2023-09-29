@@ -72,10 +72,14 @@ function SampleData({
     stream,
   ]);
 
-  const propertiesSelectedFromStream =
-    useMemo(() => getSelectedPropertiesByPropertyUUID(stream || {}) || {}, [
-      stream,
-    ]);
+  const isEmpty = useMemo(() => isEmptyObject(
+    getSelectedPropertiesByPropertyUUID(stream || {}) || {},
+    {
+      idIsInObject: true,
+    },
+  ), [
+    stream,
+  ]);
 
   const { data: dataOutput } = api.outputs.pipelines.detail(
     !outputState && pipelineUUID,
@@ -190,7 +194,7 @@ function SampleData({
   return (
     <>
       <Spacing p={PADDING_UNITS} ref={refSubheader}>
-        {isEmptyObject(propertiesSelectedFromStream)
+        {isEmpty
           ? (
             <>
               <Text default>

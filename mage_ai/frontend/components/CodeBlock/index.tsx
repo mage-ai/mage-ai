@@ -959,8 +959,10 @@ function CodeBlock({
       return (
         <DataIntegrationBlock
           block={block}
-          codeEditor={editorEl}
+          blocksMapping={blocksMapping}
+          blockContent={content}
           callbackEl={callbackEl}
+          codeEditor={editorEl}
           onChangeBlock={(blockUpdated: BlockType) => updateBlock({
             block: blockUpdated,
           })}
@@ -982,6 +984,7 @@ function CodeBlock({
     block,
     blockLanguage,
     blockType,
+    blocksMapping,
     callbackContent,
     content,
     dbtProjectName,

@@ -947,18 +947,41 @@ function PipelineDetailPage({
   // Data integration modal
   const [showDataIntegrationModal, hideDataIntegrationModal] = useModal((
     opts: OpenDataIntegrationModalOptionsType,
-  ) => (
-    <ErrorProvider>
-      {/* @ts-ignore */}
-      <DataIntegrationModal
-        {...opts}
-        onChangeCodeBlock={onChangeCodeBlock}
-        onClose={hideDataIntegrationModal}
-        pipeline={pipeline}
-        savePipelineContent={savePipelineContent}
-      />
-    </ErrorProvider>
-  ), {}, [
+  ) => {
+    const {
+      block,
+      contentByBlockUUID,
+    } = opts || {
+      block: null,
+      contentByBlockUUID: null,
+    };
+    const {
+      type: blockType,
+      uuid: blockUUID,
+    } = block || {
+      type: null,
+      uuid: null,
+    };
+    const blockWithContent = { ...block };
+
+    if (contentByBlockUUID) {
+      blockWithContent.content = contentByBlockUUID?.current?.[blockType]?.[blockUUID];
+    }
+
+    return (
+      <ErrorProvider>
+        {/* @ts-ignore */}
+        <DataIntegrationModal
+          {...opts}
+          block={blockWithContent}
+          onChangeCodeBlock={onChangeCodeBlock}
+          onClose={hideDataIntegrationModal}
+          pipeline={pipeline}
+          savePipelineContent={savePipelineContent}
+        />
+      </ErrorProvider>
+    );
+  }, {}, [
     onChangeCodeBlock,
     pipeline,
     savePipelineContent,
@@ -2167,6 +2190,7 @@ function PipelineDetailPage({
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
       checkIfPipelineRunning={checkIfPipelineRunning}
+      contentByBlockUUID={contentByBlockUUID}
       deleteBlock={deleteBlock}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
@@ -2238,6 +2262,7 @@ function PipelineDetailPage({
     blocksInNotebook,
     cancelPipeline,
     checkIfPipelineRunning,
+    contentByBlockUUID,
     deleteBlock,
     deleteWidget,
     editingBlock,

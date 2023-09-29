@@ -5,11 +5,13 @@ from inspect import Parameter, signature
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
+import pandas as pd
 import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     BLOCK_CATALOG_FILENAME,
+    KEY_METADATA,
 )
 from mage_ai.data_preparation.models.block.data_integration.schema import build_schema
 from mage_ai.data_preparation.models.block.data_integration.utils import (
@@ -31,6 +33,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.shared.array import find
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 
@@ -172,6 +175,7 @@ class DataIntegrationMixin:
 
     def get_data_integration_settings(
         self,
+        data_integration_uuid_only: bool = False,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         from_notebook: bool = False,
@@ -192,6 +196,8 @@ class DataIntegrationMixin:
 
         key = 'source' if self.is_source() else 'destination'
         data_integration_uuid = None
+
+        catalog_from_file = self.get_catalog_from_file()
 
         if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
                 BlockLanguage.YAML == self.language and \
@@ -260,11 +266,13 @@ class DataIntegrationMixin:
 
             settings = yaml.safe_load(text)
 
-            catalog = self.get_catalog_from_file()
+            catalog = catalog_from_file
             config = settings.get('config')
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(
+                catalog_from_file=catalog_from_file,
+                data_integration_uuid_only=data_integration_uuid_only,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 from_notebook=from_notebook,
@@ -274,10 +282,29 @@ class DataIntegrationMixin:
                 **kwargs,
             )
 
-            catalog = results_from_block_code.get('catalog')
             config = results_from_block_code.get('config')
-            selected_streams = results_from_block_code.get('selected_streams')
             data_integration_uuid = results_from_block_code.get(key)
+
+            catalog = results_from_block_code.get('catalog')
+            selected_streams = results_from_block_code.get('selected_streams')
+
+            if not selected_streams and catalog and catalog.get('streams'):
+                selected_streams = []
+                for stream_dict in (catalog.get('streams') or []):
+                    metadata1 = stream_dict.get(KEY_METADATA) or []
+                    if metadata1:
+                        metadata_for_stream = find(
+                            lambda x: not x.get('breadcrumb'),
+                            metadata1,
+                        )
+
+                        if not metadata_for_stream or \
+                                not metadata_for_stream.get('metadata') or \
+                                (metadata_for_stream.get('metadata') or {}).get('selected'):
+
+                            selected_streams.append(
+                                stream_dict.get('stream') or stream_dict.get('tap_stream_id'),
+                            )
 
         if data_integration_uuid:
             self._data_integration = {
@@ -327,9 +354,10 @@ class DataIntegrationMixin:
 
                 catalog = di_settings.get('catalog') or {}
 
-                streams = settings.get('streams')
-                if streams and not all_streams:
-                    catalog['streams'] = get_streams_from_catalog(catalog, streams)
+                if BlockLanguage.YAML == upstream_block.language:
+                    streams = settings.get('streams')
+                    if streams and not all_streams:
+                        catalog['streams'] = get_streams_from_catalog(catalog, streams)
 
                 catalog_by_upstream_block_uuid[up_uuid] = catalog
                 data_integration_settings_mapping[up_uuid] = di_settings
@@ -414,7 +442,10 @@ class DataIntegrationMixin:
                         if kwargs_vars_inner and not kwargs_var_to_add:
                             kwargs_var_to_add = kwargs_vars_inner[0]
 
-                    if not catalog and input_data is not None:
+                    if not catalog and \
+                            input_data is not None and \
+                            isinstance(input_data, pd.DataFrame):
+
                         catalog = dict(streams=[build_schema(input_data, up_uuid)])
 
                     input_var_to_add.append(catalog)
@@ -431,6 +462,8 @@ class DataIntegrationMixin:
 
     def __execute_data_integration_block_code(
         self,
+        catalog_from_file: Dict = None,
+        data_integration_uuid_only: bool = False,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         from_notebook: bool = False,
@@ -512,6 +545,15 @@ class DataIntegrationMixin:
                 initialize_decorator_modules=False,
             )
 
+        def _print_time(block=self, now=now):
+            if is_debug():
+                seconds = round((datetime.utcnow().timestamp() - now) * 10000) / 10000
+                print(f'[Block.__execute_data_integration_block_code]: {seconds} | {block.uuid}')
+
+        if data_integration_uuid_only:
+            _print_time()
+            return self._data_integration
+
         if decorated_functions_config:
             self._data_integration['config'] = self.execute_block_function(
                 decorated_functions_config[0],
@@ -555,15 +597,19 @@ class DataIntegrationMixin:
                 )
             elif is_source:
                 selected_streams = self._data_integration.get('selected_streams')
-                catalog = discover_func(data_integration_uuid, config, selected_streams)
-                self._data_integration['catalog'] = select_streams_in_catalog(
-                    catalog,
-                    selected_streams,
-                )
 
-        seconds = round((datetime.utcnow().timestamp() - now) * 10000) / 10000
-        if is_debug():
-            print(f'[Block.__execute_data_integration_block_code]: {seconds} | {self.uuid}')
+                if catalog_from_file:
+                    self._data_integration['catalog'] = catalog_from_file
+                else:
+                    catalog = discover_func(data_integration_uuid, config, selected_streams)
+                    self._data_integration['catalog'] = select_streams_in_catalog(
+                        catalog,
+                        selected_streams,
+                    )
+            elif catalog_from_file:
+                self._data_integration['catalog'] = catalog_from_file
+
+        _print_time()
 
         return self._data_integration
 

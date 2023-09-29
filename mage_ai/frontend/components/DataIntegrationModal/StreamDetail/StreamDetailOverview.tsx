@@ -524,7 +524,7 @@ function StreamDetailOverview({
                       const updated = {
                         ...prev,
                         catalog: {
-                          ...prev,
+                          ...prev?.catalog,
                           streams: remove(
                             prev?.catalog?.streams,
                             (s: StreamType) => getStreamIDWithParentStream(s) === streamUUID,

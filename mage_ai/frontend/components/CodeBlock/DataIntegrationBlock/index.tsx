@@ -6,18 +6,22 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import InputsTable, {
+  InputBlockType,
+} from '@components/DataIntegrationModal/Credentials/InputsTable';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Check, Settings } from '@oracle/icons';
-import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import { EmptyCodeSpace, HeaderSectionStyle, StreamSectionStyle } from './index.style';
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
-import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
+import { OpenDataIntegrationModalType, SubTabEnum } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { buildInputsFromUpstreamBlocks } from '@utils/models/block'
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import {
   getParentStreamID,
@@ -29,6 +33,10 @@ import { pushAtIndex } from '@utils/array';
 
 type DataIntegrationBlockProps = {
   block: BlockType,
+  blockContent?: string;
+  blocksMapping?: {
+    [blockUUID: string]: BlockType;
+  };
   codeEditor?: any;
   callbackEl?: any;
   onChangeBlock?: (block: BlockType) => void;
@@ -43,6 +51,8 @@ type DataIntegrationBlockProps = {
 
 function DataIntegrationBlock({
   block,
+  blockContent,
+  blocksMapping,
   codeEditor,
   callbackEl,
   onChangeBlock,
@@ -131,23 +141,27 @@ function DataIntegrationBlock({
             }
           });
 
+          const danger = BlockLanguageEnum.YAML === language && !columnsCountSelected;
 
           let columnsCountEl;
           let streamNameEl = (
             <Link
-              danger={!columnsCountSelected}
+              danger={danger}
               key="stream"
               monospace
               onClick={() => showDataIntegrationModal({
-                block,
+                block: {
+                  ...block,
+                  content: blockContent,
+                },
                 defaultMainNavigationTab: streamName,
                 defaultMainNavigationTabSub: parentStream,
                 onChangeBlock,
               })}
               preventDefault
-              sameColorAsText={columnsCountSelected >= 1}
+              sameColorAsText={!danger}
             >
-              {streamName} {!columnsCountSelected && (
+              {streamName} {danger && (
                 <Text inline default monospace>
                   will fail unless a column is selcted
                 </Text>
@@ -155,7 +169,7 @@ function DataIntegrationBlock({
             </Link>
           );
 
-          if (columnsCountSelected >= 1) {
+          if (columnsCountSelected >= 1 || BlockLanguageEnum.PYTHON === language) {
             columnsCountEl = (
               <Text center default monospace key="columns">
                 {columnsCountSelected} <Text
@@ -203,9 +217,18 @@ function DataIntegrationBlock({
     );
   }, [
     block,
+    language,
     isSource,
     showDataIntegrationModal,
     streams,
+  ]);
+
+  const inputsBlocks: InputBlockType[] = useMemo(() => buildInputsFromUpstreamBlocks(
+    block?.upstream_blocks?.map(uuid => blocksMapping?.[uuid]),
+    block?.configuration?.data_integration,
+  ), [
+    block,
+    blocksMapping,
   ]);
 
   return (
@@ -215,7 +238,7 @@ function DataIntegrationBlock({
           <Divider light />
 
           <Spacing p={PADDING_UNITS}>
-            <FlexContainer alignItems="center" justifyContent="space-between">
+            <FlexContainer alignItems="flex-start" justifyContent="space-between">
               <Flex flex={1} flexDirection="column">
                 <Text bold monospace muted small uppercase>
                   {displayTypeText}
@@ -229,7 +252,10 @@ function DataIntegrationBlock({
               <Button
                 compact
                 onClick={() => showDataIntegrationModal({
-                  block,
+                  block: {
+                    ...block,
+                    content: blockContent,
+                  },
                   defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                   onChangeBlock,
                 })}
@@ -245,10 +271,96 @@ function DataIntegrationBlock({
       )}
 
       {BlockLanguageEnum.PYTHON === language && (
-        <>
-          {codeEditor}
-          {callbackEl}
-        </>
+        <HeaderSectionStyle>
+          <Divider light />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="flex-start" justifyContent="space-between">
+              <Flex flex={1} flexDirection="column">
+                <Text bold monospace muted small uppercase>
+                  {displayTypeText}
+                </Text>
+
+                <Headline default>
+                  {dataIntegrationName}
+                </Headline>
+              </Flex>
+
+              <Button
+                compact
+                onClick={() => showDataIntegrationModal({
+                  block: {
+                    ...block,
+                    content: blockContent,
+                  },
+                  defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
+                  onChangeBlock,
+                })}
+                secondary
+              >
+                Configure {displayTypeText} documentation
+              </Button>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider light />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer
+              alignItems="flex-start"
+              justifyContent="space-between"
+            >
+              <Flex flex={4} flexDirection="column">
+                <Text bold monospace muted small uppercase>
+                  Inputs
+                </Text>
+
+                <Spacing mt={1}>
+                  {inputsBlocks?.length >= 1 && (
+                    <Text default>
+                      The output of these upstream blocks are used as positional arguments
+                      for decorated functions.
+                    </Text>
+                  )}
+                  {!inputsBlocks?.length && (
+                    <Text default>
+                      There are currently no positional arguments for decorated functions.
+                      <br />
+                      To use the output of 1 or more upstream blocks as positional arguments
+                      for decorated functions, add and configure 1 or more inputs.
+                    </Text>
+                  )}
+                </Spacing>
+              </Flex>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex flex={1} justifyContent="flex-end">
+                <Button
+                  compact
+                  onClick={() => showDataIntegrationModal({
+                    block: {
+                      ...block,
+                      content: blockContent,
+                    },
+                    defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
+                    defaultSubTab: SubTabEnum.UPSTREAM_BLOCK_SETTINGS,
+                    onChangeBlock,
+                  })}
+                  secondary
+                >
+                  {inputsBlocks?.length >= 1 ? 'Configure inputs' : 'Add inputs'}
+                </Button>
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+
+          {inputsBlocks?.length >= 1 && (
+            <InputsTable
+              inputsBlocks={inputsBlocks}
+            />
+          )}
+        </HeaderSectionStyle>
       )}
 
       <StreamSectionStyle>
@@ -282,7 +394,10 @@ function DataIntegrationBlock({
               beforeIcon={!streamsCount && <Settings size={2 * UNIT} />}
               compact={streamsCount >= 1}
               onClick={() => showDataIntegrationModal({
-                block,
+                block: {
+                  ...block,
+                  content: blockContent,
+                },
                 defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
                 onChangeBlock,
               })}
@@ -299,6 +414,17 @@ function DataIntegrationBlock({
 
         {streamsCount >= 1 && <Spacing mb={PADDING_UNITS} />}
       </StreamSectionStyle>
+
+      {BlockLanguageEnum.PYTHON === language && (
+        <>
+          <EmptyCodeSpace>
+            <Spacing pb={PADDING_UNITS} />
+          </EmptyCodeSpace>
+
+          {codeEditor}
+          {callbackEl}
+        </>
+      )}
     </>
   );
 }

@@ -31,8 +31,10 @@ export enum MainNavigationTabEnum {
 
 export type OpenDataIntegrationModalOptionsType = {
   block: BlockType,
+  contentByBlockUUID?: any;
   defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
+  defaultSubTab?: string;
   onChangeBlock?: (block: BlockType) => void;
   savePipelineContent?: (payload?: {
     block?: BlockType;

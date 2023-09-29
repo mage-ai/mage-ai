@@ -9,23 +9,19 @@ import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import InputsTable, { InputBlockType } from './InputsTable';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { Check, Close } from '@oracle/icons';
 import { CodeEditorStyle} from '@components/IntegrationPipeline/index.style';
-import {
-  ConfigurationDataIntegrationInputsType,
-  ConfigurationDataIntegrationType,
-} from '@interfaces/ChartBlockType';
+import { ConfigurationDataIntegrationType } from '@interfaces/ChartBlockType';
 import { ErrorRunTimeProps } from '@context/Error/ErrorContext';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PlugAPI } from '@oracle/icons';
-import { SubTabEnum } from './constants';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { SubTabEnum } from '../constants';
+import { buildInputsFromUpstreamBlocks } from '@utils/models/block'
 import { onSuccess } from '@api/utils/response';
 
 export type CredentialsProps = {
@@ -34,6 +30,7 @@ export type CredentialsProps = {
 
 type CredentialsInternalProps = {
   block: BlockType;
+  blockContent?: string;
   blockUpstreamBlocks: BlockType[];
   dataIntegrationConfiguration: ConfigurationDataIntegrationType;
   pipeline: PipelineType;
@@ -41,22 +38,24 @@ type CredentialsInternalProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setBlockContent?: (blockContent: string) => void;
   setSelectedSubTab: (subTab: SubTabEnum) => void;
   showError: (opts: ErrorRunTimeProps) => void;
 } & CredentialsProps;
 
 function Credentials({
   block,
+  blockContent,
   blockUpstreamBlocks,
   dataIntegrationConfiguration,
   onChangeCodeBlock,
   pipeline,
   savePipelineContent,
+  setBlockContent,
   setSelectedSubTab,
   showError,
 }: CredentialsInternalProps) {
   const {
-    content: blockContent,
     language: blockLanguage,
     type: blockType,
     uuid: blockUUID,
@@ -167,20 +166,22 @@ function Credentials({
         </CodeEditorStyle>
       );
     } else if (BlockLanguageEnum.PYTHON === blockLanguage) {
-      return (
-        <CodeEditorStyle>
-          <CodeEditor
-            autoHeight
-            language={blockLanguage}
-            onChange={(val: string) => {
-              onChangeCodeBlock?.(blockType, blockUUID, val);
-            }}
-            tabSize={4}
-            value={blockContent}
-            width="100%"
-          />
-        </CodeEditorStyle>
-      );
+      // return (
+      //   <CodeEditorStyle>
+      //     <CodeEditor
+      //       autoHeight
+      //       language={blockLanguage}
+      //       onChange={(val: string) => {
+      //         setBlockContent?.(val);
+      //         onChangeCodeBlock?.(blockType, blockUUID, val);
+      //       }}
+      //       readOnly
+      //       tabSize={4}
+      //       value={blockContent}
+      //       width="100%"
+      //     />
+      //   </CodeEditorStyle>
+      // );
     }
   }, [
     blockConfigString,
@@ -189,26 +190,13 @@ function Credentials({
     blockLanguage,
     blockType,
     blockUUID,
+    setBlockContent,
   ]);
 
-  const inputsBlocks = useMemo(() => {
-    const inputs = dataIntegrationConfiguration?.inputs || {};
-
-    return blockUpstreamBlocks?.reduce((acc, b) => {
-      const {
-        uuid,
-      } = b;
-      const input = inputs?.[uuid];
-      if (!input) {
-        return acc;
-      }
-
-      return acc.concat({
-        block: b,
-        input,
-      })
-    }, []);
-  }, [
+  const inputsBlocks: InputBlockType[] = useMemo(() => buildInputsFromUpstreamBlocks(
+    blockUpstreamBlocks,
+    dataIntegrationConfiguration,
+  ), [
     blockUpstreamBlocks,
     dataIntegrationConfiguration,
   ]);
@@ -275,78 +263,8 @@ function Credentials({
       </Spacing>
 
       {inputsBlocks?.length >= 1 && (
-        <Table
-          columnFlex={[1, null, 1, null, null]}
-          columns={[
-            {
-              uuid: 'Block',
-            },
-            {
-              center: true,
-              uuid: 'Catalog',
-            },
-            {
-              center: true,
-              uuid: 'Streams',
-            },
-            {
-              center: true,
-              uuid: 'Argument shape',
-            },
-            {
-              center: true,
-              uuid: 'Order',
-            },
-          ]}
-          rows={inputsBlocks?.map(({
-            block: {
-              color,
-              type: bType,
-              uuid,
-            },
-            input: {
-              catalog,
-              streams,
-            },
-          }, idx: number) => {
-            const hasStreams = streams?.length >= 1;
-            const {
-              accent,
-            } = getColorsForBlockType(bType, {
-              blockColor: color,
-            });
-
-            return [
-              <Text color={accent} key={`block-${uuid}`} monospace>
-                {uuid}
-              </Text>,
-              <FlexContainer justifyContent="center" key={`catalog-${uuid}`}>
-                {catalog
-                  ? <Check success />
-                  : <Close muted />
-                }
-              </FlexContainer>,
-              <FlexContainer justifyContent="center" key={`selected-streams-${uuid}`}>
-                {!hasStreams && <Close key={`catalog-${uuid}`} muted />}
-                {hasStreams && streams?.includes(uuid)
-                  ? <Check success />
-                  : (
-                    <Text center default monospace small>
-                      {streams?.join(', ')}
-                    </Text>
-                  )
-                }
-              </FlexContainer>,
-              <Text center default key={`shape-${uuid}`} monospace>
-                {catalog && !hasStreams && 'Dict'}
-                {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
-                {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}
-              </Text>,
-              <Text center default key={`position-${uuid}`} monospace>
-                {idx}
-              </Text>,
-            ];
-          })}
+        <InputsTable
+          inputsBlocks={inputsBlocks}
         />
       )}
 
@@ -367,6 +285,7 @@ function Credentials({
           </Spacing>
         </>
       )}
+
       {codeEl}
     </>
   );

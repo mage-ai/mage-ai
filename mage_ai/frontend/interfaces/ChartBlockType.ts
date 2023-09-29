@@ -98,12 +98,14 @@ export enum SortOrderEnum {
   DESCENDING = 'descending',
 }
 
+export interface ConfigurationDataIntegrationInputType {
+  catalog?: boolean;
+  input_only?: boolean;
+  streams?: string[];
+}
+
 export interface ConfigurationDataIntegrationInputsType {
-  [block_uuid: string]: {
-    catalog?: boolean;
-    input_only?: boolean;
-    streams?: string[];
-  };
+  [block_uuid: string]: ConfigurationDataIntegrationInputType;
 }
 
 export interface ConfigurationDataIntegrationType {

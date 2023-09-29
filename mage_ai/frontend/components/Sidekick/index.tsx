@@ -77,6 +77,7 @@ export type SidekickProps = {
   blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
   checkIfPipelineRunning: () => void;
+  contentByBlockUUID?: any;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -133,6 +134,7 @@ function Sidekick({
   cancelPipeline,
   chartRefs,
   checkIfPipelineRunning,
+  contentByBlockUUID,
   deleteBlock,
   deleteWidget,
   editingBlock,
@@ -453,6 +455,7 @@ function Sidekick({
   const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
       block={selectedBlock}
+      contentByBlockUUID={contentByBlockUUID}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       globalDataProducts={globalDataProducts}
@@ -462,6 +465,7 @@ function Sidekick({
       showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
+    contentByBlockUUID,
     fetchFileTree,
     fetchPipeline,
     globalDataProducts,
