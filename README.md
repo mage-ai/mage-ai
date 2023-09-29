@@ -255,7 +255,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 - [Train model on Titanic dataset](https://docs.mage.ai/guides/train-model)
 - [Set up dbt models and orchestrate dbt runs](https://docs.mage.ai/integrations/dbt-models)
 
-<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
+<img alt="Fire mage" height="160" src="https://github.com/mage-ai/assets/blob/main/mage-fire-charging-up.svg?raw=True" />
 
 <br />
 
@@ -294,7 +294,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 <img
   alt="data pipeline overview"
-  src="media/data-pipeline-overview.png"
+  src="https://github.com/mage-ai/assets/blob/main/data-pipeline-overview.png?raw=True"
 />
 
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
@@ -377,6 +377,6 @@ Check out our [FAQ page](https://docs.mage.ai/about/frequently-asked-questions) 
 # 🪪 License
 See the [LICENSE](LICENSE) file for licensing information.
 
-[<img alt="Water mage casting spell" height="300" src="media/mage-water-charging-up.svg" />](https://www.mage.ai/)
+[<img alt="Water mage casting spell" height="300" src="https://github.com/mage-ai/assets/blob/main/mage-water-charging-up.svg?raw=True" />](https://www.mage.ai/)
 
 <br />
