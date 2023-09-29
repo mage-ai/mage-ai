@@ -26,6 +26,7 @@ import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getParentStreamID,
+  getSelectedColumnsAndAllColumn,
   getSelectedStreams,
   getStreamID,
   isStreamSelected,
@@ -120,7 +121,6 @@ function DataIntegrationBlock({
         rows={streams?.map((stream: StreamType) => {
           const {
             destination_table: tableName,
-            metadata: metadataArray,
             replication_method: replicationMethod,
             run_in_parallel: runInParallel,
             tap_stream_id: tapStreamID,
@@ -128,22 +128,15 @@ function DataIntegrationBlock({
 
           const streamName = getStreamID(stream);
           const parentStream = getParentStreamID(stream);
-          let columnsCount = 0;
-          let columnsCountSelected = 0;
-
-          metadataArray?.forEach(({
-            breadcrumb,
-            metadata,
-          }) => {
-            if (breadcrumb?.length >= 1) {
-              columnsCount += 1;
-              if (metadata?.selected) {
-                columnsCountSelected += 1;
-              }
-            }
-          });
 
           const danger = BlockLanguageEnum.YAML === language && !columnsCountSelected;
+
+          const {
+            allColumns,
+            selectedColumns,
+          } = getSelectedColumnsAndAllColumn(stream);
+          const columnsCount = Object.keys(allColumns || [])?.length || 0;
+          const columnsCountSelected = Object.keys(selectedColumns || [])?.length || 0;
 
           let columnsCountEl;
           let streamNameEl = (

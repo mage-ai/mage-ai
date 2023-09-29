@@ -64,9 +64,10 @@ export enum SubTabEnum {
   BOOKMARKS = 'bookmarks',
   CREDENTIALS = 'credentials',
   OVERVIEW = 'overview',
-  UPSTREAM_BLOCK_SETTINGS = 'upstream_block_settings',
-  SETTINGS = 'settings',
   SAMPLE_DATA = 'sample_data',
+  SETTINGS = 'settings',
+  STREAM_CONFLICTS = 'stream_conflicts',
+  UPSTREAM_BLOCK_SETTINGS = 'upstream_block_settings',
 }
 
 export const SUB_TABS_BY_MAIN_NAVIGATION_TAB: {
@@ -92,17 +93,33 @@ export const SUB_TABS_BY_MAIN_NAVIGATION_TAB: {
   [MainNavigationTabEnum.OVERVIEW]: [],
 };
 
-export const SUB_TABS_FOR_STREAM_DETAIL = [
-  {
-    label: () => 'Overview',
-    uuid: SubTabEnum.OVERVIEW,
-  },
-  {
-    label: () => 'Schema properties',
-    uuid: SubTabEnum.SETTINGS,
-  },
-  {
+export const SUB_TABS_FOR_STREAM_DETAIL_STREAM_CONFLICTS = {
+  label: () => 'Schema property conflicts',
+  uuid: SubTabEnum.STREAM_CONFLICTS,
+};
+
+export function SUB_TABS_FOR_STREAM_DETAIL(opts?: {
+  addStreamConflicts?: boolean;
+}): TabType[] {
+  const arr = [
+    {
+      label: () => 'Overview',
+      uuid: SubTabEnum.OVERVIEW,
+    },
+    {
+      label: () => 'Schema properties',
+      uuid: SubTabEnum.SETTINGS,
+    },
+  ];
+
+  if (opts?.addStreamConflicts) {
+    arr.push(SUB_TABS_FOR_STREAM_DETAIL_STREAM_CONFLICTS);
+  }
+
+  arr.push({
     label: () => 'Sample data',
     uuid: SubTabEnum.SAMPLE_DATA,
-  },
-];
+  });
+
+  return arr;
+}

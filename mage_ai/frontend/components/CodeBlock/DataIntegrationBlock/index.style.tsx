@@ -34,6 +34,7 @@ export const CalloutStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
 
   ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
     border: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 `;
