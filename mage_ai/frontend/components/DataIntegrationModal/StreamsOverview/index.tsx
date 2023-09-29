@@ -268,8 +268,7 @@ function StreamsOverview({
             compact
             key={`${uuid}-destinationTable`}
             monospace
-            noBackground
-            noBorder
+            noBackground={!!destinationTable}
             onChange={(e) => {
               const val = e?.target?.value;
 
@@ -287,7 +286,6 @@ function StreamsOverview({
               ]), 300);
             }}
             onClick={pauseEvent}
-            paddingHorizontal={0}
             placeholder={streamID}
             value={destinationTable || ''}
           />,

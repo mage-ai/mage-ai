@@ -150,6 +150,7 @@ function DataIntegrationModal({
   } = pipeline || {};
 
   const {
+    content: blockContentFromBlockProp,
     language: blockLanguage,
     type: blockType,
     uuid: blockUUID,
@@ -166,7 +167,7 @@ function DataIntegrationModal({
 
   const {
     configuration,
-    content: blockContent,
+    content: blockContentFromBlockAttributes,
     metadata,
   } = blockAttributes || {};
 
@@ -298,15 +299,14 @@ function DataIntegrationModal({
       setBlockAttributes,
     ]);
 
+  const blockFromServer = useMemo(() => dataBlock?.block, [dataBlock]);
   useEffect(() => {
-    const block = dataBlock?.block;
-
-    if (block && (!blockAttributes || block?.uuid !== blockAttributes?.uuid)) {
-      setBlockAttributes(block)
+    if (blockFromServer && (!blockAttributes || blockFromServer?.uuid !== blockAttributes?.uuid)) {
+      setBlockAttributes(blockFromServer)
     }
   }, [
     blockAttributes,
-    dataBlock,
+    blockFromServer,
   ]);
 
   const blocksMapping = useMemo(() => indexBy(blocks || [], ({ uuid }) => uuid), [blocks]);
@@ -315,7 +315,7 @@ function DataIntegrationModal({
       blockAttributes,
       blocksMapping,
     ]);
-  const documentation = useMemo(() => blockAttributes?.documentation, [blockAttributes]);
+  const documentation = useMemo(() => blockFromServer?.documentation, [blockFromServer]);
 
   const streams = useMemo(() => getSelectedStreams(blockAttributes, { getAll: true }), [
     blockAttributes,
@@ -874,24 +874,45 @@ function DataIntegrationModal({
     updateStreamsInCatalog,
   ]);
 
+  const [blockContentState, setBlockContentState] = useState<string>(null);
+  useEffect(() => {
+    if (typeof blockContentState === 'undefined' || blockContentState === null) {
+      setBlockContentState((typeof blockContentFromBlockProp !== 'undefined'
+        && blockContentFromBlockProp !== null
+        )
+          ? blockContentFromBlockProp
+          : blockContentFromBlockAttributes
+      );
+    }
+  }, [
+    blockContentFromBlockAttributes,
+    blockContentFromBlockProp,
+    blockContentState,
+    setBlockContentState,
+  ]);
+
   const credentialsMemo = useMemo(() => (
     <Credentials
       block={blockAttributes}
+      blockContent={blockContentState}
       blockUpstreamBlocks={blockUpstreamBlocks}
       dataIntegrationConfiguration={dataIntegrationConfiguration}
       onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
+      setBlockContent={setBlockContentState}
       setSelectedSubTab={setSelectedSubTab}
       showError={showError}
     />
   ), [
     blockAttributes,
+    blockContentState,
     blockUpstreamBlocks,
     dataIntegrationConfiguration,
     onChangeCodeBlock,
-    savePipelineContent,
     pipeline,
+    savePipelineContent,
+    setBlockContentState,
     setSelectedSubTab,
     showError,
   ]);
@@ -1246,7 +1267,6 @@ function DataIntegrationModal({
     afterWidth,
     beforeWidth,
     blockAttributes,
-    blockContent,
     blockLanguage,
     blockType,
     blockUUID,

@@ -34,6 +34,7 @@ export type CredentialsProps = {
 
 type CredentialsInternalProps = {
   block: BlockType;
+  blockContent?: string;
   blockUpstreamBlocks: BlockType[];
   dataIntegrationConfiguration: ConfigurationDataIntegrationType;
   pipeline: PipelineType;
@@ -41,22 +42,24 @@ type CredentialsInternalProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setBlockContent?: (blockContent: string) => void;
   setSelectedSubTab: (subTab: SubTabEnum) => void;
   showError: (opts: ErrorRunTimeProps) => void;
 } & CredentialsProps;
 
 function Credentials({
   block,
+  blockContent,
   blockUpstreamBlocks,
   dataIntegrationConfiguration,
   onChangeCodeBlock,
   pipeline,
   savePipelineContent,
+  setBlockContent,
   setSelectedSubTab,
   showError,
 }: CredentialsInternalProps) {
   const {
-    content: blockContent,
     language: blockLanguage,
     type: blockType,
     uuid: blockUUID,
@@ -167,20 +170,22 @@ function Credentials({
         </CodeEditorStyle>
       );
     } else if (BlockLanguageEnum.PYTHON === blockLanguage) {
-      return (
-        <CodeEditorStyle>
-          <CodeEditor
-            autoHeight
-            language={blockLanguage}
-            onChange={(val: string) => {
-              onChangeCodeBlock?.(blockType, blockUUID, val);
-            }}
-            tabSize={4}
-            value={blockContent}
-            width="100%"
-          />
-        </CodeEditorStyle>
-      );
+      // return (
+      //   <CodeEditorStyle>
+      //     <CodeEditor
+      //       autoHeight
+      //       language={blockLanguage}
+      //       onChange={(val: string) => {
+      //         setBlockContent?.(val);
+      //         onChangeCodeBlock?.(blockType, blockUUID, val);
+      //       }}
+      //       readOnly
+      //       tabSize={4}
+      //       value={blockContent}
+      //       width="100%"
+      //     />
+      //   </CodeEditorStyle>
+      // );
     }
   }, [
     blockConfigString,
@@ -189,6 +194,7 @@ function Credentials({
     blockLanguage,
     blockType,
     blockUUID,
+    setBlockContent,
   ]);
 
   const inputsBlocks = useMemo(() => {
@@ -367,6 +373,7 @@ function Credentials({
           </Spacing>
         </>
       )}
+
       {codeEl}
     </>
   );

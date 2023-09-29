@@ -12,7 +12,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Check, Settings } from '@oracle/icons';
-import { HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import { EmptyCodeSpace, HeaderSectionStyle, StreamSectionStyle } from './index.style';
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -29,6 +29,7 @@ import { pushAtIndex } from '@utils/array';
 
 type DataIntegrationBlockProps = {
   block: BlockType,
+  blockContent?: string;
   codeEditor?: any;
   callbackEl?: any;
   onChangeBlock?: (block: BlockType) => void;
@@ -43,6 +44,7 @@ type DataIntegrationBlockProps = {
 
 function DataIntegrationBlock({
   block,
+  blockContent,
   codeEditor,
   callbackEl,
   onChangeBlock,
@@ -139,7 +141,10 @@ function DataIntegrationBlock({
               key="stream"
               monospace
               onClick={() => showDataIntegrationModal({
-                block,
+                block: {
+                  ...block,
+                  content: blockContent,
+                },
                 defaultMainNavigationTab: streamName,
                 defaultMainNavigationTabSub: parentStream,
                 onChangeBlock,
@@ -229,7 +234,10 @@ function DataIntegrationBlock({
               <Button
                 compact
                 onClick={() => showDataIntegrationModal({
-                  block,
+                  block: {
+                    ...block,
+                    content: blockContent,
+                  },
                   defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                   onChangeBlock,
                 })}
@@ -246,6 +254,45 @@ function DataIntegrationBlock({
 
       {BlockLanguageEnum.PYTHON === language && (
         <>
+          <HeaderSectionStyle>
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Flex flex={1} flexDirection="column">
+                  <Text bold monospace muted small uppercase>
+                    {displayTypeText}
+                  </Text>
+
+                  <Headline default>
+                    {dataIntegrationName}
+                  </Headline>
+                </Flex>
+
+                <Button
+                  compact
+                  onClick={() => showDataIntegrationModal({
+                    block: {
+                      ...block,
+                      content: blockContent,
+                    },
+                    defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
+                    onChangeBlock,
+                  })}
+                  secondary
+                >
+                  Configure {displayTypeText} documentation
+                </Button>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+          </HeaderSectionStyle>
+
+          <EmptyCodeSpace>
+            <Spacing pb={PADDING_UNITS} />
+          </EmptyCodeSpace>
+
           {codeEditor}
           {callbackEl}
         </>
@@ -282,7 +329,10 @@ function DataIntegrationBlock({
               beforeIcon={!streamsCount && <Settings size={2 * UNIT} />}
               compact={streamsCount >= 1}
               onClick={() => showDataIntegrationModal({
-                block,
+                block: {
+                  ...block,
+                  content: blockContent,
+                },
                 defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
                 onChangeBlock,
               })}

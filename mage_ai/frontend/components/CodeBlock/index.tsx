@@ -959,8 +959,9 @@ function CodeBlock({
       return (
         <DataIntegrationBlock
           block={block}
-          codeEditor={editorEl}
+          blockContent={content}
           callbackEl={callbackEl}
+          codeEditor={editorEl}
           onChangeBlock={(blockUpdated: BlockType) => updateBlock({
             block: blockUpdated,
           })}

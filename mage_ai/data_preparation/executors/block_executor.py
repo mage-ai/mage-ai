@@ -316,12 +316,64 @@ class BlockExecutor:
                         block_uuid=self.block.uuid,
                     )),
                 )
-                self.__update_block_run_status(
-                    BlockRun.BlockRunStatus.CONDITION_FAILED,
-                    block_run_id=block_run_id,
-                    callback_url=callback_url,
-                    tags=tags,
-                )
+
+                if is_data_integration:
+                    # Only the controller (main and not child) has a condition.
+                    def __update_condition_failed(
+                        block_run_id_init: int,
+                        block_run_block_uuid_init: str,
+                        block_init,
+                        block_run_dicts=block_run_dicts,
+                        tags=tags,
+                    ):
+                        self.__update_block_run_status(
+                            BlockRun.BlockRunStatus.CONDITION_FAILED,
+                            block_run_id=block_run_id_init,
+                            tags=tags,
+                        )
+
+                        downstream_block_uuids = block_init.downstream_block_uuids
+
+                        for block_run_dict in block_run_dicts:
+                            block_run_block_uuid = block_run_dict.get('block_uuid')
+                            block_run_id2 = block_run_dict.get('id')
+
+                            if block_run_block_uuid_init == block_run_block_uuid:
+                                continue
+
+                            block = self.pipeline.get_block(block_run_block_uuid)
+
+                            # Update all the downstream blocks recursively.
+                            if block.uuid in downstream_block_uuids:
+                                __update_condition_failed(
+                                    block_run_id2,
+                                    block_run_block_uuid,
+                                    block,
+                                )
+
+                            # Update all the block runs that have a matching original block UUID
+                            metrics = block_run_dict.get('metrics')
+                            original_block_uuid = metrics.get('original_block_uuid')
+                            if block_init == original_block_uuid or block_init.uuid == block.uuid:
+                                self.__update_block_run_status(
+                                    BlockRun.BlockRunStatus.CONDITION_FAILED,
+                                    block_run_id=block_run_id2,
+                                    tags=tags,
+                                )
+
+                    __update_condition_failed(
+                        block_run_id,
+                        self.block_uuid,
+                        self.block,
+                    )
+                else:
+                    self.__update_block_run_status(
+                        BlockRun.BlockRunStatus.CONDITION_FAILED,
+                        block_run_id=block_run_id,
+                        callback_url=callback_url,
+                        tags=tags,
+                    )
+
                 return dict(output=[])
 
             should_execute = True

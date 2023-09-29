@@ -77,6 +77,7 @@ type BlockSettingsProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   globalDataProducts?: GlobalDataProductType[];
+  contentByBlockUUID?: any;
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
   showUpdateBlockModal?: (
@@ -88,6 +89,7 @@ type BlockSettingsProps = {
 
 function BlockSettings({
   block,
+  contentByBlockUUID,
   fetchFileTree,
   fetchPipeline,
   globalDataProducts,
@@ -461,6 +463,7 @@ function BlockSettings({
                     {...SHARED_BUTTON_PROPS}
                     onClick={() => showDataIntegrationModal({
                       block,
+                      contentByBlockUUID,
                       defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                       onChangeBlock,
                     })}
@@ -484,6 +487,7 @@ function BlockSettings({
                     afterIcon={<Edit size={ICON_SIZE_SMALL} />}
                     onClick={() => showDataIntegrationModal({
                       block,
+                      contentByBlockUUID,
                       defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
                       onChangeBlock,
                     })}

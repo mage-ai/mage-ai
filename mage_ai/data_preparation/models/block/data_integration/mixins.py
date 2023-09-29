@@ -172,6 +172,7 @@ class DataIntegrationMixin:
 
     def get_data_integration_settings(
         self,
+        data_integration_uuid_only: bool = False,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         from_notebook: bool = False,
@@ -265,6 +266,7 @@ class DataIntegrationMixin:
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(
+                data_integration_uuid_only=data_integration_uuid_only,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 from_notebook=from_notebook,
@@ -431,6 +433,7 @@ class DataIntegrationMixin:
 
     def __execute_data_integration_block_code(
         self,
+        data_integration_uuid_only: bool = False,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         from_notebook: bool = False,
@@ -512,6 +515,15 @@ class DataIntegrationMixin:
                 initialize_decorator_modules=False,
             )
 
+        def _print_time(block=self, now=now):
+            if is_debug():
+                seconds = round((datetime.utcnow().timestamp() - now) * 10000) / 10000
+                print(f'[Block.__execute_data_integration_block_code]: {seconds} | {block.uuid}')
+
+        if data_integration_uuid_only:
+            _print_time()
+            return self._data_integration
+
         if decorated_functions_config:
             self._data_integration['config'] = self.execute_block_function(
                 decorated_functions_config[0],
@@ -561,9 +573,7 @@ class DataIntegrationMixin:
                     selected_streams,
                 )
 
-        seconds = round((datetime.utcnow().timestamp() - now) * 10000) / 10000
-        if is_debug():
-            print(f'[Block.__execute_data_integration_block_code]: {seconds} | {self.uuid}')
+        _print_time()
 
         return self._data_integration
 
