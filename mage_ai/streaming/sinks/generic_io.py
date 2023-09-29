@@ -70,7 +70,10 @@ class GenericIOSink(BaseSink):
             else:
                 formatted_messages.append(m)
         df = pd.DataFrame.from_records(formatted_messages)
-        self.io_client.export(df, **self.config.config)
+        self.io_client.export(
+            df,
+            **merge_dict(dict(if_exists='append'), self.config.config),
+        )
 
     def destroy(self):
         try:

@@ -88,3 +88,6 @@ class BaseSource(ABC):
 
     def _print(self, msg: str):
         print(f'[{self.__class__.__name__}] {msg}')
+
+    def __del__(self):
+        self.destroy()

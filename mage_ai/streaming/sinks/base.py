@@ -110,3 +110,6 @@ class BaseSink(ABC):
 
     def _print(self, msg):
         print(f'[{self.__class__.__name__}] {msg}')
+
+    def __del__(self):
+        self.destroy()
