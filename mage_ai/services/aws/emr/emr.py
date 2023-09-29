@@ -9,7 +9,11 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import (
+    get_aws_access_key_id,
+    get_aws_region_name,
+    get_aws_secret_access_key,
+)
 from mage_ai.services.aws.emr import emr_basics
 from mage_ai.services.aws.emr.config import EmrConfig
 
@@ -45,9 +49,16 @@ def create_a_new_cluster(
 ):
     if tags is None:
         tags = dict()
+
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    emr_client = boto3.client('emr', config=config)
+    emr_client = boto3.client('emr',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
+
     if type(emr_config) is dict:
         emr_config = EmrConfig.load(config=emr_config)
 
@@ -121,15 +132,26 @@ def create_a_new_cluster(
 
 def describe_cluster(cluster_id):
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    emr_client = boto3.client('emr', config=config)
+    emr_client = boto3.client('emr',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
+
     return emr_basics.describe_cluster(cluster_id, emr_client)
 
 
 def list_clusters():
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    emr_client = boto3.client('emr', config=config)
+    emr_client = boto3.client('emr',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
 
     clusters = emr_client.list_clusters(
         ClusterStates=[
@@ -153,8 +175,13 @@ def submit_spark_job(
     if emr_config is None:
         emr_config = dict()
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    emr_client = boto3.client('emr', config=config)
+    emr_client = boto3.client('emr',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
 
     clusters = emr_client.list_clusters(
         ClusterStates=[

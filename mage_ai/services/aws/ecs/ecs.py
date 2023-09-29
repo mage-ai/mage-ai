@@ -4,7 +4,11 @@ from typing import Dict, List
 import boto3
 from botocore.config import Config
 
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import (
+    get_aws_access_key_id,
+    get_aws_region_name,
+    get_aws_secret_access_key,
+)
 from mage_ai.services.aws.ecs.config import EcsConfig
 
 
@@ -64,8 +68,13 @@ def stop_task(task_arn: str, cluster: str = None) -> None:
 
 def list_tasks(cluster) -> List[Dict]:
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    ecs_client = boto3.client('ecs', config=config)
+    ecs_client = boto3.client('ecs',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
 
     task_arns = ecs_client.list_tasks(
         cluster=cluster,
@@ -82,8 +91,13 @@ def list_tasks(cluster) -> List[Dict]:
 
 def list_services(cluster) -> List[Dict]:
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    ecs_client = boto3.client('ecs', config=config)
+    ecs_client = boto3.client('ecs',
+                              aws_access_key_id=aws_access_key,
+                              aws_secret_access_key=aws_secret_key,
+                              config=config)
 
     service_arns = ecs_client.list_services(
         cluster=cluster,

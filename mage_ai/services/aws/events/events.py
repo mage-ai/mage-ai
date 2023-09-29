@@ -4,15 +4,25 @@ import uuid
 import boto3
 from botocore.config import Config
 
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import (
+    get_aws_access_key_id,
+    get_aws_region_name,
+    get_aws_secret_access_key,
+)
 
 EVENT_RULE_LIMIT = 100
 
 
 def get_all_event_rules():
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    client = boto3.client('events', config=config)
+    client = boto3.client('events',
+                          aws_access_key_id=aws_access_key,
+                          aws_secret_access_key=aws_secret_key,
+                          config=config)
+
     response = client.list_rules(
         Limit=EVENT_RULE_LIMIT
     )
@@ -35,8 +45,13 @@ def update_event_rule_targets(name):
     if lambda_function_arn is None or lambda_function_name is None:
         return
     region_name = get_aws_region_name()
+    aws_access_key = get_aws_access_key_id()
+    aws_secret_key = get_aws_secret_access_key()
     config = Config(region_name=region_name)
-    client = boto3.client('events', config=config)
+    client = boto3.client('events',
+                          aws_access_key_id=aws_access_key,
+                          aws_secret_access_key=aws_secret_key,
+                          config=config)
     event_rule_info = client.describe_rule(Name=name)
     targets = client.list_targets_by_rule(Rule=name)['Targets']
     print(f'Current targets for Event rule {name}: {targets}')
