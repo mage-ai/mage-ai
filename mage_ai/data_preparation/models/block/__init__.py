@@ -1217,7 +1217,8 @@ class Block(DataIntegrationMixin):
                     df = pd.DataFrame()
 
                 if df.empty:
-                    logger.info('No data for dbt to materialize.')
+                    if logger:
+                        logger.info('No data for dbt to materialize.')
                 else:
                     DBTBlock.materialize_df(
                         df=df,
