@@ -45,15 +45,10 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineHeaderStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import {
-  dateFormatLongFromUnixTimestamp,
-  datetimeInLocalTimezone,
-} from '@utils/date';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
-import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -64,13 +59,11 @@ type KernelStatusProps = {
     [path: string]: boolean;
   };
   isBusy: boolean;
-  isPipelineUpdating: boolean;
   kernel: KernelType;
   pipeline: PipelineType;
-  pipelineContentTouched: boolean;
-  pipelineLastSaved: Date;
   restartKernel: () => void;
   savePipelineContent: () => void;
+  saveStatus?: string;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
@@ -82,20 +75,17 @@ function KernelStatus({
   filePaths: filePathsProp,
   filesTouched,
   isBusy,
-  isPipelineUpdating,
   kernel,
   pipeline,
-  pipelineContentTouched,
-  pipelineLastSaved,
   restartKernel,
   savePipelineContent,
+  saveStatus,
   selectedFilePath,
   setErrors,
   setRunningBlocks,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
-  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const {
     alive,
     usage,
@@ -145,21 +135,6 @@ function KernelStatus({
       setNewPipelineName(pipeline.uuid);
     }
   }, [pipeline?.uuid]);
-
-  let saveStatus;
-  if (pipelineContentTouched) {
-    saveStatus = 'Unsaved changes';
-  } else if (isPipelineUpdating) {
-    saveStatus = 'Saving changes...';
-  } else if (pipelineLastSaved) {
-    let lastSavedDate = dateFormatLongFromUnixTimestamp(Number(pipelineLastSaved) / 1000);
-    if (pipeline?.updated_at) {
-      lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
-    }
-    saveStatus = `Last saved ${lastSavedDate}`;
-  } else {
-    saveStatus = 'All changes saved';
-  }
 
   const uuidKeyboard = 'KernelStatus';
   const {

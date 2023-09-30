@@ -29,6 +29,7 @@ import {
   getSelectedColumnsAndAllColumn,
   getSelectedStreams,
   getStreamID,
+  getStreamIDWithParentStream,
   isStreamSelected,
 } from '@utils/models/block';
 import { pushAtIndex } from '@utils/array';
@@ -128,7 +129,7 @@ function DataIntegrationBlock({
 
           const streamName = getStreamID(stream);
           const parentStream = getParentStreamID(stream);
-
+          const streamUUID = getStreamIDWithParentStream(stream);
 
           const {
             allColumns,
@@ -143,7 +144,7 @@ function DataIntegrationBlock({
           let streamNameEl = (
             <Link
               danger={danger}
-              key="stream"
+              key={`${streamUUID}-stream`}
               monospace
               onClick={() => showDataIntegrationModal({
                 block: {
@@ -152,6 +153,7 @@ function DataIntegrationBlock({
                 },
                 defaultMainNavigationTab: streamName,
                 defaultMainNavigationTabSub: parentStream,
+                defaultSubTab: danger ? SubTabEnum.SETTINGS : SubTabEnum.OVERVIEW,
                 onChangeBlock,
               })}
               preventDefault
@@ -159,7 +161,7 @@ function DataIntegrationBlock({
             >
               {streamName} {danger && (
                 <Text inline default monospace>
-                  will fail unless a column is selcted
+                  will fail if no columns selected
                 </Text>
               )}
             </Link>
@@ -167,7 +169,7 @@ function DataIntegrationBlock({
 
           if (columnsCountSelected >= 1 || BlockLanguageEnum.PYTHON === language) {
             columnsCountEl = (
-              <Text center default monospace key="columns">
+              <Text center default monospace>
                 {columnsCountSelected} <Text
                   inline
                   monospace
@@ -179,7 +181,7 @@ function DataIntegrationBlock({
             );
           } else {
             columnsCountEl = (
-              <Text center danger key="columns">
+              <Text center danger>
                 No columns selected
               </Text>
             );
@@ -187,11 +189,29 @@ function DataIntegrationBlock({
 
           let row = [
             streamNameEl,
-            columnsCountEl,
-            <Text center default key="replicationMethod">
+            <Link
+              danger={danger}
+              key={`${streamUUID}-columns`}
+              monospace
+              onClick={() => showDataIntegrationModal({
+                block: {
+                  ...block,
+                  content: blockContent,
+                },
+                defaultMainNavigationTab: streamName,
+                defaultMainNavigationTabSub: parentStream,
+                defaultSubTab: SubTabEnum.SETTINGS,
+                onChangeBlock,
+              })}
+              preventDefault
+              sameColorAsText={!danger}
+            >
+              {columnsCountEl}
+            </Link>,
+            <Text center default key={`${streamUUID}-replicationMethod`}>
               {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
             </Text>,
-            <FlexContainer justifyContent="flex-end" key="runInParallel">
+            <FlexContainer justifyContent="flex-end" key={`${streamUUID}-runInParallel`}>
               {runInParallel
                 ? <Check size={UNIT * 2} success />
                 : <Text monospace muted>-</Text>
@@ -201,7 +221,7 @@ function DataIntegrationBlock({
 
           if (!isSource) {
             row = pushAtIndex((
-              <Text default key="tableName" monospace>
+              <Text default key={`${streamUUID}-tableName`} monospace>
                 {tableName || streamName}
               </Text>
             ), 1, row);

@@ -241,7 +241,6 @@ function StreamDetailOverview({
 
               <Flex flex={1}>
                 <TextInput
-                  defaultColor
                   fullWidth
                   monospace
                   onChange={(e) => {

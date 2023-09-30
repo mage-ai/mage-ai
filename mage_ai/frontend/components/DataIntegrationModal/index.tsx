@@ -644,9 +644,12 @@ function DataIntegrationModal({
               noHoverUnderline
               noOutline
               onClick={() => {
-                setSelectedMainNavigationTab(() => ({
+                setSelectedMainNavigationTab(({
+                  selectedSubTab,
+                }) => ({
                   selectedMainNavigationTab: streamID,
                   selectedMainNavigationTabSub: parentStreamID,
+                  selectedSubTab,
                 }));
               }}
               preventDefault
@@ -1415,7 +1418,7 @@ function DataIntegrationModal({
               />
             </Spacing>
 
-            <FlexContainer>
+            <FlexContainer alignItems="center">
               <Button
                 fullWidth
                 onClick={() => {
@@ -1450,7 +1453,7 @@ function DataIntegrationModal({
                 }}
                 primary
               >
-                Apply changes
+                Apply bulk changes
               </Button>
 
               <Spacing mr={1} />
