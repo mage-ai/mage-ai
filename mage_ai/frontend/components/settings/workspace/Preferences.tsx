@@ -157,6 +157,7 @@ function Preferences({
             <Spacing mr={PADDING_UNITS} />
 
             <ToggleSwitch
+              compact
               checked={projectAttributes?.help_improve_mage}
               onCheck={() => setProjectAttributes(prev => ({
                 ...prev,

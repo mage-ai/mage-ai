@@ -138,7 +138,7 @@ function PipelineListPage() {
     [project?.features],
   );
   const operationHistoryEnabled =
-    useMemo(() => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY]);
+    useMemo(() => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY], [project]);
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({
