@@ -104,3 +104,6 @@ class S3Storage(BaseStorage):
         finally:
             self.client.upload(s3_url_path(file_path), stream.getvalue())
             stream.close()
+
+    async def read_async(self, file_path: str) -> str:
+        pass

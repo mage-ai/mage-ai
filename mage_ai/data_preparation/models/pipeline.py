@@ -93,6 +93,9 @@ class Pipeline:
             self.remote_variables_dir or self.variables_dir,
         )
 
+        # Used for showing the operation history. For example: recently viewed pipelines.
+        self.history = []
+
     @property
     def config_path(self):
         return os.path.join(
