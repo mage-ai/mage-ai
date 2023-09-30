@@ -70,6 +70,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
     'conditionals',
     'extensions',
+    'operation_history',
     'schedules',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -127,10 +128,11 @@ PipelinePolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_query([
+    'from_history_days',
+    'include_schedules',
     'status[]',
     'tag[]',
     'type[]',
-    'include_schedules',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

@@ -11,6 +11,7 @@ import simplejson
 
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import encode_complex
 
 
@@ -94,13 +95,29 @@ class LocalStorage(BaseStorage):
         df.write_parquet(file_path)
 
     @contextmanager
-    def open_to_write(self, file_path: str) -> None:
+    def open_to_write(
+        self,
+        file_path: str,
+        append: bool = False,
+    ) -> None:
         dirname = os.path.dirname(file_path)
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
 
         try:
-            file = open(file_path, 'w')
+            file = open(file_path, 'a' if append else 'w')
             yield file
         finally:
             file.close()
+
+    async def read_async(self, file_path: str) -> str:
+        dirname = os.path.dirname(file_path)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+
+        async with aiofiles.open(file_path, mode='r') as file:
+            try:
+                return await file.read()
+            except Exception as err:
+                if is_debug():
+                    print(f'[ERROR] LocalStorage.read_async: {err}')

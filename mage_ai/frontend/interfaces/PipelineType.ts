@@ -50,6 +50,7 @@ export enum PipelineStatusEnum {
 
 export enum PipelineQueryEnum {
   GROUP = 'group_by',
+  HISTORY_DAYS = 'from_history_days',
   STATUS = 'status[]',
   TAG = 'tag[]',
   TYPE = 'type[]',

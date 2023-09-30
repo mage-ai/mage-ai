@@ -77,6 +77,8 @@ class PipelinePresenter(BasePresenter):
             data = self.model.to_dict(include_extensions=include_extensions)
         else:
             data = self.model.to_dict()
+            if self.model.history:
+                data.update(history=[h.to_dict() for h in self.model.history])
 
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:

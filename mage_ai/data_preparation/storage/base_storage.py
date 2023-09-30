@@ -92,3 +92,7 @@ class BaseStorage(ABC):
     @contextmanager
     def open_to_write(self, file_path: str) -> None:
         pass
+
+    @abstractmethod
+    async def read_async(self, file_path: str) -> str:
+        pass
