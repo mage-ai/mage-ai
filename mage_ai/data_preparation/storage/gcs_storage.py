@@ -113,3 +113,6 @@ class GCSStorage(BaseStorage):
             blob = self.bucket.blob(gcs_url_path(file_path))
             blob.upload_from_string(stream.getvalue())
             stream.close()
+
+    async def read_async(self, file_path: str) -> str:
+        pass
