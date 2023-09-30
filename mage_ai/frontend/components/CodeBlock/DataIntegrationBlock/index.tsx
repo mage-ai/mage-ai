@@ -14,8 +14,8 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import { Check, Settings } from '@oracle/icons';
-import { EmptyCodeSpace, HeaderSectionStyle, StreamSectionStyle } from './index.style';
+import { AlertTriangle, Check, Settings } from '@oracle/icons';
+import { CalloutStyle, EmptyCodeSpace, HeaderSectionStyle, StreamSectionStyle } from './index.style';
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { OpenDataIntegrationModalType, SubTabEnum } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -23,8 +23,10 @@ import { StreamType } from '@interfaces/IntegrationSourceType';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildInputsFromUpstreamBlocks } from '@utils/models/block'
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getParentStreamID,
+  getSelectedColumnsAndAllColumn,
   getSelectedStreams,
   getStreamID,
   isStreamSelected,
@@ -64,6 +66,7 @@ function DataIntegrationBlock({
     language,
     metadata,
     type: blockType,
+    upstream_blocks: upstreamBlockUUIDs,
     uuid: blockUUID,
   } = block;
   const {
@@ -118,7 +121,6 @@ function DataIntegrationBlock({
         rows={streams?.map((stream: StreamType) => {
           const {
             destination_table: tableName,
-            metadata: metadataArray,
             replication_method: replicationMethod,
             run_in_parallel: runInParallel,
             tap_stream_id: tapStreamID,
@@ -126,20 +128,14 @@ function DataIntegrationBlock({
 
           const streamName = getStreamID(stream);
           const parentStream = getParentStreamID(stream);
-          let columnsCount = 0;
-          let columnsCountSelected = 0;
 
-          metadataArray?.forEach(({
-            breadcrumb,
-            metadata,
-          }) => {
-            if (breadcrumb?.length >= 1) {
-              columnsCount += 1;
-              if (metadata?.selected) {
-                columnsCountSelected += 1;
-              }
-            }
-          });
+
+          const {
+            allColumns,
+            selectedColumns,
+          } = getSelectedColumnsAndAllColumn(stream);
+          const columnsCount = Object.keys(allColumns || [])?.length || 0;
+          const columnsCountSelected = Object.keys(selectedColumns || [])?.length || 0;
 
           const danger = BlockLanguageEnum.YAML === language && !columnsCountSelected;
 
@@ -305,55 +301,57 @@ function DataIntegrationBlock({
 
           <Divider light />
 
-          <Spacing p={PADDING_UNITS}>
-            <FlexContainer
-              alignItems="flex-start"
-              justifyContent="space-between"
-            >
-              <Flex flex={4} flexDirection="column">
-                <Text bold monospace muted small uppercase>
-                  Inputs
-                </Text>
+          {upstreamBlockUUIDs?.length >= 1 && (
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer
+                alignItems="flex-start"
+                justifyContent="space-between"
+              >
+                <Flex flex={4} flexDirection="column">
+                  <Text bold monospace muted small uppercase>
+                    Inputs
+                  </Text>
 
-                <Spacing mt={1}>
-                  {inputsBlocks?.length >= 1 && (
-                    <Text default>
-                      The output of these upstream blocks are used as positional arguments
-                      for decorated functions.
-                    </Text>
-                  )}
-                  {!inputsBlocks?.length && (
-                    <Text default>
-                      There are currently no positional arguments for decorated functions.
-                      <br />
-                      To use the output of 1 or more upstream blocks as positional arguments
-                      for decorated functions, add and configure 1 or more inputs.
-                    </Text>
-                  )}
-                </Spacing>
-              </Flex>
+                  <Spacing mt={1}>
+                    {inputsBlocks?.length >= 1 && (
+                      <Text default>
+                        The output of these upstream blocks are used as positional arguments
+                        for decorated functions.
+                      </Text>
+                    )}
+                    {!inputsBlocks?.length && (
+                      <Text default>
+                        There are currently no positional arguments for decorated functions.
+                        <br />
+                        To use the output of 1 or more upstream blocks as positional arguments
+                        for decorated functions, add and configure 1 or more inputs.
+                      </Text>
+                    )}
+                  </Spacing>
+                </Flex>
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <Flex flex={1} justifyContent="flex-end">
-                <Button
-                  compact
-                  onClick={() => showDataIntegrationModal({
-                    block: {
-                      ...block,
-                      content: blockContent,
-                    },
-                    defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
-                    defaultSubTab: SubTabEnum.UPSTREAM_BLOCK_SETTINGS,
-                    onChangeBlock,
-                  })}
-                  secondary
-                >
-                  {inputsBlocks?.length >= 1 ? 'Configure inputs' : 'Add inputs'}
-                </Button>
-              </Flex>
-            </FlexContainer>
-          </Spacing>
+                <Flex flex={1} justifyContent="flex-end">
+                  <Button
+                    compact
+                    onClick={() => showDataIntegrationModal({
+                      block: {
+                        ...block,
+                        content: blockContent,
+                      },
+                      defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
+                      defaultSubTab: SubTabEnum.UPSTREAM_BLOCK_SETTINGS,
+                      onChangeBlock,
+                    })}
+                    secondary
+                  >
+                    {inputsBlocks?.length >= 1 ? 'Configure inputs' : 'Add inputs'}
+                  </Button>
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          )}
 
           {inputsBlocks?.length >= 1 && (
             <InputsTable
@@ -417,6 +415,48 @@ function DataIntegrationBlock({
 
       {BlockLanguageEnum.PYTHON === language && (
         <>
+          {streamsCount >= 1 && (
+            <HeaderSectionStyle>
+              <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
+                <CalloutStyle>
+                  <FlexContainer alignItems="center">
+                    <Flex>
+                      <AlertTriangle size={2 * UNIT} warning />
+                    </Flex>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Text muted>
+                      The decorated function <Text
+                        inline
+                        monospace
+                        default
+                      >
+                        @selected_streams
+                      </Text> and <Text
+                        inline
+                        monospace
+                        default
+                      >
+                        @catalog
+                      </Text> will override any stream settings configured
+                      for <Text
+                        bold
+                        color={getColorsForBlockType(block?.type, {
+                          blockColor: block?.color,
+                        }).accent}
+                        inline
+                        monospace
+                      >
+                        {blockUUID}
+                      </Text>.
+                    </Text>
+                  </FlexContainer>
+                </CalloutStyle>
+              </Spacing>
+            </HeaderSectionStyle>
+          )}
+
           <EmptyCodeSpace>
             <Spacing pb={PADDING_UNITS} />
           </EmptyCodeSpace>

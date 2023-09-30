@@ -34,7 +34,7 @@ import {
   isStreamSelected,
   updateStreamMetadata,
 } from '@utils/models/block';
-import { MainNavigationTabEnum } from './constants';
+import { MainNavigationTabEnum, SubTabEnum } from './constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { pluralize } from '@utils/string';
 import { sortByKey, sum } from '@utils/array';
@@ -47,7 +47,17 @@ type StreamGridPros = {
   height: number;
   onChangeBlock?: (block: BlockType) => void;
   searchText?: string;
-  setSelectedMainNavigationTab: (tab: MainNavigationTabEnum | string, mainNavigationTabSub?: string) => void;
+  setSelectedMainNavigationTab: (tabs: {
+    selectedMainNavigationTab?: MainNavigationTabEnum;
+    selectedMainNavigationTabSub?: string;
+    selectedSubTab?: SubTabEnum | string;
+  }) => {
+    selectedMainNavigationTab?: MainNavigationTabEnum;
+    selectedMainNavigationTabSub?: string;
+    selectedSubTab?: SubTabEnum | string;
+  };
+  setSelectedSubTab: (subTab: SubTabEnum | string) => void;
+  setStreamsMappingConflicts?: (prev: StreamMapping) => StreamMapping;
   streamsFetched?: StreamType[];
   updateStreamsInCatalog: (streams: StreamType[], callback?: (block: BlockType) => void) => any;
   width: number;
@@ -92,6 +102,8 @@ function StreamGrid({
   onChangeBlock,
   searchText,
   setSelectedMainNavigationTab,
+  setSelectedSubTab,
+  setStreamsMappingConflicts,
   streamsFetched,
   updateStreamsInCatalog,
   width,
@@ -316,17 +328,37 @@ function StreamGrid({
                                   <>
                                     <Spacing mr={1} />
 
-                                    <Text warning>
-                                      stream exists with changes
+                                    <Text monospace warning>
+                                      exists
                                     </Text>
+                                  </>
+                                )}
 
+                                {isDifferentWithExisting && isFetchedGroup && (
+                                  <>
                                     <Spacing mr={1} />
 
-                                    <Flex alignItems="center" style={{ height: 3 * UNIT }}>
+                                    <Flex alignItems="center" style={{ minHeight: 3 * UNIT }}>
                                       <Button
                                         compact
                                         onClick={() => {
-                                          setSelectedMainNavigationTab(streamID, parentStream);
+                                          // @ts-ignore
+                                          setStreamsMappingConflicts((prev: StreamMapping) => buildStreamMapping(
+                                            [
+                                              stream,
+                                            ],
+                                            prev,
+                                          ));
+                                          // @ts-ignore
+                                          setSelectedMainNavigationTab((tabs: {
+                                            selectedMainNavigationTab?: MainNavigationTabEnum;
+                                            selectedMainNavigationTabSub?: string;
+                                            selectedSubTab?: SubTabEnum | string;
+                                          }) => ({
+                                            selectedMainNavigationTab: streamID,
+                                            selectedMainNavigationTabSub: parentStream,
+                                            selectedSubTab: SubTabEnum.STREAM_CONFLICTS,
+                                          }));
                                         }}
                                         small
                                         warning

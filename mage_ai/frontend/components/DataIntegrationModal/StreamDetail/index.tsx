@@ -9,7 +9,6 @@ type StreamDetailPropsInner = {
   height?: number;
   pipeline: PipelineType;
   selectedSubTab?: SubTabEnum | string;
-  setSelectedSubTab?: (subTab: SubTabEnum | string) => void;
   showError: (opts: any) => void;
 } & StreamDetailProps;
 
@@ -18,7 +17,6 @@ function StreamDetail({
   height,
   pipeline,
   selectedSubTab,
-  setSelectedSubTab,
   showError,
   stream,
   ...propsRest
@@ -31,11 +29,14 @@ function StreamDetail({
         stream={stream}
       />
     );
-  } else if (SubTabEnum.SETTINGS === selectedSubTab) {
+  } else if (SubTabEnum.SETTINGS === selectedSubTab
+    || SubTabEnum.STREAM_CONFLICTS === selectedSubTab
+  ) {
     return (
       <StreamDetailSchemaProperties
         {...propsRest}
         block={block}
+        showStreamConflicts={SubTabEnum.STREAM_CONFLICTS === selectedSubTab}
         stream={stream}
       />
     );
@@ -46,7 +47,6 @@ function StreamDetail({
         height={height}
         pipeline={pipeline}
         showError={showError}
-        setSelectedSubTab={setSelectedSubTab}
         stream={stream}
       />
     )

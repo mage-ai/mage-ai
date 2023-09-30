@@ -412,13 +412,20 @@ class Block(DataIntegrationMixin):
                                 self.data_integration_inputs and \
                                 block_uuid in self.data_integration_inputs:
 
-                            index = self.upstream_block_uuids.index(block_uuid)
+                            up_uuids = [i for i in
+                                        self.upstream_block_uuids if i in
+                                        self.data_integration_inputs]
+
+                            index = up_uuids.index(block_uuid)
                             data = self.fetched_inputs_from_blocks[index]
 
                         if parse:
                             results = {}
                             exec(f'_parse_func = {parse}', results)
-                            return results['_parse_func'](data)
+                            try:
+                                return results['_parse_func'](data)
+                            except Exception:
+                                pass
 
                         return data
 

@@ -28,3 +28,13 @@ export const EmptyCodeSpace = styled.div`
     background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 `;
+
+export const CalloutStyle = styled.div`
+  border-radius: ${BORDER_RADIUS}px;
+  padding: ${PADDING_UNITS * UNIT}px;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+`;

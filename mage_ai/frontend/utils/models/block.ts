@@ -401,6 +401,7 @@ export function mergeSchemaProperties(
         ...streamOverride?.schema,
         properties: {
           ...p2,
+          ...newProperties,
           ...newColumnSettings,
         },
       },
@@ -408,7 +409,7 @@ export function mergeSchemaProperties(
   };
 }
 
-export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: StreamMapping) {
+export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: StreamMapping): StreamMapping {
   const {
     noParents: noParentsExisting,
     parents: parentsExisting,
@@ -979,4 +980,51 @@ export function buildInputsFromUpstreamBlocks(
       input,
     })
   }, []);
+}
+
+export function getSelectedColumnsAndAllColumn(stream: StreamType): {
+  allColumns: {
+    [uuid: string]: PropertyColumnWithUUIDType[];
+  };
+  selectedColumns: {
+    [uuid: string]: PropertyColumnWithUUIDType[];
+  };
+} {
+  const allColumns = {};
+  const selectedColumns = {};
+
+  const selectedByColumns = {};
+
+  stream?.metadata?.forEach((metadata: MetadataType) => {
+    if (!isMetadataForStreamFromMetadataArray(metadata)) {
+      const column = getColumnFromMetadata(metadata);
+      if (column && metadata?.metadata) {
+        selectedByColumns[column] = metadata?.metadata?.selected;
+      }
+    }
+  });
+
+  Object.entries(stream?.schema?.properties || {}).forEach(([
+    column,
+    property,
+  ]) => {
+    const propertyWithUUID: PropertyColumnWithUUIDType = {
+      ...property,
+      uuid: column,
+    };
+
+    if (column in selectedByColumns)  {
+      if (selectedByColumns?.[column]) {
+        selectedColumns[column] = propertyWithUUID;
+      }
+    } else {
+      selectedColumns[column] = propertyWithUUID;
+    }
+    allColumns[column] = propertyWithUUID;
+  });
+
+  return {
+    allColumns,
+    selectedColumns,
+  };
 }

@@ -4,14 +4,17 @@ import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import Circle from '@oracle/elements/Circle';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel/v2';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
+import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { Close, Edit } from '@oracle/icons';
+import { AlertTriangle, BranchAlt, Close, Edit } from '@oracle/icons';
+import { CalloutStyle } from '@components/CodeBlock/DataIntegrationBlock/index.style';
 import {
   COLUMN_TYPES,
   MetadataType,
@@ -19,28 +22,37 @@ import {
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { StreamDetailProps } from './constants';
-import { StreamsOverviewProps } from '../StreamsOverview';
-import { appendArray, indexBy, remove, sortByKey } from '@utils/array';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import {
   PropertyColumnMoreType,
   addTypesToProperty,
   buildMetadataForColumn,
+  getDifferencesBetweenStreams,
   getSchemaPropertiesWithMetadata,
+  getStreamFromStreamMapping,
   getStreamID,
   getStreamIDWithParentStream,
   getStreamMetadataByColumn,
   getStreamMetadataFromMetadataArray,
   hydrateProperty,
   isStreamSelected,
+  mergeSchemaProperties,
   removeTypesFromProperty,
   updateStreamInBlock,
   updateStreamMetadataForColumns,
   updateStreamPropertiesForColumns,
 } from '@utils/models/block';
+import { StreamDetailProps } from './constants';
+import { StreamsOverviewProps } from '../StreamsOverview';
+import { SubTabEnum } from '../constants';
+import { appendArray, indexBy, remove, sortByKey } from '@utils/array';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { ignoreKeys } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
+
+type StreamDetailSchemaPropertiesProps = {
+  showStreamConflicts?: boolean;
+} & StreamDetailProps;
 
 function StreamDetailSchemaProperties({
   block,
@@ -49,9 +61,13 @@ function StreamDetailSchemaProperties({
   onChangeBlock,
   setBlockAttributes: setBlockAttributesProp,
   setHighlightedColumnsMapping,
+  setSelectedSubTab,
+  setStreamsMappingConflicts,
+  showStreamConflicts,
   stream,
   streamMapping,
-}: StreamDetailProps) {
+  streamsMappingConflicts,
+}: StreamDetailSchemaPropertiesProps) {
   const setBlockAttributes = useCallback((prev1) => {
     setBlockAttributesProp((prev2) => {
       const blockUpdated = prev1(prev2);
@@ -72,6 +88,9 @@ function StreamDetailSchemaProperties({
   ]);
 
   const [propertyFocused, setPropertyFocused] = useState<PropertyColumnMoreType>(null);
+  const [selectedPropertiesToMerge, setSelectedPropertiesToMerge] = useState<{
+    [column: string]: SchemaPropertyType;
+  }>(null);
 
   const refTable = useRef(null);
   const [coordinates, setCoordinates] = useState<{
@@ -95,7 +114,6 @@ function StreamDetailSchemaProperties({
   }, [
     handleClick,
   ]);
-
 
   const {
     bookmarkPropertiesMapping,
@@ -254,6 +272,99 @@ function StreamDetailSchemaProperties({
     streamMetadataByColumn,
   ]);
 
+  const renderTypes = useCallback((
+    column: string,
+    property: SchemaPropertyType,
+    opts?: {
+      disableEdit?: boolean;
+      key?: string;
+    },
+  ) => {
+    const {
+      disableEdit,
+      key,
+    } = opts || {};
+
+    const p2: PropertyColumnMoreType = hydrateProperty(column, property);
+    const typesDerived = p2?.typesDerived || [];
+
+    return (
+      <FlexContainer
+        alignItems="center"
+        flexWrap="wrap"
+        key={`${column}-${key || 'types'}`}
+      >
+        {(typesDerived || [])?.map((columnType: string) => (
+          <div
+            key={`${column}-${key || 'types'}-${columnType}`}
+            style={{
+              paddingBottom: 1,
+              marginRight: 2,
+              paddingTop: 1,
+             }}
+          >
+            <Chip
+              label={columnType}
+              onClick={disableEdit
+                ? null
+                : (e) => {
+                  pauseEvent(e);
+
+                  const isSelected = !!typesDerived?.includes(columnType);
+
+                  const propUpdated1 = isSelected
+                    ? removeTypesFromProperty([columnType], p2)
+                    : addTypesToProperty([columnType], p2);
+
+                  const propUpdated2 = {
+                    anyOf: propUpdated1?.anyOf,
+                    format: propUpdated1?.format,
+                    type: propUpdated1?.type,
+                  };
+
+                  setBlockAttributes(prev => updateStreamInBlock(
+                    updateStreamPropertiesForColumns(stream, {
+                      [column]: propUpdated2,
+                    }),
+                    prev,
+                  ));
+                }
+              }
+              xsmall
+            />
+          </div>
+        ))}
+
+        {!disableEdit && (
+          <Button
+            iconOnly
+            noBackground
+            noBorder
+            noPadding
+            onClick={(e) => {
+              pauseEvent(e);
+              setCoordinates({
+                // @ts-ignore
+                x: e.pageX,
+                // @ts-ignore
+                y: e.pageY,
+              });
+              setPropertyFocused(p2);
+            }}
+          >
+            <Edit default />
+          </Button>
+        )}
+      </FlexContainer>
+    );
+  }, [
+    setBlockAttributes,
+    setCoordinates,
+    setPropertyFocused,
+    stream,
+    updateStreamInBlock,
+  ]);
+
   const rows = useMemo(() => schemaPropertiesSortedArray?.map(({
     column,
     property,
@@ -310,67 +421,7 @@ function StreamDetailSchemaProperties({
       <Text key={`${column}-column`} monospace>
         {column}
       </Text>,
-      <FlexContainer
-        alignItems="center"
-        flexWrap="wrap"
-        key={`${column}-types`}
-      >
-        {(typesDerived || [])?.map((columnType: string) => (
-          <div
-            key={`${column}-types-${columnType}`}
-            style={{
-              paddingBottom: 1,
-              marginRight: 2,
-              paddingTop: 1,
-             }}
-          >
-            <Chip
-              label={columnType}
-              onClick={(e) => {
-                pauseEvent(e);
-
-                const isSelected = !!typesDerived?.includes(columnType);
-
-                const propUpdated1 = isSelected
-                  ? removeTypesFromProperty([columnType], p2)
-                  : addTypesToProperty([columnType], p2);
-
-                const propUpdated2 = {
-                  anyOf: propUpdated1?.anyOf,
-                  format: propUpdated1?.format,
-                  type: propUpdated1?.type,
-                };
-
-                setBlockAttributes(prev => updateStreamInBlock(
-                  updateStreamPropertiesForColumns(stream, {
-                    [column]: propUpdated2,
-                  }),
-                  prev,
-                ));
-              }}
-              xsmall
-            />
-          </div>
-        ))}
-        <Button
-          iconOnly
-          noBackground
-          noBorder
-          noPadding
-          onClick={(e) => {
-            pauseEvent(e);
-            setCoordinates({
-              // @ts-ignore
-              x: e.pageX,
-              // @ts-ignore
-              y: e.pageY,
-            });
-            setPropertyFocused(p2);
-          }}
-        >
-          <Edit default />
-        </Button>
-      </FlexContainer>,
+      renderTypes(column, p2),
       <FlexContainer
         alignItems="center"
         justifyContent="center"
@@ -452,6 +503,7 @@ function StreamDetailSchemaProperties({
     bookmarkPropertiesMapping,
     keyPropertiesMapping,
     partitionKeysMapping,
+    renderTypes,
     schemaProperties,
     schemaPropertiesSortedArray,
     setBlockAttributes,
@@ -591,6 +643,238 @@ function StreamDetailSchemaProperties({
     stream,
   ]);
 
+  const diffs = useMemo(() => getDifferencesBetweenStreams(
+    stream,
+    streamsMappingConflicts,
+    streamMapping,
+  ), [
+    stream,
+    streamMapping,
+    streamsMappingConflicts,
+  ]);
+
+  const updateColumnsInSelectedPropertiesToMerge = useCallback((columns, value) => {
+    const streamDiffs = diffs?.stream;
+    const schemaPropertiesDiffs = streamDiffs?.schema?.properties;
+
+    setSelectedPropertiesToMerge(prev => {
+      const updated = {
+        ...prev,
+      };
+
+      columns?.forEach((column: string) => {
+        if (value) {
+          updated[column] = schemaPropertiesDiffs?.[column];
+        } else {
+          if (column in updated) {
+            delete updated?.[column];
+          }
+        }
+      });
+
+      return updated;
+    });
+  }, [
+    diffs,
+    setSelectedPropertiesToMerge,
+  ]);
+
+  const renderConflictRow = useCallback((opts: {
+    column: string;
+    property: SchemaPropertyType;
+    currentProperty?: SchemaPropertyType;
+  }) => {
+    const {
+      column,
+      property,
+      currentProperty,
+    } = opts || {};
+    const isSelected = !!selectedPropertiesToMerge?.[column];
+
+    const arr = [
+      <Checkbox
+        checked={isSelected}
+        key={`${column}-accept`}
+        onClick={(e) => {
+          pauseEvent(e);
+          updateColumnsInSelectedPropertiesToMerge([column], !isSelected);
+        }}
+      />,
+      <Text
+        key={`${column}-property`}
+        monospace
+      >
+        {column}
+      </Text>,
+      renderTypes(column, property, {
+        disableEdit: true,
+      }),
+    ];
+
+    if (currentProperty) {
+      arr.push(
+        renderTypes(column, currentProperty, {
+          disableEdit: true,
+          key: 'types-current',
+        }),
+      );
+    } else {
+      arr.push(<div key={`${column}-empty`} />);
+    }
+
+    return arr;
+  }, [
+    renderTypes,
+    selectedPropertiesToMerge,
+    setSelectedPropertiesToMerge,
+    updateColumnsInSelectedPropertiesToMerge,
+  ]);
+
+  const renderTableConflict = useCallback((rowsForTable: {
+    column: string;
+    property: SchemaPropertyType;
+  }[], opts?: {
+    columnFlex?: number[];
+    columns?: ColumnType[];
+  }) => {
+    const {
+      columnFlex: cf,
+      columns: c,
+    } = opts || {};
+
+    const allColumns = rowsForTable?.map(({ column }) => column) || [];
+    const allColumnsSelected = allColumns?.every(column => !!selectedPropertiesToMerge?.[column]);
+
+    return (
+      <Table
+        columnFlex={[null, 1].concat(cf || [])}
+        columns={[
+          {
+            label: () => (
+              <Checkbox
+                checked={allColumnsSelected}
+                onClick={(e) => {
+                  pauseEvent(e);
+
+                  updateColumnsInSelectedPropertiesToMerge(allColumns, !allColumnsSelected);
+                }}
+              />
+            ),
+            uuid: 'Accept change',
+          },
+          {
+            uuid: 'Property',
+          },
+          // @ts-ignore
+        ].concat(c || [])}
+        highlightRowOnHover
+        onClickRow={(index: number) => {
+          const row = rowsForTable?.[index];
+          const column = row?.column;
+          const isSelected = !!selectedPropertiesToMerge?.[column];
+
+          updateColumnsInSelectedPropertiesToMerge([column], !isSelected);
+        }}
+        rows={rowsForTable?.map(renderConflictRow)}
+      />
+    );
+  }, [
+    renderConflictRow,
+    selectedPropertiesToMerge,
+    updateColumnsInSelectedPropertiesToMerge,
+  ]);
+
+  const tableConflictMemo = useMemo(() => {
+    if (!diffs) {
+      return null;
+    }
+
+    const {
+      newColumnSettings,
+      newColumns,
+      stream: streamDiffs,
+    } = diffs;
+
+    const schemaPropertiesDiffs = streamDiffs?.schema?.properties;
+    const rowsNewColumns = sortByKey(
+      newColumns,
+      column => column,
+    )?.map((column: string) => ({
+      column,
+      property: schemaPropertiesDiffs?.[column],
+    }));
+
+    const rowsNewColumnsSettings = sortByKey(
+      Object.entries(newColumnSettings),
+      ([column,]) => column,
+    ).map(([
+      column,
+      property,
+    ]) => ({
+      column,
+      property: schemaPropertiesDiffs?.[column],
+      currentProperty: schemaProperties?.[column],
+    }));
+
+    return (
+      <>
+        {rowsNewColumns?.length >= 1 && (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={5} warning>
+                New properties
+              </Headline>
+            </Spacing>
+
+            <Divider light />
+
+            {renderTableConflict(rowsNewColumns, {
+              columnFlex: [1, 1],
+              columns: [
+                {
+                  uuid: 'Types (new)',
+                },
+                {
+                  label: () => '',
+                  uuid: 'empty',
+                },
+              ],
+            })}
+          </>
+        )}
+
+        {rowsNewColumnsSettings?.length >= 1 && (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={5} warning>
+                Properties with new types
+              </Headline>
+            </Spacing>
+
+            <Divider light />
+
+            {renderTableConflict(rowsNewColumnsSettings, {
+              columnFlex: [1, 1],
+              columns: [
+                {
+                  uuid: 'Types (new)',
+                },
+                {
+                  uuid: 'Types (current)',
+                },
+              ],
+            })}
+          </>
+        )}
+      </>
+    );
+  }, [
+    diffs,
+    renderTableConflict,
+    schemaProperties,
+    stream,
+  ]);
+
   const tableMemo = useMemo(() => {
     return (
       <Table
@@ -627,8 +911,84 @@ function StreamDetailSchemaProperties({
     setHighlightedColumnsMapping,
   ]);
 
+  return (
+    <>
+      {showStreamConflicts && tableConflictMemo && (
+        <Spacing my={PADDING_UNITS}>
+          <Spacing px={PADDING_UNITS}>
+            <CalloutStyle>
+              <FlexContainer alignItems="center">
+                <Flex>
+                  <AlertTriangle size={2 * UNIT} warning />
+                </Flex>
 
-  return tableMemo;
+                <Spacing mr={PADDING_UNITS} />
+
+                <Text muted>
+                  The following properties are either new or have different types.
+                  Please review and either merge the changes or discard them.
+                  <br />
+                  Click the checkbox to include the updated property when merging changes.
+                </Text>
+              </FlexContainer>
+            </CalloutStyle>
+          </Spacing>
+
+          {tableConflictMemo}
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer>
+              <Button
+                beforeIcon={<BranchAlt />}
+                onClick={() => {
+                  setBlockAttributes(prev => updateStreamInBlock(
+                    {
+                      ...stream,
+                      schema: {
+                        ...stream?.schema,
+                        properties: {
+                          ...stream?.schema?.properties,
+                          ...selectedPropertiesToMerge,
+                        },
+                      },
+                    },
+                    prev,
+                  ));
+                  setStreamsMappingConflicts({
+                    noParents: {},
+                    parents: {},
+                  });
+                  setSelectedSubTab(SubTabEnum.SETTINGS);
+                }}
+                primary
+              >
+                Merge changes
+              </Button>
+
+              <Spacing mr={1} />
+
+              <Button
+                onClick={() => {
+                  setStreamsMappingConflicts({
+                    noParents: {},
+                    parents: {},
+                  });
+                  setSelectedSubTab(SubTabEnum.SETTINGS);
+                }}
+                secondary
+              >
+                Discard changes
+              </Button>
+            </FlexContainer>
+          </Spacing>
+        </Spacing>
+      )}
+
+      {!showStreamConflicts && tableMemo}
+
+      <Spacing pb={UNITS_BETWEEN_SECTIONS} />
+    </>
+  );
 }
 
 export default StreamDetailSchemaProperties;
