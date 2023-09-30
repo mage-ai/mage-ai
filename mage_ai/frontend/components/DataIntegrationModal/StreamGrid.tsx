@@ -51,7 +51,11 @@ type StreamGridPros = {
     selectedMainNavigationTab?: MainNavigationTabEnum;
     selectedMainNavigationTabSub?: string;
     selectedSubTab?: SubTabEnum | string;
-  }) => void;
+  }) => {
+    selectedMainNavigationTab?: MainNavigationTabEnum;
+    selectedMainNavigationTabSub?: string;
+    selectedSubTab?: SubTabEnum | string;
+  };
   setSelectedSubTab: (subTab: SubTabEnum | string) => void;
   setStreamsMappingConflicts?: (prev: StreamMapping) => StreamMapping;
   streamsFetched?: StreamType[];
@@ -338,13 +342,19 @@ function StreamGrid({
                                       <Button
                                         compact
                                         onClick={() => {
-                                          setStreamsMappingConflicts(prev => buildStreamMapping(
+                                          // @ts-ignore
+                                          setStreamsMappingConflicts((prev: StreamMapping) => buildStreamMapping(
                                             [
                                               stream,
                                             ],
                                             prev,
                                           ));
-                                          setSelectedMainNavigationTab(() => ({
+                                          // @ts-ignore
+                                          setSelectedMainNavigationTab((tabs: {
+                                            selectedMainNavigationTab?: MainNavigationTabEnum;
+                                            selectedMainNavigationTabSub?: string;
+                                            selectedSubTab?: SubTabEnum | string;
+                                          }) => ({
                                             selectedMainNavigationTab: streamID,
                                             selectedMainNavigationTabSub: parentStream,
                                             selectedSubTab: SubTabEnum.STREAM_CONFLICTS,

@@ -415,7 +415,7 @@ function DataIntegrationModal({
       },
     ) => {
       const {
-        selectedMainNavigationTab: prev1,
+        selectedMainNavigationTab: val1,
         selectedMainNavigationTabSub: mainNavigationTabSub,
         selectedSubTab: subTab,
       } = allTabsNew || {};
@@ -423,8 +423,6 @@ function DataIntegrationModal({
         selectedMainNavigationTab: prev2,
         selectedMainNavigationTabSub: subtabPrev,
       } = allTabsPrev || {};
-
-      const val1 = typeof prev1 === 'function' ? prev1(prev2) : prev1
 
       const tabs = val1 in SUB_TABS_BY_MAIN_NAVIGATION_TAB
         ? SUB_TABS_BY_MAIN_NAVIGATION_TAB[val1]
@@ -936,6 +934,7 @@ function DataIntegrationModal({
             ...prev,
             selectedSubTab: subTab,
           }))}
+          // @ts-ignore
           setStreamsMappingConflicts={setStreamsMappingConflicts}
           showError={showError}
           stream={stream}
@@ -1598,11 +1597,13 @@ function DataIntegrationModal({
       height={heightModal - headerOffset}
       onChangeBlock={onChangeBlock}
       searchText={searchText}
+      // @ts-ignore
       setSelectedMainNavigationTab={setSelectedMainNavigationTab}
       setSelectedSubTab={(subTab: SubTabEnum | string) => setSelectedMainNavigationTab(prev => ({
         ...prev,
         selectedSubTab: subTab,
       }))}
+      // @ts-ignore
       setStreamsMappingConflicts={setStreamsMappingConflicts}
       streamsFetched={streamsFetched}
       updateStreamsInCatalog={updateStreamsInCatalog}

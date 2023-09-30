@@ -409,7 +409,7 @@ export function mergeSchemaProperties(
   };
 }
 
-export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: StreamMapping) {
+export function buildStreamMapping(streamsArr: StreamType[], existingMapping?: StreamMapping): StreamMapping {
   const {
     noParents: noParentsExisting,
     parents: parentsExisting,
@@ -990,8 +990,8 @@ export function getSelectedColumnsAndAllColumn(stream: StreamType): {
     [uuid: string]: PropertyColumnWithUUIDType[];
   };
 } {
-  const allColumns = [];
-  const selectedColumns = [];
+  const allColumns = {};
+  const selectedColumns = {};
 
   const selectedByColumns = {};
 
@@ -1008,7 +1008,7 @@ export function getSelectedColumnsAndAllColumn(stream: StreamType): {
     column,
     property,
   ]) => {
-    const propertyWithUUID = {
+    const propertyWithUUID: PropertyColumnWithUUIDType = {
       ...property,
       uuid: column,
     };

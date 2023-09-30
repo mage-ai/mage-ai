@@ -730,7 +730,10 @@ function StreamDetailSchemaProperties({
     updateColumnsInSelectedPropertiesToMerge,
   ]);
 
-  const renderTableConflict = useCallback((rows: any[][], opts?: {
+  const renderTableConflict = useCallback((rowsForTable: {
+    column: string;
+    property: SchemaPropertyType;
+  }[], opts?: {
     columnFlex?: number[];
     columns?: ColumnType[];
   }) => {
@@ -739,7 +742,7 @@ function StreamDetailSchemaProperties({
       columns: c,
     } = opts || {};
 
-    const allColumns = rows?.map(({ column }) => column) || [];
+    const allColumns = rowsForTable?.map(({ column }) => column) || [];
     const allColumnsSelected = allColumns?.every(column => !!selectedPropertiesToMerge?.[column]);
 
     return (
@@ -762,16 +765,17 @@ function StreamDetailSchemaProperties({
           {
             uuid: 'Property',
           },
+          // @ts-ignore
         ].concat(c || [])}
         highlightRowOnHover
         onClickRow={(index: number) => {
-          const row = rows?.[index];
+          const row = rowsForTable?.[index];
           const column = row?.column;
           const isSelected = !!selectedPropertiesToMerge?.[column];
 
           updateColumnsInSelectedPropertiesToMerge([column], !isSelected);
         }}
-        rows={rows?.map(renderConflictRow)}
+        rows={rowsForTable?.map(renderConflictRow)}
       />
     );
   }, [
@@ -950,7 +954,10 @@ function StreamDetailSchemaProperties({
                     },
                     prev,
                   ));
-                  setStreamsMappingConflicts({});
+                  setStreamsMappingConflicts({
+                    noParents: {},
+                    parents: {},
+                  });
                   setSelectedSubTab(SubTabEnum.SETTINGS);
                 }}
                 primary
@@ -962,7 +969,10 @@ function StreamDetailSchemaProperties({
 
               <Button
                 onClick={() => {
-                  setStreamsMappingConflicts({});
+                  setStreamsMappingConflicts({
+                    noParents: {},
+                    parents: {},
+                  });
                   setSelectedSubTab(SubTabEnum.SETTINGS);
                 }}
                 secondary

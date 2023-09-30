@@ -1,6 +1,5 @@
 import PipelineType from '@interfaces/PipelineType';
 import SampleData from './SampleData';
-import StreamConflicts from './StreamConflicts';
 import StreamDetailOverview from './StreamDetailOverview';
 import StreamDetailSchemaProperties from './StreamDetailSchemaProperties';
 import { StreamDetailProps } from './constants';

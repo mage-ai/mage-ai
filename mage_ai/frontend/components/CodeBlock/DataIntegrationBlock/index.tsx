@@ -129,7 +129,6 @@ function DataIntegrationBlock({
           const streamName = getStreamID(stream);
           const parentStream = getParentStreamID(stream);
 
-          const danger = BlockLanguageEnum.YAML === language && !columnsCountSelected;
 
           const {
             allColumns,
@@ -137,6 +136,8 @@ function DataIntegrationBlock({
           } = getSelectedColumnsAndAllColumn(stream);
           const columnsCount = Object.keys(allColumns || [])?.length || 0;
           const columnsCountSelected = Object.keys(selectedColumns || [])?.length || 0;
+
+          const danger = BlockLanguageEnum.YAML === language && !columnsCountSelected;
 
           let columnsCountEl;
           let streamNameEl = (
