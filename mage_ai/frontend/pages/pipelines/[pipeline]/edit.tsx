@@ -103,6 +103,7 @@ import {
 } from '@components/Sidekick/Navigation/constants';
 import {
   convertBlockUUIDstoBlockTypes,
+  displayPipelineLastSaved,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
   removeDataOutputBlockUUID,
@@ -942,6 +943,20 @@ function PipelineDetailPage({
     showStalePipelineMessageModal,
     updatePipeline,
     widgets,
+  ]);
+
+  const saveStatus: string = useMemo(() => displayPipelineLastSaved(
+    pipeline,
+    {
+      isPipelineUpdating,
+      pipelineContentTouched,
+      pipelineLastSaved,
+    },
+  ), [
+    isPipelineUpdating,
+    pipeline,
+    pipelineContentTouched,
+    pipelineLastSaved,
   ]);
 
   // Data integration modal
@@ -2518,13 +2533,11 @@ function PipelineDetailPage({
             filePaths={selectedFilePaths}
             filesTouched={filesTouched}
             isBusy={runningBlocks.length >= 1}
-            isPipelineUpdating={isPipelineUpdating}
             kernel={kernel}
             pipeline={pipeline}
-            pipelineContentTouched={pipelineContentTouched}
-            pipelineLastSaved={pipelineLastSaved}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
+            saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
             setRunningBlocks={setRunningBlocks}
@@ -2548,15 +2561,13 @@ function PipelineDetailPage({
   }, [
     beforeHeader,
     filesTouched,
-    isPipelineUpdating,
     kernel,
     page,
     pipeline,
-    pipelineContentTouched,
-    pipelineLastSaved,
     restartKernel,
     runningBlocks,
     savePipelineContent,
+    saveStatus,
     selectedFilePath,
     selectedFilePaths,
     setErrors,

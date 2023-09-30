@@ -266,9 +266,9 @@ function StreamsOverview({
           </Link>,
           <TextInput
             compact
+            defaultColor={!destinationTable}
             key={`${uuid}-destinationTable`}
             monospace
-            noBackground={!!destinationTable}
             onChange={(e) => {
               const val = e?.target?.value;
 

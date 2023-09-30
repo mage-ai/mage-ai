@@ -644,9 +644,12 @@ function DataIntegrationModal({
               noHoverUnderline
               noOutline
               onClick={() => {
-                setSelectedMainNavigationTab(() => ({
+                setSelectedMainNavigationTab(({
+                  selectedSubTab,
+                }) => ({
                   selectedMainNavigationTab: streamID,
                   selectedMainNavigationTabSub: parentStreamID,
+                  selectedSubTab,
                 }));
               }}
               preventDefault
@@ -982,15 +985,19 @@ function DataIntegrationModal({
     setBlockContentState,
   ]);
 
+  const [blockConfigString, setBlockConfigString] = useState<string>(null);
+
   const credentialsMemo = useMemo(() => (
     <Credentials
       block={blockAttributes}
+      blockConfigString={blockConfigString}
       blockContent={blockContentState}
       blockUpstreamBlocks={blockUpstreamBlocks}
       dataIntegrationConfiguration={dataIntegrationConfiguration}
       onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
+      setBlockConfigString={setBlockConfigString}
       setBlockContent={setBlockContentState}
       setSelectedSubTab={(subTab: SubTabEnum | string) => setSelectedMainNavigationTab(prev => ({
         ...prev,
@@ -1000,12 +1007,14 @@ function DataIntegrationModal({
     />
   ), [
     blockAttributes,
+    blockConfigString,
     blockContentState,
     blockUpstreamBlocks,
     dataIntegrationConfiguration,
     onChangeCodeBlock,
     pipeline,
     savePipelineContent,
+    setBlockConfigString,
     setBlockContentState,
     setSelectedMainNavigationTab,
     showError,
@@ -1409,7 +1418,7 @@ function DataIntegrationModal({
               />
             </Spacing>
 
-            <FlexContainer>
+            <FlexContainer alignItems="center">
               <Button
                 fullWidth
                 onClick={() => {
@@ -1444,7 +1453,7 @@ function DataIntegrationModal({
                 }}
                 primary
               >
-                Apply changes
+                Apply bulk changes
               </Button>
 
               <Spacing mr={1} />

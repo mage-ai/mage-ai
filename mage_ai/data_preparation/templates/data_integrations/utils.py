@@ -43,6 +43,9 @@ def get_templates(group_templates: bool = False) -> Union[List[Dict], Dict]:
             template = dict(
                 block_type=block_type,
                 configuration=dict(data_integration={}),
+                defaults=dict(
+                    language=BlockLanguage.YAML,
+                ),
                 description=description,
                 language=di_type,
                 name=display_name,

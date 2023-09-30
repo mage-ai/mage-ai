@@ -216,6 +216,9 @@ export interface BlockRequestPayloadType {
   content?: string;
   converted_from_type?: string;
   converted_from_uuid?: string;
+  defaults?: {
+    language?: BlockLanguageEnum;
+  };
   extension_uuid?: string;
   language?: BlockLanguageEnum;
   name?: string;
@@ -257,6 +260,9 @@ export default interface BlockType {
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  defaults?: {
+    language?: BlockLanguageEnum;
+  };
   description?: string;
   documentation?: string;
   downstream_blocks?: string[];

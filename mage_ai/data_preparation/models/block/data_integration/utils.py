@@ -332,7 +332,11 @@ def execute_data_integration(
 
     catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config')
-    config_json = json.dumps(config)
+    config_json = simplejson.dumps(
+        config,
+        default=encode_complex,
+        ignore_nan=True,
+    )
 
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
 
@@ -410,13 +414,21 @@ def execute_data_integration(
             '--log_to_stdout',
             '1',
             '--query_json',
-            json.dumps(query_data),
+            simplejson.dumps(
+                query_data,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
         ]
 
         if BlockLanguage.PYTHON == block.language:
             args += [
                 '--catalog_json',
-                json.dumps(catalog),
+                simplejson.dumps(
+                    catalog,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
             ]
         else:
             args += [
@@ -433,7 +445,11 @@ def execute_data_integration(
         if len(selected_streams) >= 1:
             args += [
                 '--selected_streams_json',
-                json.dumps(selected_streams),
+                simplejson.dumps(
+                    selected_streams,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
             ]
 
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -906,13 +922,21 @@ def __execute_destination(
 
         args += [
             '--catalog_json',
-            json.dumps(catalog_final),
+            simplejson.dumps(
+                catalog_final,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
         ]
 
     # This needs to go last because we add the table name at the end.
     args += [
         '--config_json',
-        json.dumps(config),
+        simplejson.dumps(
+            config,
+            default=encode_complex,
+            ignore_nan=True,
+        ),
     ]
 
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -1016,14 +1040,22 @@ def discover(source_uuid: str, config: Dict, streams: List[str] = None) -> Dict:
         PYTHON_COMMAND,
         source_module_file_path(source_uuid),
         '--config_json',
-        json.dumps(config),
+        simplejson.dumps(
+            config,
+            default=encode_complex,
+            ignore_nan=True,
+        ),
         '--discover',
     ]
 
     if streams:
         run_args += [
             '--selected_streams_json',
-            json.dumps(streams),
+            simplejson.dumps(
+                streams,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
         ]
 
     return json.loads(
@@ -1041,7 +1073,11 @@ def discover_streams(source_uuid: str, config: Dict) -> List[str]:
                 PYTHON_COMMAND,
                 source_module_file_path(source_uuid),
                 '--config_json',
-                json.dumps(config),
+                simplejson.dumps(
+                    config,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
                 '--discover',
                 '--discover_streams',
             ],
@@ -1087,16 +1123,28 @@ def count_records(
             PYTHON_COMMAND,
             source_module_file_path(source_uuid),
             '--config_json',
-            json.dumps(config),
+            simplejson.dumps(
+                config,
+                default=encode_complex,
+                ignore_nan=True,
+            ),
             '--selected_streams_json',
-            json.dumps([stream]),
+            simplejson.dumps(
+                [stream],
+                default=encode_complex,
+                ignore_nan=True,
+            ),
             '--count_records',
         ]
 
         if catalog:
             args += [
                 '--catalog_json',
-                json.dumps(catalog),
+                simplejson.dumps(
+                    catalog,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
             ]
         elif catalog_file_path:
             args += [

@@ -1,4 +1,4 @@
-import { BlockTypeEnum } from './BlockType';
+import { BlockLanguageEnum, BlockTypeEnum } from './BlockType';
 import { ConfigurationType } from './ChartBlockType';
 
 export enum DataIntegrationTypeEnum {
@@ -13,6 +13,9 @@ export enum TemplateTypeEnum {
 export default interface BlockTemplateType {
   block_type: BlockTypeEnum;
   configuration?: ConfigurationType;
+  defaults?: {
+    language?: BlockLanguageEnum;
+  };
   description: string;
   groups?: string[];
   language: string;
