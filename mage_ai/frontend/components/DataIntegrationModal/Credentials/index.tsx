@@ -30,6 +30,7 @@ export type CredentialsProps = {
 
 type CredentialsInternalProps = {
   block: BlockType;
+  blockConfigString?: string;
   blockContent?: string;
   blockUpstreamBlocks: BlockType[];
   dataIntegrationConfiguration: ConfigurationDataIntegrationType;
@@ -38,6 +39,7 @@ type CredentialsInternalProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setBlockConfigString?: (blockConfigString: string) => void;
   setBlockContent?: (blockContent: string) => void;
   setSelectedSubTab: (subTab: SubTabEnum) => void;
   showError: (opts: ErrorRunTimeProps) => void;
@@ -45,12 +47,14 @@ type CredentialsInternalProps = {
 
 function Credentials({
   block,
+  blockConfigString,
   blockContent,
   blockUpstreamBlocks,
   dataIntegrationConfiguration,
   onChangeCodeBlock,
   pipeline,
   savePipelineContent,
+  setBlockConfigString,
   setBlockContent,
   setSelectedSubTab,
   showError,
@@ -63,7 +67,6 @@ function Credentials({
   const { uuid: pipelineUUID } = pipeline || {};
 
   const [configIsInvalid, setConfigIsInvalid] = useState<boolean>(false);
-  const [blockConfigString, setBlockConfigString] = useState<string>(null);
   const blockContentParsed: {
     [key: string]: string | number;
   } = useMemo(() => {

@@ -982,15 +982,19 @@ function DataIntegrationModal({
     setBlockContentState,
   ]);
 
+  const [blockConfigString, setBlockConfigString] = useState<string>(null);
+
   const credentialsMemo = useMemo(() => (
     <Credentials
       block={blockAttributes}
+      blockConfigString={blockConfigString}
       blockContent={blockContentState}
       blockUpstreamBlocks={blockUpstreamBlocks}
       dataIntegrationConfiguration={dataIntegrationConfiguration}
       onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
+      setBlockConfigString={setBlockConfigString}
       setBlockContent={setBlockContentState}
       setSelectedSubTab={(subTab: SubTabEnum | string) => setSelectedMainNavigationTab(prev => ({
         ...prev,
@@ -1000,12 +1004,14 @@ function DataIntegrationModal({
     />
   ), [
     blockAttributes,
+    blockConfigString,
     blockContentState,
     blockUpstreamBlocks,
     dataIntegrationConfiguration,
     onChangeCodeBlock,
     pipeline,
     savePipelineContent,
+    setBlockConfigString,
     setBlockContentState,
     setSelectedMainNavigationTab,
     showError,

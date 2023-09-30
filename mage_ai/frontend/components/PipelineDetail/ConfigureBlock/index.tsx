@@ -86,7 +86,7 @@ function ConfigureBlock({
     type?: BlockTypeEnum;
   }>({
     color: block?.color || null,
-    language: block?.language,
+    language: block?.defaults?.language || block?.language,
     name: defaultName,
     type: block?.type,
   });
