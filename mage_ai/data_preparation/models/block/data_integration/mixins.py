@@ -33,6 +33,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.shared.array import find
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
@@ -246,25 +247,13 @@ class DataIntegrationMixin:
 
                 return data
 
-            def _get_variable(
-                var_name: str,
-                parse: str = None,
-                global_vars=global_vars,
-            ) -> Any:
-                if not global_vars:
-                    return None
-
-                val = global_vars.get(var_name)
-                if parse:
-                    results = {}
-                    exec(f'_parse_func = {parse}', results)
-                    return results['_parse_func'](val)
-
-                return val
-
             text = Template(self.content).render(
                 block_output=_block_output,
-                variables=_get_variable,
+                variables=lambda x, p, v=global_vars: get_variable_for_template(
+                    x,
+                    parse=p,
+                    variables=v,
+                ),
                 **get_template_vars(),
             )
 

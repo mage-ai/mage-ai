@@ -66,6 +66,7 @@ from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
@@ -428,25 +429,13 @@ class Block(DataIntegrationMixin):
 
                         return data
 
-                    def _get_variable(
-                        var_name: str,
-                        parse: str = None,
-                        global_vars=variables,
-                    ) -> Any:
-                        if not global_vars:
-                            return None
-
-                        val = global_vars.get(var_name)
-                        if parse:
-                            results = {}
-                            exec(f'_parse_func = {parse}', results)
-                            return results['_parse_func'](val)
-
-                        return val
-
                     text = Template(content).render(
                         block_output=_block_output,
-                        variables=_get_variable,
+                        variables=lambda x, p, v=variables: get_variable_for_template(
+                            x,
+                            parse=p,
+                            variables=v,
+                        ),
                         **get_template_vars(),
                     )
 
