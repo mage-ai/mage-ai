@@ -38,7 +38,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
-MAX_BLOCKS_FOR_TREE = 40
+MAX_BLOCKS_FOR_TREE = 100
 
 
 class BlockResource(GenericResource):

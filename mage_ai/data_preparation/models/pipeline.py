@@ -1209,13 +1209,14 @@ class Pipeline:
                 stream_id=variable_name,
             )
 
-        return self.variable_manager.get_variable(
-            self.uuid,
-            block_uuid,
-            variable_name,
+        variable = block.get_variable(
+            block_uuid=block_uuid,
             partition=partition,
             spark=spark,
+            variable_uuid=variable_name,
         )
+
+        return variable
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

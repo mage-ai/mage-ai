@@ -9,6 +9,10 @@ from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_datafra
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     get_selected_streams,
 )
+from mage_ai.data_preparation.models.block.dynamic import (
+    all_variable_uuids,
+    reduce_output_from_block,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     BlockType,
@@ -123,7 +127,10 @@ def dynamic_block_values_and_metadata(
 
     values = []
     block_metadata = []
-    output_vars = block.output_variables(execution_partition=execution_partition)
+    output_vars = block.output_variables(
+        block_uuid=block_uuid,
+        execution_partition=execution_partition,
+    )
     for idx, output_name in enumerate(output_vars):
         if idx == 0:
             values = block.pipeline.get_block_variable(
@@ -510,11 +517,16 @@ def output_variables(
         streams = get_selected_streams(di_settings.get('catalog'))
         output_variables = [s.get('tap_stream_id') for s in streams]
     else:
-        all_variables = pipeline.variable_manager.get_variables_by_block(
-            pipeline.uuid,
-            block_uuid,
-            partition=execution_partition,
-        )
+        if should_reduce_output(block):
+            all_variables = all_variable_uuids(
+                block,
+                partition=execution_partition,
+            )
+        else:
+            all_variables = block.get_variables_by_block(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+            )
         output_variables = [v for v in all_variables if is_output_variable(v)]
 
     output_variables.sort()
@@ -672,18 +684,30 @@ def fetch_input_variables(
                 continue
 
             variables = input_variables_by_uuid[upstream_block_uuid]
-            variable_values = [
-                pipeline.get_block_variable(
-                    upstream_block_uuid,
-                    var,
+
+            if should_reduce:
+                variable_values = [reduce_output_from_block(
+                    upstream_block,
+                    variable_uuid,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
                     input_args=input_args,
                     partition=execution_partition,
                     spark=spark,
-                )
-                for var in variables
-            ]
+                ) for variable_uuid in variables]
+            else:
+                variable_values = [
+                    pipeline.get_block_variable(
+                        upstream_block_uuid,
+                        var,
+                        from_notebook=from_notebook,
+                        global_vars=global_vars,
+                        input_args=input_args,
+                        partition=execution_partition,
+                        spark=spark,
+                    )
+                    for var in variables
+                ]
 
             upstream_in_dynamic_upstream = False
             if dynamic_upstream_block_uuids:
@@ -693,7 +717,13 @@ def fetch_input_variables(
                     elif upstream_block_uuid in uuids:
                         upstream_in_dynamic_upstream = True
 
-            if dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
+            if should_reduce:
+                if isinstance(variable_values, list) and len(variable_values) == 1:
+                    final_val = variable_values[0]
+                else:
+                    final_val = variable_values
+                input_vars[idx] = final_val
+            elif dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
                 reduce_output_indexes.append((idx, upstream_block_uuid))
             elif is_dynamic_block(upstream_block):
                 val = None
@@ -734,6 +764,10 @@ def fetch_input_variables(
 
                 upstream_block = pipeline.get_block(upstream_block_uuid)
                 should_reduce = should_reduce_output(upstream_block)
+
+                if should_reduce:
+                    continue
+
                 upstream_is_dynamic = is_dynamic_block(upstream_block)
 
                 uuids = list(
