@@ -101,16 +101,19 @@ class Interaction:
     def delete(self) -> None:
         self.file.delete()
 
+    def exists(self) -> bool:
+        return self.file.exists()
+
     async def inputs(self) -> Dict:
         mapping = {}
-        settings = await self.content_parsed()
+        settings = await self.content_parsed() or {}
         for uuid, item in (settings.get('inputs') or {}).items():
             mapping[uuid] = InteractionInput(**item)
 
         return mapping
 
     async def layout(self) -> Dict:
-        settings = await self.content_parsed()
+        settings = await self.content_parsed() or {}
         rows = []
         for row in (settings.get('layout') or []):
             items = []
@@ -122,7 +125,7 @@ class Interaction:
 
     async def variables(self) -> Dict:
         mapping = {}
-        settings = await self.content_parsed()
+        settings = await self.content_parsed() or {}
         for uuid, item in (settings.get('variables') or {}).items():
             mapping[uuid] = InteractionVariable(**item)
 
