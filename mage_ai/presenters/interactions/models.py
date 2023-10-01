@@ -28,7 +28,7 @@ class InteractionInputOption:
 
 @dataclass
 class InteractionInputStyle:
-    multiline: bool = False
+    multiline: bool = None
 
 
 @dataclass
@@ -36,6 +36,13 @@ class InteractionInput:
     options: List[InteractionInputOption] = field(default_factory=list)
     style: InteractionInputStyle = None
     type: InteractionInputType = None
+
+    def __post_init__(self):
+        if self.style and isinstance(self.style, dict):
+            self.style = InteractionInputStyle(**self.style)
+
+        if self.type and isinstance(self.type, str):
+            self.type = InteractionInputType(self.type)
 
 
 @dataclass
@@ -49,8 +56,13 @@ class InteractionVariable:
     description: str = None
     input: str = None
     name: str = None
-    required: bool = False
+    required: bool = None
     types: List[InteractionVariableType] = field(default_factory=list)
+    uuid: str = None
+
+    def __post_init__(self):
+        if self.types and isinstance(self.types, list):
+            self.types = [InteractionVariableType(t) for t in self.types]
 
 
 class Interaction:
