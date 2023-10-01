@@ -686,6 +686,10 @@ function PipelineDetailPage({
     },
   );
 
+  const [ouputsToSaveByBlockUUID, setOuputsToSaveByBlockUUID] = useState<{
+    [blockUUID: string]: any;
+  }>({});
+
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType | {
@@ -752,7 +756,10 @@ function PipelineDetailPage({
             type,
           } = d;
 
-          if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+          if (BlockTypeEnum.SCRATCHPAD === block.type
+            || hasError
+            || ('table' !== type && ouputsToSaveByBlockUUID?.[block?.uuid])
+          ) {
             if (Array.isArray(data)) {
               d.data = data.reduce((acc, text: string) => {
                 if (text.match(INTERNAL_OUTPUT_REGEX)) {
@@ -785,7 +792,7 @@ function PipelineDetailPage({
         // @ts-ignore
         outputs = arr2.map((d: KernelOutputType, idx: number) => ({
           text_data: JSON.stringify(d),
-          variable_uuid: `${uuid}_${idx}`,
+          variable_uuid: `output_${idx}`,
         }));
       }
 
@@ -867,6 +874,8 @@ function PipelineDetailPage({
       }
     });
 
+    setOuputsToSaveByBlockUUID({});
+
     // @ts-ignore
     return updatePipeline({
       pipeline: {
@@ -937,6 +946,7 @@ function PipelineDetailPage({
     blocks,
     maxPrintOutputLines,
     messages,
+    ouputsToSaveByBlockUUID,
     pipeline,
     pipelineLastSaved,
     pipelineLastSavedState,
@@ -2073,6 +2083,11 @@ function PipelineDetailPage({
 
         return runningBlocksPrevious.concat(block);
       });
+
+      setOuputsToSaveByBlockUUID(prev => ({
+        ...prev,
+        [block?.uuid]: true,
+      }));
     }
 
     // Need to fetch pipeline to refresh block status in dependency graph

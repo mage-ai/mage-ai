@@ -160,8 +160,11 @@ function LogDetail({
               valueToDisplay = <pre>{valueTitle}</pre>;
             }
             if (typeof valueToDisplay === 'object') {
-              valueToDisplay = JSON.stringify(valueToDisplay, null, 2);
-              valueToDisplay = <pre>{valueToDisplay}</pre>;
+              try {
+                valueToDisplay = JSON.stringify(valueToDisplay, null, 2);
+                valueToDisplay = <pre>{valueToDisplay}</pre>;
+              } catch {
+              }
             }
             if (typeof valueTitle === 'object') {
               valueTitle = JSON.stringify(valueTitle);

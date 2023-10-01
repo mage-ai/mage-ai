@@ -77,6 +77,7 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
+  messagesAll?: KernelOutputType[];
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline?: PipelineType;
   runCount?: number;
@@ -119,6 +120,7 @@ function CodeOutput({
   isInProgress,
   mainContainerWidth,
   messages,
+  messagesAll,
   openSidekickView,
   pipeline,
   runCount,
@@ -199,33 +201,42 @@ function CodeOutput({
 
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
-  const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
-    const last = arr.at(-1);
+  const combinedMessages = useMemo(() => messages?.length >= 1
+    ? messages.reduce((arr, curr) => {
+      const last = arr.at(-1);
 
-    if (DATA_TYPE_TEXTLIKE.includes(last?.type)
-      && last?.type === curr.type
-      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-    ) {
-      if (Array.isArray(last.data)) {
-        last.data.concat(curr.data);
-      } else if (typeof last.data === 'string') {
-        const currentText = combineTextData(curr.data) || '';
-        last.data = [last.data, currentText].join('\n');
+      if (DATA_TYPE_TEXTLIKE.includes(last?.type)
+        && last?.type === curr.type
+        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+      ) {
+        if (Array.isArray(last.data)) {
+          last.data.concat(curr.data);
+        } else if (typeof last.data === 'string') {
+          const currentText = combineTextData(curr.data) || '';
+          last.data = [last.data, currentText].join('\n');
+        }
+      } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+      ) {
+        arr.push({
+          ...curr,
+          data: combineTextData(curr.data),
+        });
+      } else {
+        arr.push({ ...curr });
       }
-    } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-    ) {
-      arr.push({
-        ...curr,
-        data: combineTextData(curr.data),
-      });
-    } else {
-      arr.push({ ...curr });
-    }
 
-    return arr;
-  }, []), [
+      return arr;
+    }, [])
+    : messagesAll || []
+  , [
     messages,
+    messagesAll,
+  ]);
+
+  const renderMessagesRaw = useMemo(() => !messages?.length && messagesAll?.length >= 1, [
+    messages,
+    messagesAll,
   ]);
 
   const progressBar = useMemo(() => (
@@ -291,11 +302,25 @@ function CodeOutput({
     const tableContent = [];
     const testMessages = [];
 
-    combinedMessages?.forEach(({
-      data: dataInit,
-      type: dataType,
-    }: KernelOutputType, idx: number) => {
-      if (!dataInit || dataInit?.length === 0) {
+    combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
+      let dataInit;
+      let dataType;
+      const outputIsArray = Array.isArray(output);
+
+      if (renderMessagesRaw && outputIsArray) {
+        dataInit = {
+          columns: ['-'],
+          index: 0,
+          rows: output?.map(i => [JSON.parse(i)]),
+          shape: [output?.length, 1],
+        };
+        dataType = DataTypeEnum.TABLE;
+      } else {
+        dataInit = output?.data;
+        dataType = output?.type;
+      }
+
+      if (!outputIsArray && (!dataInit || dataInit?.length === 0)) {
         return;
       }
 
@@ -487,6 +512,7 @@ function CodeOutput({
     mainContainerWidth,
     pipeline,
     progressBar,
+    renderMessagesRaw,
     selected,
   ]);
 
@@ -590,7 +616,7 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs && !hasError && !hasOutput) {
+  if (!buttonTabs && !hasError && !hasOutput && !renderMessagesRaw) {
     return null;
   }
 

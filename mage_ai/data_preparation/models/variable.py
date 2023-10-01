@@ -57,7 +57,8 @@ class Variable:
         partition: str = None,
         spark=None,
         storage: BaseStorage = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -68,7 +69,7 @@ class Variable:
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
-        self.block_dir_name = clean_name(self.block_uuid)
+        self.block_dir_name = clean_name(self.block_uuid) if clean_block_uuid else self.block_uuid
         self.partition = partition
         self.variable_dir_path = os.path.join(
             pipeline_path,
@@ -84,7 +85,7 @@ class Variable:
 
     @property
     def variable_path(self):
-        return os.path.join(self.variable_dir_path, self.uuid)
+        return os.path.join(self.variable_dir_path, self.uuid or '')
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):

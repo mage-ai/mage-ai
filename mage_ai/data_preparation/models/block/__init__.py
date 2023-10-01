@@ -336,7 +336,7 @@ class Block(DataIntegrationMixin):
 
     @property
     def uuid(self) -> str:
-        return self.dynamic_block_uuid or self._uuid
+        return self._uuid
 
     @property
     def uuid_replicated(self) -> str:
@@ -345,7 +345,6 @@ class Block(DataIntegrationMixin):
 
     @uuid.setter
     def uuid(self, x) -> None:
-        self.dynamic_block_uuid = None
         self._uuid = x
 
     @property
@@ -1517,7 +1516,7 @@ class Block(DataIntegrationMixin):
         upstream_block_uuids: List[str] = None,
         data_integration_settings_mapping: Dict = None,
     ) -> Tuple[List, List, List]:
-        return fetch_input_variables(
+        variables = fetch_input_variables(
             self.pipeline,
             upstream_block_uuids or self.upstream_block_uuids,
             input_args,
@@ -1528,6 +1527,8 @@ class Block(DataIntegrationMixin):
             from_notebook=from_notebook,
             data_integration_settings_mapping=data_integration_settings_mapping,
         )
+
+        return variables
 
     def get_analyses(self) -> List:
         if self.status == BlockStatus.NOT_EXECUTED:
@@ -1548,6 +1549,76 @@ class Block(DataIntegrationMixin):
             data['variable_uuid'] = v.uuid
             analyses.append(data)
         return analyses
+
+    def get_variables_by_block(
+        self,
+        block_uuid: str,
+        dynamic_block_index: int = None,
+        partition: str = None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+        )
+
+    def get_variable(
+        self,
+        block_uuid: str,
+        variable_uuid: str,
+        dynamic_block_index: int = None,
+        partition: str = None,
+        spark=None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variable(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+            spark=spark,
+            variable_uuid=variable_uuid,
+        )
+
+    def get_variable_object(
+        self,
+        block_uuid: str,
+        variable_uuid: str = None,
+        dynamic_block_index: int = None,
+        partition: str = None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variable_object(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+            spark=self.__get_spark_session(),
+            variable_uuid=variable_uuid,
+        )
 
     def get_outputs(
         self,
@@ -1570,11 +1641,11 @@ class Block(DataIntegrationMixin):
         outputs = []
         variable_manager = self.pipeline.variable_manager
 
-        all_variables = variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            block_uuid,
+        all_variables = self.get_variables_by_block(
+            block_uuid=block_uuid,
             partition=execution_partition,
         )
+
         if not include_print_outputs:
             all_variables = self.output_variables(
                 execution_partition=execution_partition,
@@ -1584,12 +1655,10 @@ class Block(DataIntegrationMixin):
             if selected_variables and v not in selected_variables:
                 continue
 
-            variable_object = variable_manager.get_variable_object(
-                self.pipeline.uuid,
-                block_uuid,
-                v,
+            variable_object = self.get_variable_object(
+                block_uuid=block_uuid,
                 partition=execution_partition,
-                spark=self.__get_spark_session(),
+                variable_uuid=v,
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -2403,12 +2472,20 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     ) -> Dict:
         self.dynamic_block_uuid = dynamic_block_uuid
 
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         if self.pipeline is None:
             return
+
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid=block_uuid,
             partition=execution_partition,
+            clean_block_uuid=clean_block_uuid,
         )
 
         variable_mapping = self.__consolidate_variables(variable_mapping)
@@ -2422,6 +2499,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             is_output_var = is_output_variable(v)
             if (override and not is_output_var) or (override_outputs and is_output_var):
                 removed_variables.append(v)
+
         return dict(
             removed_variables=removed_variables,
             variable_mapping=variable_mapping,
@@ -2441,8 +2519,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             execution_partition,
             override,
             override_outputs,
-            dynamic_block_uuid,
+            dynamic_block_uuid=dynamic_block_uuid,
         )
+
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
@@ -2450,16 +2535,17 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
                 data,
                 partition=execution_partition,
+                clean_block_uuid=clean_block_uuid,
             )
 
         for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
             )
 
@@ -2479,22 +2565,32 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             override_outputs,
             dynamic_block_uuid,
         )
+
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
+
             await self.pipeline.variable_manager.add_variable_async(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
                 data,
                 partition=execution_partition,
+                clean_block_uuid=clean_block_uuid,
             )
 
         for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
+                clean_block_uuid=clean_block_uuid,
             )
 
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
@@ -2537,17 +2633,17 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         from_notebook: bool = False,
         global_vars: Dict = None,
         input_args: List[Any] = None,
+        block_uuid: str = None,
     ) -> List[str]:
         return output_variables(
             self.pipeline,
-            self.uuid,
+            block_uuid or self.uuid,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
-
         )
 
     def output_variable_objects(

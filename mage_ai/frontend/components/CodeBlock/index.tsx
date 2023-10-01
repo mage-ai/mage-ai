@@ -610,8 +610,12 @@ function CodeBlock({
   ]);
   const {
     hasError,
-    hasOutput,
+    hasOutput: hasOutputInit,
   } = hasErrorOrOutput(messagesWithType);
+  const hasOutput = useMemo(() => hasOutputInit || messages?.length >= 1, [
+    hasOutputInit,
+    messages,
+  ]);
 
   const color = getColorsForBlockType(
     blockType,
@@ -1061,6 +1065,7 @@ function CodeBlock({
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
+      messagesAll={messages}
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       runCount={runCount}
@@ -1087,6 +1092,7 @@ function CodeBlock({
     hasOutput,
     isInProgress,
     mainContainerWidth,
+    messages,
     messagesWithType,
     openSidekickView,
     outputCollapsed,

@@ -52,7 +52,8 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -67,6 +68,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
         # Delete data if it exists
         variable.delete()
@@ -98,7 +100,8 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -113,6 +116,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
         # Delete data if it exists
         variable.delete()
@@ -166,6 +170,7 @@ class VariableManager:
         variable_uuid: str,
         partition: str = None,
         variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         Variable(
             variable_uuid,
@@ -174,6 +179,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         ).delete()
 
     def get_variable(
@@ -187,6 +193,7 @@ class VariableManager:
         sample: bool = False,
         sample_count: int = None,
         spark=None,
+        clean_block_uuid: bool = True,
     ) -> Any:
         variable = self.get_variable_object(
             pipeline_uuid,
@@ -195,6 +202,7 @@ class VariableManager:
             partition=partition,
             variable_type=variable_type,
             spark=spark,
+            clean_block_uuid=clean_block_uuid,
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
@@ -210,6 +218,7 @@ class VariableManager:
         variable_uuid: str,
         partition: str = None,
         variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
         spark=None,
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
@@ -222,6 +231,7 @@ class VariableManager:
             spark=spark,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
@@ -249,12 +259,13 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         partition: str = None,
+        clean_block_uuid: bool = True,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
             partition or '',
-            clean_name(block_uuid),
+            clean_name(block_uuid) if clean_block_uuid else block_uuid,
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
