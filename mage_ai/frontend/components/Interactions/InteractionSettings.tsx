@@ -1,0 +1,682 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+
+import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
+import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
+import InteractionDisplay from './InteractionDisplay';
+import InteractionType, {
+  INTERACTION_INPUT_TYPES,
+  INTERACTION_VARIABLE_VALUE_TYPES,
+  InteractionInputOptionType,
+  InteractionInputStyleType,
+  InteractionInputType,
+  InteractionInputTypeEnum,
+  InteractionLayoutItemType,
+  InteractionVariableType,
+  InteractionVariableTypeEnum,
+} from '@interfaces/InteractionType';
+import Select from '@oracle/elements/Inputs/Select';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import { Add, Close } from '@oracle/icons';
+import { ContainerStyle, VariableSettingsStyle } from './index.style';
+import {
+  PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower, removeUnderscore } from '@utils/string';
+import { removeAtIndex } from '@utils/array';
+
+type InteractionSettingsProps = {
+  interaction: InteractionType;
+  updateInteraction: (interaction: InteractionType) => void;
+};
+
+function InteractionSettings({
+  interaction,
+  updateInteraction: updateInteractionProp,
+}: InteractionSettingsProps) {
+  const refNewInputUUID = useRef(null);
+  const refNewVariableUUID = useRef(null);
+
+  const [isAddingNewVariable, setIsAddingNewVariable] = useState<boolean>(false);
+  const [isAddingNewInput, setIsAddingNewInput] = useState<boolean>(false);
+  const [newInputUUID, setNewInputUUID] = useState<string>(null);
+  const [newVariableUUID, setNewVariableUUID] = useState<string>(null);
+
+  const {
+    inputs,
+    layout,
+    uuid,
+    variables,
+  } = interaction || {
+    variables: null,
+    uuid: null,
+  };
+
+  const updateInteraction = useCallback((data) => updateInteractionProp({
+    ...interaction,
+    ...data,
+  }), [
+    interaction,
+    updateInteractionProp,
+  ]);
+
+  const updateInteractionInputs = useCallback((
+    inputUUID: string,
+    input: InteractionInputType,
+  ) => updateInteraction({
+    inputs: {
+      ...inputs,
+      [inputUUID]: {
+        ...inputs?.[inputUUID],
+        ...input,
+      },
+    },
+  }), [
+    inputs,
+    updateInteraction,
+  ]);
+
+  const updateInteractionVariables = useCallback((
+    variableUUID: string,
+    variable: InteractionVariableType,
+  ) => updateInteraction({
+    variables: {
+      ...variables,
+      [variableUUID]: {
+        ...variables?.[variableUUID],
+        ...variable,
+      },
+    },
+  }), [
+    updateInteraction,
+    variables,
+  ]);
+
+  const inputsMemo = useMemo(() => Object.entries(inputs || {}).map(([
+    inputUUID,
+    input,
+  ], idx: number) => {
+    const {
+      options,
+      style,
+      type: inputType,
+    } = input || {
+      options: [],
+      style: null,
+      type: null,
+    };
+
+    return (
+      <Spacing key={`${inputUUID}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
+        <ContainerStyle>
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Spacing mr={PADDING_UNITS}>
+                <Headline default level={5} monospace>
+                  {inputUUID}
+                </Headline>
+              </Spacing>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider muted />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer fullWidth>
+              <Flex flex={1} flexDirection="column">
+                <Spacing mb={1}>
+                  <Text bold default>
+                    Type
+                  </Text>
+                </Spacing>
+
+                <Select
+                  onChange={e => updateInteractionInputs(inputUUID, {
+                    type: e.target.value,
+                  })}
+                  placeholder="Choose a type of input"
+                  value={inputType}
+                >
+                  {INTERACTION_INPUT_TYPES.map((iType: string) => (
+                    <option key={iType} value={iType}>
+                      {capitalizeRemoveUnderscoreLower(iType)}
+                    </option>
+                  ))}
+                </Select>
+              </Flex>
+
+              <Spacing mr={UNITS_BETWEEN_ITEMS_IN_SECTIONS} />
+
+              <Flex flex={1} flexDirection="column">
+                {InteractionInputTypeEnum.TEXT_FIELD === inputType && (
+                  <>
+                    <Spacing mb={1}>
+                      <Text bold default>
+                        Style {removeUnderscore(inputType)}
+                      </Text>
+                    </Spacing>
+
+                    <Checkbox
+                      checked={style?.multiline}
+                      label="Allow writing multiple lines"
+                      onClick={() => updateInteractionInputs(inputUUID, {
+                        style: {
+                          ...style,
+                          multiline: !style?.multiline,
+                        },
+                      })}
+                    />
+                  </>
+                )}
+
+                {[
+                  InteractionInputTypeEnum.CHECKBOX,
+                  InteractionInputTypeEnum.DROPDOWN_MENU,
+                ].includes(inputType) && (
+                  <>
+                    <Spacing mb={1}>
+                      <Text bold default>
+                        Options for {removeUnderscore(inputType)}
+                      </Text>
+                    </Spacing>
+
+                    {options?.map(({
+                      label,
+                      value,
+                    }, idx: number) => (
+                      <Spacing key={`${inputUUID}-option-${idx}`} mt={idx >= 1 ? 1 : 0}>
+                        <FlexContainer
+                          alignItems="center"
+                          flexDirection="row"
+                        >
+                          <Button
+                            iconOnly
+                            noBackground
+                            noBorder
+                            onClick={() => updateInteractionInputs(inputUUID, {
+                              options: removeAtIndex(options, idx),
+                            })}
+                          >
+                            <Close />
+                          </Button>
+
+                          <Spacing mr={PADDING_UNITS} />
+
+                          <Text default>
+                            Label
+                          </Text>
+
+                          <Spacing mr={1} />
+
+                          <TextInput
+                            compact
+                            onChange={e => updateInteractionInputs(inputUUID, {
+                              options: (options || [])?.map((opt, idx2: number) => idx === idx2
+                                ? { ...opt, label: e.target.value }
+                                : opt
+                              ),
+                            })}
+                            value={label || ''}
+                          />
+
+                          <Spacing mr={PADDING_UNITS} />
+
+                          <Text default>
+                            Value
+                          </Text>
+
+                          <Spacing mr={1} />
+
+                          <TextInput
+                            compact
+                            onChange={e => updateInteractionInputs(inputUUID, {
+                              options: (options || [])?.map((opt, idx2: number) => idx === idx2
+                                ? { ...opt, value: e.target.value }
+                                : opt
+                              ),
+                            })}
+                            value={value || ''}
+                          />
+                        </FlexContainer>
+                      </Spacing>
+                    ))}
+
+                    <Spacing mt={1}>
+                      <Button
+                        beforeIcon={<Add />}
+                        compact
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          options: (options || []).concat({
+                            label: '',
+                            value: '',
+                          }),
+                        })}
+                        secondary
+                      >
+                        Add option
+                      </Button>
+                    </Spacing>
+                  </>
+                )}
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+        </ContainerStyle>
+      </Spacing>
+    );
+  }), [
+    inputs,
+    updateInteractionInputs,
+  ]);
+
+  const variablesMemo = useMemo(() => Object.entries(variables || {}).map(([
+    variableUUID,
+    variable,
+  ], idx: number) => {
+    const {
+      description,
+      input: inputUUID,
+      name,
+      required,
+      types,
+    } = variable || {
+      description: '',
+      name: '',
+      required: false,
+      types: [],
+    };
+
+    return (
+      <Spacing key={`${variableUUID}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
+        <ContainerStyle>
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Spacing mr={PADDING_UNITS}>
+                <Headline default level={5} monospace>
+                  {variableUUID}
+                </Headline>
+              </Spacing>
+
+              <FlexContainer alignItems="center">
+                <Text muted={!required} success={required}>
+                  Required
+                </Text>
+
+                <Spacing mr={1} />
+
+                <ToggleSwitch
+                  checked={required as boolean}
+                  compact
+                  onCheck={(valFunc: (val: boolean) => boolean) => updateInteractionVariables(variableUUID, {
+                    required: valFunc(required),
+                  })}
+                />
+              </FlexContainer>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider muted />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer fullWidth>
+              <Flex flex={1} flexDirection="column">
+                <Spacing mb={1}>
+                  <Text bold default>
+                    Label
+                  </Text>
+                </Spacing>
+
+                <TextInput
+                  onChange={e => updateInteractionVariables(variableUUID, {
+                    name: e.target.value,
+                  })}
+                  value={name}
+                />
+
+                <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                  <Spacing mb={1}>
+                    <Text bold default>
+                      Valid data types
+                    </Text>
+                  </Spacing>
+
+                  <FlexContainer
+                    alignItems="center"
+                    flexWrap="wrap"
+                  >
+                    {INTERACTION_VARIABLE_VALUE_TYPES.map((
+                      variableValueType: InteractionVariableTypeEnum,
+                    ) => {
+                      const checked = types?.includes(String(variableValueType));
+
+                      return (
+                        <Spacing
+                          key={variableValueType}
+                          mr={PADDING_UNITS}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            label={capitalizeRemoveUnderscoreLower(variableValueType)}
+                            onClick={()  => updateInteractionVariables(variableUUID, {
+                              types: checked
+                                ? types?.filter(t => t !== variableValueType)
+                                : types.concat(variableValueType),
+                            })}
+                          />
+                        </Spacing>
+                      );
+                    })}
+                  </FlexContainer>
+                </Spacing>
+              </Flex>
+
+              <Spacing mr={UNITS_BETWEEN_ITEMS_IN_SECTIONS} />
+
+              <Flex flex={1} flexDirection="column">
+                <Spacing mb={1}>
+                  <Text bold default>
+                    Description
+                  </Text>
+                </Spacing>
+
+                <TextArea
+                  onChange={e => updateInteractionVariables(variableUUID, {
+                    description: e.target.value,
+                  })}
+                  rows={Math.max(3, description?.split('\n')?.length)}
+                  value={description}
+                />
+              </Flex>
+            </FlexContainer>
+
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <Spacing mb={1}>
+                <Text bold default>
+                  Input
+                </Text>
+              </Spacing>
+
+              <Select
+                monospace
+                onChange={e => updateInteractionVariables(variableUUID, {
+                  input: e.target.value,
+                })}
+                placeholder="Select an existing input"
+                value={inputUUID}
+              >
+                {Object.keys(inputs || {}).map((iUUID: string) => (
+                  <option key={iUUID} value={iUUID}>
+                    {iUUID}
+                  </option>
+                ))}
+              </Select>
+            </Spacing>
+          </Spacing>
+
+          <Divider muted />
+
+          <Spacing p={PADDING_UNITS}>
+            <Spacing mb={PADDING_UNITS}>
+              <Headline default level={5}>
+                Preview of {inputUUID}
+              </Headline>
+            </Spacing>
+
+            <InteractionDisplay
+              interaction={{
+                inputs: {
+                  [inputUUID]: inputs?.[inputUUID],
+                },
+                layout: [
+                  [
+                    {
+                      variable: variableUUID,
+                      width: 1,
+                    },
+                  ],
+                ],
+                variables: {
+                  [variableUUID]: variable,
+                },
+              }}
+            />
+          </Spacing>
+        </ContainerStyle>
+      </Spacing>
+    );
+  }), [
+    inputs,
+    updateInteractionVariables,
+    variables
+  ]);
+
+  const variableUUIDexists = useMemo(() => !!variables?.[newVariableUUID], [
+    newVariableUUID,
+    variables,
+  ]);
+  const inputUUIDexists = useMemo(() => !!inputs?.[newInputUUID], [
+    inputs,
+    newInputUUID,
+  ]);
+
+  return (
+    <ContainerStyle>
+      <Spacing p={PADDING_UNITS}>
+        <Text default large monospace>
+          {uuid}
+        </Text>
+      </Spacing>
+
+      <Divider muted />
+
+      <Spacing p={PADDING_UNITS}>
+        <Spacing mb={PADDING_UNITS}>
+          <FlexContainer
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Spacing mr={PADDING_UNITS} py={1}>
+              <Headline level={4}>
+                Variables
+              </Headline>
+            </Spacing>
+
+            <FlexContainer
+              alignItems="center"
+            >
+              {!isAddingNewVariable && (
+                <Button
+                  beforeIcon={<Add />}
+                  compact
+                  onClick={() => {
+                    setIsAddingNewVariable(true);
+                    setTimeout(() => refNewVariableUUID?.current?.focus(), 1);
+                  }}
+                  secondary
+                  small
+                >
+                  Add new variable
+                </Button>
+              )}
+
+              {isAddingNewVariable && (
+                <>
+                  {variableUUIDexists && (
+                    <>
+                      <Text danger small>
+                        Variable already exists
+                      </Text>
+
+                      <Spacing mr={1} />
+                    </>
+                  )}
+
+                  <TextInput
+                    compact
+                    meta={{
+                      touched: variableUUIDexists,
+                      error: variableUUIDexists,
+                    }}
+                    monospace
+                    onChange={e => setNewVariableUUID(e.target.value)}
+                    ref={refNewVariableUUID}
+                    small
+                    value={newVariableUUID || ''}
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Button
+                    disabled={variableUUIDexists}
+                    compact
+                    onClick={() => {
+                      if (!variableUUIDexists) {
+                        updateInteractionVariables(newVariableUUID, {});
+                        setIsAddingNewVariable(false);
+                        setNewVariableUUID(null);
+                      }
+                    }}
+                    primary
+                    small
+                  >
+                    Create variable
+                  </Button>
+
+                  <Spacing mr={1} />
+
+                  <Button
+                    compact
+                    onClick={() => {
+                      setIsAddingNewVariable(false);
+                      setNewVariableUUID(null);
+                    }}
+                    secondary
+                    small
+                  >
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </FlexContainer>
+          </FlexContainer>
+        </Spacing>
+
+        {variablesMemo}
+      </Spacing>
+
+      <Divider muted />
+
+      <Spacing p={PADDING_UNITS}>
+        <Spacing mb={PADDING_UNITS}>
+          <FlexContainer
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Spacing mr={PADDING_UNITS} py={1}>
+              <Headline level={4}>
+                Inputs
+              </Headline>
+            </Spacing>
+
+            <FlexContainer
+              alignItems="center"
+            >
+              {!isAddingNewInput && (
+                <Button
+                  beforeIcon={<Add />}
+                  compact
+                  onClick={() => {
+                    setIsAddingNewInput(true);
+                    setTimeout(() => refNewInputUUID?.current?.focus(), 1);
+                  }}
+                  secondary
+                  small
+                >
+                  Add new input
+                </Button>
+              )}
+
+              {isAddingNewInput && (
+                <>
+                  {inputUUIDexists && (
+                    <>
+                      <Text danger small>
+                        Input already exists
+                      </Text>
+
+                      <Spacing mr={1} />
+                    </>
+                  )}
+
+                  <TextInput
+                    compact
+                    meta={{
+                      touched: inputUUIDexists,
+                      error: inputUUIDexists,
+                    }}
+                    monospace
+                    onChange={e => setNewInputUUID(e.target.value)}
+                    ref={refNewInputUUID}
+                    small
+                    value={newInputUUID || ''}
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Button
+                    disabled={inputUUIDexists}
+                    compact
+                    onClick={() => {
+                      if (!inputUUIDexists) {
+                        updateInteractionInputs(newInputUUID, {});
+                        setIsAddingNewInput(false);
+                        setNewInputUUID(null);
+                      }
+                    }}
+                    primary
+                    small
+                  >
+                    Create input
+                  </Button>
+
+                  <Spacing mr={1} />
+
+                  <Button
+                    compact
+                    onClick={() => {
+                      setIsAddingNewInput(false);
+                      setNewInputUUID(null);
+                    }}
+                    secondary
+                    small
+                  >
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </FlexContainer>
+          </FlexContainer>
+        </Spacing>
+
+        {inputsMemo}
+      </Spacing>
+    </ContainerStyle>
+  );
+}
+
+export default InteractionSettings;

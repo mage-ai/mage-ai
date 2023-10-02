@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import BlockInteractionRow, { BlockInteractionWithInteraction } from './BlockInteractionRow';
+import BlockInteractionRow from './BlockInteractionRow';
 import BlockType from '@interfaces/BlockType';
 import InteractionType from '@interfaces/InteractionType';
 import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
@@ -24,14 +24,34 @@ function PipelineInteractions({
   selectedBlockUUID,
   setSelectedBlockUUID,
 }: PipelineInteractionsProps) {
-  const interactionsMapping = useMemo(() => indexBy(
-    interactions || [],
-    ({ uuid }) => uuid,
-  ), [
+  const [interactionsMapping, setInteractionsMapping] = useState<{
+    [interactionUUID: string]: InteractionType;
+  }>(null);
+  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
+    [blockUUID: string]: BlockInteractionType;
+  }>(null);
+
+  useEffect(() => {
+    if (!interactionsMapping && interactions?.length >= 1) {
+      setInteractionsMapping(indexBy(
+        interactions || [],
+        ({ uuid }) => uuid,
+      ));
+    }
+  }, [
     interactions,
+    interactionsMapping,
+    setInteractionsMapping,
   ]);
-  const pipelineInteractions = useMemo(() => pipelineInteraction?.interactions || {}, [
+
+  useEffect(() => {
+    if (!blockInteractionsMapping && pipelineInteraction?.interactions) {
+      setBlockInteractionsMapping(pipelineInteraction?.interactions);
+    }
+  }, [
+    blockInteractionsMapping,
     pipelineInteraction,
+    setBlockInteractionsMapping,
   ]);
 
   const interactionsMemo = useMemo(() => {
@@ -39,24 +59,20 @@ function PipelineInteractions({
 
     pipeline?.blocks?.map((block: BlockType) => {
       const blockUUID = block?.uuid;
-      const blockInteractions: BlockInteractionType[] = pipelineInteractions?.[blockUUID];
-
-      const blockInteractionWithInteractions: BlockInteractionWithInteraction[] =
-        blockInteractions?.map((blockInteraction: BlockInteractionType) => {
-          const interaction = interactionsMapping?.[blockInteraction?.uuid];
-
-          return {
-            blockInteraction,
-            interaction,
-          };
-        });
+      const blockInteractions: BlockInteractionType[] = blockInteractionsMapping?.[blockUUID];
 
       arr.push(
         <Spacing mb={PADDING_UNITS}>
           <BlockInteractionRow
             block={block}
-            blockInteractionWithInteractions={blockInteractionWithInteractions}
-
+            blockInteractionWithInteractions={blockInteractions?.map((
+              blockInteraction: BlockInteractionType,
+            ) => ({
+              blockInteraction,
+              interaction: interactionsMapping?.[blockInteraction?.uuid],
+            }))}
+            setBlockInteractionsMapping={setBlockInteractionsMapping}
+            setInteractionsMapping={setInteractionsMapping}
           />
         </Spacing>
       );
@@ -64,9 +80,11 @@ function PipelineInteractions({
 
     return arr;
   }, [
+    blockInteractionsMapping,
     interactionsMapping,
     pipeline,
-    pipelineInteractions,
+    setBlockInteractionsMapping,
+    setInteractionsMapping,
   ]);
 
   return (

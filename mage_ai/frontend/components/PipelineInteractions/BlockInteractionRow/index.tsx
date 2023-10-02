@@ -1,4 +1,7 @@
-import BlockInteractionController from '@components/Interactions/BlockInteractionController';
+import BlockInteractionController, {
+  BlockInteractionControllerProps,
+  BlockInteractionWithInteractionType,
+} from '@components/Interactions/BlockInteractionController';
 import BlockType from '@interfaces/BlockType';
 import Divider from '@oracle/elements/Divider';
 import Headline from '@oracle/elements/Headline';
@@ -8,19 +11,16 @@ import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import { ContainerStyle } from '../index.style';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 
-export type BlockInteractionWithInteraction = {
-  blockInteraction: BlockInteractionType;
-  interaction: InteractionType;
-};
-
 type BlockInteractionRowProps = {
   block: BlockType;
-  blockInteractionWithInteractions: BlockInteractionWithInteraction[];
-};
+  blockInteractionWithInteractions: BlockInteractionWithInteractionType[];
+} & BlockInteractionControllerProps;
 
 function BlockInteractionRow({
   block,
   blockInteractionWithInteractions,
+  setBlockInteractionsMapping,
+  setInteractionsMapping,
 }: BlockInteractionRowProps) {
   const {
     color: borderColor,
@@ -29,10 +29,7 @@ function BlockInteractionRow({
   } = block;
 
   return (
-    <ContainerStyle
-      // borderColor={borderColor}
-      // blockType={blockType}
-    >
+    <ContainerStyle>
       <Spacing p={PADDING_UNITS}>
         <Headline bold default monospace>
           {blockName}
@@ -51,6 +48,8 @@ function BlockInteractionRow({
               blockInteraction={blockInteraction}
               interaction={interaction}
               key={blockInteraction?.name}
+              setBlockInteractionsMapping={setBlockInteractionsMapping}
+              setInteractionsMapping={setInteractionsMapping}
             />
           </Spacing>
         ))}

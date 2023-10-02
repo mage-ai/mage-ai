@@ -5,6 +5,13 @@ export enum InteractionInputTypeEnum {
   TEXT_FIELD = 'text_field',
 }
 
+export const INTERACTION_INPUT_TYPES = [
+  InteractionInputTypeEnum.CHECKBOX,
+  InteractionInputTypeEnum.DROPDOWN_MENU,
+  InteractionInputTypeEnum.SWITCH,
+  InteractionInputTypeEnum.TEXT_FIELD,
+];
+
 export enum InteractionVariableTypeEnum {
   DATE = 'date',
   DATETIME = 'datetime',
@@ -14,6 +21,16 @@ export enum InteractionVariableTypeEnum {
   LIST = 'list',
   STRING = 'string',
 }
+
+export const INTERACTION_VARIABLE_VALUE_TYPES = [
+  InteractionVariableTypeEnum.DATE,
+  InteractionVariableTypeEnum.DATETIME,
+  InteractionVariableTypeEnum.DICTIONARY,
+  InteractionVariableTypeEnum.FLOAT,
+  InteractionVariableTypeEnum.INTEGER,
+  InteractionVariableTypeEnum.LIST,
+  InteractionVariableTypeEnum.STRING,
+];
 
 export interface InteractionInputOptionType {
   label: string;
