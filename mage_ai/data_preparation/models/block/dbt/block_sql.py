@@ -368,7 +368,7 @@ class DBTBlockSQL(DBTBlock):
             needs_downstream_df = True
             limit = -1
 
-        # Interpoalte profiles.yml and invoke dbt
+        # Interpolate profiles.yml and invoke dbt
         with Profiles(self.project_path, variables) as profiles:
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
