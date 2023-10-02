@@ -11,6 +11,7 @@ import {
   InteractionLayoutItemType,
   InteractionVariableType,
 } from '@interfaces/InteractionType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { insertAtIndex, pushAtIndex, removeAtIndex, sum } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
 
@@ -182,7 +183,7 @@ function InteractionLayoutContainer({
               }}
               rowIndex={idx1}
               variable={variable}
-              width={Math.floor(widthPercentageFinal * containerWidth)}
+              width={Math.floor(widthPercentageFinal * containerWidth) - (2 + (UNIT * 2))}
             />
           </Flex>,
         );
@@ -206,7 +207,7 @@ function InteractionLayoutContainer({
                 },
               );
             }}
-            width={containerWidth}
+            // width={containerWidth - 120}
           />,
         );
       }
@@ -234,7 +235,7 @@ function InteractionLayoutContainer({
                 },
               );
             }}
-           width={containerWidth}
+           // width={containerWidth - 120}
         />,
       );
     });

@@ -2,7 +2,8 @@ import { useDrag, useDrop } from 'react-dnd';
 
 import InteractionDisplay from '../InteractionDisplay';
 import Spacing from '@oracle/elements/Spacing';
-import { ContainerStyle } from '../index.style';
+import { ArrowsAdjustingFrameSquare } from '@oracle/icons';
+import { ContainerStyle, LayoutItemStyle } from '../index.style';
 import {
   InteractionInputType,
   InteractionLayoutItemType,
@@ -64,12 +65,16 @@ function LayoutItem({
   }), [onDrop]);
 
   return (
-    <div ref={drop} style={{ width }}>
+    <LayoutItemStyle ref={drop} style={{ width }}>
       <ContainerStyle
         ref={disableDrag ? null : drag}
         style={{ marginLeft: UNIT, marginRight: UNIT }}
       >
         <Spacing p={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <ArrowsAdjustingFrameSquare default size={2 * UNIT} />
+          </Spacing>
+
           <InteractionDisplay
             interaction={{
               inputs: {
@@ -90,7 +95,7 @@ function LayoutItem({
           />
         </Spacing>
       </ContainerStyle>
-    </div>
+    </LayoutItemStyle>
   );
 }
 

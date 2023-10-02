@@ -36,3 +36,9 @@ export const DottedLineStyle = styled.div`
     border: 1px dashed ${(props.theme.borders || dark.borders).light};
   `}
 `;
+
+export const LayoutItemStyle = styled.div`
+  &:hover {
+    cursor: move;
+  }
+`;

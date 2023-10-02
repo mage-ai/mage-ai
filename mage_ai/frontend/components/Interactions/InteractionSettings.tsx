@@ -580,6 +580,7 @@ function InteractionSettings({
         visibleMapping={{
           '0': true,
           '1': true,
+          '2': true,
         }}
         visibleMappingForced={visibleMappingForced}
       >
@@ -859,9 +860,33 @@ function InteractionSettings({
             {inputsMemo}
           </Spacing>
         </AccordionPanel>
-      </Accordion>
 
-      {interactionLayoutMemo}
+        <AccordionPanel
+          noBorderRadius
+          noPaddingContent
+          onClick={() => {
+            setVisibleMappingForced({});
+          }}
+          titleXPadding={PADDING_UNITS * UNIT}
+          titleYPadding={1.5 * UNIT}
+          title={(
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Spacing mr={PADDING_UNITS} py={1}>
+                <Headline level={4}>
+                  Interaction layout
+                </Headline>
+              </Spacing>
+            </FlexContainer>
+          )}
+        >
+          <Spacing p={1}>
+            {interactionLayoutMemo}
+          </Spacing>
+        </AccordionPanel>
+      </Accordion>
     </ContainerStyle>
   );
 }
