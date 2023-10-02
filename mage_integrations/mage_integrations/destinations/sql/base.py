@@ -33,7 +33,8 @@ class Destination(BaseDestination):
         return ''
 
     def test_connection(self) -> None:
-        self.build_connection().build_connection()
+        sql_connection = self.build_connection()
+        sql_connection.close_connection(sql_connection.build_connection())
 
     def export_batch_data(
         self,

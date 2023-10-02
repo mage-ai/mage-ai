@@ -328,14 +328,17 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
     ) -> List[List[tuple]]:
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
+        snowflake_connection = self.build_connection()
+        connection = snowflake_connection.build_connection()
         success, num_chunks, num_rows, output = write_pandas(
-            self.build_connection().build_connection(),
+            connection,
             df,
             table,
             database=database,
             schema=schema,
             auto_create_table=False,
         )
+        snowflake_connection.close_connection(connection)
         self.logger.info(
             f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
         self.logger.info(f'write_pandas output: {output}')
