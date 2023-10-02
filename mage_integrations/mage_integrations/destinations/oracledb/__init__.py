@@ -10,8 +10,8 @@ from mage_integrations.destinations.oracledb.utils import (
     build_alter_table_command,
     build_create_table_command,
     clean_column_name,
-    convert_column_type,
     convert_column_to_type,
+    convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
@@ -62,13 +62,16 @@ class OracleDB(Destination):
         ]
 
     def test_connection(self) -> None:
-        conn = self.build_connection().build_connection()
+        oracledb_connection = self.build_connection()
+        conn = oracledb_connection.build_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("SELECT name FROM v$database")
         except Exception as exc:
             self.logger.error(f"test_connection exception: {exc}")
             raise exc
+        finally:
+            oracledb_connection.close_connection(conn)
         return
 
     def build_create_table_commands(
@@ -204,11 +207,13 @@ END;
         table_name: str,
         database_name: str = None,
     ) -> bool:
-        connection = self.build_connection().build_connection()
+        oracledb_connection = self.build_connection()
+        connection = oracledb_connection.uild_connection()
         cursor = connection.cursor()
         cursor.execute(
             f'SELECT COUNT(*) FROM user_tables WHERE table_name = \'{table_name.upper()}\'')
         number_of_rows = cursor.fetchone()[0]
+        oracledb_connection.close_connection(connection)
         if number_of_rows > 0:
             return True
         return False

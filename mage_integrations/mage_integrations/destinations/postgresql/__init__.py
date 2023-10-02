@@ -173,7 +173,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         table_name: str,
         database_name: str = None,
     ) -> bool:
-        connection = self.build_connection().build_connection()
+        postgres_connection = self.build_connection()
+        connection = postgres_connection.build_connection()
         with connection.cursor() as cursor:
             cursor.execute(
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
@@ -181,7 +182,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             )
             count = cursor.rowcount
 
-            return bool(count)
+            table_exist = bool(count)
+        postgres_connection.close_connection(connection)
+        return table_exist
 
     def calculate_records_inserted_and_updated(
         self,
