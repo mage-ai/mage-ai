@@ -1,8 +1,10 @@
 from datetime import datetime
-from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.shared.hash import ignore_keys, merge_dict
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 import mage_ai
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import ScheduleInterval
+from mage_ai.shared.hash import ignore_keys, merge_dict
 
 
 def create_dag(
@@ -10,9 +12,14 @@ def create_dag(
     pipeline_uuid: str,
     dag_class,
     python_operator_class,
-    dag_settings: Dict[str, Any] = dict(),
-    globals_dict: Dict[str, Any] = dict(),
+    dag_settings: Dict[str, Any] = None,
+    globals_dict: Dict[str, Any] = None,
 ):
+    if dag_settings is None:
+        dag_settings = dict()
+    if globals_dict is None:
+        globals_dict = dict()
+
     pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
 
     tasks = []
@@ -62,7 +69,7 @@ def create_dag(
                 dict(
                     start_date=datetime(2022, 7, 14),
                     description=f'Mage pipeline: {pipeline_uuid}.',
-                    schedule_interval='@once',
+                    schedule_interval=ScheduleInterval.ONCE,
                     catchup=False,
                 ),
                 dag_settings,
@@ -77,10 +84,17 @@ def create_dags(
     project_path: str,
     dag_class,
     python_operator_class,
-    blacklist_pipelines: List[str] = [],
-    dag_settings: Dict[str, Any] = dict(),
-    globals_dict: Dict[str, Any] = dict(),
+    blacklist_pipelines: List[str] = None,
+    dag_settings: Dict[str, Any] = None,
+    globals_dict: Dict[str, Any] = None,
 ):
+    if blacklist_pipelines is None:
+        blacklist_pipelines = []
+    if dag_settings is None:
+        dag_settings = dict()
+    if globals_dict is None:
+        globals_dict = dict()
+
     all_pipeline_uuids = Pipeline.get_all_pipelines(project_path)
     for pipeline_uuid in all_pipeline_uuids:
         if pipeline_uuid not in blacklist_pipelines:

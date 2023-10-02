@@ -644,6 +644,37 @@ class PipelineScheduleTests(DBTestCase):
             cron_itr.get_next(datetime),
         )
 
+    @freeze_time('2023-08-19 20:10:15')
+    def test_should_schedule_always_on(self):
+        pipeline_schedule = PipelineSchedule.create(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 19, 14, 15).replace(tzinfo=timezone.utc),
+        )
+        created_at = datetime(2023, 8, 19, 0, 0, 0)
+        completed_at = datetime(2023, 8, 19, 9, 0, 0)
+        execution_date = datetime(2023, 8, 19, 0, 0, 0)
+        PipelineRun.create(
+            completed_at=completed_at,
+            created_at=created_at,
+            execution_date=execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+        )
+
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+        PipelineRun.create(
+            created_at=datetime(2023, 8, 19, 1, 0, 0),
+            execution_date=datetime(2023, 8, 19, 1, 0, 0),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        self.assertFalse(pipeline_schedule.should_schedule())
+
 
 class PipelineRunTests(DBTestCase):
     @classmethod

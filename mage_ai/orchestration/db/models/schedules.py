@@ -219,16 +219,17 @@ class PipelineSchedule(BaseModel):
         if self.schedule_interval is None:
             return None
 
-        if self.schedule_interval == '@once':
+        if self.schedule_interval == ScheduleInterval.ONCE or \
+                self.schedule_interval == ScheduleInterval.ALWAYS_ON:
             current_execution_date = now
-        elif self.schedule_interval == '@daily':
+        elif self.schedule_interval == ScheduleInterval.DAILY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0)
-        elif self.schedule_interval == '@hourly':
+        elif self.schedule_interval == ScheduleInterval.HOURLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0)
-        elif self.schedule_interval == '@weekly':
+        elif self.schedule_interval == ScheduleInterval.WEEKLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
-        elif self.schedule_interval == '@monthly':
+        elif self.schedule_interval == ScheduleInterval.MONTHLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
             cron_itr = croniter(self.schedule_interval, now)
@@ -241,24 +242,24 @@ class PipelineSchedule(BaseModel):
         # and if the schedule_interval is @daily, then the schedule should finish running by
         # every day by 12:25:00.
         if self.landing_time_enabled() and self.start_time:
-            if self.schedule_interval == '@hourly':
+            if self.schedule_interval == ScheduleInterval.HOURLY:
                 current_execution_date = current_execution_date.replace(
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 )
-            elif self.schedule_interval == '@daily':
+            elif self.schedule_interval == ScheduleInterval.DAILY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 )
-            elif self.schedule_interval == '@weekly':
+            elif self.schedule_interval == ScheduleInterval.WEEKLY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 ) + timedelta(days=self.start_time.weekday())
-            elif self.schedule_interval == '@monthly':
+            elif self.schedule_interval == ScheduleInterval.MONTHLY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
@@ -274,15 +275,16 @@ class PipelineSchedule(BaseModel):
         if current_execution_date is None:
             return None
 
-        if self.schedule_interval == '@once':
+        if self.schedule_interval == ScheduleInterval.ONCE or \
+                self.schedule_interval == ScheduleInterval.ALWAYS_ON:
             pass
-        elif self.schedule_interval == '@daily':
+        elif self.schedule_interval == ScheduleInterval.DAILY:
             next_execution_date = current_execution_date + timedelta(days=1)
-        elif self.schedule_interval == '@hourly':
+        elif self.schedule_interval == ScheduleInterval.HOURLY:
             next_execution_date = current_execution_date + timedelta(hours=1)
-        elif self.schedule_interval == '@weekly':
+        elif self.schedule_interval == ScheduleInterval.WEEKLY:
             next_execution_date = current_execution_date + timedelta(weeks=1)
-        elif self.schedule_interval == '@monthly':
+        elif self.schedule_interval == ScheduleInterval.MONTHLY:
             next_execution_date = (current_execution_date + timedelta(days=32)).replace(day=1)
         else:
             cron_itr = croniter(self.schedule_interval, current_execution_date)
@@ -329,7 +331,7 @@ class PipelineSchedule(BaseModel):
             )
             return False
 
-        if self.schedule_interval == '@once':
+        if self.schedule_interval == ScheduleInterval.ONCE:
             pipeline_run_count = len(self.pipeline_runs)
             if pipeline_run_count == 0:
                 return True
@@ -337,6 +339,14 @@ class PipelineSchedule(BaseModel):
             # Used by streaming pipeline to launch multiple executors
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
+        elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
+            if len(self.pipeline_runs) == 0:
+                return True
+            else:
+                return self.last_pipeline_run_status not in [
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                ]
         else:
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
@@ -382,10 +392,10 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval not in [
-            '@daily',
-            '@hourly',
-            '@monthly',
-            '@weekly',
+            ScheduleInterval.DAILY,
+            ScheduleInterval.HOURLY,
+            ScheduleInterval.MONTHLY,
+            ScheduleInterval.WEEKLY,
         ]:
             return False
 
