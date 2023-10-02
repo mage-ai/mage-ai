@@ -193,7 +193,7 @@ export default {
     checked: BLACK,
     dangerBorder: RED,
     defaultBackground: '#36383F',
-    defaultBorder: '#2E3036',
+    defaultBorder: '#ffffff1a',
     disabledBorder: GRAY,
     focusBackground: GRAY,
     focusBorder: BLUE_HIGHLIGHT,

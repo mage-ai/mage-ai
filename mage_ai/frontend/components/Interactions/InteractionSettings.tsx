@@ -25,7 +25,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import { Add, Close } from '@oracle/icons';
-import { ContainerStyle, VariableSettingsStyle } from './index.style';
+import { ContainerStyle, HeadlineStyle } from './index.style';
 import {
   PADDING_UNITS,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
@@ -43,11 +43,16 @@ function InteractionSettings({
   interaction,
   updateInteraction: updateInteractionProp,
 }: InteractionSettingsProps) {
+  const refMostRecentlyAddedInput = useRef(null);
+  const refMostRecentlyAddedVariable = useRef(null);
   const refNewInputUUID = useRef(null);
   const refNewVariableUUID = useRef(null);
 
   const [isAddingNewVariable, setIsAddingNewVariable] = useState<boolean>(false);
   const [isAddingNewInput, setIsAddingNewInput] = useState<boolean>(false);
+  const [mostRecentlyAddedInputUUID, setMostRecentlyAddedInputUUID] = useState<string>(null);
+  const [mostRecentlyAddedVariableUUID, setMostRecentlyAddedVariableUUID] = useState<string>(null);
+  const [mostRecentlyTouchedVariableUUID, setMostRecentlyTouchedVariableUUID] = useState<string>(null);
   const [newInputUUID, setNewInputUUID] = useState<string>(null);
   const [newVariableUUID, setNewVariableUUID] = useState<string>(null);
 
@@ -116,20 +121,27 @@ function InteractionSettings({
     };
 
     return (
-      <Spacing key={`${inputUUID}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
-        <ContainerStyle>
-          <Spacing p={PADDING_UNITS}>
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Spacing mr={PADDING_UNITS}>
-                <Headline default level={5} monospace>
-                  {inputUUID}
-                </Headline>
-              </Spacing>
-            </FlexContainer>
-          </Spacing>
+      <Spacing key={`${inputUUID}-${idx}`} mt={idx >= 1 ? UNITS_BETWEEN_ITEMS_IN_SECTIONS : 0}>
+        <ContainerStyle
+          ref={mostRecentlyAddedInputUUID === inputUUID
+            ? refMostRecentlyAddedInput
+            : null
+          }
+        >
+          <HeadlineStyle>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Spacing mr={PADDING_UNITS}>
+                  <Headline bold level={5}>
+                    {inputUUID}
+                  </Headline>
+                </Spacing>
+              </FlexContainer>
+            </Spacing>
+          </HeadlineStyle>
 
           <Divider muted />
 
@@ -278,6 +290,8 @@ function InteractionSettings({
     );
   }), [
     inputs,
+    mostRecentlyAddedInputUUID,
+    refMostRecentlyAddedInput,
     updateInteractionInputs,
   ]);
 
@@ -298,37 +312,46 @@ function InteractionSettings({
       types: [],
     };
 
+    const inputSettings = inputs?.[inputUUID];
+
     return (
-      <Spacing key={`${variableUUID}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
-        <ContainerStyle>
-          <Spacing p={PADDING_UNITS}>
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Spacing mr={PADDING_UNITS}>
-                <Headline default level={5} monospace>
-                  {variableUUID}
-                </Headline>
-              </Spacing>
+      <Spacing key={`${variableUUID}-${idx}`} mt={idx >= 1 ? UNITS_BETWEEN_ITEMS_IN_SECTIONS : 0}>
+        <ContainerStyle
+          ref={mostRecentlyAddedVariableUUID === variableUUID
+            ? refMostRecentlyAddedVariable
+            : null
+          }
+        >
+          <HeadlineStyle>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Spacing mr={PADDING_UNITS}>
+                  <Headline bold level={5}>
+                    {variableUUID}
+                  </Headline>
+                </Spacing>
 
-              <FlexContainer alignItems="center">
-                <Text muted={!required} success={required}>
-                  Required
-                </Text>
+                <FlexContainer alignItems="center">
+                  <Text muted={!required} success={required}>
+                    Required
+                  </Text>
 
-                <Spacing mr={1} />
+                  <Spacing mr={1} />
 
-                <ToggleSwitch
-                  checked={required as boolean}
-                  compact
-                  onCheck={(valFunc: (val: boolean) => boolean) => updateInteractionVariables(variableUUID, {
-                    required: valFunc(required),
-                  })}
-                />
+                  <ToggleSwitch
+                    checked={required as boolean}
+                    compact
+                    onCheck={(valFunc: (val: boolean) => boolean) => updateInteractionVariables(variableUUID, {
+                      required: valFunc(required),
+                    })}
+                  />
+                </FlexContainer>
               </FlexContainer>
-            </FlexContainer>
-          </Spacing>
+            </Spacing>
+          </HeadlineStyle>
 
           <Divider muted />
 
@@ -375,7 +398,7 @@ function InteractionSettings({
                             onClick={()  => updateInteractionVariables(variableUUID, {
                               types: checked
                                 ? types?.filter(t => t !== variableValueType)
-                                : types.concat(variableValueType),
+                                : (types || []).concat(variableValueType),
                             })}
                           />
                         </Spacing>
@@ -405,62 +428,101 @@ function InteractionSettings({
             </FlexContainer>
 
             <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Spacing mb={1}>
-                <Text bold default>
-                  Input
-                </Text>
-              </Spacing>
-
-              <Select
-                monospace
-                onChange={e => updateInteractionVariables(variableUUID, {
-                  input: e.target.value,
-                })}
-                placeholder="Select an existing input"
-                value={inputUUID}
+              <FlexContainer
+                alignContent="center"
+                flexDirection="row"
+                justifyContent="space-between"
               >
-                {Object.keys(inputs || {}).map((iUUID: string) => (
-                  <option key={iUUID} value={iUUID}>
-                    {iUUID}
+                <FlexContainer flexDirection="column">
+                  <Text bold default>
+                    Input
+                  </Text>
+                  <Text muted>
+                    Associate an existing input to this variable or create a new input and
+                    then associate it to this variable.
+                  </Text>
+                </FlexContainer>
+              </FlexContainer>
+
+              <Spacing mt={1}>
+                <Select
+                  monospace
+                  onChange={(e) => {
+                    const val = e.target.value;
+
+                    if ('+ Add a new input' === val) {
+                      setIsAddingNewInput(true);
+                      setMostRecentlyTouchedVariableUUID(variableUUID);
+                      setTimeout(() => refNewInputUUID?.current?.focus(), 1);
+                    } else {
+                      updateInteractionVariables(variableUUID, {
+                        input: val,
+                      });
+                    }
+                  }}
+                  placeholder="Select an existing input"
+                  value={inputUUID}
+                >
+                  <option value="+ Add a new input">
+                    + Add a new input
                   </option>
-                ))}
-              </Select>
+                  {Object.keys(inputs || {}).map((iUUID: string) => (
+                    <option key={iUUID} value={iUUID}>
+                      {iUUID}
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
             </Spacing>
           </Spacing>
 
-          <Divider muted />
+          {inputUUID && (
+            <>
+              <Divider muted />
 
-          <Spacing p={PADDING_UNITS}>
-            <Spacing mb={PADDING_UNITS}>
-              <Headline default level={5}>
-                Preview of {inputUUID}
-              </Headline>
-            </Spacing>
+              <Spacing p={PADDING_UNITS}>
+                <Spacing mb={PADDING_UNITS}>
+                  <Headline default level={5}>
+                    Preview of {inputUUID}
+                  </Headline>
+                </Spacing>
 
-            <InteractionDisplay
-              interaction={{
-                inputs: {
-                  [inputUUID]: inputs?.[inputUUID],
-                },
-                layout: [
-                  [
-                    {
-                      variable: variableUUID,
-                      width: 1,
-                    },
-                  ],
-                ],
-                variables: {
-                  [variableUUID]: variable,
-                },
-              }}
-            />
-          </Spacing>
+                {!inputSettings?.type && (
+                  <Text muted>
+                    Select an input style for {inputUUID} before seeing a preview.
+                  </Text>
+                )}
+                {inputSettings?.type && (
+                  <InteractionDisplay
+                    interaction={{
+                      inputs: {
+                        [inputUUID]: inputs?.[inputUUID],
+                      },
+                      layout: [
+                        [
+                          {
+                            variable: variableUUID,
+                            width: 1,
+                          },
+                        ],
+                      ],
+                      variables: {
+                        [variableUUID]: variable,
+                      },
+                    }}
+                  />
+                )}
+              </Spacing>
+            </>
+          )}
         </ContainerStyle>
       </Spacing>
     );
   }), [
     inputs,
+    mostRecentlyAddedVariableUUID,
+    refMostRecentlyAddedVariable,
+    setMostRecentlyTouchedVariableUUID,
     updateInteractionVariables,
     variables
   ]);
@@ -476,15 +538,21 @@ function InteractionSettings({
 
   return (
     <ContainerStyle>
-      <Spacing p={PADDING_UNITS}>
-        <Text default large monospace>
-          {uuid}
-        </Text>
-      </Spacing>
+      <HeadlineStyle>
+        <Spacing p={PADDING_UNITS}>
+          <Text default large monospace>
+            {uuid}
+          </Text>
+        </Spacing>
+      </HeadlineStyle>
 
       <Divider muted />
 
-      <Spacing p={PADDING_UNITS}>
+      <Spacing
+        pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
+        pt={PADDING_UNITS}
+        px={PADDING_UNITS}
+      >
         <Spacing mb={PADDING_UNITS}>
           <FlexContainer
             alignItems="center"
@@ -548,7 +616,9 @@ function InteractionSettings({
                       if (!variableUUIDexists) {
                         updateInteractionVariables(newVariableUUID, {});
                         setIsAddingNewVariable(false);
+                        setMostRecentlyAddedVariableUUID(newVariableUUID);
                         setNewVariableUUID(null);
+                        setTimeout(() => refMostRecentlyAddedVariable?.current?.scrollIntoView(), 1);
                       }
                     }}
                     primary
@@ -581,7 +651,11 @@ function InteractionSettings({
 
       <Divider muted />
 
-      <Spacing p={PADDING_UNITS}>
+      <Spacing
+        pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
+        pt={PADDING_UNITS}
+        px={PADDING_UNITS}
+      >
         <Spacing mb={PADDING_UNITS}>
           <FlexContainer
             alignItems="center"
@@ -643,9 +717,31 @@ function InteractionSettings({
                     compact
                     onClick={() => {
                       if (!inputUUIDexists) {
-                        updateInteractionInputs(newInputUUID, {});
+                        if (mostRecentlyTouchedVariableUUID) {
+                          updateInteraction({
+                            ...interaction,
+                            inputs: {
+                              ...inputs,
+                              [newInputUUID]: {},
+                            },
+                            variables: {
+                              ...variables,
+                              [mostRecentlyTouchedVariableUUID]: {
+                                ...variables?.[mostRecentlyTouchedVariableUUID],
+                                input: newInputUUID,
+                              },
+                            },
+                          });
+                        } else {
+                          updateInteractionInputs(newInputUUID, {});
+                        }
+
                         setIsAddingNewInput(false);
+                        setMostRecentlyAddedInputUUID(newInputUUID);
+                        setMostRecentlyTouchedVariableUUID(null);
                         setNewInputUUID(null);
+
+                        setTimeout(() => refMostRecentlyAddedInput?.current?.scrollIntoView(), 1);
                       }
                     }}
                     primary

@@ -18,11 +18,15 @@ export const ContainerStyle = styled.div<{
   position: relative;
   border-style: solid;
   border-width: 1px;
+  overflow: hidden;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 `;
 
-export const VariableSettingsStyle = styled.div`
+export const HeadlineStyle = styled.div`
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).chartBlock};
+  `}
 `;
