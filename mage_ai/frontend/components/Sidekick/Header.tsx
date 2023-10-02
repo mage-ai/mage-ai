@@ -9,6 +9,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -31,6 +32,7 @@ type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
   depGraphZoom?: number;
   pipeline: PipelineType;
+  project?: ProjectType;
   secrets?: {
     [key: string]: any;
   }[];
@@ -45,6 +47,7 @@ function SidekickHeader({
   activeView,
   depGraphZoom,
   pipeline,
+  project,
   secrets,
   selectedBlock,
   treeRef,
@@ -54,7 +57,9 @@ function SidekickHeader({
   const query = queryFromUrl();
   const globalVars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
-  const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
+  const sidekickView = SIDEKICK_VIEWS_BY_KEY({
+    project,
+  })[activeView];
   let sidekickLabel = sidekickView?.buildLabel?.({
     pipeline,
     secrets,

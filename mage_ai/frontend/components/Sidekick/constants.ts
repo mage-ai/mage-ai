@@ -1,7 +1,9 @@
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import {
   Callback,
   Charts,
+  Interactions,
   Lightning,
   NavReport,
   Secrets,
@@ -27,6 +29,7 @@ export enum ViewKeyEnum {
   EXTENSIONS = 'power_ups',
   FILE_VERSIONS = 'file_versions',
   GRAPHS = 'graphs',
+  INTERACTIONS = 'interactions',
   REPORTS = 'reports',
   SECRETS = 'secrets',
   SETTINGS = 'settings',
@@ -48,7 +51,9 @@ export const MESSAGE_VIEWS = [
   ViewKeyEnum.DATA,
 ];
 
-export const SIDEKICK_VIEWS: {
+export function SIDEKICK_VIEWS(opts?: {
+  project?: ProjectType;
+}): {
   buildLabel?: (opts: {
     pipeline: PipelineType;
     secrets?: {
@@ -60,88 +65,103 @@ export const SIDEKICK_VIEWS: {
   }) => string;
   key: ViewKeyEnum;
   label?: string;
-}[] = [
-  {
-    key: ViewKeyEnum.TREE,
-    label: 'Tree',
-  },
-  {
-    buildLabel: ({
-      pipeline,
-    }) => {
-      const { widgets = [] } = pipeline || {};
-
-      if (widgets?.length >= 1) {
-        return `Charts (${widgets.length})`;
-      }
-
-      return 'Charts';
+}[] {
+  const arr = [
+    {
+      key: ViewKeyEnum.TREE,
+      label: 'Tree',
     },
-    key: ViewKeyEnum.CHARTS,
-  },
-  {
-    buildLabel: ({
-      variables,
-    }) => {
-      if (variables?.length >= 1) {
-        return `Variables (${variables.length})`;
-      }
+    {
+      buildLabel: ({
+        pipeline,
+      }) => {
+        const { widgets = [] } = pipeline || {};
 
-      return 'Variables';
+        if (widgets?.length >= 1) {
+          return `Charts (${widgets.length})`;
+        }
+
+        return 'Charts';
+      },
+      key: ViewKeyEnum.CHARTS,
     },
-    key: ViewKeyEnum.VARIABLES,
-  },
-  {
-    buildLabel: ({
-      secrets,
-    }) => {
-      if (secrets?.length >= 1) {
-        return `Secrets (${secrets.length})`;
-      }
+    {
+      buildLabel: ({
+        variables,
+      }) => {
+        if (variables?.length >= 1) {
+          return `Variables (${variables.length})`;
+        }
 
-      return 'Secrets';
+        return 'Variables';
+      },
+      key: ViewKeyEnum.VARIABLES,
     },
-    key: ViewKeyEnum.SECRETS,
-  },
-  {
-    buildLabel: ({
-      pipeline,
-    }) => 'Add-on blocks',
-    key: ViewKeyEnum.ADDON_BLOCKS,
-  },
-  {
-    buildLabel: ({
-      pipeline,
-    }) => {
-      const { extensions = {} } = pipeline || {};
-      let extensionsCount = 0;
-      Object.values(extensions).forEach(({ blocks }) => {
-        extensionsCount += blocks?.length || 0;
-      });
+    {
+      buildLabel: ({
+        secrets,
+      }) => {
+        if (secrets?.length >= 1) {
+          return `Secrets (${secrets.length})`;
+        }
 
-      if (extensionsCount >= 1) {
-        return `Power ups (${extensionsCount})`;
-      }
-
-      return 'Power ups';
+        return 'Secrets';
+      },
+      key: ViewKeyEnum.SECRETS,
     },
-    key: ViewKeyEnum.EXTENSIONS,
-  },
-  {
-    key: ViewKeyEnum.DATA,
-    label: 'Data',
-  },
-  {
-    key: ViewKeyEnum.TERMINAL,
-    label: 'Terminal',
-  },
-  {
-    key: ViewKeyEnum.BLOCK_SETTINGS,
-    label: 'Block settings',
-  },
-];
+    {
+      buildLabel: ({
+        pipeline,
+      }) => 'Add-on blocks',
+      key: ViewKeyEnum.ADDON_BLOCKS,
+    },
+    {
+      buildLabel: ({
+        pipeline,
+      }) => {
+        const { extensions = {} } = pipeline || {};
+        let extensionsCount = 0;
+        Object.values(extensions).forEach(({ blocks }) => {
+          extensionsCount += blocks?.length || 0;
+        });
 
-export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
+        if (extensionsCount >= 1) {
+          return `Power ups (${extensionsCount})`;
+        }
+
+        return 'Power ups';
+      },
+      key: ViewKeyEnum.EXTENSIONS,
+    },
+    {
+      key: ViewKeyEnum.DATA,
+      label: 'Data',
+    },
+    {
+      key: ViewKeyEnum.TERMINAL,
+      label: 'Terminal',
+    },
+    {
+      key: ViewKeyEnum.BLOCK_SETTINGS,
+      label: 'Block settings',
+    },
+  ];
+
+  if (opts?.project?.features?.[FeatureUUIDEnum.INTERACTIONS]) {
+    arr.push({
+      key: ViewKeyEnum.INTERACTIONS,
+      label: 'Interactions',
+    });
+  }
+
+  return arr;
+}
+
+export function SIDEKICK_VIEWS_BY_KEY(opts?: {
+  project?: ProjectType;
+}) {
+  return indexBy(SIDEKICK_VIEWS(opts), ({ key }) => key)
+};
 
 export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.ADDON_BLOCKS]: Union,
@@ -150,6 +170,7 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.CHARTS]: Charts,
   [ViewKeyEnum.DATA]: Table,
   [ViewKeyEnum.EXTENSIONS]: Lightning,
+  [ViewKeyEnum.INTERACTIONS]: Interactions,
   [ViewKeyEnum.SECRETS]: Secrets,
   [ViewKeyEnum.SETTINGS]: Settings,
   [ViewKeyEnum.TERMINAL]: Terminal,

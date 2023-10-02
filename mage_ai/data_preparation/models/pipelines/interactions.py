@@ -136,6 +136,15 @@ class PipelineInteractions:
     def file_path(self) -> str:
         return os.path.join(self.pipeline.dir_path, PIPELINE_INTERACTIONS_FILENAME)
 
+    async def interaction_uuids(self) -> List[str]:
+        interaction = await self.interaction()
+        interaction_uuids = []
+        for _block_uuid, block_interactions in (interaction.interactions or {}).items():
+            for block_interaction in block_interactions:
+                interaction_uuids.append(block_interaction.uuid)
+
+        return list(set(interaction_uuids))
+
     async def save(self) -> None:
         await self.file.update_content_async(self._content or '')
 

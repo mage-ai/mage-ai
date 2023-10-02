@@ -10,10 +10,15 @@ from mage_ai.shared.hash import extract
 class PipelineInteractionResource(GenericResource):
     @classmethod
     @safe_db_query
-    async def member(self, pk, user, **kwargs):
+    async def get_model(self, pk):
         uuid = urllib.parse.unquote(pk)
         pipeline = await Pipeline.get_async(uuid)
-        model = PipelineInteractions(pipeline)
+        return PipelineInteractions(pipeline)
+
+    @classmethod
+    @safe_db_query
+    async def member(self, pk, user, **kwargs):
+        model = await self.get_model(pk)
 
         return self(model, user, **kwargs)
 

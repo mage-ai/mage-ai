@@ -14,11 +14,11 @@ class InteractionResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        pipeline = kwargs.get('parent_model')
+        pipeline_interaction = kwargs.get('parent_model')
         interactions = []
 
         async def load_interaction(uuid) -> Dict:
-            interaction = Interaction(uuid, pipeline)
+            interaction = Interaction(uuid, pipeline=pipeline_interaction.pipeline)
 
             try:
                 return await interaction.to_dict(include_content=True)
@@ -26,8 +26,8 @@ class InteractionResource(GenericResource):
                 if is_debug():
                     print(f'[WARNING] InteractionResource.collection: {err}')
 
-        if pipeline:
-            interaction_uuids = [d.get('uuid') for d in (pipeline.interactions or {}).values()]
+        if pipeline_interaction:
+            interaction_uuids = await pipeline_interaction.interaction_uuids()
             interactions += await asyncio.gather(
                 *[load_interaction(uuid) for uuid in interaction_uuids],
             )
@@ -37,10 +37,14 @@ class InteractionResource(GenericResource):
     @classmethod
     @safe_db_query
     async def create(self, payload, user, **kwargs):
-        pipeline = kwargs.get('parent_model')
+        pipeline_interaction = kwargs.get('parent_model')
         uuid = payload.get('uuid')
 
-        interaction = Interaction(uuid, pipeline=pipeline)
+        interaction = Interaction(
+            uuid,
+            pipeline=pipeline_interaction.pipeline if pipeline_interaction else None,
+        )
+
         if interaction.exists():
             error = ApiError.RESOURCE_INVALID.copy()
             error['message'] = f'Interaction {uuid} already exists.'

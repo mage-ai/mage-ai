@@ -2728,6 +2728,7 @@ function PipelineDetailPage({
             activeView={activeSidekickView}
             depGraphZoom={depGraphZoom}
             pipeline={pipeline}
+            project={project}
             secrets={secrets}
             selectedBlock={selectedBlock}
             treeRef={treeRef}
@@ -2739,6 +2740,7 @@ function PipelineDetailPage({
         afterNavigationItems={buildNavigationItemsSidekick({
           activeView: activeSidekickView,
           pipeline,
+          project,
           secrets,
           setActiveSidekickView,
           variables: globalVariables,
