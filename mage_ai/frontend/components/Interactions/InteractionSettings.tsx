@@ -11,6 +11,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import InteractionDisplay from './InteractionDisplay';
+import InteractionLayoutContainer from './InteractionLayoutContainer';
 import InteractionType, {
   INTERACTION_INPUT_TYPES,
   INTERACTION_VARIABLE_VALUE_TYPES,
@@ -49,6 +50,7 @@ function InteractionSettings({
   interaction,
   updateInteraction: updateInteractionProp,
 }: InteractionSettingsProps) {
+  const containerRef = useRef(null);
   const refMostRecentlyAddedInput = useRef(null);
   const refMostRecentlyAddedVariable = useRef(null);
   const refNewInputUUID = useRef(null);
@@ -545,8 +547,24 @@ function InteractionSettings({
     newInputUUID,
   ]);
 
+  const interactionLayoutMemo = useMemo(() => (
+    <InteractionLayoutContainer
+      containerRef={containerRef}
+      interaction={interaction}
+      updateLayout={(
+        layoutNew: InteractionLayoutItemType[][],
+      ) => updateInteraction({
+        layout: layoutNew,
+      })}
+    />
+  ), [
+    containerRef,
+    interaction,
+    updateInteraction,
+  ]);
+
   return (
-    <ContainerStyle>
+    <ContainerStyle ref={containerRef}>
       <HeadlineStyle>
         <Spacing p={PADDING_UNITS}>
           <Text default large monospace>
@@ -641,7 +659,19 @@ function InteractionSettings({
                         pauseEvent(e);
 
                         if (!variableUUIDexists) {
-                          updateInteractionVariables(newVariableUUID, {});
+                          const layoutNew = [...layout];
+                          layoutNew.push([{
+                            width: 1,
+                            variable: newVariableUUID,
+                          }]);
+                          updateInteraction({
+                            ...interaction,
+                            layout: layoutNew,
+                            variables: {
+                              ...variables,
+                              [newVariableUUID]: {},
+                            },
+                          });
                           setIsAddingNewVariable(false);
                           setMostRecentlyAddedVariableUUID(newVariableUUID);
                           setNewVariableUUID(null);
@@ -830,6 +860,8 @@ function InteractionSettings({
           </Spacing>
         </AccordionPanel>
       </Accordion>
+
+      {interactionLayoutMemo}
     </ContainerStyle>
   );
 }

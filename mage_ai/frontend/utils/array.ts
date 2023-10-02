@@ -1,5 +1,18 @@
 import { dig } from '@utils/hash';
 
+export function insertAtIndex(item, idx, arr) {
+  const copy1 = arr.slice(0, idx);
+  const copy2 = arr.slice(idx, arr?.length);
+
+  const arrNew = [];
+
+  arrNew.push(...copy1);
+  arrNew.push(item);
+  arrNew.push(...copy2);
+
+  return arrNew;
+}
+
 export function pushAtIndex(item, idx, arr) {
   const copy = arr.slice();
   copy.splice(idx, 0, item);

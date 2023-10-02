@@ -30,3 +30,9 @@ export const HeadlineStyle = styled.div`
     background-color: ${(props.theme.background || dark.background).chartBlock};
   `}
 `;
+
+export const DottedLineStyle = styled.div`
+  ${props => `
+    border: 1px dashed ${(props.theme.borders || dark.borders).light};
+  `}
+`;
