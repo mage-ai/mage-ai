@@ -6,6 +6,7 @@ import Headline from '@oracle/elements/Headline';
 import InteractionType, {
   InteractionInputOptionType,
   InteractionInputStyleType,
+  InteractionInputType,
   InteractionInputTypeEnum,
   InteractionLayoutItemType,
   InteractionVariableType,
@@ -79,14 +80,14 @@ function InteractionDisplay({
                 label,
                 value,
               }: InteractionInputOptionType) => (
-                <Spacing key={value || label} mr={PADDING_UNITS}>
+                <Spacing key={String(value || label)} mr={PADDING_UNITS}>
                   <Checkbox
                     {...sharedProps}
                     label={label}
                     // checked={!!value}
-                    onClick={(e) => {
-                      console.log(value, e.target.value);
-                    }}
+                    // onClick={(e) => {
+                    //   console.log(value, e.target.value);
+                    // }}
                   />
                 </Spacing>
               ))}
@@ -141,8 +142,8 @@ function InteractionDisplay({
                 label,
                 value,
               }: InteractionInputOptionType) => (
-                <option key={value || label} value={value || label}>
-                  {label || value}
+                <option key={String(value || label)} value={String(value || label)}>
+                  {String(label || value)}
                 </option>
               ))}
             </Select>
@@ -230,7 +231,11 @@ function InteractionDisplay({
     variables,
   ]);
 
-  return inputsMemo;
+  return (
+    <>
+      {inputsMemo}
+    </>
+  );
 }
 
 export default InteractionDisplay;

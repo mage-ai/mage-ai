@@ -8,7 +8,7 @@ import LayoutItem from './LayoutItem';
 import LayoutItemWithDrag from './LayoutItemWithDrag';
 import RowDivider from './RowDivider';
 import Spacing from '@oracle/elements/Spacing';
-import {
+import InteractionType, {
   InteractionInputType,
   InteractionLayoutItemType,
   InteractionVariableType,
@@ -20,7 +20,7 @@ import { useWindowSize } from '@utils/sizes';
 type InteractionLayoutContainerProps = {
   containerRef: any;
   interaction: InteractionType;
-  updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => InteractionLayoutItemType[][];
+  updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => void;
 };
 
 function InteractionLayoutContainer({
@@ -277,7 +277,11 @@ function InteractionLayoutContainer({
   ]);
 
   if (!updateLayout) {
-    return layoutWithVariablesAndInput;
+    return (
+      <>
+        {layoutWithVariablesAndInput}
+      </>
+    );
   }
 
   return (

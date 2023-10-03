@@ -19,7 +19,7 @@ export type AccordionProps = {
     [key: number]: boolean;
   };
   visibleMappingForced?: {
-    [key: number]: boolean;
+    [key: number | number]: boolean;
   };
 } & AccordionPanelProps;
 

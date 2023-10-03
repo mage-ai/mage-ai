@@ -13,6 +13,7 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 
 type BlockInteractionControllerProps = {
   blockInteraction?: BlockInteractionType;
+  children?: any;
   containerRef?: any;
   interaction: InteractionType;
   isEditing?: boolean;
@@ -42,6 +43,7 @@ function BlockInteractionController({
   ]);
 
   const updateInteraction =
+    // @ts-ignore
     useCallback((interactionUpdated: InteractionType) => setInteractionsMapping(prev => ({
       ...prev,
       [interactionUpdated?.uuid]: {

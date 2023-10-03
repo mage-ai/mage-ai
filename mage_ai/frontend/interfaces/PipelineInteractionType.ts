@@ -11,15 +11,17 @@ export interface BlockInteractionTriggerType {
 }
 
 export interface BlockInteractionTriggerWithUUIDType {
+  schedule_interval?: ScheduleIntervalEnum;
+  schedule_type?: ScheduleTypeEnum;
   uuid: string | number;
-} & BlockInteractionTriggerType;
+};
 
 export interface BlockInteractionRoleWithUUIDType {
   role?: RoleFromServerEnum;
   uuid: string;
 };
 
-export interface BlockInteractionVariableType; {
+export interface BlockInteractionVariableType {
   disabled?: boolean;
   required?: boolean;
   types?: InteractionVariableTypeEnum[];
@@ -40,9 +42,9 @@ export interface InteractionPermissionWithUUID {
 export interface BlockInteractionType {
   description?: string;
   layout?: InteractionLayoutItemType[][];
-  name: string;
+  name?: string;
   permissions?: InteractionPermission[];
-  uuid: string;
+  uuid?: string;
   variables?: {
     [variable: string]: BlockInteractionVariableType;
   };
@@ -51,7 +53,10 @@ export interface BlockInteractionType {
 export interface PipelineInteractionLayoutItem {
   block_uuid: string;
   interaction: string;
-} & InteractionLayoutItemType;
+  max_width_percentage?: number;
+  variable?: string;
+  width?: number;
+};
 
 export default interface PipelineInteractionType {
   blocks: {

@@ -42,6 +42,7 @@ import { pauseEvent } from '@utils/events';
 import { removeAtIndex } from '@utils/array';
 
 type InteractionSettingsProps = {
+  children?: any;
   interaction: InteractionType;
   removeBlockInteraction?: () => void;
   updateInteraction: (interaction: InteractionType) => void;
@@ -444,7 +445,7 @@ function InteractionSettings({
                     {INTERACTION_VARIABLE_VALUE_TYPES.map((
                       variableValueType: InteractionVariableTypeEnum,
                     ) => {
-                      const checked = types?.includes(String(variableValueType));
+                      const checked = types?.includes(variableValueType);
 
                       return (
                         <Spacing
@@ -644,8 +645,8 @@ function InteractionSettings({
           <TextInput
             compact
             meta={{
-              touched: variableUUIDexists,
-              error: variableUUIDexists,
+              touched: !!variableUUIDexists,
+              error: String(variableUUIDexists),
             }}
             monospace
             onChange={(e) => {
@@ -766,8 +767,8 @@ function InteractionSettings({
           <TextInput
             compact
             meta={{
-              touched: inputUUIDexists,
-              error: inputUUIDexists,
+              touched: !!inputUUIDexists,
+              error: String(inputUUIDexists),
             }}
             monospace
             onClick={e => pauseEvent(e)}

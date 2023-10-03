@@ -55,7 +55,6 @@ function PipelineInteractions({
   isLoadingUpdatePipelineInteraction,
   pipeline,
   pipelineInteraction,
-  updateInteraction,
   updatePipelineInteraction,
 }: PipelineInteractionsProps) {
   const containerRef = useRef(null);
@@ -70,11 +69,11 @@ function PipelineInteractions({
     [interactionUUID: string]: InteractionType;
   }>(null);
   const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
-    [blockUUID: string]: BlockInteractionType;
+    [blockUUID: string]: BlockInteractionType[];
   }>(null);
   const [permissionsState, setPermissionsState] =
     useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
-  const [editingBlock, setEditingBlock]: BlockType = useState<BlockType>(null);
+  const [editingBlock, setEditingBlock] = useState<BlockType>(null);
 
   const [lastUpdated, setLastUpdated] = useState<Number>(null);
 
@@ -85,9 +84,11 @@ function PipelineInteractions({
     opts?: {
       remove?: boolean;
     },
+  // @ts-ignore
   ) => setBlockInteractionsMapping((prev: {
     [blockUUID: string]: BlockInteractionType;
   }) => {
+    // @ts-ignore
     let blockInteractions = [...(prev?.[blockUUID] || [])];
 
     if (opts?.remove) {
@@ -107,6 +108,7 @@ function PipelineInteractions({
     setBlockInteractionsMapping,
   ]);
 
+  // @ts-ignore
   const setPermissions: (prev) => InteractionPermissionWithUUID[] =
     useCallback((prev) => {
       setLastUpdated(Number(new Date()));
@@ -116,6 +118,7 @@ function PipelineInteractions({
       setPermissionsState,
     ]);
 
+  // @ts-ignore
   const permissions: InteractionPermissionWithUUID[] = useMemo(() => permissionsState?.map(({
     roles,
     triggers,
@@ -169,7 +172,10 @@ function PipelineInteractions({
   ]);
 
   const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
-  const visibleMapping = useMemo(() => blocks?.reduce((acc, _, idx: number) => ({
+  // @ts-ignore
+  const visibleMapping: {
+    [key: string]: boolean;
+  } = useMemo(() => blocks?.reduce((acc, _, idx: number) => ({
     ...acc,
     [String(idx)]: true,
   }), {}), [
@@ -188,6 +194,8 @@ function PipelineInteractions({
     interactionsMapping,
     setInteractionsMapping,
   ]);
+
+  console.log(interactionsMapping)
 
   useEffect(() => {
     if (!blockInteractionsMapping && pipelineInteraction?.blocks) {
@@ -367,13 +375,13 @@ function PipelineInteractions({
               </Spacing>
             </Spacing>
 
-            {permissions?.map((permission: InteractionPermission, idx: number) => (
+            {permissions?.map((permission: InteractionPermissionWithUUID, idx: number) => (
               <Spacing key={`permission-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
                 <PermissionRow
                   index={idx}
                   permission={permission}
                   setPermissions={setPermissions}
-                  updatePermission={(permissionUpdated: InteractionPermission) => {
+                  updatePermission={(permissionUpdated: InteractionPermissionWithUUID) => {
                     const permissionsUpdated = [...permissions];
                     permissionsUpdated[idx] = permissionUpdated;
 
@@ -457,6 +465,7 @@ function PipelineInteractions({
                           layout: [],
                           uuid: `${newInteractionUUID}.${BlockLanguageEnum.YAML}`,
                           variables: {},
+                        // @ts-ignore
                         }).then(({
                           data: {
                             interaction,
@@ -631,7 +640,7 @@ function PipelineInteractions({
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Button
-          isLoading={isLoadingUpdatePipelineInteraction}
+          loading={isLoadingUpdatePipelineInteraction}
           onClick={() => savePipelineInteraction()}
           primary
         >

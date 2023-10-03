@@ -1,3 +1,5 @@
+import { BlockLanguageEnum } from './BlockType';
+
 export enum InteractionInputTypeEnum {
   CHECKBOX = 'checkbox',
   DROPDOWN_MENU = 'dropdown_menu',
@@ -44,12 +46,13 @@ export interface InteractionInputStyleType {
 export interface InteractionInputType {
   options?: InteractionInputOptionType[];
   style?: InteractionInputStyleType;
-  type: InteractionInputTypeEnum;
+  type?: InteractionInputTypeEnum;
 }
 
 export interface InteractionLayoutItemType {
-  variable: string;
-  width: number;
+  max_width_percentage?: number;
+  variable?: string;
+  width?: number;
 }
 
 export interface InteractionVariableType {
@@ -58,15 +61,18 @@ export interface InteractionVariableType {
   name?: string;
   required?: boolean;
   types?: InteractionVariableTypeEnum[];
-  uuid: string;
+  uuid?: string;
 }
 
 export default interface InteractionType {
   block_uuid?: string;
+  content?: string;
   inputs?: {
     [uuid: string]: InteractionInputType;
   };
   layout?: InteractionLayoutItemType[][];
+  language?: BlockLanguageEnum;
+  uuid?: string;
   variables?: {
     [variable: string]: InteractionVariableType;
   };

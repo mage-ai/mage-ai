@@ -5,11 +5,12 @@ import { DottedLineStyle } from '../index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 type RowDividerProps = {
+  children?: any;
   onDrop?: (opts: {
     columnIndex: number;
     rowIndex: number;
   }) => void;
-  width: number;
+  width?: number;
 };
 
 function RowDivider({

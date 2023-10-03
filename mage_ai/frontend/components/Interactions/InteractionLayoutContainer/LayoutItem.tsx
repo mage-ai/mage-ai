@@ -10,12 +10,12 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 export type LayoutItemProps = {
-  columnLayoutSettings: InteractionLayoutItemType;
+  columnLayoutSettings?: InteractionLayoutItemType;
   drag?: any;
   drop?: any;
-  input: InteractionInputType;
-  variable: InteractionVariableType;
-  width: number;
+  input?: InteractionInputType;
+  variable?: InteractionVariableType;
+  width?: number;
 };
 
 function LayoutItem({

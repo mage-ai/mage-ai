@@ -23,7 +23,7 @@ import { removeAtIndex } from '@utils/array';
 
 type PermissionRowProps = {
   index: number;
-  permission: InteractionPermission | InteractionPermissionWithUUID;
+  permission: InteractionPermissionWithUUID;
   setPermissions: (
     permissions: InteractionPermission[] | InteractionPermissionWithUUID[],
   ) => InteractionPermission[] | InteractionPermissionWithUUID[];
@@ -46,6 +46,7 @@ function PermissionRow({
           <Button
             iconOnly
             onClick={() => setPermissions(
+              // @ts-ignore
               (prev: InteractionPermission[] | InteractionPermissionWithUUID[]) => removeAtIndex(
                 prev,
                 index,
@@ -74,9 +75,13 @@ function PermissionRow({
                     pauseEvent(e);
                     updatePermission({
                       ...permission,
+                      // @ts-ignore
                       triggers: (permission?.triggers || []).concat({
+                        // @ts-ignore
                         schedule_interval: '',
+                        // @ts-ignore
                         schedule_type: '',
+                        // @ts-ignore
                         uuid: '',
                       }),
                     });
@@ -187,8 +192,11 @@ function PermissionRow({
                     pauseEvent(e);
                     updatePermission({
                       ...permission,
+                      // @ts-ignore
                       roles: (permission?.roles || []).concat({
+                        // @ts-ignore
                         role: '',
+                        // @ts-ignore
                         uuid: '',
                       }),
                     });

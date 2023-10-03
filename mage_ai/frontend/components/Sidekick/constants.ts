@@ -66,7 +66,19 @@ export function SIDEKICK_VIEWS(opts?: {
   key: ViewKeyEnum;
   label?: string;
 }[] {
-  const arr = [
+  const arr: {
+    buildLabel?: (opts: {
+      pipeline: PipelineType;
+      secrets?: {
+        [key: string]: any;
+      }[];
+      variables?: {
+        [key: string]: any;
+      }[];
+    }) => string;
+    key: ViewKeyEnum;
+    label?: string;
+  }[] = [
     {
       key: ViewKeyEnum.TREE,
       label: 'Tree',
