@@ -26,6 +26,14 @@ export enum ScheduleIntervalEnum {
   MONTHLY = '@monthly',
 }
 
+export const SCHEDULE_INTERVALS = [
+  ScheduleIntervalEnum.ONCE,
+  ScheduleIntervalEnum.HOURLY,
+  ScheduleIntervalEnum.DAILY,
+  ScheduleIntervalEnum.WEEKLY,
+  ScheduleIntervalEnum.MONTHLY,
+];
+
 export interface SelectedScheduleType {
   pipelineUuid: string;
   scheduleName?: string;

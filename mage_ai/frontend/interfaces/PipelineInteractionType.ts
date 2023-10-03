@@ -1,10 +1,20 @@
 import { InteractionLayoutItemType, InteractionVariableTypeEnum } from './InteractionType';
 import { ScheduleIntervalEnum, ScheduleTypeEnum } from './PipelineScheduleType';
+import { RoleFromServerEnum } from '@interfaces/UserType';
 
 export interface BlockInteractionTriggerType {
   schedule_interval?: ScheduleIntervalEnum;
   schedule_type?: ScheduleTypeEnum;
 }
+
+export interface BlockInteractionTriggerWithUUIDType {
+  uuid: string | number;
+} & BlockInteractionTriggerType;
+
+export interface BlockInteractionRoleWithUUIDType {
+  role?: RoleFromServerEnum;
+  uuid: string;
+};
 
 export interface BlockInteractionVariableType; {
   disabled?: boolean;
@@ -14,8 +24,14 @@ export interface BlockInteractionVariableType; {
 }
 
 export interface InteractionPermission {
-  roles?: string[];
+  roles?: RoleFromServerEnum[];
   triggers?: BlockInteractionTriggerType[];
+}
+
+export interface InteractionPermissionWithUUID {
+  roles?: BlockInteractionRoleWithUUIDType[];
+  triggers?: BlockInteractionTriggerWithUUIDType[];
+  uuid: string;
 }
 
 export interface BlockInteractionType {
@@ -39,5 +55,5 @@ export default interface PipelineInteractionType {
     [blockUUID: string]: BlockInteractionType[];
   };
   layout: PipelineInteractionLayoutItem[][];
-  permissions?: InteractionPermission[];
+  permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
 }

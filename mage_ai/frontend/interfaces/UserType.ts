@@ -27,6 +27,21 @@ export const ROLES = [
   RoleValueEnum.ADMIN,
 ];
 
+// From the server
+
+export enum RoleFromServerEnum {
+  ADMIN = 'Admin',
+  EDITOR = 'Editor',
+  OWNER = 'Owner',
+  VIEWER = 'Viewer',
+}
+
+export const ROLES_FROM_SERVER = [
+  RoleFromServerEnum.VIEWER,
+  RoleFromServerEnum.EDITOR,
+  RoleFromServerEnum.ADMIN,
+];
+
 export default interface UserType {
   avatar?: string;
   email?: string;

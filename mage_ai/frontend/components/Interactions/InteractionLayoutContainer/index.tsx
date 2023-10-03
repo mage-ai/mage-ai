@@ -166,19 +166,16 @@ function InteractionLayoutContainer({
 
         const LayoutEl = updateLayout ? LayoutItemWithDrag : LayoutItem;
         const widthAdjusted = Math.floor(widthPercentageFinal * containerWidth);
+
         let widthOffset = 0;
 
-        if (columnsCount >= 3) {
-          widthOffset = 0.5
-        } else if (columnsCount === 2) {
-          widthOffset = 1;
+        if (updateLayout) {
+          widthOffset = Math.round(20 / columnsCount);
         } else {
-          widthOffset = 2;
+          widthOffset = Math.round(50 / columnsCount);
         }
 
-        const widthItem = updateLayout
-          ? widthAdjusted - (2 + (UNIT * 2))
-          : widthAdjusted - (2 + (UNIT * widthOffset));
+        const widthItem = widthAdjusted - widthOffset;
 
         row.push(
           <Flex

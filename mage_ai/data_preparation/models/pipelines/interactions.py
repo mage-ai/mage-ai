@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.pipelines.constants import (
     PIPELINE_INTERACTIONS_FILENAME,
 )
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
+from mage_ai.orchestration.db.models.oauth import Role
 from mage_ai.presenters.interactions.constants import InteractionVariableType
 from mage_ai.presenters.interactions.models import InteractionLayoutItem
 
@@ -40,8 +41,15 @@ class BlockInteractionVariable:
 
 @dataclass
 class InteractionPermission:
-    roles: List[str] = None
+    roles: List[Role.DefaultRole] = None
     triggers: List[BlockInteractionTrigger] = None
+
+    def __post_init__(self):
+        if self.roles and isinstance(self.roles, list):
+            self.roles = [Role.DefaultRole(i) for i in self.roles]
+
+        if self.triggers and isinstance(self.triggers, list):
+            self.triggers = [BlockInteractionTrigger(**i) for i in self.triggers]
 
 
 @dataclass

@@ -17,15 +17,35 @@ export const AfterFooterStyle = styled.div`
 
 export const ContainerStyle = styled.div<{
   borderColor?: string;
+  noBackground?: boolean;
+  noBorderRadiusBottom?: boolean;
+  noBorderRadiusTop?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
-  border-radius: ${BORDER_RADIUS}px;
+  border-style: solid;
+  border-width: 1px;
   position: relative;
 
-  ${props => `
-    border-width: 1px;
-    border-style: solid;
+  ${props => !props.noBorderRadiusTop && `
+    border-top-left-radius: ${BORDER_RADIUS}px;
+    border-top-right-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.noBorderRadiusTop && `
+    border-top: none !important;
+  `}
+
+  ${props => !props.noBorderRadiusBottom && `
+    border-bottom-left-radius: ${BORDER_RADIUS}px;
+    border-bottom-right-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.noBorderRadiusBottom && `
+    border-bottom: none !important;
+  `}
+
+  ${props => !props.noBackground && `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 
