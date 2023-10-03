@@ -239,6 +239,7 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
@@ -603,6 +604,7 @@ function PipelineDetail({
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
             blocks={blocks}
+            containerRef={containerRef}
             dataProviders={dataProviders}
             defaultValue={block.content}
             deleteBlock={(b: BlockType) => {
@@ -672,6 +674,7 @@ function PipelineDetail({
     blockTemplates,
     blocksThatNeedToRefresh,
     blocks,
+    containerRef,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -869,7 +872,7 @@ function PipelineDetail({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <PipelineContainerStyle>
+      <PipelineContainerStyle ref={containerRef}>
         {visibleOverlay && (
           <CSSTransition
             classNames="pipeline-detail"

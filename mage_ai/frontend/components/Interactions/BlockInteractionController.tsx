@@ -15,6 +15,7 @@ type BlockInteractionControllerProps = {
   blockInteraction?: BlockInteractionType;
   children?: any;
   containerRef?: any;
+  containerWidth?: number;
   interaction: InteractionType;
   isEditing?: boolean;
   removeBlockInteraction?: () => void;
@@ -27,6 +28,7 @@ function BlockInteractionController({
   blockInteraction,
   children,
   containerRef,
+  containerWidth,
   interaction,
   isEditing,
   removeBlockInteraction,
@@ -86,6 +88,7 @@ function BlockInteractionController({
           <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={1}>
             <InteractionLayoutContainer
               containerRef={containerRef}
+              containerWidth={containerWidth}
               interaction={interaction}
             />
           </Spacing>

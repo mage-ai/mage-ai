@@ -42,6 +42,7 @@ type PipelineInteractionsProps = {
   blockInteractionsMapping: {
     [blockUUID: string]: BlockInteractionType[];
   };
+  containerWidth?: number;
   createInteraction: (interaction: InteractionType) => void;
   interactionsMapping: {
     [interactionUUID: string]: InteractionType;
@@ -65,6 +66,7 @@ type PipelineInteractionsProps = {
 
 function PipelineInteractions({
   blockInteractionsMapping: blockInteractionsMappingProp,
+  containerWidth,
   createInteraction,
   interactions,
   interactionsMapping: interactionsMappingProp,
@@ -249,7 +251,10 @@ function PipelineInteractions({
   ]);
 
   useEffect(() => {
-    if (!interactionsMapping && interactions?.length >= 1) {
+    if (typeof interactionsMappingProp === 'undefined'
+      && !interactionsMapping
+      && interactions?.length >= 1
+    ) {
       setInteractionsMapping(indexBy(
         interactions || [],
         ({ uuid }) => uuid,
@@ -258,15 +263,20 @@ function PipelineInteractions({
   }, [
     interactions,
     interactionsMapping,
+    interactionsMappingProp,
     setInteractionsMapping,
   ]);
 
   useEffect(() => {
-    if (!blockInteractionsMapping && pipelineInteraction?.blocks) {
+    if (typeof blockInteractionsMappingProp === 'undefined'
+      && !blockInteractionsMapping
+      && pipelineInteraction?.blocks
+    ) {
       setBlockInteractionsMapping(pipelineInteraction?.blocks);
     }
   }, [
     blockInteractionsMapping,
+    blockInteractionsMappingProp,
     pipelineInteraction,
     setBlockInteractionsMapping,
   ]);
@@ -353,6 +363,7 @@ function PipelineInteractions({
                 >
                   <BlockInteractionController
                     blockInteraction={blockInteraction}
+                    containerWidth={containerWidth}
                     containerRef={containerRef}
                     interaction={interactionsMapping?.[blockInteraction?.uuid]}
                     setInteractionsMapping={setInteractionsMapping}
@@ -369,6 +380,7 @@ function PipelineInteractions({
   }, [
     blocks,
     containerRef,
+    containerWidth,
     interactionsMapping,
     setBlockInteractionsMapping,
     setInteractionsMapping,
@@ -625,6 +637,7 @@ function PipelineInteractions({
               <BlockInteractionController
                 blockInteraction={blockInteraction}
                 containerRef={containerRef}
+                containerWidth={containerWidth}
                 interaction={interaction}
                 isEditing
                 removeBlockInteraction={() => updateBlockInteractionAtIndex(

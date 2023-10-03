@@ -157,6 +157,7 @@ type CodeBlockProps = {
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
+  containerRef?: any;
   dataProviders?: DataProviderType[];
   defaultValue?: string;
   disableDrag?: boolean;
@@ -247,6 +248,7 @@ function CodeBlock({
   blockRefs,
   blockTemplates,
   blocks = [],
+  containerRef,
   dataProviders,
   defaultValue = '',
   deleteBlock,
@@ -486,7 +488,6 @@ function CodeBlock({
 
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
-  const containerRef = useRef(null);
 
   const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
@@ -1074,6 +1075,7 @@ function CodeBlock({
           <BlockInteractionController
             blockInteraction={blockInteraction}
             containerRef={containerRef}
+            containerWidth={mainContainerWidth}
             interaction={interactionsMapping?.[blockInteraction?.uuid]}
           />
         </Spacing>
@@ -1119,6 +1121,7 @@ function CodeBlock({
     hasOutput,
     interactionsMapping,
     isInProgress,
+    mainContainerRef,
     mainContainerWidth,
     messages,
     messagesWithType,
@@ -1244,7 +1247,6 @@ function CodeBlock({
         }}
       >
         <div
-          ref={containerRef}
           style={{
             position: 'relative',
           }}

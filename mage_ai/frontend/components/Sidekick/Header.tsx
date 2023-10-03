@@ -108,7 +108,7 @@ function SidekickHeader({
     if (selectedBlock?.uuid) {
       breadcrumbs.push(...[
         {
-          label: () => 'Interactions',
+          label: () => 'All interactions',
           monospace: false,
           onClick: () => setSelectedBlock(null),
         },

@@ -2295,6 +2295,29 @@ function PipelineDetailPage({
     [blockUUID: string]: BlockInteractionType[];
   }>(null);
 
+  useEffect(() => {
+    if (!interactionsMapping && interactions?.length >= 1) {
+      setInteractionsMapping(indexBy(
+        interactions || [],
+        ({ uuid }) => uuid,
+      ));
+    }
+  }, [
+    interactions,
+    interactionsMapping,
+    setInteractionsMapping,
+  ]);
+
+  useEffect(() => {
+    if (!blockInteractionsMapping && pipelineInteraction?.blocks) {
+      setBlockInteractionsMapping(pipelineInteraction?.blocks);
+    }
+  }, [
+    blockInteractionsMapping,
+    pipelineInteraction,
+    setBlockInteractionsMapping,
+  ]);
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}

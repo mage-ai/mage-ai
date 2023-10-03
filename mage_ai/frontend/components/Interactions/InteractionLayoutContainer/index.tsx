@@ -19,12 +19,14 @@ import { useWindowSize } from '@utils/sizes';
 
 type InteractionLayoutContainerProps = {
   containerRef: any;
+  containerWidth?: number;
   interaction: InteractionType;
   updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => void;
 };
 
 function InteractionLayoutContainer({
   containerRef: mainContainerRef,
+  containerWidth,
   interaction,
   updateLayout,
 }: InteractionLayoutContainerProps) {
@@ -37,6 +39,7 @@ function InteractionLayoutContainer({
       setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
     }
   }, [
+    containerWidth,
     mainContainerRef,
     windowSize,
   ]);

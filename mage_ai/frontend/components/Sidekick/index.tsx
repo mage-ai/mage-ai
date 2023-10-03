@@ -728,6 +728,7 @@ function Sidekick({
 
         {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
           <PipelineInteractions
+            containerWidth={afterWidth}
             createInteraction={(interaction: InteractionType) => createInteraction({
               interaction,
             })}
