@@ -222,15 +222,30 @@ function PipelineInteractions({
       }
 
       const blockInteractions = blockInteractionsMapping?.[blockUUID] || [];
+      const hasBlockInteractions = blockInteractions?.length >= 1;
+
+      const buttonEl = (
+        <Button
+          beforeIcon={hasBlockInteractions ? <Edit /> : <Add />}
+          compact
+          onClick={(e) => {
+            pauseEvent(e);
+            setEditingBlock(block);
+          }}
+          primary={!hasBlockInteractions}
+          secondary={hasBlockInteractions}
+          small
+        >
+          {hasBlockInteractions && 'Edit interactions'}
+          {!hasBlockInteractions && 'Add interactions'}
+        </Button>
+      );
 
       arr.push(
         <AccordionPanel
           key={blockUUID}
           noBorderRadius
           noPaddingContent
-          onClick={() => {
-            // setVisibleMappingForced({});
-          }}
           titleXPadding={PADDING_UNITS * UNIT}
           titleYPadding={1.5 * UNIT}
           title={(
@@ -239,27 +254,16 @@ function PipelineInteractions({
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Text default large monospace>
+                <Text large monospace>
                   {blockUUID}
                 </Text>
               </Spacing>
 
-              <FlexContainer
-                alignItems="center"
-              >
-                <Button
-                  beforeIcon={<Edit />}
-                  compact
-                  onClick={(e) => {
-                    pauseEvent(e);
-                    setEditingBlock(block);
-                  }}
-                  secondary
-                  small
-                >
-                  Edit interactions for block
-                </Button>
-              </FlexContainer>
+              {hasBlockInteractions && (
+                <FlexContainer alignItems="center">
+                  {buttonEl}
+                </FlexContainer>
+              )}
             </FlexContainer>
           )}
         >
@@ -269,6 +273,7 @@ function PipelineInteractions({
             noBorderRadiusTop
           >
             <Spacing p={PADDING_UNITS}>
+              {!hasBlockInteractions && buttonEl}
               {blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
                 <Spacing
                   key={`${blockInteraction?.uuid}-${idx}`}

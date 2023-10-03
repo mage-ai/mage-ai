@@ -170,7 +170,7 @@ function InteractionLayoutContainer({
         let widthOffset = 0;
 
         if (updateLayout) {
-          widthOffset = Math.round(20 / columnsCount);
+          widthOffset = Math.round(24 / columnsCount);
         } else {
           widthOffset = Math.round(50 / columnsCount);
         }
