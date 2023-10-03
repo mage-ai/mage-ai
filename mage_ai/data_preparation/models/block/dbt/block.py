@@ -86,6 +86,36 @@ class DBTBlock(Block):
         """
         return
 
+    def update_upstream_blocks(
+        self,
+        upstream_blocks: List[Any],
+        variables: Dict = None,
+        **kwargs,
+    ) -> None:
+        """
+        Update the upstream blocks of the DBT block.
+        Args:
+            upstream_blocks (List[Any]): The list of upstream blocks.
+        """
+        upstream_blocks_previous = self.upstream_blocks
+        super().update_upstream_blocks(upstream_blocks)
+
+        if BlockLanguage.SQL != self.language or self.pipeline is None:
+            return
+
+        upstream_blocks_previous_by_uuid = {b.uuid: b for b in upstream_blocks_previous}
+        upstream_blocks_by_uuid = {b.uuid: b for b in self.upstream_blocks}
+
+        removed_upstream_blocks = [
+            b for b in upstream_blocks_previous if b.uuid not in upstream_blocks_by_uuid]
+        new_upstream_blocks = [
+            b for b in self.upstream_blocks if b.uuid not in upstream_blocks_previous_by_uuid]
+
+        if any(not isinstance(b, self.__class__)
+               for b in (removed_upstream_blocks + new_upstream_blocks)):
+            self.__class__.update_sources(
+                self.pipeline.blocks_by_uuid, variables=self.pipeline.variables)
+
     @classmethod
     def _variables_json(self, variables: Dict[str, Any]) -> str:
         """
