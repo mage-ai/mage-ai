@@ -37,8 +37,15 @@ export interface PipelineRunReqQueryParamsType {
   _offset?: number;
   disable_retries_grouping?: boolean;
   global_data_product_uuid?: string;
+  include_pipeline_uuids?: boolean;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
+}
+
+export enum PipelineRunFilterQueryEnum {
+  PIPELINE_UUID = 'pipeline_uuid[]',
+  STATUS = 'status[]',
+  TAG = 'pipeline_tag[]',
 }
 
 interface Obj {
