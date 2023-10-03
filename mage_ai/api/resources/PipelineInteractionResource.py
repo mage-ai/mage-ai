@@ -28,7 +28,9 @@ class PipelineInteractionResource(GenericResource):
             payload_update['content'] = payload.get('content')
         else:
             payload_update['content_parsed'] = extract(payload, [
-                'interactions',
+                'blocks',
+                'layout',
+                'permissions',
             ])
 
         await self.model.update(**payload_update)

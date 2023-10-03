@@ -43,6 +43,7 @@ InteractionPolicy.allow_read(InteractionPresenter.default_attributes + [], scope
 
 
 InteractionPolicy.allow_write([
+    'block_uuid',
     'content',
     'inputs',
     'layout',
@@ -51,6 +52,17 @@ InteractionPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+
+InteractionPolicy.allow_write([
+    'content',
+    'inputs',
+    'layout',
+    'variables',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
     constants.DELETE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())

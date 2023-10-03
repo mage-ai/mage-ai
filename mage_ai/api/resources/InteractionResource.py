@@ -1,4 +1,5 @@
 import asyncio
+import os
 import urllib.parse
 from typing import Dict
 
@@ -8,6 +9,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.presenters.interactions.models import Interaction
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import extract
+from mage_ai.shared.utils import clean_name
 
 
 class InteractionResource(GenericResource):
@@ -38,10 +40,13 @@ class InteractionResource(GenericResource):
     @safe_db_query
     async def create(self, payload, user, **kwargs):
         pipeline_interaction = kwargs.get('parent_model')
-        uuid = payload.get('uuid')
+        uuid = clean_name(payload.get('uuid') or '', allow_characters=[
+            '.',
+            os.path.sep,
+        ])
 
         interaction = Interaction(
-            uuid,
+            uuid=uuid,
             pipeline=pipeline_interaction.pipeline if pipeline_interaction else None,
         )
 
@@ -61,6 +66,13 @@ class InteractionResource(GenericResource):
             ])
 
         await interaction.update(**payload_update)
+
+        block_uuid = payload.get('block_uuid')
+        if block_uuid and pipeline_interaction:
+            await pipeline_interaction.add_interaction_to_block(
+                block_uuid,
+                interaction,
+            )
 
         return self(interaction, user, **kwargs)
 

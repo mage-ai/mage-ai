@@ -62,6 +62,7 @@ export interface InteractionVariableType {
 }
 
 export default interface InteractionType {
+  block_uuid?: string;
   inputs?: {
     [uuid: string]: InteractionInputType;
   };

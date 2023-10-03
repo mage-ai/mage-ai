@@ -1,5 +1,6 @@
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
+from functools import reduce
 from typing import Dict, List
 
 import yaml
@@ -11,7 +12,9 @@ from mage_ai.data_preparation.models.pipelines.constants import (
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.orchestration.db.models.oauth import Role
 from mage_ai.presenters.interactions.constants import InteractionVariableType
+from mage_ai.presenters.interactions.models import Interaction as InteractionBase
 from mage_ai.presenters.interactions.models import InteractionLayoutItem
+from mage_ai.shared.hash import merge_dict
 
 
 @dataclass
@@ -26,6 +29,12 @@ class BlockInteractionTrigger:
         if self.schedule_type and isinstance(self.schedule_type, str):
             self.schedule_type = ScheduleType(self.schedule_type)
 
+    def to_dict(self) -> Dict:
+        return dict(
+            schedule_interval=self.schedule_interval.value if self.schedule_interval else None,
+            schedule_type=self.schedule_type.value if self.schedule_type else None,
+        )
+
 
 @dataclass
 class BlockInteractionVariable:
@@ -37,6 +46,14 @@ class BlockInteractionVariable:
     def __post_init__(self):
         if self.types and isinstance(self.types, list):
             self.types = [InteractionVariableType(t) for t in self.types]
+
+    def to_dict(self) -> Dict:
+        return dict(
+            disabled=self.disabled,
+            required=self.required,
+            types=[t.value for t in self.types],
+            uuid_override=self.uuid_override,
+        )
 
 
 @dataclass
@@ -51,14 +68,20 @@ class InteractionPermission:
         if self.triggers and isinstance(self.triggers, list):
             self.triggers = [BlockInteractionTrigger(**i) for i in self.triggers]
 
+    def to_dict(self) -> Dict:
+        return dict(
+            roles=[r.value for r in self.roles],
+            triggers=[i.to_dict() for i in self.triggers],
+        )
+
 
 @dataclass
 class BlockInteraction:
-    name: str
     # This is the path to the interaction file (excluding the interactions directory).
     uuid: str
     description: str = None
     layout: List[List[InteractionLayoutItem]] = field(default_factory=list)
+    name: str = None
     permissions: List[InteractionPermission] = field(default_factory=list)
     variables: Dict = field(default_factory=dict)
 
@@ -96,23 +119,41 @@ class BlockInteraction:
                     mapping[variable_uuid] = variable
             self.variables = mapping
 
+    def to_dict(self) -> Dict:
+        return dict(
+            description=self.description,
+            layout=[[i.to_dict() for i in arr] for arr in self.layout],
+            name=self.name,
+            permissions=[i.to_dict() for i in self.permissions],
+            variables=reduce(lambda obj, tup: merge_dict(obj, {
+                tup[0]: tup[1].to_dict(),
+            }), (self.variables or {}).items(), {}),
+            uuid=self.uuid,
+        )
+
 
 @dataclass
 class PipelineInteractionLayoutItem(InteractionLayoutItem):
     block_uuid: str = None
     interaction: str = None
 
+    def to_dict(self) -> Dict:
+        return dict(
+            block_uuid=self.block_uuid,
+            interaction=self.interaction,
+        )
+
 
 @dataclass
 class Interaction:
-    interactions: Dict = field(default_factory=dict)
+    blocks: Dict = field(default_factory=dict)
     layout: List[List[PipelineInteractionLayoutItem]] = field(default_factory=list)
     permissions: List[InteractionPermission] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.interactions and isinstance(self.interactions, dict):
+        if self.blocks and isinstance(self.blocks, dict):
             mapping = {}
-            for block_uuid, interactions in self.interactions.items():
+            for block_uuid, interactions in self.blocks.items():
                 if isinstance(interactions, list):
                     arr = []
                     for interaction in interactions:
@@ -123,7 +164,7 @@ class Interaction:
                     mapping[block_uuid] = arr
                 else:
                     mapping[block_uuid] = interactions
-            self.interactions = mapping
+            self.blocks = mapping
 
         if self.layout and isinstance(self.layout, list):
             arr = []
@@ -148,6 +189,15 @@ class Interaction:
                 else:
                     arr.append(permission)
             self.permissions = arr
+
+    def to_dict(self) -> Dict:
+        return dict(
+            blocks=reduce(lambda obj, tup: merge_dict(obj, {
+                tup[0]: [i.to_dict() for i in tup[1]],
+            }), (self.blocks or {}).items(), {}),
+            layout=[[i.to_dict() for i in arr] for arr in self.layout],
+            permissions=[i.to_dict() for i in self.permissions],
+        )
 
 
 class PipelineInteractions:
@@ -185,10 +235,22 @@ class PipelineInteractions:
     def file_path(self) -> str:
         return os.path.join(self.pipeline.dir_path, PIPELINE_INTERACTIONS_FILENAME)
 
+    async def add_interaction_to_block(self, block_uuid: str, interaction: InteractionBase) -> Dict:
+        content_parsed = await self.to_dict() or {}
+
+        blocks = content_parsed.get('blocks') or {}
+        interactions = blocks.get(block_uuid) or []
+        interactions.append(dict(uuid=interaction.uuid))
+        blocks[block_uuid] = interactions
+
+        await self.update(content_parsed=merge_dict(content_parsed, dict(
+            blocks=blocks,
+        )))
+
     async def interaction_uuids(self) -> List[str]:
         interaction = await self.interaction()
         interaction_uuids = []
-        for _block_uuid, block_interactions in (interaction.interactions or {}).items():
+        for _block_uuid, block_interactions in (interaction.blocks or {}).items():
             for block_interaction in block_interactions:
                 interaction_uuids.append(block_interaction.uuid)
 
@@ -197,21 +259,33 @@ class PipelineInteractions:
     async def save(self) -> None:
         await self.file.update_content_async(self._content or '')
 
+    async def validate(
+        self,
+        content: str = None,
+        content_parsed: Dict = None,
+    ) -> None:
+        settings = content_parsed or yaml.safe_load(content)
+        Interaction(**settings)
+
     async def update(
         self,
         commit: bool = True,
         content: str = None,
         content_parsed: Dict = None,
     ) -> None:
+        await self.validate(content=content, content_parsed=content_parsed)
+
         if content:
             self._content = content
         elif content_parsed:
             self._content = yaml.safe_dump(content_parsed)
 
-        if commit:
-            await self.save()
+        if not commit:
+            return
+
+        await self.save()
 
     async def to_dict(self) -> Dict:
         interaction = await self.interaction()
 
-        return asdict(interaction)
+        return interaction.to_dict()

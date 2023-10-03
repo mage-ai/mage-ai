@@ -10,16 +10,11 @@ import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 function Test() {
-  const [selectedBlockUUID, setSelectedBlockUUID] = useState<string>(null);
-
-  // const blockUUID = 'source_pg_python';
-  // const blockUUID = 'source_pg_yaml';
-  // const blockUUID = 'destination_pg_yaml';
   const pipelineUUID = 'interactions_testing';
 
   const {
     data: dataPipeline,
-    // mutate: fetchPipeline,
+    mutate: fetchPipeline,
   } = api.pipelines.detail(
     pipelineUUID,
     {
@@ -30,83 +25,71 @@ function Test() {
 
   const {
     data: dataPipelineInteraction,
-    // mutate: fetchPipeline,
-  } = api.pipeline_interactions.detail(
-    pipelineUUID,
-    // {
-    //   include_block_pipelines: true,
-    //   includes_outputs: true,
-    // },
-  );
+    mutate: fetchPipelineInteraction,
+  } = api.pipeline_interactions.detail(pipelineUUID);
 
   const {
     data: dataInteractions,
-    // mutate: fetchPipeline,
-  } = api.interactions.pipeline_interactions.list(
-    pipelineUUID,
-    // {
-    //   include_block_pipelines: true,
-    //   includes_outputs: true,
-    // },
-  );
+    mutate: fetchInteractions,
+  } = api.interactions.pipeline_interactions.list(pipelineUUID);
 
   const pipeline = dataPipeline?.pipeline;
   const pipelineInteraction: PipelineInteractionType = dataPipelineInteraction?.pipeline_interaction;
   const interactions: InteractionType = dataInteractions?.interactions
 
-  // const block = pipeline?.blocks?.find(({ uuid }) => blockUUID === uuid);
+  const [
+    updatePipelineInteraction,
+    {
+      isLoading: isLoadingUpdatePipelineInteraction,
+    },
+  ] = useMutation(
+    api.pipeline_interactions.useUpdate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (resp) => {
+            fetchPipelineInteraction();
+          },
+        },
+      ),
+    },
+  );
 
-  // const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
-  //   api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
-  //   {
-  //     onSuccess: (response: any) => onSuccess(
-  //       response, {
-  //         callback: () => {
-
-  //         },
-  //       },
-  //     ),
-  //   },
-  // );
-
-  // const [showModal, hideModal] = useModal(() => (
-  //   <ErrorProvider>
-  //     <DataIntegrationModal
-  //       block={block}
-  //       onClose={hideModal}
-  //       pipeline={pipeline}
-  //     />
-  //   </ErrorProvider>
-  // ), {}, [
-  //   block,
-  //   blockUUID,
-  //   pipeline,
-  // ], {
-  //   background: true,
-  //   disableClickOutside: true,
-  //   disableCloseButton: true,
-  //   disableEscape: true,
-  //   uuid: `DataIntegrationModal/${blockUUID}`,
-  // });
-
-  // useEffect(() => {
-  //   if (block) {
-  //     showModal();
-  //   }
-  // }, [
-  //   block,
-  //   pipeline,
-  //   showModal,
-  // ]);
+  const [
+    createInteraction,
+    {
+      isLoading: isLoadingCreateInteraction,
+    },
+  ] = useMutation(
+    api.interactions.pipeline_interactions.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (resp) => {
+            fetchInteractions();
+            fetchPipelineInteraction();
+          },
+        },
+      ),
+    },
+  );
 
   return (
     <div>
       <PipelineInteractions
+        createInteraction={(interaction: InteractionType) => createInteraction({
+          interaction,
+        })}
         interactions={interactions}
+        isLoadingCreateInteraction={isLoadingCreateInteraction}
+        isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
         pipeline={pipeline}
         pipelineInteraction={pipelineInteraction}
-        selectedBlockUUID={selectedBlockUUID}
-        setSelectedBlockUUID={setSelectedBlockUUID}
+        updatePipelineInteraction={(
+          pipelineInteraction: PipelineInteractionType,
+         ) => updatePipelineInteraction({
+          pipeline_interaction: pipelineInteraction,
+        })}
       />
     </div>
   );

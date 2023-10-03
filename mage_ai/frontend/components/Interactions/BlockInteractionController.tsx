@@ -67,11 +67,11 @@ function BlockInteractionController({
                 {blockInteractionName}
               </Headline>
 
-              {blockInteractionDescription && (
-                <Text default>
-                  {blockInteractionDescription}
+              {blockInteractionDescription && blockInteractionDescription?.split('\n')?.map((line: string) => (
+                <Text default key={line}>
+                  {line}
                 </Text>
-              )}
+              ))}
             </Spacing>
           )}
 
