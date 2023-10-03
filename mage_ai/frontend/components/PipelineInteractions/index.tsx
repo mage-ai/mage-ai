@@ -7,6 +7,8 @@ import AccordionPanel, {
 import BlockInteractionController from '@components/Interactions/BlockInteractionController';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import InteractionType from '@interfaces/InteractionType';
@@ -22,6 +24,7 @@ import PermissionRow from './PermissionRow';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import { Add, Edit } from '@oracle/icons';
 import { ContainerStyle } from './index.style';
@@ -202,7 +205,7 @@ function PipelineInteractions({
                   secondary
                   small
                 >
-                  Edit interactions
+                  Edit interactions for block
                 </Button>
               </FlexContainer>
             </FlexContainer>
@@ -215,7 +218,10 @@ function PipelineInteractions({
           >
             <Spacing p={PADDING_UNITS}>
               {blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
-                <Spacing key={`${blockInteraction?.uuid}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
+                <Spacing
+                  key={`${blockInteraction?.uuid}-${idx}`}
+                  mt={idx >= 1 ? UNITS_BETWEEN_SECTIONS : 0}
+                >
                   <BlockInteractionController
                     blockInteraction={blockInteraction}
                     containerRef={containerRef}
@@ -266,7 +272,7 @@ function PipelineInteractions({
           <>
             <Spacing mb={PADDING_UNITS}>
               <Headline>
-                Interactions
+                Blocks with interactions
               </Headline>
             </Spacing>
 
@@ -323,7 +329,54 @@ function PipelineInteractions({
         )}
 
         {editingBlock && (
-          <>
+          <div>
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <FlexContainer alignItems="center">
+                <Headline>
+                  Interactions for block
+                </Headline>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <FlexContainer alignItems="center">
+                  <Button
+                    beforeIcon={<Add />}
+                    compact
+                    // onClick={() => setPermissions(prev => prev.concat([{
+                    //   roles: [],
+                    //   triggers: [],
+                    // }]))}
+                    primary
+                    small
+                  >
+                    Create and add new interaction
+                  </Button>
+
+                  <Spacing mr={PADDING_UNITS} />
+
+                  <Button
+                    beforeIcon={<Add />}
+                    compact
+                    // onClick={() => setPermissions(prev => prev.concat([{
+                    //   roles: [],
+                    //   triggers: [],
+                    // }]))}
+                    secondary
+                    small
+                  >
+                    Add from existing interactions
+                  </Button>
+                </FlexContainer>
+              </FlexContainer>
+
+              <Spacing mt={1}>
+                <Text default>
+                  Add permissions to allow specific user roles the ability to trigger this pipeline
+                  using the interactions for this pipeline.
+                </Text>
+              </Spacing>
+            </Spacing>
+
             {editingBlockInteractions?.map((
               blockInteraction: BlockInteractionType, idx: number,
             ) => {
@@ -337,22 +390,70 @@ function PipelineInteractions({
               const blockUUID = editingBlock?.uuid;
 
               return (
-                <Spacing key={`${blockInteraction?.uuid}-${idx}`} mt={idx >= 1 ? PADDING_UNITS : 0}>
-                  <Spacing mb={1}>
-                    <Text bold default>
-                      Label
-                    </Text>
-                    <Text muted>
-                      Add a label for the set of interactions in this block.
-                    </Text>
-                  </Spacing>
+                <div key={`${blockInteraction?.uuid}-${idx}`}>
+                  {idx >= 1 && (
+                    <Spacing my={UNITS_BETWEEN_SECTIONS}>
+                      <Divider light />
+                    </Spacing>
+                  )}
 
-                  <TextInput
-                    onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
-                      name: e.target.value,
-                    })}
-                    value={blockInteractionName || ''}
-                  />
+                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                    <FlexContainer alignItems="flex-start">
+                      <Spacing mb={1} style={{ width: 20 * UNIT }}>
+                        <Text bold large>
+                          Label
+                        </Text>
+                        <Text muted>
+                          Add a label for this
+                          <br />
+                          set of interactions.
+                        </Text>
+                      </Spacing>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <Flex flex={1}>
+                        <TextInput
+                          fullWidth
+                          onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
+                            name: e.target.value,
+                          })}
+                          value={blockInteractionName || ''}
+                        />
+                      </Flex>
+                    </FlexContainer>
+
+                    <Spacing mb={PADDING_UNITS} />
+
+                    <FlexContainer alignItems="flex-start">
+                      <Spacing mb={1} style={{ width: 20 * UNIT }}>
+                        <Text bold large>
+                          Description
+                        </Text>
+                        <Text muted>
+                          Describe how these
+                          <br />
+                          interactions are used.
+                        </Text>
+                      </Spacing>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <Flex flex={1}>
+                        <TextArea
+                          fullWidth
+                          onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
+                            description: e.target.value,
+                          })}
+                          rows={Math.max(
+                            3,
+                            Math.min(12, blockInteractionDescription?.split('\n')?.length),
+                          )}
+                          value={blockInteractionDescription || ''}
+                        />
+                      </Flex>
+                    </FlexContainer>
+                  </Spacing>
 
                   <BlockInteractionController
                     blockInteraction={blockInteraction}
@@ -361,10 +462,10 @@ function PipelineInteractions({
                     isEditing
                     setInteractionsMapping={setInteractionsMapping}
                   />
-                </Spacing>
+                </div>
               );
             })}
-          </>
+          </div>
         )}
       </div>
     </Spacing>
