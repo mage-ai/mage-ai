@@ -8,6 +8,7 @@ import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import TagType from '@interfaces/TagType';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
@@ -17,6 +18,7 @@ import {
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
+import { UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { sortByKey } from '@utils/array';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
@@ -99,29 +101,38 @@ function RunListPage() {
       title="Pipeline runs"
       uuid="pipeline_runs/index"
     >
-      <PipelineRunsTable
-        fetchPipelineRuns={fetchPipelineRuns}
-        pipelineRuns={pipelineRuns}
-        setErrors={setErrors}
-      />
-      <Spacing p={2}>
-        <Paginate
-          maxPages={MAX_PAGES}
-          onUpdate={(p) => {
-            const newPage = Number(p);
-            const updatedQuery = {
-              ...q,
-              page: newPage >= 0 ? newPage : 0,
-            };
-            router.push(
-              '/pipeline-runs',
-              `/pipeline-runs?${queryString(updatedQuery)}`,
-            );
-          }}
-          page={Number(page)}
-          totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
-        />
-      </Spacing>
+      {!dataPipelineRuns
+        ?
+          <Spacing p={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Spinner inverted large />
+          </Spacing>
+        :
+          <>
+            <PipelineRunsTable
+              fetchPipelineRuns={fetchPipelineRuns}
+              pipelineRuns={pipelineRuns}
+              setErrors={setErrors}
+            />
+            <Spacing p={2}>
+              <Paginate
+                maxPages={MAX_PAGES}
+                onUpdate={(p) => {
+                  const newPage = Number(p);
+                  const updatedQuery = {
+                    ...q,
+                    page: newPage >= 0 ? newPage : 0,
+                  };
+                  router.push(
+                    '/pipeline-runs',
+                    `/pipeline-runs?${queryString(updatedQuery)}`,
+                  );
+                }}
+                page={Number(page)}
+                totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
+              />
+            </Spacing>
+          </>
+      }
     </Dashboard>
   );
 }

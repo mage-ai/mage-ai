@@ -466,7 +466,7 @@ function PipelineSchedules({
           {!dataPipelineSchedules
             ?
               <Spacing m={2}>
-                <Spinner inverted />
+                <Spinner inverted large />
               </Spacing>
             :
               <>
