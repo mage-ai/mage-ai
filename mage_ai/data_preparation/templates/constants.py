@@ -575,6 +575,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='Amazon S3',
         path='sensors/s3.py',
     ),
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='Google Cloud Storage',
+        path='sensors/google_cloud_storage.py',
+    ),
     #   Data warehouses
     dict(
         block_type=BlockType.SENSOR,
