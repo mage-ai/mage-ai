@@ -101,6 +101,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
   [BlockTypeEnum.SENSOR]: [
     DataSourceTypeEnum.GENERIC,
     DataSourceTypeEnum.S3,
+    DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.SNOWFLAKE,
