@@ -1234,6 +1234,7 @@ function PipelineListPage() {
           },
         ];
       }}
+      rightClickMenuHeight={36 * 7}
       rightClickMenuWidth={UNIT * 25}
       rowGroupHeaders={rowGroupHeadersInner}
       rows={pipelinesInner?.map((pipeline, idx) => {

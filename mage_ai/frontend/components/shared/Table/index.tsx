@@ -86,6 +86,7 @@ type TableProps = {
   onRightClickRow?: (index: number, event?: any) => void;
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
+  rightClickMenuHeight?: number;
   rightClickMenuWidth?: number;
   rowGroupHeaders?: string[] | any[];
   rowVerticalPadding?: number;
@@ -127,6 +128,7 @@ function Table({
   onRightClickRow,
   renderRightClickMenu,
   renderRightClickMenuItems,
+  rightClickMenuHeight,
   rightClickMenuWidth = MENU_WIDTH,
   rowGroupHeaders,
   rowVerticalPadding,
@@ -397,10 +399,23 @@ function Table({
           onContextMenu={hasRightClickMenu
             ? (e) => {
               e.preventDefault();
+              let yCoordinate = e.pageY;
+              if (rightClickMenuHeight) {
+                const windowHeight = typeof window !== 'undefined'
+                  ? window.innerHeight
+                  : null;
+                const distanceFromBottomOfPage = windowHeight
+                  ? windowHeight - e.pageY
+                  : 0;
+                const contextMenuIsCutOff = (distanceFromBottomOfPage - rightClickMenuHeight) < 0;
+                yCoordinate = contextMenuIsCutOff
+                  ? e.pageY - rightClickMenuHeight
+                  : e.pageY;
+              }
 
               setCoordinates({
                 x: e.pageX,
-                y: e.pageY,
+                y: yCoordinate,
               });
               setFocusedRowIndex(rowIndex);
               onRightClickRow?.(rowIndex, e);
