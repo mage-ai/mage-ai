@@ -35,7 +35,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { RoleFromServerEnum } from '@interfaces/UserType';
-import { indexBy } from '@utils/array';
+import { indexBy, removeAtIndex } from '@utils/array';
 import { pauseEvent } from '@utils/events';
 
 type PipelineInteractionsProps = {
@@ -82,14 +82,22 @@ function PipelineInteractions({
     blockUUID: string,
     index: number,
     blockInteraction: BlockInteractionType,
+    opts?: {
+      remove?: boolean;
+    },
   ) => setBlockInteractionsMapping((prev: {
     [blockUUID: string]: BlockInteractionType;
   }) => {
-    const blockInteractions = [...(prev?.[blockUUID] || [])];
-    blockInteractions[index] = {
-      ...blockInteractions[index],
-      ...blockInteraction,
-    };
+    let blockInteractions = [...(prev?.[blockUUID] || [])];
+
+    if (opts?.remove) {
+      blockInteractions = removeAtIndex(blockInteractions, index);
+    } else {
+      blockInteractions[index] = {
+        ...blockInteractions[index],
+        ...blockInteraction,
+      };
+    }
 
     return {
       ...prev,
@@ -132,6 +140,7 @@ function PipelineInteractions({
   const savePipelineInteraction = useCallback(() => updatePipelineInteraction({
     ...pipelineInteraction,
     blocks: blockInteractionsMapping,
+    interactions: interactionsMapping,
     permissions: permissions?.map(
       ({
         roles,
@@ -153,6 +162,7 @@ function PipelineInteractions({
     ),
   }), [
     blockInteractionsMapping,
+    interactionsMapping,
     permissions,
     pipelineInteraction,
     updatePipelineInteraction,
@@ -451,7 +461,8 @@ function PipelineInteractions({
 
                           updateBlockInteractionAtIndex(
                             editingBlock?.uuid,
-                            editingBlockInteractions?.length || 0, {
+                            editingBlockInteractions?.length || 0,
+                            {
                               uuid: interactionUUID,
                             },
                           );
@@ -528,71 +539,79 @@ function PipelineInteractions({
                 </Spacing>
               )}
 
-              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                <FlexContainer alignItems="flex-start">
-                  <Spacing mb={1} style={{ width: 20 * UNIT }}>
-                    <Text bold large>
-                      Label
-                    </Text>
-                    <Text muted>
-                      Add a label for this
-                      <br />
-                      set of interactions.
-                    </Text>
-                  </Spacing>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Flex flex={1}>
-                    <TextInput
-                      fullWidth
-                      onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
-                        name: e.target.value,
-                      })}
-                      value={blockInteractionName || ''}
-                    />
-                  </Flex>
-                </FlexContainer>
-
-                <Spacing mb={PADDING_UNITS} />
-
-                <FlexContainer alignItems="flex-start">
-                  <Spacing mb={1} style={{ width: 20 * UNIT }}>
-                    <Text bold large>
-                      Description
-                    </Text>
-                    <Text muted>
-                      Describe how these
-                      <br />
-                      interactions are used.
-                    </Text>
-                  </Spacing>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Flex flex={1}>
-                    <TextArea
-                      fullWidth
-                      onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
-                        description: e.target.value,
-                      })}
-                      rows={Math.max(
-                        3,
-                        Math.min(12, blockInteractionDescription?.split('\n')?.length),
-                      )}
-                      value={blockInteractionDescription || ''}
-                    />
-                  </Flex>
-                </FlexContainer>
-              </Spacing>
-
               <BlockInteractionController
                 blockInteraction={blockInteraction}
                 containerRef={containerRef}
                 interaction={interaction}
                 isEditing
+                removeBlockInteraction={() => updateBlockInteractionAtIndex(
+                  blockUUID,
+                  idx,
+                  blockInteraction,
+                  {
+                    remove: true,
+                  },
+                )}
                 setInteractionsMapping={setInteractionsMapping}
-              />
+              >
+                <Spacing p={PADDING_UNITS}>
+                  <FlexContainer alignItems="flex-start">
+                    <Spacing mb={1} style={{ width: 20 * UNIT }}>
+                      <Text bold large>
+                        Label
+                      </Text>
+                      <Text muted>
+                        Add a label for this
+                        <br />
+                        set of interactions.
+                      </Text>
+                    </Spacing>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex flex={1}>
+                      <TextInput
+                        fullWidth
+                        onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
+                          name: e.target.value,
+                        })}
+                        value={blockInteractionName || ''}
+                      />
+                    </Flex>
+                  </FlexContainer>
+
+                  <Spacing mb={PADDING_UNITS} />
+
+                  <FlexContainer alignItems="flex-start">
+                    <Spacing mb={1} style={{ width: 20 * UNIT }}>
+                      <Text bold large>
+                        Description
+                      </Text>
+                      <Text muted>
+                        Describe how these
+                        <br />
+                        interactions are used.
+                      </Text>
+                    </Spacing>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex flex={1}>
+                      <TextArea
+                        fullWidth
+                        onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
+                          description: e.target.value,
+                        })}
+                        rows={Math.max(
+                          3,
+                          Math.min(12, blockInteractionDescription?.split('\n')?.length),
+                        )}
+                        value={blockInteractionDescription || ''}
+                      />
+                    </Flex>
+                  </FlexContainer>
+                </Spacing>
+              </BlockInteractionController>
 
               <div
                 ref={idx === editingBlockInteractions?.length - 1

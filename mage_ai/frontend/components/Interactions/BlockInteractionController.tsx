@@ -16,6 +16,7 @@ type BlockInteractionControllerProps = {
   containerRef?: any;
   interaction: InteractionType;
   isEditing?: boolean;
+  removeBlockInteraction?: () => void;
   setInteractionsMapping: (prev: {
     [interactionUUID: string]: InteractionType;
   }) => void;
@@ -23,9 +24,11 @@ type BlockInteractionControllerProps = {
 
 function BlockInteractionController({
   blockInteraction,
+  children,
   containerRef,
   interaction,
   isEditing,
+  removeBlockInteraction,
   setInteractionsMapping,
 }: BlockInteractionControllerProps) {
   const {
@@ -55,8 +58,11 @@ function BlockInteractionController({
       {isEditing && (
         <InteractionSettings
           interaction={interaction}
+          removeBlockInteraction={removeBlockInteraction}
           updateInteraction={updateInteraction}
-        />
+        >
+          {children}
+        </InteractionSettings>
       )}
 
       {!isEditing && (

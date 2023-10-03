@@ -43,11 +43,14 @@ import { removeAtIndex } from '@utils/array';
 
 type InteractionSettingsProps = {
   interaction: InteractionType;
+  removeBlockInteraction?: () => void;
   updateInteraction: (interaction: InteractionType) => void;
 };
 
 function InteractionSettings({
+  children,
   interaction,
+  removeBlockInteraction,
   updateInteraction: updateInteractionProp,
 }: InteractionSettingsProps) {
   const containerRef = useRef(null);
@@ -88,15 +91,24 @@ function InteractionSettings({
   const updateInteractionInputs = useCallback((
     inputUUID: string,
     input: InteractionInputType,
-  ) => updateInteraction({
-    inputs: {
+  ) => {
+    const inputsUpdated = {
       ...inputs,
-      [inputUUID]: {
-        ...inputs?.[inputUUID],
+    };
+
+    if (input) {
+      inputsUpdated[inputUUID] = {
+        ...inputsUpdated?.[inputUUID],
         ...input,
-      },
-    },
-  }), [
+      };
+    } else {
+      delete inputsUpdated[inputUUID];
+    }
+
+    return updateInteraction({
+      inputs: inputsUpdated,
+    });
+  }, [
     inputs,
     updateInteraction,
   ]);
@@ -104,15 +116,24 @@ function InteractionSettings({
   const updateInteractionVariables = useCallback((
     variableUUID: string,
     variable: InteractionVariableType,
-  ) => updateInteraction({
-    variables: {
+  ) => {
+    const variablesUpdated = {
       ...variables,
-      [variableUUID]: {
-        ...variables?.[variableUUID],
+    };
+
+    if (variable) {
+      variablesUpdated[variableUUID] = {
+        ...variablesUpdated?.[variableUUID],
         ...variable,
-      },
-    },
-  }), [
+      };
+    } else {
+      delete variablesUpdated[variableUUID];
+    }
+
+    return updateInteraction({
+      variables: variablesUpdated,
+    });
+  }, [
     updateInteraction,
     variables,
   ]);
@@ -145,11 +166,21 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Spacing mr={PADDING_UNITS}>
-                  <Headline bold level={5}>
-                    {inputUUID}
-                  </Headline>
-                </Spacing>
+                <Headline bold level={5}>
+                  {inputUUID}
+                </Headline>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => updateInteractionInputs(inputUUID, null)}
+                >
+                  <Close default />
+                </Button>
               </FlexContainer>
             </Spacing>
           </HeadlineStyle>
@@ -339,27 +370,44 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Spacing mr={PADDING_UNITS}>
+                <FlexContainer alignItems="center" flexDirection="row">
                   <Headline bold level={5}>
                     {variableUUID}
                   </Headline>
-                </Spacing>
 
-                <FlexContainer alignItems="center">
-                  <Text muted={!required} success={required}>
-                    Required
-                  </Text>
+                  <Spacing mr={PADDING_UNITS} />
 
-                  <Spacing mr={1} />
+                  <FlexContainer alignItems="center">
+                    <ToggleSwitch
+                      checked={required as boolean}
+                      compact
+                      onCheck={(valFunc: (val: boolean) => boolean) => updateInteractionVariables(
+                        variableUUID,
+                        {
+                          required: valFunc(required),
+                        },
+                      )}
+                    />
 
-                  <ToggleSwitch
-                    checked={required as boolean}
-                    compact
-                    onCheck={(valFunc: (val: boolean) => boolean) => updateInteractionVariables(variableUUID, {
-                      required: valFunc(required),
-                    })}
-                  />
+                    <Spacing mr={1} />
+
+                    <Text muted={!required} success={required}>
+                      Required
+                    </Text>
+                  </FlexContainer>
                 </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => updateInteractionVariables(variableUUID, null)}
+                >
+                  <Close default />
+                </Button>
               </FlexContainer>
             </Spacing>
           </HeadlineStyle>
@@ -563,17 +611,294 @@ function InteractionSettings({
     updateInteraction,
   ]);
 
+  const addNewVariableButtonMemo = useMemo(() => (
+    <FlexContainer alignItems="center">
+      {!isAddingNewVariable && (
+        <Button
+          beforeIcon={<Add />}
+          compact
+          onClick={(e) => {
+            pauseEvent(e);
+            setIsAddingNewVariable(true);
+            setTimeout(() => refNewVariableUUID?.current?.focus(), 1);
+          }}
+          secondary
+          small
+        >
+          Add new variable
+        </Button>
+      )}
+
+      {isAddingNewVariable && (
+        <>
+          {variableUUIDexists && (
+            <>
+              <Text danger small>
+                Variable already exists
+              </Text>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <TextInput
+            compact
+            meta={{
+              touched: variableUUIDexists,
+              error: variableUUIDexists,
+            }}
+            monospace
+            onChange={(e) => {
+              pauseEvent(e);
+              setNewVariableUUID(e.target.value);
+            }}
+            onClick={e => pauseEvent(e)}
+            ref={refNewVariableUUID}
+            small
+            value={newVariableUUID || ''}
+          />
+
+          <Spacing mr={1} />
+
+          <Button
+            disabled={variableUUIDexists}
+            compact
+            onClick={(e) => {
+              pauseEvent(e);
+
+              if (!variableUUIDexists) {
+                const layoutNew = [...layout];
+                layoutNew.push([{
+                  width: 1,
+                  variable: newVariableUUID,
+                }]);
+                updateInteraction({
+                  ...interaction,
+                  layout: layoutNew,
+                  variables: {
+                    ...variables,
+                    [newVariableUUID]: {},
+                  },
+                });
+                setIsAddingNewVariable(false);
+                setMostRecentlyAddedVariableUUID(newVariableUUID);
+                setNewVariableUUID(null);
+
+                setVisibleMappingForced({ '0': true });
+                setTimeout(
+                  () => {
+                    refMostRecentlyAddedVariable?.current?.scrollIntoView();
+                    setVisibleMappingForced({});
+                  },
+                  ANIMATION_DURATION_CONTENT + 100,
+                );
+              }
+            }}
+            primary
+            small
+          >
+            Create variable
+          </Button>
+
+          <Spacing mr={1} />
+
+          <Button
+            compact
+            onClick={(e) => {
+              pauseEvent(e);
+
+              setIsAddingNewVariable(false);
+              setNewVariableUUID(null);
+            }}
+            secondary
+            small
+          >
+            Cancel
+          </Button>
+        </>
+      )}
+    </FlexContainer>
+  ), [
+    isAddingNewVariable,
+    layout,
+    newVariableUUID,
+    refMostRecentlyAddedVariable,
+    refNewVariableUUID,
+    setIsAddingNewVariable,
+    setMostRecentlyAddedVariableUUID,
+    setNewVariableUUID,
+    setVisibleMappingForced,
+    updateInteraction,
+    variableUUIDexists,
+    variables,
+  ]);
+
+  const addNewInputButtonMemo = useMemo(() => (
+    <FlexContainer alignItems="center">
+      {!isAddingNewInput && (
+        <Button
+          beforeIcon={<Add />}
+          compact
+          onClick={(e) => {
+            pauseEvent(e);
+            setIsAddingNewInput(true);
+            setTimeout(() => refNewInputUUID?.current?.focus(), 1);
+          }}
+          secondary
+          small
+        >
+          Add new input
+        </Button>
+      )}
+
+      {isAddingNewInput && (
+        <>
+          {inputUUIDexists && (
+            <>
+              <Text danger small>
+                Input already exists
+              </Text>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <TextInput
+            compact
+            meta={{
+              touched: inputUUIDexists,
+              error: inputUUIDexists,
+            }}
+            monospace
+            onClick={e => pauseEvent(e)}
+            onChange={(e) => {
+              pauseEvent(e);
+              setNewInputUUID(e.target.value);
+            }}
+            ref={refNewInputUUID}
+            small
+            value={newInputUUID || ''}
+          />
+
+          <Spacing mr={1} />
+
+          <Button
+            disabled={inputUUIDexists}
+            compact
+            onClick={(e) => {
+              pauseEvent(e);
+
+              if (!inputUUIDexists) {
+                if (mostRecentlyTouchedVariableUUID) {
+                  updateInteraction({
+                    ...interaction,
+                    inputs: {
+                      ...inputs,
+                      [newInputUUID]: {},
+                    },
+                    variables: {
+                      ...variables,
+                      [mostRecentlyTouchedVariableUUID]: {
+                        ...variables?.[mostRecentlyTouchedVariableUUID],
+                        input: newInputUUID,
+                      },
+                    },
+                  });
+                } else {
+                  updateInteractionInputs(newInputUUID, {});
+                }
+
+                setIsAddingNewInput(false);
+                setMostRecentlyAddedInputUUID(newInputUUID);
+                setMostRecentlyTouchedVariableUUID(null);
+                setNewInputUUID(null);
+
+                setVisibleMappingForced({ '1': true });
+                setTimeout(
+                  () => {
+                    refMostRecentlyAddedInput?.current?.scrollIntoView();
+                    setVisibleMappingForced({});
+                  },
+                  ANIMATION_DURATION_CONTENT + 100,
+                );
+              }
+            }}
+            primary
+            small
+          >
+            Create input
+          </Button>
+
+          <Spacing mr={1} />
+
+          <Button
+            compact
+            onClick={(e) => {
+              pauseEvent(e);
+
+              setIsAddingNewInput(false);
+              setNewInputUUID(null);
+            }}
+            secondary
+            small
+          >
+            Cancel
+          </Button>
+        </>
+      )}
+    </FlexContainer>
+  ), [
+    inputUUIDexists,
+    inputs,
+    interaction,
+    isAddingNewInput,
+    mostRecentlyTouchedVariableUUID,
+    newInputUUID,
+    refMostRecentlyAddedInput,
+    refNewInputUUID,
+    setIsAddingNewInput,
+    setMostRecentlyAddedInputUUID,
+    setMostRecentlyTouchedVariableUUID,
+    setNewInputUUID,
+    setVisibleMappingForced,
+    updateInteractionInputs,
+    variables,
+  ]);
+
   return (
     <ContainerStyle ref={containerRef}>
       <HeadlineStyle>
         <Spacing p={PADDING_UNITS}>
-          <Text default large monospace>
-            {uuid}
-          </Text>
+          <FlexContainer
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Text default large monospace>
+              {uuid}
+            </Text>
+
+            {removeBlockInteraction && (
+              <>
+                <Spacing mr={PADDING_UNITS} />
+
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => removeBlockInteraction()}
+                >
+                  <Close default />
+                </Button>
+              </>
+            )}
+          </FlexContainer>
         </Spacing>
       </HeadlineStyle>
 
       <Divider muted />
+
+      {children}
 
       <Accordion
         noBorder
@@ -603,119 +928,13 @@ function InteractionSettings({
                 </Headline>
               </Spacing>
 
-              <FlexContainer
-                alignItems="center"
-              >
-                {!isAddingNewVariable && (
-                  <Button
-                    beforeIcon={<Add />}
-                    compact
-                    onClick={(e) => {
-                      pauseEvent(e);
-                      setIsAddingNewVariable(true);
-                      setTimeout(() => refNewVariableUUID?.current?.focus(), 1);
-                    }}
-                    secondary
-                    small
-                  >
-                    Add new variable
-                  </Button>
-                )}
-
-                {isAddingNewVariable && (
-                  <>
-                    {variableUUIDexists && (
-                      <>
-                        <Text danger small>
-                          Variable already exists
-                        </Text>
-
-                        <Spacing mr={1} />
-                      </>
-                    )}
-
-                    <TextInput
-                      compact
-                      meta={{
-                        touched: variableUUIDexists,
-                        error: variableUUIDexists,
-                      }}
-                      monospace
-                      onChange={(e) => {
-                        pauseEvent(e);
-                        setNewVariableUUID(e.target.value);
-                      }}
-                      onClick={e => pauseEvent(e)}
-                      ref={refNewVariableUUID}
-                      small
-                      value={newVariableUUID || ''}
-                    />
-
-                    <Spacing mr={1} />
-
-                    <Button
-                      disabled={variableUUIDexists}
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
-
-                        if (!variableUUIDexists) {
-                          const layoutNew = [...layout];
-                          layoutNew.push([{
-                            width: 1,
-                            variable: newVariableUUID,
-                          }]);
-                          updateInteraction({
-                            ...interaction,
-                            layout: layoutNew,
-                            variables: {
-                              ...variables,
-                              [newVariableUUID]: {},
-                            },
-                          });
-                          setIsAddingNewVariable(false);
-                          setMostRecentlyAddedVariableUUID(newVariableUUID);
-                          setNewVariableUUID(null);
-
-                          setVisibleMappingForced({ '0': true });
-                          setTimeout(
-                            () => {
-                              refMostRecentlyAddedVariable?.current?.scrollIntoView();
-                              setVisibleMappingForced({});
-                            },
-                            ANIMATION_DURATION_CONTENT + 100,
-                          );
-                        }
-                      }}
-                      primary
-                      small
-                    >
-                      Create variable
-                    </Button>
-
-                    <Spacing mr={1} />
-
-                    <Button
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
-
-                        setIsAddingNewVariable(false);
-                        setNewVariableUUID(null);
-                      }}
-                      secondary
-                      small
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </FlexContainer>
+              {Object.keys(variables)?.length >= 1 && addNewVariableButtonMemo}
             </FlexContainer>
           )}
         >
           <Spacing p={PADDING_UNITS}>
             {variablesMemo}
+            {!Object.keys(variables)?.length && addNewVariableButtonMemo}
           </Spacing>
         </AccordionPanel>
 
@@ -738,126 +957,13 @@ function InteractionSettings({
                 </Headline>
               </Spacing>
 
-              <FlexContainer
-                alignItems="center"
-              >
-                {!isAddingNewInput && (
-                  <Button
-                    beforeIcon={<Add />}
-                    compact
-                    onClick={(e) => {
-                      pauseEvent(e);
-                      setIsAddingNewInput(true);
-                      setTimeout(() => refNewInputUUID?.current?.focus(), 1);
-                    }}
-                    secondary
-                    small
-                  >
-                    Add new input
-                  </Button>
-                )}
-
-                {isAddingNewInput && (
-                  <>
-                    {inputUUIDexists && (
-                      <>
-                        <Text danger small>
-                          Input already exists
-                        </Text>
-
-                        <Spacing mr={1} />
-                      </>
-                    )}
-
-                    <TextInput
-                      compact
-                      meta={{
-                        touched: inputUUIDexists,
-                        error: inputUUIDexists,
-                      }}
-                      monospace
-                      onClick={e => pauseEvent(e)}
-                      onChange={(e) => {
-                        pauseEvent(e);
-                        setNewInputUUID(e.target.value);
-                      }}
-                      ref={refNewInputUUID}
-                      small
-                      value={newInputUUID || ''}
-                    />
-
-                    <Spacing mr={1} />
-
-                    <Button
-                      disabled={inputUUIDexists}
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
-
-                        if (!inputUUIDexists) {
-                          if (mostRecentlyTouchedVariableUUID) {
-                            updateInteraction({
-                              ...interaction,
-                              inputs: {
-                                ...inputs,
-                                [newInputUUID]: {},
-                              },
-                              variables: {
-                                ...variables,
-                                [mostRecentlyTouchedVariableUUID]: {
-                                  ...variables?.[mostRecentlyTouchedVariableUUID],
-                                  input: newInputUUID,
-                                },
-                              },
-                            });
-                          } else {
-                            updateInteractionInputs(newInputUUID, {});
-                          }
-
-                          setIsAddingNewInput(false);
-                          setMostRecentlyAddedInputUUID(newInputUUID);
-                          setMostRecentlyTouchedVariableUUID(null);
-                          setNewInputUUID(null);
-
-                          setVisibleMappingForced({ '1': true });
-                          setTimeout(
-                            () => {
-                              refMostRecentlyAddedInput?.current?.scrollIntoView();
-                              setVisibleMappingForced({});
-                            },
-                            ANIMATION_DURATION_CONTENT + 100,
-                          );
-                        }
-                      }}
-                      primary
-                      small
-                    >
-                      Create input
-                    </Button>
-
-                    <Spacing mr={1} />
-
-                    <Button
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
-
-                        setIsAddingNewInput(false);
-                        setNewInputUUID(null);
-                      }}
-                      secondary
-                      small
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </FlexContainer>
+              {Object.keys(inputs)?.length >= 1 && addNewInputButtonMemo}
             </FlexContainer>
           )}
         >
           <Spacing p={PADDING_UNITS}>
             {inputsMemo}
+            {!Object.keys(inputs)?.length && addNewInputButtonMemo}
           </Spacing>
         </AccordionPanel>
 
@@ -885,6 +991,14 @@ function InteractionSettings({
           <Spacing p={1}>
             {interactionLayoutMemo}
           </Spacing>
+
+          {!layout?.length && (
+            <Spacing px={PADDING_UNITS} pb={PADDING_UNITS}>
+              <Text muted>
+                Add at least 1 variable and associate an input to it and see a preview.
+              </Text>
+            </Spacing>
+          )}
         </AccordionPanel>
       </Accordion>
     </ContainerStyle>
