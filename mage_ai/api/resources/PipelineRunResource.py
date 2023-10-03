@@ -149,8 +149,8 @@ class PipelineRunResource(DatabaseResource):
                 pipeline_type_by_pipeline_uuid = dict()
                 if filter_by_pipeline_tag:
                     pipeline_tag_cache = TagCache()
-                    pipeline_tags_set_by_pipeline_uuid = \
-                        pipeline_tag_cache.get_tags_set_by_pipeline_uuid()
+                    pipeline_tags_by_pipeline_uuid = \
+                        pipeline_tag_cache.get_tags_by_pipeline_uuid()
                 pipeline_runs = total_results.all()
                 results = []
                 for run in pipeline_runs:
@@ -161,11 +161,11 @@ class PipelineRunResource(DatabaseResource):
                         run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
                         filters.append(run_pipeline_type == pipeline_type)
                     if filter_by_pipeline_tag:
-                        pipeline_tags_set_for_run = \
-                            pipeline_tags_set_by_pipeline_uuid.get(run.pipeline_uuid, set())
+                        pipeline_tags_for_run = \
+                            pipeline_tags_by_pipeline_uuid.get(run.pipeline_uuid, [])
                         filters.append(
-                            len(pipeline_tags_set_for_run) > 0 and
-                            pipeline_tags_set_for_run.issubset(set(pipeline_tags.split(','))),
+                            len(pipeline_tags_for_run) > 0 and
+                            set(pipeline_tags_for_run).issubset(set(pipeline_tags.split(','))),
                         )
                     if all(filters):
                         results.append(run)

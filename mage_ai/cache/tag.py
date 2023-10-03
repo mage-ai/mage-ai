@@ -31,7 +31,7 @@ class TagCache(BaseCache):
             tag: list(val.get(KEY_FOR_PIPELINES, {}).keys()) for tag, val in tags.items()
         }
 
-    def get_tags_set_by_pipeline_uuid(self) -> Dict:
+    def get_tags_by_pipeline_uuid(self) -> Dict:
         tags = self.get_tags()
         tags_set_by_pipeline_uuid = dict()
         for tag, pipelines in tags.items():
@@ -41,7 +41,10 @@ class TagCache(BaseCache):
                 else:
                     tags_set_by_pipeline_uuid[pipeline_uuid].add(tag)
 
-        return tags_set_by_pipeline_uuid
+        return {
+            pipeline_uuid: list(tags_set) for pipeline_uuid, tags_set
+            in tags_set_by_pipeline_uuid.items()
+        }
 
     def build_key(self, tag_uuid: str) -> str:
         """Generate cache key for tag.
