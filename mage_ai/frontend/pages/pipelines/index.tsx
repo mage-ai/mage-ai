@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
-import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
 import Chip from '@oracle/components/Chip';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
@@ -17,6 +17,7 @@ import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
+  FILTERABLE_PIPELINE_STATUSES,
   PipelineGroupingEnum,
   PipelineQueryEnum,
   PipelineStatusEnum,
@@ -38,7 +39,18 @@ import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { Check, Circle, Clone, File, Open, Pause, PipelineV3, PlayButtonFilled, Secrets, Schedule } from '@oracle/icons';
+import {
+  Check,
+  Circle,
+  Clone,
+  File,
+  Open,
+  Pause,
+  PipelineV3,
+  PlayButtonFilled,
+  Secrets,
+  Schedule,
+} from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
 import { GlobalDataProductObjectTypeEnum } from '@interfaces/GlobalDataProductType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
@@ -53,7 +65,12 @@ import {
 } from '@storage/pipelines';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_SECTIONS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import {
   SortDirectionEnum,
@@ -61,7 +78,12 @@ import {
   TIMEZONE_TOOLTIP_PROPS,
 } from '@components/shared/Table/constants';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
-import { capitalize, capitalizeRemoveUnderscoreLower, isNumeric, randomNameGenerator } from '@utils/string';
+import {
+  capitalize,
+  capitalizeRemoveUnderscoreLower,
+  isNumeric,
+  randomNameGenerator,
+} from '@utils/string';
 import { datetimeInLocalTimezone } from '@utils/date';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
@@ -139,7 +161,9 @@ function PipelineListPage() {
   );
   const operationHistoryEnabled =
     useMemo(() => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY], [project]);
-  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
+  const timezoneTooltipProps = useMemo(() =>
+    displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}
+  , [displayLocalTimezone]);
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
@@ -667,7 +691,7 @@ function PipelineListPage() {
         tooltip: 'Clone pipeline',
       }}
       filterOptions={{
-        status: Object.values(PipelineStatusEnum),
+        status: FILTERABLE_PIPELINE_STATUSES,
         tag: tags.map(({ uuid }) => uuid),
         type: Object.values(PipelineTypeEnum),
       }}
@@ -1046,7 +1070,7 @@ function PipelineListPage() {
         arrFinal.push(rows);
         headersFinal.push(headers?.[idx]);
       }
-    })
+    });
 
     return {
       rowGroupHeaders: headersFinal,
@@ -1210,6 +1234,7 @@ function PipelineListPage() {
           },
         ];
       }}
+      rightClickMenuHeight={36 * 7}
       rightClickMenuWidth={UNIT * 25}
       rowGroupHeaders={rowGroupHeadersInner}
       rows={pipelinesInner?.map((pipeline, idx) => {
@@ -1378,8 +1403,8 @@ function PipelineListPage() {
     deletePipeline,
     displayLocalTimezone,
     getUniqueRowIdentifier,
-    groupByQuery,
     pipelinesEditing,
+    router,
     selectedPipeline,
     setPipelinesEditing,
     setSelectedPipeline,

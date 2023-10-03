@@ -62,6 +62,12 @@ export enum PipelineGroupingEnum {
   TYPE = 'type',
 }
 
+export const FILTERABLE_PIPELINE_STATUSES: PipelineStatusEnum[] = [
+  PipelineStatusEnum.ACTIVE,
+  PipelineStatusEnum.INACTIVE,
+  PipelineStatusEnum.NO_SCHEDULES,
+];
+
 export const PIPELINE_TYPE_TO_KERNEL_NAME = {
   [PipelineTypeEnum.PYTHON]: 'python3',
   [PipelineTypeEnum.PYSPARK]: 'pysparkkernel',
