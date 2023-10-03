@@ -33,3 +33,16 @@ def get_aws_secret_access_key():
     if aws_secret_access_key is None:
         aws_secret_access_key = get_secret_value(AWS_SECRET_ACCESS_KEY)
     return aws_secret_access_key
+
+
+def get_aws_boto3_client(aws_service):
+    import boto3
+    from botocore.config import Config
+
+    config = Config(region_name=get_aws_region_name())
+
+    client = boto3.client(aws_service,
+                          aws_access_key_id=get_aws_access_key_id(),
+                          aws_secret_access_key=get_aws_secret_access_key(),
+                          config=config)
+    return client
