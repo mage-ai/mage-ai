@@ -3,14 +3,7 @@ import os
 from functools import reduce
 from typing import Dict, List
 
-import boto3
-from botocore.config import Config
-
-from mage_ai.services.aws import (
-    get_aws_access_key_id,
-    get_aws_region_name,
-    get_aws_secret_access_key,
-)
+from mage_ai.services.aws import get_aws_boto3_client
 from mage_ai.services.aws.ecs.config import EcsConfig
 from mage_ai.services.aws.ecs.ecs import list_services, list_tasks, run_task, stop_task
 from mage_ai.shared.array import find
@@ -42,14 +35,7 @@ class EcsTaskManager:
             json.dump(metadata, file)
 
     def list_tasks(self):
-        region_name = get_aws_region_name()
-        aws_access_key = get_aws_access_key_id()
-        aws_secret_key = get_aws_secret_access_key()
-        config = Config(region_name=region_name)
-        ec2_client = boto3.client('ec2',
-                                  aws_access_key_id=aws_access_key,
-                                  aws_secret_access_key=aws_secret_key,
-                                  config=config)
+        ec2_client = get_aws_boto3_client('ec2')
 
         response = list_tasks(self.cluster_name)
         network_interfaces = self.__get_network_interfaces(response, ec2_client)
@@ -87,14 +73,7 @@ class EcsTaskManager:
         return tasks + stopped_instances
 
     def create_task(self, name: str, task_definition: str, container_name: str):
-        region_name = get_aws_region_name()
-        aws_access_key = get_aws_access_key_id()
-        aws_secret_key = get_aws_secret_access_key()
-        config = Config(region_name=region_name)
-        ec2_client = boto3.client('ec2',
-                                  aws_access_key_id=aws_access_key,
-                                  aws_secret_access_key=aws_secret_key,
-                                  config=config)
+        ec2_client = get_aws_boto3_client('ec2')
 
         # create new task
         def find_main_task(task):
