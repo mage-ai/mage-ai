@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Button from '@oracle/elements/Button';
 import ButtonGroup, { ButtonGroupProps } from '@oracle/elements/Button/ButtonGroup';
@@ -20,7 +20,7 @@ const TemplateWithTheme = ({ children, ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<ButtonGroupProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<ButtonGroupProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {
