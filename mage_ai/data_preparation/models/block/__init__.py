@@ -431,7 +431,7 @@ class Block(DataIntegrationMixin):
 
                     text = Template(content).render(
                         block_output=_block_output,
-                        variables=lambda x, p, v=variables: get_variable_for_template(
+                        variables=lambda x, p=None, v=variables: get_variable_for_template(
                             x,
                             parse=p,
                             variables=v,

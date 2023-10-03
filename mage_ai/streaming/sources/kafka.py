@@ -14,8 +14,8 @@ from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
 class SecurityProtocol(str, Enum):
-    SASL_SSL = 'SASL_SSL'
     SASL_PLAINTEXT = 'SASL_PLAINTEXT'
+    SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'
 
 
@@ -93,6 +93,9 @@ class KafkaSource(BaseSource):
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
             consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
             consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
+
+            if self.config.ssl_config is not None and self.config.ssl_config.cafile:
+                consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
         elif self.config.security_protocol == SecurityProtocol.SASL_PLAINTEXT:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_PLAINTEXT
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
