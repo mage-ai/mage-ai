@@ -83,6 +83,7 @@ import {
   capitalizeRemoveUnderscoreLower,
   isNumeric,
   randomNameGenerator,
+  removeUnderscore,
 } from '@utils/string';
 import { datetimeInLocalTimezone } from '@utils/date';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
@@ -696,6 +697,9 @@ function PipelineListPage() {
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={{
+        status: FILTERABLE_PIPELINE_STATUSES.reduce(
+          (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
+        ),
         tag: tags.reduce((acc, { uuid }) => ({
           ...acc,
           [uuid]: uuid,
