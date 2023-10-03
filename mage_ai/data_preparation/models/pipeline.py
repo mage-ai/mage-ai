@@ -1184,6 +1184,7 @@ class Pipeline:
         global_vars: Dict = None,
         input_args: List[Any] = None,
         partition: str = None,
+        raise_exception: bool = False,
         spark=None,
         index: int = None,
         sample_count: int = None,
@@ -1212,6 +1213,7 @@ class Pipeline:
         variable = block.get_variable(
             block_uuid=block_uuid,
             partition=partition,
+            raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_name,
         )

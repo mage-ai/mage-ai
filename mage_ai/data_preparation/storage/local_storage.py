@@ -39,22 +39,36 @@ class LocalStorage(BaseStorage):
     def remove_dir(self, path: str) -> None:
         shutil.rmtree(path, ignore_errors=True)
 
-    def read_json_file(self, file_path: str, default_value: Dict = None) -> Dict:
+    def read_json_file(
+        self,
+        file_path: str,
+        default_value: Dict = None,
+        raise_exception: bool = False,
+    ) -> Dict:
         if not self.path_exists(file_path):
             return default_value or {}
         with open(file_path) as file:
             try:
                 return json.load(file)
             except Exception:
+                if raise_exception:
+                    raise
                 return default_value or {}
 
-    async def read_json_file_async(self, file_path: str, default_value: Dict = None) -> Dict:
+    async def read_json_file_async(
+        self,
+        file_path: str,
+        default_value: Dict = None,
+        raise_exception: bool = False,
+    ) -> Dict:
         if not self.path_exists(file_path):
             return default_value or {}
         async with aiofiles.open(file_path, mode='r') as file:
             try:
-                return json.loads(await file.read())
+                return json.load(await file.read())
             except Exception:
+                if raise_exception:
+                    raise
                 return default_value or {}
 
     def write_json_file(self, file_path: str, data) -> None:
