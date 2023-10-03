@@ -384,7 +384,6 @@ function CodeOutput({
           });
         }
 
-
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
@@ -441,9 +440,14 @@ function CodeOutput({
             <OutputRowStyle {...outputRowSharedProps}>
               {textArr.map((t) => (
                 <Text key={t} monospace preWrap>
-                  <Ansi>
-                    {t}
-                  </Ansi>
+                  {t?.length >= 1 && (
+                    <Ansi>
+                      {t}
+                    </Ansi>
+                  )}
+                  {!t?.length && (
+                    <>&nbsp;</>
+                  )}
                 </Text>
               ))}
             </OutputRowStyle>

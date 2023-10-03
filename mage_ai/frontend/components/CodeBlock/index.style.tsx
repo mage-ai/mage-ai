@@ -155,15 +155,22 @@ export const BlockHeaderStyle = styled.div<{
   top: -5px;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.content};
+    background-color: ${(props.theme || dark).background.dashboard};
   `}
 
   ${props => props.bottomBorder && `
-    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.darkLight} !important;
   `}
 
   ${props => props.zIndex && `
     z-index: ${6 + (props.zIndex || 0)};
+  `}
+`;
+
+export const SubheaderStyle = styled.div`
+  ${props => `
+    background-color: ${(props.theme || dark).background.dashboard};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).darkLight};
   `}
 `;
 

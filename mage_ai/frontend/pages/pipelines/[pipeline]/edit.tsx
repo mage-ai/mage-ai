@@ -805,7 +805,7 @@ function PipelineDetailPage({
         callbackToSave = block.callback_content;
       }
 
-      let outputs;
+      let outputs = null;
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
@@ -863,8 +863,13 @@ function PipelineDetailPage({
         ...block,
         callback_content: callbackToSave,
         content: contentToSave,
-        outputs,
       };
+
+      if (outputs === null) {
+        delete blockPayload.outputs;
+      } else {
+        blockPayload.outputs = outputs;
+      }
 
       if (blockOverride?.uuid === uuid) {
         Object.entries(blockOverride).forEach(([k, v]) => {
@@ -2283,6 +2288,7 @@ function PipelineDetailPage({
     }
   }, [
     activeSidekickView,
+    afterHidden,
     heightWindow,
     isInteractionsEnabled,
     refAfterFooter,

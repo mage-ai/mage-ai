@@ -57,7 +57,7 @@ import InteractionType from '@interfaces/InteractionType';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -84,6 +84,7 @@ import {
   CodeContainerStyle,
   CodeHelperStyle,
   ContainerStyle,
+  SubheaderStyle,
   TimeTrackerStyle,
   getColorsForBlockType,
 } from './index.style';
@@ -104,7 +105,12 @@ import {
   CONFIG_KEY_USE_RAW_SQL,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
-import { DRAG_AND_DROP_TYPE } from './constants';
+import {
+  DRAG_AND_DROP_TYPE,
+  SUBHEADER_TABS,
+  SUBHEADER_TAB_CODE,
+  SUBHEADER_TAB_INTERACTIONS,
+} from './constants';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -301,6 +307,11 @@ function CodeBlock({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
+
   const {
     callback_content: callbackContentOrig,
     configuration: blockConfig = {},
@@ -330,6 +341,8 @@ function CodeBlock({
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
+    useState<string>(SUBHEADER_TABS[0].uuid);
 
   const {
     type: pipelineType,
@@ -1067,20 +1080,6 @@ function CodeBlock({
 
   const codeOutputEl = useMemo(() => (
     <>
-      {blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
-        <Spacing
-          key={`${blockInteraction?.uuid}-${idx}`}
-          mt={idx >= 1 ? UNITS_BETWEEN_SECTIONS : 0}
-        >
-          <BlockInteractionController
-            blockInteraction={blockInteraction}
-            containerRef={containerRef}
-            containerWidth={mainContainerWidth}
-            interaction={interactionsMapping?.[blockInteraction?.uuid]}
-          />
-        </Spacing>
-      ))}
-
       <CodeOutput
         {...borderColorShareProps}
         block={block}
@@ -1113,15 +1112,11 @@ function CodeBlock({
     </>
   ), [
     block,
-    blockInteractions,
     blockMetadata,
     borderColorShareProps,
     buttonTabs,
-    containerRef,
     hasOutput,
-    interactionsMapping,
     isInProgress,
-    mainContainerRef,
     mainContainerWidth,
     messages,
     messagesWithType,
@@ -1237,6 +1232,62 @@ function CodeBlock({
     updateDataProviderConfig,
   ]);
 
+  const blockInteractionsMemo = useMemo(() => {
+    if (isInteractionsEnabled) {
+      return blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
+        <div key={`${blockInteraction?.uuid}-${idx}`}>
+          <BlockInteractionController
+            blockInteraction={blockInteraction}
+            contained
+            containerRef={containerRef}
+            containerWidth={mainContainerWidth}
+            interaction={interactionsMapping?.[blockInteraction?.uuid]}
+          />
+        </div>
+      ));
+    }
+  }, [
+    blockInteractions,
+    containerRef,
+    interactionsMapping,
+    isInteractionsEnabled,
+    mainContainerWidth,
+  ]);
+
+  const headerTabs = useMemo(() => {
+    if (!isInteractionsEnabled || !blockInteractions?.length) {
+      return null;
+    }
+
+    return (
+      <SubheaderStyle>
+        <Spacing px={PADDING_UNITS} pt={1}>
+          <ButtonTabs
+            noPadding
+            onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+            selectedTabUUID={selectedSubheaderTabUUID}
+            tabs={SUBHEADER_TABS}
+            underlineColor={getColorsForBlockType(
+              block?.type,
+              {
+                blockColor: block?.color,
+                theme: themeContext,
+              },
+            ).accent}
+            underlineStyle
+          />
+        </Spacing>
+      </SubheaderStyle>
+    );
+  }, [
+    block,
+    blockInteractions,
+    isInteractionsEnabled,
+    selectedSubheaderTabUUID,
+    setSelectedSubheaderTabUUID,
+    themeContext,
+  ]);
+
   return (
     <div ref={drop}>
       <div
@@ -1256,7 +1307,7 @@ function CodeBlock({
               ...borderColorShareProps,
               ...collected,
             }}
-            bottomBorder={isMarkdown}
+            bottomBorder
             onClick={() => onClickSelectBlock()}
             ref={disableDrag ? null : drag}
             zIndex={blocksLength + 1 - (blockIdx || 0)}
@@ -1511,7 +1562,7 @@ function CodeBlock({
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
               lightBackground={isMarkdown && !isEditingBlock}
-              noPadding={isDataIntegration}
+              noPadding
               onClick={onClickSelectBlock}
               onDoubleClick={() => {
                 if (isMarkdown && !isEditingBlock) {
@@ -2132,11 +2183,8 @@ function CodeBlock({
               )}
 
               {tags.length >= 1 && (
-                <CodeHelperStyle
-                  noMargin={isDataIntegration}
-                  normalPadding
-                >
-                  <Spacing py={isDataIntegration ? 1 : 0}>
+                <SubheaderStyle>
+                  <Spacing px={PADDING_UNITS} py={1}>
                     <FlexContainer>
                       {tags.map(({
                         description,
@@ -2157,8 +2205,10 @@ function CodeBlock({
                       ))}
                     </FlexContainer>
                   </Spacing>
-                </CodeHelperStyle>
+                </SubheaderStyle>
               )}
+
+              {headerTabs}
 
               {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
@@ -2271,7 +2321,19 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {!blockError && (
+              {SUBHEADER_TAB_INTERACTIONS.uuid === selectedSubheaderTabUUID && !codeCollapsed && (
+                <>
+                  {blockInteractionsMemo}
+                </>
+              )}
+
+              {!blockError
+                && (
+                  !selectedSubheaderTabUUID
+                    || SUBHEADER_TAB_CODE.uuid === selectedSubheaderTabUUID
+                  )
+                &&
+              (
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
@@ -2305,7 +2367,11 @@ function CodeBlock({
                             </Link>
                           </Text>
                         </Spacing>)
-                        : codeEditorEl
+                        : (
+                          <Spacing py={1}>
+                            {codeEditorEl}
+                          </Spacing>
+                        )
                       : markdownEl
                     )
                     : (

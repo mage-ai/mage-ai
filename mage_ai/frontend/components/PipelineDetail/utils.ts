@@ -2,6 +2,7 @@ import { NextRouter } from 'next/router';
 
 import BlockType, { OutputType } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
+import { DataTypeEnum } from '@interfaces/KernelOutputType';
 import {
   LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS,
   get,
@@ -28,22 +29,30 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   }: BlockType) => {
     if (outputs?.length >= 1) {
       messagesInit[uuid] = outputs.map((output: OutputType) => {
-        const {
-          sample_data: sampleData,
-          shape: shape,
-          text_data: textDataJsonString,
-          type,
-        } = output || {};
-        if (sampleData) {
-          return {
-            data: {
-              shape,
-              ...sampleData,
-            },
+        if (typeof output === 'object') {
+          const {
+            sample_data: sampleData,
+            shape: shape,
+            text_data: textDataJsonString,
             type,
+          } = output || {};
+
+          if (sampleData) {
+            return {
+              data: {
+                shape,
+                ...sampleData,
+              },
+              type,
+            };
+          } else if (textDataJsonString && isJsonString(textDataJsonString)) {
+            return JSON.parse(textDataJsonString);
+          }
+        } else {
+          return {
+            data: String(output),
+            type: DataTypeEnum.TEXT,
           };
-        } else if (textDataJsonString && isJsonString(textDataJsonString)) {
-          return JSON.parse(textDataJsonString);
         }
 
         return textDataJsonString;
