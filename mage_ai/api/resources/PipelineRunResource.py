@@ -16,6 +16,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     configure_pipeline_run_payload,
     stop_pipeline_run,
 )
+from mage_ai.settings.repo import get_repo_path
 
 
 class PipelineRunResource(DatabaseResource):
@@ -38,6 +39,11 @@ class PipelineRunResource(DatabaseResource):
         pipeline_uuid = query_arg.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
+        pipeline_uuids = query_arg.get('pipeline_uuid[]', [])
+        if pipeline_uuids:
+            pipeline_uuids = pipeline_uuids[0]
+        if pipeline_uuids:
+            pipeline_uuids = pipeline_uuids.split(',')
 
         global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
         if global_data_product_uuid:
@@ -46,6 +52,11 @@ class PipelineRunResource(DatabaseResource):
         status = query_arg.get('status', [None])
         if status:
             status = status[0]
+        statuses = query_arg.get('status[]', [])
+        if statuses:
+            statuses = statuses[0]
+        if statuses:
+            statuses = statuses.split(',')
 
         order_by_arg = query_arg.get('order_by[]', [None])
         if order_by_arg:
@@ -85,8 +96,12 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id))
         if pipeline_uuid is not None:
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
+        if pipeline_uuids:
+            results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
         if status is not None:
             results = results.filter(PipelineRun.status == status)
+        if statuses:
+            results = results.filter(PipelineRun.status.in_(statuses))
         if start_timestamp is not None:
             results = results.filter(PipelineRun.created_at >= start_timestamp)
         if end_timestamp is not None:
@@ -115,16 +130,20 @@ class PipelineRunResource(DatabaseResource):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
 
-        pipeline_tag = query_arg.get('pipeline_tag', [None])
-        if pipeline_tag:
-            pipeline_tag = pipeline_tag[0]
+        include_pipeline_uuids = query_arg.get('include_pipeline_uuids', [False])
+        if include_pipeline_uuids:
+            include_pipeline_uuids = include_pipeline_uuids[0]
+
+        pipeline_tags = query_arg.get('pipeline_tag[]', [None])
+        if pipeline_tags:
+            pipeline_tags = pipeline_tags[0]
 
         pipeline_type = query_arg.get('pipeline_type', [None])
         if pipeline_type:
             pipeline_type = pipeline_type[0]
 
         filter_by_pipeline_type = pipeline_type is not None
-        filter_by_pipeline_tag = pipeline_tag is not None
+        filter_by_pipeline_tag = pipeline_tags is not None
         if filter_by_pipeline_type or filter_by_pipeline_tag:
             try:
                 pipeline_type_by_pipeline_uuid = dict()
@@ -146,7 +165,7 @@ class PipelineRunResource(DatabaseResource):
                             pipeline_tags_by_pipeline_uuid.get(run.pipeline_uuid, [])
                         filters.append(
                             len(pipeline_tags_for_run) > 0 and
-                            set(pipeline_tags_for_run).issubset(set(pipeline_tag.split(','))),
+                            set(pipeline_tags_for_run).issubset(set(pipeline_tags.split(','))),
                         )
                     if all(filters):
                         results.append(run)
@@ -219,6 +238,10 @@ class PipelineRunResource(DatabaseResource):
             'count': total_count,
             'next': has_next,
         }
+
+        if include_pipeline_uuids:
+            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+            result_set.metadata['pipeline_uuids'] = pipeline_uuids
 
         return result_set
 
