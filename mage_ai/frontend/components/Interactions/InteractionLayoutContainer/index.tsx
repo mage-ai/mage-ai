@@ -5,7 +5,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import LayoutItem from './LayoutItem';
+import LayoutItemWithDrag from './LayoutItemWithDrag';
 import RowDivider from './RowDivider';
+import Spacing from '@oracle/elements/Spacing';
 import {
   InteractionInputType,
   InteractionLayoutItemType,
@@ -18,7 +20,7 @@ import { useWindowSize } from '@utils/sizes';
 type InteractionLayoutContainerProps = {
   containerRef: any;
   interaction: InteractionType;
-  updateLayout: (layoutNew: InteractionLayoutItemType[][]) => InteractionLayoutItemType[][];
+  updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => InteractionLayoutItemType[][];
 };
 
 function InteractionLayoutContainer({
@@ -86,7 +88,7 @@ function InteractionLayoutContainer({
         );
       }
 
-      updateLayout(newLayout);
+      updateLayout?.(newLayout);
 
       return;
     } else if (rowIndex === rowIndexNew && columnIndex !== columnIndexNew) {
@@ -120,17 +122,20 @@ function InteractionLayoutContainer({
 
     if (rowIndex !== rowIndexNew || columnIndex !== columnIndexNew) {
       // @ts-ignore
-      updateLayout(newLayout);
+      updateLayout?.(newLayout);
     }
   }, [
     layout,
     updateLayout,
   ]);
 
+  const rowsCount = useMemo(() => layout?.length || 0, [layout]);
+
   const layoutWithVariablesAndInput = useMemo(() => {
     const rows = [];
 
     layout?.forEach((columns: InteractionLayoutItemType[], idx1: number) => {
+      const columnsCount = columns?.length || 0;
       const row = [];
 
       const columnWidthTotal = sum(columns?.map(({ width }) => width || 0));
@@ -159,15 +164,32 @@ function InteractionLayoutContainer({
           ? maxWidth
           : widthPercentage;
 
+        const LayoutEl = updateLayout ? LayoutItemWithDrag : LayoutItem;
+        const widthAdjusted = Math.floor(widthPercentageFinal * containerWidth);
+        let widthOffset = 0;
+
+        if (columnsCount >= 3) {
+          widthOffset = 0.5
+        } else if (columnsCount === 2) {
+          widthOffset = 1;
+        } else {
+          widthOffset = 2;
+        }
+
+        const widthItem = updateLayout
+          ? widthAdjusted - (2 + (UNIT * 2))
+          : widthAdjusted - (2 + (UNIT * widthOffset));
+
         row.push(
           <Flex
             flexBasis={`${Math.floor(widthPercentageFinal * 100)}%`}
             key={`row-${idx1}-column-${idx2}-${variableUUID}`}
           >
-            <LayoutItem
+            <LayoutEl
               columnIndex={idx2}
               columnLayoutSettings={column}
               columnsInRow={columnsInRow}
+              disableDrag={!!updateLayout}
               first={0 === idx2}
               input={input}
               onDrop={({
@@ -183,13 +205,13 @@ function InteractionLayoutContainer({
               }}
               rowIndex={idx1}
               variable={variable}
-              width={Math.floor(widthPercentageFinal * containerWidth) - (2 + (UNIT * 2))}
+              width={widthItem}
             />
           </Flex>,
         );
       });
 
-      if (idx1 === 0) {
+      if (idx1 === 0 && updateLayout) {
         rows.push(
           <RowDivider
             key={`layout-divider-${idx1}-top`}
@@ -218,26 +240,32 @@ function InteractionLayoutContainer({
         </FlexContainer>,
       );
 
-      rows.push(
-        <RowDivider
-           key={`layout-divider-${idx1}-bottom`}
-           onDrop={({
-              columnIndex,
-              rowIndex,
-            }) => {
-              moveLayoutItem(
-                rowIndex,
+      if (updateLayout) {
+        rows.push(
+          <RowDivider
+             key={`layout-divider-${idx1}-bottom`}
+             onDrop={({
                 columnIndex,
-                idx1 + 1,
-                0,
-                {
-                  newRow: true,
-                },
-              );
-            }}
-           // width={containerWidth - 120}
-        />,
-      );
+                rowIndex,
+              }) => {
+                moveLayoutItem(
+                  rowIndex,
+                  columnIndex,
+                  idx1 + 1,
+                  0,
+                  {
+                    newRow: true,
+                  },
+                );
+              }}
+             // width={containerWidth - 120}
+          />,
+        );
+      } else if (idx1 < rowsCount - 1) {
+        rows.push(
+          <Spacing key={`layout-divider-${idx1}-bottom`} py={2} />
+        );
+      }
     });
 
     return rows;
@@ -246,8 +274,14 @@ function InteractionLayoutContainer({
     inputs,
     layout,
     moveLayoutItem,
+    rowsCount,
+    updateLayout,
     variables,
   ]);
+
+  if (!updateLayout) {
+    return layoutWithVariablesAndInput;
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>

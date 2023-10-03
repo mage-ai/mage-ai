@@ -9,7 +9,7 @@ import InteractionType from '@interfaces/InteractionType';
 import Spacing from '@oracle/elements/Spacing';
 import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import { ContainerStyle } from '../index.style';
-import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 type BlockInteractionRowProps = {
   block: BlockType;
@@ -31,19 +31,19 @@ function BlockInteractionRow({
   return (
     <ContainerStyle>
       <Spacing p={PADDING_UNITS}>
-        <Headline bold default monospace>
+        <Headline bold default level={4} monospace>
           {blockName}
         </Headline>
       </Spacing>
 
       <Divider light />
 
-      <Spacing p={PADDING_UNITS}>
+      <Spacing pb={PADDING_UNITS}>
         {blockInteractionWithInteractions?.map(({
           blockInteraction,
           interaction,
         }: BlockInteractionWithInteraction, idx: number) => (
-          <Spacing mt={idx >= 1 ? UNITS_BETWEEN_SECTIONS : 0}>
+          <Spacing mt={idx >= 1 ? PADDING_UNITS : 0}>
             <BlockInteractionController
               blockInteraction={blockInteraction}
               interaction={interaction}

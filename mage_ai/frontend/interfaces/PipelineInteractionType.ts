@@ -14,6 +14,7 @@ export interface BlockInteractionVariableType; {
 }
 
 export interface BlockInteractionType {
+  description?: string;
   layout?: InteractionLayoutItemType[][];
   name: string;
   roles?: string[];

@@ -1,5 +1,3 @@
-import { useDrag, useDrop } from 'react-dnd';
-
 import InteractionDisplay from '../InteractionDisplay';
 import Spacing from '@oracle/elements/Spacing';
 import { ArrowsAdjustingFrameSquare } from '@oracle/icons';
@@ -11,69 +9,42 @@ import {
 } from '@interfaces/InteractionType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-type LayoutItemProps = {
-  columnIndex: number;
+export type LayoutItemProps = {
   columnLayoutSettings: InteractionLayoutItemType;
-  columnsInRow: number;
-  disableDrag?: boolean;
-  first: boolean;
+  drag?: any;
+  drop?: any;
   input: InteractionInputType;
-  onDrop?: (opts: {
-    columnIndex: number;
-    rowIndex: number;
-  }) => void;
-  rowIndex: number;
   variable: InteractionVariableType;
   width: number;
 };
 
 function LayoutItem({
-  columnIndex,
   columnLayoutSettings,
-  columnsInRow,
-  disableDrag,
-  first,
+  drag,
+  drop,
   input,
-  onDrop,
-  rowIndex,
   variable,
   width,
 }: LayoutItemProps) {
   const inputUUID = variable?.input;
   const variableUUID = columnLayoutSettings?.variable;
 
-  const [collected, drag] = useDrag(() => ({
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-    item: {
-      columnIndex,
-      rowIndex,
-    },
-    type: 'InteractionLayoutItem',
-  }), [
-    columnIndex,
-    rowIndex,
-  ]);
-
-  const [, drop] = useDrop(() => ({
-    accept: 'InteractionLayoutItem',
-    drop: (opts: {
-      columnIndex: number;
-      rowIndex: number;
-    }) => onDrop?.(opts),
-  }), [onDrop]);
-
   return (
-    <LayoutItemStyle ref={drop} style={{ width }}>
+    <LayoutItemStyle
+      disableDrag={!drag}
+      ref={drop}
+      style={{ width }}
+    >
       <ContainerStyle
-        ref={disableDrag ? null : drag}
+        ref={drag}
         style={{ marginLeft: UNIT, marginRight: UNIT }}
       >
         <Spacing p={PADDING_UNITS}>
-          <Spacing mb={1}>
-            <ArrowsAdjustingFrameSquare default size={2 * UNIT} />
-          </Spacing>
+          {!!drag && (
+            <Spacing mb={1}>
+              <ArrowsAdjustingFrameSquare default size={2 * UNIT} />
+            </Spacing>
+          )}
 
           <InteractionDisplay
             interaction={{

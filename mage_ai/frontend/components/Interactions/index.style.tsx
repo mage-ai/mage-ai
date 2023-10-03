@@ -37,8 +37,12 @@ export const DottedLineStyle = styled.div`
   `}
 `;
 
-export const LayoutItemStyle = styled.div`
-  &:hover {
-    cursor: move;
-  }
+export const LayoutItemStyle = styled.div<{
+  disableDrag?: boolean;
+}>`
+  ${props => !props.disableDrag && `
+    &:hover {
+      cursor: move;
+    }
+  `}
 `;

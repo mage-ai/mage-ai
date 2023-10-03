@@ -6,7 +6,7 @@ import InteractionType from '@interfaces/InteractionType';
 import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 
 type PipelineInteractionsProps = {
@@ -57,12 +57,12 @@ function PipelineInteractions({
   const interactionsMemo = useMemo(() => {
     const arr = [];
 
-    pipeline?.blocks?.map((block: BlockType) => {
+    pipeline?.blocks?.map((block: BlockType, idx: number) => {
       const blockUUID = block?.uuid;
       const blockInteractions: BlockInteractionType[] = blockInteractionsMapping?.[blockUUID];
 
       arr.push(
-        <Spacing mb={PADDING_UNITS}>
+        <Spacing mt={idx >= 1 ? UNITS_BETWEEN_SECTIONS : 0}>
           <BlockInteractionRow
             block={block}
             blockInteractionWithInteractions={blockInteractions?.map((

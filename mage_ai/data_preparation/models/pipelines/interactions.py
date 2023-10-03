@@ -40,6 +40,7 @@ class BlockInteraction:
     name: str
     # This is the path to the interaction file (excluding the interactions directory).
     uuid: str
+    description: str = None
     layout: List[List[InteractionLayoutItem]] = field(default_factory=list)
     roles: List[str] = None
     triggers: List[BlockInteractionTrigger] = None
