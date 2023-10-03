@@ -308,6 +308,6 @@ export default {
   title: 'Oracle/Icons',
 } as Meta;
 
-const Template: Story = () => <Icons />;
+const Template: StoryFn = () => <Icons />;
 
 export const Main = Template.bind({});
