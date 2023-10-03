@@ -187,14 +187,14 @@ class Interaction:
     ) -> None:
         settings = content_parsed or yaml.safe_load(content)
 
-        for uuid, item in (settings.get('inputs') or {}).items():
+        for _uuid, item in (settings.get('inputs') or {}).items():
             InteractionInput(**item)
 
         for row in (settings.get('layout') or []):
             for item in row:
                 InteractionLayoutItem(**item)
 
-        for uuid, item in (settings.get('variables') or {}).items():
+        for _uuid, item in (settings.get('variables') or {}).items():
             InteractionVariable(**item)
 
     async def update(
