@@ -46,8 +46,10 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import InteractionType from '@interfaces/InteractionType';
 import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
+import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
@@ -90,13 +92,13 @@ import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/cons
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
   buildNavigationItems as buildNavigationItemsSidekick,
@@ -165,6 +167,11 @@ function PipelineDetailPage({
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
+
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -264,6 +271,62 @@ function PipelineDetailPage({
     },
     {
       key: `/pipelines/${pipelineUUID}/edit`,
+    },
+  );
+
+  const {
+    data: dataPipelineInteraction,
+    mutate: fetchPipelineInteraction,
+  } = api.pipeline_interactions.detail(isInteractionsEnabled && pipelineUUID);
+
+  const {
+    data: dataInteractions,
+    mutate: fetchInteractions,
+  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
+
+  const pipelineInteraction: PipelineInteractionType =
+    useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
+      dataPipelineInteraction,
+    ]);
+  const interactions: InteractionType =
+    useMemo(() => dataInteractions?.interactions || {}, [
+      dataInteractions,
+    ]);
+
+  const [
+    updatePipelineInteraction,
+    {
+      isLoading: isLoadingUpdatePipelineInteraction,
+    },
+  ] = useMutation(
+    api.pipeline_interactions.useUpdate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (resp) => {
+            fetchPipelineInteraction();
+          },
+        },
+      ),
+    },
+  );
+
+  const [
+    createInteraction,
+    {
+      isLoading: isLoadingCreateInteraction,
+    },
+  ] = useMutation(
+    api.interactions.pipeline_interactions.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (resp) => {
+            fetchInteractions();
+            fetchPipelineInteraction();
+          },
+        },
+      ),
     },
   );
 
@@ -2203,6 +2266,28 @@ function PipelineDetailPage({
     uuid: 'global_data_products',
   });
 
+  // After footer for interactions in Sidekick
+
+  const refAfterFooter = useRef(null);
+
+  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
+
+  const isSidekickOnInteractions: boolean =
+    useMemo(() => ViewKeyEnum.INTERACTIONS === activeSidekickView, [
+      activeSidekickView,
+    ]);
+
+  useEffect(() => {
+    if (activeSidekickView && refAfterFooter?.current) {
+      setAfterFooterBottomOffset(refAfterFooter?.current?.getBoundingClientRect()?.height);
+    }
+  }, [
+    activeSidekickView,
+    heightWindow,
+    isInteractionsEnabled,
+    refAfterFooter,
+  ]);
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -2220,7 +2305,9 @@ function PipelineDetailPage({
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
       checkIfPipelineRunning={checkIfPipelineRunning}
+      containerHeightOffset={isSidekickOnInteractions ? (afterFooterBottomOffset + 1) : null}
       contentByBlockUUID={contentByBlockUUID}
+      createInteraction={createInteraction}
       deleteBlock={deleteBlock}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
@@ -2232,7 +2319,10 @@ function PipelineDetailPage({
       globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       insights={insights}
+      interactions={interactions}
       interruptKernel={interruptKernel}
+      isLoadingCreateInteraction={isLoadingCreateInteraction}
+      isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
       isPipelineExecuting={isPipelineExecuting}
       isPipelineUpdating={isPipelineUpdating}
       lastTerminalMessage={lastTerminalMessage}
@@ -2244,7 +2334,10 @@ function PipelineDetailPage({
       onSelectBlockFile={onSelectBlockFile}
       onUpdateFileSuccess={onUpdateFileSuccess}
       pipeline={pipeline}
+      pipelineInteraction={pipelineInteraction}
       pipelineMessages={pipelineMessages}
+      project={project}
+      refAfterFooter={refAfterFooter}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
@@ -2279,12 +2372,14 @@ function PipelineDetailPage({
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
+      updatePipelineInteraction={updatePipelineInteraction}
       updatePipelineMetadata={updatePipelineMetadata}
       updateWidget={updateWidget}
       widgets={widgets}
     />
   ), [
     activeSidekickView,
+    afterFooterBottomOffset,
     afterWidthForChildren,
     autocompleteItems,
     blockRefs,
@@ -2293,6 +2388,7 @@ function PipelineDetailPage({
     cancelPipeline,
     checkIfPipelineRunning,
     contentByBlockUUID,
+    createInteraction,
     deleteBlock,
     deleteWidget,
     editingBlock,
@@ -2304,9 +2400,13 @@ function PipelineDetailPage({
     globalDataProducts,
     globalVariables,
     insights,
+    interactions,
     interruptKernel,
+    isLoadingCreateInteraction,
+    isLoadingUpdatePipelineInteraction,
     isPipelineExecuting,
     isPipelineUpdating,
+    isSidekickOnInteractions,
     lastTerminalMessage,
     messages,
     metadata,
@@ -2316,7 +2416,10 @@ function PipelineDetailPage({
     onSelectBlockFile,
     onUpdateFileSuccess,
     pipeline,
+    pipelineInteraction,
     pipelineMessages,
+    project,
+    refAfterFooter,
     runBlock,
     runningBlocks,
     sampleData,
@@ -2336,6 +2439,7 @@ function PipelineDetailPage({
     showDataIntegrationModal,
     statistics,
     textareaFocused,
+    updatePipelineInteraction,
     updatePipelineMetadata,
     updateWidget,
     widgets,
@@ -2731,12 +2835,14 @@ function PipelineDetailPage({
             project={project}
             secrets={secrets}
             selectedBlock={selectedBlock}
+            setSelectedBlock={setSelectedBlock}
             treeRef={treeRef}
             variables={globalVariables}
           />
         )}
         afterHeightOffset={HEADER_HEIGHT}
         afterHidden={afterHidden}
+        afterInnerHeightMinus={afterFooterBottomOffset}
         afterNavigationItems={buildNavigationItemsSidekick({
           activeView: activeSidekickView,
           pipeline,

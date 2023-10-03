@@ -27,7 +27,7 @@ import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import { Add, Edit } from '@oracle/icons';
-import { ContainerStyle } from './index.style';
+import { ButtonContainerStyle, ContainerStyle } from './index.style';
 import {
   PADDING_UNITS,
   UNIT,
@@ -45,6 +45,9 @@ type PipelineInteractionsProps = {
   isLoadingUpdatePipelineInteraction?: boolean;
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
+  refAfterFooter?: any;
+  selectedBlock?: BlockType;
+  setSelectedBlock?: (block: BlockType) => void;
   updatePipelineInteraction: (pipelineInteraction: PipelineInteractionType) => void;
 };
 
@@ -55,6 +58,9 @@ function PipelineInteractions({
   isLoadingUpdatePipelineInteraction,
   pipeline,
   pipelineInteraction,
+  refAfterFooter,
+  selectedBlock: editingBlock,
+  setSelectedBlock,
   updatePipelineInteraction,
 }: PipelineInteractionsProps) {
   const containerRef = useRef(null);
@@ -73,7 +79,6 @@ function PipelineInteractions({
   }>(null);
   const [permissionsState, setPermissionsState] =
     useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
-  const [editingBlock, setEditingBlock] = useState<BlockType>(null);
 
   const [lastUpdated, setLastUpdated] = useState<Number>(null);
 
@@ -195,8 +200,6 @@ function PipelineInteractions({
     setInteractionsMapping,
   ]);
 
-  console.log(interactionsMapping)
-
   useEffect(() => {
     if (!blockInteractionsMapping && pipelineInteraction?.blocks) {
       setBlockInteractionsMapping(pipelineInteraction?.blocks);
@@ -238,7 +241,7 @@ function PipelineInteractions({
           compact
           onClick={(e) => {
             pauseEvent(e);
-            setEditingBlock(block);
+            setSelectedBlock(block);
           }}
           primary={!hasBlockInteractions}
           secondary={hasBlockInteractions}
@@ -307,8 +310,8 @@ function PipelineInteractions({
     containerRef,
     interactionsMapping,
     setBlockInteractionsMapping,
-    setEditingBlock,
     setInteractionsMapping,
+    setSelectedBlock,
   ]);
 
   const accordionMemo = useMemo(() => blocks?.length >= 1 && (
@@ -331,8 +334,13 @@ function PipelineInteractions({
     ]);
 
   return (
-    <Spacing p={PADDING_UNITS}>
-      <div ref={containerRef}>
+    <Spacing
+      p={PADDING_UNITS}
+      style={{
+        position: 'relative',
+      }}
+    >
+      <Spacing pb={PADDING_UNITS} ref={containerRef}>
         {!editingBlock && (
           <>
             <Spacing mb={PADDING_UNITS}>
@@ -636,17 +644,19 @@ function PipelineInteractions({
             </div>
           );
         })}
-      </div>
-
-      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
-        <Button
-          loading={isLoadingUpdatePipelineInteraction}
-          onClick={() => savePipelineInteraction()}
-          primary
-        >
-          Save interactions for all blocks
-        </Button>
       </Spacing>
+
+      <ButtonContainerStyle ref={refAfterFooter}>
+        <Spacing p={PADDING_UNITS}>
+          <Button
+            loading={isLoadingUpdatePipelineInteraction}
+            onClick={() => savePipelineInteraction()}
+            primary
+          >
+            Save interactions for all blocks
+          </Button>
+        </Spacing>
+      </ButtonContainerStyle>
     </Spacing>
   );
 }

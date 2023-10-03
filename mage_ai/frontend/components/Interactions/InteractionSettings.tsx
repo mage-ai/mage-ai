@@ -929,13 +929,13 @@ function InteractionSettings({
                 </Headline>
               </Spacing>
 
-              {Object.keys(variables)?.length >= 1 && addNewVariableButtonMemo}
+              {Object.keys(variables || {})?.length >= 1 && addNewVariableButtonMemo}
             </FlexContainer>
           )}
         >
           <Spacing p={PADDING_UNITS}>
             {variablesMemo}
-            {!Object.keys(variables)?.length && addNewVariableButtonMemo}
+            {!Object.keys(variables || {})?.length && addNewVariableButtonMemo}
           </Spacing>
         </AccordionPanel>
 
@@ -958,13 +958,13 @@ function InteractionSettings({
                 </Headline>
               </Spacing>
 
-              {Object.keys(inputs)?.length >= 1 && addNewInputButtonMemo}
+              {Object.keys(inputs || {})?.length >= 1 && addNewInputButtonMemo}
             </FlexContainer>
           )}
         >
           <Spacing p={PADDING_UNITS}>
             {inputsMemo}
-            {!Object.keys(inputs)?.length && addNewInputButtonMemo}
+            {!Object.keys(inputs || {})?.length && addNewInputButtonMemo}
           </Spacing>
         </AccordionPanel>
 

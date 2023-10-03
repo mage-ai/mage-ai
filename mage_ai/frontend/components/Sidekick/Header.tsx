@@ -3,6 +3,7 @@ import { CanvasRef } from 'reaflow';
 import { useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
+import Breadcrumbs, { BreadcrumbType as BreadcrumbTypeOrig } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ExtensionOptionType from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
@@ -37,6 +38,7 @@ type SidekickHeaderProps = {
     [key: string]: any;
   }[];
   selectedBlock?: BlockType;
+  setSelectedBlock?: (block: BlockType) => void;
   treeRef?: { current?: CanvasRef };
   variables?: {
     [key: string]: any;
@@ -50,6 +52,7 @@ function SidekickHeader({
   project,
   secrets,
   selectedBlock,
+  setSelectedBlock,
   treeRef,
   variables,
 }: SidekickHeaderProps) {
@@ -99,7 +102,37 @@ function SidekickHeader({
 
   const showAddonDetails = ViewKeyEnum.ADDON_BLOCKS === activeView && query?.addon;
 
-  if (!activeView) {
+  if (ViewKeyEnum.INTERACTIONS === activeView) {
+    const breadcrumbs = [];
+
+    if (selectedBlock?.uuid) {
+      breadcrumbs.push(...[
+        {
+          label: () => 'Interactions',
+          monospace: false,
+          onClick: () => setSelectedBlock(null),
+        },
+        {
+          bold: true,
+          label: () => selectedBlock?.uuid,
+          monospace: true,
+        },
+      ]);
+    } else {
+      breadcrumbs.push({
+        bold: true,
+        label: () => 'Interactions',
+        monospace: false,
+      });
+    }
+
+    el = (
+      <Breadcrumbs
+        breadcrumbs={breadcrumbs}
+        noMarginLeft
+      />
+    )
+  } else if (!activeView) {
     return <div />;
   } else if (treeRef && ViewKeyEnum.TREE === activeView) {
     el = (
