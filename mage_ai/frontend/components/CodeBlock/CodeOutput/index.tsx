@@ -384,7 +384,6 @@ function CodeOutput({
           });
         }
 
-
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
@@ -458,7 +457,7 @@ function CodeOutput({
               </OutputRowStyle>
             );
           }
-        } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+        } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
               <img
