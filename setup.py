@@ -70,7 +70,6 @@ setuptools.setup(
             'dbt-sqlserver==1.4.3',
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
-            'dbt-synapse @ git+https://github.com/mage-ai/dbt-synapse.git@1.4.0-upgrade',
         ],
         'google-cloud-storage': ['google-cloud-storage==2.5.0'],
         'hdf5': ['tables==3.7.0'],
