@@ -8,17 +8,20 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.constants import (
     PIPELINE_INTERACTIONS_FILENAME,
 )
-from mage_ai.data_preparation.models.triggers import ScheduleType
+from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.presenters.interactions.constants import InteractionVariableType
 from mage_ai.presenters.interactions.models import InteractionLayoutItem
 
 
 @dataclass
 class BlockInteractionTrigger:
-    schedule_interval: str = None
+    schedule_interval: ScheduleInterval = None
     schedule_type: ScheduleType = None
 
     def __post_init__(self):
+        if self.schedule_interval and isinstance(self.schedule_interval, str):
+            self.schedule_interval = ScheduleInterval(self.schedule_interval)
+
         if self.schedule_type and isinstance(self.schedule_type, str):
             self.schedule_type = ScheduleType(self.schedule_type)
 
@@ -36,14 +39,19 @@ class BlockInteractionVariable:
 
 
 @dataclass
+class InteractionPermission:
+    roles: List[str] = None
+    triggers: List[BlockInteractionTrigger] = None
+
+
+@dataclass
 class BlockInteraction:
     name: str
     # This is the path to the interaction file (excluding the interactions directory).
     uuid: str
     description: str = None
     layout: List[List[InteractionLayoutItem]] = field(default_factory=list)
-    roles: List[str] = None
-    triggers: List[BlockInteractionTrigger] = None
+    permissions: List[InteractionPermission] = field(default_factory=list)
     variables: Dict = field(default_factory=dict)
 
     def __post_init__(self):
@@ -62,14 +70,14 @@ class BlockInteraction:
                     arr.append(row)
             self.layout = arr
 
-        if self.triggers and isinstance(self.triggers, list):
+        if self.permissions and isinstance(self.permissions, list):
             arr = []
-            for trigger in self.triggers:
-                if isinstance(trigger, dict):
-                    arr.append(BlockInteractionTrigger(**trigger))
+            for permission in self.permissions:
+                if isinstance(permission, dict):
+                    arr.append(InteractionPermission(**permission))
                 else:
-                    arr.append(trigger)
-            self.triggers = arr
+                    arr.append(permission)
+            self.permissions = arr
 
         if self.variables and isinstance(self.variables, dict):
             mapping = {}
@@ -82,8 +90,16 @@ class BlockInteraction:
 
 
 @dataclass
+class PipelineInteractionLayoutItem(InteractionLayoutItem):
+    block_uuid: str = None
+    interaction: str = None
+
+
+@dataclass
 class Interaction:
     interactions: Dict = field(default_factory=dict)
+    layout: List[List[PipelineInteractionLayoutItem]] = field(default_factory=list)
+    permissions: List[InteractionPermission] = field(default_factory=list)
 
     def __post_init__(self):
         if self.interactions and isinstance(self.interactions, dict):
@@ -100,6 +116,30 @@ class Interaction:
                 else:
                     mapping[block_uuid] = interactions
             self.interactions = mapping
+
+        if self.layout and isinstance(self.layout, list):
+            arr = []
+            for row in self.layout:
+                if isinstance(row, list):
+                    arr2 = []
+                    for item in row:
+                        if isinstance(item, dict):
+                            arr2.append(PipelineInteractionLayoutItem(**item))
+                        else:
+                            arr2.append(item)
+                    arr.append(arr2)
+                else:
+                    arr.append(row)
+            self.layout = arr
+
+        if self.permissions and isinstance(self.permissions, list):
+            arr = []
+            for permission in self.permissions:
+                if isinstance(permission, dict):
+                    arr.append(InteractionPermission(**permission))
+                else:
+                    arr.append(permission)
+            self.permissions = arr
 
 
 class PipelineInteractions:
