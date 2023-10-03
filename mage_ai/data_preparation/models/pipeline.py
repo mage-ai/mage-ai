@@ -985,7 +985,7 @@ class Pipeline:
                 BlockType.DBT != block.type and
                 block.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
                 any(
-                    BlockType.DBT != downstream_block.type
+                    BlockType.DBT == downstream_block.type
                     for downstream_block in block.downstream_blocks
                 )
             )

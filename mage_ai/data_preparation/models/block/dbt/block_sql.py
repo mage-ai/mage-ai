@@ -179,7 +179,7 @@ class DBTBlockSQL(DBTBlock):
         if res:
             nodes = [simplejson.loads(node) for node in res]
         else:
-            return None
+            return []
 
         # transform List into dict and remove unnecessary fields
         file_path = self.configuration.get('file_path')
