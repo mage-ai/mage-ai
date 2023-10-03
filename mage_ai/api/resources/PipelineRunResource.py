@@ -3,6 +3,7 @@ from sqlalchemy.orm import selectinload
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
+from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -114,20 +115,40 @@ class PipelineRunResource(DatabaseResource):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
 
+        pipeline_tag = query_arg.get('pipeline_tag', [None])
+        if pipeline_tag:
+            pipeline_tag = pipeline_tag[0]
+
         pipeline_type = query_arg.get('pipeline_type', [None])
         if pipeline_type:
             pipeline_type = pipeline_type[0]
 
-        if pipeline_type is not None:
-            pipeline_type_by_pipeline_uuid = dict()
+        filter_by_pipeline_type = pipeline_type is not None
+        filter_by_pipeline_tag = pipeline_tag is not None
+        if filter_by_pipeline_type or filter_by_pipeline_tag:
             try:
+                pipeline_type_by_pipeline_uuid = dict()
+                if filter_by_pipeline_tag:
+                    pipeline_tag_cache = TagCache()
+                    pipeline_tags_by_pipeline_uuid = \
+                        pipeline_tag_cache.get_tags_by_pipeline_uuid()
                 pipeline_runs = total_results.all()
                 results = []
                 for run in pipeline_runs:
-                    if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
-                        pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
-                    run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
-                    if run_pipeline_type == pipeline_type:
+                    filters = []
+                    if filter_by_pipeline_type:
+                        if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
+                            pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
+                        run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
+                        filters.append(run_pipeline_type == pipeline_type)
+                    if filter_by_pipeline_tag:
+                        pipeline_tags_for_run = \
+                            pipeline_tags_by_pipeline_uuid.get(run.pipeline_uuid, [])
+                        filters.append(
+                            len(pipeline_tags_for_run) > 0 and
+                            set(pipeline_tags_for_run).issubset(set(pipeline_tag.split(','))),
+                        )
+                    if all(filters):
                         results.append(run)
                 total_count = len(results)
                 results = results[offset:(offset + limit)]

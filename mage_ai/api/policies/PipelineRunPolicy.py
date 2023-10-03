@@ -102,6 +102,7 @@ PipelineRunPolicy.allow_query([
     'global_data_product_uuid',
     'include_pipeline_type',
     'order_by[]',
+    'pipeline_tag',
     'pipeline_type',
     'pipeline_uuid',
     'start_timestamp',
