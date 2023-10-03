@@ -575,9 +575,10 @@ class Block(DataIntegrationMixin):
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
-                    for block in block.upstream_dbt_blocks()
+                    for block in upstream_dbt_blocks
                 }
                 pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                 pipeline.validate('A cycle was formed while adding a block')
