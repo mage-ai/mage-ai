@@ -296,8 +296,7 @@ function Table({
      */
     if (sortableColumnIndexes
       && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-        || (sortedRowIdsPrev?.length > 0
-          && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+        || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
       )
     ) {
       setRowsSorted?.(rowsSorted);
@@ -590,8 +589,7 @@ function Table({
 
   const tableEl = useMemo(() => {
     if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {
-      // @ts-ignore
-      return rowsGroupedByIndex?.reduce((acc, indexes: number[], idx: number) => {
+      return rowsGroupedByIndex?.reduce((acc: any, indexes: number[], idx: number) => {
         const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
         if (els?.length >= 1) {
           const header = rowGroupHeaders[idx];
