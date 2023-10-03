@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 

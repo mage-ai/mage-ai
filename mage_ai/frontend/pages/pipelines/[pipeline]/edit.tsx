@@ -2387,6 +2387,7 @@ function PipelineDetailPage({
       setActiveSidekickView={setActiveSidekickView}
       setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
+      // @ts-ignore
       setBlockInteractionsMapping={setBlockInteractionsMapping}
       setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
@@ -2394,6 +2395,7 @@ function PipelineDetailPage({
       setErrors={setErrors}
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
+      // @ts-ignore
       setInteractionsMapping={setInteractionsMapping}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}

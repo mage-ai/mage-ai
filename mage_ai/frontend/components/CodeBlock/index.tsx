@@ -2368,7 +2368,7 @@ function CodeBlock({
                           </Text>
                         </Spacing>)
                         : (
-                          <Spacing py={1}>
+                          <Spacing pt={PADDING_UNITS}>
                             {codeEditorEl}
                           </Spacing>
                         )

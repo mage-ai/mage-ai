@@ -48,14 +48,14 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
           } else if (textDataJsonString && isJsonString(textDataJsonString)) {
             return JSON.parse(textDataJsonString);
           }
+
+          return textDataJsonString;
         } else {
           return {
             data: String(output),
             type: DataTypeEnum.TEXT,
           };
         }
-
-        return textDataJsonString;
       });
     }
 
