@@ -668,7 +668,7 @@ function InteractionSettings({
               pauseEvent(e);
 
               if (!variableUUIDexists) {
-                const layoutNew = [...layout];
+                const layoutNew = [...(layout || [])];
                 layoutNew.push([{
                   width: 1,
                   variable: newVariableUUID,

@@ -250,9 +250,11 @@ class PipelineInteractions:
     async def interaction_uuids(self) -> List[str]:
         interaction = await self.interaction()
         interaction_uuids = []
-        for _block_uuid, block_interactions in (interaction.blocks or {}).items():
-            for block_interaction in block_interactions:
-                interaction_uuids.append(block_interaction.uuid)
+
+        if interaction:
+            for _block_uuid, block_interactions in (interaction.blocks or {}).items():
+                for block_interaction in block_interactions:
+                    interaction_uuids.append(block_interaction.uuid)
 
         return list(set(interaction_uuids))
 
@@ -287,5 +289,8 @@ class PipelineInteractions:
 
     async def to_dict(self) -> Dict:
         interaction = await self.interaction()
+
+        if not interaction:
+            return {}
 
         return interaction.to_dict()

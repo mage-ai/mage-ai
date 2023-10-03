@@ -83,7 +83,9 @@ export type SidekickProps = {
   checkIfPipelineRunning: () => void;
   containerHeightOffset?: number;
   contentByBlockUUID?: any;
-  createInteraction: (interaction: InteractionType) => void;
+  createInteraction: (opts: {
+    interaction: InteractionType;
+  }) => void;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -133,7 +135,9 @@ export type SidekickProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
-  updatePipelineInteraction: (pipelineInteraction: PipelineInteractionType) => void;
+  updatePipelineInteraction: (opts: {
+    pipeline_interaction: PipelineInteractionType;
+  }) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & OpenDataIntegrationModalType;
 
 function Sidekick({
@@ -721,7 +725,7 @@ function Sidekick({
             setSelectedBlock={setSelectedBlock}
             updatePipelineInteraction={(
               pipelineInteraction: PipelineInteractionType,
-             ) => updatePipelineInteraction({
+            ) => updatePipelineInteraction({
               pipeline_interaction: pipelineInteraction,
             })}
           />

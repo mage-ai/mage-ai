@@ -288,7 +288,7 @@ function PipelineDetailPage({
     useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
       dataPipelineInteraction,
     ]);
-  const interactions: InteractionType =
+  const interactions: InteractionType[] =
     useMemo(() => dataInteractions?.interactions || {}, [
       dataInteractions,
     ]);
