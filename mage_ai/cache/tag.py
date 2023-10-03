@@ -1,10 +1,11 @@
 import asyncio
 import os
 from datetime import datetime
+from typing import Dict
+
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_TAGS_TO_OBJECT_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
-from typing import Dict
 
 KEY_FOR_PIPELINES = 'Pipeline'
 
