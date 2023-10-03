@@ -27,6 +27,14 @@ export enum ScheduleIntervalEnum {
   ALWAYS_ON = '@always_on'
 }
 
+export const SCHEDULE_INTERVALS = [
+  ScheduleIntervalEnum.ONCE,
+  ScheduleIntervalEnum.HOURLY,
+  ScheduleIntervalEnum.DAILY,
+  ScheduleIntervalEnum.WEEKLY,
+  ScheduleIntervalEnum.MONTHLY,
+];
+
 export interface SelectedScheduleType {
   pipelineUuid: string;
   scheduleName?: string;

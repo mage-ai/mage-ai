@@ -11,11 +11,11 @@ const COMPACT_HEIGHT = 20;
 const COMPACT_WIDTH = 35;
 
 type ToggleSwitchProps = {
-  checked: boolean;
+  checked?: boolean;
   compact?: boolean;
   disabled?: boolean;
   monotone?: boolean;
-  onCheck: Dispatch<SetStateAction<boolean>>;
+  onCheck?: Dispatch<SetStateAction<boolean>>;
   pauseEvent?: boolean;
   purpleBackground?: boolean;
 } & InputWrapperProps;

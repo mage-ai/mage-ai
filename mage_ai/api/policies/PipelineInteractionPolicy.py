@@ -39,7 +39,10 @@ PipelineInteractionPolicy.allow_read(PipelineInteractionPresenter.default_attrib
 
 
 PipelineInteractionPolicy.allow_write([
+    'blocks',
     'interactions',
+    'layout',
+    'permissions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

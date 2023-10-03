@@ -84,7 +84,7 @@ export type BorderColorShareProps = {
   dynamicBlock?: boolean;
   dynamicChildBlock?: boolean;
   hasError?: boolean;
-  selected: boolean;
+  selected?: boolean;
 };
 
 export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`

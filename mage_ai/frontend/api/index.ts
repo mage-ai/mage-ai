@@ -56,6 +56,7 @@ export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration
 export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
+export const INTERACTIONS: 'interactions' = 'interactions';
 export const KERNELS: 'kernels' = 'kernels';
 export const LLMS = 'llms';
 export const LOGS = 'logs';
@@ -64,6 +65,7 @@ export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PAGE_BLOCK_LAYOUTS: 'page_block_layouts' = 'page_block_layouts';
 export const PIPELINES: 'pipelines' = 'pipelines';
+export const PIPELINE_INTERACTIONS: 'pipeline_interactions' = 'pipeline_interactions';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PIPELINE_TRIGGERS: 'pipeline_triggers' = 'pipeline_triggers';
@@ -122,6 +124,8 @@ const RESOURCES: any[][] = [
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
+  [INTERACTIONS, PIPELINE_INTERACTIONS],
+  [INTERACTIONS],
   [KERNELS],
   [LLMS],
   [LOGS, PIPELINES],
@@ -132,6 +136,7 @@ const RESOURCES: any[][] = [
   [OUTPUTS],
   [PAGE_BLOCK_LAYOUTS],
   [PIPELINES],
+  [PIPELINE_INTERACTIONS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
   [PIPELINE_RUNS],
   [PIPELINE_SCHEDULES],
