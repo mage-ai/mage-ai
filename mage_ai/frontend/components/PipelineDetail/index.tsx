@@ -31,6 +31,7 @@ import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
+import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -45,6 +46,7 @@ import {
   OverlayStyle,
   PipelineContainerStyle,
 } from './index.style';
+import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
@@ -93,6 +95,9 @@ type PipelineDetailProps = {
   allowCodeBlockShortcuts?: boolean;
   anyInputFocused: boolean;
   autocompleteItems: AutocompleteItemType[];
+  blockInteractionsMapping?: {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   blockRefs: any;
   blocks: BlockType[];
   blocksThatNeedToRefresh?: {
@@ -109,6 +114,9 @@ type PipelineDetailProps = {
   globalVariables: PipelineVariableType[];
   hiddenBlocks: {
     [uuid: string]: BlockType;
+  };
+  interactionsMapping?: {
+    [interactionUUID: string]: InteractionType;
   };
   interruptKernel: () => void;
   mainContainerRef: any;
@@ -181,6 +189,7 @@ function PipelineDetail({
   allowCodeBlockShortcuts,
   anyInputFocused,
   autocompleteItems,
+  blockInteractionsMapping,
   blockRefs,
   blocks = [],
   blocksThatNeedToRefresh,
@@ -194,6 +203,7 @@ function PipelineDetail({
   globalDataProducts,
   globalVariables,
   hiddenBlocks,
+  interactionsMapping,
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
@@ -588,6 +598,7 @@ function PipelineDetail({
             allowCodeBlockShortcuts={allowCodeBlockShortcuts}
             autocompleteItems={autocompleteItems}
             block={block}
+            blockInteractions={blockInteractionsMapping?.[uuid]}
             blockIdx={idx}
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
@@ -604,6 +615,7 @@ function PipelineDetail({
             fetchPipeline={fetchPipeline}
             globalDataProducts={globalDataProducts}
             hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
+            interactionsMapping={interactionsMapping}
             interruptKernel={interruptKernel}
             key={key}
             mainContainerRef={mainContainerRef}
@@ -655,6 +667,7 @@ function PipelineDetail({
     allBlocks,
     allowCodeBlockShortcuts,
     autocompleteItems,
+    blockInteractionsMapping,
     blockRefs,
     blockTemplates,
     blocksThatNeedToRefresh,
@@ -666,6 +679,7 @@ function PipelineDetail({
     fetchPipeline,
     globalDataProducts,
     hiddenBlocks,
+    interactionsMapping,
     interruptKernel,
     isIntegration,
     isStreaming,

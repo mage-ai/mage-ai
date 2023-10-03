@@ -18,7 +18,7 @@ type BlockInteractionControllerProps = {
   interaction: InteractionType;
   isEditing?: boolean;
   removeBlockInteraction?: () => void;
-  setInteractionsMapping: (prev: {
+  setInteractionsMapping?: (prev: {
     [interactionUUID: string]: InteractionType;
   }) => void;
 };
@@ -44,7 +44,7 @@ function BlockInteractionController({
 
   const updateInteraction =
     // @ts-ignore
-    useCallback((interactionUpdated: InteractionType) => setInteractionsMapping(prev => ({
+    useCallback((interactionUpdated: InteractionType) => setInteractionsMapping?.(prev => ({
       ...prev,
       [interactionUpdated?.uuid]: {
         ...interaction,

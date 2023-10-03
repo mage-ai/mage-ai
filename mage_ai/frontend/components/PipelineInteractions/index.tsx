@@ -39,12 +39,24 @@ import { indexBy, removeAtIndex } from '@utils/array';
 import { pauseEvent } from '@utils/events';
 
 type PipelineInteractionsProps = {
+  blockInteractionsMapping: {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   createInteraction: (interaction: InteractionType) => void;
+  interactionsMapping: {
+    [interactionUUID: string]: InteractionType;
+  };
   interactions: InteractionType[];
   isLoadingCreateInteraction?: boolean;
   isLoadingUpdatePipelineInteraction?: boolean;
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
+  setBlockInteractionsMapping: (prev: any) => {
+    [blockUUID: string]: BlockInteractionType[];
+  };
+  setInteractionsMapping: (prev: any) => {
+    [interactionUUID: string]: InteractionType;
+  };
   refAfterFooter?: any;
   selectedBlock?: BlockType;
   setSelectedBlock?: (block: BlockType) => void;
@@ -52,14 +64,18 @@ type PipelineInteractionsProps = {
 };
 
 function PipelineInteractions({
+  blockInteractionsMapping: blockInteractionsMappingProp,
   createInteraction,
   interactions,
+  interactionsMapping: interactionsMappingProp,
   isLoadingCreateInteraction,
   isLoadingUpdatePipelineInteraction,
   pipeline,
   pipelineInteraction,
   refAfterFooter,
   selectedBlock: editingBlock,
+  setBlockInteractionsMapping: setBlockInteractionsMappingProp,
+  setInteractionsMapping: setInteractionsMappingProp,
   setSelectedBlock,
   updatePipelineInteraction,
 }: PipelineInteractionsProps) {
@@ -71,12 +87,57 @@ function PipelineInteractions({
   const [isAddingNewInteraction, setIsAddingNewInteraction] = useState<boolean>(false);
   const [mostRecentlyAddedInteractionUUID, setMostRecentlyAddedInteractionUUID] = useState<string>(null);
 
-  const [interactionsMapping, setInteractionsMapping] = useState<{
+  const [interactionsMappingState, setInteractionsMappingState] = useState<{
     [interactionUUID: string]: InteractionType;
   }>(null);
-  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
+  const [blockInteractionsMappingState, setBlockInteractionsMappingState] = useState<{
     [blockUUID: string]: BlockInteractionType[];
   }>(null);
+
+  const blockInteractionsMapping = useMemo(() => {
+    if (typeof blockInteractionsMappingProp !== 'undefined') {
+      return blockInteractionsMappingProp;
+    }
+
+    return blockInteractionsMappingState;
+  }, [
+    blockInteractionsMappingProp,
+    blockInteractionsMappingState,
+  ]);
+
+  const interactionsMapping = useMemo(() => {
+    if (typeof interactionsMappingProp !== 'undefined') {
+      return interactionsMappingProp;
+    }
+
+    return interactionsMappingState;
+  }, [
+    interactionsMappingProp,
+    interactionsMappingState,
+  ]);
+
+  const setBlockInteractionsMapping = useCallback((prev) => {
+    if (typeof setBlockInteractionsMappingProp !== 'undefined') {
+      return setBlockInteractionsMappingProp(prev);
+    }
+
+    return setBlockInteractionsMappingState(prev);
+  }, [
+    setBlockInteractionsMappingProp,
+    setBlockInteractionsMappingState,
+  ]);
+
+  const setInteractionsMapping = useCallback((prev) => {
+    if (typeof setInteractionsMappingProp !== 'undefined') {
+      return setInteractionsMappingProp(prev);
+    }
+
+    return setInteractionsMappingState(prev);
+  }, [
+    setInteractionsMappingProp,
+    setInteractionsMappingState,
+  ]);
+
   const [permissionsState, setPermissionsState] =
     useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
 

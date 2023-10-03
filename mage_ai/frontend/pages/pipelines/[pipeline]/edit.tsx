@@ -49,7 +49,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import InteractionType from '@interfaces/InteractionType';
 import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
-import PipelineInteractionType from '@interfaces/PipelineInteractionType';
+import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
@@ -2288,6 +2288,13 @@ function PipelineDetailPage({
     refAfterFooter,
   ]);
 
+  const [interactionsMapping, setInteractionsMapping] = useState<{
+    [interactionUUID: string]: InteractionType;
+  }>(null);
+  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
+    [blockUUID: string]: BlockInteractionType[];
+  }>(null);
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -2299,6 +2306,7 @@ function PipelineDetailPage({
       }))}
       afterWidth={afterWidthForChildren}
       autocompleteItems={autocompleteItems}
+      blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocks}
       blocksInNotebook={blocksInNotebook}
@@ -2320,6 +2328,7 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       insights={insights}
       interactions={interactions}
+      interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       isLoadingCreateInteraction={isLoadingCreateInteraction}
       isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
@@ -2349,12 +2358,14 @@ function PipelineDetailPage({
       setActiveSidekickView={setActiveSidekickView}
       setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
+      setBlockInteractionsMapping={setBlockInteractionsMapping}
       setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
+      setInteractionsMapping={setInteractionsMapping}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
@@ -2382,6 +2393,7 @@ function PipelineDetailPage({
     afterFooterBottomOffset,
     afterWidthForChildren,
     autocompleteItems,
+    blockInteractionsMapping,
     blockRefs,
     blocks,
     blocksInNotebook,
@@ -2401,6 +2413,7 @@ function PipelineDetailPage({
     globalVariables,
     insights,
     interactions,
+    interactionsMapping,
     interruptKernel,
     isLoadingCreateInteraction,
     isLoadingUpdatePipelineInteraction,
@@ -2430,9 +2443,11 @@ function PipelineDetailPage({
     sendTerminalMessage,
     setActiveSidekickView,
     setAnyInputFocused,
+    setBlockInteractionsMapping,
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
+    setInteractionsMapping,
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
@@ -2488,6 +2503,7 @@ function PipelineDetailPage({
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
+      blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
       blocksThatNeedToRefresh={blocksThatNeedToRefresh}
@@ -2502,6 +2518,7 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
+      interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
@@ -2553,6 +2570,7 @@ function PipelineDetailPage({
     autocompleteItems,
     // automaticallyNameBlocks,
     blockRefs,
+    blockInteractionsMapping,
     blocks,
     blocksInNotebook,
     blocksThatNeedToRefresh,
@@ -2566,6 +2584,7 @@ function PipelineDetailPage({
     globalDataProducts,
     globalVariables,
     hiddenBlocks,
+    interactionsMapping,
     interruptKernel,
     mainContainerRef,
     mainContainerWidth,

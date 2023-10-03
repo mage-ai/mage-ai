@@ -15,6 +15,7 @@ import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import Badge from '@oracle/components/Badge';
 import BlockExtras from './BlockExtras';
+import BlockInteractionController from '@components/Interactions/BlockInteractionController';
 import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
@@ -52,6 +53,7 @@ import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import InteractionType from '@interfaces/InteractionType';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -85,6 +87,7 @@ import {
   TimeTrackerStyle,
   getColorsForBlockType,
 } from './index.style';
+import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
@@ -150,6 +153,7 @@ type CodeBlockProps = {
   autocompleteItems?: AutocompleteItemType[];
   block: BlockType;
   blockIdx: number;
+  blockInteractions?: BlockInteractionType[];
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
@@ -166,6 +170,9 @@ type CodeBlockProps = {
   hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
   hideRunButton?: boolean;
+  interactionsMapping?: {
+    [interactionUUID: string]: InteractionType;
+  };
   mainContainerRef?: any;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -236,6 +243,7 @@ function CodeBlock({
   autocompleteItems,
   block,
   blockIdx,
+  blockInteractions,
   blockRefs,
   blockTemplates,
   blocks = [],
@@ -254,6 +262,7 @@ function CodeBlock({
   hideExtraConfiguration,
   hideHeaderInteractiveInformation,
   hideRunButton,
+  interactionsMapping,
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
@@ -477,6 +486,7 @@ function CodeBlock({
 
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
+  const containerRef = useRef(null);
 
   const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
@@ -1055,41 +1065,59 @@ function CodeBlock({
   ]);
 
   const codeOutputEl = useMemo(() => (
-    <CodeOutput
-      {...borderColorShareProps}
-      block={block}
-      blockMetadata={blockMetadata}
-      buttonTabs={buttonTabs}
-      collapsed={outputCollapsed}
-      hasOutput={hasOutput}
-      isInProgress={isInProgress}
-      mainContainerWidth={mainContainerWidth}
-      messages={messagesWithType}
-      messagesAll={messages}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      runCount={runCount}
-      runEndTime={runEndTime}
-      runStartTime={runStartTime}
-      selected={selected}
-      selectedTab={selectedTab}
-      setCollapsed={(val: boolean) => {
-        setOutputCollapsed(() => {
-          set(outputCollapsedUUID, val);
-          return val;
-        });
-      }}
-      setErrors={setErrors}
-      setOutputBlocks={setOutputBlocks}
-      setSelectedOutputBlock={setSelectedOutputBlock}
-      setSelectedTab={setSelectedTab}
-    />
+    <>
+      {blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
+        <Spacing
+          key={`${blockInteraction?.uuid}-${idx}`}
+          mt={idx >= 1 ? UNITS_BETWEEN_SECTIONS : 0}
+        >
+          <BlockInteractionController
+            blockInteraction={blockInteraction}
+            containerRef={containerRef}
+            interaction={interactionsMapping?.[blockInteraction?.uuid]}
+          />
+        </Spacing>
+      ))}
+
+      <CodeOutput
+        {...borderColorShareProps}
+        block={block}
+        blockMetadata={blockMetadata}
+        buttonTabs={buttonTabs}
+        collapsed={outputCollapsed}
+        hasOutput={hasOutput}
+        isInProgress={isInProgress}
+        mainContainerWidth={mainContainerWidth}
+        messages={messagesWithType}
+        messagesAll={messages}
+        openSidekickView={openSidekickView}
+        pipeline={pipeline}
+        runCount={runCount}
+        runEndTime={runEndTime}
+        runStartTime={runStartTime}
+        selected={selected}
+        selectedTab={selectedTab}
+        setCollapsed={(val: boolean) => {
+          setOutputCollapsed(() => {
+            set(outputCollapsedUUID, val);
+            return val;
+          });
+        }}
+        setErrors={setErrors}
+        setOutputBlocks={setOutputBlocks}
+        setSelectedOutputBlock={setSelectedOutputBlock}
+        setSelectedTab={setSelectedTab}
+      />
+    </>
   ), [
     block,
+    blockInteractions,
     blockMetadata,
     borderColorShareProps,
     buttonTabs,
+    containerRef,
     hasOutput,
+    interactionsMapping,
     isInProgress,
     mainContainerWidth,
     messages,
@@ -1216,6 +1244,7 @@ function CodeBlock({
         }}
       >
         <div
+          ref={containerRef}
           style={{
             position: 'relative',
           }}
