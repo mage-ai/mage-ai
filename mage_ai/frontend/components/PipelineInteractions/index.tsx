@@ -406,7 +406,7 @@ function PipelineInteractions({
                       Create new set of interactions
                     </Button>
 
-                    <Spacing mr={1} />
+                    {/*<Spacing mr={1} />
 
                     <Button
                       beforeIcon={<Add />}
@@ -419,7 +419,7 @@ function PipelineInteractions({
                       small
                     >
                       Add from existing interactions
-                    </Button>
+                    </Button>*/}
                   </>
                 )}
 
