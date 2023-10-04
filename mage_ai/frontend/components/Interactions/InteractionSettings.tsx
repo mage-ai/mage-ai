@@ -16,6 +16,7 @@ import InteractionType, {
   INTERACTION_INPUT_TYPES,
   INTERACTION_VARIABLE_VALUE_TYPES,
   InteractionInputOptionType,
+  InteractionInputStyleInputTypeEnum,
   InteractionInputStyleType,
   InteractionInputType,
   InteractionInputTypeEnum,
@@ -202,7 +203,7 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Headline bold level={5}>
+                <Headline level={5} monospace>
                   {inputUUID}
                 </Headline>
 
@@ -252,22 +253,51 @@ function InteractionSettings({
               <Flex flex={1} flexDirection="column">
                 {InteractionInputTypeEnum.TEXT_FIELD === inputType && (
                   <>
-                    <Spacing mb={1}>
-                      <Text bold default>
-                        Style {removeUnderscore(inputType)}
-                      </Text>
+                    <Spacing mb={PADDING_UNITS}>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Style {removeUnderscore(inputType)}
+                        </Text>
+                      </Spacing>
+
+                      <Checkbox
+                        checked={style?.multiline}
+                        label="Allow writing multiple lines"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            multiline: !style?.multiline,
+                          },
+                        })}
+                      />
                     </Spacing>
 
-                    <Checkbox
-                      checked={style?.multiline}
-                      label="Allow writing multiple lines"
-                      onClick={() => updateInteractionInputs(inputUUID, {
-                        style: {
-                          ...style,
-                          multiline: !style?.multiline,
-                        },
-                      })}
-                    />
+                    <div>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Text field type
+                        </Text>
+                        {style?.multiline && (
+                          <Text muted small>
+                            Not available for multiline text field.
+                          </Text>
+                        )}
+                      </Spacing>
+
+                      <Checkbox
+                        checked={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type}
+                        disabled={!!style?.multiline}
+                        label="Numbers only"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            input_type: InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type
+                              ? null
+                              : InteractionInputStyleInputTypeEnum.NUMBER,
+                          },
+                        })}
+                      />
+                    </div>
                   </>
                 )}
 
@@ -407,7 +437,7 @@ function InteractionSettings({
                 justifyContent="space-between"
               >
                 <FlexContainer alignItems="center" flexDirection="row">
-                  <Headline bold level={5}>
+                  <Headline level={5} monospace>
                     {variableUUID}
                   </Headline>
 

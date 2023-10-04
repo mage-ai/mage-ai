@@ -22,6 +22,7 @@ type InteractionLayoutContainerProps = {
   containerWidth?: number;
   interaction: InteractionType;
   setVariables?: (prev: any) => void;
+  showVariableUUID?: boolean;
   updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => void;
   variables?: {
     [key: string]: any;
@@ -33,6 +34,7 @@ function InteractionLayoutContainer({
   containerWidth,
   interaction,
   setVariables,
+  showVariableUUID,
   updateLayout,
   variables: variablesProp,
 }: InteractionLayoutContainerProps) {
@@ -211,6 +213,7 @@ function InteractionLayoutContainer({
               }}
               rowIndex={idx1}
               setVariables={setVariables}
+              showVariableUUID={showVariableUUID}
               variable={variable}
               variables={variablesProp}
               width={widthItem}
@@ -284,6 +287,7 @@ function InteractionLayoutContainer({
     moveLayoutItem,
     rowsCount,
     setVariables,
+    showVariableUUID,
     updateLayout,
     variables,
     variablesProp,

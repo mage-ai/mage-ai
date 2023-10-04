@@ -10,6 +10,10 @@ class InteractionInputType(str, Enum):
     TEXT_FIELD = 'text_field'
 
 
+class InteractionInputStyleInputType(str, Enum):
+    NUMBER = 'number'
+
+
 class InteractionVariableType(str, Enum):
     DATE = 'date'
     DATETIME = 'datetime'

@@ -24,6 +24,7 @@ type BlockInteractionControllerProps = {
     [interactionUUID: string]: InteractionType;
   }) => void;
   setVariables?: (prev: any) => void;
+  showVariableUUID?: boolean;
   variables?: {
     [key: string]: any;
   };
@@ -40,6 +41,7 @@ function BlockInteractionController({
   removeBlockInteraction,
   setInteractionsMapping,
   setVariables,
+  showVariableUUID,
   variables,
 }: BlockInteractionControllerProps) {
   const {
@@ -87,6 +89,7 @@ function BlockInteractionController({
           containerWidth={containerWidth}
           interaction={interaction}
           setVariables={setVariables}
+          showVariableUUID={showVariableUUID}
           variables={variables}
         />
       </Spacing>
@@ -98,6 +101,7 @@ function BlockInteractionController({
     containerWidth,
     interaction,
     setVariables,
+    showVariableUUID,
     variables,
   ]);
 
