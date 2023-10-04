@@ -65,7 +65,7 @@ class LocalStorage(BaseStorage):
             return default_value or {}
         async with aiofiles.open(file_path, mode='r') as file:
             try:
-                return json.load(await file.read())
+                return json.loads(await file.read())
             except Exception:
                 if raise_exception:
                     raise
