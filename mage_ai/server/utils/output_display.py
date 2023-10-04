@@ -232,6 +232,7 @@ def add_execution_code(
     run_upstream: bool = False,
     update_status: bool = True,
     upstream_blocks: List[str] = None,
+    variables: Dict = None,
     widget: bool = False,
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
@@ -301,6 +302,10 @@ def execute_custom_code():
     \'\'\'
 
     global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
+
+    if {variables}:
+        global_vars = merge_dict(global_vars, {variables})
+
     if pipeline.run_pipeline_in_one_process:
         # Use shared context for blocks
         global_vars['context'] = context
