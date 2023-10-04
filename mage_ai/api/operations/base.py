@@ -320,7 +320,7 @@ class BaseOperation():
                     else:
                         raise error
             else:
-                _build_authorize_query(self.query)
+                await _build_authorize_query(self.query)
 
         elif UPDATE == self.action:
             def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
