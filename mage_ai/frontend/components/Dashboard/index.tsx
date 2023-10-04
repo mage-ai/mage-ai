@@ -31,6 +31,7 @@ export type DashboardSharedProps = {
   afterWidthOverride?: boolean;
   before?: any;
   beforeWidth?: number;
+  subheaderNoPadding?: boolean;
   uuid: string;
 };
 
@@ -64,6 +65,7 @@ function Dashboard({
   navigationItems,
   setErrors,
   subheaderChildren,
+  subheaderNoPadding,
   title,
   uuid,
 }: DashboardProps & VerticalNavigationProps, ref) {
@@ -208,7 +210,7 @@ function Dashboard({
             setBeforeWidth={setBeforeWidth}
           >
             {subheaderChildren && (
-              <Subheader>
+              <Subheader noPadding={subheaderNoPadding}>
                 {subheaderChildren}
               </Subheader>
             )}

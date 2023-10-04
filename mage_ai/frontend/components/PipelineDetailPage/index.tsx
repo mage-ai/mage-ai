@@ -65,6 +65,7 @@ function PipelineDetailPage({
   subheaderBackground,
   subheaderBackgroundImage,
   subheaderButton,
+  subheaderNoPadding,
   subheaderText,
   title,
   uuid,
@@ -161,6 +162,7 @@ function PipelineDetailPage({
         navigationItems={buildNavigationItems(pageName, pipeline, pipelineUUIDFromUrl)}
         ref={ref}
         subheaderChildren={typeof subheader !== 'undefined' && subheader}
+        subheaderNoPadding={subheaderNoPadding}
         title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
         uuid={uuid}
       >

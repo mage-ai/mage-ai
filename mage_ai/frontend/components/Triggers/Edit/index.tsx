@@ -39,6 +39,7 @@ import PipelineScheduleType, {
 } from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -98,26 +99,24 @@ import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
+  creatingWithLimitation?: boolean;
   errors: ErrorsType;
   fetchPipelineSchedule: () => void;
-  hideSidekick?: boolean;
-  interactions: InteractionType[];
   pipeline: PipelineType;
-  pipelineInteraction: PipelineInteractionType;
   pipelineSchedule?: PipelineScheduleType;
+  project?: ProjectType;
   setErrors: (errors: ErrorsType) => void;
   useCreateScheduleMutation?: any;
   variables?: PipelineVariableType[];
 };
 
 function Edit({
+  creatingWithLimitation: creatingWithLimitationProp,
   errors,
   fetchPipelineSchedule,
-  hideSidekick,
-  interactions,
   pipeline,
-  pipelineInteraction,
   pipelineSchedule,
+  project,
   setErrors,
   variables,
   useCreateScheduleMutation,
@@ -127,7 +126,7 @@ function Edit({
   const router = useRouter();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
-  const pipelineScheduleID = pipelineSchedule?.id;
+  const pipelineScheduleID = useMemo(() => pipelineSchedule?.id, [pipelineSchedule]);
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
@@ -142,6 +141,54 @@ function Edit({
 
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
+
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
+
+  const creatingWithLimitation = useMemo(() => !pipelineScheduleID && creatingWithLimitationProp, [
+    creatingWithLimitation,
+    pipelineScheduleID,
+  ]);
+
+  const {
+    data: dataPipelineInteraction,
+    mutate: fetchPipelineInteraction,
+  } = api.pipeline_interactions.detail(
+    isInteractionsEnabled && pipelineUUID,
+    {
+      filter_for_permissions: 1,
+    },
+  );
+
+  const {
+    data: dataInteractions,
+    mutate: fetchInteractions,
+  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
+
+  const { data: dataPipeline } = api.pipelines.detail(isInteractionsEnabled && pipelineUUID);
+
+  const pipelineInteraction: PipelineInteractionType =
+    useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
+      dataPipelineInteraction,
+    ]);
+  const interactions: InteractionType[] =
+    useMemo(() => dataInteractions?.interactions || [], [
+      dataInteractions,
+    ]);
+  const pipelineHasInteractions =
+    useMemo(() => isInteractionsEnabled
+      && Object.keys(pipelineInteraction?.blocks || {})?.length >= 1,
+    [
+      isInteractionsEnabled,
+      pipelineInteraction,
+    ]);
+
+  const shouldShowInteractions = useMemo(() => !!pipelineScheduleID && pipelineHasInteractions, [
+    pipelineHasInteractions,
+    pipelineScheduleID,
+  ]);
 
   const permittedScheduleTypesAndScheduleIntervals = useMemo(() => {
     const mapping = {};
@@ -786,7 +833,7 @@ function Edit({
             value={scheduleInterval}
           >
             {Object.values(ScheduleIntervalEnum).reduce((acc, value) => {
-              if (hideSidekick
+              if (creatingWithLimitation
                 && !permittedScheduleTypesAndScheduleIntervals?.[ScheduleTypeEnum.TIME]?.[value]
               ) {
                 return acc;
@@ -798,14 +845,14 @@ function Edit({
                 </option>
               );
             }, [])}
-            {!hideSidekick && (
+            {!creatingWithLimitation && (
               <option key="custom" value="custom">
                 custom
               </option>
             )}
           </Select>
 
-          {!hideSidekick && (
+          {!creatingWithLimitation && (
             <Spacing mt={1} p={1}>
               <Text muted small>
                 If you don’t see the frequency option you need, select <Text inline monospace small>
@@ -818,7 +865,7 @@ function Edit({
       ],
     ];
 
-    if (!hideSidekick) {
+    if (!creatingWithLimitation) {
       rows.push([
         <FlexContainer
           alignItems="center"
@@ -1047,7 +1094,7 @@ function Edit({
     customInterval,
     date,
     displayLocalTimezone,
-    hideSidekick,
+    creatingWithLimitation,
     isCustomInterval,
     isStreamingPipeline,
     landingTimeDisabled,
@@ -1640,22 +1687,24 @@ function Edit({
       pipeline={pipeline}
       pipelineInteraction={pipelineInteraction}
       pipelineSchedule={schedule}
-      setVariables={setOverwriteVariables}
+      setVariables={(prev1) => setSchedule(prev2 => ({
+        ...prev2,
+        variables: prev1(prev2?.variables || {}),
+      }))}
       showSummary={SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID}
       time={time}
       triggerTypes={triggerTypesForPipeline}
-      variables={overwriteVariables}
+      variables={schedule?.variables}
     />
   ), [
     containerRef,
     date,
     interactions,
-    overwriteVariables,
     pipeline,
     pipelineInteraction,
     schedule,
     selectedSubheaderTabUUID,
-    setOverwriteVariables,
+    setSchedule,
     time,
     triggerTypesForPipeline,
   ]);
@@ -1664,23 +1713,20 @@ function Edit({
     schedule,
   ]);
 
-  const [createScheduleBase, { isLoading: isLoadingCreateSchedule }] = useCreateScheduleMutation(
-    (pipelineScheduleId) => router.push(
-      '/pipelines/[pipeline]/triggers/[...slug]',
-      `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}`,
-    ),
-  );
+  const [createScheduleBase, { isLoading: isLoadingCreateSchedule }] = useCreateScheduleMutation
+    ? useCreateScheduleMutation?.(
+      (pipelineScheduleId) => router.push(
+        '/pipelines/[pipeline]/triggers/[...slug]',
+        `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}`,
+      ),
+    )
+    : [null, {}];
   const createSchedule = useCallback(() => {
-    createScheduleBase({
-      pipeline_schedule: {
-        ...schedule,
-        variables: overwriteVariables,
-      },
+    createScheduleBase?.({
+      pipeline_schedule: schedule,
     });
   }, [
     createScheduleBase,
-    overwriteVariables,
-    pipeline,
     schedule,
   ]);
 
@@ -1688,7 +1734,30 @@ function Edit({
     let buttonPrevious;
     let buttonNext;
 
-    if (SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) {
+    if (pipelineScheduleID) {
+      buttonPrevious = (
+        <Button
+          linkProps={{
+            as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+            href: '/pipelines/[pipeline]/triggers/[...slug]',
+          }}
+          noHoverUnderline
+          outline
+          sameColorAsText
+        >
+          Cancel and go back
+        </Button>
+      );
+
+      buttonNext = (
+        <Button
+          onClick={onSave}
+          primary
+        >
+          Save trigger
+        </Button>
+      );
+    } else if (SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) {
       buttonNext = (
         <Button
           afterIcon={<PaginateArrowRight />}
@@ -1739,31 +1808,35 @@ function Edit({
             onClick={() => createSchedule()}
             primary
           >
-            Create trigger
+            {pipelineScheduleID ? 'Save trigger' : 'Create trigger'}
           </Button>
 
-          <Spacing mr={PADDING_UNITS} />
+          {!pipelineScheduleID && (
+            <>
+              <Spacing mr={PADDING_UNITS} />
 
-          <ToggleSwitch
-            checked={isScheduleActive}
-            compact
-            onCheck={(valFunc: (val: boolean) => boolean) => setSchedule(prev => ({
-              ...prev,
-              status: valFunc(isScheduleActive)
-                ? ScheduleStatusEnum.ACTIVE
-                : ScheduleStatusEnum.INACTIVE,
-            }))}
-          />
+              <ToggleSwitch
+                checked={isScheduleActive}
+                compact
+                onCheck={(valFunc: (val: boolean) => boolean) => setSchedule(prev => ({
+                  ...prev,
+                  status: valFunc(isScheduleActive)
+                    ? ScheduleStatusEnum.ACTIVE
+                    : ScheduleStatusEnum.INACTIVE,
+                }))}
+              />
 
-          <Spacing mr={1} />
+              <Spacing mr={1} />
 
-          <Text
-            default={isScheduleActive}
-            muted={!isScheduleActive}
-            small
-          >
-            Set trigger to be active immediately after creating
-          </Text>
+              <Text
+                default={isScheduleActive}
+                muted={!isScheduleActive}
+                small
+              >
+                Set trigger to be active immediately after creating
+              </Text>
+            </>
+          )}
         </FlexContainer>
       );
     }
@@ -1783,6 +1856,9 @@ function Edit({
     createSchedule,
     isLoadingCreateSchedule,
     isScheduleActive,
+    onSave,
+    pipelineScheduleID,
+    pipelineUUID,
     selectedSubheaderTabUUID,
     setSelectedSubheaderTabUUID,
   ]);
@@ -1790,8 +1866,8 @@ function Edit({
   return (
     <>
       <PipelineDetailPage
-        after={!hideSidekick && afterMemo}
-        afterHidden={hideSidekick}
+        after={!creatingWithLimitation && afterMemo}
+        afterHidden={creatingWithLimitation}
         breadcrumbs={[
           {
             label: () => 'Triggers',
@@ -1812,58 +1888,58 @@ function Edit({
         pageName={PageNameEnum.TRIGGERS}
         pipeline={pipeline}
         setErrors={setErrors}
-        subheader={!hideSidekick && (
-          <FlexContainer alignItems="center">
-            <Button
-              disabled={saveButtonDisabled}
-              loading={isLoadingUpdate}
-              onClick={onSave}
-              outline
-              primary
-            >
-              Save changes
-            </Button>
+        subheader={(creatingWithLimitation || shouldShowInteractions)
+          ? (
+            <Spacing px={PADDING_UNITS}>
+              <ButtonTabs
+                noPadding
+                onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+                regularSizeText
+                selectedTabUUID={selectedSubheaderTabUUID}
+                tabs={SUBHEADER_TABS}
+                underlineColor={getColorsForBlockType(
+                  BlockTypeEnum.DATA_LOADER,
+                ).accent}
+                underlineStyle
+              />
+            </Spacing>
+          )
+          : (
+            <FlexContainer alignItems="center">
+              <Button
+                disabled={saveButtonDisabled}
+                loading={isLoadingUpdate}
+                onClick={onSave}
+                outline
+                primary
+              >
+                Save changes
+              </Button>
 
-            <Spacing mr={1} />
+              <Spacing mr={1} />
 
-            <Button
-              linkProps={{
-                as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
-                href: '/pipelines/[pipeline]/triggers/[...slug]',
-              }}
-              noHoverUnderline
-              outline
-              sameColorAsText
-            >
-              Cancel
-            </Button>
-          </FlexContainer>
-        )}
+              <Button
+                linkProps={{
+                  as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+                  href: '/pipelines/[pipeline]/triggers/[...slug]',
+                }}
+                noHoverUnderline
+                outline
+                sameColorAsText
+              >
+                Cancel
+              </Button>
+            </FlexContainer>
+          )
+        }
+        subheaderNoPadding={creatingWithLimitation || shouldShowInteractions}
         title={() => pipelineSchedule?.name ? `Edit ${pipelineSchedule?.name}` : 'New trigger'}
         uuid="triggers/edit"
       >
         <div ref={containerRef}>
-          {hideSidekick && (
-            <>
-              <Spacing px={PADDING_UNITS}>
-                <ButtonTabs
-                  noPadding
-                  onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
-                  regularSizeText
-                  selectedTabUUID={selectedSubheaderTabUUID}
-                  tabs={SUBHEADER_TABS}
-                  underlineColor={getColorsForBlockType(
-                    BlockTypeEnum.DATA_LOADER,
-                  ).accent}
-                  underlineStyle
-                />
-              </Spacing>
+          {(creatingWithLimitation || shouldShowInteractions) && <Divider light />}
 
-              <Divider light />
-            </>
-          )}
-
-          {hideSidekick
+          {(creatingWithLimitation || shouldShowInteractions)
             && (
               SUBHEADER_TAB_CUSTOMIZE.uuid === selectedSubheaderTabUUID
                 || SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID
@@ -1871,7 +1947,9 @@ function Edit({
             && triggerInteractionsMemo
           }
 
-          {(!hideSidekick || SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) && (
+          {(!creatingWithLimitation || SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID)
+            && (!shouldShowInteractions || SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID)
+            && (
             <>
               <Spacing p={PADDING_UNITS}>
                 <Spacing mb={2}>
@@ -1893,7 +1971,7 @@ function Edit({
                     const selected = scheduleType === uuid;
                     const othersSelected = scheduleType && !selected;
 
-                    if (hideSidekick && !permittedScheduleTypesAndScheduleIntervals?.[uuid]) {
+                    if (creatingWithLimitation && !permittedScheduleTypesAndScheduleIntervals?.[uuid]) {
                       return acc;
                     }
 
@@ -1958,7 +2036,7 @@ function Edit({
                 {ScheduleTypeEnum.API === scheduleType && apiMemo}
               </Spacing>
 
-              {!hideSidekick && (
+              {!creatingWithLimitation && (
                 <Spacing mt={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
                   <Spacing mb={2}>
                     <Headline>
@@ -1992,7 +2070,7 @@ function Edit({
             </>
           )}
 
-          {hideSidekick && navigationButtonsMemo}
+          {(creatingWithLimitation || shouldShowInteractions) && navigationButtonsMemo}
         </div>
       </PipelineDetailPage>
     </>
