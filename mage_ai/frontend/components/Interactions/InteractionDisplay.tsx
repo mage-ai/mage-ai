@@ -94,6 +94,7 @@ function InteractionDisplay({
                 value,
               }: InteractionInputOptionType) => {
                 const checkboxValues = variablesProp?.[variableUUID] || {};
+                // @ts-ignore
                 const currentValue = checkboxValues?.[value];
 
                 return (
@@ -106,6 +107,7 @@ function InteractionDisplay({
                         ...prev,
                         [variableUUID]: {
                           ...checkboxValues,
+                          // @ts-ignore
                           [value]: !currentValue,
                         },
                       }))}
@@ -211,7 +213,7 @@ function InteractionDisplay({
           row.push(
             <Spacing key={key} mt={itemIndex >= 1 ? PADDING_UNITS : 0}>
               {(name || description || showVariableUUID) && (
-                <FlexContainer alignItems="flex-start" justify="space-between">
+                <FlexContainer alignItems="flex-start" justifyContent="space-between">
                   <Flex flex={1} flexDirection="column">
                     <Spacing mb={1}>
                       {name && (
