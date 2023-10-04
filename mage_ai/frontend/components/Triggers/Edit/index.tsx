@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import cronstrue from 'cronstrue';
@@ -11,6 +12,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
 import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -24,9 +26,11 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import InteractionType from '@interfaces/InteractionType';
 import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
+import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, {
   PipelineScheduleSettingsType,
   ScheduleIntervalEnum,
@@ -42,12 +46,16 @@ import TagsAutocompleteInputField from '@components/Tags/TagsAutocompleteInputFi
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import TriggerInteractions from './TriggerInteractions';
 import api from '@api';
 import {
   Add,
   Alphabet,
   CalendarDate,
   Code,
+  Lightning,
+  PaginateArrowLeft,
+  PaginateArrowRight,
   Schedule,
   Switch,
   Trash,
@@ -63,6 +71,12 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
+  SUBHEADER_TABS,
+  SUBHEADER_TAB_CUSTOMIZE,
+  SUBHEADER_TAB_REVIEW,
+  SUBHEADER_TAB_SETTINGS,
+} from './constants';
+import {
   TIME_UNIT_TO_SECONDS,
   checkIfCustomInterval,
   convertSeconds,
@@ -72,6 +86,7 @@ import {
   getTriggerApiEndpoint,
   getTriggerTypes,
 } from '../utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
@@ -82,22 +97,36 @@ import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
+  createNewSchedule?: (payload: {
+    pipeline_schedule: PipelineScheduleType;
+  }) => void;
   errors: ErrorsType;
   fetchPipelineSchedule: () => void;
+  hideSidekick?: boolean;
+  interactions: InteractionType[];
+  isLoadingCreateNewSchedule?: boolean;
   pipeline: PipelineType;
+  pipelineInteraction: PipelineInteractionType;
   pipelineSchedule?: PipelineScheduleType;
   setErrors: (errors: ErrorsType) => void;
   variables?: PipelineVariableType[];
 };
 
 function Edit({
+  createNewSchedule,
   errors,
   fetchPipelineSchedule,
+  hideSidekick,
+  interactions,
+  isLoadingCreateNewSchedule,
   pipeline,
+  pipelineInteraction,
   pipelineSchedule,
   setErrors,
   variables,
 }: EditProps) {
+  const containerRef = useRef(null);
+
   const router = useRouter();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
@@ -108,11 +137,14 @@ function Edit({
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
 
-  const [settings, setSettings] = useState<PipelineScheduleSettingsType>();
+  const [settings, setSettings] = useState<PipelineScheduleSettingsType>(null);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(null);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
+
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
+    useState<string>(SUBHEADER_TABS[0].uuid);
 
   const formattedVariables = useMemo(() => getFormattedVariables(
     variables,
@@ -131,13 +163,16 @@ function Edit({
     start_time: startTime,
     tags,
     variables: scheduleVariablesInit = {},
-  } = schedule || {};
+  } = useMemo(() => schedule || {}, [schedule]);
 
   useEffect(() => {
-    if (settingsInit) {
+    if (!settings && settingsInit) {
       setSettings(settingsInit);
     }
-  }, [settingsInit]);
+  }, [
+    settings,
+    settingsInit,
+  ]);
 
   const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
@@ -1558,10 +1593,111 @@ function Edit({
       tags,
     ]);
 
+  const triggerInteractionsMemo = useMemo(() => (
+    <TriggerInteractions
+      containerRef={containerRef}
+      interactions={interactions}
+      pipeline={pipeline}
+      pipelineInteraction={pipelineInteraction}
+      setVariables={setOverwriteVariables}
+      variables={overwriteVariables}
+    />
+  ), [
+    containerRef,
+    interactions,
+    overwriteVariables,
+    pipeline,
+    pipelineInteraction,
+    setOverwriteVariables,
+  ]);
+
+  const navigationButtonsMemo = useMemo(() => {
+    let buttonPrevious;
+    let buttonNext;
+
+    if (SUBHEADER_TAB_CUSTOMIZE.uuid === selectedSubheaderTabUUID) {
+      buttonNext = (
+        <Button
+          afterIcon={<PaginateArrowRight />}
+          onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_SETTINGS.uuid)}
+          primary
+        >
+          Next to Settings
+        </Button>
+      );
+    } else if (SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) {
+      buttonPrevious = (
+        <Button
+          beforeIcon={<PaginateArrowLeft />}
+          onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_CUSTOMIZE.uuid)}
+          secondary
+        >
+          Back to Customize
+        </Button>
+      );
+
+      buttonNext = (
+        <Button
+          afterIcon={<PaginateArrowRight />}
+          onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_REVIEW.uuid)}
+          primary
+        >
+          Next to Review
+        </Button>
+      );
+    } else if (SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID) {
+      buttonPrevious = (
+        <Button
+          beforeIcon={<PaginateArrowLeft />}
+          onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_SETTINGS.uuid)}
+          secondary
+        >
+          Back to Settings
+        </Button>
+      );
+
+      buttonNext = (
+        <Button
+          beforeIcon={<Lightning />}
+          loading={isLoadingCreateNewSchedule}
+          onClick={() => createNewSchedule({
+            pipeline_schedule: {
+              ...schedule,
+              variables: overwriteVariables,
+            },
+          })}
+          primary
+        >
+          Create trigger
+        </Button>
+      );
+    }
+
+    return (
+      <Spacing p={PADDING_UNITS}>
+        <FlexContainer alignItems="center">
+          {buttonPrevious}
+
+          {buttonPrevious && buttonNext && <Spacing mr={PADDING_UNITS} />}
+
+          {buttonNext}
+        </FlexContainer>
+      </Spacing>
+    );
+  }, [
+    createNewSchedule,
+    isLoadingCreateNewSchedule,
+    overwriteVariables,
+    schedule,
+    selectedSubheaderTabUUID,
+    setSelectedSubheaderTabUUID,
+  ]);
+
   return (
     <>
       <PipelineDetailPage
-        after={afterMemo}
+        after={!hideSidekick && afterMemo}
+        afterHidden={hideSidekick}
         breadcrumbs={[
           {
             label: () => 'Triggers',
@@ -1582,7 +1718,7 @@ function Edit({
         pageName={PageNameEnum.TRIGGERS}
         pipeline={pipeline}
         setErrors={setErrors}
-        subheader={(
+        subheader={!hideSidekick && (
           <FlexContainer alignItems="center">
             <Button
               disabled={saveButtonDisabled}
@@ -1609,119 +1745,152 @@ function Edit({
             </Button>
           </FlexContainer>
         )}
-        title={() => `Edit ${pipelineSchedule?.name}`}
+        title={() => pipelineSchedule?.name ? `Edit ${pipelineSchedule?.name}` : 'New trigger'}
         uuid="triggers/edit"
       >
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mb={2}>
-            <Headline>
-              Trigger type
-            </Headline>
-
-            <Text muted>
-              How would you like this pipeline to be triggered?
-            </Text>
-          </Spacing>
-
-          <FlexContainer>
-            {getTriggerTypes(isStreamingPipeline).map(({
-              label,
-              description,
-              uuid,
-            }) => {
-              const selected = scheduleType === uuid;
-              const othersSelected = scheduleType && !selected;
-
-              return (
-                <Button
-                  key={uuid}
-                  noBackground
-                  noBorder
+        <div ref={containerRef}>
+          {hideSidekick && (
+            <>
+              <Spacing px={PADDING_UNITS}>
+                <ButtonTabs
                   noPadding
-                  onClick={() => {
-                    if (ScheduleTypeEnum.EVENT === uuid && !eventMatchers?.length) {
-                      // @ts-ignore
-                      setEventMatchers([{}]);
-                    }
+                  onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+                  regularSizeText
+                  selectedTabUUID={selectedSubheaderTabUUID}
+                  tabs={SUBHEADER_TABS}
+                  underlineColor={getColorsForBlockType(
+                    BlockTypeEnum.DATA_LOADER,
+                  ).accent}
+                  underlineStyle
+                />
+              </Spacing>
 
-                    setSchedule(s => ({
-                      ...s,
-                      schedule_type: uuid,
+              <Divider light />
+            </>
+          )}
+
+          {hideSidekick
+            && SUBHEADER_TAB_CUSTOMIZE.uuid === selectedSubheaderTabUUID
+            && triggerInteractionsMemo
+          }
+
+          {(!hideSidekick || SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) && (
+            <>
+              <Spacing p={PADDING_UNITS}>
+                <Spacing mb={2}>
+                  <Headline>
+                    Trigger type
+                  </Headline>
+
+                  <Text muted>
+                    How would you like this pipeline to be triggered?
+                  </Text>
+                </Spacing>
+
+                <FlexContainer>
+                  {getTriggerTypes(isStreamingPipeline).map(({
+                    label,
+                    description,
+                    uuid,
+                  }) => {
+                    const selected = scheduleType === uuid;
+                    const othersSelected = scheduleType && !selected;
+
+                    return (
+                      <Button
+                        key={uuid}
+                        noBackground
+                        noBorder
+                        noPadding
+                        onClick={() => {
+                          if (ScheduleTypeEnum.EVENT === uuid && !eventMatchers?.length) {
+                            // @ts-ignore
+                            setEventMatchers([{}]);
+                          }
+
+                          setSchedule(s => ({
+                            ...s,
+                            schedule_type: uuid,
+                          }));
+                        }}
+                      >
+                        <CardStyle selected={selected}>
+                          <FlexContainer alignItems="center">
+                            <Flex>
+                              <input checked={selected} type="radio" />
+                            </Flex>
+
+                            <Spacing mr={PADDING_UNITS} />
+
+                            <Flex
+                              alignItems="flex-start"
+                              flexDirection="column"
+                            >
+                              <Headline
+                                bold
+                                default={!selected && !othersSelected}
+                                level={5}
+                                muted={!selected && othersSelected}
+                              >
+                                {label()}
+                              </Headline>
+
+                              <Text
+                                default={!selected && !othersSelected}
+                                leftAligned
+                                muted={othersSelected}
+                              >
+                                {description()}
+                              </Text>
+                            </Flex>
+                          </FlexContainer>
+                        </CardStyle>
+                      </Button>
+                    );
+                  })}
+                </FlexContainer>
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+                {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
+                {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
+                {ScheduleTypeEnum.API === scheduleType && apiMemo}
+              </Spacing>
+
+              <Spacing mt={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
+                <Spacing mb={2}>
+                  <Headline>
+                    Tags
+                  </Headline>
+
+                  <Text muted>
+                    Add or remove tags from this trigger.
+                  </Text>
+                </Spacing>
+
+                <TagsAutocompleteInputField
+                  removeTag={(tag: TagType) => {
+                    setSchedule(prev => ({
+                      ...prev,
+                      tags: tags?.filter(uuid => uuid !== tag.uuid),
                     }));
                   }}
-                >
-                  <CardStyle selected={selected}>
-                    <FlexContainer alignItems="center">
-                      <Flex>
-                        <input checked={selected} type="radio" />
-                      </Flex>
+                  selectTag={(tag: TagType) => {
+                    setSchedule(prev => ({
+                      ...prev,
+                      tags: pushUnique(tag.uuid, tags, uuid => uuid === tag.uuid),
+                    }));
+                  }}
+                  selectedTags={tags?.map(tag => ({ uuid: tag }))}
+                  tags={unselectedTags}
+                  uuid={`TagsAutocompleteInputField-trigger-${pipelineScheduleID}`}
+                />
+              </Spacing>
+            </>
+          )}
 
-                      <Spacing mr={PADDING_UNITS} />
-
-                      <Flex
-                        alignItems="flex-start"
-                        flexDirection="column"
-                      >
-                        <Headline
-                          bold
-                          default={!selected && !othersSelected}
-                          level={5}
-                          muted={!selected && othersSelected}
-                        >
-                          {label()}
-                        </Headline>
-
-                        <Text
-                          default={!selected && !othersSelected}
-                          leftAligned
-                          muted={othersSelected}
-                        >
-                          {description()}
-                        </Text>
-                      </Flex>
-                    </FlexContainer>
-                  </CardStyle>
-                </Button>
-              );
-            })}
-          </FlexContainer>
-        </Spacing>
-
-        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
-          {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
-          {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
-          {ScheduleTypeEnum.API === scheduleType && apiMemo}
-        </Spacing>
-
-        <Spacing mt={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
-          <Spacing mb={2}>
-            <Headline>
-              Tags
-            </Headline>
-
-            <Text muted>
-              Add or remove tags from this trigger.
-            </Text>
-          </Spacing>
-
-          <TagsAutocompleteInputField
-            removeTag={(tag: TagType) => {
-              setSchedule(prev => ({
-                ...prev,
-                tags: tags?.filter(uuid => uuid !== tag.uuid),
-              }));
-            }}
-            selectTag={(tag: TagType) => {
-              setSchedule(prev => ({
-                ...prev,
-                tags: pushUnique(tag.uuid, tags, uuid => uuid === tag.uuid),
-              }));
-            }}
-            selectedTags={tags?.map(tag => ({ uuid: tag }))}
-            tags={unselectedTags}
-            uuid={`TagsAutocompleteInputField-trigger-${pipelineScheduleID}`}
-          />
-        </Spacing>
+          {hideSidekick && navigationButtonsMemo}
+        </div>
       </PipelineDetailPage>
     </>
   );

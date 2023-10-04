@@ -71,6 +71,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelineSchedulePolicy.allow_write([
+    'description',
     'name',
     'repo_path',
     'schedule_interval',

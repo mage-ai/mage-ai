@@ -5,9 +5,12 @@ import { useRouter } from 'next/router';
 
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import InteractionType from '@interfaces/InteractionType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
+import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, {
   PipelineScheduleFilterQueryEnum,
   SCHEDULE_TYPE_TO_LABEL,
@@ -24,12 +27,16 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import TagType from '@interfaces/TagType';
 import Text from '@oracle/elements/Text';
+import TriggerEdit from '@components/Triggers/Edit';
 import Toolbar from '@components/shared/Table/Toolbar';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
+import { Interactions as InteractionsIcon } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
@@ -55,6 +62,7 @@ function PipelineSchedules({
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
   const [errors, setErrors] = useState(null);
+  const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(true);
 
   const { data: dataProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
@@ -62,6 +70,11 @@ function PipelineSchedules({
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
+
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
 
   const {
     data: dataGlobalVariables,
@@ -241,6 +254,61 @@ function PipelineSchedules({
     dataTags,
   ]);
 
+  const {
+    data: dataPipelineInteraction,
+    mutate: fetchPipelineInteraction,
+  } = api.pipeline_interactions.detail(
+    isInteractionsEnabled && pipelineUUID,
+    {
+      filter_for_permissions: 1,
+    },
+  );
+
+  const {
+    data: dataInteractions,
+    mutate: fetchInteractions,
+  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
+
+  const { data: dataPipeline } = api.pipelines.detail(isInteractionsEnabled && pipelineUUID);
+
+  const pipelineInteraction: PipelineInteractionType =
+    useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
+      dataPipelineInteraction,
+    ]);
+  const interactions: InteractionType[] =
+    useMemo(() => dataInteractions?.interactions || [], [
+      dataInteractions,
+    ]);
+  const pipelineHasInteractions =
+    useMemo(() => isInteractionsEnabled
+      && Object.keys(pipelineInteraction?.blocks || {})?.length >= 1,
+    [
+      isInteractionsEnabled,
+      pipelineInteraction,
+    ]);
+
+  const newTriggerFromInteractionsButtonMemo = useMemo(() => pipelineHasInteractions && (
+    <>
+      <Spacing ml="12px" />
+
+      <VerticalDividerStyle />
+
+      <Spacing ml="12px" />
+
+      <KeyboardShortcutButton
+        {...SHARED_BUTTON_PROPS}
+        Icon={InteractionsIcon}
+        inline
+        onClick={() => setIsCreatingTrigger(true)}
+      >
+        Create trigger with no-code
+      </KeyboardShortcutButton>
+    </>
+  ), [
+    pipelineHasInteractions,
+    setIsCreatingTrigger,
+  ]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
       addButtonProps={{
@@ -284,13 +352,16 @@ function PipelineSchedules({
         tooltip: 'Creates an @once trigger and runs pipeline immediately',
       }}
       showDivider
-    />
+    >
+      {newTriggerFromInteractionsButtonMemo}
+    </Toolbar>
   ), [
     createNewSchedule,
     createOnceSchedule,
     isLoadingCreateNewSchedule,
     isLoadingCreateOnceSchedule,
     isViewerRole,
+    newTriggerFromInteractionsButtonMemo,
     pipelineOnceSchedulePayload,
     pipelineUUID,
     query,
@@ -300,60 +371,99 @@ function PipelineSchedules({
     variablesOrig,
   ]);
 
-  return (
-    <PipelineDetailPage
-      breadcrumbs={[
+  const breadcrumbs = useMemo(() => {
+    const arr = [];
+
+    if (isCreatingTrigger) {
+      arr.push(...[
         {
           label: () => 'Triggers',
+          onClick: () => setIsCreatingTrigger(false),
         },
-      ]}
-      buildSidekick={buildSidekick}
+        {
+          bold: true,
+          label: () => 'New trigger',
+        },
+      ]);
+    } else {
+      arr.push({
+        label: () => 'Triggers',
+      });
+    }
+
+    return arr;
+  }, [
+    isCreatingTrigger,
+    setIsCreatingTrigger,
+  ]);
+
+  return (
+    <PipelineDetailPage
+      breadcrumbs={breadcrumbs}
+      buildSidekick={!isCreatingTrigger && buildSidekick}
       errors={errors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={toolbarEl}
+      subheader={!isCreatingTrigger && toolbarEl}
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
-      <Divider light />
+      {isCreatingTrigger && (
+        <TriggerEdit
+          createNewSchedule={createNewSchedule}
+          errors={errors}
+          hideSidekick
+          interactions={interactions}
+          isLoadingCreateNewSchedule={isLoadingCreateNewSchedule}
+          pipeline={dataPipeline?.pipeline}
+          pipelineInteraction={pipelineInteraction}
+          setErrors={setErrors}
+        />
+      )}
 
-      {!dataPipelineSchedules
-        ?
-          <Spacing m={2}>
-            <Spinner inverted />
-          </Spacing>
-        :
-          <>
-            <TriggersTable
-              fetchPipelineSchedules={fetchPipelineSchedules}
-              pipeline={pipeline}
-              pipelineSchedules={pipelineSchedules}
-              pipelineTriggersByName={pipelineTriggersByName}
-              selectedSchedule={selectedSchedule}
-              setErrors={setErrors}
-              setSelectedSchedule={setSelectedSchedule}
-            />
-            <Spacing p={2}>
-              <Paginate
-                maxPages={9}
-                onUpdate={(p) => {
-                  const newPage = Number(p);
-                  const updatedQuery = {
-                    ...q,
-                    page: newPage >= 0 ? newPage : 0,
-                  };
-                  router.push(
-                    '/pipelines/[pipeline]/triggers',
-                    `/pipelines/${pipelineUUID}/triggers?${queryString(updatedQuery)}`,
-                  );
-                }}
-                page={Number(page)}
-                totalPages={Math.ceil(totalTriggers / ROW_LIMIT)}
-              />
-            </Spacing>
-          </>
-      }
+      {!isCreatingTrigger && (
+        <>
+          <Divider light />
+
+          {!dataPipelineSchedules
+            ?
+              <Spacing m={2}>
+                <Spinner inverted />
+              </Spacing>
+            :
+              <>
+                <TriggersTable
+                  fetchPipelineSchedules={fetchPipelineSchedules}
+                  pipeline={pipeline}
+                  pipelineSchedules={pipelineSchedules}
+                  pipelineTriggersByName={pipelineTriggersByName}
+                  selectedSchedule={selectedSchedule}
+                  setErrors={setErrors}
+                  setSelectedSchedule={setSelectedSchedule}
+                />
+                <Spacing p={2}>
+                  <Paginate
+                    maxPages={9}
+                    onUpdate={(p) => {
+                      const newPage = Number(p);
+                      const updatedQuery = {
+                        ...q,
+                        page: newPage >= 0 ? newPage : 0,
+                      };
+                      router.push(
+                        '/pipelines/[pipeline]/triggers',
+                        `/pipelines/${pipelineUUID}/triggers?${queryString(updatedQuery)}`,
+                      );
+                    }}
+                    page={Number(page)}
+                    totalPages={Math.ceil(totalTriggers / ROW_LIMIT)}
+                  />
+                </Spacing>
+              </>
+          }
+        </>
+      )}
     </PipelineDetailPage>
   );
 }

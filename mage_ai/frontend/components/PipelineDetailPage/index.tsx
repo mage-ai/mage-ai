@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -68,12 +68,12 @@ function PipelineDetailPage({
   subheaderText,
   title,
   uuid,
-}: PipelineDetailPageProps) {
+}: PipelineDetailPageProps, ref) {
   const { height } = useWindowSize();
   const router = useRouter();
   const { pipeline: pipelineUUIDFromUrl }: any = router.query;
 
-  const pipelineUUID = pipelineProp.uuid;
+  const pipelineUUID = pipelineProp?.uuid;
   const { data } = api.pipelines.detail(pipelineUUID, {
     includes_outputs: false,
   }, {
@@ -159,6 +159,7 @@ function PipelineDetailPage({
         beforeWidth={beforeWidth}
         breadcrumbs={breadcrumbs}
         navigationItems={buildNavigationItems(pageName, pipeline, pipelineUUIDFromUrl)}
+        ref={ref}
         subheaderChildren={typeof subheader !== 'undefined' && subheader}
         title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
         uuid={uuid}
@@ -209,4 +210,4 @@ function PipelineDetailPage({
   );
 }
 
-export default PipelineDetailPage;
+export default React.forwardRef(PipelineDetailPage);
