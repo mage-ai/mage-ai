@@ -62,7 +62,7 @@ function PipelineSchedules({
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
   const [errors, setErrors] = useState(null);
-  const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(true);
+  const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
 
   const { data: dataProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
