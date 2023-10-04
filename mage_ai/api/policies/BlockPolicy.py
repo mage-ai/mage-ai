@@ -50,7 +50,9 @@ BlockPolicy.allow_read([
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
-BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
+BlockPolicy.allow_read(BlockPresenter.default_attributes + [
+    'configuration',
+], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DELETE,
@@ -83,6 +85,7 @@ BlockPolicy.allow_write([
     'configuration',
     'content',
     'converted_from',
+    'defaults',
     'extension_uuid',
     'has_callback',
     'language',
