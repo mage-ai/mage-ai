@@ -364,15 +364,11 @@ function ConfigureBlock({
               const selected = language === v;
 
               if (
-                (
-                  (!isCustomBlock || isUpdatingBlock)
-                  && !selected
-                  && (
-                    (!isDataIntegration || BlockLanguageEnum.R === v)
-                      || (!isDataIntegration || BlockLanguageEnum.SQL === v)
-                  )
-                ) || (
-                  !isDataIntegration && BlockLanguageEnum.YAML === v
+                (!isCustomBlock || isUpdatingBlock)
+                && !selected
+                && (
+                  (!isDataIntegration || BlockLanguageEnum.R === v)
+                    || (!isDataIntegration || BlockLanguageEnum.SQL === v)
                 )
               ) {
                 return acc;
