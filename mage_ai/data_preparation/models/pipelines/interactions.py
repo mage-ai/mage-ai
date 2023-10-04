@@ -254,7 +254,7 @@ class PipelineInteractions:
             blocks=blocks,
         )))
 
-    async def filter_for_permissions(self, user: User = None) -> None:
+    async def filter_for_permissions(self, user: User = None) -> bool:
         interaction = await self.interaction()
 
         if not interaction or not interaction.permissions:
@@ -278,10 +278,13 @@ class PipelineInteractions:
                 if validate_func and validate_func(user, Entity.PIPELINE, self.pipeline.uuid):
                     permissions.append(permission)
 
-        if permissions and len(permissions) >= 1:
+        validation = permissions and len(permissions) >= 1
+        if validation:
             self._interaction.permissions = permissions
         else:
             self._interaction = Interaction()
+
+        return True if validation else False
 
     async def interaction_uuids(self) -> List[str]:
         interaction = await self.interaction()

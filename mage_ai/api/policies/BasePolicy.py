@@ -1,12 +1,15 @@
 import importlib
+import inspect
 from collections.abc import Iterable
 from typing import List, Tuple, Union
 
 import inflection
 
 from mage_ai import settings
+from mage_ai.api.constants import AttributeOperationType
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
@@ -177,20 +180,24 @@ class BasePolicy():
             entity_id=self.entity[1],
         )
 
-    def authorize_action(self, action):
+    async def authorize_action(self, action):
         config = self.__class__.action_rule(action)
         if config:
-            self.__validate_scopes(action, config.keys())
+            await self.__validate_scopes(action, config.keys())
+
             if config.get(self.__current_scope(), {}).get('condition'):
-                self.__validate_condition(
-                    action, config[self.__current_scope()]['condition'])
+                await self.__validate_condition(
+                    action,
+                    config[self.__current_scope()]['condition'],
+                    operation=action,
+                )
         else:
             error = ApiError.UNAUTHORIZED_ACCESS
             error.update({'message': 'The {} action is disabled for {}.'.format(
                 action, self.resource_name()), })
             raise ApiError(error)
 
-    def authorize_attribute(self, read_or_write, attrb, **kwargs):
+    async def authorize_attribute(self, read_or_write, attrb, **kwargs):
         if self.is_owner():
             return True
 
@@ -198,14 +205,18 @@ class BasePolicy():
             'api_operation_action',
             kwargs.get('api_operation_action', ALL_ACTIONS),
         )
+
+        attribute_operation = None
         if 'read' == read_or_write:
+            attribute_operation = AttributeOperationType.READ
             orig_config = self.__class__.read_rule(attrb)
         else:
             orig_config = self.__class__.write_rule(attrb)
+            attribute_operation = AttributeOperationType.WRITE
 
         config = None
         if orig_config:
-            self.__validate_scopes(attrb, orig_config.keys())
+            await self.__validate_scopes(attrb, orig_config.keys())
             config_scope = orig_config.get(self.__current_scope(), {})
             config = config_scope.get(api_operation_action)
 
@@ -225,23 +236,34 @@ class BasePolicy():
             raise ApiError(error)
         cond = config.get('condition')
         if cond:
-            self.__validate_condition(attrb, cond, **kwargs)
+            await self.__validate_condition(
+                attrb,
+                cond,
+                attribute_operation=attribute_operation,
+                operation=api_operation_action,
+                **kwargs,
+            )
 
-    def authorize_attributes(self, read_or_write, attrbs, **kwargs):
+    async def authorize_attributes(self, read_or_write, attrbs, **kwargs):
         if self.is_owner():
             return True
 
         for attrb in attrbs:
-            self.authorize_attribute(read_or_write, attrb, **kwargs)
+            await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
-    def authorize_query(self, query):
+    async def authorize_query(self, query):
         if not query:
             return
 
         for key, value in query.items():
             if key != settings.QUERY_API_KEY:
-                error_message = 'Query parameter {} of value {} is not permitted.'.format(
-                    key, value)
+                api_operation_action = self.options.get(
+                    'api_operation_action',
+                    ALL_ACTIONS,
+                )
+
+                error_message = f'Query parameter {key} of value {value} ' \
+                    f'is not permitted on {api_operation_action} operation.'
 
                 config = self.__class__.query_rule(key) or \
                     self.__class__.query_rule(ALL_ATTRIBUTES_SYMBOL)
@@ -253,10 +275,11 @@ class BasePolicy():
                     })
                     raise ApiError(error)
                 elif config.get(self.__current_scope(), {}).get('condition'):
-                    self.__validate_condition(
+                    await self.__validate_condition(
                         key,
                         config[self.__current_scope()]['condition'],
                         message=error_message,
+                        operation=api_operation_action,
                     )
 
     def parent_model(self):
@@ -286,31 +309,58 @@ class BasePolicy():
         else:
             return OauthScope.CLIENT_PUBLIC
 
-    def __validate_condition(self, action, cond, **kwargs):
-        if cond and not cond(self):
+    async def __validate_condition(
+        self,
+        action,
+        cond,
+        attribute_operation: AttributeOperationType = None,
+        operation: OperationType = None,
+        **kwargs,
+    ):
+        if not cond:
+            return
+
+        validation = cond(self)
+        if validation and inspect.isawaitable(validation):
+            validation = await validation
+
+        if not validation:
             error = ApiError.UNAUTHORIZED_ACCESS
+            message = f'Unauthorized access for {action}'
+
+            if attribute_operation:
+                message = f'Unauthorized {attribute_operation} access for {action}'
+                if operation:
+                    message = f'{message} on {operation} operation'
+            elif operation:
+                message = f'Unauthorized access for {action} on {operation} operation'
+
             error.update({
                 'message': kwargs.get(
                     'message',
-                    'Unauthorized access for {}, failed condition.'.format(action),
+                    f'{message}, failed condition.',
                 ),
             })
             increment(
                 'api_error.unauthorized_access',
                 tags={
                     'action': action,
+                    'attribute_operation': attribute_operation,
                     'policy_class_name': self.__class__.__name__,
                     'id': self.resource.id if hasattr(
                         self.resource,
                         'id') else None,
+                    'operation': operation,
                 })
             if settings.DEBUG:
                 error['debug'] = {
                     'action': action,
+                    'attribute_operation': attribute_operation,
+                    'operation': operation,
                 }
             raise ApiError(error)
 
-    def __validate_scopes(self, val, scopes):
+    async def __validate_scopes(self, val, scopes):
         error = ApiError.UNAUTHORIZED_ACCESS
         if not REQUIRE_USER_AUTHENTICATION:
             return

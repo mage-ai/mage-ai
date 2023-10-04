@@ -69,7 +69,7 @@ class BaseOperation():
             for res in results:
                 updated_options = await self.__updated_options()
                 policy = self.__policy_class()(res, self.user, **updated_options)
-                policy.authorize_attributes(
+                await policy.authorize_attributes(
                     READ, attrb, api_operation_action=self.action)
             response_key = self.resource if LIST == self.action else self.__resource_name_singular()
             response[response_key] = presented
@@ -146,9 +146,9 @@ class BaseOperation():
     async def __create_or_index(self):
         updated_options = await self.__updated_options()
         policy = self.__policy_class()(None, self.user, **updated_options)
-        policy.authorize_action(self.action)
+        await policy.authorize_action(self.action)
         if CREATE == self.action:
-            policy.authorize_attributes(
+            await policy.authorize_attributes(
                 WRITE,
                 self.__payload_for_resource().keys(),
                 **self.__payload_for_resource(),
@@ -161,7 +161,7 @@ class BaseOperation():
                 **options,
             )
         elif LIST == self.action:
-            policy.authorize_query(self.query)
+            await policy.authorize_query(self.query)
             options = updated_options.copy()
             options.pop('meta', None)
             options.pop('query', None)
@@ -178,19 +178,19 @@ class BaseOperation():
             self.pk, self.user, **updated_options)
 
         policy = self.__policy_class()(res, self.user, **updated_options)
-        policy.authorize_action(self.action)
+        await policy.authorize_action(self.action)
 
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
-            policy.authorize_query(self.query)
+            await policy.authorize_query(self.query)
         elif UPDATE == self.action:
-            policy.authorize_attributes(
+            await policy.authorize_attributes(
                 WRITE,
                 self.__payload_for_resource().keys(),
                 **self.__payload_for_resource(),
             )
-            policy.authorize_query(self.query)
+            await policy.authorize_query(self.query)
             options = updated_options.copy()
             options.pop('payload', None)
             await res.process_update(self.__payload_for_resource(), **options)
