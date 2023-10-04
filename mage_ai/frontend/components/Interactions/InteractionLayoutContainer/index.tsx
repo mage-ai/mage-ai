@@ -21,14 +21,20 @@ type InteractionLayoutContainerProps = {
   containerRef: any;
   containerWidth?: number;
   interaction: InteractionType;
+  setVariables?: (prev: any) => void;
   updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => void;
+  variables?: {
+    [key: string]: any;
+  };
 };
 
 function InteractionLayoutContainer({
   containerRef: mainContainerRef,
   containerWidth,
   interaction,
+  setVariables,
   updateLayout,
+  variables: variablesProp,
 }: InteractionLayoutContainerProps) {
   const windowSize = useWindowSize();
 
@@ -204,7 +210,9 @@ function InteractionLayoutContainer({
                 );
               }}
               rowIndex={idx1}
+              setVariables={setVariables}
               variable={variable}
+              variables={variablesProp}
               width={widthItem}
             />
           </Flex>,
@@ -275,8 +283,10 @@ function InteractionLayoutContainer({
     layout,
     moveLayoutItem,
     rowsCount,
+    setVariables,
     updateLayout,
     variables,
+    variablesProp,
   ]);
 
   if (!updateLayout) {

@@ -14,7 +14,11 @@ export type LayoutItemProps = {
   drag?: any;
   drop?: any;
   input?: InteractionInputType;
+  setVariables?: (prev: any) => void;
   variable?: InteractionVariableType;
+  variables?: {
+    [key: string]: any;
+  };
   width?: number;
 };
 
@@ -23,7 +27,9 @@ function LayoutItem({
   drag,
   drop,
   input,
+  setVariables,
   variable,
+  variables,
   width,
 }: LayoutItemProps) {
   const inputUUID = variable?.input;
@@ -63,6 +69,8 @@ function LayoutItem({
                 [variableUUID]: variable,
               },
             }}
+            setVariables={setVariables}
+            variables={variables}
           />
         </Spacing>
       </ContainerStyle>

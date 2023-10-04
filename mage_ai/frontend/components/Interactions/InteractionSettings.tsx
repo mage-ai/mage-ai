@@ -77,6 +77,7 @@ function InteractionSettings({
     uuid,
     variables,
   } = interaction || {
+    layout: null,
     variables: null,
     uuid: null,
   };
@@ -93,17 +94,31 @@ function InteractionSettings({
     inputUUID: string,
     input: InteractionInputType,
   ) => {
+    const variablesUpdated = {
+      ...variables,
+    };
     const inputsUpdated = {
       ...inputs,
     };
 
-    if (input) {
+    const shouldDelete: boolean = !input;
+
+    if (shouldDelete) {
+      delete inputsUpdated[inputUUID];
+
+      Object.entries(variablesUpdated || {}).forEach(([variableUUID, variable]) => {
+        if (inputUUID === variable?.input) {
+          variablesUpdated[variableUUID] = {
+            ...variable,
+            input: null,
+          };
+        }
+      });
+    } else {
       inputsUpdated[inputUUID] = {
         ...inputsUpdated?.[inputUUID],
         ...input,
       };
-    } else {
-      delete inputsUpdated[inputUUID];
     }
 
     return updateInteraction({
@@ -112,29 +127,49 @@ function InteractionSettings({
   }, [
     inputs,
     updateInteraction,
+    variables,
   ]);
 
   const updateInteractionVariables = useCallback((
     variableUUID: string,
     variable: InteractionVariableType,
   ) => {
+    const layoutUpdated = [];
     const variablesUpdated = {
       ...variables,
     };
 
-    if (variable) {
+    const shouldDelete: boolean = !variable;
+
+    if (shouldDelete) {
+      delete variablesUpdated[variableUUID];
+    } else {
       variablesUpdated[variableUUID] = {
         ...variablesUpdated?.[variableUUID],
         ...variable,
       };
-    } else {
-      delete variablesUpdated[variableUUID];
     }
 
+    layout?.forEach((row) => {
+      const arr = [];
+
+      row?.forEach((layoutItem) => {
+        if (!shouldDelete || variableUUID !== layoutItem?.variable) {
+          arr.push(layoutItem)
+        }
+      });
+
+      if (arr?.length >= 1) {
+        layoutUpdated.push(arr);
+      }
+    });
+
     return updateInteraction({
+      layout: layoutUpdated,
       variables: variablesUpdated,
     });
   }, [
+    layout,
     updateInteraction,
     variables,
   ]);
@@ -523,6 +558,7 @@ function InteractionSettings({
                   placeholder="Select an existing input"
                   value={inputUUID}
                 >
+                  <option value="" />
                   <option value="+ Add a new input">
                     + Add a new input
                   </option>

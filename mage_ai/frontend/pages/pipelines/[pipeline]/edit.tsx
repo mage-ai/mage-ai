@@ -2163,6 +2163,9 @@ function PipelineDetailPage({
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
   }) => {
     const {
       block,
@@ -2173,6 +2176,7 @@ function PipelineDetailPage({
       runSettings = {},
       runTests = false,
       runUpstream,
+      variables,
     } = payload;
 
     const {
@@ -2200,6 +2204,7 @@ function PipelineDetailPage({
         type: block.type,
         upstream_blocks: upstreamBlocks,
         uuid,
+        variables,
       }));
 
       // @ts-ignore

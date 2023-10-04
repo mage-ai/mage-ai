@@ -21,10 +21,16 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 
 type InteractionDisplayProps = {
   interaction: InteractionType;
+  setVariables?: (prev: any) => void;
+  variables?: {
+    [key: string]: any;
+  };
 };
 
 function InteractionDisplay({
   interaction,
+  setVariables,
+  variables: variablesProp,
 }: InteractionDisplayProps) {
   const {
     inputs,
@@ -70,6 +76,10 @@ function InteractionDisplay({
         };
         const inputEls = [];
 
+        const variableValue = typeof variablesProp !== 'undefined'
+          ? variablesProp?.[variableUUID]
+          : undefined;
+
         if (InteractionInputTypeEnum.CHECKBOX === inputType) {
           inputEls.push(
             <FlexContainer
@@ -84,10 +94,11 @@ function InteractionDisplay({
                   <Checkbox
                     {...sharedProps}
                     label={label}
-                    // checked={!!value}
-                    // onClick={(e) => {
-                    //   console.log(value, e.target.value);
-                    // }}
+                    checked={!!variableValue}
+                    onClick={() => setVariables(prev => ({
+                      ...prev,
+                      [variableUUID]: !variableValue,
+                    }))}
                   />
                 </Spacing>
               ))}
@@ -104,12 +115,22 @@ function InteractionDisplay({
                   <TextArea
                     {...sharedProps}
                     key={`${key}-${inputType}`}
+                    onChange={(e) => setVariables(prev => ({
+                      ...prev,
+                      [variableUUID]: e.target.value,
+                    }))}
+                    value={variableValue}
                   />
                 )
                 : (
                   <TextInput
                     {...sharedProps}
                     key={`${key}-${inputType}`}
+                    onChange={(e) => setVariables(prev => ({
+                      ...prev,
+                      [variableUUID]: e.target.value,
+                    }))}
+                    value={variableValue}
                   />
                 )
               }
@@ -120,22 +141,11 @@ function InteractionDisplay({
             <Select
               {...sharedProps}
               key={`${key}-${inputType}`}
-              // onChange={(e) => {
-              //   pauseEvent(e);
-              //   setAttributesMapping(prev => ({
-              //     ...prev,
-              //     [uuid]: {
-              //       ...prev?.[uuid],
-              //       value: e?.target?.value,
-              //     },
-              //   }));
-              // }}
-              // onClick={(e) => {
-              //   if (isSelected) {
-              //     pauseEvent(e);
-              //   }
-              // }}
-              // value={value}
+              onChange={(e) => setVariables(prev => ({
+                ...prev,
+                [variableUUID]: e.target.value,
+              }))}
+              value={variableValue}
             >
               <option value="" />
               {options?.map(({
@@ -154,19 +164,13 @@ function InteractionDisplay({
               <FlexContainer alignItems="center" fullWidth>
                 <ToggleSwitch
                   {...sharedProps}
-                  // checked={value as boolean}
+                  checked={variableValue as boolean}
                   compact
                   key={`${key}-${inputType}`}
-                  // onCheck={(valFunc: (val: boolean) => boolean) => {
-                  //   setAttributesMapping(prev => ({
-                  //     ...prev,
-                  //     [uuid]: {
-                  //       ...prev?.[uuid],
-                  //       value: valFunc(value as boolean),
-                  //     },
-                  //   }));
-                  // }}
-                  // pauseEvent={isSelected}
+                  onCheck={(valFunc: (val: boolean) => boolean) => setVariables(prev => ({
+                    ...prev,
+                    [variableUUID]: valFunc(variableValue),
+                  }))}
                 />
 
                 {name && (
@@ -228,7 +232,9 @@ function InteractionDisplay({
   }, [
     inputs,
     layout,
+    setVariables,
     variables,
+    variablesProp,
   ]);
 
   return (

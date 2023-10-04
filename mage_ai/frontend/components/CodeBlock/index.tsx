@@ -204,6 +204,9 @@ type CodeBlockProps = {
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
   }) => void;
   runningBlocks?: BlockType[];
   savePipelineContent: (payload?: {
@@ -344,6 +347,9 @@ function CodeBlock({
   const [currentTime, setCurrentTime] = useState<number>(null);
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
+  const [variables,  setVariables] = useState<{
+    [key: string]: any;
+  }>(null);
 
   const {
     type: pipelineType,
@@ -521,6 +527,9 @@ function CodeBlock({
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
   }) => {
     const {
       block: blockPayload,
@@ -531,6 +540,7 @@ function CodeBlock({
       runSettings,
       runUpstream,
       runTests: runTestsInit,
+      variables: variablesOverride,
     } = payload || {};
 
     let runTests = runTestsInit;
@@ -557,6 +567,7 @@ function CodeBlock({
       runSettings,
       runTests: runTests || false,
       runUpstream: runUpstream || false,
+      variables: variablesOverride || variables,
     });
 
     if (!disableReset) {
@@ -574,6 +585,7 @@ function CodeBlock({
     setRunCount,
     setRunEndTime,
     setSelectedTab,
+    variables,
   ]);
 
   const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
@@ -1243,6 +1255,8 @@ function CodeBlock({
             containerRef={containerRef}
             containerWidth={mainContainerWidth}
             interaction={interactionsMapping?.[blockInteraction?.uuid]}
+            setVariables={setVariables}
+            variables={variables}
           />
         </div>
       ));
@@ -1253,6 +1267,8 @@ function CodeBlock({
     interactionsMapping,
     isInteractionsEnabled,
     mainContainerWidth,
+    setVariables,
+    variables,
   ]);
 
   const headerTabs = useMemo(() => {
