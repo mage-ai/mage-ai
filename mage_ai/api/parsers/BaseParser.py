@@ -144,8 +144,9 @@ class BaseParser:
         self,
         value: Any,
         build_authorize: Callable,
+        return_on_first_failure: bool = False,
         **kwargs,
-    ) -> Any:
+    ) -> Tuple[Any, bool, ApiError]:
         authorize_status = None
         error = None
 
@@ -157,16 +158,22 @@ class BaseParser:
             authorize_status = AuthorizeStatusType.FAILED
 
         value_parsed, parser_found = await self.__parse(
-            self.query_parsers[self.__class__.__name__] or {},
+            self.query_parsers.get(self.__class__.__name__) or {},
             value,
             authorize_status,
             **kwargs,
         )
 
-        if error and parser_found:
-            await build_authorize(value_parsed)
+        if error and return_on_first_failure:
+            return value_parsed, parser_found, error
 
-        return value_parsed
+        if error:
+            if parser_found:
+                await build_authorize(value_parsed)
+            else:
+                raise error
+
+        return value_parsed, parser_found, None
 
     async def parse_read_attributes_and_authorize(
         self,
@@ -185,14 +192,17 @@ class BaseParser:
             authorize_status = AuthorizeStatusType.FAILED
 
         value_parsed, parser_found = await self.__parse(
-            self.read_parsers[self.__class__.__name__] or {},
+            self.read_parsers.get(self.__class__.__name__) or {},
             value,
             authorize_status,
             **kwargs,
         )
 
-        if error and parser_found:
-            await build_authorize(value_parsed)
+        if error:
+            if parser_found:
+                await build_authorize(value_parsed)
+            else:
+                raise error
 
         return value_parsed
 
@@ -213,14 +223,17 @@ class BaseParser:
             authorize_status = AuthorizeStatusType.FAILED
 
         value_parsed, parser_found = await self.__parse(
-            self.write_parsers[self.__class__.__name__] or {},
+            self.write_parsers.get(self.__class__.__name__) or {},
             value,
             authorize_status,
             **kwargs,
         )
 
-        if error and parser_found:
-            await build_authorize(value_parsed)
+        if error:
+            if parser_found:
+                await build_authorize(value_parsed)
+            else:
+                raise error
 
         return value_parsed
 

@@ -26,7 +26,8 @@ class PipelineInteractionResource(GenericResource):
         if filter_for_permissions:
             filter_for_permissions = filter_for_permissions[0]
 
-        await model.filter_for_permissions(user)
+        if filter_for_permissions:
+            await model.filter_for_permissions(user)
 
         return self(model, user, **kwargs)
 

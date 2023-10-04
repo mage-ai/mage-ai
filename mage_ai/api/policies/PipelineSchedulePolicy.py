@@ -8,6 +8,7 @@ from mage_ai.orchestration.constants import Entity
 
 READABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
     'description',
+    'id',
     'name',
     'schedule_interval',
     'schedule_type',
