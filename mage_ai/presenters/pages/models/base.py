@@ -43,7 +43,7 @@ class BaseModel(ABC):
 
     @classmethod
     async def components(self, current_user: User = None, **kwargs) -> List['BaseModel']:
-        pass
+        return []
 
     @classmethod
     async def disabled(self, current_user: User = None, **kwargs) -> bool:
