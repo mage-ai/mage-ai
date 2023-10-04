@@ -5,8 +5,11 @@ import BlockType from '@interfaces/BlockType';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import InteractionType, {InteractionVariableTypeEnum } from '@interfaces/InteractionType';
-import PipelineInteractionType from '@interfaces/PipelineInteractionType';
+import InteractionType, {
+  InteractionVariableType,
+  InteractionVariableTypeEnum,
+} from '@interfaces/InteractionType';
+import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -167,11 +170,10 @@ function TriggerInteractions({
           variable,
         ], idx3: number) => {
           const {
-            description,
             name,
             required,
             types,
-          } = variable;
+          }: InteractionVariableType = variable;
 
           const value = variables?.[variableUUID];
           const missingValue = typeof value === 'undefined'

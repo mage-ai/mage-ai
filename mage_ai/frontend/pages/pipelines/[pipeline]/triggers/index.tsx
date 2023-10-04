@@ -300,6 +300,7 @@ function PipelineSchedules({
         Icon={InteractionsIcon}
         inline
         onClick={() => setIsCreatingTrigger(true)}
+        uuid="Create trigger with no-code"
       >
         Create trigger with no-code
       </KeyboardShortcutButton>
@@ -413,6 +414,7 @@ function PipelineSchedules({
         <TriggerEdit
           creatingWithLimitation
           errors={errors}
+          onCancel={() => setIsCreatingTrigger(false)}
           pipeline={dataPipeline?.pipeline}
           project={project}
           setErrors={setErrors}

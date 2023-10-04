@@ -101,7 +101,8 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 type EditProps = {
   creatingWithLimitation?: boolean;
   errors: ErrorsType;
-  fetchPipelineSchedule: () => void;
+  fetchPipelineSchedule?: () => void;
+  onCancel?: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
   project?: ProjectType;
@@ -114,6 +115,7 @@ function Edit({
   creatingWithLimitation: creatingWithLimitationProp,
   errors,
   fetchPipelineSchedule,
+  onCancel,
   pipeline,
   pipelineSchedule,
   project,
@@ -148,7 +150,7 @@ function Edit({
     ]);
 
   const creatingWithLimitation = useMemo(() => !pipelineScheduleID && creatingWithLimitationProp, [
-    creatingWithLimitation,
+    creatingWithLimitationProp,
     pipelineScheduleID,
   ]);
 
@@ -193,6 +195,7 @@ function Edit({
   const permittedScheduleTypesAndScheduleIntervals = useMemo(() => {
     const mapping = {};
 
+    // @ts-ignore
     pipelineInteraction?.permissions?.forEach(({ triggers }) => {
       triggers?.forEach(({
         schedule_interval: scheduleInterval,
@@ -268,7 +271,7 @@ function Edit({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchPipelineSchedule();
+            fetchPipelineSchedule?.();
             router.push(
               '/pipelines/[pipeline]/triggers/[...slug]',
               `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
@@ -1720,7 +1723,7 @@ function Edit({
         `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}`,
       ),
     )
-    : [null, {}];
+    : [null, { isLoading: false }];
   const createSchedule = useCallback(() => {
     createScheduleBase?.({
       pipeline_schedule: schedule,
@@ -1758,13 +1761,22 @@ function Edit({
         </Button>
       );
     } else if (SUBHEADER_TAB_SETTINGS.uuid === selectedSubheaderTabUUID) {
+      buttonPrevious = (
+        <Button
+          onClick={() => onCancel?.()}
+          secondary
+        >
+          Cancel and go back
+        </Button>
+      );
+
       buttonNext = (
         <Button
           afterIcon={<PaginateArrowRight />}
           onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_CUSTOMIZE.uuid)}
           primary
         >
-          Next to Customize
+          Next: Customize
         </Button>
       );
     } else if (SUBHEADER_TAB_CUSTOMIZE.uuid === selectedSubheaderTabUUID) {
@@ -1774,7 +1786,7 @@ function Edit({
           onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_SETTINGS.uuid)}
           secondary
         >
-          Back to Settings
+          Back: Settings
         </Button>
       );
 
@@ -1784,7 +1796,7 @@ function Edit({
           onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_REVIEW.uuid)}
           primary
         >
-          Next to Review
+          Next: Review
         </Button>
       );
     } else if (SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID) {
@@ -1794,7 +1806,7 @@ function Edit({
           onClick={() => setSelectedSubheaderTabUUID(SUBHEADER_TAB_CUSTOMIZE.uuid)}
           secondary
         >
-          Back to Customize
+          Back: Customize
         </Button>
       );
 
@@ -1856,6 +1868,7 @@ function Edit({
     createSchedule,
     isLoadingCreateSchedule,
     isScheduleActive,
+    onCancel,
     onSave,
     pipelineScheduleID,
     pipelineUUID,
