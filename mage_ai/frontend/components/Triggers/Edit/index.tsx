@@ -145,7 +145,7 @@ function Edit({
   const [customInterval, setCustomInterval] = useState<string>(null);
 
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
-    useState<string>(SUBHEADER_TABS[2].uuid);
+    useState<string>(SUBHEADER_TABS[0].uuid);
 
   const permittedScheduleTypesAndScheduleIntervals = useMemo(() => {
     const mapping = {};
