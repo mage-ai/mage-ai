@@ -85,7 +85,7 @@ function ButtonTabs({
         arr.push(
           <div
             key={`spacing-${uuid}`}
-            style={{ marginLeft: 1.5 * UNIT }}
+            style={{ marginLeft: (regularSizeText ? 2 : 1.5) * UNIT }}
           />,
         );
       }

@@ -48,3 +48,12 @@ PipelineInteractionPolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+
+PipelineInteractionPolicy.allow_query([
+    'filter_for_permissions',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())

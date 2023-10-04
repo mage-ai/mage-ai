@@ -36,6 +36,7 @@ type ToolbarProps = {
     onClick?: () => void;
     menuItems?: FlyoutMenuItemType[];
   };
+  children?: any;
   deleteRowProps?: {
     confirmationMessage: string;
     isLoading: boolean;
@@ -93,6 +94,7 @@ type ToolbarProps = {
 
 function Toolbar({
   addButtonProps,
+  children,
   deleteRowProps,
   extraActionButtonProps,
   filterOptions = {},
@@ -349,6 +351,8 @@ function Toolbar({
           {secondaryButtonEl}
         </Spacing>
       )}
+
+      {children}
 
       {showDivider && (
         <>
