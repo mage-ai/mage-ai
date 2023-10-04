@@ -6,6 +6,7 @@ class ClientPagePresenter(BasePresenter):
         'category',
         'components',
         'disabled',
+        'metadata',
         'operation',
         'parent',
         'resource',
@@ -14,4 +15,7 @@ class ClientPagePresenter(BasePresenter):
     ]
 
     async def present(self, **kwargs):
-        return self.model.to_dict(user=self.current_user)
+        return await self.model.to_dict(
+            current_user=self.current_user,
+            **(self.resource.result_set().context.data.get('resources') or {}),
+        )

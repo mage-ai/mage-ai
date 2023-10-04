@@ -1,9 +1,11 @@
+import asyncio
 from abc import ABC
 from typing import Dict, List, Union
 
 import inflection
 
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.presenters.pages.models.constants import (
     ComponentCategory,
     PageCategory,
@@ -40,21 +42,40 @@ class BaseModel(ABC):
         return inflection.underscore(self.__name__)
 
     @classmethod
-    def components(self, **kwargs) -> List['BaseModel']:
+    async def components(self, current_user: User = None, **kwargs) -> List['BaseModel']:
         return []
 
     @classmethod
-    def disabled(self, **kwargs) -> bool:
+    async def disabled(self, current_user: User = None, **kwargs) -> bool:
         return False
 
     @classmethod
-    def to_dict(self, **kwargs) -> Dict:
+    async def metadata(self, current_user: User = None, **kwargs) -> Dict:
+        return {}
+
+    @classmethod
+    async def to_dict(self, current_user: User = None, **kwargs) -> Dict:
+        components = await self.components(
+            current_user=current_user,
+            **kwargs,
+        ) or []
+
         return dict(
             category=self.category,
-            components=[c.to_dict(**kwargs) for c in self.components(**kwargs)],
-            disabled=self.disabled(**kwargs),
+            components=await asyncio.gather(*[c.to_dict(
+                current_user=current_user,
+                **kwargs,
+            ) for c in components]),
+            disabled=await self.disabled(
+                current_user=current_user,
+                **kwargs,
+            ),
+            metadata=await self.metadata(current_user=current_user, **kwargs),
             operation=self.operation,
-            parent=self.parent.to_dict(**kwargs) if self.parent else None,
+            parent=await self.parent.to_dict(
+                current_user=current_user,
+                **kwargs,
+            ) if self.parent else None,
             resource=self.resource,
             uuid=self.get_uuid(),
             version=self.version,

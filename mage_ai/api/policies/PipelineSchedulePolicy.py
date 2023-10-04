@@ -40,7 +40,9 @@ async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:
     if policy.has_at_least_editor_role():
         return True
 
-    return await validate_pipeline_interactions_permissions(policy)
+    cond = await validate_pipeline_interactions_permissions(policy)
+
+    return cond
 
 
 PipelineSchedulePolicy.allow_actions([
