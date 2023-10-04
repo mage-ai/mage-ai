@@ -19,6 +19,7 @@ COOKIE_PREFIX = '__COOKIE__'
 
 
 class OperationType(str, Enum):
+    ALL = 'all'
     CREATE = 'create'
     DELETE = 'delete'
     DETAIL = 'detail'

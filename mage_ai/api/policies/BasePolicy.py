@@ -6,7 +6,7 @@ from typing import List, Tuple, Union
 import inflection
 
 from mage_ai import settings
-from mage_ai.api.constants import AttributeOperationType
+from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
@@ -23,9 +23,6 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import extract
-
-ALL_ACTIONS = 'all'
-ALL_ATTRIBUTES_SYMBOL = '__*MAGE*__'
 
 
 class BasePolicy():
@@ -89,7 +86,7 @@ class BasePolicy():
         if not self.query_rules.get(self.__name__):
             self.query_rules[self.__name__] = {}
 
-        array_use = array or [ALL_ATTRIBUTES_SYMBOL]
+        array_use = array or [AttributeType.ALL]
         for key in array_use:
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
@@ -103,7 +100,7 @@ class BasePolicy():
         for key in array:
             if not self.read_rules[self.__name__].get(key):
                 self.read_rules[self.__name__][key] = {}
-            actions = kwargs.get('on_action', [ALL_ACTIONS])
+            actions = kwargs.get('on_action', [OperationType.ALL])
             actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
                 if not self.read_rules[self.__name__][key].get(scope):
@@ -119,7 +116,7 @@ class BasePolicy():
         for key in array:
             if not self.write_rules[self.__name__].get(key):
                 self.write_rules[self.__name__][key] = {}
-            actions = kwargs.get('on_action', [ALL_ACTIONS])
+            actions = kwargs.get('on_action', [OperationType.ALL])
             actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
                 if not self.write_rules[self.__name__][key].get(scope):
@@ -185,10 +182,10 @@ class BasePolicy():
         if config:
             await self.__validate_scopes(action, config.keys())
 
-            if config.get(self.__current_scope(), {}).get('condition'):
+            if config.get(self.current_scope(), {}).get('condition'):
                 await self.__validate_condition(
                     action,
-                    config[self.__current_scope()]['condition'],
+                    config[self.current_scope()]['condition'],
                     operation=action,
                 )
         else:
@@ -203,7 +200,7 @@ class BasePolicy():
 
         api_operation_action = self.options.get(
             'api_operation_action',
-            kwargs.get('api_operation_action', ALL_ACTIONS),
+            kwargs.get('api_operation_action', OperationType.ALL),
         )
 
         attribute_operation = None
@@ -217,11 +214,11 @@ class BasePolicy():
         config = None
         if orig_config:
             await self.__validate_scopes(attrb, orig_config.keys())
-            config_scope = orig_config.get(self.__current_scope(), {})
+            config_scope = orig_config.get(self.current_scope(), {})
             config = config_scope.get(api_operation_action)
 
             if config is None:
-                config = config_scope.get(ALL_ACTIONS)
+                config = config_scope.get(OperationType.ALL)
 
         if config is None:
             error = ApiError.UNAUTHORIZED_ACCESS
@@ -259,14 +256,14 @@ class BasePolicy():
             if key != settings.QUERY_API_KEY:
                 api_operation_action = self.options.get(
                     'api_operation_action',
-                    ALL_ACTIONS,
+                    OperationType.ALL,
                 )
 
                 error_message = f'Query parameter {key} of value {value} ' \
                     f'is not permitted on {api_operation_action} operation.'
 
                 config = self.__class__.query_rule(key) or \
-                    self.__class__.query_rule(ALL_ATTRIBUTES_SYMBOL)
+                    self.__class__.query_rule(AttributeType.ALL)
 
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
@@ -274,10 +271,10 @@ class BasePolicy():
                         'message': error_message,
                     })
                     raise ApiError(error)
-                elif config.get(self.__current_scope(), {}).get('condition'):
+                elif config.get(self.current_scope(), {}).get('condition'):
                     await self.__validate_condition(
                         key,
-                        config[self.__current_scope()]['condition'],
+                        config[self.current_scope()]['condition'],
                         message=error_message,
                         operation=api_operation_action,
                     )
@@ -299,7 +296,7 @@ class BasePolicy():
             )(self.parent_model(), self.current_user, **self.options)
         return self.parent_resource_attr
 
-    def __current_scope(self):
+    def current_scope(self) -> OauthScope:
         # If edit access is disabled and user authentication is not enabled, we want to
         # treat the user as if they are logged in, so we can stop users from accessing
         # certain endpoints.

@@ -7,3 +7,7 @@ META_KEY_OFFSET = '_offset'
 class AttributeOperationType(str, Enum):
     READ = 'read'
     WRITE = 'write'
+
+
+class AttributeType(str, Enum):
+    ALL = '__*MAGE*__'

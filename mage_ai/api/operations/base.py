@@ -1,7 +1,8 @@
 import importlib
+import importlib.util
 import inspect
 from collections import UserList
-from typing import Dict
+from typing import Dict, Union
 
 import dateutil.parser
 import inflection
@@ -22,6 +23,7 @@ from mage_ai.api.operations.constants import (
     UPDATE,
     WRITE,
 )
+from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
@@ -180,10 +182,25 @@ class BaseOperation():
         policy = self.__policy_class()(res, self.user, **updated_options)
         await policy.authorize_action(self.action)
 
+        parser = None
+        parser_class = self.__parser_class()
+        if parser_class:
+            parser = parser_class(
+                resource=res,
+                current_user=self.user,
+                policy=policy,
+                **updated_options,
+            )
+
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
-            await policy.authorize_query(self.query)
+            query = await parser.parse_query_values(
+                self.query,
+                **updated_options,
+            ) if parser else self.query
+
+            await policy.authorize_query(query)
         elif UPDATE == self.action:
             await policy.authorize_attributes(
                 WRITE,
@@ -220,6 +237,16 @@ class BaseOperation():
                     self.__classified_class()), )
         except ModuleNotFoundError:
             return BaseMonitor
+
+    def __parser_class(self) -> Union[BaseParser, None]:
+        klass = self.__classified_class()
+        module_name = f'mage_ai.api.parsers.{klass}Parser'
+        class_name = f'{klass}Parser'
+
+        try:
+            return getattr(importlib.import_module(module_name), class_name)
+        except ModuleNotFoundError:
+            return None
 
     def __policy_class(self):
         return getattr(
