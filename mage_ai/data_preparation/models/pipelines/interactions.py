@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.pipelines.constants import (
     PIPELINE_INTERACTIONS_FILENAME,
 )
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.presenters.interactions.constants import InteractionVariableType
 from mage_ai.presenters.interactions.models import Interaction as InteractionBase
@@ -262,7 +263,6 @@ class PipelineInteractions:
         permissions = []
 
         for permission in interaction.permissions:
-            permission.triggers
             for role in permission.roles:
                 validate_func = None
 
@@ -275,7 +275,7 @@ class PipelineInteractions:
                 elif Role.DefaultRole.VIEWER == role:
                     validate_func = has_at_least_viewer_role
 
-                if validate_func and validate_func(user):
+                if validate_func and validate_func(user, Entity.PIPELINE, self.pipeline.uuid):
                     permissions.append(permission)
 
         if permissions and len(permissions) >= 1:
