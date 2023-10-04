@@ -25,7 +25,7 @@ class CreatePage(BasePage):
     operation = OperationType.CREATE
 
     @classmethod
-    def components(self, **kwargs) -> List[PageComponent]:
+    async def components(self, **kwargs) -> List[PageComponent]:
         return [
             CreateWithInteractionsComponent,
         ]
