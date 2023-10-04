@@ -1,7 +1,9 @@
 import inspect
 from collections.abc import Iterable
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple, Union
 
+from mage_ai.api.constants import AuthorizeStatusType
+from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope, OauthScopeType
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
@@ -52,92 +54,183 @@ class BaseParser:
     def parse_query(
         self,
         parser: Callable[['BaseParser', Any, Dict], Any],
-        on_action: List[OperationType] = None,
+        on_action: Union[List[OperationType], OperationType] = None,
+        on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
     ) -> None:
         if not self.query_parsers.get(self.__name__):
             self.query_parsers[self.__name__] = {}
 
-        actions = on_action or OperationType.ALL
+        actions = on_action or [OperationType.ALL.value]
         if not isinstance(actions, list):
             actions = [actions]
+
+        authorize_statuses = on_authorize_status or [AuthorizeStatusType.ALL.value]
+        if not isinstance(authorize_statuses, list):
+            authorize_statuses = [authorize_statuses]
 
         for scope in (scopes or [OauthScopeType.ALL]):
             if not self.query_parsers[self.__name__].get(scope):
                 self.query_parsers[self.__name__][scope] = {}
 
             for action in actions:
-                self.query_parsers[self.__name__][scope][action] = parser
+                if not self.query_parsers[self.__name__][scope].get(action):
+                    self.query_parsers[self.__name__][scope][action] = {}
+
+                for authorize_status in authorize_statuses:
+                    self.query_parsers[self.__name__][scope][action][authorize_status] = parser
 
     @classmethod
     def parse_read(
         self,
         parser: Callable[['BaseParser', Any, Dict], Any],
-        on_action: List[OperationType] = None,
+        on_action: Union[List[OperationType], OperationType] = None,
+        on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
     ) -> None:
         if not self.read_parsers.get(self.__name__):
             self.read_parsers[self.__name__] = {}
 
-        actions = on_action or OperationType.ALL
+        actions = on_action or [OperationType.ALL.value]
         if not isinstance(actions, list):
             actions = [actions]
+
+        authorize_statuses = on_authorize_status or [AuthorizeStatusType.ALL.value]
+        if not isinstance(authorize_statuses, list):
+            authorize_statuses = [authorize_statuses]
 
         for scope in (scopes or [OauthScopeType.ALL]):
             if not self.read_parsers[self.__name__].get(scope):
                 self.read_parsers[self.__name__][scope] = {}
 
             for action in actions:
-                self.read_parsers[self.__name__][scope][action] = parser
+                if not self.read_parsers[self.__name__][scope].get(action):
+                    self.read_parsers[self.__name__][scope][action] = {}
+
+                for authorize_status in authorize_statuses:
+                    self.read_parsers[self.__name__][scope][action][authorize_status] = parser
 
     @classmethod
     def parse_write(
         self,
         parser: Callable[['BaseParser', Any, Dict], Any],
-        on_action: List[OperationType] = None,
+        on_action: Union[List[OperationType], OperationType] = None,
+        on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
     ) -> None:
         if not self.write_parsers.get(self.__name__):
             self.write_parsers[self.__name__] = {}
 
-        actions = on_action or OperationType.ALL
+        actions = on_action or [OperationType.ALL.value]
         if not isinstance(actions, list):
             actions = [actions]
+
+        authorize_statuses = on_authorize_status or [AuthorizeStatusType.ALL.value]
+        if not isinstance(authorize_statuses, list):
+            authorize_statuses = [authorize_statuses]
 
         for scope in (scopes or [OauthScopeType.ALL]):
             if not self.write_parsers[self.__name__].get(scope):
                 self.write_parsers[self.__name__][scope] = {}
 
             for action in actions:
-                self.write_parsers[self.__name__][scope][action] = parser
+                if not self.write_parsers[self.__name__][scope].get(action):
+                    self.write_parsers[self.__name__][scope][action] = {}
 
-    async def parse_query_values(self, value: Any, **kwargs) -> Any:
-        return await self.__parse(
+                for authorize_status in authorize_statuses:
+                    self.write_parsers[self.__name__][scope][action][authorize_status] = parser
+
+    async def parse_query_and_authorize(
+        self,
+        value: Any,
+        build_authorize: Callable,
+        **kwargs,
+    ) -> Any:
+        authorize_status = None
+        error = None
+
+        try:
+            await build_authorize(value)
+            authorize_status = AuthorizeStatusType.SUCCEEDED
+        except ApiError as err:
+            error = err
+            authorize_status = AuthorizeStatusType.FAILED
+
+        value_parsed, parser_found = await self.__parse(
             self.query_parsers[self.__class__.__name__] or {},
             value,
+            authorize_status,
             **kwargs,
         )
 
-    async def parse_read_attributes(self, value: Any, **kwargs) -> Any:
-        return await self.__parse(
+        if error and parser_found:
+            await build_authorize(value_parsed)
+
+        return value_parsed
+
+    async def parse_read_attributes_and_authorize(
+        self,
+        value: Any,
+        build_authorize: Callable,
+        **kwargs,
+    ) -> Any:
+        authorize_status = None
+        error = None
+
+        try:
+            await build_authorize(value)
+            authorize_status = AuthorizeStatusType.SUCCEEDED
+        except ApiError as err:
+            error = err
+            authorize_status = AuthorizeStatusType.FAILED
+
+        value_parsed, parser_found = await self.__parse(
             self.read_parsers[self.__class__.__name__] or {},
             value,
+            authorize_status,
             **kwargs,
         )
 
-    async def parse_write_attributes(self, value: Any, **kwargs) -> Any:
-        return await self.__parse(
+        if error and parser_found:
+            await build_authorize(value_parsed)
+
+        return value_parsed
+
+    async def parse_write_attributes_and_authorize(
+        self,
+        value: Any,
+        build_authorize: Callable,
+        **kwargs,
+    ) -> Any:
+        authorize_status = None
+        error = None
+
+        try:
+            await build_authorize(value)
+            authorize_status = AuthorizeStatusType.SUCCEEDED
+        except ApiError as err:
+            error = err
+            authorize_status = AuthorizeStatusType.FAILED
+
+        value_parsed, parser_found = await self.__parse(
             self.write_parsers[self.__class__.__name__] or {},
             value,
+            authorize_status,
             **kwargs,
         )
+
+        if error and parser_found:
+            await build_authorize(value_parsed)
+
+        return value_parsed
 
     async def __parse(
         self,
         parser_mapping: Dict,
         value: Any,
+        authorize_status: AuthorizeStatusType,
         **kwargs,
-    ) -> Any:
+    ) -> Tuple[Any, bool]:
         api_operation_action = self.options.get('api_operation_action') or \
             kwargs.get('api_operation_action') or \
             OperationType.ALL
@@ -145,17 +238,23 @@ class BaseParser:
         parser = None
         parser_scope = parser_mapping.get(self.__current_scope()) or {}
         if parser_scope:
-            parser = parser_scope.get(api_operation_action) or parser_scope.get(OperationType.ALL)
+            parser_action = parser_scope.get(
+                api_operation_action,
+            ) or parser_scope.get(OperationType.ALL)
+            if parser_action:
+                parser = parser_action.get(
+                    authorize_status,
+                ) or parser_action.get(AuthorizeStatusType.ALL)
 
         if not parser:
-            return value
+            return value, False
 
         value_parsed = parser(self, value, **kwargs)
 
         if value_parsed and inspect.isawaitable(value_parsed):
             value_parsed = await value_parsed
 
-        return value_parsed
+        return value_parsed, True
 
     def __current_scope(self) -> OauthScope:
         return self.policy.current_scope()

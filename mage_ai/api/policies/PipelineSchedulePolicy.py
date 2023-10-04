@@ -1,10 +1,8 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
+from mage_ai.api.policies.utils import validate_pipeline_interactions_permissions
 from mage_ai.api.presenters.PipelineSchedulePresenter import PipelineSchedulePresenter
-from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 
@@ -41,13 +39,7 @@ async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:
     if policy.has_at_least_editor_role():
         return True
 
-    pipeline = policy.parent_model()
-    if Project(pipeline.repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
-        pipeline_interactions = PipelineInteractions(pipeline)
-        validation = await pipeline_interactions.filter_for_permissions(policy.current_user)
-        return validation
-
-    return False
+    return await validate_pipeline_interactions_permissions(policy)
 
 
 PipelineSchedulePolicy.allow_actions([

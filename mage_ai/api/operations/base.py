@@ -2,7 +2,7 @@ import importlib
 import importlib.util
 import inspect
 from collections import UserList
-from typing import Dict, Union
+from typing import Any, Callable, Dict, Union
 
 import dateutil.parser
 import inflection
@@ -139,6 +139,10 @@ class BaseOperation():
 
         return query
 
+    @query.setter
+    def query(self, value):
+        self._query = value
+
     async def __executed_result(self):
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
@@ -147,26 +151,57 @@ class BaseOperation():
 
     async def __create_or_index(self):
         updated_options = await self.__updated_options()
+
         policy = self.__policy_class()(None, self.user, **updated_options)
         await policy.authorize_action(self.action)
-        if CREATE == self.action:
-            await policy.authorize_attributes(
-                WRITE,
-                self.__payload_for_resource().keys(),
-                **self.__payload_for_resource(),
+
+        parser = None
+        parser_class = self.__parser_class()
+        if parser_class:
+            parser = parser_class(
+                resource=None,
+                current_user=self.user,
+                policy=policy,
+                **updated_options,
             )
+
+        if CREATE == self.action:
+            def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_attributes(
+                    WRITE,
+                    parsed_value.keys(),
+                    **parsed_value,
+                )
+
+            payload = self.__payload_for_resource()
+            payload = await parser.parse_write_attributes_and_authorize(
+                payload,
+                _build_authorize_attributes,
+                **updated_options,
+            ) if parser else payload
+
             options = updated_options.copy()
             options.pop('payload', None)
+
             return await self.__resource_class().process_create(
-                self.__payload_for_resource(),
+                payload,
                 self.user,
                 **options,
             )
         elif LIST == self.action:
-            await policy.authorize_query(self.query)
+            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_query(parsed_value)
+
+            self.query = await parser.parse_query_and_authorize(
+                self.query,
+                _build_authorize_query,
+                **updated_options,
+            ) if parser else self.query
+
             options = updated_options.copy()
             options.pop('meta', None)
             options.pop('query', None)
+
             return await self.__resource_class().process_collection(
                 self.query,
                 self.meta,
@@ -177,7 +212,10 @@ class BaseOperation():
     async def __delete_show_or_update(self):
         updated_options = await self.__updated_options()
         res = await self.__resource_class().process_member(
-            self.pk, self.user, **updated_options)
+            self.pk,
+            self.user,
+            **updated_options,
+        )
 
         policy = self.__policy_class()(res, self.user, **updated_options)
         await policy.authorize_action(self.action)
@@ -195,22 +233,42 @@ class BaseOperation():
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
-            query = await parser.parse_query_values(
+            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_query(parsed_value)
+
+            self.query = await parser.parse_query_and_authorize(
                 self.query,
+                _build_authorize_query,
+                **updated_options,
+            ) if parser else self.query
+        elif UPDATE == self.action:
+            def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_attributes(
+                    WRITE,
+                    parsed_value.keys(),
+                    **parsed_value,
+                )
+
+            payload = self.__payload_for_resource()
+            payload = await parser.parse_write_attributes_and_authorize(
+                payload,
+                _build_authorize_attributes,
+                **updated_options,
+            ) if parser else payload
+
+            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_query(parsed_value)
+
+            self.query = await parser.parse_query_and_authorize(
+                self.query,
+                _build_authorize_query,
                 **updated_options,
             ) if parser else self.query
 
-            await policy.authorize_query(query)
-        elif UPDATE == self.action:
-            await policy.authorize_attributes(
-                WRITE,
-                self.__payload_for_resource().keys(),
-                **self.__payload_for_resource(),
-            )
-            await policy.authorize_query(self.query)
             options = updated_options.copy()
             options.pop('payload', None)
-            await res.process_update(self.__payload_for_resource(), **options)
+
+            await res.process_update(payload, **options)
 
         return res
 

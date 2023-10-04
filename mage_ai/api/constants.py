@@ -11,3 +11,9 @@ class AttributeOperationType(str, Enum):
 
 class AttributeType(str, Enum):
     ALL = '__*MAGE*__'
+
+
+class AuthorizeStatusType(str, Enum):
+    ALL = 'all'
+    FAILED = 'failed'
+    SUCCEEDED = 'succeeded'
