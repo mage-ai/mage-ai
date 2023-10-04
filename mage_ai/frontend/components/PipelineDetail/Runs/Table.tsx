@@ -18,6 +18,7 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -262,6 +263,7 @@ type PipelineRunsTableProps = {
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
   hideTriggerColumn?: boolean;
+  includePipelineTags?: boolean;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
@@ -278,6 +280,7 @@ function PipelineRunsTable({
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
   hideTriggerColumn,
+  includePipelineTags,
   onClickRow,
   pipelineRuns,
   selectedRun,
@@ -341,7 +344,14 @@ function PipelineRunsTable({
     });
   }
 
-  columnFlex.push(...[1, 1, null, null]);
+  if (includePipelineTags) {
+    columnFlex.push(null);
+    columns.push({
+      uuid: 'Pipeline tags',
+    });
+  }
+
+  columnFlex.push(...[1, 1, 1, null, null]);
   columns.push(...[
     {
       ...timezoneTooltipProps,
@@ -436,6 +446,7 @@ function PipelineRunsTable({
                 id,
                 pipeline_schedule_id: pipelineScheduleId,
                 pipeline_schedule_name: pipelineScheduleName,
+                pipeline_tags: pipelineTags,
                 pipeline_uuid: pipelineUUID,
                 started_at: startedAt,
                 status,
@@ -445,7 +456,14 @@ function PipelineRunsTable({
               const blockRunCountTooltipMessage =
                 `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
 
-              const isRetry =
+              const tagsEl = (
+                <TagsContainer
+                  key={`row_pipeline_tags_${index}`}
+                  tags={pipelineTags?.map(tag => ({ uuid: tag }))}
+                />
+              );
+
+                const isRetry =
                 index > 0
                   && pipelineRuns[index - 1].execution_date === pipelineRun.execution_date
                   && pipelineRuns[index - 1].pipeline_schedule_id === pipelineRun.pipeline_schedule_id;
@@ -478,6 +496,10 @@ function PipelineRunsTable({
                       -
                     </Text>,
                   );
+                }
+
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
                 }
 
                 arr.push(...[
@@ -573,6 +595,10 @@ function PipelineRunsTable({
                       </Link>
                     </NextLink>,
                   );
+                }
+
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
                 }
 
                 arr.push(...[

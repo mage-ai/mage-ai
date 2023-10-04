@@ -46,6 +46,7 @@ function RunListPage() {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
     disable_retries_grouping: true,
+    include_pipeline_tags: true,
     include_pipeline_uuids: true,
   };
   if (q?.status) {
@@ -110,6 +111,7 @@ function RunListPage() {
           <>
             <PipelineRunsTable
               fetchPipelineRuns={fetchPipelineRuns}
+              includePipelineTags
               pipelineRuns={pipelineRuns}
               setErrors={setErrors}
             />
