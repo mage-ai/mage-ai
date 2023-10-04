@@ -113,6 +113,7 @@ export default {
     contrast: WHITE,
     danger: RED,
     dark: '#000000',
+    darkLight: '#2E3036',
     info: YELLOW,
     light: '#2F3034',
     medium: '#1C1C1C',

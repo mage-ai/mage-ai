@@ -49,7 +49,14 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import InteractionType from '@interfaces/InteractionType';
 import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
-import PipelineInteractionType from '@interfaces/PipelineInteractionType';
+import PipelineInteractionType, {
+  BlockInteractionRoleWithUUIDType,
+  BlockInteractionTriggerType,
+  BlockInteractionTriggerWithUUIDType,
+  BlockInteractionType,
+  InteractionPermission,
+  InteractionPermissionWithUUID,
+} from '@interfaces/PipelineInteractionType';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
@@ -95,6 +102,7 @@ import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegration
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
+import { RoleFromServerEnum } from '@interfaces/UserType';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
@@ -805,7 +813,7 @@ function PipelineDetailPage({
         callbackToSave = block.callback_content;
       }
 
-      let outputs;
+      let outputs = null;
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
@@ -863,8 +871,13 @@ function PipelineDetailPage({
         ...block,
         callback_content: callbackToSave,
         content: contentToSave,
-        outputs,
       };
+
+      if (outputs === null) {
+        delete blockPayload.outputs;
+      } else {
+        blockPayload.outputs = outputs;
+      }
 
       if (blockOverride?.uuid === uuid) {
         Object.entries(blockOverride).forEach(([k, v]) => {
@@ -1226,6 +1239,55 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
+  const [interactionsMapping, setInteractionsMapping] = useState<{
+    [interactionUUID: string]: InteractionType;
+  }>(null);
+  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
+    [blockUUID: string]: BlockInteractionType[];
+  }>(null);
+  const [permissions, setPermissions] =
+    useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
+
+  const savePipelineInteraction = useCallback((opts?: {
+    blockInteractionsMapping?: {
+      [blockUUID: string]: BlockInteractionType[];
+    },
+    // @ts-ignore
+  }) => updatePipelineInteraction({
+    pipeline_interaction: {
+      ...pipelineInteraction,
+      blocks: opts?.blockInteractionsMapping
+        ? opts?.blockInteractionsMapping
+        : blockInteractionsMapping,
+      interactions: interactionsMapping,
+      permissions: permissions?.map(
+        ({
+          roles,
+          triggers,
+        }: InteractionPermission | InteractionPermissionWithUUID) => ({
+          roles: roles?.map(
+            (roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType) => typeof roleItem === 'string'
+              ? roleItem
+              : roleItem?.role,
+          ),
+          triggers: triggers?.map(({
+            schedule_interval: scheduleInterval,
+            schedule_type: scheduleType,
+          }: BlockInteractionTriggerType | BlockInteractionTriggerWithUUIDType) => ({
+            schedule_interval: scheduleInterval,
+            schedule_type: scheduleType,
+          })),
+        }),
+      ),
+    },
+  }), [
+    blockInteractionsMapping,
+    interactionsMapping,
+    permissions,
+    pipelineInteraction,
+    updatePipelineInteraction,
+  ]);
+
   const [deleteBlock] = useMutation(
     ({
       type: blockType,
@@ -1270,6 +1332,17 @@ function PipelineDetailPage({
             setSelectedBlock(null);
             if (type === BlockTypeEnum.SCRATCHPAD) {
               fetchFileTree();
+            }
+
+            if (isInteractionsEnabled) {
+              const blocksMapping = { ...blockInteractionsMapping };
+              delete blocksMapping[uuid];
+
+              savePipelineInteraction({
+                blockInteractionsMapping: blocksMapping,
+              }).then(({
+                pipeline_interaction: pi,
+              }) => setBlockInteractionsMapping(pi?.blocks));
             }
           },
           onErrorCallback: (response: {
@@ -2283,9 +2356,33 @@ function PipelineDetailPage({
     }
   }, [
     activeSidekickView,
+    afterHidden,
     heightWindow,
     isInteractionsEnabled,
     refAfterFooter,
+  ]);
+
+  useEffect(() => {
+    if (!interactionsMapping && interactions?.length >= 1) {
+      setInteractionsMapping(indexBy(
+        interactions || [],
+        ({ uuid }) => uuid,
+      ));
+    }
+  }, [
+    interactions,
+    interactionsMapping,
+    setInteractionsMapping,
+  ]);
+
+  useEffect(() => {
+    if (!blockInteractionsMapping && pipelineInteraction?.blocks) {
+      setBlockInteractionsMapping(pipelineInteraction?.blocks);
+    }
+  }, [
+    blockInteractionsMapping,
+    pipelineInteraction,
+    setBlockInteractionsMapping,
   ]);
 
   const sideKick = useMemo(() => (
@@ -2299,6 +2396,7 @@ function PipelineDetailPage({
       }))}
       afterWidth={afterWidthForChildren}
       autocompleteItems={autocompleteItems}
+      blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocks}
       blocksInNotebook={blocksInNotebook}
@@ -2320,6 +2418,7 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       insights={insights}
       interactions={interactions}
+      interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       isLoadingCreateInteraction={isLoadingCreateInteraction}
       isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
@@ -2333,6 +2432,7 @@ function PipelineDetailPage({
       onChangeCodeBlock={onChangeCodeBlock}
       onSelectBlockFile={onSelectBlockFile}
       onUpdateFileSuccess={onUpdateFileSuccess}
+      permissions={permissions}
       pipeline={pipeline}
       pipelineInteraction={pipelineInteraction}
       pipelineMessages={pipelineMessages}
@@ -2342,6 +2442,7 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
+      savePipelineInteraction={savePipelineInteraction}
       secrets={secrets}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
@@ -2349,12 +2450,17 @@ function PipelineDetailPage({
       setActiveSidekickView={setActiveSidekickView}
       setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
+      // @ts-ignore
+      setBlockInteractionsMapping={setBlockInteractionsMapping}
       setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
+      // @ts-ignore
+      setInteractionsMapping={setInteractionsMapping}
+      setPermissions={setPermissions}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
@@ -2382,6 +2488,7 @@ function PipelineDetailPage({
     afterFooterBottomOffset,
     afterWidthForChildren,
     autocompleteItems,
+    blockInteractionsMapping,
     blockRefs,
     blocks,
     blocksInNotebook,
@@ -2401,6 +2508,7 @@ function PipelineDetailPage({
     globalVariables,
     insights,
     interactions,
+    interactionsMapping,
     interruptKernel,
     isLoadingCreateInteraction,
     isLoadingUpdatePipelineInteraction,
@@ -2415,6 +2523,7 @@ function PipelineDetailPage({
     onChangeCodeBlock,
     onSelectBlockFile,
     onUpdateFileSuccess,
+    permissions,
     pipeline,
     pipelineInteraction,
     pipelineMessages,
@@ -2424,15 +2533,19 @@ function PipelineDetailPage({
     runningBlocks,
     sampleData,
     savePipelineContent,
+    savePipelineInteraction,
     secrets,
     selectedBlock,
     selectedFilePath,
     sendTerminalMessage,
     setActiveSidekickView,
     setAnyInputFocused,
+    setBlockInteractionsMapping,
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
+    setInteractionsMapping,
+    setPermissions,
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
@@ -2488,6 +2601,7 @@ function PipelineDetailPage({
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
+      blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
       blocksThatNeedToRefresh={blocksThatNeedToRefresh}
@@ -2502,6 +2616,7 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
+      interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
@@ -2553,6 +2668,7 @@ function PipelineDetailPage({
     autocompleteItems,
     // automaticallyNameBlocks,
     blockRefs,
+    blockInteractionsMapping,
     blocks,
     blocksInNotebook,
     blocksThatNeedToRefresh,
@@ -2566,6 +2682,7 @@ function PipelineDetailPage({
     globalDataProducts,
     globalVariables,
     hiddenBlocks,
+    interactionsMapping,
     interruptKernel,
     mainContainerRef,
     mainContainerWidth,

@@ -14,11 +14,13 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 type BlockInteractionControllerProps = {
   blockInteraction?: BlockInteractionType;
   children?: any;
+  contained?: boolean;
   containerRef?: any;
+  containerWidth?: number;
   interaction: InteractionType;
   isEditing?: boolean;
   removeBlockInteraction?: () => void;
-  setInteractionsMapping: (prev: {
+  setInteractionsMapping?: (prev: {
     [interactionUUID: string]: InteractionType;
   }) => void;
 };
@@ -26,7 +28,9 @@ type BlockInteractionControllerProps = {
 function BlockInteractionController({
   blockInteraction,
   children,
+  contained,
   containerRef,
+  containerWidth,
   interaction,
   isEditing,
   removeBlockInteraction,
@@ -44,7 +48,7 @@ function BlockInteractionController({
 
   const updateInteraction =
     // @ts-ignore
-    useCallback((interactionUpdated: InteractionType) => setInteractionsMapping(prev => ({
+    useCallback((interactionUpdated: InteractionType) => setInteractionsMapping?.(prev => ({
       ...prev,
       [interactionUpdated?.uuid]: {
         ...interaction,
@@ -54,6 +58,38 @@ function BlockInteractionController({
       interaction,
       setInteractionsMapping,
     ]);
+
+  const contentMemo = useMemo(() => (
+    <>
+      {blockInteractionName && (
+        <Spacing mb={PADDING_UNITS} pt={PADDING_UNITS} px={PADDING_UNITS}>
+          <Headline level={5}>
+            {blockInteractionName}
+          </Headline>
+
+          {blockInteractionDescription && blockInteractionDescription?.split('\n')?.map((line: string) => (
+            <Text default key={line}>
+              {line}
+            </Text>
+          ))}
+        </Spacing>
+      )}
+
+      <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={1}>
+        <InteractionLayoutContainer
+          containerRef={containerRef}
+          containerWidth={containerWidth}
+          interaction={interaction}
+        />
+      </Spacing>
+    </>
+  ), [
+    blockInteractionDescription,
+    blockInteractionName,
+    containerRef,
+    containerWidth,
+    interaction,
+  ]);
 
   return (
     <div>
@@ -68,28 +104,14 @@ function BlockInteractionController({
       )}
 
       {!isEditing && (
-        <ContainerStyle>
-          {blockInteractionName && (
-            <Spacing mb={PADDING_UNITS} pt={PADDING_UNITS} px={PADDING_UNITS}>
-              <Headline level={5}>
-                {blockInteractionName}
-              </Headline>
-
-              {blockInteractionDescription && blockInteractionDescription?.split('\n')?.map((line: string) => (
-                <Text default key={line}>
-                  {line}
-                </Text>
-              ))}
-            </Spacing>
+        <>
+          {contained && contentMemo}
+          {!contained && (
+            <ContainerStyle>
+              {contentMemo}
+            </ContainerStyle>
           )}
-
-          <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={1}>
-            <InteractionLayoutContainer
-              containerRef={containerRef}
-              interaction={interaction}
-            />
-          </Spacing>
-        </ContainerStyle>
+        </>
       )}
     </div>
   );

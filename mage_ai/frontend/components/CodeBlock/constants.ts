@@ -25,3 +25,18 @@ export const TABS_DBT = ({
 
 export const DEFAULT_ICON_SIZE = UNIT * 2.5;
 export const DRAG_AND_DROP_TYPE = 'CodeBlock_HiddenBlock';
+
+export const SUBHEADER_TAB_CODE = {
+  label: () => 'CODE',
+  uuid: 'code',
+};
+
+export const SUBHEADER_TAB_INTERACTIONS = {
+  label: () => 'INTERACTIONS',
+  uuid: 'interactions',
+};
+
+export const SUBHEADER_TABS = [
+  SUBHEADER_TAB_CODE,
+  SUBHEADER_TAB_INTERACTIONS,
+];

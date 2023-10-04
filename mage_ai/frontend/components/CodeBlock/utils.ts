@@ -357,7 +357,7 @@ export const getMoreActionsItems = (
 
   if (isInteractionsEnabled) {
     items.push({
-      label: () => 'Add interactions',
+      label: () => 'Add / Edit interactions',
       onClick: () => {
         opts?.openSidekickView?.(ViewKeyEnum.INTERACTIONS);
       },

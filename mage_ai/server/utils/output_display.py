@@ -149,7 +149,6 @@ def __custom_output():
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
-
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame) and (
