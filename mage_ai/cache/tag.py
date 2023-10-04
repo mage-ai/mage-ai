@@ -27,13 +27,6 @@ class TagCache(BaseCache):
     def get_tags(self) -> Dict:
         return self.get(self.cache_key) or {}
 
-    def get_pipelines_uuids_by_tag(self) -> Dict:
-        tags = self.get_tags()
-
-        return {
-            tag: list(val.get(KEY_FOR_PIPELINES, {}).keys()) for tag, val in tags.items()
-        }
-
     def get_tags_by_pipeline_uuid(self) -> Dict:
         tags_by_pipeline_uuid_cache = self.get(CACHE_KEY_PIPELINE_TO_TAGS_MAPPING)
         if tags_by_pipeline_uuid_cache:
