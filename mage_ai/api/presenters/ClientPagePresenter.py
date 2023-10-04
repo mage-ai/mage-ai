@@ -6,6 +6,7 @@ class ClientPagePresenter(BasePresenter):
         'category',
         'components',
         'disabled',
+        'metadata',
         'operation',
         'parent',
         'resource',

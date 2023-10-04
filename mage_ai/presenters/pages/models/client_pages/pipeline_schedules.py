@@ -8,6 +8,7 @@ from mage_ai.presenters.pages.models.client_pages.pipelines import (
 from mage_ai.presenters.pages.models.constants import ResourceType
 from mage_ai.presenters.pages.models.page_components.pipeline_schedules import (
     CreateWithInteractionsComponent,
+    EditComponent,
 )
 
 
@@ -28,4 +29,5 @@ class CreatePage(BasePage):
     async def components(self, **kwargs) -> List[PageComponent]:
         return [
             CreateWithInteractionsComponent,
+            EditComponent,
         ]

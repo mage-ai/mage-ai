@@ -1,6 +1,10 @@
 import asyncio
+from typing import Dict
 
+from mage_ai.api.constants import AttributeOperationType
+from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.data_preparation.models.project import Project
@@ -43,3 +47,37 @@ class CreateWithInteractionsComponent(BaseComponent):
             return not all(results)
 
         return True
+
+
+class EditComponent(BaseComponent):
+    category = ComponentCategory.FORM
+    operation = OperationType.UPDATE
+    uuid_from_name = True
+
+    @classmethod
+    async def metadata(self, current_user: User = None, **kwargs) -> Dict:
+        mapping = {}
+
+        pipeline_schedules = kwargs.get('pipeline_schedules') or []
+        for pipeline_schedule in pipeline_schedules:
+            resource = PipelineScheduleResource(
+                pipeline_schedule,
+                current_user,
+                api_operation_action=OperationType.UPDATE,
+            )
+            policy = resource.policy_class()(resource, current_user)
+            write_attributes = \
+                (policy.write_rules.get(policy.__class__.__name__) or {}).keys()
+
+            for write_attribute in write_attributes:
+                try:
+                    await policy.authorize_attribute(
+                        AttributeOperationType.WRITE,
+                        write_attribute,
+                        api_operation_action=OperationType.UPDATE,
+                    )
+                    mapping[write_attribute] = True
+                except ApiError:
+                    mapping[write_attribute] = False
+
+        return mapping

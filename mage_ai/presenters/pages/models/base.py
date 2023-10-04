@@ -50,6 +50,10 @@ class BaseModel(ABC):
         return False
 
     @classmethod
+    async def metadata(self, current_user: User = None, **kwargs) -> Dict:
+        return {}
+
+    @classmethod
     async def to_dict(self, current_user: User = None, **kwargs) -> Dict:
         components = await self.components(
             current_user=current_user,
@@ -66,6 +70,7 @@ class BaseModel(ABC):
                 current_user=current_user,
                 **kwargs,
             ),
+            metadata=await self.metadata(current_user=current_user, **kwargs),
             operation=self.operation,
             parent=await self.parent.to_dict(
                 current_user=current_user,
