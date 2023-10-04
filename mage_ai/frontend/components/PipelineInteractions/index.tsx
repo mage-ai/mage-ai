@@ -429,6 +429,7 @@ function PipelineInteractions({
                     containerRef={containerRef}
                     interaction={interactionsMapping?.[blockInteraction?.uuid]}
                     setInteractionsMapping={setInteractionsMapping}
+                    showVariableUUID
                   />
                 </Spacing>
               ))}
@@ -467,6 +468,32 @@ function PipelineInteractions({
       blockInteractionsMapping,
       editingBlock,
     ]);
+
+  const editingBlockVariableUUIDs = useMemo(() => {
+    const variableUUIDS = [];
+    const variablesSeen = {};
+
+    editingBlockInteractions?.forEach(({
+      uuid: interactionUUID,
+    }) => {
+      const interaction = interactionsMapping?.[interactionUUID];
+      const variables = interaction?.variables;
+
+      Object.keys(variables || {}).forEach((variableUUID: string) => {
+        if (!variablesSeen?.[variableUUID]) {
+          variableUUIDS.push(variableUUID);
+          variablesSeen[variableUUID] = true;
+        }
+      });
+    });
+
+    return variableUUIDS;
+  }, [
+    interactionsMapping,
+    editingBlockInteractions,
+  ]);
+
+  console.log(editingBlockInteractions)
 
   return (
     <Spacing
@@ -537,140 +564,160 @@ function PipelineInteractions({
         )}
 
         {editingBlock && (
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline>
-                  Interactions for block
-                </Headline>
-              </Spacing>
-
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <FlexContainer alignItems="center">
-                {!isAddingNewInteraction && (
-                  <>
-                    <Button
-                      beforeIcon={<Add />}
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
-                        setIsAddingNewInteraction(true);
-                        setTimeout(() => refNewInteractionUUID?.current?.focus(), 1);
-                      }}
-                      primary
-                      small
-                    >
-                      Create new set of interactions
-                    </Button>
+                <Spacing mr={PADDING_UNITS} py={1}>
+                  <Headline>
+                    Block interactions
+                  </Headline>
+                </Spacing>
 
-                    {/*<Spacing mr={1} />
+                <FlexContainer alignItems="center">
+                  {!isAddingNewInteraction && (
+                    <>
+                      <Button
+                        beforeIcon={<Add />}
+                        compact
+                        onClick={(e) => {
+                          pauseEvent(e);
+                          setIsAddingNewInteraction(true);
+                          setTimeout(() => refNewInteractionUUID?.current?.focus(), 1);
+                        }}
+                        primary
+                        small
+                      >
+                        Create new set of interactions
+                      </Button>
 
-                    <Button
-                      beforeIcon={<Add />}
-                      compact
-                      // onClick={() => setPermissions(prev => prev.concat([{
-                      //   roles: [],
-                      //   triggers: [],
-                      // }]))}
-                      secondary
-                      small
-                    >
-                      Add from existing interactions
-                    </Button>*/}
-                  </>
-                )}
+                      {/*<Spacing mr={1} />
 
-                {isAddingNewInteraction && (
-                  <>
-                    <TextInput
-                      compact
-                      monospace
-                      onChange={(e) => {
-                        pauseEvent(e);
-                        setNewInteractionUUID(e.target.value);
-                      }}
-                      onClick={e => pauseEvent(e)}
-                      ref={refNewInteractionUUID}
-                      small
-                      value={newInteractionUUID || ''}
-                    />
+                      <Button
+                        beforeIcon={<Add />}
+                        compact
+                        // onClick={() => setPermissions(prev => prev.concat([{
+                        //   roles: [],
+                        //   triggers: [],
+                        // }]))}
+                        secondary
+                        small
+                      >
+                        Add from existing interactions
+                      </Button>*/}
+                    </>
+                  )}
 
-                    <Spacing mr={1} />
+                  {isAddingNewInteraction && (
+                    <>
+                      <TextInput
+                        compact
+                        monospace
+                        onChange={(e) => {
+                          pauseEvent(e);
+                          setNewInteractionUUID(e.target.value);
+                        }}
+                        onClick={e => pauseEvent(e)}
+                        ref={refNewInteractionUUID}
+                        small
+                        value={newInteractionUUID || ''}
+                      />
 
-                    <Button
-                      compact
-                      loading={isLoadingCreateInteraction}
-                      onClick={(e) => {
-                        pauseEvent(e);
+                      <Spacing mr={1} />
 
-                        createInteraction({
-                          block_uuid: editingBlock?.uuid,
-                          inputs: {},
-                          layout: [],
-                          uuid: `${newInteractionUUID}.${BlockLanguageEnum.YAML}`,
-                          variables: {},
-                        // @ts-ignore
-                        }).then(({
-                          data: {
-                            interaction,
-                          },
-                        }) => {
-                          const interactionUUID = interaction?.uuid;
+                      <Button
+                        compact
+                        loading={isLoadingCreateInteraction}
+                        onClick={(e) => {
+                          pauseEvent(e);
 
-                          updateBlockInteractionAtIndex(
-                            editingBlock?.uuid,
-                            editingBlockInteractions?.length || 0,
-                            {
-                              uuid: interactionUUID,
+                          createInteraction({
+                            block_uuid: editingBlock?.uuid,
+                            inputs: {},
+                            layout: [],
+                            uuid: `${newInteractionUUID}.${BlockLanguageEnum.YAML}`,
+                            variables: {},
+                          // @ts-ignore
+                          }).then(({
+                            data: {
+                              interaction,
                             },
-                          );
-                          setInteractionsMapping(prev => ({
-                            ...prev,
-                            [interactionUUID]: interaction,
-                          }));
+                          }) => {
+                            const interactionUUID = interaction?.uuid;
 
-                          setTimeout(
-                            () => {
-                              refMostRecentlyAddedInteraction?.current?.scrollIntoView()
-                            },
-                            ANIMATION_DURATION_CONTENT + 100,
-                          );
-                        });
+                            updateBlockInteractionAtIndex(
+                              editingBlock?.uuid,
+                              editingBlockInteractions?.length || 0,
+                              {
+                                uuid: interactionUUID,
+                              },
+                            );
+                            setInteractionsMapping(prev => ({
+                              ...prev,
+                              [interactionUUID]: interaction,
+                            }));
 
-                        setIsAddingNewInteraction(false);
-                        setMostRecentlyAddedInteractionUUID(newInteractionUUID);
-                        setNewInteractionUUID(null);
-                      }}
-                      primary
-                      small
-                    >
-                      Save interaction
-                    </Button>
+                            setTimeout(
+                              () => {
+                                refMostRecentlyAddedInteraction?.current?.scrollIntoView()
+                              },
+                              ANIMATION_DURATION_CONTENT + 100,
+                            );
+                          });
 
-                    <Spacing mr={1} />
+                          setIsAddingNewInteraction(false);
+                          setMostRecentlyAddedInteractionUUID(newInteractionUUID);
+                          setNewInteractionUUID(null);
+                        }}
+                        primary
+                        small
+                      >
+                        Save interaction
+                      </Button>
 
-                    <Button
-                      compact
-                      onClick={(e) => {
-                        pauseEvent(e);
+                      <Spacing mr={1} />
 
-                        setIsAddingNewInteraction(false);
-                        setNewInteractionUUID(null);
-                      }}
-                      secondary
-                      small
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                )}
+                      <Button
+                        compact
+                        onClick={(e) => {
+                          pauseEvent(e);
+
+                          setIsAddingNewInteraction(false);
+                          setNewInteractionUUID(null);
+                        }}
+                        secondary
+                        small
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </FlexContainer>
               </FlexContainer>
-            </FlexContainer>
 
-            <Spacing mt={1}>
               <Text default>
                 A block can have multiple sets of interactions associated with it.
               </Text>
             </Spacing>
+
+            <FlexContainer alignItems="center">
+              <Text bold large>
+                Variables
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex alignItems="center" flex={1}>
+                {editingBlockVariableUUIDs?.map((variableUUID: string, idx: number) => (
+                  <Spacing key={variableUUID} mr={1}>
+                    <Text default monospace>
+                      {variableUUID}{editingBlockVariableUUIDs?.length >= 2 && idx < editingBlockVariableUUIDs?.length - 1 && (
+                        <Text inline monospace muted>,</Text>
+                      )}
+                    </Text>
+                  </Spacing>
+                ))}
+              </Flex>
+            </FlexContainer>
           </Spacing>
         )}
 

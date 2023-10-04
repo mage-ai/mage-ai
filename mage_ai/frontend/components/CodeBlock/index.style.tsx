@@ -168,10 +168,20 @@ export const BlockHeaderStyle = styled.div<{
   `}
 `;
 
-export const SubheaderStyle = styled.div`
-  ${props => `
-    background-color: ${(props.theme || dark).background.dashboard};
+export const SubheaderStyle = styled.div<{
+  darkBorder?: boolean;
+  noBackground?: boolean;
+}>`
+  ${props => !props.darkBorder && `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).darkLight};
+  `}
+
+  ${props => props.darkBorder && `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme || dark).background.dashboard};
   `}
 `;
 

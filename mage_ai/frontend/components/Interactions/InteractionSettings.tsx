@@ -16,6 +16,7 @@ import InteractionType, {
   INTERACTION_INPUT_TYPES,
   INTERACTION_VARIABLE_VALUE_TYPES,
   InteractionInputOptionType,
+  InteractionInputStyleInputTypeEnum,
   InteractionInputStyleType,
   InteractionInputType,
   InteractionInputTypeEnum,
@@ -202,9 +203,9 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Headline bold level={5}>
+                <Text large monospace>
                   {inputUUID}
-                </Headline>
+                </Text>
 
                 <Spacing mr={PADDING_UNITS} />
 
@@ -252,22 +253,51 @@ function InteractionSettings({
               <Flex flex={1} flexDirection="column">
                 {InteractionInputTypeEnum.TEXT_FIELD === inputType && (
                   <>
-                    <Spacing mb={1}>
-                      <Text bold default>
-                        Style {removeUnderscore(inputType)}
-                      </Text>
+                    <Spacing mb={PADDING_UNITS}>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Style {removeUnderscore(inputType)}
+                        </Text>
+                      </Spacing>
+
+                      <Checkbox
+                        checked={style?.multiline}
+                        label="Allow writing multiple lines"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            multiline: !style?.multiline,
+                          },
+                        })}
+                      />
                     </Spacing>
 
-                    <Checkbox
-                      checked={style?.multiline}
-                      label="Allow writing multiple lines"
-                      onClick={() => updateInteractionInputs(inputUUID, {
-                        style: {
-                          ...style,
-                          multiline: !style?.multiline,
-                        },
-                      })}
-                    />
+                    <div>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Text field type
+                        </Text>
+                        {style?.multiline && (
+                          <Text muted small>
+                            Not available for multiline text field.
+                          </Text>
+                        )}
+                      </Spacing>
+
+                      <Checkbox
+                        checked={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type}
+                        disabled={!!style?.multiline}
+                        label="Numbers only"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            input_type: InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type
+                              ? null
+                              : InteractionInputStyleInputTypeEnum.NUMBER,
+                          },
+                        })}
+                      />
+                    </div>
                   </>
                 )}
 
@@ -407,9 +437,9 @@ function InteractionSettings({
                 justifyContent="space-between"
               >
                 <FlexContainer alignItems="center" flexDirection="row">
-                  <Headline bold level={5}>
+                  <Text large monospace>
                     {variableUUID}
-                  </Headline>
+                  </Text>
 
                   <Spacing mr={PADDING_UNITS} />
 
@@ -577,10 +607,10 @@ function InteractionSettings({
               <Divider muted />
 
               <Spacing p={PADDING_UNITS}>
-                <Spacing mb={PADDING_UNITS}>
-                  <Headline default level={5}>
-                    Preview of {inputUUID}
-                  </Headline>
+                <Spacing mb={1}>
+                  <Text muted rightAligned small uppercase>
+                    Preview
+                  </Text>
                 </Spacing>
 
                 {!inputSettings?.type && (
@@ -636,6 +666,7 @@ function InteractionSettings({
     <InteractionLayoutContainer
       containerRef={containerRef}
       interaction={interaction}
+      showVariableUUID
       updateLayout={(
         layoutNew: InteractionLayoutItemType[][],
       ) => updateInteraction({
@@ -953,14 +984,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Variables
                 </Headline>
               </Spacing>
@@ -982,14 +1013,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Inputs
                 </Headline>
               </Spacing>
@@ -1011,14 +1042,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Interaction layout
                 </Headline>
               </Spacing>

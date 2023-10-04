@@ -1256,6 +1256,7 @@ function CodeBlock({
             containerWidth={mainContainerWidth}
             interaction={interactionsMapping?.[blockInteraction?.uuid]}
             setVariables={setVariables}
+            showVariableUUID
             variables={variables}
           />
         </div>
@@ -1303,6 +1304,59 @@ function CodeBlock({
     selectedSubheaderTabUUID,
     setSelectedSubheaderTabUUID,
     themeContext,
+  ]);
+
+  const variablesFromBlockInteractions = useMemo(() => {
+    if (!isInteractionsEnabled) {
+      return null;
+    }
+
+    const variableUUIDS = [];
+    const variablesSeen = {};
+
+    blockInteractions?.forEach(({
+      uuid: interactionUUID,
+    }) => {
+      const interaction = interactionsMapping?.[interactionUUID];
+      const variables = interaction?.variables;
+
+      Object.keys(variables || {}).forEach((variableUUID: string) => {
+        if (!variablesSeen?.[variableUUID]) {
+          variableUUIDS.push(variableUUID);
+          variablesSeen[variableUUID] = true;
+        }
+      });
+    });
+
+    if (!variableUUIDS?.length) {
+      return null;
+    }
+
+    const variablesCount = variableUUIDS?.length || 0;
+
+    return (
+      <FlexContainer alignItems="center">
+        <Text monospace muted small>
+          Interaction variables:
+        </Text>
+
+        <Spacing mr={PADDING_UNITS} />
+
+        {variableUUIDS?.map((variableUUID: string, idx: number) => (
+          <Spacing key={variableUUID} mr={1}>
+            <Text default monospace small>
+              {variableUUID}{variablesCount >= 2 && idx < variablesCount - 1 && (
+                <Text inline monospace muted small>,</Text>
+              )}
+            </Text>
+          </Spacing>
+        ))}
+      </FlexContainer>
+    );
+  }, [
+    blockInteractions,
+    interactionsMapping,
+    isInteractionsEnabled,
   ]);
 
   return (
@@ -1570,7 +1624,6 @@ function CodeBlock({
             </FlexContainer>
           </BlockHeaderStyle>
 
-          <HeaderHorizontalBorder />
 
           <ContainerStyle
             onClick={() => onClickSelectBlock()}
@@ -1588,6 +1641,8 @@ function CodeBlock({
                 }
               }}
             >
+              <HeaderHorizontalBorder />
+
               {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
                 && (
@@ -2234,9 +2289,10 @@ function CodeBlock({
                 && !isStreamingPipeline
                 && !replicatedBlockUUID
                 && !isDataIntegration
+                && (!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                 && (
-                <CodeHelperStyle normalPadding>
-                  <Spacing mr={1}>
+                <CodeHelperStyle noMargin normalPadding>
+                  <Spacing mr={1} pt={1}>
                     <Text muted small>
                       {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
                       {isSQLBlock && (
@@ -2339,6 +2395,17 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
+              {(!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
+                && !codeCollapsed
+                && variablesFromBlockInteractions
+                && (
+                <SubheaderStyle darkBorder noBackground>
+                  <Spacing p={1}>
+                    {variablesFromBlockInteractions}
+                  </Spacing>
+                </SubheaderStyle>
+              )}
+
               {SUBHEADER_TAB_INTERACTIONS.uuid === selectedSubheaderTabUUID && !codeCollapsed && (
                 <>
                   {blockInteractionsMemo}
@@ -2393,7 +2460,7 @@ function CodeBlock({
                       : markdownEl
                     )
                     : (
-                      <Spacing px={1}>
+                      <Spacing p={1}>
                         <Text monospace muted>
                           ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
                         </Text>

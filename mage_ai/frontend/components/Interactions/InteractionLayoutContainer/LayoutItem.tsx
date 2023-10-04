@@ -15,6 +15,7 @@ export type LayoutItemProps = {
   drop?: any;
   input?: InteractionInputType;
   setVariables?: (prev: any) => void;
+  showVariableUUID?: boolean;
   variable?: InteractionVariableType;
   variables?: {
     [key: string]: any;
@@ -28,6 +29,7 @@ function LayoutItem({
   drop,
   input,
   setVariables,
+  showVariableUUID,
   variable,
   variables,
   width,
@@ -70,6 +72,7 @@ function LayoutItem({
               },
             }}
             setVariables={setVariables}
+            showVariableUUID={showVariableUUID}
             variables={variables}
           />
         </Spacing>
