@@ -52,13 +52,13 @@ PipelineSchedulePolicy.allow_actions([
 
 PipelineSchedulePolicy.allow_actions([
     constants.DELETE,
-    constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineSchedulePolicy.allow_actions([
     constants.CREATE,
+    constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=authorize_operation_create)
@@ -122,7 +122,6 @@ PipelineSchedulePolicy.allow_write([
     'settings',
     'sla',
     'start_time',
-    'status',
     'tags',
     'variables',
 ], scopes=[
@@ -162,4 +161,12 @@ PipelineSchedulePolicy.allow_write(WRITABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+], condition=authorize_operation_create)
+
+PipelineSchedulePolicy.allow_write([
+    'status',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
 ], condition=authorize_operation_create)
