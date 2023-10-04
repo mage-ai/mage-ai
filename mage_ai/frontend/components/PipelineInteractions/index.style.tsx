@@ -137,15 +137,21 @@ export const BackgroundStyle = styled.div`
   `}
 `;
 
-export const ButtonContainerStyle = styled.div`
+export const ButtonContainerStyle = styled.div<{
+  width?: number;
+}>`
   bottom: 0;
   position: fixed;
   z-index: 1;
-  width: 100%;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
     border-left: 1px solid ${(props.theme.borders || dark.borders).light};
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
     border-top: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
+
+  ${props => props.width && `
+    width: ${props.width}px;
+   `}
 `;

@@ -84,6 +84,7 @@ import {
   CodeContainerStyle,
   CodeHelperStyle,
   ContainerStyle,
+  HeaderHorizontalBorder,
   SubheaderStyle,
   TimeTrackerStyle,
   getColorsForBlockType,
@@ -1261,7 +1262,7 @@ function CodeBlock({
 
     return (
       <SubheaderStyle>
-        <Spacing px={PADDING_UNITS} pt={1}>
+        <Spacing px={PADDING_UNITS}>
           <ButtonTabs
             noPadding
             onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
@@ -1307,7 +1308,6 @@ function CodeBlock({
               ...borderColorShareProps,
               ...collected,
             }}
-            bottomBorder
             onClick={() => onClickSelectBlock()}
             ref={disableDrag ? null : drag}
             zIndex={blocksLength + 1 - (blockIdx || 0)}
@@ -1553,6 +1553,8 @@ function CodeBlock({
               )}
             </FlexContainer>
           </BlockHeaderStyle>
+
+          <HeaderHorizontalBorder />
 
           <ContainerStyle
             onClick={() => onClickSelectBlock()}
@@ -2184,7 +2186,7 @@ function CodeBlock({
 
               {tags.length >= 1 && (
                 <SubheaderStyle>
-                  <Spacing px={PADDING_UNITS} py={1}>
+                  <Spacing p={1}>
                     <FlexContainer>
                       {tags.map(({
                         description,
@@ -2368,7 +2370,7 @@ function CodeBlock({
                           </Text>
                         </Spacing>)
                         : (
-                          <Spacing pt={PADDING_UNITS}>
+                          <Spacing py={PADDING_UNITS}>
                             {codeEditorEl}
                           </Spacing>
                         )

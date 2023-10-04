@@ -49,7 +49,14 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import InteractionType from '@interfaces/InteractionType';
 import Panel from '@oracle/components/Panel';
 import PipelineDetail from '@components/PipelineDetail';
-import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
+import PipelineInteractionType, {
+  BlockInteractionRoleWithUUIDType,
+  BlockInteractionTriggerType,
+  BlockInteractionTriggerWithUUIDType,
+  BlockInteractionType,
+  InteractionPermission,
+  InteractionPermissionWithUUID,
+} from '@interfaces/PipelineInteractionType';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
@@ -95,6 +102,7 @@ import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegration
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
+import { RoleFromServerEnum } from '@interfaces/UserType';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
@@ -1231,6 +1239,55 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
+  const [interactionsMapping, setInteractionsMapping] = useState<{
+    [interactionUUID: string]: InteractionType;
+  }>(null);
+  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
+    [blockUUID: string]: BlockInteractionType[];
+  }>(null);
+  const [permissions, setPermissions] =
+    useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
+
+  const savePipelineInteraction = useCallback((opts?: {
+    blockInteractionsMapping?: {
+      [blockUUID: string]: BlockInteractionType[];
+    },
+    // @ts-ignore
+  }) => updatePipelineInteraction({
+    pipeline_interaction: {
+      ...pipelineInteraction,
+      blocks: opts?.blockInteractionsMapping
+        ? opts?.blockInteractionsMapping
+        : blockInteractionsMapping,
+      interactions: interactionsMapping,
+      permissions: permissions?.map(
+        ({
+          roles,
+          triggers,
+        }: InteractionPermission | InteractionPermissionWithUUID) => ({
+          roles: roles?.map(
+            (roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType) => typeof roleItem === 'string'
+              ? roleItem
+              : roleItem?.role,
+          ),
+          triggers: triggers?.map(({
+            schedule_interval: scheduleInterval,
+            schedule_type: scheduleType,
+          }: BlockInteractionTriggerType | BlockInteractionTriggerWithUUIDType) => ({
+            schedule_interval: scheduleInterval,
+            schedule_type: scheduleType,
+          })),
+        }),
+      ),
+    },
+  }), [
+    blockInteractionsMapping,
+    interactionsMapping,
+    permissions,
+    pipelineInteraction,
+    updatePipelineInteraction,
+  ]);
+
   const [deleteBlock] = useMutation(
     ({
       type: blockType,
@@ -1275,6 +1332,17 @@ function PipelineDetailPage({
             setSelectedBlock(null);
             if (type === BlockTypeEnum.SCRATCHPAD) {
               fetchFileTree();
+            }
+
+            if (isInteractionsEnabled) {
+              const blocksMapping = { ...blockInteractionsMapping };
+              delete blocksMapping[uuid];
+
+              savePipelineInteraction({
+                blockInteractionsMapping: blocksMapping,
+              }).then(({
+                pipeline_interaction: pi,
+              }) => setBlockInteractionsMapping(pi?.blocks));
             }
           },
           onErrorCallback: (response: {
@@ -2294,13 +2362,6 @@ function PipelineDetailPage({
     refAfterFooter,
   ]);
 
-  const [interactionsMapping, setInteractionsMapping] = useState<{
-    [interactionUUID: string]: InteractionType;
-  }>(null);
-  const [blockInteractionsMapping, setBlockInteractionsMapping] = useState<{
-    [blockUUID: string]: BlockInteractionType[];
-  }>(null);
-
   useEffect(() => {
     if (!interactionsMapping && interactions?.length >= 1) {
       setInteractionsMapping(indexBy(
@@ -2371,6 +2432,7 @@ function PipelineDetailPage({
       onChangeCodeBlock={onChangeCodeBlock}
       onSelectBlockFile={onSelectBlockFile}
       onUpdateFileSuccess={onUpdateFileSuccess}
+      permissions={permissions}
       pipeline={pipeline}
       pipelineInteraction={pipelineInteraction}
       pipelineMessages={pipelineMessages}
@@ -2380,6 +2442,7 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
+      savePipelineInteraction={savePipelineInteraction}
       secrets={secrets}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
@@ -2397,6 +2460,7 @@ function PipelineDetailPage({
       setHiddenBlocks={setHiddenBlocks}
       // @ts-ignore
       setInteractionsMapping={setInteractionsMapping}
+      setPermissions={setPermissions}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
@@ -2459,6 +2523,7 @@ function PipelineDetailPage({
     onChangeCodeBlock,
     onSelectBlockFile,
     onUpdateFileSuccess,
+    permissions,
     pipeline,
     pipelineInteraction,
     pipelineMessages,
@@ -2468,6 +2533,7 @@ function PipelineDetailPage({
     runningBlocks,
     sampleData,
     savePipelineContent,
+    savePipelineInteraction,
     secrets,
     selectedBlock,
     selectedFilePath,
@@ -2479,6 +2545,7 @@ function PipelineDetailPage({
     setErrors,
     setHiddenBlocks,
     setInteractionsMapping,
+    setPermissions,
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,

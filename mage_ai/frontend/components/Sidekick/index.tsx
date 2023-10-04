@@ -26,7 +26,11 @@ import GlobalVariables from './GlobalVariables';
 import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
-import PipelineInteractionType, { BlockInteractionType } from '@interfaces/PipelineInteractionType';
+import PipelineInteractionType, {
+  BlockInteractionType,
+  InteractionPermission,
+  InteractionPermissionWithUUID,
+} from '@interfaces/PipelineInteractionType';
 import PipelineInteractions from '@components/PipelineInteractions';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -114,6 +118,7 @@ export type SidekickProps = {
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
+  permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
   pipelineMessages: KernelOutputType[];
@@ -121,6 +126,7 @@ export type SidekickProps = {
   refAfterFooter?: any;
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  savePipelineInteraction?: () => void;
   secrets: SecretType[];
   selectedBlock: BlockType;
   selectedFilePath?: string;
@@ -140,6 +146,7 @@ export type SidekickProps = {
   setInteractionsMapping: (prev: any) => {
     [interactionUUID: string]: InteractionType;
   };
+  setPermissions?: (prev: any) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   showUpdateBlockModal?: (
@@ -147,7 +154,7 @@ export type SidekickProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
-  updatePipelineInteraction: (opts: {
+  updatePipelineInteraction?: (opts: {
     pipeline_interaction: PipelineInteractionType;
   }) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & OpenDataIntegrationModalType;
@@ -192,6 +199,7 @@ function Sidekick({
   onChangeCodeBlock,
   onSelectBlockFile,
   onUpdateFileSuccess,
+  permissions,
   pipeline,
   pipelineInteraction,
   pipelineMessages,
@@ -201,6 +209,7 @@ function Sidekick({
   runningBlocks,
   sampleData,
   savePipelineContent,
+  savePipelineInteraction,
   secrets,
   selectedBlock,
   selectedFilePath,
@@ -214,6 +223,7 @@ function Sidekick({
   setErrors,
   setHiddenBlocks,
   setInteractionsMapping,
+  setPermissions,
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
@@ -737,12 +747,15 @@ function Sidekick({
             interactionsMapping={interactionsMapping}
             isLoadingCreateInteraction={isLoadingCreateInteraction}
             isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
+            permissions={permissions}
             pipeline={pipeline}
             pipelineInteraction={pipelineInteraction}
             refAfterFooter={refAfterFooter}
+            savePipelineInteraction={savePipelineInteraction}
             selectedBlock={selectedBlock}
             setBlockInteractionsMapping={setBlockInteractionsMapping}
             setInteractionsMapping={setInteractionsMapping}
+            setPermissions={setPermissions}
             setSelectedBlock={setSelectedBlock}
             updatePipelineInteraction={(
               pipelineInteraction: PipelineInteractionType,
