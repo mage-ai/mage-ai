@@ -1,0 +1,68 @@
+---
+title: "Configure your development environment"
+sidebarTitle: "Environment setup"
+icon: "alien"
+description: "Want to get started contributing code? You're in the right place! Read on to learn how to set up your development environment."
+---
+
+<Steps>
+<Step title="Create a new project">
+   ```bash
+   ./scripts/init.sh [project_name]
+   ```
+</Step>
+<Step title="Build the dev docker image and run all services">
+   ```bash
+   ./scripts/dev.sh [project]
+   ```
+</Step>
+<Step title="Open Mage">
+    Open your browser and go to [http://localhost:3000](http://localhost:3000).
+</Step>
+</Steps>
+
+You can find more information about setting up your local environment for development [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
+
+## Push code changes
+
+* Fork the Mage github repo: https://github.com/mage-ai/mage-ai
+* Create a branch in your forked repo and commit your changes
+* Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) 
+* Tag Mage team members for PR review (@wangxiaoyou1993, @dy46, @johnson-mage, @tommydangerous)
+
+## Debugging
+
+Instead of using `breakpoint()`, add the following line to your code where you
+want a debug:
+
+```python
+import pdb; pdb.set_trace()
+```
+
+Attach to running container to use debugger. To get the container ID, run
+`docker ps` and look in the `NAMES` column.
+
+```bash
+docker attach [container_id]
+```
+
+## Backend server
+
+[Contributing to the backend server](/contributing/backend/overview)
+
+## Frontend app
+
+[Contributing to the frontend client](/contributing/frontend/overview)
+
+## Troubleshoot
+
+### Permission denied
+
+If you get an error relating to permission denied when trying to execute a script,
+it might have something to do with SELinux.
+
+Two or more containers are trying to mount the same volume. With SELinux it’s not possible without
+the `z` option.
+
+For more information about using the `z` option,
+read [Docker’s documentation](https://docs.docker.com/storage/bind-mounts/).
