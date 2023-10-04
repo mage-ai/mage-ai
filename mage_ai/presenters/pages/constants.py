@@ -1,13 +1,28 @@
-from enum import Enum
+from functools import reduce
+from typing import Dict
+
+from mage_ai.presenters.pages.models.client_pages.pipeline_schedules import (
+    CreatePage as PipelineSchedulesCreatePage,
+)
+from mage_ai.presenters.pages.models.client_pages.pipeline_schedules import (
+    ListPage as PipelineSchedulesListPage,
+)
+from mage_ai.presenters.pages.models.client_pages.pipelines import (
+    DetailPage as PipelinesDetailPage,
+)
+from mage_ai.presenters.pages.models.client_pages.pipelines import (
+    ListPage as PipelinesListPage,
+)
 
 
-class ComponentCategory(str, Enum):
-    FORM = 'form'
+def _combine(acc, model) -> Dict:
+    acc[model.get_uuid()] = model
+    return acc
 
 
-class PageCategory(str, Enum):
-    COMMUNITY = 'community'
-
-
-class ResourceType(str, Enum):
-    PIPELINE_SCHEDULE = 'pipeline_schedule'
+CLIENT_PAGES = reduce(_combine, [
+    PipelineSchedulesCreatePage,
+    PipelineSchedulesListPage,
+    PipelinesDetailPage,
+    PipelinesListPage,
+], {})
