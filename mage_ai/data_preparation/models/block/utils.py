@@ -705,6 +705,7 @@ def fetch_input_variables(
                         global_vars=global_vars,
                         input_args=input_args,
                         partition=execution_partition,
+                        raise_exception=True,
                         spark=spark,
                     )
                     for var in variables

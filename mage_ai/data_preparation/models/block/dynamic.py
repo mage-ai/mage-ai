@@ -54,6 +54,7 @@ def reduce_output_from_block(
     global_vars: Dict = None,
     input_args: List[Any] = None,
     partition: str = None,
+    raise_exception: bool = False,
     spark=None,
 ) -> List:
     block_uuid = block.uuid
@@ -97,6 +98,7 @@ def reduce_output_from_block(
             global_vars=global_vars,
             input_args=input_args,
             partition=partition,
+            raise_exception=raise_exception,
             spark=spark,
         )
 
