@@ -255,8 +255,13 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         ),
 
         # Trigger pipeline via API
+        # Original route for backwards compatibility
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
+            ApiTriggerPipelineHandler,
+        ),
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/api_trigger',
             ApiTriggerPipelineHandler,
         ),
 

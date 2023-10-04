@@ -205,11 +205,7 @@ export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
 
   const windowIsDefined = typeof window !== 'undefined';
   if (windowIsDefined) {
-    url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
-
-    if (pipelineSchedule?.token) {
-      url = `${url}/${pipelineSchedule.token}`;
-    }
+    url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/api_trigger`;
   }
 
   if (windowIsDefined) {

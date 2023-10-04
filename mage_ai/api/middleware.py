@@ -14,7 +14,7 @@ from mage_ai.server.api.constants import (
     URL_PARAMETER_API_KEY,
 )
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
-from mage_ai.shared.array import find
+from mage_ai.shared.requests import get_bearer_auth_token_from_headers
 
 
 class OAuthMiddleware(RequestHandler):
@@ -56,20 +56,7 @@ class OAuthMiddleware(RequestHandler):
 
         token_from_header = self.request.headers.get(HEADER_OAUTH_TOKEN, None)
         if not token_from_header:
-            token_from_header = self.request.headers.get('Authorization')
-            if token_from_header:
-                tokens = token_from_header.split(',')
-                token_from_header = find(lambda x: 'bearer' in x.lower(), tokens)
-                if token_from_header:
-                    token_from_header = (
-                        token_from_header.
-                        replace('Bearer ', '').
-                        replace('bearer ', '')
-                    )
-                else:
-                    token_from_header = None
-            else:
-                token_from_header = self.request.query_arguments.get('HTTP_AUTHORIZATION', None)
+            token_from_header = get_bearer_auth_token_from_headers(self.request.headers)
 
         cookies = parse_cookie_header(self.request.headers.get('Cookie', ''))
 

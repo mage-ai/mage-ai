@@ -1369,6 +1369,35 @@ function Edit({
 
         <Spacing mb={2} mt={5} px={PADDING_UNITS}>
           <Headline>
+            Headers
+          </Headline>
+
+          <Text muted>
+            You will need to include the following headers in your request to authenticate
+            with the server.
+          </Text>
+
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <CopyToClipboard
+              copiedText={`Content-Type: application/json
+Authorization: Bearer ${pipelineSchedule?.token}
+`}
+              withCopyIcon
+            >
+              <CodeBlock
+                language="json"
+                small
+                source={`
+    Content-Type: application/json
+    Authorization: Bearer ${pipelineSchedule?.token}
+`}
+              />
+            </CopyToClipboard>
+          </Spacing>
+        </Spacing>
+
+        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+          <Headline>
             Payload
           </Headline>
 
@@ -1420,6 +1449,7 @@ function Edit({
               source={`
     curl -X POST ${url} \\
       --header 'Content-Type: application/json' \\
+      --header 'Authorization: Bearer ${pipelineSchedule?.token}' \\
       --data '
     {
       "pipeline_run": {
