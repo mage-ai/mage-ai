@@ -411,14 +411,13 @@ function PipelineSchedules({
     >
       {isCreatingTrigger && (
         <TriggerEdit
-          createNewSchedule={createNewSchedule}
           errors={errors}
           hideSidekick
           interactions={interactions}
-          isLoadingCreateNewSchedule={isLoadingCreateNewSchedule}
           pipeline={dataPipeline?.pipeline}
           pipelineInteraction={pipelineInteraction}
           setErrors={setErrors}
+          useCreateScheduleMutation={useCreateScheduleMutation}
         />
       )}
 

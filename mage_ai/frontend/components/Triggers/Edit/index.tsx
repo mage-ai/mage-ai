@@ -98,33 +98,29 @@ import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
-  createNewSchedule?: (payload: {
-    pipeline_schedule: PipelineScheduleType;
-  }) => void;
   errors: ErrorsType;
   fetchPipelineSchedule: () => void;
   hideSidekick?: boolean;
   interactions: InteractionType[];
-  isLoadingCreateNewSchedule?: boolean;
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
   pipelineSchedule?: PipelineScheduleType;
   setErrors: (errors: ErrorsType) => void;
+  useCreateScheduleMutation?: any;
   variables?: PipelineVariableType[];
 };
 
 function Edit({
-  createNewSchedule,
   errors,
   fetchPipelineSchedule,
   hideSidekick,
   interactions,
-  isLoadingCreateNewSchedule,
   pipeline,
   pipelineInteraction,
   pipelineSchedule,
   setErrors,
   variables,
+  useCreateScheduleMutation,
 }: EditProps) {
   const containerRef = useRef(null);
 
@@ -1668,6 +1664,26 @@ function Edit({
     schedule,
   ]);
 
+  const [createScheduleBase, { isLoading: isLoadingCreateSchedule }] = useCreateScheduleMutation(
+    (pipelineScheduleId) => router.push(
+      '/pipelines/[pipeline]/triggers/[...slug]',
+      `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}`,
+    ),
+  );
+  const createSchedule = useCallback(() => {
+    createScheduleBase({
+      pipeline_schedule: {
+        ...schedule,
+        variables: overwriteVariables,
+      },
+    });
+  }, [
+    createScheduleBase,
+    overwriteVariables,
+    pipeline,
+    schedule,
+  ]);
+
   const navigationButtonsMemo = useMemo(() => {
     let buttonPrevious;
     let buttonNext;
@@ -1719,13 +1735,8 @@ function Edit({
         >
           <Button
             beforeIcon={<Lightning />}
-            loading={isLoadingCreateNewSchedule}
-            onClick={() => createNewSchedule({
-              pipeline_schedule: {
-                ...schedule,
-                variables: overwriteVariables,
-              },
-            })}
+            loading={isLoadingCreateSchedule}
+            onClick={() => createSchedule()}
             primary
           >
             Create trigger
@@ -1769,11 +1780,9 @@ function Edit({
       </Spacing>
     );
   }, [
-    createNewSchedule,
-    isLoadingCreateNewSchedule,
+    createSchedule,
+    isLoadingCreateSchedule,
     isScheduleActive,
-    overwriteVariables,
-    schedule,
     selectedSubheaderTabUUID,
     setSelectedSubheaderTabUUID,
   ]);
