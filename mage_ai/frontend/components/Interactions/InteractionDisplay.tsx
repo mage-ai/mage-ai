@@ -92,19 +92,27 @@ function InteractionDisplay({
               {options?.map(({
                 label,
                 value,
-              }: InteractionInputOptionType) => (
-                <Spacing key={String(value || label)} mr={PADDING_UNITS}>
-                  <Checkbox
-                    {...sharedProps}
-                    label={label}
-                    checked={!!variableValue}
-                    onClick={() => setVariables(prev => ({
-                      ...prev,
-                      [variableUUID]: !variableValue,
-                    }))}
-                  />
-                </Spacing>
-              ))}
+              }: InteractionInputOptionType) => {
+                const checkboxValues = variablesProp?.[variableUUID] || {};
+                const currentValue = checkboxValues?.[value];
+
+                return (
+                  <Spacing key={String(value || label)} mr={PADDING_UNITS}>
+                    <Checkbox
+                      {...sharedProps}
+                      label={label}
+                      checked={!!currentValue}
+                      onClick={() => setVariables(prev => ({
+                        ...prev,
+                        [variableUUID]: {
+                          ...checkboxValues,
+                          [value]: !currentValue,
+                        },
+                      }))}
+                    />
+                  </Spacing>
+                );
+              })}
             </FlexContainer>
           );
         } else if (InteractionInputTypeEnum.TEXT_FIELD === inputType) {

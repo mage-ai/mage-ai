@@ -203,9 +203,9 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Headline level={5} monospace>
+                <Text large monospace>
                   {inputUUID}
-                </Headline>
+                </Text>
 
                 <Spacing mr={PADDING_UNITS} />
 
@@ -437,9 +437,9 @@ function InteractionSettings({
                 justifyContent="space-between"
               >
                 <FlexContainer alignItems="center" flexDirection="row">
-                  <Headline level={5} monospace>
+                  <Text large monospace>
                     {variableUUID}
-                  </Headline>
+                  </Text>
 
                   <Spacing mr={PADDING_UNITS} />
 
@@ -607,10 +607,10 @@ function InteractionSettings({
               <Divider muted />
 
               <Spacing p={PADDING_UNITS}>
-                <Spacing mb={PADDING_UNITS}>
-                  <Headline default level={5}>
-                    Preview of {inputUUID}
-                  </Headline>
+                <Spacing mb={1}>
+                  <Text muted rightAligned small uppercase>
+                    Preview
+                  </Text>
                 </Spacing>
 
                 {!inputSettings?.type && (
@@ -666,6 +666,7 @@ function InteractionSettings({
     <InteractionLayoutContainer
       containerRef={containerRef}
       interaction={interaction}
+      showVariableUUID
       updateLayout={(
         layoutNew: InteractionLayoutItemType[][],
       ) => updateInteraction({
@@ -983,14 +984,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Variables
                 </Headline>
               </Spacing>
@@ -1012,14 +1013,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Inputs
                 </Headline>
               </Spacing>
@@ -1041,14 +1042,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Interaction layout
                 </Headline>
               </Spacing>

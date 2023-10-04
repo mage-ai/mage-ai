@@ -31,6 +31,12 @@ export const HeadlineStyle = styled.div`
   `}
 `;
 
+export const DottedLineStyle = styled.div`
+  ${props => `
+    border: 1px dashed ${(props.theme.borders || dark.borders).light};
+  `}
+`;
+
 export const LayoutItemStyle = styled.div<{
   disableDrag?: boolean;
 }>`

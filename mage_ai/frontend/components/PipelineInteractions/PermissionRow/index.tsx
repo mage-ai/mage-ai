@@ -16,7 +16,11 @@ import {
 import { ContainerStyle } from '../index.style';
 import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ROLES_FROM_SERVER } from '@interfaces/UserType';
-import { SCHEDULE_INTERVALS, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
+import {
+  SCHEDULE_INTERVALS,
+  SCHEDULE_TYPE_TO_LABEL,
+  ScheduleTypeEnum,
+} from '@interfaces/PipelineScheduleType';
 import { capitalize } from '@utils/string';
 import { pauseEvent } from '@utils/events';
 import { removeAtIndex } from '@utils/array';
@@ -143,30 +147,34 @@ function PermissionRow({
                         ))}
                       </Select>
 
-                      <Spacing mr={1} />
+                      {(ScheduleTypeEnum.TIME === scheduleType || !scheduleType) && (
+                        <>
+                          <Spacing mr={1} />
 
-                      <Select
-                        compact
-                        monospace
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const p = { ...permission };
-                          const item = { ...p?.triggers?.[idx] };
-                          item.schedule_interval = val;
-                          p.triggers[idx] = item;
+                          <Select
+                            compact
+                            monospace
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const p = { ...permission };
+                              const item = { ...p?.triggers?.[idx] };
+                              item.schedule_interval = val;
+                              p.triggers[idx] = item;
 
-                          updatePermission(p);
-                        }}
-                        placeholder="Interval"
-                        small
-                        value={scheduleInterval}
-                      >
-                        {SCHEDULE_INTERVALS.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </Select>
+                              updatePermission(p);
+                            }}
+                            placeholder="Interval"
+                            small
+                            value={scheduleInterval}
+                          >
+                            {SCHEDULE_INTERVALS.map((value) => (
+                              <option key={value} value={value}>
+                                {value}
+                              </option>
+                            ))}
+                          </Select>
+                        </>
+                      )}
                     </FlexContainer>
                   </Spacing>
                 ))}
