@@ -187,22 +187,41 @@ function InteractionDisplay({
                   }))}
                 />
 
-                {name && (
-                  <>
-                    <Spacing ml={PADDING_UNITS} />
+                {(name || description) && <Spacing ml={PADDING_UNITS} />}
 
-                    <FlexContainer flexDirection="column" fullWidth>
-                      <Text bold large success>
-                        {name}
-                      </Text>
+                {(name || description || showVariableUUID) && (
+                  <FlexContainer
+                    alignItems="flex-start"
+                    flexDirection="row"
+                    fullWidth
+                    justifyContent="space-between"
+                  >
+                    {(name || description) && (
+                      <Flex flex={1} flexDirection="column">
+                        {name && (
+                          <Text bold large success>
+                            {name}
+                          </Text>
+                        )}
 
-                      {description && description?.split('\n')?.map((line: string) => (
-                        <Text default key={line}>
-                          {line}
+                        {description && description?.split('\n')?.map((line: string) => (
+                          <Text default key={line}>
+                            {line}
+                          </Text>
+                        ))}
+                      </Flex>
+                    )}
+
+                    {showVariableUUID && (
+                      <>
+                        <Spacing mr={PADDING_UNITS} />
+
+                        <Text monospace muted small>
+                          {variableUUID}
                         </Text>
-                      ))}
-                    </FlexContainer>
-                  </>
+                      </>
+                    )}
+                  </FlexContainer>
                 )}
               </FlexContainer>
             </Spacing>
