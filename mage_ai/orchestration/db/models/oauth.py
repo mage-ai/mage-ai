@@ -15,6 +15,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
+from mage_ai.authentication.permissions.constants import (
+    BlockEntityType,
+    EntityName,
+    PipelineEntityType,
+)
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -22,6 +27,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 
 
 class User(BaseModel):
@@ -45,7 +51,7 @@ class User(BaseModel):
     created_roles = relationship('Role', back_populates='user')
 
     @validates('email')
-    def validate_email(self, key, value):
+    def validate_email_if_present(self, key, value):
         if not value:
             raise ValidationError('Email address cannot be blank.', metadata=dict(
                 key=key,
@@ -148,6 +154,11 @@ class User(BaseModel):
 class Role(BaseModel):
     name = Column(String(255), index=True, unique=True)
     permissions = relationship('Permission', back_populates='role')
+    role_permissions = relationship(
+        'Permission',
+        secondary='role_permission',
+        back_populates='roles',
+    )
     users = relationship('User', secondary='user_role', back_populates='roles_new')
     user_id = Column(Integer, ForeignKey('user.id'), default=None)
     user = relationship(User, back_populates='created_roles')
@@ -158,6 +169,16 @@ class Role(BaseModel):
         ADMIN = 'Admin'
         EDITOR = 'Editor'
         VIEWER = 'Viewer'
+
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
 
     @classmethod
     @safe_db_query
@@ -262,13 +283,43 @@ class UserRole(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
     role_id = Column(Integer, ForeignKey('role.id'))
 
+    @validates('role_id')
+    def validate_role_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @validates('user_id')
+    def validate_user_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
 
 class Permission(BaseModel):
     class Access(int, enum.Enum):
         OWNER = 1
         ADMIN = 2
+        # Editor: list, detail, create, update, delete
         EDITOR = 4
+        # Viewer: list, detail
         VIEWER = 8
+        LIST = 16
+        DETAIL = 32
+        CREATE = 64
+        UPDATE = 128
+        DELETE = 512
+        QUERY = 1024
+        READ = 2048
+        WRITE = 4096
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
@@ -285,12 +336,53 @@ class Permission(BaseModel):
     options = Column(JSON, default=None)
 
     role = relationship(Role, back_populates='permissions')
+    roles = relationship(Role, secondary='role_permission', back_populates='role_permissions')
 
     @validates('entity')
     def validate_entity(self, key, value):
         if value == Entity.ANY:
             raise ValidationError(
                 'Permission entity cannot be ANY. Please select a specific entity.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
+
+    @validates('entity_name')
+    def validate_entity_name(self, key, value):
+        if not value:
+            return value
+
+        if value not in EntityName._value2member_map_:
+            valid_values = ', '.join([i.value for i in EntityName])
+
+            raise ValidationError(
+                f'{key} {value} isn’t valid, it must be 1 of {valid_values}.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
+
+    @validates('entity_type')
+    def validate_entity_type(self, key, value):
+        if not value:
+            return value
+
+        if value not in BlockEntityType._value2member_map_ and \
+                value not in PipelineEntityType._value2member_map_:
+
+            valid_values = ', '.join(
+                [i.value for i in BlockEntityType] + [i.value for i in PipelineEntityType],
+            )
+
+            raise ValidationError(
+                f'{key} {value} isn’t valid, it must be 1 of {valid_values}.',
                 metadata=dict(
                     key=key,
                     value=value,
@@ -337,6 +429,64 @@ class Permission(BaseModel):
                 )
             db_connection.session.commit()
         return new_permissions
+
+    @property
+    def query_attributes(self) -> List[str]:
+        return self.__get_access_attributes('query_attributes')
+
+    @query_attributes.setter
+    def query_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('query_attributes', values)
+
+    @property
+    def read_attributes(self) -> List[str]:
+        return self.__get_access_attributes('read_attributes')
+
+    @read_attributes.setter
+    def read_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('read_attributes', values)
+
+    @property
+    def write_attributes(self) -> List[str]:
+        return self.__get_access_attributes('write_attributes')
+
+    @write_attributes.setter
+    def write_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('write_attributes', values)
+
+    def __get_access_attributes(self, access_name: str) -> List[str]:
+        return (self.options or {}).get(access_name)
+
+    def __set_access_attributes(self, access_name: str, values: List[str]) -> None:
+        self.options = merge_dict((self.options or {}), {
+            access_name: values,
+        })
+
+
+class RolePermission(BaseModel):
+    permission_id = Column(Integer, ForeignKey('permission.id'))
+    role_id = Column(Integer, ForeignKey('role.id'))
+    user_id = Column(Integer, ForeignKey('user.id'), default=None)
+
+    @validates('permission_id')
+    def validate_permission_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @validates('role_id')
+    def validate_role_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
 
 
 class Oauth2Application(BaseModel):

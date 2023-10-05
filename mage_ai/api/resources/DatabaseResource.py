@@ -1,3 +1,7 @@
+import inspect
+
+from sqlalchemy.orm.query import Query
+
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
@@ -5,8 +9,6 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError, ValidationError
 from mage_ai.shared.hash import ignore_keys, merge_dict
-from sqlalchemy.orm.query import Query
-import inspect
 
 
 class DatabaseResource(BaseResource):
@@ -62,7 +64,7 @@ class DatabaseResource(BaseResource):
             where[column_name] = parent_model.id
 
             filters = []
-            for col, val in merge_dict(query, where).items():
+            for _col, _val in merge_dict(query, where).items():
                 filters.append(self.model_class)
             return self.model_class.query.filter(
                 **merge_dict(query, where)).all()
