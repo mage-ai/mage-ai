@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 
 
 class EntityName(str, Enum):
+    ALL = 'ALL'
     AutocompleteItem = 'AutocompleteItem'
     Backfill = 'Backfill'
     Block = 'Block'

@@ -30,6 +30,8 @@ DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', '
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
+REQUIRE_USER_PERMISSIONS = REQUIRE_USER_AUTHENTICATION and \
+    os.getenv('REQUIRE_USER_PERMISSIONS', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
 try:
     MAGE_ACCESS_TOKEN_EXPIRY_TIME = int(os.getenv('MAGE_ACCESS_TOKEN_EXPIRY_TIME', '2592000'))
