@@ -41,8 +41,8 @@ class User(BaseModel):
     # roles_new is used for the new authentication system to define permissions at
     # an entity level
     roles_new = relationship('Role', secondary='user_role', back_populates='users')
-    created_permissions = relationship('Permission', back_populates='users')
-    created_roles = relationship('Role', back_populates='users')
+    created_permissions = relationship('Permission', back_populates='user')
+    created_roles = relationship('Role', back_populates='user')
 
     @validates('email')
     def validate_email(self, key, value):
