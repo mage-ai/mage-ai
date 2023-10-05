@@ -43,7 +43,8 @@ class GoogleCloudPubSubSink(BaseSink):
             os.environ['PUBSUB_EMULATOR_HOST'] = self.config.pubsub_emulator_host
 
         self.publisher_client = self._get_publisher_client()
-        self.topic_path = self.publisher_client.topic_path(self.config.project_id, self.config.topic_id)
+        self.topic_path = self.publisher_client.topic_path(
+            self.config.project_id, self.config.topic_id)
 
     def write(self, message: Dict):
 
