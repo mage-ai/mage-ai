@@ -10,6 +10,7 @@ from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.policies.mixins.user_permissions import UserPermissionMixIn
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
@@ -21,11 +22,15 @@ from mage_ai.api.utils import (
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import (
+    DISABLE_NOTEBOOK_EDIT_ACCESS,
+    REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
+)
 from mage_ai.shared.hash import extract
 
 
-class BasePolicy():
+class BasePolicy(UserPermissionMixIn):
     action_rules = {}
     query_rules = {}
     read_rules = {}
@@ -48,6 +53,9 @@ class BasePolicy():
 
     @classmethod
     def action_rule(self, action):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.action_rule_with_permissions(action)
+
         if not self.action_rules.get(self.__name__):
             self.action_rules[self.__name__] = {}
         return self.action_rules[self.__name__].get(action)

@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship, validates
 from mage_ai.authentication.permissions.constants import (
     BlockEntityType,
     EntityName,
+    PermissionAccess,
     PipelineEntityType,
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
@@ -306,20 +307,27 @@ class UserRole(BaseModel):
 
 class Permission(BaseModel):
     class Access(int, enum.Enum):
-        OWNER = 1
-        ADMIN = 2
-        # Editor: list, detail, create, update, delete
-        EDITOR = 4
-        # Viewer: list, detail
-        VIEWER = 8
-        LIST = 16
-        DETAIL = 32
-        CREATE = 64
-        UPDATE = 128
-        DELETE = 512
-        QUERY = 1024
-        READ = 2048
-        WRITE = 4096
+        OWNER = PermissionAccess.OWNER.value
+        ADMIN = PermissionAccess.ADMIN.value
+        EDITOR = PermissionAccess.EDITOR.value
+        VIEWER = PermissionAccess.VIEWER.value
+        LIST = PermissionAccess.LIST.value
+        DETAIL = PermissionAccess.DETAIL.value
+        CREATE = PermissionAccess.CREATE.value
+        UPDATE = PermissionAccess.UPDATE.value
+        DELETE = PermissionAccess.DELETE.value
+        QUERY = PermissionAccess.QUERY.value
+        READ = PermissionAccess.READ.value
+        WRITE = PermissionAccess.WRITE.value
+        DISABLE_LIST = PermissionAccess.DISABLE_LIST.value
+        DISABLE_DETAIL = PermissionAccess.DISABLE_DETAIL.value
+        DISABLE_CREATE = PermissionAccess.DISABLE_CREATE.value
+        DISABLE_UPDATE = PermissionAccess.DISABLE_UPDATE.value
+        DISABLE_DELETE = PermissionAccess.DISABLE_DELETE.value
+        DISABLE_QUERY = PermissionAccess.DISABLE_QUERY.value
+        DISABLE_READ = PermissionAccess.DISABLE_READ.value
+        DISABLE_WRITE = PermissionAccess.DISABLE_WRITE.value
+        DISABLE_ALL = PermissionAccess.DISABLE_ALL.value
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)

@@ -1,5 +1,26 @@
 from enum import Enum
 
+from mage_ai.api.operations.constants import OperationType
+from mage_ai.orchestration.db.models.oauth import Permission
+
+OPERATION_TYPE_TO_ACCESS_MAPPING = {
+  OperationType.ALL: Permission.Access.ADMIN,
+  OperationType.CREATE: Permission.Access.CREATE,
+  OperationType.DELETE: Permission.Access.DELETE,
+  OperationType.DETAIL: Permission.Access.DETAIL,
+  OperationType.LIST: Permission.Access.LIST,
+  OperationType.UPDATE: Permission.Access.UPDATE,
+}
+
+OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
+  OperationType.ALL: Permission.Access.DISABLE_ALL,
+  OperationType.CREATE: Permission.Access.DISABLE_CREATE,
+  OperationType.DELETE: Permission.Access.DISABLE_DELETE,
+  OperationType.DETAIL: Permission.Access.DISABLE_DETAIL,
+  OperationType.LIST: Permission.Access.DISABLE_LIST,
+  OperationType.UPDATE: Permission.Access.DISABLE_UPDATE,
+}
+
 META_KEY_LIMIT = '_limit'
 META_KEY_OFFSET = '_offset'
 

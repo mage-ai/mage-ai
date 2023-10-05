@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import List, Tuple
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.BaseResource import BaseResource
+from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import (
     Oauth2AccessToken,
@@ -148,3 +150,11 @@ def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
             raise ApiError(error)
 
     return start_timestamp, end_timestamp
+
+
+def get_entity_name_from_resource(resource: BaseResource) -> EntityName:
+    model_name = resource.model_name()
+    if model_name in EntityName._value2member_map_:
+        return EntityName(model_name)
+
+    return None

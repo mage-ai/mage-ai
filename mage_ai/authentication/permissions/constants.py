@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 
 class EntityName(str, Enum):
     ALL = 'ALL'
+    ALL_EXCEPT_RESERVED = 'ALL_EXCEPT_RESERVED'
     AutocompleteItem = 'AutocompleteItem'
     Backfill = 'Backfill'
     Block = 'Block'
@@ -68,6 +69,15 @@ class EntityName(str, Enum):
     Workspace = 'Workspace'
 
 
+RESERVED_ENTITY_NAMES = [
+    EntityName.Oauth,
+    EntityName.OauthAccessToken,
+    EntityName.OauthApplication,
+    EntityName.Project,
+    EntityName.Workspace,
+]
+
+
 class BaseEntityType(str, Enum):
     pass
 
@@ -94,3 +104,58 @@ class PipelineEntityType(BaseEntityType):
     PYTHON = PipelineType.PYTHON.value
     PYSPARK = PipelineType.PYSPARK.value
     STREAMING = PipelineType.STREAMING.value
+
+
+class PermissionAccess(int, Enum):
+    OWNER = 1
+    ADMIN = 2
+    # Editor: list, detail, create, update, delete
+    EDITOR = 4
+    # Viewer: list, detail
+    VIEWER = 8
+    LIST = 16
+    DETAIL = 32
+    CREATE = 64
+    UPDATE = 128
+    DELETE = 512
+    QUERY = 1024
+    READ = 2048
+    WRITE = 4096
+    DISABLE_LIST = 8192
+    DISABLE_DETAIL = 16384
+    DISABLE_CREATE = 32768
+    DISABLE_UPDATE = 65536
+    DISABLE_DELETE = 131072
+    DISABLE_QUERY = 262144
+    DISABLE_READ = 524288
+    DISABLE_WRITE = 1048576
+    DISABLE_ALL = 2097152
+
+
+ACCESS_FOR_VIEWER = [
+    PermissionAccess.DETAIL,
+    PermissionAccess.LIST,
+    PermissionAccess.READ,
+    PermissionAccess.VIEWER,
+]
+ACCESS_FOR_EDITOR = ACCESS_FOR_VIEWER + [
+    PermissionAccess.CREATE,
+    PermissionAccess.DELETE,
+    PermissionAccess.EDITOR,
+    PermissionAccess.QUERY,
+    PermissionAccess.UPDATE,
+    PermissionAccess.WRITE,
+]
+ACCESS_FOR_ADMIN = ACCESS_FOR_VIEWER + ACCESS_FOR_EDITOR + [
+    PermissionAccess.ADMIN,
+]
+ACCESS_FOR_OWNER = ACCESS_FOR_ADMIN + [
+    PermissionAccess.OWNER,
+]
+
+PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS = {
+    f'{PermissionAccess.ADMIN}': ACCESS_FOR_ADMIN,
+    f'{PermissionAccess.EDITOR}': ACCESS_FOR_EDITOR,
+    f'{PermissionAccess.OWNER}': ACCESS_FOR_OWNER,
+    f'{PermissionAccess.VIEWER}': ACCESS_FOR_VIEWER,
+}

@@ -1,5 +1,6 @@
 import importlib
 import inspect
+from typing import List
 
 import inflection
 
@@ -8,8 +9,17 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError
+from mage_ai.orchestration.db.models.oauth import (
+    Permission,
+    Role,
+    RolePermission,
+    UserRole,
+)
 from mage_ai.shared.hash import merge_dict
+
+CONTEXT_DATA_KEY_USER_PERMISSIONS = '__user_permissions'
 
 
 class BaseResource(Resource):
@@ -26,10 +36,14 @@ class BaseResource(Resource):
     parent_resource_attr = {}
 
     @classmethod
+    def model_name(self) -> str:
+        return self.__name__.replace('Resource', '')
+
+    @classmethod
     def parser_class(self):
-        klass = self.__name__.replace('Resource', '')
-        module_name = f'mage_ai.api.parsers.{klass}Parser'
-        class_name = f'{klass}Parser'
+        model_name = self.model_name()
+        module_name = f'mage_ai.api.parsers.{model_name}Parser'
+        class_name = f'{model_name}Parser'
 
         try:
             return getattr(importlib.import_module(module_name), class_name)
@@ -38,7 +52,7 @@ class BaseResource(Resource):
 
     @classmethod
     def policy_class(self):
-        model_name = self.__name__.replace('Resource', '')
+        model_name = self.model_name()
         return getattr(
             importlib.import_module(
                 'mage_ai.api.policies.{}Policy'.format(model_name)),
@@ -47,7 +61,7 @@ class BaseResource(Resource):
 
     @classmethod
     def presenter_class(self):
-        model_name = self.__name__.replace('Resource', '')
+        model_name = self.model_name()
         return getattr(
             importlib.import_module(
                 'mage_ai.api.presenters.{}Presenter'.format(model_name)),
@@ -291,6 +305,65 @@ class BaseResource(Resource):
                 self.result_set().context.data[k_name] = {}
             self.result_set().context.data[k_name][key] = loaded
         return loaded
+
+    @safe_db_query
+    async def load_and_cache_user_permissions(self) -> List[Permission]:
+        # This will fetch the user permissions and store it on the context data
+        # so that repeat policy user permission validations won’t keep querying the
+        # database for permissions.
+        if not self.current_user:
+            return
+
+        permissions = self.result_set().context.data.get(CONTEXT_DATA_KEY_USER_PERMISSIONS)
+        if permissions:
+            return permissions
+
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF0 running load_and_cache_user_permissions')
+
+        query = (
+            Permission.
+            select(
+                Permission.access,
+                Permission.entity,
+                Permission.entity_id,
+                Permission.entity_name,
+                Permission.entity_type,
+                Permission.id,
+                Permission.options,
+            ).
+            join(
+                RolePermission,
+                RolePermission.permission_id == Permission.id).
+            join(
+                Role,
+                Role.id == RolePermission.role_id).
+            join(
+                UserRole,
+                UserRole.role_id == Role.id).
+            filter(UserRole.user_id == self.current_user.id)
+        )
+
+        permissions = []
+
+        for row in query.all():
+            permission = Permission()
+            permission.access = row.access
+            permission.entity = row.entity
+            permission.entity_id = row.entity_id
+            permission.entity_name = row.entity_name
+            permission.entity_type = row.entity_type
+            permission.id = row.id
+            permission.options = row.options
+            permissions.append(permission)
+
+        self.result_set().context.data[CONTEXT_DATA_KEY_USER_PERMISSIONS] = permissions
+
+        print(
+            'WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF1 done load_and_cache_user_permissions',
+            self.result_set().context.data[CONTEXT_DATA_KEY_USER_PERMISSIONS],
+        )
+
+        return permissions
 
     def __result_sets(self):
         return self.model_options.get('result_sets', {})
