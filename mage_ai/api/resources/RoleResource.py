@@ -1,11 +1,12 @@
-from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role
+from mage_ai.shared.hash import merge_dict
 
 
-class RoleResource(GenericResource):
+class RoleResource(DatabaseResource):
     model_class = Role
 
     @classmethod
@@ -58,3 +59,10 @@ class RoleResource(GenericResource):
             ))
 
         return self.build_result_set(roles, user, **kwargs)
+
+    @classmethod
+    @safe_db_query
+    def create(self, payload, user, **kwargs):
+        return super().create(merge_dict(payload, dict(
+            user_id=user.id if user else None,
+        )), user, **kwargs)

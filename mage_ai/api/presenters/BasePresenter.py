@@ -3,12 +3,24 @@ import inspect
 from collections import UserList
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 from mage_ai.api.operations.constants import READ
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.shared.hash import merge_dict
+
+
+class CustomDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.already_validated = False
+
+
+class CustomList(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.already_validated = False
 
 
 class BasePresenter():
@@ -77,22 +89,37 @@ class BasePresenter():
             return results
 
         if isinstance(resource, Iterable):
-            return [await present_lambda(r) for r in resource]
+            already_validated_values = []
+
+            arr = []
+            for r in resource:
+                res = await present_lambda(r)
+                arr.append(res)
+
+                already_validated = False
+                if isinstance(res, CustomDict) or isinstance(res, CustomList):
+                    already_validated = res.already_validated
+                already_validated_values.append(already_validated)
+
+            custom_list = CustomList(arr)
+            custom_list.already_validated = all(already_validated_values)
+
+            return custom_list
         else:
             return await present_lambda(resource)
 
     @classmethod
-    def present_model(self, model, resource_class, user, **kwargs):
+    async def present_model(self, model, resource_class, user, **kwargs):
         if model:
-            return self.present_resource(
+            return await self.present_resource(
                 resource_class(model, user, **kwargs),
                 user,
                 **kwargs,
             )
 
     @classmethod
-    def present_models(self, models, resource_class, user, **kwargs):
-        return self.present_resource(
+    async def present_models(self, models, resource_class, user, **kwargs):
+        return await self.present_resource(
             resource_class.build_result_set(models, user, **kwargs),
             user,
             **kwargs,
@@ -155,7 +182,7 @@ class BasePresenter():
         elif issubclass(value.__class__, BaseResource):
             opts = self.options.copy()
             opts['from_resource'] = self.resource
-            data = value.presenter_class().present_resource(
+            data = await value.presenter_class().present_resource(
                 value,
                 self.current_user,
                 **merge_dict(kwargs, opts),
@@ -163,11 +190,44 @@ class BasePresenter():
 
             if not kwargs.get('ignore_permissions'):
                 policy = value.policy_class()(value, self.current_user, **opts)
-                await policy.authorize_attributes(
-                    READ,
-                    data.keys(),
-                    **opts,
-                )
+
+                def _build_authorize_attributes(
+                    parsed_value: Any,
+                    policy=policy,
+                    opts=opts,
+                ) -> Callable:
+                    return policy.authorize_attributes(
+                        READ,
+                        parsed_value.keys(),
+                        **opts,
+                    )
+
+                parser = None
+                parser_class = value.parser_class()
+                if parser_class:
+                    parser = parser_class(
+                        resource=value,
+                        current_user=self.current_user,
+                        policy=policy,
+                        **opts,
+                    )
+                    data = await parser.parse_read_attributes_and_authorize(
+                        data,
+                        _build_authorize_attributes,
+                        **opts,
+                    )
+                    if isinstance(data, list):
+                        data = CustomList(data)
+                        data.already_validated = True
+                    elif isinstance(data, dict):
+                        data = CustomDict(data)
+                        data.already_validated = True
+                else:
+                    await policy.authorize_attributes(
+                        READ,
+                        data.keys(),
+                        **opts,
+                    )
 
             return data
         else:
