@@ -111,7 +111,10 @@ def sync(client, config, catalog, state, logger=LOGGER):
                     'location_type': 'COUNTRIES',
                     'country_code': country_code
                 }
-                country_cursor = reports_obj.get_resource('countries', client, country_path, country_params)
+                country_cursor = reports_obj.get_resource('countries',
+                                                          client,
+                                                          country_path,
+                                                          country_params)
                 for country in country_cursor:
                     country_id = country['targeting_value']
                     country_ids.append(country_id)
@@ -125,7 +128,10 @@ def sync(client, config, catalog, state, logger=LOGGER):
                 'count': 1000,
                 'cursor': None
             }
-            platforms_cursor = reports_obj.get_resource('platforms', client, platforms_path, platforms_params)
+            platforms_cursor = reports_obj.get_resource('platforms',
+                                                        client,
+                                                        platforms_path,
+                                                        platforms_params)
             for platform in platforms_cursor:
                 platform_id = platform['targeting_value']
                 platform_ids.append(platform_id)
@@ -161,8 +167,9 @@ def sync(client, config, catalog, state, logger=LOGGER):
                 )
 
                 # pylint: disable=line-too-long
-                logger.info('Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
-                    report_name, account_id, total_records))
+                logger.info(
+                    'Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
+                     report_name, account_id, total_records))
                 # pylint: enable=line-too-long
                 update_currently_syncing(state, None)
 
