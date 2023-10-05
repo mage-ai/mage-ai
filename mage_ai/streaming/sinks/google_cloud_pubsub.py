@@ -1,11 +1,11 @@
+import json
+import os
 import time
+from dataclasses import dataclass
+from typing import Dict, List
 
 from google.cloud import pubsub_v1
 from google.oauth2 import service_account
-from dataclasses import dataclass
-from typing import List, Dict
-import json
-import os
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
