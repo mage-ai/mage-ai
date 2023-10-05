@@ -30,3 +30,17 @@ RolePresenter.register_format(
         'users',
     ],
 )
+
+
+RolePresenter.register_formats([
+    f'permission/{constants.CREATE}',
+    f'permission/{constants.DETAIL}',
+    f'permission/{constants.UPDATE}',
+], [
+        'created_at',
+        'id',
+        'name',
+        'updated_at',
+        'users',
+    ],
+)

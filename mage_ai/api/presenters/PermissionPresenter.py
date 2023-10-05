@@ -12,7 +12,6 @@ class PermissionPresenter(BasePresenter):
         'entity_type',
         'id',
         'updated_at',
-        'user_id',
     ]
 
 
@@ -21,6 +20,20 @@ PermissionPresenter.register_format(
     PermissionPresenter.default_attributes + [
         'query_attributes',
         'read_attributes',
+        'write_attributes',
+    ],
+)
+
+
+PermissionPresenter.register_formats([
+    constants.CREATE,
+    constants.DETAIL,
+    constants.UPDATE,
+], PermissionPresenter.default_attributes + [
+        'query_attributes',
+        'read_attributes',
+        'role',
+        'user_id',
         'write_attributes',
     ],
 )

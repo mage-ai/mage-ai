@@ -15,6 +15,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
+from mage_ai.authentication.permissions.constants import (
+    BlockEntityType,
+    EntityName,
+    PipelineEntityType,
+)
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -273,6 +278,26 @@ class UserRole(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
     role_id = Column(Integer, ForeignKey('role.id'))
 
+    @validates('role_id')
+    def validate_role_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @validates('user_id')
+    def validate_user_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
 
 class Permission(BaseModel):
     class Access(int, enum.Enum):
@@ -312,6 +337,40 @@ class Permission(BaseModel):
         if value == Entity.ANY:
             raise ValidationError(
                 'Permission entity cannot be ANY. Please select a specific entity.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
+
+    @validates('entity_name')
+    def validate_entity_name(self, key, value):
+        if value not in EntityName._value2member_map_:
+            valid_values = ', '.join([i.value for i in EntityName])
+
+            raise ValidationError(
+                f'{key} {value} isn’t valid, it must be 1 of {valid_values}.',
+                metadata=dict(
+                    key=key,
+                    value=value,
+                ),
+            )
+
+        return value
+
+    @validates('entity_type')
+    def validate_entity_type(self, key, value):
+        if value not in BlockEntityType._value2member_map_ and \
+                value not in PipelineEntityType._value2member_map_:
+
+            valid_values = ', '.join(
+                [i.value for i in BlockEntityType] + [i.value for i in PipelineEntityType],
+            )
+
+            raise ValidationError(
+                f'{key} {value} isn’t valid, it must be 1 of {valid_values}.',
                 metadata=dict(
                     key=key,
                     value=value,
