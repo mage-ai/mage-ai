@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import List
 
 from mage_ai.api.constants import AttributeOperationType
 from mage_ai.api.errors import ApiError
@@ -10,7 +10,7 @@ from mage_ai.data_preparation.models.pipelines.interactions import PipelineInter
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.presenters.pages.models.base import PageComponent
+from mage_ai.presenters.pages.models.base import DynamicBaseModel, PageComponent
 from mage_ai.presenters.pages.models.constants import ComponentCategory, ResourceType
 
 
@@ -25,7 +25,7 @@ class CreateWithInteractionsComponent(BaseComponent):
     uuid_from_name = True
 
     @classmethod
-    async def disabled(self, current_user: User = None, **kwargs) -> bool:
+    async def enabled(self, current_user: User = None, **kwargs) -> bool:
         async def __validate_pipeline_interactions_permissions(
             pipeline: Pipeline,
             current_user=current_user,
@@ -35,27 +35,31 @@ class CreateWithInteractionsComponent(BaseComponent):
         pipelines = kwargs.get('pipelines') or []
 
         if pipelines and len(pipelines) >= 1:
-            if not Project(pipelines[0].repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
-                return True
+            if Project(pipelines[0].repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
+                results = await asyncio.gather(
+                    *[__validate_pipeline_interactions_permissions(
+                        pipeline,
+                    ) for pipeline in pipelines]
+                )
 
-            results = await asyncio.gather(
-                *[__validate_pipeline_interactions_permissions(
-                    pipeline,
-                ) for pipeline in pipelines]
-            )
+                return all(results)
 
-            return not all(results)
+        return False
 
-        return True
+
+class EditAttributes(DynamicBaseModel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.category = ComponentCategory.FIELD
+        self.operation = OperationType.UPDATE
 
 
 class EditComponent(BaseComponent):
     category = ComponentCategory.FORM
     operation = OperationType.UPDATE
-    uuid_from_name = True
 
     @classmethod
-    async def metadata(self, current_user: User = None, **kwargs) -> Dict:
+    async def components(self, current_user: User = None, **kwargs) -> List[EditAttributes]:
         mapping = {}
 
         pipeline_schedules = kwargs.get('pipeline_schedules') or []
@@ -80,4 +84,12 @@ class EditComponent(BaseComponent):
                 except ApiError:
                     mapping[write_attribute] = False
 
-        return mapping
+        arr = []
+
+        for write_attribute, enabled in mapping.items():
+            arr.append(EditAttributes(
+                disabled_override=not enabled,
+                uuid=write_attribute,
+            ))
+
+        return arr

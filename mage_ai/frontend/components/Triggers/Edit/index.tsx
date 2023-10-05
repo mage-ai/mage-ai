@@ -141,6 +141,17 @@ function Edit({
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
+  const {
+    data: dataClientPage,
+  } = api.client_pages.detail('pipeline_schedule:create', {
+    'pipelines[]': [pipelineUUID],
+    'pipeline_schedules[]': [pipelineScheduleID],
+  }, {}, {
+    pauseFetch: !pipelineUUID || !pipelineScheduleID,
+    key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
+  });
+  const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
+
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
 

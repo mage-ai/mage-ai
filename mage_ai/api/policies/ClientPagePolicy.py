@@ -22,9 +22,18 @@ ClientPagePolicy.allow_read(ClientPagePresenter.default_attributes + [
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+ClientPagePolicy.allow_read(ClientPagePresenter.default_attributes + [
+    'components',
+    'metadata',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
     constants.CREATE,
     constants.DETAIL,
-    constants.LIST,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
