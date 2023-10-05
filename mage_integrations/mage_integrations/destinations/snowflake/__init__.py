@@ -37,6 +37,10 @@ class Snowflake(Destination):
         return '"'
 
     @property
+    def use_lowercase(self) -> bool:
+        return self.config.get('lower_case', True)
+
+    @property
     def disable_double_quotes(self) -> bool:
         return self.config.get('disable_double_quotes', False)
 
@@ -74,6 +78,7 @@ class Snowflake(Destination):
             ),
             unique_constraints=unique_constraints,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         return [
@@ -101,7 +106,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema_columns = schema['properties'].keys()
 
         new_columns = [c for c in schema_columns
-                       if clean_column_name(c) not in current_columns]
+                       if clean_column_name(c, self.use_lowercase)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -121,6 +127,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     table_name,
                 ),
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -133,11 +140,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         unique_constraints: List[str] = None,
     ) -> str:
         unique_constraints_clean = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
             for col in unique_constraints
         ]
         columns_cleaned = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
             for col in columns
         ]
 
@@ -188,6 +195,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             convert_column_to_type_func=convert_column_if_json,
             records=records,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         insert_columns = ', '.join(insert_columns)

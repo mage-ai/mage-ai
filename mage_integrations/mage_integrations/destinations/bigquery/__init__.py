@@ -64,6 +64,10 @@ class BigQuery(Destination):
     def quote(self) -> str:
         return '`'
 
+    @property
+    def use_lowercase(self) -> bool:
+        return self.config.get('lower_case', True)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.use_batch_load = self.config.get('use_batch_load')
@@ -106,6 +110,7 @@ class BigQuery(Destination):
                 unique_constraints=None,
                 create_temporary_table=create_temporary_table,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase
             )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
@@ -114,7 +119,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE(`{clean_column_name(partition_col)}`)
+  DATE(`{clean_column_name(partition_col, self.use_lowercase)}`)
             '''
 
         return [
@@ -142,7 +147,7 @@ WHERE TABLE_NAME = '{table_name}'
 
         current_mapping = reduce(
             lambda obj, tup: merge_dict(obj, {
-                clean_column_name(tup[0]): tup[1],
+                clean_column_name(tup[0], self.use_lowercase): tup[1],
             }),
             results,
             {},
@@ -158,7 +163,9 @@ WHERE TABLE_NAME = '{table_name}'
 
         new_mapping_column_types = {}
         for col, obj in new_mapping.items():
-            new_mapping_column_types[clean_column_name(col)] = obj['type_converted']
+            new_mapping_column_types[clean_column_name
+                                     (col, self.use_lowercase)
+                                     ] = obj['type_converted']
 
         new_column_types = {}
         for col, col_type in current_mapping.items():
@@ -182,13 +189,16 @@ WHERE TABLE_NAME = '{table_name}'
                 ', '.join(cmds),
             ]))
 
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns if
+                       clean_column_name(c, self.use_lowercase)
+                       not in current_columns]
         if new_columns:
             alter_table_commands.append(build_alter_table_command(
                 column_type_mapping=new_mapping,
                 columns=new_columns,
                 full_table_name=full_table_name,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             ))
 
         return alter_table_commands
@@ -453,6 +463,7 @@ WHERE table_id = '{table_name}'
         insert_columns = build_insert_columns(
             columns=columns,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
         insert_columns = ', '.join(insert_columns)
 
@@ -499,8 +510,10 @@ WHERE table_id = '{table_name}'
                 tags=tags,
             )
 
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            unique_constraints = [clean_column_name(col, self.use_lowercase)
+                                  for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col, self.use_lowercase)
+                               for col in columns]
 
             on_conditions = []
             for col in unique_constraints:
@@ -589,6 +602,7 @@ WHERE table_id = '{table_name}'
                 stringify_values=False,
                 convert_column_types=True,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             )
             insert_columns = ', '.join(insert_columns)
 

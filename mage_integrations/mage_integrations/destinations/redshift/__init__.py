@@ -22,6 +22,10 @@ from mage_integrations.destinations.sql.utils import (
 
 
 class Redshift(Destination):
+    @property
+    def use_lowercase(self) -> bool:
+        return self.config.get('lower_case', True)
+
     def build_connection(self) -> RedshiftConnection:
         return RedshiftConnection(
             access_key_id=self.config.get('access_key_id'),
@@ -58,6 +62,7 @@ class Redshift(Destination):
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -79,7 +84,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns if clean_column_name
+                       (c, self.use_lowercase) not in current_columns]
 
         if not new_columns:
             return []
@@ -90,6 +96,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
+                use_lowercase=self.use_lowercase
             ),
         ]
 
@@ -112,6 +119,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             records=records,
             convert_array_func=self.convert_array,
             string_parse_func=self.string_parse_func,
+            use_lowercase=self.use_lowercase,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -129,7 +137,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
             unique_constraints_clean = [
-                f'{clean_column_name(col)}'
+                f'{clean_column_name(col, self.use_lowercase)}'
                 for col in unique_constraints
             ]
             commands = commands + [

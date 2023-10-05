@@ -27,6 +27,10 @@ class PostgreSQL(Destination):
     def quote(self) -> str:
         return '"'
 
+    @property
+    def use_lowercase(self) -> bool:
+        return self.config.get('lower_case', True)
+
     def full_table_name(self, schema_name: str, table_name: str):
         return f'{self._wrap_with_quotes(schema_name)}.{self._wrap_with_quotes(table_name)}'
 
@@ -57,6 +61,7 @@ class PostgreSQL(Destination):
                 unique_constraints=unique_constraints,
                 column_identifier=self.quote,
                 key_properties=self.key_properties.get(stream),
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -78,7 +83,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns if clean_column_name
+                       (c, self.use_lowercase) not in current_columns]
 
         if not new_columns:
             return []
@@ -90,6 +96,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 columns=new_columns,
                 full_table_name=self.full_table_name(schema_name, table_name),
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase
             ),
         ]
 
@@ -111,6 +118,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             convert_array_func=self.convert_array,
             string_parse_func=self.string_parse_func,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -122,11 +130,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [
-                self._wrap_with_quotes(clean_column_name(col))
+                self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
                 for col in unique_constraints
             ]
             columns_cleaned = [
-                self._wrap_with_quotes(clean_column_name(col))
+                self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
                 for col in columns if col != INTERNAL_COLUMN_CREATED_AT
             ]
 
