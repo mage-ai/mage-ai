@@ -147,6 +147,8 @@ class Role(BaseModel):
     name = Column(String(255), index=True, unique=True)
     permissions = relationship('Permission', back_populates='role')
     users = relationship('User', secondary='user_role', back_populates='roles_new')
+    user_id = Column(Integer, ForeignKey('user.id'), default=None)
+    user = relationship(User, back_populates='created_roles')
 
     # Default global roles created by Mage
     class DefaultRole(str, enum.Enum):
@@ -274,6 +276,11 @@ class Permission(BaseModel):
     # 8 = view
     access = Column(Integer, default=None)
     role_id = Column(Integer, ForeignKey('role.id'))
+    user_id = Column(Integer, ForeignKey('user.id'), default=None)
+    user = relationship(User, back_populates='created_permissions')
+    entity_name = Column(String(255), default=None)
+    entity_type = Column(String(255), default=None)
+    options = Column(JSON, default=None)
 
     role = relationship(Role, back_populates='permissions')
 
