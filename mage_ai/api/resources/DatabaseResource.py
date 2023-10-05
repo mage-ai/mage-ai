@@ -64,7 +64,7 @@ class DatabaseResource(BaseResource):
             where[column_name] = parent_model.id
 
             filters = []
-            for col, val in merge_dict(query, where).items():
+            for _col, _val in merge_dict(query, where).items():
                 filters.append(self.model_class)
             return self.model_class.query.filter(
                 **merge_dict(query, where)).all()
