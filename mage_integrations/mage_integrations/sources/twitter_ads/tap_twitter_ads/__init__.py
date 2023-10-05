@@ -65,8 +65,10 @@ def do_discover(
     account_ids,
     logger=LOGGER,
     return_streams: bool = False,
-    selected_streams: List = [],
+    selected_streams: List = None,
 ):
+    if selected_streams is None:
+        selected_streams = []
     logger.info('Starting discover')
     # check_credentials(client, TwitterAds(), account_ids)    # validating credentials
     catalog = discover(reports)

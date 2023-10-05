@@ -303,9 +303,10 @@ class TwitterAds:
         account_id=None,
         parent_ids=None,
         child_streams=None,
-        selected_streams=[]
+        selected_streams=None,
     ):
-
+        if selected_streams is None:
+            selected_streams = []
         # endpoint_config variables
         path = getattr(endpoint_config, 'path', None)
         id_fields = (hasattr(endpoint_config, 'key_properties')
