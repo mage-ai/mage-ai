@@ -33,6 +33,7 @@ PermissionPresenter.register_formats([
         'query_attributes',
         'read_attributes',
         'role',
+        'roles',
         'user_id',
         'write_attributes',
     ],

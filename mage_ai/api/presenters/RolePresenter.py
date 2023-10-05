@@ -8,6 +8,7 @@ class RolePresenter(BasePresenter):
         'id',
         'name',
         'permissions',
+        'role_permissions',
         'updated_at',
     ]
 

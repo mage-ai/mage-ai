@@ -154,6 +154,11 @@ class User(BaseModel):
 class Role(BaseModel):
     name = Column(String(255), index=True, unique=True)
     permissions = relationship('Permission', back_populates='role')
+    role_permissions = relationship(
+        'Permission',
+        secondary='role_permission',
+        back_populates='roles',
+    )
     users = relationship('User', secondary='user_role', back_populates='roles_new')
     user_id = Column(Integer, ForeignKey('user.id'), default=None)
     user = relationship(User, back_populates='created_roles')
@@ -331,6 +336,7 @@ class Permission(BaseModel):
     options = Column(JSON, default=None)
 
     role = relationship(Role, back_populates='permissions')
+    roles = relationship(Role, secondary='role_permission', back_populates='role_permissions')
 
     @validates('entity')
     def validate_entity(self, key, value):
