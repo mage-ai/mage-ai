@@ -1,12 +1,12 @@
-from .discover import discover
-from .sync import sync as _sync
-from .streams import TwitterAds
-from twitter_ads.client import Client
-from typing import List
 import json
-import singer
 import sys
+from typing import List
 
+import singer
+from twitter_ads.client import Client
+
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.discover import discover
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.sync import sync as _sync
 
 LOGGER = singer.get_logger()
 REQUEST_TIMEOUT = 300   # 5 minutes default timeout
@@ -54,7 +54,8 @@ def check_credentials(client, twitter_ads_client, account_ids):
             invalid_account_ids.append(account_id)
 
     if invalid_account_ids:
-        error_message = 'Invalid Twitter Ads accounts provided during the configuration:{}'.format(invalid_account_ids)
+        error_message = 'Invalid Twitter Ads accounts provided during the configuration:{}'.format(
+            invalid_account_ids)
         raise Exception(error_message) from None
 
 
@@ -92,7 +93,8 @@ def main():
         request_timeout = REQUEST_TIMEOUT
 
     # Twitter Ads SDK Reference: https://github.com/twitterdev/twitter-python-ads-sdk
-    # Client reference: https://github.com/twitterdev/twitter-python-ads-sdk#rate-limit-handling-and-request-options
+    # Client reference:
+    # https://github.com/twitterdev/twitter-python-ads-sdk#rate-limit-handling-and-request-options
     client = Client(
         consumer_key=config.get('consumer_key'),
         consumer_secret=config.get('consumer_secret'),

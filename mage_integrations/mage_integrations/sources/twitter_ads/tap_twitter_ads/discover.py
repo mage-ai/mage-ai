@@ -1,6 +1,7 @@
-from singer.catalog import Catalog, CatalogEntry, Schema
-from .schema import get_schemas
 import singer
+from singer.catalog import Catalog, CatalogEntry, Schema
+
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.schema import get_schemas
 
 LOGGER = singer.get_logger()
 
