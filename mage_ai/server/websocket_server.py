@@ -373,6 +373,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         run_upstream = message.get('run_upstream')
         upstream_blocks = message.get('upstream_blocks')
 
+        variables = message.get('variables') or None
+
         pipeline_uuid = pipeline.uuid
 
         widget = BlockType.CHART == block_type
@@ -440,6 +442,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
                     upstream_blocks=upstream_blocks,
+                    variables=variables,
                     widget=widget,
                 )
             elif BlockType.SCRATCHPAD == block_type:

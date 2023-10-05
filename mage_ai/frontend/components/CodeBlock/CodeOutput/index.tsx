@@ -311,10 +311,13 @@ function CodeOutput({
         dataInit = {
           columns: ['-'],
           index: 0,
-          rows: output?.map(i => [JSON.parse(i)]),
+          rows: output?.map(i => [isJsonString(i) ? JSON.parse(i) : i]),
           shape: [output?.length, 1],
         };
         dataType = DataTypeEnum.TABLE;
+      } else if (typeof output === 'string') {
+        dataInit = output;
+        dataType = DataTypeEnum.TEXT_PLAIN;
       } else {
         dataInit = output?.data;
         dataType = output?.type;
@@ -440,9 +443,14 @@ function CodeOutput({
             <OutputRowStyle {...outputRowSharedProps}>
               {textArr.map((t) => (
                 <Text key={t} monospace preWrap>
-                  <Ansi>
-                    {t}
-                  </Ansi>
+                  {t?.length >= 1 && (
+                    <Ansi>
+                      {t}
+                    </Ansi>
+                  )}
+                  {!t?.length && (
+                    <>&nbsp;</>
+                  )}
                 </Text>
               ))}
             </OutputRowStyle>

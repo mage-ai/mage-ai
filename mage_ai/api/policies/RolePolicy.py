@@ -9,14 +9,59 @@ class RolePolicy(BasePolicy):
 
 
 RolePolicy.allow_actions([
+    constants.DETAIL,
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
+
+RolePolicy.allow_actions([
+    constants.CREATE,
+    constants.DELETE,
+    constants.UPDATE,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
+
 RolePolicy.allow_read(RolePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+    constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+RolePolicy.allow_read([
+    'users',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
+
+RolePolicy.allow_read(RolePresenter.default_attributes + [
+    'user_id',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+    constants.DELETE,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
+
+RolePolicy.allow_write([
+    'name'
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
 
 RolePolicy.allow_query([
     'limit_roles',

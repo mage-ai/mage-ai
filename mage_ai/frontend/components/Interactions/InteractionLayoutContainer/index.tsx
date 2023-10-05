@@ -19,14 +19,24 @@ import { useWindowSize } from '@utils/sizes';
 
 type InteractionLayoutContainerProps = {
   containerRef: any;
+  containerWidth?: number;
   interaction: InteractionType;
+  setVariables?: (prev: any) => void;
+  showVariableUUID?: boolean;
   updateLayout?: (layoutNew: InteractionLayoutItemType[][]) => void;
+  variables?: {
+    [key: string]: any;
+  };
 };
 
 function InteractionLayoutContainer({
   containerRef: mainContainerRef,
+  containerWidth,
   interaction,
+  setVariables,
+  showVariableUUID,
   updateLayout,
+  variables: variablesProp,
 }: InteractionLayoutContainerProps) {
   const windowSize = useWindowSize();
 
@@ -37,6 +47,7 @@ function InteractionLayoutContainer({
       setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
     }
   }, [
+    containerWidth,
     mainContainerRef,
     windowSize,
   ]);
@@ -201,7 +212,10 @@ function InteractionLayoutContainer({
                 );
               }}
               rowIndex={idx1}
+              setVariables={setVariables}
+              showVariableUUID={showVariableUUID}
               variable={variable}
+              variables={variablesProp}
               width={widthItem}
             />
           </Flex>,
@@ -272,8 +286,11 @@ function InteractionLayoutContainer({
     layout,
     moveLayoutItem,
     rowsCount,
+    setVariables,
+    showVariableUUID,
     updateLayout,
     variables,
+    variablesProp,
   ]);
 
   if (!updateLayout) {

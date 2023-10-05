@@ -18,7 +18,7 @@ class UserPresenter(BasePresenter):
         'username',
     ]
 
-    def present(self, **kwargs):
+    async def prepare_present(self, **kwargs):
         data = self.model.to_dict(include_attributes=self.default_attributes)
         data = extract(data, self.default_attributes, include_blank_values=True)
 
@@ -33,3 +33,14 @@ class UserPresenter(BasePresenter):
 
 UserPresenter.register_format(
     constants.CREATE, UserPresenter.default_attributes + ['token', ])
+
+
+UserPresenter.register_format(
+    f'role/{constants.DETAIL}',
+    [
+        'first_name',
+        'id',
+        'last_name',
+        'username',
+    ],
+)

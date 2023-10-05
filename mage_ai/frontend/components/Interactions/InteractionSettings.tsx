@@ -16,6 +16,7 @@ import InteractionType, {
   INTERACTION_INPUT_TYPES,
   INTERACTION_VARIABLE_VALUE_TYPES,
   InteractionInputOptionType,
+  InteractionInputStyleInputTypeEnum,
   InteractionInputStyleType,
   InteractionInputType,
   InteractionInputTypeEnum,
@@ -77,6 +78,7 @@ function InteractionSettings({
     uuid,
     variables,
   } = interaction || {
+    layout: null,
     variables: null,
     uuid: null,
   };
@@ -93,17 +95,31 @@ function InteractionSettings({
     inputUUID: string,
     input: InteractionInputType,
   ) => {
+    const variablesUpdated = {
+      ...variables,
+    };
     const inputsUpdated = {
       ...inputs,
     };
 
-    if (input) {
+    const shouldDelete: boolean = !input;
+
+    if (shouldDelete) {
+      delete inputsUpdated[inputUUID];
+
+      Object.entries(variablesUpdated || {}).forEach(([variableUUID, variable]) => {
+        if (inputUUID === variable?.input) {
+          variablesUpdated[variableUUID] = {
+            ...variable,
+            input: null,
+          };
+        }
+      });
+    } else {
       inputsUpdated[inputUUID] = {
         ...inputsUpdated?.[inputUUID],
         ...input,
       };
-    } else {
-      delete inputsUpdated[inputUUID];
     }
 
     return updateInteraction({
@@ -112,29 +128,49 @@ function InteractionSettings({
   }, [
     inputs,
     updateInteraction,
+    variables,
   ]);
 
   const updateInteractionVariables = useCallback((
     variableUUID: string,
     variable: InteractionVariableType,
   ) => {
+    const layoutUpdated = [];
     const variablesUpdated = {
       ...variables,
     };
 
-    if (variable) {
+    const shouldDelete: boolean = !variable;
+
+    if (shouldDelete) {
+      delete variablesUpdated[variableUUID];
+    } else {
       variablesUpdated[variableUUID] = {
         ...variablesUpdated?.[variableUUID],
         ...variable,
       };
-    } else {
-      delete variablesUpdated[variableUUID];
     }
 
+    layout?.forEach((row) => {
+      const arr = [];
+
+      row?.forEach((layoutItem) => {
+        if (!shouldDelete || variableUUID !== layoutItem?.variable) {
+          arr.push(layoutItem)
+        }
+      });
+
+      if (arr?.length >= 1) {
+        layoutUpdated.push(arr);
+      }
+    });
+
     return updateInteraction({
+      layout: layoutUpdated,
       variables: variablesUpdated,
     });
   }, [
+    layout,
     updateInteraction,
     variables,
   ]);
@@ -167,9 +203,9 @@ function InteractionSettings({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Headline bold level={5}>
+                <Text large monospace>
                   {inputUUID}
-                </Headline>
+                </Text>
 
                 <Spacing mr={PADDING_UNITS} />
 
@@ -217,22 +253,51 @@ function InteractionSettings({
               <Flex flex={1} flexDirection="column">
                 {InteractionInputTypeEnum.TEXT_FIELD === inputType && (
                   <>
-                    <Spacing mb={1}>
-                      <Text bold default>
-                        Style {removeUnderscore(inputType)}
-                      </Text>
+                    <Spacing mb={PADDING_UNITS}>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Style {removeUnderscore(inputType)}
+                        </Text>
+                      </Spacing>
+
+                      <Checkbox
+                        checked={style?.multiline}
+                        label="Allow writing multiple lines"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            multiline: !style?.multiline,
+                          },
+                        })}
+                      />
                     </Spacing>
 
-                    <Checkbox
-                      checked={style?.multiline}
-                      label="Allow writing multiple lines"
-                      onClick={() => updateInteractionInputs(inputUUID, {
-                        style: {
-                          ...style,
-                          multiline: !style?.multiline,
-                        },
-                      })}
-                    />
+                    <div>
+                      <Spacing mb={1}>
+                        <Text bold default>
+                          Text field type
+                        </Text>
+                        {style?.multiline && (
+                          <Text muted small>
+                            Not available for multiline text field.
+                          </Text>
+                        )}
+                      </Spacing>
+
+                      <Checkbox
+                        checked={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type}
+                        disabled={!!style?.multiline}
+                        label="Numbers only"
+                        onClick={() => updateInteractionInputs(inputUUID, {
+                          style: {
+                            ...style,
+                            input_type: InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type
+                              ? null
+                              : InteractionInputStyleInputTypeEnum.NUMBER,
+                          },
+                        })}
+                      />
+                    </div>
                   </>
                 )}
 
@@ -372,9 +437,9 @@ function InteractionSettings({
                 justifyContent="space-between"
               >
                 <FlexContainer alignItems="center" flexDirection="row">
-                  <Headline bold level={5}>
+                  <Text large monospace>
                     {variableUUID}
-                  </Headline>
+                  </Text>
 
                   <Spacing mr={PADDING_UNITS} />
 
@@ -523,6 +588,7 @@ function InteractionSettings({
                   placeholder="Select an existing input"
                   value={inputUUID}
                 >
+                  <option value="" />
                   <option value="+ Add a new input">
                     + Add a new input
                   </option>
@@ -541,10 +607,10 @@ function InteractionSettings({
               <Divider muted />
 
               <Spacing p={PADDING_UNITS}>
-                <Spacing mb={PADDING_UNITS}>
-                  <Headline default level={5}>
-                    Preview of {inputUUID}
-                  </Headline>
+                <Spacing mb={1}>
+                  <Text muted rightAligned small uppercase>
+                    Preview
+                  </Text>
                 </Spacing>
 
                 {!inputSettings?.type && (
@@ -600,6 +666,7 @@ function InteractionSettings({
     <InteractionLayoutContainer
       containerRef={containerRef}
       interaction={interaction}
+      showVariableUUID
       updateLayout={(
         layoutNew: InteractionLayoutItemType[][],
       ) => updateInteraction({
@@ -917,14 +984,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Variables
                 </Headline>
               </Spacing>
@@ -946,14 +1013,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Inputs
                 </Headline>
               </Spacing>
@@ -975,14 +1042,14 @@ function InteractionSettings({
             setVisibleMappingForced({});
           }}
           titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
+          titleYPadding={UNIT}
           title={(
             <FlexContainer
               alignItems="center"
               justifyContent="space-between"
             >
               <Spacing mr={PADDING_UNITS} py={1}>
-                <Headline level={4}>
+                <Headline level={5}>
                   Interaction layout
                 </Headline>
               </Spacing>

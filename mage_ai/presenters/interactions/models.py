@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.presenters.interactions.constants import (
     INTERACTIONS_DIRECTORY_NAME,
+    InteractionInputStyleInputType,
     InteractionInputType,
     InteractionVariableType,
 )
@@ -34,10 +35,16 @@ class InteractionInputOption:
 
 @dataclass
 class InteractionInputStyle:
+    input_type: InteractionInputStyleInputType = None
     multiline: bool = None
+
+    def __post_init__(self):
+        if self.input_type and isinstance(self.input_type, str):
+            self.input_type = InteractionInputStyleInputType(self.input_type)
 
     def to_dict(self) -> Dict:
         return dict(
+            input_type=self.input_type.value if self.input_type else None,
             multiline=self.multiline,
         )
 

@@ -21,6 +21,14 @@ class PipelineInteractionResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         model = await self.get_model(pk)
 
+        query = kwargs.get('query', {})
+        filter_for_permissions = query.get('filter_for_permissions', [False])
+        if filter_for_permissions:
+            filter_for_permissions = filter_for_permissions[0]
+
+        if filter_for_permissions:
+            await model.filter_for_permissions(user)
+
         return self(model, user, **kwargs)
 
     async def update(self, payload, **kwargs):

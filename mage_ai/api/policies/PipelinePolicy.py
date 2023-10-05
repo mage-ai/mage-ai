@@ -70,6 +70,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
     'conditionals',
     'extensions',
+    'history',
     'operation_history',
     'schedules',
 ], scopes=[

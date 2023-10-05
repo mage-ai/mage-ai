@@ -26,7 +26,11 @@ import GlobalVariables from './GlobalVariables';
 import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
-import PipelineInteractionType from '@interfaces/PipelineInteractionType';
+import PipelineInteractionType, {
+  BlockInteractionType,
+  InteractionPermission,
+  InteractionPermissionWithUUID,
+} from '@interfaces/PipelineInteractionType';
 import PipelineInteractions from '@components/PipelineInteractions';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -74,6 +78,9 @@ export type SidekickProps = {
     name?: string,
   ) => Promise<any>;
   afterWidth: number;
+  blockInteractionsMapping: {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   blockRefs?: {
     [current: string]: any;
   };
@@ -101,6 +108,9 @@ export type SidekickProps = {
   globalVariables: PipelineVariableType[];
   insights: InsightType[][];
   interactions: InteractionType[];
+  interactionsMapping: {
+    [interactionUUID: string]: InteractionType;
+  };
   interruptKernel: () => void;
   isLoadingCreateInteraction?: boolean;
   isLoadingUpdatePipelineInteraction?: boolean;
@@ -108,6 +118,7 @@ export type SidekickProps = {
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
+  permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
   pipelineMessages: KernelOutputType[];
@@ -115,11 +126,15 @@ export type SidekickProps = {
   refAfterFooter?: any;
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  savePipelineInteraction?: () => void;
   secrets: SecretType[];
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
+  setBlockInteractionsMapping: (prev: any) => {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   setDepGraphZoom?: (zoom: number) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setHiddenBlocks: ((opts: {
@@ -128,6 +143,10 @@ export type SidekickProps = {
     [uuid: string]: BlockType;
   });
   setErrors: (errors: ErrorsType) => void;
+  setInteractionsMapping: (prev: any) => {
+    [interactionUUID: string]: InteractionType;
+  };
+  setPermissions?: (prev: any) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   showUpdateBlockModal?: (
@@ -135,7 +154,7 @@ export type SidekickProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
-  updatePipelineInteraction: (opts: {
+  updatePipelineInteraction?: (opts: {
     pipeline_interaction: PipelineInteractionType;
   }) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & OpenDataIntegrationModalType;
@@ -145,14 +164,15 @@ function Sidekick({
   addNewBlockAtIndex,
   afterWidth: afterWidthProp,
   autocompleteItems,
+  blockInteractionsMapping,
   blockRefs,
   blocks,
   blocksInNotebook,
   cancelPipeline,
   chartRefs,
   checkIfPipelineRunning,
-  contentByBlockUUID,
   containerHeightOffset,
+  contentByBlockUUID,
   createInteraction,
   deleteBlock,
   deleteWidget,
@@ -166,6 +186,7 @@ function Sidekick({
   globalVariables,
   insights,
   interactions,
+  interactionsMapping,
   interruptKernel,
   isLoadingCreateInteraction,
   isLoadingUpdatePipelineInteraction,
@@ -178,6 +199,7 @@ function Sidekick({
   onChangeCodeBlock,
   onSelectBlockFile,
   onUpdateFileSuccess,
+  permissions,
   pipeline,
   pipelineInteraction,
   pipelineMessages,
@@ -187,17 +209,21 @@ function Sidekick({
   runningBlocks,
   sampleData,
   savePipelineContent,
+  savePipelineInteraction,
   secrets,
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
+  setBlockInteractionsMapping,
   setDepGraphZoom,
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setHiddenBlocks,
+  setInteractionsMapping,
+  setPermissions,
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
@@ -712,16 +738,24 @@ function Sidekick({
 
         {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
           <PipelineInteractions
+            containerWidth={afterWidth}
             createInteraction={(interaction: InteractionType) => createInteraction({
               interaction,
             })}
+            blockInteractionsMapping={blockInteractionsMapping}
             interactions={interactions}
+            interactionsMapping={interactionsMapping}
             isLoadingCreateInteraction={isLoadingCreateInteraction}
             isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
+            permissions={permissions}
             pipeline={pipeline}
             pipelineInteraction={pipelineInteraction}
             refAfterFooter={refAfterFooter}
+            savePipelineInteraction={savePipelineInteraction}
             selectedBlock={selectedBlock}
+            setBlockInteractionsMapping={setBlockInteractionsMapping}
+            setInteractionsMapping={setInteractionsMapping}
+            setPermissions={setPermissions}
             setSelectedBlock={setSelectedBlock}
             updatePipelineInteraction={(
               pipelineInteraction: PipelineInteractionType,

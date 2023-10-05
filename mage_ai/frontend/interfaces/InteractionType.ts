@@ -39,7 +39,12 @@ export interface InteractionInputOptionType {
   value: boolean | number | string;
 }
 
+export enum InteractionInputStyleInputTypeEnum {
+  NUMBER = 'number',
+}
+
 export interface InteractionInputStyleType {
+  input_type?: InteractionInputStyleInputTypeEnum;
   multiline?: boolean;
 }
 

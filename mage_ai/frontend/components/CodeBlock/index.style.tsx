@@ -136,8 +136,13 @@ export const HiddenBlockContainerStyle = styled.div<BorderColorShareProps>`
   `}
 `;
 
+export const HeaderHorizontalBorder = styled.div`
+  ${props => `
+    border-bottom: 1px solid ${(props.theme || dark).borders.darkLight};
+  `}
+`;
+
 export const BlockHeaderStyle = styled.div<{
-  bottomBorder?: boolean;
   zIndex: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -155,15 +160,28 @@ export const BlockHeaderStyle = styled.div<{
   top: -5px;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.content};
-  `}
-
-  ${props => props.bottomBorder && `
-    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+    background-color: ${(props.theme || dark).background.dashboard};
   `}
 
   ${props => props.zIndex && `
     z-index: ${6 + (props.zIndex || 0)};
+  `}
+`;
+
+export const SubheaderStyle = styled.div<{
+  darkBorder?: boolean;
+  noBackground?: boolean;
+}>`
+  ${props => !props.darkBorder && `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).darkLight};
+  `}
+
+  ${props => props.darkBorder && `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme || dark).background.dashboard};
   `}
 `;
 

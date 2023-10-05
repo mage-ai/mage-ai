@@ -5,12 +5,19 @@ from typing import Dict, List
 
 import yaml
 
+from mage_ai.api.utils import (
+    has_at_least_admin_role,
+    has_at_least_editor_role,
+    has_at_least_viewer_role,
+    is_owner,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.constants import (
     PIPELINE_INTERACTIONS_FILENAME,
 )
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
-from mage_ai.orchestration.db.models.oauth import Role
+from mage_ai.orchestration.constants import Entity
+from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.presenters.interactions.constants import InteractionVariableType
 from mage_ai.presenters.interactions.models import Interaction as InteractionBase
 from mage_ai.presenters.interactions.models import InteractionLayoutItem
@@ -246,6 +253,38 @@ class PipelineInteractions:
         await self.update(content_parsed=merge_dict(content_parsed, dict(
             blocks=blocks,
         )))
+
+    async def filter_for_permissions(self, user: User = None) -> bool:
+        interaction = await self.interaction()
+
+        if not interaction or not interaction.permissions:
+            return
+
+        permissions = []
+
+        for permission in interaction.permissions:
+            for role in permission.roles:
+                validate_func = None
+
+                if Role.DefaultRole.ADMIN == role:
+                    validate_func = has_at_least_admin_role
+                elif Role.DefaultRole.EDITOR == role:
+                    validate_func = has_at_least_editor_role
+                elif Role.DefaultRole.OWNER == role:
+                    validate_func = is_owner
+                elif Role.DefaultRole.VIEWER == role:
+                    validate_func = has_at_least_viewer_role
+
+                if validate_func and validate_func(user, Entity.PIPELINE, self.pipeline.uuid):
+                    permissions.append(permission)
+
+        validation = permissions and len(permissions) >= 1
+        if validation:
+            self._interaction.permissions = permissions
+        else:
+            self._interaction = Interaction()
+
+        return True if validation else False
 
     async def interaction_uuids(self) -> List[str]:
         interaction = await self.interaction()

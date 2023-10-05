@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import Checkbox from '@oracle/elements/Checkbox';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import InteractionType, {
@@ -21,10 +22,18 @@ import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/u
 
 type InteractionDisplayProps = {
   interaction: InteractionType;
+  setVariables?: (prev: any) => void;
+  showVariableUUID?: boolean;
+  variables?: {
+    [key: string]: any;
+  };
 };
 
 function InteractionDisplay({
   interaction,
+  setVariables,
+  showVariableUUID,
+  variables: variablesProp,
 }: InteractionDisplayProps) {
   const {
     inputs,
@@ -70,6 +79,10 @@ function InteractionDisplay({
         };
         const inputEls = [];
 
+        const variableValue = typeof variablesProp !== 'undefined'
+          ? variablesProp?.[variableUUID]
+          : undefined;
+
         if (InteractionInputTypeEnum.CHECKBOX === inputType) {
           inputEls.push(
             <FlexContainer
@@ -79,18 +92,29 @@ function InteractionDisplay({
               {options?.map(({
                 label,
                 value,
-              }: InteractionInputOptionType) => (
-                <Spacing key={String(value || label)} mr={PADDING_UNITS}>
-                  <Checkbox
-                    {...sharedProps}
-                    label={label}
-                    // checked={!!value}
-                    // onClick={(e) => {
-                    //   console.log(value, e.target.value);
-                    // }}
-                  />
-                </Spacing>
-              ))}
+              }: InteractionInputOptionType) => {
+                const checkboxValues = variablesProp?.[variableUUID] || {};
+                // @ts-ignore
+                const currentValue = checkboxValues?.[value];
+
+                return (
+                  <Spacing key={String(value || label)} mr={PADDING_UNITS}>
+                    <Checkbox
+                      {...sharedProps}
+                      label={label}
+                      checked={!!currentValue}
+                      onClick={() => setVariables(prev => ({
+                        ...prev,
+                        [variableUUID]: {
+                          ...checkboxValues,
+                          // @ts-ignore
+                          [value]: !currentValue,
+                        },
+                      }))}
+                    />
+                  </Spacing>
+                );
+              })}
             </FlexContainer>
           );
         } else if (InteractionInputTypeEnum.TEXT_FIELD === inputType) {
@@ -104,12 +128,23 @@ function InteractionDisplay({
                   <TextArea
                     {...sharedProps}
                     key={`${key}-${inputType}`}
+                    onChange={(e) => setVariables(prev => ({
+                      ...prev,
+                      [variableUUID]: e.target.value,
+                    }))}
+                    value={variableValue}
                   />
                 )
                 : (
                   <TextInput
                     {...sharedProps}
                     key={`${key}-${inputType}`}
+                    onChange={(e) => setVariables(prev => ({
+                      ...prev,
+                      [variableUUID]: e.target.value,
+                    }))}
+                    type={style?.input_type || null}
+                    value={variableValue}
                   />
                 )
               }
@@ -120,22 +155,11 @@ function InteractionDisplay({
             <Select
               {...sharedProps}
               key={`${key}-${inputType}`}
-              // onChange={(e) => {
-              //   pauseEvent(e);
-              //   setAttributesMapping(prev => ({
-              //     ...prev,
-              //     [uuid]: {
-              //       ...prev?.[uuid],
-              //       value: e?.target?.value,
-              //     },
-              //   }));
-              // }}
-              // onClick={(e) => {
-              //   if (isSelected) {
-              //     pauseEvent(e);
-              //   }
-              // }}
-              // value={value}
+              onChange={(e) => setVariables(prev => ({
+                ...prev,
+                [variableUUID]: e.target.value,
+              }))}
+              value={variableValue}
             >
               <option value="" />
               {options?.map(({
@@ -154,37 +178,50 @@ function InteractionDisplay({
               <FlexContainer alignItems="center" fullWidth>
                 <ToggleSwitch
                   {...sharedProps}
-                  // checked={value as boolean}
+                  checked={variableValue as boolean}
                   compact
                   key={`${key}-${inputType}`}
-                  // onCheck={(valFunc: (val: boolean) => boolean) => {
-                  //   setAttributesMapping(prev => ({
-                  //     ...prev,
-                  //     [uuid]: {
-                  //       ...prev?.[uuid],
-                  //       value: valFunc(value as boolean),
-                  //     },
-                  //   }));
-                  // }}
-                  // pauseEvent={isSelected}
+                  onCheck={(valFunc: (val: boolean) => boolean) => setVariables(prev => ({
+                    ...prev,
+                    [variableUUID]: valFunc(variableValue),
+                  }))}
                 />
 
-                {name && (
-                  <>
-                    <Spacing ml={PADDING_UNITS} />
+                {(name || description) && <Spacing ml={PADDING_UNITS} />}
 
-                    <FlexContainer flexDirection="column" fullWidth>
-                      <Text bold large success>
-                        {name}
-                      </Text>
+                {(name || description || showVariableUUID) && (
+                  <FlexContainer
+                    alignItems="flex-start"
+                    flexDirection="row"
+                    fullWidth
+                    justifyContent="space-between"
+                  >
+                    {(name || description) && (
+                      <Flex flex={1} flexDirection="column">
+                        {name && (
+                          <Text bold large success>
+                            {name}
+                          </Text>
+                        )}
 
-                      {description && description?.split('\n')?.map((line: string) => (
-                        <Text default key={line}>
-                          {line}
+                        {description && description?.split('\n')?.map((line: string) => (
+                          <Text default key={line}>
+                            {line}
+                          </Text>
+                        ))}
+                      </Flex>
+                    )}
+
+                    {showVariableUUID && (
+                      <>
+                        <Spacing mr={PADDING_UNITS} />
+
+                        <Text monospace muted small>
+                          {variableUUID}
                         </Text>
-                      ))}
-                    </FlexContainer>
-                  </>
+                      </>
+                    )}
+                  </FlexContainer>
                 )}
               </FlexContainer>
             </Spacing>
@@ -194,18 +231,32 @@ function InteractionDisplay({
         if (inputEls?.length >= 1) {
           row.push(
             <Spacing key={key} mt={itemIndex >= 1 ? PADDING_UNITS : 0}>
-              {name && (
-                <Spacing mb={1}>
-                  <Text bold large success>
-                    {name}
-                  </Text>
+              {(name || description || showVariableUUID) && (
+                <FlexContainer alignItems="flex-start" justifyContent="space-between">
+                  <Flex flex={1} flexDirection="column">
+                    <Spacing mb={1}>
+                      {name && (
+                        <Text bold large success>
+                          {name}
+                        </Text>
+                      )}
 
-                  {description && description?.split('\n')?.map((line: string) => (
-                    <Text default key={line}>
-                      {line}
+                      {description && description?.split('\n')?.map((line: string) => (
+                        <Text default key={line}>
+                          {line}
+                        </Text>
+                      ))}
+                    </Spacing>
+                  </Flex>
+
+                  <Spacing mr={PADDING_UNITS} />
+
+                  {showVariableUUID && (
+                    <Text monospace muted small>
+                      {variableUUID}
                     </Text>
-                  ))}
-                </Spacing>
+                  )}
+                </FlexContainer>
               )}
 
               {inputEls}
@@ -228,7 +279,10 @@ function InteractionDisplay({
   }, [
     inputs,
     layout,
+    setVariables,
+    showVariableUUID,
     variables,
+    variablesProp,
   ]);
 
   return (
