@@ -94,7 +94,6 @@ class DatabaseResource(BaseResource):
             except StopIteration:
                 pass
         try:
-            print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF', parent_model, payload)
             model = self.model_class(**payload)
             model.full_clean()
             model.save()

@@ -51,7 +51,7 @@ class User(BaseModel):
     created_roles = relationship('Role', back_populates='user')
 
     @validates('email')
-    def validate_email(self, key, value):
+    def validate_email_if_present(self, key, value):
         if not value:
             raise ValidationError('Email address cannot be blank.', metadata=dict(
                 key=key,
