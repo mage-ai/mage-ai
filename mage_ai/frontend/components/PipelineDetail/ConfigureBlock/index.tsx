@@ -371,9 +371,7 @@ function ConfigureBlock({
                     (!isDataIntegration || BlockLanguageEnum.R === v)
                       || (!isDataIntegration || BlockLanguageEnum.SQL === v)
                   )
-                ) || (
-                  !isDataIntegration && BlockLanguageEnum.YAML === v
-                )
+                ) || (isCustomBlock && BlockLanguageEnum.YAML === v)
               ) {
                 return acc;
               }
