@@ -339,6 +339,32 @@ class Permission(BaseModel):
         return new_permissions
 
 
+class RolePermission(BaseModel):
+    permission_id = Column(Integer, ForeignKey('permission.id'))
+    role_id = Column(Integer, ForeignKey('role.id'))
+    user_id = Column(Integer, ForeignKey('user.id'), default=None)
+
+    @validates('permission_id')
+    def validate_permission_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @validates('role_id')
+    def validate_role_id(self, key, value):
+        if value is None:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+
 class Oauth2Application(BaseModel):
     class AuthorizationGrantType(str, enum.Enum):
         AUTHORIZATION_CODE = 'authorization-code'
