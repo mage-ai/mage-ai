@@ -3,6 +3,7 @@ import inspect
 from collections import UserList
 from collections.abc import Iterable
 from datetime import datetime
+from typing import Any, Union
 
 from mage_ai.api.operations.constants import READ
 from mage_ai.api.resources.BaseResource import BaseResource
@@ -97,9 +98,18 @@ class BasePresenter():
             **kwargs,
         )
 
+    async def prepare_present(self, **kwargs) -> Union[Any, None]:
+        return self
+
     async def present(self, **kwargs):
-        async def _build(obj, key):
-            value = getattr(self, key)
+        object_to_present = await self.prepare_present(**kwargs)
+
+        async def _build(obj, key, object_to_present=object_to_present):
+            if isinstance(object_to_present, dict):
+                value = object_to_present.get(key)
+            else:
+                value = getattr(object_to_present, key)
+
             if callable(value):
                 value = value(**kwargs)
             self.__validate_attribute_type(key, value)

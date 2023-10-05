@@ -32,6 +32,7 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
@@ -101,6 +102,7 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
+  [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [CUSTOM_TEMPLATES],

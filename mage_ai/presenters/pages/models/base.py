@@ -1,5 +1,6 @@
 import asyncio
 from abc import ABC
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 import inflection
@@ -11,10 +12,66 @@ from mage_ai.presenters.pages.models.constants import (
     PageCategory,
     ResourceType,
 )
+from mage_ai.shared.hash import ignore_keys_with_blank_values
+
+
+def get_uuid(model) -> str:
+    if model.uuid_from_name:
+        return inflection.underscore(model.__name__)
+
+    if model.uuid:
+        return model.uuid
+
+    parts = list(filter(lambda x: x, [
+        model.resource,
+        model.operation,
+        model.category,
+    ]))
+
+    if len(parts) >= 1:
+        return ':'.join(parts)
+
+    return inflection.underscore(model.__name__)
+
+
+async def to_dict(model, current_user: User = None, **kwargs) -> Dict:
+    components = await model.components(
+        current_user=current_user,
+        **kwargs,
+    ) or []
+
+    data = dict(
+        category=model.category,
+        components=await asyncio.gather(*[c.to_dict(
+            current_user=current_user,
+            **kwargs,
+        ) for c in components]),
+        disabled=await model.disabled(
+            current_user=current_user,
+            **kwargs,
+        ),
+        enabled=await model.enabled(
+            current_user=current_user,
+            **kwargs,
+        ),
+        metadata=await model.metadata(current_user=current_user, **kwargs),
+        operation=model.operation,
+        parent=await model.parent.to_dict(
+            current_user=current_user,
+            **kwargs,
+        ) if model.parent else None,
+        resource=model.resource,
+        uuid=model.get_uuid(),
+        version=model.version,
+    )
+
+    return ignore_keys_with_blank_values(data, include_values=[False])
 
 
 class BaseModel(ABC):
     category: Union[ComponentCategory, PageCategory] = None
+    disabled_override: bool = None
+    enabled_override: bool = None
     operation: OperationType = None
     parent: Union['ClientPage', 'PageComponent'] = None
     resource: ResourceType = None
@@ -24,22 +81,7 @@ class BaseModel(ABC):
 
     @classmethod
     def get_uuid(self) -> str:
-        if self.uuid_from_name:
-            return inflection.underscore(self.__name__)
-
-        if self.uuid:
-            return self.uuid
-
-        parts = list(filter(lambda x: x, [
-            self.resource,
-            self.operation,
-            self.category,
-        ]))
-
-        if len(parts) >= 1:
-            return ':'.join(parts)
-
-        return inflection.underscore(self.__name__)
+        return get_uuid(self)
 
     @classmethod
     async def components(self, current_user: User = None, **kwargs) -> List['BaseModel']:
@@ -47,7 +89,11 @@ class BaseModel(ABC):
 
     @classmethod
     async def disabled(self, current_user: User = None, **kwargs) -> bool:
-        return False
+        return self.disabled_override
+
+    @classmethod
+    async def enabled(self, current_user: User = None, **kwargs) -> bool:
+        return self.enabled_override
 
     @classmethod
     async def metadata(self, current_user: User = None, **kwargs) -> Dict:
@@ -55,31 +101,38 @@ class BaseModel(ABC):
 
     @classmethod
     async def to_dict(self, current_user: User = None, **kwargs) -> Dict:
-        components = await self.components(
-            current_user=current_user,
-            **kwargs,
-        ) or []
+        return await to_dict(self, current_user=current_user, **kwargs)
 
-        return dict(
-            category=self.category,
-            components=await asyncio.gather(*[c.to_dict(
-                current_user=current_user,
-                **kwargs,
-            ) for c in components]),
-            disabled=await self.disabled(
-                current_user=current_user,
-                **kwargs,
-            ),
-            metadata=await self.metadata(current_user=current_user, **kwargs),
-            operation=self.operation,
-            parent=await self.parent.to_dict(
-                current_user=current_user,
-                **kwargs,
-            ) if self.parent else None,
-            resource=self.resource,
-            uuid=self.get_uuid(),
-            version=self.version,
-        )
+
+@dataclass
+class DynamicBaseModel:
+    category: Union[ComponentCategory, PageCategory] = None
+    disabled_override: bool = None
+    enabled_override: bool = None
+    operation: OperationType = None
+    parent: Union['ClientPage', 'PageComponent'] = None
+    resource: ResourceType = None
+    uuid: str = None
+    uuid_from_name: bool = False
+    version: Union[int, str] = None
+
+    def get_uuid(self) -> str:
+        return get_uuid(self)
+
+    async def components(self, current_user: User = None, **kwargs) -> List['BaseModel']:
+        return []
+
+    async def disabled(self, current_user: User = None, **kwargs) -> bool:
+        return self.disabled_override
+
+    async def enabled(self, current_user: User = None, **kwargs) -> bool:
+        return self.enabled_override
+
+    async def metadata(self, current_user: User = None, **kwargs) -> Dict:
+        return {}
+
+    async def to_dict(self, current_user: User = None, **kwargs) -> Dict:
+        return await to_dict(self, current_user=current_user, **kwargs)
 
 
 class PageComponent(BaseModel):

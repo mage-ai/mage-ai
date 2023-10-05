@@ -3,6 +3,7 @@ from enum import Enum
 
 class ComponentCategory(str, Enum):
     BUTTON = 'button'
+    FIELD = 'field'
     FORM = 'form'
 
 
