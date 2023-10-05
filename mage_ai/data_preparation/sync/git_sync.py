@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 from mage_ai.data_preparation.git import Git
@@ -10,15 +11,17 @@ from mage_ai.shared.logger import VerboseFunctionExec
 class PreserveGitConfig:
     def __init__(self):
         self.preferences_file_path = get_preferences().preferences_file_path
-        self.initial_preferences = ''
+        self.initial_preferences = None
 
     def __enter__(self):
-        with open(self.preferences_file_path, 'r', encoding='utf-8') as f:
-            self.initial_preferences = f.read()
+        if os.path.exists(self.preferences_file_path):
+            with open(self.preferences_file_path, 'r', encoding='utf-8') as f:
+                self.initial_preferences = f.read()
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        with open(self.preferences_file_path, 'w', encoding='utf-8') as f:
-            f.write(self.initial_preferences)
+        if self.initial_preferences is not None:
+            with open(self.preferences_file_path, 'w', encoding='utf-8') as f:
+                f.write(self.initial_preferences)
 
 
 class GitSync(BaseSync):
