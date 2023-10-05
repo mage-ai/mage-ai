@@ -347,6 +347,9 @@ class Permission(BaseModel):
 
     @validates('entity_name')
     def validate_entity_name(self, key, value):
+        if not value:
+            return value
+
         if value not in EntityName._value2member_map_:
             valid_values = ', '.join([i.value for i in EntityName])
 
@@ -362,6 +365,9 @@ class Permission(BaseModel):
 
     @validates('entity_type')
     def validate_entity_type(self, key, value):
+        if not value:
+            return value
+
         if value not in BlockEntityType._value2member_map_ and \
                 value not in PipelineEntityType._value2member_map_:
 
