@@ -89,6 +89,10 @@ function PipelineSchedules({
     }) => uuid === 'create_with_interactions_component')?.enabled, [
       clientPage,
     ]);
+  const isCreateDisabled =
+    useMemo(() => clientPage?.disabled, [
+      clientPage,
+    ]);
 
   const {
     data: dataGlobalVariables,
@@ -326,7 +330,7 @@ function PipelineSchedules({
 
   const toolbarEl = useMemo(() => (
     <Toolbar
-      addButtonProps={{
+      addButtonProps={!isCreateDisabled && {
         isLoading: isLoadingCreateNewSchedule,
         label: 'New trigger',
         onClick: () => createNewSchedule({
@@ -355,7 +359,7 @@ function PipelineSchedules({
         );
       }}
       query={query}
-      secondaryButtonProps={{
+      secondaryButtonProps={!isCreateDisabled && {
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
         label: 'Run @once',
@@ -366,13 +370,14 @@ function PipelineSchedules({
           : showModal,
         tooltip: 'Creates an @once trigger and runs pipeline immediately',
       }}
-      showDivider
+      showDivider={!isCreateDisabled}
     >
       {newTriggerFromInteractionsButtonMemo}
     </Toolbar>
   ), [
     createNewSchedule,
     createOnceSchedule,
+    isCreateDisabled,
     isLoadingCreateNewSchedule,
     isLoadingCreateOnceSchedule,
     isViewerRole,

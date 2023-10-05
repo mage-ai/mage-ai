@@ -361,7 +361,7 @@ function Toolbar({
         </>
       )}
 
-      <Spacing mr={BUTTON_PADDING} />
+      {(addButtonProps || secondaryButtonProps || children) && <Spacing mr={BUTTON_PADDING} />}
       {filterButtonEl}
 
       {groupMenuItems?.length > 0 &&

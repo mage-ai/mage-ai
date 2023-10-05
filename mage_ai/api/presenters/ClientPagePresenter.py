@@ -23,7 +23,7 @@ class ClientPagePresenter(BasePresenter):
 
 ClientPagePresenter.register_format(
     constants.DETAIL,
-    [
+    ClientPagePresenter.default_attributes + [
         'components',
         'metadata',
     ],

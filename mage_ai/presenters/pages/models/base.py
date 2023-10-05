@@ -12,7 +12,6 @@ from mage_ai.presenters.pages.models.constants import (
     PageCategory,
     ResourceType,
 )
-from mage_ai.shared.hash import ignore_keys_with_blank_values
 
 
 def get_uuid(model) -> str:
@@ -40,7 +39,7 @@ async def to_dict(model, current_user: User = None, **kwargs) -> Dict:
         **kwargs,
     ) or []
 
-    data = dict(
+    return dict(
         category=model.category,
         components=await asyncio.gather(*[c.to_dict(
             current_user=current_user,
@@ -64,8 +63,6 @@ async def to_dict(model, current_user: User = None, **kwargs) -> Dict:
         uuid=model.get_uuid(),
         version=model.version,
     )
-
-    return ignore_keys_with_blank_values(data, include_values=[False])
 
 
 class BaseModel(ABC):
