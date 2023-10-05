@@ -60,6 +60,7 @@ class EntityName(str, Enum):
     Sync = 'Sync'
     Tag = 'Tag'
     User = 'User'
+    UserRole = 'UserRole'
     Variable = 'Variable'
     Widget = 'Widget'
     Workspace = 'Workspace'

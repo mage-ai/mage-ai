@@ -26,6 +26,17 @@ class BaseResource(Resource):
     parent_resource_attr = {}
 
     @classmethod
+    def parser_class(self):
+        klass = self.__name__.replace('Resource', '')
+        module_name = f'mage_ai.api.parsers.{klass}Parser'
+        class_name = f'{klass}Parser'
+
+        try:
+            return getattr(importlib.import_module(module_name), class_name)
+        except ModuleNotFoundError:
+            return None
+
+    @classmethod
     def policy_class(self):
         model_name = self.__name__.replace('Resource', '')
         return getattr(

@@ -160,6 +160,16 @@ class Role(BaseModel):
         EDITOR = 'Editor'
         VIEWER = 'Viewer'
 
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
     @classmethod
     @safe_db_query
     def create_default_roles(
