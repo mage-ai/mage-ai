@@ -31,6 +31,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.kafka import KafkaSink
 
             return KafkaSink(config, **kwargs)
+        elif connector_type == SinkType.GOOGLE_CLOUD_PUBSUB:
+            from mage_ai.streaming.sinks.google_cloud_pubsub import GoogleCloudPubSubSink
+
+            return GoogleCloudPubSubSink(config, **kwargs)
         elif connector_type == SinkType.KINESIS:
             from mage_ai.streaming.sinks.kinesis import KinesisSink
 

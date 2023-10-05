@@ -26,6 +26,7 @@ class SinkType(str, Enum):
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     INFLUXDB = 'influxdb'
     KAFKA = 'kafka'
+    GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub'
     KINESIS = 'kinesis'
     MONGODB = 'mongodb'
     MSSQL = 'mssql'
