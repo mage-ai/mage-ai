@@ -268,6 +268,7 @@ class Postgres(BaseSQL):
         allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        **kwargs,
     ) -> None:
         if unique_constraints and unique_conflict_method:
             use_insert_command = True

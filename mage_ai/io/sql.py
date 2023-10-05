@@ -105,7 +105,8 @@ class BaseSQL(BaseSQLConnection):
         db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         raise Exception('Subclasses must override this method.')
 
@@ -215,6 +216,7 @@ class BaseSQL(BaseSQLConnection):
         allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        **kwargs,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -324,6 +326,9 @@ class BaseSQL(BaseSQLConnection):
                         allow_reserved_words=allow_reserved_words,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
+                        schema_name=schema_name,
+                        table_name=table_name,
+                        **kwargs,
                     )
             self.conn.commit()
 
