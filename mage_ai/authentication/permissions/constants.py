@@ -52,6 +52,7 @@ class EntityName(str, Enum):
     Project = 'Project'
     PullRequest = 'PullRequest'
     Role = 'Role'
+    RolePermission = 'RolePermission'
     Scheduler = 'Scheduler'
     SearchResult = 'SearchResult'
     Secret = 'Secret'
