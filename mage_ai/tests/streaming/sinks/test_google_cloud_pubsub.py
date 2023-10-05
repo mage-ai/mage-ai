@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 from mage_ai.streaming.sinks.google_cloud_pubsub import GoogleCloudPubSubSink
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import patch
 
 
 class GoogleCloudPubSubTests(TestCase):
