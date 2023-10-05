@@ -24,6 +24,7 @@ from mage_ai.api.operations.constants import (
     WRITE,
 )
 from mage_ai.api.parsers.BaseParser import BaseParser
+from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
@@ -59,8 +60,13 @@ class BaseOperation():
     async def execute(self):
         response = {}
         try:
+            already_validated = False
+
             result = await self.__executed_result()
             presented = await self.__present_results(result)
+
+            if isinstance(presented, CustomDict) or isinstance(presented, CustomList):
+                already_validated = presented.already_validated
 
             presented_results = []
             resource_attributes = []
@@ -90,6 +96,11 @@ class BaseOperation():
                 if idx < presented_results_count:
                     presented_result = presented_results[idx]
 
+                if already_validated:
+                    presented_results_parsed.append(presented_result)
+                    continue
+
+                # Skip this if result has already been validated
                 def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
                     return policy.authorize_attributes(
                         READ,

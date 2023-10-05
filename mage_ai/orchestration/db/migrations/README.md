@@ -7,6 +7,7 @@ We use alembic to perform DB migrations. alembic tutorial: https://alembic.sqlal
 1. Open the file `mage-ai/mage_ai/orchestration/db/alembic.ini`
 1. Change the value `sqlalchemy.url` to the URL of your database.
     - e.g. `sqlalchemy.url = postgresql+psycopg2://postgres:postgres@host.docker.internal:5432/demo`
+    - e.g. `postgresql://postgres:postgres@host.docker.internal/mage_development`
 
 ## Create migration scripts
 

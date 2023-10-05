@@ -1,14 +1,47 @@
+from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 
 class RolePresenter(BasePresenter):
     default_attributes = [
-        'id',
         'created_at',
+        'id',
         'name',
         'permissions',
+        'role_permissions',
         'updated_at',
     ]
 
-    async def present(self, **kwargs):
-        return self.model.to_dict(include_attributes=self.default_attributes)
+
+RolePresenter.register_format(
+    constants.CREATE,
+    [
+        'created_at',
+        'id',
+        'name',
+        'updated_at',
+        'user_id',
+    ],
+)
+
+
+RolePresenter.register_format(
+    constants.DETAIL,
+    RolePresenter.default_attributes + [
+        'users',
+    ],
+)
+
+
+RolePresenter.register_formats([
+    f'permission/{constants.CREATE}',
+    f'permission/{constants.DETAIL}',
+    f'permission/{constants.UPDATE}',
+], [
+        'created_at',
+        'id',
+        'name',
+        'updated_at',
+        'users',
+    ],
+)
