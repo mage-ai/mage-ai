@@ -190,6 +190,7 @@ class VariableManager:
         dataframe_analysis_keys: List[str] = None,
         partition: str = None,
         variable_type: VariableType = None,
+        raise_exception: bool = False,
         sample: bool = False,
         sample_count: int = None,
         spark=None,
@@ -206,6 +207,7 @@ class VariableManager:
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
+            raise_exception=raise_exception,
             sample=sample,
             sample_count=sample_count,
             spark=spark,
