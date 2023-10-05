@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import ErrorsType from '@interfaces/ErrorsType';
 import TriggerDetail from '@components/Triggers/Detail';
 import TriggerEdit from '@components/Triggers/Edit';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import api from '@api';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 
@@ -37,7 +38,10 @@ function TriggerDetailPage({
   const {
     data: pipelineScheduleData,
     mutate: fetchPipelineSchedule,
-  } = api.pipeline_schedules.detail(pipelineScheduleId, detailQuery);
+  } = api.pipeline_schedules.detail(
+    typeof pipelineScheduleId !== 'undefined' && pipelineScheduleId,
+    detailQuery,
+  );
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -51,6 +55,9 @@ function TriggerDetailPage({
     uuid: pipelineUUID,
   };
 
+  const { data: dataProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+
   if (isEdit) {
     return (
       <TriggerEdit
@@ -58,6 +65,7 @@ function TriggerDetailPage({
         fetchPipelineSchedule={fetchPipelineSchedule}
         pipeline={pipeline}
         pipelineSchedule={pipelineSchedule}
+        project={project}
         setErrors={setErrors}
         variables={globalVariables}
       />

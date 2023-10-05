@@ -2,7 +2,7 @@ import re
 from os import path
 from typing import Callable, Dict, List, Tuple, Union
 
-from jinja2 import Template
+from jinja2 import StrictUndefined, Template
 from pandas import DataFrame
 
 from mage_ai.data_preparation.models.block.sql.constants import (
@@ -228,7 +228,7 @@ def interpolate_input(
 def interpolate_vars(query, global_vars=None):
     if global_vars is None:
         global_vars = dict()
-    return Template(query).render(**global_vars)
+    return Template(query, undefined=StrictUndefined).render(**global_vars)
 
 
 def table_name_parts(

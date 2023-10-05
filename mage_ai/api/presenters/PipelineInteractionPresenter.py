@@ -3,7 +3,9 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class PipelineInteractionPresenter(BasePresenter):
     default_attributes = [
-        'interactions',
+        'blocks',
+        'layout',
+        'permissions',
     ]
 
     async def present(self, **kwargs):

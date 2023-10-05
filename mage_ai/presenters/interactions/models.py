@@ -1,5 +1,5 @@
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from functools import reduce
 from typing import Dict, List, Tuple, Union
 
@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.presenters.interactions.constants import (
     INTERACTIONS_DIRECTORY_NAME,
+    InteractionInputStyleInputType,
     InteractionInputType,
     InteractionVariableType,
 )
@@ -25,10 +26,27 @@ class InteractionInputOption:
     label: str = None
     value: Union[bool, float, int, str] = None
 
+    def to_dict(self) -> Dict:
+        return dict(
+            label=self.label,
+            value=self.value,
+        )
+
 
 @dataclass
 class InteractionInputStyle:
+    input_type: InteractionInputStyleInputType = None
     multiline: bool = None
+
+    def __post_init__(self):
+        if self.input_type and isinstance(self.input_type, str):
+            self.input_type = InteractionInputStyleInputType(self.input_type)
+
+    def to_dict(self) -> Dict:
+        return dict(
+            input_type=self.input_type.value if self.input_type else None,
+            multiline=self.multiline,
+        )
 
 
 @dataclass
@@ -38,17 +56,33 @@ class InteractionInput:
     type: InteractionInputType = None
 
     def __post_init__(self):
+        if self.options and isinstance(self.options, list):
+            self.options = [InteractionInputOption(**i) for i in self.options]
+
         if self.style and isinstance(self.style, dict):
             self.style = InteractionInputStyle(**self.style)
 
         if self.type and isinstance(self.type, str):
             self.type = InteractionInputType(self.type)
 
+    def to_dict(self) -> Dict:
+        return dict(
+            options=[i.to_dict() for i in self.options],
+            style=self.style.to_dict() if self.style else None,
+            type=self.type.value if self.type else None,
+        )
+
 
 @dataclass
 class InteractionLayoutItem:
     variable: str = None
     width: int = None
+
+    def to_dict(self) -> Dict:
+        return dict(
+            variable=self.variable,
+            width=self.width,
+        )
 
 
 @dataclass
@@ -63,6 +97,16 @@ class InteractionVariable:
     def __post_init__(self):
         if self.types and isinstance(self.types, list):
             self.types = [InteractionVariableType(t) for t in self.types]
+
+    def to_dict(self) -> Dict:
+        return dict(
+            description=self.description,
+            input=self.input,
+            name=self.name,
+            required=self.required,
+            types=[i.value for i in self.types],
+            uuid=self.uuid,
+        )
 
 
 class Interaction:
@@ -143,20 +187,42 @@ class Interaction:
 
         return mapping
 
+    async def validate(
+        self,
+        content: str = None,
+        content_parsed: Dict = None,
+    ) -> None:
+        settings = content_parsed or yaml.safe_load(content)
+
+        for _uuid, item in (settings.get('inputs') or {}).items():
+            InteractionInput(**item)
+
+        for row in (settings.get('layout') or []):
+            for item in row:
+                InteractionLayoutItem(**item)
+
+        for _uuid, item in (settings.get('variables') or {}).items():
+            InteractionVariable(**item)
+
     async def update(
         self,
         commit: bool = True,
         content: str = None,
         content_parsed: Dict = None,
     ) -> None:
+        if content or content_parsed:
+            await self.validate(content=content, content_parsed=content_parsed)
+
         if content:
             self._content = content
         elif content_parsed:
             self._content = yaml.safe_dump(content_parsed)
             self._content_parsed = content_parsed
 
-        if commit:
-            await self.save()
+        if not commit:
+            return
+
+        await self.save()
 
     async def save(self) -> None:
         await self.file.update_content_async(self._content or '')
@@ -169,7 +235,7 @@ class Interaction:
             uuid, item = item_tuple
 
             return {
-                uuid: asdict(item),
+                uuid: item.to_dict(),
             }
 
         items_inputs = await self.inputs()
@@ -182,7 +248,7 @@ class Interaction:
                 items_inputs.items(),
                 {},
             ),
-            layout=[[asdict(item) for item in row] for row in items_layout],
+            layout=[[item.to_dict() for item in row] for row in items_layout],
             variables=reduce(
                 lambda acc, tup: merge_dict(acc, _convert(tup)),
                 items_variables.items(),

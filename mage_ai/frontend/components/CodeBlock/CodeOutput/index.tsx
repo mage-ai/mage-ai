@@ -311,10 +311,13 @@ function CodeOutput({
         dataInit = {
           columns: ['-'],
           index: 0,
-          rows: output?.map(i => [JSON.parse(i)]),
+          rows: output?.map(i => [isJsonString(i) ? JSON.parse(i) : i]),
           shape: [output?.length, 1],
         };
         dataType = DataTypeEnum.TABLE;
+      } else if (typeof output === 'string') {
+        dataInit = output;
+        dataType = DataTypeEnum.TEXT_PLAIN;
       } else {
         dataInit = output?.data;
         dataType = output?.type;
@@ -384,7 +387,6 @@ function CodeOutput({
           });
         }
 
-
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
@@ -441,9 +443,14 @@ function CodeOutput({
             <OutputRowStyle {...outputRowSharedProps}>
               {textArr.map((t) => (
                 <Text key={t} monospace preWrap>
-                  <Ansi>
-                    {t}
-                  </Ansi>
+                  {t?.length >= 1 && (
+                    <Ansi>
+                      {t}
+                    </Ansi>
+                  )}
+                  {!t?.length && (
+                    <>&nbsp;</>
+                  )}
                 </Text>
               ))}
             </OutputRowStyle>
@@ -458,7 +465,7 @@ function CodeOutput({
               </OutputRowStyle>
             );
           }
-        } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+        } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
               <img

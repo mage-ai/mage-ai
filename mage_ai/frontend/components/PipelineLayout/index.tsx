@@ -30,9 +30,11 @@ import { useWindowSize } from '@utils/sizes';
 
 type PipelineLayoutProps = {
   after?: any;
+  afterFooter?: any;
   afterHeader?: any;
   afterHeightOffset?: number;
   afterHidden?: boolean;
+  afterInnerHeightMinus?: number;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
   afterSubheader?: any;
@@ -55,9 +57,11 @@ type PipelineLayoutProps = {
 
 function PipelineLayout({
   after,
+  afterFooter,
   afterHeader,
   afterHeightOffset,
   afterHidden: afterHiddenProp,
+  afterInnerHeightMinus,
   afterNavigationItems,
   afterOverflow,
   afterSubheader,
@@ -186,9 +190,11 @@ function PipelineLayout({
 
       <TripleLayout
         after={after}
+        afterFooter={afterFooter}
         afterHeader={afterHeader}
         afterHeightOffset={afterHeightOffset}
         afterHidden={afterHidden}
+        afterInnerHeightMinus={afterInnerHeightMinus}
         afterMousedownActive={afterMousedownActive}
         afterNavigationItems={afterNavigationItems}
         afterOverflow={afterOverflow}

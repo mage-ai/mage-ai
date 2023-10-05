@@ -2,6 +2,7 @@ import json
 import math
 import re
 from functools import reduce
+from typing import Any, Dict, List
 
 
 def dig(obj_arg, arr_or_string):
@@ -60,10 +61,10 @@ def ignore_keys(d, keys):
     return d2
 
 
-def ignore_keys_with_blank_values(d):
+def ignore_keys_with_blank_values(d: Dict, include_values: List[Any] = None) -> Dict:
     d2 = d.copy()
     for key, value in d.items():
-        if not value:
+        if not value and (not include_values or value not in include_values):
             d2.pop(key)
     return d2
 

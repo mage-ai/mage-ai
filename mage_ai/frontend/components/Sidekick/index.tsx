@@ -23,10 +23,18 @@ import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import GlobalVariables from './GlobalVariables';
+import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
+import PipelineInteractionType, {
+  BlockInteractionType,
+  InteractionPermission,
+  InteractionPermissionWithUUID,
+} from '@interfaces/PipelineInteractionType';
+import PipelineInteractions from '@components/PipelineInteractions';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Secrets from './GlobalVariables/Secrets';
 import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
@@ -70,6 +78,9 @@ export type SidekickProps = {
     name?: string,
   ) => Promise<any>;
   afterWidth: number;
+  blockInteractionsMapping: {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   blockRefs?: {
     [current: string]: any;
   };
@@ -77,7 +88,11 @@ export type SidekickProps = {
   blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
   checkIfPipelineRunning: () => void;
+  containerHeightOffset?: number;
   contentByBlockUUID?: any;
+  createInteraction: (opts: {
+    interaction: InteractionType;
+  }) => void;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -89,23 +104,37 @@ export type SidekickProps = {
   fetchPipeline: () => void;
   fetchSecrets: () => void;
   fetchVariables: () => void;
-  insights: InsightType[][];
-  interruptKernel: () => void;
-  isPipelineExecuting: boolean;
   globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
+  insights: InsightType[][];
+  interactions: InteractionType[];
+  interactionsMapping: {
+    [interactionUUID: string]: InteractionType;
+  };
+  interruptKernel: () => void;
+  isLoadingCreateInteraction?: boolean;
+  isLoadingUpdatePipelineInteraction?: boolean;
+  isPipelineExecuting: boolean;
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
+  permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
   pipeline: PipelineType;
+  pipelineInteraction: PipelineInteractionType;
   pipelineMessages: KernelOutputType[];
+  project?: ProjectType;
+  refAfterFooter?: any;
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  savePipelineInteraction?: () => void;
   secrets: SecretType[];
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
+  setBlockInteractionsMapping: (prev: any) => {
+    [blockUUID: string]: BlockInteractionType[];
+  };
   setDepGraphZoom?: (zoom: number) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setHiddenBlocks: ((opts: {
@@ -114,6 +143,10 @@ export type SidekickProps = {
     [uuid: string]: BlockType;
   });
   setErrors: (errors: ErrorsType) => void;
+  setInteractionsMapping: (prev: any) => {
+    [interactionUUID: string]: InteractionType;
+  };
+  setPermissions?: (prev: any) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   showUpdateBlockModal?: (
@@ -121,6 +154,9 @@ export type SidekickProps = {
     name: string,
     preventDuplicateBlockName?: boolean,
   ) => void;
+  updatePipelineInteraction?: (opts: {
+    pipeline_interaction: PipelineInteractionType;
+  }) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & OpenDataIntegrationModalType;
 
 function Sidekick({
@@ -128,13 +164,16 @@ function Sidekick({
   addNewBlockAtIndex,
   afterWidth: afterWidthProp,
   autocompleteItems,
+  blockInteractionsMapping,
   blockRefs,
   blocks,
   blocksInNotebook,
   cancelPipeline,
   chartRefs,
   checkIfPipelineRunning,
+  containerHeightOffset,
   contentByBlockUUID,
+  createInteraction,
   deleteBlock,
   deleteWidget,
   editingBlock,
@@ -146,7 +185,11 @@ function Sidekick({
   globalDataProducts,
   globalVariables,
   insights,
+  interactions,
+  interactionsMapping,
   interruptKernel,
+  isLoadingCreateInteraction,
+  isLoadingUpdatePipelineInteraction,
   isPipelineExecuting,
   lastTerminalMessage,
   messages,
@@ -156,23 +199,31 @@ function Sidekick({
   onChangeCodeBlock,
   onSelectBlockFile,
   onUpdateFileSuccess,
+  permissions,
   pipeline,
+  pipelineInteraction,
   pipelineMessages,
+  project,
+  refAfterFooter,
   runBlock,
   runningBlocks,
   sampleData,
   savePipelineContent,
+  savePipelineInteraction,
   secrets,
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
+  setBlockInteractionsMapping,
   setDepGraphZoom,
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setHiddenBlocks,
+  setInteractionsMapping,
+  setPermissions,
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
@@ -181,6 +232,7 @@ function Sidekick({
   statistics,
   textareaFocused,
   treeRef,
+  updatePipelineInteraction,
   updateWidget,
   widgets,
 }: SidekickProps) {
@@ -195,6 +247,11 @@ function Sidekick({
   const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
     afterWidthProp,
   ]);
+
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
 
   const {
     block: blockEditing,
@@ -508,7 +565,9 @@ function Sidekick({
         fullWidth
         heightOffset={(ViewKeyEnum.TERMINAL === activeView || activeView === ViewKeyEnum.TREE)
           ? 0
-          : SCROLLBAR_WIDTH
+          : containerHeightOffset
+            ? containerHeightOffset
+            : SCROLLBAR_WIDTH
         }
         onBlur={() => {
           if (!selectedFilePath) {
@@ -675,6 +734,35 @@ function Sidekick({
               </Spacing>
             </FlexContainer>
           )
+        )}
+
+        {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
+          <PipelineInteractions
+            containerWidth={afterWidth}
+            createInteraction={(interaction: InteractionType) => createInteraction({
+              interaction,
+            })}
+            blockInteractionsMapping={blockInteractionsMapping}
+            interactions={interactions}
+            interactionsMapping={interactionsMapping}
+            isLoadingCreateInteraction={isLoadingCreateInteraction}
+            isLoadingUpdatePipelineInteraction={isLoadingUpdatePipelineInteraction}
+            permissions={permissions}
+            pipeline={pipeline}
+            pipelineInteraction={pipelineInteraction}
+            refAfterFooter={refAfterFooter}
+            savePipelineInteraction={savePipelineInteraction}
+            selectedBlock={selectedBlock}
+            setBlockInteractionsMapping={setBlockInteractionsMapping}
+            setInteractionsMapping={setInteractionsMapping}
+            setPermissions={setPermissions}
+            setSelectedBlock={setSelectedBlock}
+            updatePipelineInteraction={(
+              pipelineInteraction: PipelineInteractionType,
+            ) => updatePipelineInteraction({
+              pipeline_interaction: pipelineInteraction,
+            })}
+          />
         )}
       </SidekickContainerStyle>
     </>

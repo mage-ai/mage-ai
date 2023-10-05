@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -31,6 +31,7 @@ export type DashboardSharedProps = {
   afterWidthOverride?: boolean;
   before?: any;
   beforeWidth?: number;
+  subheaderNoPadding?: boolean;
   uuid: string;
 };
 
@@ -64,9 +65,10 @@ function Dashboard({
   navigationItems,
   setErrors,
   subheaderChildren,
+  subheaderNoPadding,
   title,
   uuid,
-}: DashboardProps & VerticalNavigationProps) {
+}: DashboardProps & VerticalNavigationProps, ref) {
   const {
     width: widthWindow,
   } = useWindowSize();
@@ -172,7 +174,7 @@ function Dashboard({
         version={projects?.[0]?.version}
       />
 
-      <ContainerStyle>
+      <ContainerStyle ref={ref}>
         {navigationItems?.length !== 0 && (
           <VerticalNavigationStyle showMore>
             <VerticalNavigation
@@ -208,7 +210,7 @@ function Dashboard({
             setBeforeWidth={setBeforeWidth}
           >
             {subheaderChildren && (
-              <Subheader>
+              <Subheader noPadding={subheaderNoPadding}>
                 {subheaderChildren}
               </Subheader>
             )}
@@ -234,4 +236,4 @@ function Dashboard({
   );
 }
 
-export default Dashboard;
+export default React.forwardRef(Dashboard);

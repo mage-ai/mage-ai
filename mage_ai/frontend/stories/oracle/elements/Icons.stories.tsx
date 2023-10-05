@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from '../../ThemeBlock';
 import {
@@ -308,6 +308,6 @@ export default {
   title: 'Oracle/Icons',
 } as Meta;
 
-const Template: Story = () => <Icons />;
+const Template: StoryFn = () => <Icons />;
 
 export const Main = Template.bind({});

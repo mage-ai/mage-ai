@@ -575,9 +575,10 @@ class Block(DataIntegrationMixin):
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
                 upstream_dbt_blocks_by_uuid = {
                     block.uuid: block
-                    for block in block.upstream_dbt_blocks()
+                    for block in upstream_dbt_blocks
                 }
                 pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                 pipeline.validate('A cycle was formed while adding a block')
@@ -1864,8 +1865,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         for o in outputs:
             if o is None:
                 continue
+
+            if not isinstance(o, dict):
+                continue
+
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
-                    not is_output_variable(o['variable_uuid']):
+                    (not is_output_variable(o['variable_uuid']) or
+                        BlockType.SCRATCHPAD == self.type):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
@@ -1876,9 +1882,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         self.store_variables(variable_mapping, override=override)
 
-    async def save_outputs_async(self, outputs, override=False) -> None:
+    async def save_outputs_async(
+        self,
+        outputs,
+        override: bool = False,
+        override_outputs: bool = False,
+    ) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
-        await self.store_variables_async(variable_mapping, override=override)
+        await self.store_variables_async(
+            variable_mapping,
+            override=override,
+            override_outputs=override_outputs,
+        )
 
     def get_executor_type(self) -> str:
         if self.executor_type:

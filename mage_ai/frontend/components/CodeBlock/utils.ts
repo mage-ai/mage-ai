@@ -13,6 +13,8 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
@@ -115,6 +117,11 @@ export const getMoreActionsItems = (
     };
     fetchFileTree: () => void;
     fetchPipeline: () => void;
+    openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+      addon: AddonBlockTypeEnum,
+      blockUUID: string;
+    }) => void;
+    project?: ProjectType;
     savePipelineContent: (payload?: {
       block?: BlockType;
       pipeline?: PipelineType;
@@ -143,6 +150,8 @@ export const getMoreActionsItems = (
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
+
+  const isInteractionsEnabled = !!opts?.project?.features?.[FeatureUUIDEnum.INTERACTIONS];
 
   if (BlockTypeEnum.SCRATCHPAD !== blockType) {
     if (![
@@ -344,6 +353,16 @@ export const getMoreActionsItems = (
         });
       }
     }
+  }
+
+  if (isInteractionsEnabled) {
+    items.push({
+      label: () => 'Add / Edit interactions',
+      onClick: () => {
+        opts?.openSidekickView?.(ViewKeyEnum.INTERACTIONS);
+      },
+      uuid: 'Add interactions',
+    });
   }
 
   items.push({

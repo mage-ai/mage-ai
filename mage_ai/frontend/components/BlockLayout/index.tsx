@@ -569,12 +569,12 @@ function BlockLayout({
           </Spacing>
 
           <Text center default>
-            Build your own dashboard with customizable charts with the exact insights you need.
+            Add customizable charts with the exact insights you need.
           </Text>
 
           {pageBlockLayoutTemplate && (
             <Text center default>
-              Get started with a recommended set of freely define your own.
+              Start with a recommended set or freely define your own.
             </Text>
           )}
         </Spacing>

@@ -823,6 +823,15 @@ function DataIntegrationModal({
     subtabs,
   ]);
 
+  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
+  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
+
+  const [headerOffset, setHeaderOffset] = useState<number>(null);
+  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
+  const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
+
+  const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
+
   useEffect(() => {
     if (selectedMainNavigationTab || selectedSubTab) {
       setHeaderOffset(refSubheader?.current?.getBoundingClientRect()?.height);
@@ -836,15 +845,6 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
     selectedSubTab,
   ]);
-
-  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
-  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
-
-  const [headerOffset, setHeaderOffset] = useState<number>(null);
-  const [afterFooterBottomOffset, setAfterFooterBottomOffset] = useState<number>(null);
-  const [afterInnerTopOffset, setAfterInnerTopOffset] = useState<number>(null);
-
-  const [afterHiddenState, setAfterHidden] = useState<boolean>(false);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),

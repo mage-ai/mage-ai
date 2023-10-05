@@ -215,8 +215,12 @@ function PipelineRuns({
     let pipelineRunsFiltered: PipelineRunType[] = dataPipelineRuns?.pipeline_runs || [];
     if (variableSearchText) {
       const lowercaseSearchText = variableSearchText.toLowerCase();
-      pipelineRunsFiltered = pipelineRunsFiltered.filter(({ variables }) =>
-        JSON.stringify(variables || {}).toLowerCase().includes(lowercaseSearchText),
+      pipelineRunsFiltered = pipelineRunsFiltered.filter(({
+        event_variables: eventVars,
+        variables,
+      }) =>
+        JSON.stringify(variables || {}).toLowerCase().includes(lowercaseSearchText)
+        || JSON.stringify(eventVars || {}).toLowerCase().includes(lowercaseSearchText),
       );
     }
 

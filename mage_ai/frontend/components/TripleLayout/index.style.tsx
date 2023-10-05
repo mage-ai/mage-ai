@@ -400,11 +400,11 @@ export const AsideFooterStyle = styled.div<{
     border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 
-  ${props => typeof props.bottom === 'undefined' && `
+  ${props => (typeof props.bottom === 'undefined' || props.bottom === null) && `
     bottom: 0;
   `}
 
-  ${props => typeof props.bottom !== 'undefined' && `
+  ${props => typeof props.bottom !== 'undefined' && props.bottom !== null && `
     bottom: ${props.bottom}px;
   `}
 `;

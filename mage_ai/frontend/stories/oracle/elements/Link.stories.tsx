@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Link, { LinkProps } from '@oracle/elements/Link';
 import ThemeBlock from 'stories/ThemeBlock';
@@ -19,7 +19,7 @@ const TemplateWithTheme = ({ children, ...props }) => (
 );
 
 // @ts-ignore
-const Template: Story<LinkProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<LinkProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {
