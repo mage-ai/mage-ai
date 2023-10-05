@@ -1,6 +1,11 @@
 # pylint: disable=too-many-lines
 import singer
-from tap_twitter_ads.streams import STREAMS, update_currently_syncing, Reports
+
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.streams import (
+    STREAMS,
+    Reports,
+    update_currently_syncing,
+)
 
 LOGGER = singer.get_logger()
 
@@ -32,7 +37,7 @@ def sync(client, config, catalog, state, logger=LOGGER):
     child_streams = []
     # Get all streams (parent + child) from streams.py
     # Loop thru all streams
-    
+
     for stream_name, stream_obj in STREAMS.items():
         # If stream has a parent_stream, then it is a child stream
         parent_stream = hasattr(stream_obj, 'parent_stream') and stream_obj.parent_stream
@@ -65,7 +70,7 @@ def sync(client, config, catalog, state, logger=LOGGER):
             update_currently_syncing(state, stream_name)
             endpoint_config = STREAMS[stream_name]
             stream_obj = STREAMS[stream_name]()
-            
+
             logger.info('Stream: {} - START Syncing, Account ID: {}'.format(
                 stream_name, account_id))
 
@@ -106,7 +111,10 @@ def sync(client, config, catalog, state, logger=LOGGER):
                     'location_type': 'COUNTRIES',
                     'country_code': country_code
                 }
-                country_cursor = reports_obj.get_resource('countries', client, country_path, country_params)
+                country_cursor = reports_obj.get_resource('countries',
+                                                          client,
+                                                          country_path,
+                                                          country_params)
                 for country in country_cursor:
                     country_id = country['targeting_value']
                     country_ids.append(country_id)
@@ -120,7 +128,10 @@ def sync(client, config, catalog, state, logger=LOGGER):
                 'count': 1000,
                 'cursor': None
             }
-            platforms_cursor = reports_obj.get_resource('platforms', client, platforms_path, platforms_params)
+            platforms_cursor = reports_obj.get_resource('platforms',
+                                                        client,
+                                                        platforms_path,
+                                                        platforms_params)
             for platform in platforms_cursor:
                 platform_id = platform['targeting_value']
                 platform_ids.append(platform_id)
@@ -156,8 +167,9 @@ def sync(client, config, catalog, state, logger=LOGGER):
                 )
 
                 # pylint: disable=line-too-long
-                logger.info('Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
-                    report_name, account_id, total_records))
+                logger.info(
+                    'Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
+                     report_name, account_id, total_records))
                 # pylint: enable=line-too-long
                 update_currently_syncing(state, None)
 
