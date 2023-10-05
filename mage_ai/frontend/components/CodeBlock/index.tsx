@@ -15,6 +15,7 @@ import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import Badge from '@oracle/components/Badge';
 import BlockExtras from './BlockExtras';
+import BlockInteractionController from '@components/Interactions/BlockInteractionController';
 import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
@@ -52,10 +53,11 @@ import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import InteractionType from '@interfaces/InteractionType';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -82,9 +84,12 @@ import {
   CodeContainerStyle,
   CodeHelperStyle,
   ContainerStyle,
+  HeaderHorizontalBorder,
+  SubheaderStyle,
   TimeTrackerStyle,
   getColorsForBlockType,
 } from './index.style';
+import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
 import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
@@ -101,7 +106,12 @@ import {
   CONFIG_KEY_USE_RAW_SQL,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
-import { DRAG_AND_DROP_TYPE } from './constants';
+import {
+  DRAG_AND_DROP_TYPE,
+  SUBHEADER_TABS,
+  SUBHEADER_TAB_CODE,
+  SUBHEADER_TAB_INTERACTIONS,
+} from './constants';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -150,9 +160,11 @@ type CodeBlockProps = {
   autocompleteItems?: AutocompleteItemType[];
   block: BlockType;
   blockIdx: number;
+  blockInteractions?: BlockInteractionType[];
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
+  containerRef?: any;
   dataProviders?: DataProviderType[];
   defaultValue?: string;
   disableDrag?: boolean;
@@ -166,6 +178,9 @@ type CodeBlockProps = {
   hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
   hideRunButton?: boolean;
+  interactionsMapping?: {
+    [interactionUUID: string]: InteractionType;
+  };
   mainContainerRef?: any;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -189,6 +204,9 @@ type CodeBlockProps = {
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
   }) => void;
   runningBlocks?: BlockType[];
   savePipelineContent: (payload?: {
@@ -236,9 +254,11 @@ function CodeBlock({
   autocompleteItems,
   block,
   blockIdx,
+  blockInteractions,
   blockRefs,
   blockTemplates,
   blocks = [],
+  containerRef,
   dataProviders,
   defaultValue = '',
   deleteBlock,
@@ -254,6 +274,7 @@ function CodeBlock({
   hideExtraConfiguration,
   hideHeaderInteractiveInformation,
   hideRunButton,
+  interactionsMapping,
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
@@ -290,6 +311,11 @@ function CodeBlock({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
+  const isInteractionsEnabled =
+    useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+      project?.features,
+    ]);
+
   const {
     callback_content: callbackContentOrig,
     configuration: blockConfig = {},
@@ -319,6 +345,11 @@ function CodeBlock({
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
+    useState<string>(SUBHEADER_TABS[0].uuid);
+  const [variables,  setVariables] = useState<{
+    [key: string]: any;
+  }>(null);
 
   const {
     type: pipelineType,
@@ -496,6 +527,9 @@ function CodeBlock({
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
   }) => {
     const {
       block: blockPayload,
@@ -506,6 +540,7 @@ function CodeBlock({
       runSettings,
       runUpstream,
       runTests: runTestsInit,
+      variables: variablesOverride,
     } = payload || {};
 
     let runTests = runTestsInit;
@@ -532,6 +567,7 @@ function CodeBlock({
       runSettings,
       runTests: runTests || false,
       runUpstream: runUpstream || false,
+      variables: variablesOverride || variables,
     });
 
     if (!disableReset) {
@@ -549,6 +585,7 @@ function CodeBlock({
     setRunCount,
     setRunEndTime,
     setSelectedTab,
+    variables,
   ]);
 
   const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
@@ -1055,35 +1092,37 @@ function CodeBlock({
   ]);
 
   const codeOutputEl = useMemo(() => (
-    <CodeOutput
-      {...borderColorShareProps}
-      block={block}
-      blockMetadata={blockMetadata}
-      buttonTabs={buttonTabs}
-      collapsed={outputCollapsed}
-      hasOutput={hasOutput}
-      isInProgress={isInProgress}
-      mainContainerWidth={mainContainerWidth}
-      messages={messagesWithType}
-      messagesAll={messages}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      runCount={runCount}
-      runEndTime={runEndTime}
-      runStartTime={runStartTime}
-      selected={selected}
-      selectedTab={selectedTab}
-      setCollapsed={(val: boolean) => {
-        setOutputCollapsed(() => {
-          set(outputCollapsedUUID, val);
-          return val;
-        });
-      }}
-      setErrors={setErrors}
-      setOutputBlocks={setOutputBlocks}
-      setSelectedOutputBlock={setSelectedOutputBlock}
-      setSelectedTab={setSelectedTab}
-    />
+    <>
+      <CodeOutput
+        {...borderColorShareProps}
+        block={block}
+        blockMetadata={blockMetadata}
+        buttonTabs={buttonTabs}
+        collapsed={outputCollapsed}
+        hasOutput={hasOutput}
+        isInProgress={isInProgress}
+        mainContainerWidth={mainContainerWidth}
+        messages={messagesWithType}
+        messagesAll={messages}
+        openSidekickView={openSidekickView}
+        pipeline={pipeline}
+        runCount={runCount}
+        runEndTime={runEndTime}
+        runStartTime={runStartTime}
+        selected={selected}
+        selectedTab={selectedTab}
+        setCollapsed={(val: boolean) => {
+          setOutputCollapsed(() => {
+            set(outputCollapsedUUID, val);
+            return val;
+          });
+        }}
+        setErrors={setErrors}
+        setOutputBlocks={setOutputBlocks}
+        setSelectedOutputBlock={setSelectedOutputBlock}
+        setSelectedTab={setSelectedTab}
+      />
+    </>
   ), [
     block,
     blockMetadata,
@@ -1206,6 +1245,120 @@ function CodeBlock({
     updateDataProviderConfig,
   ]);
 
+  const blockInteractionsMemo = useMemo(() => {
+    if (isInteractionsEnabled) {
+      return blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
+        <div key={`${blockInteraction?.uuid}-${idx}`}>
+          <BlockInteractionController
+            blockInteraction={blockInteraction}
+            contained
+            containerRef={containerRef}
+            containerWidth={mainContainerWidth}
+            interaction={interactionsMapping?.[blockInteraction?.uuid]}
+            setVariables={setVariables}
+            showVariableUUID
+            variables={variables}
+          />
+        </div>
+      ));
+    }
+  }, [
+    blockInteractions,
+    containerRef,
+    interactionsMapping,
+    isInteractionsEnabled,
+    mainContainerWidth,
+    setVariables,
+    variables,
+  ]);
+
+  const headerTabs = useMemo(() => {
+    if (!isInteractionsEnabled || !blockInteractions?.length) {
+      return null;
+    }
+
+    return (
+      <SubheaderStyle>
+        <Spacing px={PADDING_UNITS}>
+          <ButtonTabs
+            noPadding
+            onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+            selectedTabUUID={selectedSubheaderTabUUID}
+            tabs={SUBHEADER_TABS}
+            underlineColor={getColorsForBlockType(
+              block?.type,
+              {
+                blockColor: block?.color,
+                theme: themeContext,
+              },
+            ).accent}
+            underlineStyle
+          />
+        </Spacing>
+      </SubheaderStyle>
+    );
+  }, [
+    block,
+    blockInteractions,
+    isInteractionsEnabled,
+    selectedSubheaderTabUUID,
+    setSelectedSubheaderTabUUID,
+    themeContext,
+  ]);
+
+  const variablesFromBlockInteractions = useMemo(() => {
+    if (!isInteractionsEnabled) {
+      return null;
+    }
+
+    const variableUUIDS = [];
+    const variablesSeen = {};
+
+    blockInteractions?.forEach(({
+      uuid: interactionUUID,
+    }) => {
+      const interaction = interactionsMapping?.[interactionUUID];
+      const variables = interaction?.variables;
+
+      Object.keys(variables || {}).forEach((variableUUID: string) => {
+        if (!variablesSeen?.[variableUUID]) {
+          variableUUIDS.push(variableUUID);
+          variablesSeen[variableUUID] = true;
+        }
+      });
+    });
+
+    if (!variableUUIDS?.length) {
+      return null;
+    }
+
+    const variablesCount = variableUUIDS?.length || 0;
+
+    return (
+      <FlexContainer alignItems="center">
+        <Text monospace muted small>
+          Interaction variables:
+        </Text>
+
+        <Spacing mr={PADDING_UNITS} />
+
+        {variableUUIDS?.map((variableUUID: string, idx: number) => (
+          <Spacing key={variableUUID} mr={1}>
+            <Text default monospace small>
+              {variableUUID}{variablesCount >= 2 && idx < variablesCount - 1 && (
+                <Text inline monospace muted small>,</Text>
+              )}
+            </Text>
+          </Spacing>
+        ))}
+      </FlexContainer>
+    );
+  }, [
+    blockInteractions,
+    interactionsMapping,
+    isInteractionsEnabled,
+  ]);
+
   return (
     <div ref={drop}>
       <div
@@ -1225,7 +1378,6 @@ function CodeBlock({
               ...borderColorShareProps,
               ...collected,
             }}
-            bottomBorder={isMarkdown}
             onClick={() => onClickSelectBlock()}
             ref={disableDrag ? null : drag}
             zIndex={blocksLength + 1 - (blockIdx || 0)}
@@ -1472,6 +1624,7 @@ function CodeBlock({
             </FlexContainer>
           </BlockHeaderStyle>
 
+
           <ContainerStyle
             onClick={() => onClickSelectBlock()}
           >
@@ -1480,7 +1633,7 @@ function CodeBlock({
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
               lightBackground={isMarkdown && !isEditingBlock}
-              noPadding={isDataIntegration}
+              noPadding
               onClick={onClickSelectBlock}
               onDoubleClick={() => {
                 if (isMarkdown && !isEditingBlock) {
@@ -1488,6 +1641,8 @@ function CodeBlock({
                 }
               }}
             >
+              <HeaderHorizontalBorder />
+
               {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
                 && (
@@ -2101,11 +2256,8 @@ function CodeBlock({
               )}
 
               {tags.length >= 1 && (
-                <CodeHelperStyle
-                  noMargin={isDataIntegration}
-                  normalPadding
-                >
-                  <Spacing py={isDataIntegration ? 1 : 0}>
+                <SubheaderStyle>
+                  <Spacing p={1}>
                     <FlexContainer>
                       {tags.map(({
                         description,
@@ -2126,8 +2278,10 @@ function CodeBlock({
                       ))}
                     </FlexContainer>
                   </Spacing>
-                </CodeHelperStyle>
+                </SubheaderStyle>
               )}
+
+              {headerTabs}
 
               {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
@@ -2135,9 +2289,10 @@ function CodeBlock({
                 && !isStreamingPipeline
                 && !replicatedBlockUUID
                 && !isDataIntegration
+                && (!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                 && (
-                <CodeHelperStyle normalPadding>
-                  <Spacing mr={1}>
+                <CodeHelperStyle noMargin normalPadding>
+                  <Spacing mr={1} pt={1}>
                     <Text muted small>
                       {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
                       {isSQLBlock && (
@@ -2240,7 +2395,30 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {!blockError && (
+              {(!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
+                && !codeCollapsed
+                && variablesFromBlockInteractions
+                && (
+                <SubheaderStyle darkBorder noBackground>
+                  <Spacing p={1}>
+                    {variablesFromBlockInteractions}
+                  </Spacing>
+                </SubheaderStyle>
+              )}
+
+              {SUBHEADER_TAB_INTERACTIONS.uuid === selectedSubheaderTabUUID && !codeCollapsed && (
+                <>
+                  {blockInteractionsMemo}
+                </>
+              )}
+
+              {!blockError
+                && (
+                  !selectedSubheaderTabUUID
+                    || SUBHEADER_TAB_CODE.uuid === selectedSubheaderTabUUID
+                  )
+                &&
+              (
                 <>
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
@@ -2274,11 +2452,15 @@ function CodeBlock({
                             </Link>
                           </Text>
                         </Spacing>)
-                        : codeEditorEl
+                        : (
+                          <Spacing py={PADDING_UNITS}>
+                            {codeEditorEl}
+                          </Spacing>
+                        )
                       : markdownEl
                     )
                     : (
-                      <Spacing px={1}>
+                      <Spacing p={1}>
                         <Text monospace muted>
                           ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
                         </Text>

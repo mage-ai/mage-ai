@@ -187,7 +187,7 @@ class DBTBlock(Block):
                 **template_vars,
             )
 
-            # Interpoalte profiles.yml and invoke dbt
+            # Interpolate profiles.yml and invoke dbt
             with Profiles(project_path, variables) as profiles:
                 args = [
                     'seed',

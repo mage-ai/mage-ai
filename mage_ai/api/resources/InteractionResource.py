@@ -1,4 +1,5 @@
 import asyncio
+import os
 import urllib.parse
 from typing import Dict
 
@@ -8,17 +9,18 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.presenters.interactions.models import Interaction
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import extract
+from mage_ai.shared.utils import clean_name
 
 
 class InteractionResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        pipeline = kwargs.get('parent_model')
+        pipeline_interaction = kwargs.get('parent_model')
         interactions = []
 
         async def load_interaction(uuid) -> Dict:
-            interaction = Interaction(uuid, pipeline)
+            interaction = Interaction(uuid, pipeline=pipeline_interaction.pipeline)
 
             try:
                 return await interaction.to_dict(include_content=True)
@@ -26,8 +28,8 @@ class InteractionResource(GenericResource):
                 if is_debug():
                     print(f'[WARNING] InteractionResource.collection: {err}')
 
-        if pipeline:
-            interaction_uuids = [d.get('uuid') for d in (pipeline.interactions or {}).values()]
+        if pipeline_interaction:
+            interaction_uuids = await pipeline_interaction.interaction_uuids()
             interactions += await asyncio.gather(
                 *[load_interaction(uuid) for uuid in interaction_uuids],
             )
@@ -37,10 +39,17 @@ class InteractionResource(GenericResource):
     @classmethod
     @safe_db_query
     async def create(self, payload, user, **kwargs):
-        pipeline = kwargs.get('parent_model')
-        uuid = payload.get('uuid')
+        pipeline_interaction = kwargs.get('parent_model')
+        uuid = clean_name(payload.get('uuid') or '', allow_characters=[
+            '.',
+            os.path.sep,
+        ])
 
-        interaction = Interaction(uuid, pipeline=pipeline)
+        interaction = Interaction(
+            uuid=uuid,
+            pipeline=pipeline_interaction.pipeline if pipeline_interaction else None,
+        )
+
         if interaction.exists():
             error = ApiError.RESOURCE_INVALID.copy()
             error['message'] = f'Interaction {uuid} already exists.'
@@ -57,6 +66,13 @@ class InteractionResource(GenericResource):
             ])
 
         await interaction.update(**payload_update)
+
+        block_uuid = payload.get('block_uuid')
+        if block_uuid and pipeline_interaction:
+            await pipeline_interaction.add_interaction_to_block(
+                block_uuid,
+                interaction,
+            )
 
         return self(interaction, user, **kwargs)
 

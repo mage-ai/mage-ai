@@ -725,6 +725,8 @@ function CommandButtons({
                 blocksMapping,
                 fetchFileTree,
                 fetchPipeline,
+                openSidekickView,
+                project,
                 savePipelineContent,
                 updatePipeline,
               },

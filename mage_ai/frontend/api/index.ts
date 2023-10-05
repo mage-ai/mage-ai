@@ -32,6 +32,7 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
@@ -56,6 +57,7 @@ export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration
 export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
+export const INTERACTIONS: 'interactions' = 'interactions';
 export const KERNELS: 'kernels' = 'kernels';
 export const LLMS = 'llms';
 export const LOGS = 'logs';
@@ -64,6 +66,7 @@ export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PAGE_BLOCK_LAYOUTS: 'page_block_layouts' = 'page_block_layouts';
 export const PIPELINES: 'pipelines' = 'pipelines';
+export const PIPELINE_INTERACTIONS: 'pipeline_interactions' = 'pipeline_interactions';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PIPELINE_TRIGGERS: 'pipeline_triggers' = 'pipeline_triggers';
@@ -99,6 +102,7 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
+  [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [CUSTOM_TEMPLATES],
@@ -122,6 +126,8 @@ const RESOURCES: any[][] = [
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
+  [INTERACTIONS, PIPELINE_INTERACTIONS],
+  [INTERACTIONS],
   [KERNELS],
   [LLMS],
   [LOGS, PIPELINES],
@@ -132,6 +138,7 @@ const RESOURCES: any[][] = [
   [OUTPUTS],
   [PAGE_BLOCK_LAYOUTS],
   [PIPELINES],
+  [PIPELINE_INTERACTIONS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
   [PIPELINE_RUNS],
   [PIPELINE_SCHEDULES],

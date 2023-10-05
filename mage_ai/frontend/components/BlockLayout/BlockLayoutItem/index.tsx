@@ -220,7 +220,7 @@ function BlockLayoutItem({
       columnIndex: number;
       rowIndex: number;
     }) => onDrop?.(opts),
-  }), []);
+  }), [onDrop]);
 
   if (detail) {
     return (

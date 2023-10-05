@@ -46,7 +46,7 @@ type Warning = {
   val: number;
 };
 
-type SimpleDataTableProps = {
+export type SimpleDataTableProps = {
   columnFlexNumbers: number[];
   columnHeaders: ColumnHeaderType[];
   height?: number;

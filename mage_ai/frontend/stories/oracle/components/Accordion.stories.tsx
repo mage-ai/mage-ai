@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Accordion, { AccordionProps } from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -18,7 +18,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<AccordionProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<AccordionProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

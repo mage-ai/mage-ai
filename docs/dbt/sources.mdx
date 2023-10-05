@@ -64,5 +64,10 @@ The source name follows this convention: `mage_[DBT_project_name]`.
 The table names under the source follow this convention:
 `[pipeline_uuid]_[block_uuid]`.
 
+To reference the preceding block in a dbt block use this convention:
+`{{ source('[source_name]', '[pipeline_uuid]_[block_uuid]') }`
+e.g.
+`{{ source('mage_demo', 'dbt_demo_pipeline_load_data') }`
+
 For more information on sources, read
 [dbt’s documentation](https://docs.getdbt.com/docs/build/sources).

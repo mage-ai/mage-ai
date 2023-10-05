@@ -48,6 +48,8 @@ from dbt.node_types import NodeType
 from dbt.task.compile import CompileRunner, CompileTask
 from dbt.task.seed import SeedRunner
 
+from mage_ai.data_preparation.models.block.dbt.constants import SKIP_LIMIT_ADAPTER_NAMES
+
 
 class DBTCli:
     """
@@ -86,7 +88,7 @@ class DBTCli:
         """
         if self.__logger:
             self.__logger.info(
-                'Invoke dbt with the following aguments:\n' +
+                'Invoke dbt with the following arguments:\n' +
                 'dbt ' +
                 ' '.join(self.__args).replace(' --', ' \\\n  --')
             )
@@ -540,8 +542,8 @@ class ShowRunner(CompileRunner):
 
         # really ugly workaround for backporting fetchmany by supplying LIMIT instead
         if (
-            self.config.args.limit >= 0 and
-            type(self.adapter).__name__ not in ['SQLServerAdapter', 'FabricAdapter']
+            self.config.args.limit >= 0
+            and type(self.adapter).__name__ not in SKIP_LIMIT_ADAPTER_NAMES
         ):
             compiled_node.compiled_code = (
                 compiled_node.compiled_code +

@@ -1,12 +1,15 @@
 import importlib
+import inspect
 from collections.abc import Iterable
 from typing import List, Tuple, Union
 
 import inflection
 
 from mage_ai import settings
+from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
@@ -20,9 +23,6 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import extract
-
-ALL_ACTIONS = 'all'
-ALL_ATTRIBUTES_SYMBOL = '__*MAGE*__'
 
 
 class BasePolicy():
@@ -86,7 +86,7 @@ class BasePolicy():
         if not self.query_rules.get(self.__name__):
             self.query_rules[self.__name__] = {}
 
-        array_use = array or [ALL_ATTRIBUTES_SYMBOL]
+        array_use = array or [AttributeType.ALL]
         for key in array_use:
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
@@ -100,7 +100,7 @@ class BasePolicy():
         for key in array:
             if not self.read_rules[self.__name__].get(key):
                 self.read_rules[self.__name__][key] = {}
-            actions = kwargs.get('on_action', [ALL_ACTIONS])
+            actions = kwargs.get('on_action', [OperationType.ALL])
             actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
                 if not self.read_rules[self.__name__][key].get(scope):
@@ -116,7 +116,7 @@ class BasePolicy():
         for key in array:
             if not self.write_rules[self.__name__].get(key):
                 self.write_rules[self.__name__][key] = {}
-            actions = kwargs.get('on_action', [ALL_ACTIONS])
+            actions = kwargs.get('on_action', [OperationType.ALL])
             actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
                 if not self.write_rules[self.__name__][key].get(scope):
@@ -177,40 +177,48 @@ class BasePolicy():
             entity_id=self.entity[1],
         )
 
-    def authorize_action(self, action):
+    async def authorize_action(self, action):
         config = self.__class__.action_rule(action)
         if config:
-            self.__validate_scopes(action, config.keys())
-            if config.get(self.__current_scope(), {}).get('condition'):
-                self.__validate_condition(
-                    action, config[self.__current_scope()]['condition'])
+            await self.__validate_scopes(action, config.keys())
+
+            if config.get(self.current_scope(), {}).get('condition'):
+                await self.__validate_condition(
+                    action,
+                    config[self.current_scope()]['condition'],
+                    operation=action,
+                )
         else:
             error = ApiError.UNAUTHORIZED_ACCESS
             error.update({'message': 'The {} action is disabled for {}.'.format(
                 action, self.resource_name()), })
             raise ApiError(error)
 
-    def authorize_attribute(self, read_or_write, attrb, **kwargs):
+    async def authorize_attribute(self, read_or_write, attrb, **kwargs):
         if self.is_owner():
             return True
 
         api_operation_action = self.options.get(
             'api_operation_action',
-            kwargs.get('api_operation_action', ALL_ACTIONS),
+            kwargs.get('api_operation_action', OperationType.ALL),
         )
+
+        attribute_operation = None
         if 'read' == read_or_write:
+            attribute_operation = AttributeOperationType.READ
             orig_config = self.__class__.read_rule(attrb)
         else:
             orig_config = self.__class__.write_rule(attrb)
+            attribute_operation = AttributeOperationType.WRITE
 
         config = None
         if orig_config:
-            self.__validate_scopes(attrb, orig_config.keys())
-            config_scope = orig_config.get(self.__current_scope(), {})
+            await self.__validate_scopes(attrb, orig_config.keys())
+            config_scope = orig_config.get(self.current_scope(), {})
             config = config_scope.get(api_operation_action)
 
             if config is None:
-                config = config_scope.get(ALL_ACTIONS)
+                config = config_scope.get(OperationType.ALL)
 
         if config is None:
             error = ApiError.UNAUTHORIZED_ACCESS
@@ -225,26 +233,37 @@ class BasePolicy():
             raise ApiError(error)
         cond = config.get('condition')
         if cond:
-            self.__validate_condition(attrb, cond, **kwargs)
+            await self.__validate_condition(
+                attrb,
+                cond,
+                attribute_operation=attribute_operation,
+                operation=api_operation_action,
+                **kwargs,
+            )
 
-    def authorize_attributes(self, read_or_write, attrbs, **kwargs):
+    async def authorize_attributes(self, read_or_write, attrbs, **kwargs):
         if self.is_owner():
             return True
 
         for attrb in attrbs:
-            self.authorize_attribute(read_or_write, attrb, **kwargs)
+            await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
-    def authorize_query(self, query):
+    async def authorize_query(self, query):
         if not query:
             return
 
         for key, value in query.items():
             if key != settings.QUERY_API_KEY:
-                error_message = 'Query parameter {} of value {} is not permitted.'.format(
-                    key, value)
+                api_operation_action = self.options.get(
+                    'api_operation_action',
+                    OperationType.ALL,
+                )
+
+                error_message = f'Query parameter {key} of value {value} ' \
+                    f'is not permitted on {api_operation_action} operation.'
 
                 config = self.__class__.query_rule(key) or \
-                    self.__class__.query_rule(ALL_ATTRIBUTES_SYMBOL)
+                    self.__class__.query_rule(AttributeType.ALL)
 
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
@@ -252,11 +271,12 @@ class BasePolicy():
                         'message': error_message,
                     })
                     raise ApiError(error)
-                elif config.get(self.__current_scope(), {}).get('condition'):
-                    self.__validate_condition(
+                elif config.get(self.current_scope(), {}).get('condition'):
+                    await self.__validate_condition(
                         key,
-                        config[self.__current_scope()]['condition'],
+                        config[self.current_scope()]['condition'],
                         message=error_message,
+                        operation=api_operation_action,
                     )
 
     def parent_model(self):
@@ -276,7 +296,7 @@ class BasePolicy():
             )(self.parent_model(), self.current_user, **self.options)
         return self.parent_resource_attr
 
-    def __current_scope(self):
+    def current_scope(self) -> OauthScope:
         # If edit access is disabled and user authentication is not enabled, we want to
         # treat the user as if they are logged in, so we can stop users from accessing
         # certain endpoints.
@@ -286,31 +306,58 @@ class BasePolicy():
         else:
             return OauthScope.CLIENT_PUBLIC
 
-    def __validate_condition(self, action, cond, **kwargs):
-        if cond and not cond(self):
+    async def __validate_condition(
+        self,
+        action,
+        cond,
+        attribute_operation: AttributeOperationType = None,
+        operation: OperationType = None,
+        **kwargs,
+    ):
+        if not cond:
+            return
+
+        validation = cond(self)
+        if validation and inspect.isawaitable(validation):
+            validation = await validation
+
+        if not validation:
             error = ApiError.UNAUTHORIZED_ACCESS
+            message = f'Unauthorized access for {action}'
+
+            if attribute_operation:
+                message = f'Unauthorized {attribute_operation} access for {action}'
+                if operation:
+                    message = f'{message} on {operation} operation'
+            elif operation:
+                message = f'Unauthorized access for {action} on {operation} operation'
+
             error.update({
                 'message': kwargs.get(
                     'message',
-                    'Unauthorized access for {}, failed condition.'.format(action),
+                    f'{message}, failed condition.',
                 ),
             })
             increment(
                 'api_error.unauthorized_access',
                 tags={
                     'action': action,
+                    'attribute_operation': attribute_operation,
                     'policy_class_name': self.__class__.__name__,
                     'id': self.resource.id if hasattr(
                         self.resource,
                         'id') else None,
+                    'operation': operation,
                 })
             if settings.DEBUG:
                 error['debug'] = {
                     'action': action,
+                    'attribute_operation': attribute_operation,
+                    'operation': operation,
                 }
             raise ApiError(error)
 
-    def __validate_scopes(self, val, scopes):
+    async def __validate_scopes(self, val, scopes):
         error = ApiError.UNAUTHORIZED_ACCESS
         if not REQUIRE_USER_AUTHENTICATION:
             return

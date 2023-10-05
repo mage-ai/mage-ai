@@ -911,7 +911,10 @@ class Pipeline:
                             widget=widget,
                         )
                     if 'outputs' in block_data:
-                        await block.save_outputs_async(block_data['outputs'], override=True)
+                        await block.save_outputs_async(
+                            block_data['outputs'],
+                            override=True,
+                        )
 
                     name = block_data.get('name')
 

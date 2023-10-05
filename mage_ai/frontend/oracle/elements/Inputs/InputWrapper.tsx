@@ -824,7 +824,8 @@ const InputWrapper = ({
       })}
 
       {((meta?.touched && meta?.error) || (!isFocused && isTouched && !content && required)) && (
-        <Text danger small>
+        // @ts-ignore
+        <Text danger noWrapping small style={{ marginLeft: 12 }}>
           {meta?.error || 'This field is required.'}
         </Text>
       )}

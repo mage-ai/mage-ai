@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Button, { ButtonProps } from '@oracle/elements/Button';
 import Spacing from '@oracle/elements/Spacing';
@@ -29,7 +29,7 @@ const TemplateWithTheme = ({ buttons, ...props }) => buttons ? (
 );
 
 // @ts-ignore
-const Template: Story<ButtonProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<ButtonProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const All = Template.bind({});
 All.args = {

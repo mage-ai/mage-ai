@@ -6,7 +6,7 @@ import GradientButton from '@oracle/elements/Button/GradientButton';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import { TabsContainerStyle } from './index.style';
+import { SelectedUnderlineStyle, TabsContainerStyle, UNDERLINE_HEIGHT } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
@@ -27,6 +27,8 @@ type ButtonTabsProps = {
   selectedTabUUID?: string;
   small?: boolean;
   tabs: TabType[];
+  underlineColor?: string;
+  underlineStyle?: boolean;
 };
 
 function ButtonTabs({
@@ -39,6 +41,8 @@ function ButtonTabs({
   selectedTabUUID,
   small,
   tabs,
+  underlineColor,
+  underlineStyle,
 }: ButtonTabsProps) {
   const tabEls = useMemo(() => {
     const tabCount: number = tabs.length;
@@ -81,12 +85,12 @@ function ButtonTabs({
         arr.push(
           <div
             key={`spacing-${uuid}`}
-            style={{ marginLeft: 1.5 * UNIT }}
+            style={{ marginLeft: (regularSizeText ? 2 : 1.5) * UNIT }}
           />,
         );
       }
 
-      if (selected) {
+      if (selected && !underlineStyle) {
         arr.push(
           <GradientButton
             backgroundGradient={PURPLE_BLUE}
@@ -108,21 +112,49 @@ function ButtonTabs({
         );
       } else {
         arr.push(
-          <div key={`button-tab-${uuid}`} style={{ padding: 2 }}>
+          <FlexContainer
+            flexDirection="column"
+            key={`button-tab-${uuid}`}
+            style={{
+              paddingLeft: 2,
+              paddingRight: 2,
+              paddingBottom: underlineStyle ? 0 : 2,
+              paddingTop: underlineStyle ? 0 : 2,
+            }}
+          >
             <Button
               borderLess
               compact={compact || small}
               default
+              noBackground={underlineStyle}
+              noPadding={underlineStyle}
               onClick={(e) => {
                 pauseEvent(e);
                 onClickTab(tab);
               }}
-              outline
+              outline={!underlineStyle}
               small={small}
             >
-              {el}
+              {!underlineStyle && el}
+              {underlineStyle && (
+                <div
+                  style={{
+                    paddingBottom: ((compact || small) ? UNIT / 2 : UNIT) + 2,
+                    paddingTop: ((compact || small) ? UNIT / 2 : UNIT) + 2 + UNDERLINE_HEIGHT,
+                  }}
+                >
+                  {el}
+                </div>
+              )}
             </Button>
-          </div>,
+
+            {underlineStyle && (
+              <SelectedUnderlineStyle
+                backgroundColor={underlineColor}
+                selected={selected}
+              />
+            )}
+          </FlexContainer>,
         );
       }
     });
@@ -134,6 +166,7 @@ function ButtonTabs({
     selectedTabUUID,
     small,
     tabs,
+    underlineStyle,
   ]);
 
   const el = (

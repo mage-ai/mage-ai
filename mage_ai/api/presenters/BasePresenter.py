@@ -1,13 +1,14 @@
+import importlib
+import inspect
 from collections import UserList
 from collections.abc import Iterable
 from datetime import datetime
-from functools import reduce
+from typing import Any, Union
+
 from mage_ai.api.operations.constants import READ
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.shared.hash import merge_dict
-import importlib
-import inspect
 
 
 class BasePresenter():
@@ -97,9 +98,18 @@ class BasePresenter():
             **kwargs,
         )
 
+    async def prepare_present(self, **kwargs) -> Union[Any, None]:
+        return self
+
     async def present(self, **kwargs):
-        def _build(obj, key):
-            value = getattr(self, key)
+        object_to_present = await self.prepare_present(**kwargs)
+
+        async def _build(obj, key, object_to_present=object_to_present):
+            if isinstance(object_to_present, dict):
+                value = object_to_present.get(key)
+            else:
+                value = getattr(object_to_present, key)
+
             if callable(value):
                 value = value(**kwargs)
             self.__validate_attribute_type(key, value)
@@ -109,10 +119,10 @@ class BasePresenter():
                     value.__class__,
                     UserList):
                 obj[key] = [
-                    self.__transform_value(
+                    await self.__transform_value(
                         key, v, **kwargs) for v in value]
             else:
-                obj[key] = self.__transform_value(key, value, **kwargs)
+                obj[key] = await self.__transform_value(key, value, **kwargs)
             return obj
 
         format_to_present = kwargs.get('format', None)
@@ -121,9 +131,13 @@ class BasePresenter():
             )
             format_to_present = f'{from_resource_name}/{format_to_present}'
 
-        return reduce(_build, self.__class__.formats(format_to_present), {})
+        mapping = {}
+        for key in self.__class__.formats(format_to_present):
+            mapping = await _build(mapping, key)
 
-    def __transform_value(self, key, value, **kwargs):
+        return mapping
+
+    async def __transform_value(self, key, value, **kwargs):
         klass_symbol_or_lambda = self.__class__.all_attributes().get(key, None)
 
         if issubclass(value.__class__, BaseModel):
@@ -149,7 +163,7 @@ class BasePresenter():
 
             if not kwargs.get('ignore_permissions'):
                 policy = value.policy_class()(value, self.current_user, **opts)
-                policy.authorize_attributes(
+                await policy.authorize_attributes(
                     READ,
                     data.keys(),
                     **opts,
