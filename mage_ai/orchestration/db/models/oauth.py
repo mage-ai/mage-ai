@@ -22,6 +22,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 
 
 class User(BaseModel):
@@ -267,8 +268,18 @@ class Permission(BaseModel):
     class Access(int, enum.Enum):
         OWNER = 1
         ADMIN = 2
+        # Editor: list, detail, create, update, delete
         EDITOR = 4
+        # Viewer: list, detail
         VIEWER = 8
+        LIST = 16
+        DETAIL = 32
+        CREATE = 64
+        UPDATE = 128
+        DELETE = 512
+        QUERY = 1024
+        READ = 2048
+        WRITE = 4096
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
@@ -337,6 +348,38 @@ class Permission(BaseModel):
                 )
             db_connection.session.commit()
         return new_permissions
+
+    @property
+    def query_attributes(self) -> List[str]:
+        return self.__get_access_attributes('query_attributes')
+
+    @query_attributes.setter
+    def query_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('query_attributes', values)
+
+    @property
+    def read_attributes(self) -> List[str]:
+        return self.__get_access_attributes('read_attributes')
+
+    @read_attributes.setter
+    def read_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('read_attributes', values)
+
+    @property
+    def write_attributes(self) -> List[str]:
+        return self.__get_access_attributes('write_attributes')
+
+    @write_attributes.setter
+    def write_attributes(self, values: List[str]) -> None:
+        self.__set_access_attributes('write_attributes', values)
+
+    def __get_access_attributes(self, access_name: str) -> List[str]:
+        return (self.options or {}).get(access_name)
+
+    def __set_access_attributes(self, access_name: str, values: List[str]) -> None:
+        self.options = merge_dict((self.options or {}), {
+            access_name: values,
+        })
 
 
 class Oauth2Application(BaseModel):
