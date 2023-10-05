@@ -1,7 +1,7 @@
 import os
 import shutil
 import uuid
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -155,7 +155,7 @@ def get_secret_value(
     pipeline_uuid: str = None,
     project_uuid: str = None,
     repo_name: str = None,
-) -> str:
+) -> Optional[str]:
     from mage_ai.orchestration.db.models.secrets import Secret
     key, key_uuid = _get_encryption_key(
         entity,
@@ -191,6 +191,29 @@ def get_secret_value(
                     pass
 
     print(f'WARNING: Could not find secret value for secret {name}.')
+
+
+def get_secret_value_db_safe(
+    name: str,
+    entity: Entity = Entity.GLOBAL,
+    pipeline_uuid: str = None,
+    project_uuid: str = None,
+    repo_name: str = None,
+) -> Optional[str]:
+    """
+    Calls get_secret_value only if the db has already been initialized.
+    """
+    from mage_ai.orchestration.db import db_connection
+    if db_connection.session and db_connection.session.is_active:
+        return get_secret_value(
+            name,
+            entity=entity,
+            pipeline_uuid=pipeline_uuid,
+            project_uuid=project_uuid,
+            repo_name=repo_name,
+        )
+    else:
+        return None
 
 
 @safe_db_query
