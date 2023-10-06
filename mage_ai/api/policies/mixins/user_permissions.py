@@ -120,23 +120,37 @@ async def validate_condition_with_permissions(
 
         arr = []
         for permission_access in permission_accesses:
-            valid_for_operation = permission_access & access
+            has_access_for_all_operations = permission_access & PermissionAccess.OPERATION_ALL
+            valid_for_operation = has_access_for_all_operations or permission_access & access
 
             # If this condition is validating attribute operations for an attribute:
             if access_for_attribute_operation:
+                access_for_all = 0
+                if AttributeOperationType.QUERY == attribute_operation_type:
+                    access_for_all = PermissionAccess.QUERY_ALL
+                elif AttributeOperationType.READ == attribute_operation_type:
+                    access_for_all = PermissionAccess.READ_ALL
+                elif AttributeOperationType.WRITE == attribute_operation_type:
+                    access_for_all = PermissionAccess.WRITE_ALL
+
+                has_access_for_all_attributes = permission_access & access_for_all
                 valid_for_operation = valid_for_operation and \
-                    permission_access & access_for_attribute_operation
+                    (
+                        permission_access & access_for_attribute_operation or
+                        has_access_for_all_attributes
+                    )
 
-                if valid_for_operation and attribute_operation_type and resource_attribute:
-                    permitted_attributes = []
-                    if AttributeOperationType.QUERY == attribute_operation_type:
-                        permitted_attributes = permission.query_attributes
-                    elif AttributeOperationType.READ == attribute_operation_type:
-                        permitted_attributes = permission.read_attributes
-                    elif AttributeOperationType.WRITE == attribute_operation_type:
-                        permitted_attributes = permission.write_attributes
+                if not has_access_for_all_attributes:
+                    if valid_for_operation and attribute_operation_type and resource_attribute:
+                        permitted_attributes = []
+                        if AttributeOperationType.QUERY == attribute_operation_type:
+                            permitted_attributes = permission.query_attributes
+                        elif AttributeOperationType.READ == attribute_operation_type:
+                            permitted_attributes = permission.read_attributes
+                        elif AttributeOperationType.WRITE == attribute_operation_type:
+                            permitted_attributes = permission.write_attributes
 
-                    valid_for_operation = resource_attribute in permitted_attributes
+                        valid_for_operation = resource_attribute in permitted_attributes
 
             arr.append(valid_for_operation)
 

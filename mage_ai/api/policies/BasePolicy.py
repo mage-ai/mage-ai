@@ -394,7 +394,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
                 if operation:
                     message = f'{message} on {operation} operation'
             elif operation:
-                message = f'Unauthorized access for {action} on {r_name} for operation {operation}'
+                message = f'Unauthorized access on {r_name} for operation {operation}'
 
             error.update({
                 'message': kwargs.get(
