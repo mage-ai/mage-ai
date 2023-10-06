@@ -69,6 +69,7 @@ class Trigger(BaseConfig):
 
     @property
     def has_valid_schedule_interval(self) -> bool:
+        # Check if trigger has valid cron expression
         if self.schedule_interval is not None and \
             self.schedule_type == ScheduleType.TIME and \
             self.schedule_interval not in [e.value for e in ScheduleInterval] and \

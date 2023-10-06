@@ -1,10 +1,11 @@
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import InteractionType from '@interfaces/InteractionType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
@@ -61,7 +62,7 @@ function PipelineSchedules({
   const router = useRouter();
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
 
   const { data: dataProjects } = api.projects.list();
@@ -266,6 +267,17 @@ function PipelineSchedules({
   } = useMemo(() => indexBy(dataPipelineTriggers?.pipeline_triggers || [], ({ name }) => name), [
     dataPipelineTriggers,
   ]);
+
+  useEffect(() => {
+    const triggers = dataPipelineTriggers?.pipeline_triggers || [];
+    const triggerWithInvalidCronExpression = triggers.find(({ settings }) => settings?.invalid_schedule_interval);
+    if (triggerWithInvalidCronExpression) {
+      setErrors({
+        displayMessage: `Schedule interval for Trigger (in code) "${triggerWithInvalidCronExpression?.name}"`
+          + ' is invalid. Please check your cron expression’s syntax in the pipeline’s triggers.yaml file.',
+      });
+    }
+  }, [dataPipelineTriggers?.pipeline_triggers]);
 
   const { data: dataTags } = api.tags.list();
   const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
