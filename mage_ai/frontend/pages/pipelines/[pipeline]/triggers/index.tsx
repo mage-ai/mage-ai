@@ -277,6 +277,8 @@ function PipelineSchedules({
         displayMessage: `Schedule interval for Trigger (in code) "${triggerWithInvalidCronExpression?.name}"`
           + ' is invalid. Please check your cron expression’s syntax in the pipeline’s triggers.yaml file.',
       });
+    } else {
+      setTriggerErrors(null);
     }
   }, [dataPipelineTriggers?.pipeline_triggers]);
 
