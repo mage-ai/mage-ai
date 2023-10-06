@@ -502,11 +502,13 @@ class PipelineScheduler:
             )
 
             for status, block_uuids in statuses.items():
+                upstream_block_uuids = []
                 if dynamic_upstream_block_uuids:
                     upstream_block_uuids = dynamic_upstream_block_uuids
                 else:
                     block = self.pipeline.get_block(block_run.block_uuid)
-                    upstream_block_uuids = block.upstream_block_uuids
+                    if block:
+                        upstream_block_uuids = block.upstream_block_uuids
                 if any(
                     b in block_uuids
                     for b in upstream_block_uuids

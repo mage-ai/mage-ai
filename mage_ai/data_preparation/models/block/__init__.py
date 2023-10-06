@@ -1567,6 +1567,7 @@ class Block(DataIntegrationMixin):
         variable_uuid: str,
         dynamic_block_index: int = None,
         partition: str = None,
+        raise_exception: bool = False,
         spark=None,
     ):
         variable_manager = self.pipeline.variable_manager
@@ -1582,6 +1583,7 @@ class Block(DataIntegrationMixin):
             block_uuid=block_uuid_use,
             clean_block_uuid=clean_block_uuid,
             partition=partition,
+            raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
         )
