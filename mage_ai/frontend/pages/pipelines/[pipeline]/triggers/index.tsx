@@ -63,6 +63,7 @@ function PipelineSchedules({
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
   const [errors, setErrors] = useState<ErrorsType>(null);
+  const [triggerErrors, setTriggerErrors] = useState<ErrorsType>(null);
   const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
 
   const { data: dataProjects } = api.projects.list();
@@ -272,7 +273,7 @@ function PipelineSchedules({
     const triggers = dataPipelineTriggers?.pipeline_triggers || [];
     const triggerWithInvalidCronExpression = triggers.find(({ settings }) => settings?.invalid_schedule_interval);
     if (triggerWithInvalidCronExpression) {
-      setErrors({
+      setTriggerErrors({
         displayMessage: `Schedule interval for Trigger (in code) "${triggerWithInvalidCronExpression?.name}"`
           + ' is invalid. Please check your cron expression’s syntax in the pipeline’s triggers.yaml file.',
       });
@@ -433,7 +434,7 @@ function PipelineSchedules({
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
       buildSidekick={!isCreatingTrigger && buildSidekick}
-      errors={errors}
+      errors={errors || triggerErrors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       setErrors={setErrors}
