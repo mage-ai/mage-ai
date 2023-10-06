@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 import Headline from '@oracle/elements/Headline';
@@ -52,7 +53,7 @@ function Markdown({ children }: MarkdownProps) {
             </Text>
           ),
         }}
-        rehypePlugins={[rehypeRaw] as PluggableList}
+        rehypePlugins={[rehypeRaw, rehypeSanitize] as PluggableList}
         remarkPlugins={[remarkGfm]}
       >
         {children}

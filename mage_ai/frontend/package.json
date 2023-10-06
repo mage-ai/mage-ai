@@ -70,6 +70,7 @@
     "react-xarrows": "^2.0.2",
     "reaflow": "^5.0.6",
     "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^3.0.1",
     "storybook": "^7.4.2",
     "styled-bootstrap-grid": "^3.1.2",
