@@ -23,6 +23,7 @@ class SinkType(str, Enum):
     DUCKDB = 'duckdb'
     DUMMY = 'dummy'
     ELASTICSEARCH = 'elasticsearch'
+    GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     INFLUXDB = 'influxdb'
     KAFKA = 'kafka'

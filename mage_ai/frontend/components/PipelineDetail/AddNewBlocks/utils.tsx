@@ -46,6 +46,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.DUCKDB,
         DataSourceTypeEnum.DUMMY,
         DataSourceTypeEnum.ELASTICSEARCH,
+        DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
         DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
