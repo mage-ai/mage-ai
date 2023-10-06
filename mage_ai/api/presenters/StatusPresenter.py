@@ -13,3 +13,11 @@ class StatusPresenter(BasePresenter):
         'project_type',
         'project_uuid',
     ]
+
+
+StatusPresenter.register_format(
+    'with_activity_details',
+    StatusPresenter.default_attributes + [
+        'last_user_request',
+    ],
+)

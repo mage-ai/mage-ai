@@ -61,4 +61,5 @@ class StatusResource(GenericResource):
             'project_type': project_type,
             'project_uuid': get_project_uuid(),
         }
+
         return self.build_result_set([status], user, **kwargs)
