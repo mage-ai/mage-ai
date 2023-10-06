@@ -6,7 +6,7 @@ import simplejson
 from pandas import DataFrame, Series
 from sqlalchemy import create_engine
 
-from mage_ai.io.base import QUERY_ROW_LIMIT
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
@@ -98,19 +98,8 @@ class MSSQL(BaseSQL):
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
-        schema_name: str = None,
-        table_name: str = None,
         **kwargs,
     ) -> None:
-        if kwargs.get('fast_executemany', True) and schema_name and table_name:
-            engine = create_engine(
-                f'mssql+pyodbc://?odbc_connect={self.connection_string}',
-                fast_executemany=True,
-            )
-            # if_exists and index logic is already handled in the base class's export method
-            df.to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False)
-            return
-
         def serialize_obj(val):
             if type(val) is dict:
                 return simplejson.dumps(
@@ -150,6 +139,20 @@ class MSSQL(BaseSQL):
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
         cursor.executemany(sql, values)
+
+    def upload_dataframe_fast(
+        self,
+        df: DataFrame,
+        schema_name: str,
+        table_name: str,
+        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
+
+    ):
+        engine = create_engine(
+            f'mssql+pyodbc://?odbc_connect={self.connection_string}',
+            fast_executemany=True,
+        )
+        df.to_sql(table_name, engine, schema=schema_name, if_exists=if_exists, index=False)
 
     def get_type(self, column: Series, dtype: str) -> str:
         if dtype in (

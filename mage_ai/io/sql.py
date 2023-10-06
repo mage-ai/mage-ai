@@ -256,6 +256,7 @@ class BaseSQL(BaseSQLConnection):
             if index:
                 df = df.reset_index()
 
+            # Clean dataframe
             dtypes = infer_dtypes(df)
             df = clean_df_for_export(df, self.clean, dtypes)
 
@@ -268,6 +269,16 @@ class BaseSQL(BaseSQLConnection):
             dtypes = infer_dtypes(df)
 
         def __process():
+            if not query_string and kwargs.get('fast_execute', True) and \
+                    hasattr(self, 'upload_dataframe_fast') and callable(self.upload_dataframe_fast):
+                self.upload_dataframe_fast(
+                    df,
+                    schema_name,
+                    table_name,
+                    if_exists=if_exists,
+                )
+                return
+
             buffer = StringIO()
             table_exists = self.table_exists(schema_name, table_name)
 
@@ -326,8 +337,6 @@ class BaseSQL(BaseSQLConnection):
                         allow_reserved_words=allow_reserved_words,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
-                        schema_name=schema_name,
-                        table_name=table_name,
                         **kwargs,
                     )
             self.conn.commit()
