@@ -8,9 +8,11 @@ import inflection
 from mage_ai import settings
 from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.errors import ApiError
+from mage_ai.api.mixins.result_set import ResultSetMixIn
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.mixins.user_permissions import UserPermissionMixIn
+from mage_ai.api.result_set import ResultSet
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
@@ -30,7 +32,7 @@ from mage_ai.settings import (
 from mage_ai.shared.hash import extract
 
 
-class BasePolicy(UserPermissionMixIn):
+class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     action_rules = {}
     query_rules = {}
     read_rules = {}
@@ -42,10 +44,15 @@ class BasePolicy(UserPermissionMixIn):
         self.resource = resource
         self.parent_model_attr = None
         self.parent_resource_attr = None
-        if isinstance(resource, Iterable):
-            self.resources = resource
+        self.result_set_attr = None
+
+        if resource:
+            if isinstance(resource, Iterable):
+                self.resources = resource
+            else:
+                self.resources = [resource]
         else:
-            self.resources = [resource]
+            self.result_set_attr = ResultSet([])
 
     @property
     def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
@@ -68,6 +75,9 @@ class BasePolicy(UserPermissionMixIn):
 
     @classmethod
     def read_rule(self, read):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.read_write_rule_with_permissions(AttributeOperationType.READ, read)
+
         if not self.read_rules.get(self.__name__):
             self.read_rules[self.__name__] = {}
         return self.read_rules[self.__name__].get(read)
@@ -138,6 +148,10 @@ class BasePolicy(UserPermissionMixIn):
         return inflection.pluralize(self.resource_name_singular())
 
     @classmethod
+    def model_name(self) -> str:
+        return self.__name__.replace('Policy', '')
+
+    @classmethod
     def resource_name_singular(self):
         return inflection.underscore(
             self.__name__.replace(
@@ -186,6 +200,9 @@ class BasePolicy(UserPermissionMixIn):
         )
 
     async def authorize_action(self, action):
+        if self.is_owner():
+            return True
+
         config = self.__class__.action_rule(action)
         if config:
             await self.__validate_scopes(action, config.keys())
@@ -257,6 +274,9 @@ class BasePolicy(UserPermissionMixIn):
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
     async def authorize_query(self, query):
+        if self.is_owner():
+            return True
+
         if not query:
             return
 
@@ -314,6 +334,12 @@ class BasePolicy(UserPermissionMixIn):
         else:
             return OauthScope.CLIENT_PUBLIC
 
+    def result_set(self) -> ResultSet:
+        if self.resource:
+            return self.resource.result_set()
+
+        return self.result_set_attr
+
     async def __validate_condition(
         self,
         action,
@@ -330,15 +356,16 @@ class BasePolicy(UserPermissionMixIn):
             validation = await validation
 
         if not validation:
+            r_name = self.resource_name()
             error = ApiError.UNAUTHORIZED_ACCESS
-            message = f'Unauthorized access for {action}'
+            message = f'Unauthorized access for {action} on {r_name}'
 
             if attribute_operation:
-                message = f'Unauthorized {attribute_operation} access for {action}'
+                message = f'Unauthorized {attribute_operation} access for {action} on {r_name}'
                 if operation:
                     message = f'{message} on {operation} operation'
             elif operation:
-                message = f'Unauthorized access for {action} on {operation} operation'
+                message = f'Unauthorized access for {action} on {r_name} for operation {operation}'
 
             error.update({
                 'message': kwargs.get(

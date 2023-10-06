@@ -261,7 +261,8 @@ class Role(BaseModel):
         access = 0
         if permissions:
             for permission in permissions:
-                access = access | permission.access
+                if permission.access is not None:
+                    access = access | permission.access
             return access
         else:
             # TODO: Handle permissions with different entity types better.
@@ -461,6 +462,15 @@ class Permission(BaseModel):
     @write_attributes.setter
     def write_attributes(self, values: List[str]) -> None:
         self.__set_access_attributes('write_attributes', values)
+
+    def add_accesses(self, accesses: List[PermissionAccess]) -> None:
+        if self.access is None:
+            self.access = 0
+
+        for access in accesses:
+            access_current = bin(self.access)
+            access_new = bin(access)
+            self.access = int(access_current, 2) + int(access_new, 2)
 
     def __get_access_attributes(self, access_name: str) -> List[str]:
         return (self.options or {}).get(access_name)

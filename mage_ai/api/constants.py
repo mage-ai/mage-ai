@@ -3,6 +3,22 @@ from enum import Enum
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.orchestration.db.models.oauth import Permission
 
+
+class AttributeOperationType(str, Enum):
+    READ = 'read'
+    WRITE = 'write'
+
+
+class AttributeType(str, Enum):
+    ALL = '__*MAGE*__'
+
+
+class AuthorizeStatusType(str, Enum):
+    ALL = 'all'
+    FAILED = 'failed'
+    SUCCEEDED = 'succeeded'
+
+
 OPERATION_TYPE_TO_ACCESS_MAPPING = {
   OperationType.ALL: Permission.Access.ADMIN,
   OperationType.CREATE: Permission.Access.CREATE,
@@ -21,20 +37,15 @@ OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
   OperationType.UPDATE: Permission.Access.DISABLE_UPDATE,
 }
 
+ATTRIBUTE_OPERATION_TYPE_TO_ACCESS_MAPPING = {
+  AttributeOperationType.READ: Permission.Access.READ,
+  AttributeOperationType.WRITE: Permission.Access.WRITE,
+}
+
+ATTRIBUTE_OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
+  AttributeOperationType.READ: Permission.Access.DISABLE_READ,
+  AttributeOperationType.WRITE: Permission.Access.DISABLE_WRITE,
+}
+
 META_KEY_LIMIT = '_limit'
 META_KEY_OFFSET = '_offset'
-
-
-class AttributeOperationType(str, Enum):
-    READ = 'read'
-    WRITE = 'write'
-
-
-class AttributeType(str, Enum):
-    ALL = '__*MAGE*__'
-
-
-class AuthorizeStatusType(str, Enum):
-    ALL = 'all'
-    FAILED = 'failed'
-    SUCCEEDED = 'succeeded'

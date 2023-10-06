@@ -1,28 +1,19 @@
 import importlib
 import inspect
-from typing import List
 
 import inflection
 
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
+from mage_ai.api.mixins.result_set import ResultSetMixIn
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
-from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError
-from mage_ai.orchestration.db.models.oauth import (
-    Permission,
-    Role,
-    RolePermission,
-    UserRole,
-)
 from mage_ai.shared.hash import merge_dict
 
-CONTEXT_DATA_KEY_USER_PERMISSIONS = '__user_permissions'
 
-
-class BaseResource(Resource):
+class BaseResource(Resource, ResultSetMixIn):
     collective_loader_attr = {}
     datetime_keys = []
 
@@ -165,7 +156,12 @@ class BaseResource(Resource):
         pass
 
     @classmethod
-    async def process_create(self, payload, user, **kwargs):
+    async def process_create(
+        self,
+        payload,
+        user,
+        **kwargs,
+    ):
         self.on_create_callback = None
         self.on_create_failure_callback = None
         before_create = self.before_create(payload, user, **kwargs)
@@ -273,11 +269,16 @@ class BaseResource(Resource):
 
             raise err
 
-    def result_set(self):
+    def result_set(self) -> ResultSet:
         if self.__result_sets().get(self.__class__.__name__, None):
             return self.__result_sets()[self.__class__.__name__]
         elif not self.result_set_attr:
-            self.result_set_attr = ResultSet([self])
+            if self.result_set_from_external is not None:
+                self.result_set_attr = self.result_set_from_external
+                if self not in self.result_set_attr:
+                    self.result_set_attr.add_results([self])
+            else:
+                self.result_set_attr = ResultSet([self])
         return self.result_set_attr
 
     def update(self, payload, **kwargs):
@@ -305,65 +306,6 @@ class BaseResource(Resource):
                 self.result_set().context.data[k_name] = {}
             self.result_set().context.data[k_name][key] = loaded
         return loaded
-
-    @safe_db_query
-    async def load_and_cache_user_permissions(self) -> List[Permission]:
-        # This will fetch the user permissions and store it on the context data
-        # so that repeat policy user permission validations won’t keep querying the
-        # database for permissions.
-        if not self.current_user:
-            return
-
-        permissions = self.result_set().context.data.get(CONTEXT_DATA_KEY_USER_PERMISSIONS)
-        if permissions:
-            return permissions
-
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF0 running load_and_cache_user_permissions')
-
-        query = (
-            Permission.
-            select(
-                Permission.access,
-                Permission.entity,
-                Permission.entity_id,
-                Permission.entity_name,
-                Permission.entity_type,
-                Permission.id,
-                Permission.options,
-            ).
-            join(
-                RolePermission,
-                RolePermission.permission_id == Permission.id).
-            join(
-                Role,
-                Role.id == RolePermission.role_id).
-            join(
-                UserRole,
-                UserRole.role_id == Role.id).
-            filter(UserRole.user_id == self.current_user.id)
-        )
-
-        permissions = []
-
-        for row in query.all():
-            permission = Permission()
-            permission.access = row.access
-            permission.entity = row.entity
-            permission.entity_id = row.entity_id
-            permission.entity_name = row.entity_name
-            permission.entity_type = row.entity_type
-            permission.id = row.id
-            permission.options = row.options
-            permissions.append(permission)
-
-        self.result_set().context.data[CONTEXT_DATA_KEY_USER_PERMISSIONS] = permissions
-
-        print(
-            'WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF1 done load_and_cache_user_permissions',
-            self.result_set().context.data[CONTEXT_DATA_KEY_USER_PERMISSIONS],
-        )
-
-        return permissions
 
     def __result_sets(self):
         return self.model_options.get('result_sets', {})

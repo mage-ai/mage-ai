@@ -255,6 +255,7 @@ class BaseOperation():
             return await self.__resource_class().process_create(
                 payload,
                 self.user,
+                result_set_from_external=policy.result_set(),
                 **options,
             )
         elif LIST == self.action:
@@ -279,6 +280,7 @@ class BaseOperation():
                 self.query,
                 self.meta,
                 self.user,
+                result_set_from_external=policy.result_set(),
                 **options,
             )
 
