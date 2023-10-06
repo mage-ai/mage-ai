@@ -435,12 +435,17 @@ class Permission(BaseModel):
         ).all()
         new_permissions = []
         if len(permissions) == 0:
-            for access in [a.value for a in Permission.Access]:
+            for permission_access in [
+                Permission.Access.OWNER,
+                Permission.Access.ADMIN,
+                Permission.Access.EDITOR,
+                Permission.Access.VIEWER,
+            ]:
                 new_permissions.append(
                     self.create(
                         entity=entity,
                         entity_id=entity_id,
-                        access=access,
+                        access=permission_access.value,
                         commit=False,
                     )
                 )
