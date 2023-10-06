@@ -47,6 +47,7 @@ InteractionPolicy.allow_write([
     'content',
     'inputs',
     'layout',
+    'uuid',
     'variables',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
