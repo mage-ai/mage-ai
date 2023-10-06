@@ -124,6 +124,11 @@ async def validate_condition_with_permissions(
                 permission_granted = True
                 break
 
+            # Disable all operations
+            if permission_access & PermissionAccess.DISABLE_OPERATION_ALL.value:
+                permission_disabled = True
+                break
+
             has_access_for_all_operations = permission_access & PermissionAccess.OPERATION_ALL
             valid_for_operation = has_access_for_all_operations or permission_access & access
 
@@ -175,7 +180,7 @@ async def validate_condition_with_permissions(
                     elif AttributeOperationType.WRITE == attribute_operation_type:
                         disabled_attributes = permission.write_attributes
 
-                    if resource_attribute in disabled_attributes:
+                    if resource_attribute in (disabled_attributes or []):
                         permission_disabled = True
                         break
 
@@ -189,7 +194,7 @@ async def validate_condition_with_permissions(
                         elif AttributeOperationType.WRITE == attribute_operation_type:
                             permitted_attributes = permission.write_attributes
 
-                        valid_for_operation = resource_attribute in permitted_attributes
+                        valid_for_operation = resource_attribute in (permitted_attributes or [])
 
             if valid_for_operation:
                 permission_granted = True

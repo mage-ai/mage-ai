@@ -317,18 +317,26 @@ class Permission(BaseModel):
         CREATE = PermissionAccess.CREATE.value
         UPDATE = PermissionAccess.UPDATE.value
         DELETE = PermissionAccess.DELETE.value
+        OPERATION_ALL = PermissionAccess.OPERATION_ALL.value
         QUERY = PermissionAccess.QUERY.value
+        QUERY_ALL = PermissionAccess.QUERY_ALL.value
         READ = PermissionAccess.READ.value
+        READ_ALL = PermissionAccess.READ_ALL.value
         WRITE = PermissionAccess.WRITE.value
+        WRITE_ALL = PermissionAccess.WRITE_ALL.value
+        ALL = PermissionAccess.ALL.value
         DISABLE_LIST = PermissionAccess.DISABLE_LIST.value
         DISABLE_DETAIL = PermissionAccess.DISABLE_DETAIL.value
         DISABLE_CREATE = PermissionAccess.DISABLE_CREATE.value
         DISABLE_UPDATE = PermissionAccess.DISABLE_UPDATE.value
         DISABLE_DELETE = PermissionAccess.DISABLE_DELETE.value
+        DISABLE_OPERATION_ALL = PermissionAccess.DISABLE_OPERATION_ALL.value
         DISABLE_QUERY = PermissionAccess.DISABLE_QUERY.value
+        DISABLE_QUERY_ALL = PermissionAccess.DISABLE_QUERY_ALL.value
         DISABLE_READ = PermissionAccess.DISABLE_READ.value
+        DISABLE_READ_ALL = PermissionAccess.DISABLE_READ_ALL.value
         DISABLE_WRITE = PermissionAccess.DISABLE_WRITE.value
-        DISABLE_ALL = PermissionAccess.DISABLE_ALL.value
+        DISABLE_WRITE_ALL = PermissionAccess.DISABLE_WRITE_ALL.value
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)

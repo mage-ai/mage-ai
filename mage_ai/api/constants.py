@@ -21,7 +21,7 @@ class AuthorizeStatusType(str, Enum):
 
 
 OPERATION_TYPE_TO_ACCESS_MAPPING = {
-  OperationType.ALL: Permission.Access.ADMIN,
+  OperationType.ALL: Permission.Access.OPERATION_ALL,
   OperationType.CREATE: Permission.Access.CREATE,
   OperationType.DELETE: Permission.Access.DELETE,
   OperationType.DETAIL: Permission.Access.DETAIL,
@@ -30,7 +30,7 @@ OPERATION_TYPE_TO_ACCESS_MAPPING = {
 }
 
 OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
-  OperationType.ALL: Permission.Access.DISABLE_ALL,
+  OperationType.ALL: Permission.Access.DISABLE_OPERATION_ALL,
   OperationType.CREATE: Permission.Access.DISABLE_CREATE,
   OperationType.DELETE: Permission.Access.DISABLE_DELETE,
   OperationType.DETAIL: Permission.Access.DISABLE_DETAIL,

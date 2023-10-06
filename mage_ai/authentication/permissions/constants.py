@@ -117,6 +117,9 @@ class PermissionAccess(int, Enum):
     CREATE = 64
     UPDATE = 128
     DELETE = 512
+    # Operation all will allow user to perform list, detail, create, update, delete
+    # but doesn’t include granting access for query, read, and write attributes.
+    # Query, read, and write will still need to be manually granted.
     OPERATION_ALL = 1024
     QUERY = 2048
     QUERY_ALL = 4096
@@ -124,12 +127,14 @@ class PermissionAccess(int, Enum):
     READ_ALL = 16384
     WRITE = 32768
     WRITE_ALL = 65536
+    # All will allow operation all, query all, read all, and write all.
     ALL = 131072
     DISABLE_LIST = 262144
     DISABLE_DETAIL = 524288
     DISABLE_CREATE = 1048576
     DISABLE_UPDATE = 2097152
     DISABLE_DELETE = 4194304
+    # Disable all operations: list, detail, create, update, delete.
     DISABLE_OPERATION_ALL = 8388608
     DISABLE_QUERY = 16777216
     DISABLE_QUERY_ALL = 33554432
@@ -137,7 +142,6 @@ class PermissionAccess(int, Enum):
     DISABLE_READ_ALL = 134217728
     DISABLE_WRITE = 268435456
     DISABLE_WRITE_ALL = 536870912
-    DISABLE_ALL = 1073741824
 
 
 ACCESS_FOR_VIEWER = [
