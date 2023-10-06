@@ -1,14 +1,15 @@
 import React from 'react';
 
+import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { CardsStyle, ContainerStyle, VariableCardStyle } from './index.style';
-import { LIME_DARK } from '@oracle/styles/colors/main';
+import { ContainerStyle } from './index.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/utils';
 
 type RuntimeVariablesProps = {
   hasOverride?: boolean;
+  height: number;
   variables: {
     [key: string]: string | number;
   };
@@ -20,6 +21,7 @@ type RuntimeVariablesProps = {
 
 function RuntimeVariables({
   hasOverride,
+  height,
   scheduleType,
   variables,
   variablesOverride,
@@ -36,24 +38,36 @@ function RuntimeVariables({
   addTriggerVariables(variablesArr, scheduleType);
 
   return (
-    <ContainerStyle>
+    <ContainerStyle $height={height}>
       <Spacing mb={2}>
         <Text bold large monospace muted>
           Runtime variables{hasOverride && ' (override)'}
         </Text>
       </Spacing>
-      <CardsStyle noScrollbarTrackBackground>
-        {variables && variablesArr.map(({ uuid, value }) => (
-          <VariableCardStyle>
-            <Text monospace small>
-              {uuid}
-            </Text>
-            <Text color={LIME_DARK} monospace small>
-              {getFormattedVariable(value)}
-            </Text>
-          </VariableCardStyle>
-        ))}
-      </CardsStyle>
+      {variables && (
+        <SimpleDataTable 
+          columnFlexNumbers={[1, 1]}
+          columnHeaders={[
+              {
+                label: 'Variable',
+              },
+              {
+                label: 'Value',
+              },
+            ]}
+          rowGroupData={[
+            {
+              rowData: variablesArr.map(({ uuid, value }) => (
+                {
+                  columnValues: [uuid, value],
+                  uuid,
+                }
+              )),
+            },
+          ]}
+          small
+        />
+      )}
     </ContainerStyle>
   );
 }

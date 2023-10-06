@@ -85,7 +85,8 @@ function SimpleDataTable({
     <TableStyle
       flex={flex}
       height={height}
-      scrollbarBorderRadiusLarge
+      noBorder={noBorder}
+      noScrollbarTrackBackground
     >
       <ColumnHeaderRowStyle noBorder={noBorder}>
         <FlexContainer alignItems="center">

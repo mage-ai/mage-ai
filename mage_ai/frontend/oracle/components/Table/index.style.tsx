@@ -3,17 +3,19 @@ import styled from 'styled-components';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 export const PADDING_SIZE_UNITS = 1.5;
 
 export const TableStyle = styled.div<any>`
+  ${ScrollbarStyledCss}
+
   overflow-y: auto;
   position: relative;
   width: 100%;
   z-index: 3;
-  border-bottom-left-radius: ${BORDER_RADIUS}px;
-  border-bottom-right-radius: ${BORDER_RADIUS}px;
+  border-radius: ${BORDER_RADIUS}px;
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
@@ -21,9 +23,11 @@ export const TableStyle = styled.div<any>`
   ${props => props.height && `
     height: ${props.height}px;
   `}
-
   ${props => props.flex && `
     flex: 1;
+  `}
+  ${props => props.noBorder && `
+    border-radius: 0;
   `}
 `;
 
