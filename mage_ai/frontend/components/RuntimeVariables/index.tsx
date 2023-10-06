@@ -38,7 +38,7 @@ function RuntimeVariables({
   addTriggerVariables(variablesArr, scheduleType);
 
   return (
-    <ContainerStyle $height={height}>
+    <ContainerStyle height={height}>
       <Spacing mb={2}>
         <Text bold large monospace muted>
           Runtime variables{hasOverride && ' (override)'}

@@ -1,9 +1,9 @@
 import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 export const PADDING_SIZE_UNITS = 1.5;
