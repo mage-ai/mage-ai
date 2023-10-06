@@ -129,7 +129,9 @@ async def validate_condition_with_permissions(
 
                 if valid_for_operation and attribute_operation_type and resource_attribute:
                     permitted_attributes = []
-                    if AttributeOperationType.READ == attribute_operation_type:
+                    if AttributeOperationType.QUERY == attribute_operation_type:
+                        permitted_attributes = permission.query_attributes
+                    elif AttributeOperationType.READ == attribute_operation_type:
                         permitted_attributes = permission.read_attributes
                     elif AttributeOperationType.WRITE == attribute_operation_type:
                         permitted_attributes = permission.write_attributes
@@ -157,7 +159,7 @@ class UserPermissionMixIn:
         }
 
     @classmethod
-    def read_write_rule_with_permissions(
+    def attribute_rule_with_permissions(
         self,
         attribute_operation_type: AttributeOperationType,
         resource_attribute: str,

@@ -259,8 +259,15 @@ class BaseOperation():
                 **options,
             )
         elif LIST == self.action:
-            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
-                return policy.authorize_query(parsed_value)
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -309,8 +316,15 @@ class BaseOperation():
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
-            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
-                return policy.authorize_query(parsed_value)
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -329,7 +343,9 @@ class BaseOperation():
                             **merge_dict(updated_options, dict(query=self.query)),
                         )
                         policy = self.__policy_class()(res, self.user, **updated_options)
-                        await policy.authorize_query(self.query)
+                        await policy.authorize_query(self.query, **ignore_keys(updated_options, [
+                            'query',
+                        ]))
                     else:
                         raise error
             else:
@@ -353,8 +369,15 @@ class BaseOperation():
             else:
                 await _build_authorize_attributes(payload)
 
-            def _build_authorize_query(parsed_value: Any, policy=policy) -> Callable:
-                return policy.authorize_query(parsed_value)
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -364,7 +387,7 @@ class BaseOperation():
                 )
                 self.query = value_parsed
             else:
-                await _build_authorize_query(self.query)
+                await _build_authorize_query(self.query, **updated_options)
 
             options = merge_dict(updated_options.copy(), dict(query=self.query))
             options.pop('payload', None)

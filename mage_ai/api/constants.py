@@ -5,6 +5,7 @@ from mage_ai.orchestration.db.models.oauth import Permission
 
 
 class AttributeOperationType(str, Enum):
+    QUERY = 'query'
     READ = 'read'
     WRITE = 'write'
 
@@ -38,11 +39,13 @@ OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
 }
 
 ATTRIBUTE_OPERATION_TYPE_TO_ACCESS_MAPPING = {
+  AttributeOperationType.QUERY: Permission.Access.QUERY,
   AttributeOperationType.READ: Permission.Access.READ,
   AttributeOperationType.WRITE: Permission.Access.WRITE,
 }
 
 ATTRIBUTE_OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
+  AttributeOperationType.QUERY: Permission.Access.DISABLE_QUERY,
   AttributeOperationType.READ: Permission.Access.DISABLE_READ,
   AttributeOperationType.WRITE: Permission.Access.DISABLE_WRITE,
 }

@@ -1,5 +1,6 @@
 from enum import Enum
 
+ALL = 'all'
 CREATE = 'create'
 DELETE = 'delete'
 DETAIL = 'detail'
@@ -19,9 +20,9 @@ COOKIE_PREFIX = '__COOKIE__'
 
 
 class OperationType(str, Enum):
-    ALL = 'all'
-    CREATE = 'create'
-    DELETE = 'delete'
-    DETAIL = 'detail'
-    LIST = 'list'
-    UPDATE = 'update'
+    ALL = ALL
+    CREATE = CREATE
+    DELETE = DELETE
+    DETAIL = DETAIL
+    LIST = LIST
+    UPDATE = UPDATE

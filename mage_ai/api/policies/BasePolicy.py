@@ -69,6 +69,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
 
     @classmethod
     def query_rule(self, query):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.attribute_rule_with_permissions(AttributeOperationType.QUERY, query)
+
         if not self.query_rules.get(self.__name__):
             self.query_rules[self.__name__] = {}
         return self.query_rules[self.__name__].get(query)
@@ -76,7 +79,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     @classmethod
     def read_rule(self, read):
         if REQUIRE_USER_PERMISSIONS:
-            return self.read_write_rule_with_permissions(AttributeOperationType.READ, read)
+            return self.attribute_rule_with_permissions(AttributeOperationType.READ, read)
 
         if not self.read_rules.get(self.__name__):
             self.read_rules[self.__name__] = {}
@@ -84,6 +87,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
 
     @classmethod
     def write_rule(self, write):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.attribute_rule_with_permissions(AttributeOperationType.WRITE, write)
+
         if not self.write_rules.get(self.__name__):
             self.write_rules[self.__name__] = {}
         return self.write_rules[self.__name__].get(write)
@@ -92,7 +98,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     def allow_actions(self, array, **kwargs):
         if not self.action_rules.get(self.__name__):
             self.action_rules[self.__name__] = {}
-        for key in array:
+
+        array_use = array or [OperationType.ALL]
+        for key in array_use:
             if not self.action_rules[self.__name__].get(key):
                 self.action_rules[self.__name__][key] = {}
             for scope in kwargs.get('scopes', []):
@@ -108,8 +116,18 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         for key in array_use:
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
+            actions = kwargs.get('on_action', [OperationType.ALL])
+            actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
-                self.query_rules[self.__name__][key][scope] = extract(kwargs, ['condition'])
+                if not self.query_rules[self.__name__][key].get(scope):
+                    self.query_rules[self.__name__][key][scope] = {}
+                for action in actions:
+                    self.query_rules[self.__name__][key][scope][action] = extract(
+                        kwargs,
+                        [
+                            'condition',
+                        ],
+                    )
 
     @classmethod
     def allow_read(self, array, **kwargs):
@@ -273,39 +291,50 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         for attrb in attrbs:
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
-    async def authorize_query(self, query):
-        if self.is_owner():
+    async def authorize_query(self, query, **kwargs):
+        if self.is_owner() or not query:
             return True
 
-        if not query:
-            return
+        api_operation_action = self.options.get(
+            'api_operation_action',
+            kwargs.get('api_operation_action', OperationType.ALL),
+        )
 
         for key, value in query.items():
-            if key != settings.QUERY_API_KEY:
-                api_operation_action = self.options.get(
-                    'api_operation_action',
-                    OperationType.ALL,
-                )
+            if key == settings.QUERY_API_KEY:
+                continue
 
-                error_message = f'Query parameter {key} of value {value} ' \
-                    f'is not permitted on {api_operation_action} operation.'
+            error_message = f'Query parameter {key} of value {value} ' \
+                f'is not permitted on {api_operation_action} operation ' \
+                f'for {self.__class__.resource_name()}.'
 
-                config = self.__class__.query_rule(key) or \
-                    self.__class__.query_rule(AttributeType.ALL)
+            orig_config = self.__class__.query_rule(key) or \
+                self.__class__.query_rule(AttributeType.ALL)
 
-                if not config:
-                    error = ApiError.UNAUTHORIZED_ACCESS
-                    error.update({
-                        'message': error_message,
-                    })
-                    raise ApiError(error)
-                elif config.get(self.current_scope(), {}).get('condition'):
-                    await self.__validate_condition(
-                        key,
-                        config[self.current_scope()]['condition'],
-                        message=error_message,
-                        operation=api_operation_action,
-                    )
+            config = None
+            if orig_config:
+                await self.__validate_scopes(key, orig_config.keys())
+                config_scope = orig_config.get(self.current_scope(), {})
+                config = config_scope.get(api_operation_action)
+
+                if config is None:
+                    config = config_scope.get(OperationType.ALL)
+
+            if config is None:
+                error = ApiError.UNAUTHORIZED_ACCESS
+                error.update({
+                    'message': error_message,
+                })
+                raise ApiError(error)
+
+            cond = config.get('condition')
+
+            await self.__validate_condition(
+                key,
+                cond,
+                message=error_message,
+                operation=api_operation_action,
+            )
 
     def parent_model(self):
         if not self.parent_model_attr:
