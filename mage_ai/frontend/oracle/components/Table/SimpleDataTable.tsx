@@ -30,6 +30,7 @@ export type ColumnHeaderType = {
 };
 
 type RowDataType = {
+  columnTextColors?: (string | undefined)[]; // An undefined list item will have the default text color
   columnValues: (string | number | boolean | any)[];
   danger?: boolean;
   uuid?: string | number;
@@ -52,6 +53,7 @@ export type SimpleDataTableProps = {
   height?: number;
   isTextSelectionRequired?: boolean;
   noBorder?: boolean;
+  noBorderRadius?: boolean; // noBorder takes priority if there's a conflict
   onClickRow?: (opts: OnClickRowProps) => void;
   onHoverRow?: (opts: OnClickRowProps) => void;
   renderRowCellByIndex?: {
@@ -70,6 +72,7 @@ function SimpleDataTable({
   height,
   isTextSelectionRequired,
   noBorder,
+  noBorderRadius,
   onClickRow,
   onHoverRow,
   renderRowCellByIndex,
@@ -86,9 +89,10 @@ function SimpleDataTable({
       flex={flex}
       height={height}
       noBorder={noBorder}
+      noBorderRadius={noBorderRadius}
       noScrollbarTrackBackground
     >
-      <ColumnHeaderRowStyle noBorder={noBorder}>
+      <ColumnHeaderRowStyle noBorder={noBorder} noBorderRadius={noBorderRadius}>
         <FlexContainer alignItems="center">
           {columnHeaders.map(({
             Icon,
@@ -141,10 +145,12 @@ function SimpleDataTable({
 
         const numberOfRows = rowData?.length;
         rowData?.forEach(({
+          columnTextColors,
           columnValues,
           danger,
           uuid,
         }: {
+          columnTextColors: (string | undefined)[];
           columnValues: (string | number | any)[];
           danger: boolean;
           uuid: string;
@@ -159,6 +165,7 @@ function SimpleDataTable({
 
           columnValues?.forEach((value: any, cellIndex: number, arr: []) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
+            const textColor = columnTextColors ? columnTextColors[cellIndex] : undefined;
             if (Array.isArray(value)) {
               cells.push(
                 <Cell
@@ -172,6 +179,7 @@ function SimpleDataTable({
                   showBackground={rowIndex % 2 === 1}
                   showProgress={value[0]}
                   small={small}
+                  textColor={textColor}
                   value={value[1]}
                 />,
               );
@@ -190,6 +198,7 @@ function SimpleDataTable({
                   selected={isSelected}
                   showBackground={rowIndex % 2 === 1}
                   small={small}
+                  textColor={textColor}
                   value={value}
                   vanish={true}
                 />,
@@ -207,6 +216,7 @@ function SimpleDataTable({
                   selected={isSelected}
                   showBackground={rowIndex % 2 === 1}
                   small={small}
+                  textColor={textColor}
                   value={value}
                 />,
               );
@@ -225,6 +235,7 @@ function SimpleDataTable({
               hasHover={!!onHoverRow}
               key={`row-group-${key}-row-${rowIndex}`}
               noBorder={noBorder}
+              noBorderRadius={noBorderRadius}
               onMouseEnter={() => onHoverRow?.({
                 rowGroupIndex,
                 rowIndex,

@@ -196,7 +196,6 @@ function PipelineSchedules({
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
     const variablesOverride = selectedSchedule?.variables;
-    const hasOverride = !isEmptyObject(variablesOverride);
     const hasVariables = !isEmptyObject(variablesOrig);
 
     return (props: DependencyGraphProps) => {
@@ -209,20 +208,24 @@ function PipelineSchedules({
       let runtimeVariablesHeight = 80;
       if (hasVariables) {
         const maxVisibleRows = 5;
-        const rowHeight = 44;
+        const headerRowHeight = 46; // Includes top + bottom border
+        const rowHeight = 43; // Includes bottom border
         const numVariables = Object.keys(variablesOrig).length;
         const numVisibleRows = Math.min(maxVisibleRows, numVariables);
-        // This accounts for title + spacing + table in RuntimeVariables
-        runtimeVariablesHeight = 116 + numVisibleRows * rowHeight;
+        runtimeVariablesHeight = headerRowHeight + (numVisibleRows * rowHeight) + 1;
       }
    
       const dependencyGraphHeight = props.height - runtimeVariablesHeight;
 
       return (
         <>
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+            noStatus
+          />
           {hasVariables && (
             <RuntimeVariables
-              hasOverride={hasOverride}
               height={runtimeVariablesHeight}
               scheduleType={selectedSchedule?.schedule_type}
               variables={variablesOrig}
@@ -252,11 +255,6 @@ function PipelineSchedules({
               }
             </Spacing>
           )}
-          <DependencyGraph
-            {...props}
-            height={dependencyGraphHeight}
-            noStatus
-          />
         </>
       );
     };

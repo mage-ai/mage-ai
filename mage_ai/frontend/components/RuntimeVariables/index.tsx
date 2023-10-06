@@ -1,14 +1,12 @@
 import React from 'react';
 
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
-import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import { ContainerStyle } from './index.style';
+import { LIME_DARK } from '@oracle/styles/colors/main';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/utils';
 
 type RuntimeVariablesProps = {
-  hasOverride?: boolean;
   height: number;
   variables: {
     [key: string]: string | number;
@@ -20,7 +18,6 @@ type RuntimeVariablesProps = {
 };
 
 function RuntimeVariables({
-  hasOverride,
   height,
   scheduleType,
   variables,
@@ -37,28 +34,27 @@ function RuntimeVariables({
   });
   addTriggerVariables(variablesArr, scheduleType);
 
+  const numVariables = Object.keys(variables).length;
+
   return (
     <ContainerStyle height={height}>
-      <Spacing mb={2}>
-        <Text bold large monospace muted>
-          Runtime variables{hasOverride && ' (override)'}
-        </Text>
-      </Spacing>
       {variables && (
-        <SimpleDataTable 
+        <SimpleDataTable
           columnFlexNumbers={[1, 1]}
           columnHeaders={[
-              {
-                label: 'Variable',
-              },
-              {
-                label: 'Value',
-              },
-            ]}
+            {
+              label: `Runtime variable (${numVariables})`,
+            },
+            {
+              label: 'Value',
+            },
+          ]}
+          noBorderRadius
           rowGroupData={[
             {
               rowData: variablesArr.map(({ uuid, value }) => (
                 {
+                  columnTextColors: [LIME_DARK, undefined],
                   columnValues: [uuid, value],
                   uuid,
                 }
