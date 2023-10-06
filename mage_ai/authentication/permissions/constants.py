@@ -73,7 +73,6 @@ RESERVED_ENTITY_NAMES = [
     EntityName.Oauth,
     EntityName.OauthAccessToken,
     EntityName.OauthApplication,
-    EntityName.Project,
     EntityName.Workspace,
 ]
 

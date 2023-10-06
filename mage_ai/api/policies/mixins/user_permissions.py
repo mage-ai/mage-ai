@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Tuple
 
 from mage_ai.api.constants import (
     ATTRIBUTE_OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING,
@@ -82,13 +82,13 @@ async def validate_condition_with_permissions(
         disable_access_for_attribute_operation=disable_access_for_attribute_operation,
         attribute_operation_type=attribute_operation_type,
         resource_attribute=resource_attribute,
-    ) -> bool:
+    ) -> Tuple[bool, bool]:
         if permission.access is None:
-            return False
+            return (False, False)
 
         # Check if user is an owner
         if permission.access & PermissionAccess.OWNER:
-            return True
+            return (True, False)
 
         # 1. Get permissions for current entity_name for roles belonging to current user.
         # Include permissions where entity_name is ALL or ALL_EXCEPT_RESERVED.
@@ -100,17 +100,11 @@ async def validate_condition_with_permissions(
             )
 
         if not correct_entity_name:
-            return False
+            return (False, False)
 
         # 2a. Don’t grant access if permission disables access to this entity for this operation.
         if disable_access is not None and permission.access & disable_access:
-            return False
-
-        # 2a. Don’t grant access if permission disables access to this entity’s attributes for this
-        # attribute operation.
-        if disable_access_for_attribute_operation is not None and \
-                permission.access & disable_access_for_attribute_operation:
-            return False
+            return (False, True)
 
         # 3. Add additional permission access (e.g. read, list, detail for viewer)
         # to grant access to this entity and its attributes
@@ -118,20 +112,39 @@ async def validate_condition_with_permissions(
         if not permission_accesses:
             permission_accesses = [permission.access]
 
-        arr = []
+        permission_granted = False
+        permission_disabled = False
+
         for permission_access in permission_accesses:
+            if permission_granted:
+                break
+
+            # Access to all operations and attribute operations
+            if permission_access & PermissionAccess.ALL.value:
+                permission_granted = True
+                break
+
             has_access_for_all_operations = permission_access & PermissionAccess.OPERATION_ALL
             valid_for_operation = has_access_for_all_operations or permission_access & access
 
             # If this condition is validating attribute operations for an attribute:
             if access_for_attribute_operation:
                 access_for_all = 0
+                disable_access_for_all = 0
+
                 if AttributeOperationType.QUERY == attribute_operation_type:
                     access_for_all = PermissionAccess.QUERY_ALL
+                    disable_access_for_all = PermissionAccess.DISABLE_QUERY_ALL
                 elif AttributeOperationType.READ == attribute_operation_type:
                     access_for_all = PermissionAccess.READ_ALL
+                    disable_access_for_all = PermissionAccess.DISABLE_READ_ALL
                 elif AttributeOperationType.WRITE == attribute_operation_type:
                     access_for_all = PermissionAccess.WRITE_ALL
+                    disable_access_for_all = PermissionAccess.DISABLE_WRITE_ALL
+
+                if permission_access & disable_access_for_all:
+                    permission_disabled = True
+                    break
 
                 has_access_for_all_attributes = permission_access & access_for_all
                 valid_for_operation = valid_for_operation and \
@@ -139,6 +152,32 @@ async def validate_condition_with_permissions(
                         permission_access & access_for_attribute_operation or
                         has_access_for_all_attributes
                     )
+
+                print(
+                    'WTFFFFFFFFFFFFFFFFFFFFFF',
+                    disable_access_for_attribute_operation,
+                    resource_attribute,
+                    permission.id,
+                    permission.access,
+                    permission.access & disable_access_for_attribute_operation,
+                )
+
+                # Don’t grant access if permission disables access to this entity’s attributes
+                # for this attribute operation.
+                if disable_access_for_attribute_operation is not None and \
+                        permission.access & disable_access_for_attribute_operation:
+
+                    disabled_attributes = []
+                    if AttributeOperationType.QUERY == attribute_operation_type:
+                        disabled_attributes = permission.query_attributes
+                    elif AttributeOperationType.READ == attribute_operation_type:
+                        disabled_attributes = permission.read_attributes
+                    elif AttributeOperationType.WRITE == attribute_operation_type:
+                        disabled_attributes = permission.write_attributes
+
+                    if resource_attribute in disabled_attributes:
+                        permission_disabled = True
+                        break
 
                 if not has_access_for_all_attributes:
                     if valid_for_operation and attribute_operation_type and resource_attribute:
@@ -152,15 +191,27 @@ async def validate_condition_with_permissions(
 
                         valid_for_operation = resource_attribute in permitted_attributes
 
-            arr.append(valid_for_operation)
+            if valid_for_operation:
+                permission_granted = True
+                break
 
-        return any(arr)
+        return (permission_granted, permission_disabled)
 
     validation_results = await asyncio.gather(
         *[__permission_grants_access(p) for p in permissions]
     )
 
-    return any(validation_results)
+    authorized = False
+    unauthorized = False
+    for permission_granted, permission_disabled in validation_results:
+        if permission_disabled:
+            unauthorized = True
+            break
+
+        if permission_granted and not authorized:
+            authorized = True
+
+    return authorized and not unauthorized
 
 
 class UserPermissionMixIn:
