@@ -8,8 +8,11 @@ import inflection
 from mage_ai import settings
 from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.errors import ApiError
+from mage_ai.api.mixins.result_set import ResultSetMixIn
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.policies.mixins.user_permissions import UserPermissionMixIn
+from mage_ai.api.result_set import ResultSet
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
@@ -21,11 +24,15 @@ from mage_ai.api.utils import (
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import (
+    DISABLE_NOTEBOOK_EDIT_ACCESS,
+    REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
+)
 from mage_ai.shared.hash import extract
 
 
-class BasePolicy():
+class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     action_rules = {}
     query_rules = {}
     read_rules = {}
@@ -37,10 +44,15 @@ class BasePolicy():
         self.resource = resource
         self.parent_model_attr = None
         self.parent_resource_attr = None
-        if isinstance(resource, Iterable):
-            self.resources = resource
+        self.result_set_attr = None
+
+        if resource:
+            if isinstance(resource, Iterable):
+                self.resources = resource
+            else:
+                self.resources = [resource]
         else:
-            self.resources = [resource]
+            self.result_set_attr = ResultSet([])
 
     @property
     def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
@@ -48,24 +60,36 @@ class BasePolicy():
 
     @classmethod
     def action_rule(self, action):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.action_rule_with_permissions(action)
+
         if not self.action_rules.get(self.__name__):
             self.action_rules[self.__name__] = {}
         return self.action_rules[self.__name__].get(action)
 
     @classmethod
     def query_rule(self, query):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.attribute_rule_with_permissions(AttributeOperationType.QUERY, query)
+
         if not self.query_rules.get(self.__name__):
             self.query_rules[self.__name__] = {}
         return self.query_rules[self.__name__].get(query)
 
     @classmethod
     def read_rule(self, read):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.attribute_rule_with_permissions(AttributeOperationType.READ, read)
+
         if not self.read_rules.get(self.__name__):
             self.read_rules[self.__name__] = {}
         return self.read_rules[self.__name__].get(read)
 
     @classmethod
     def write_rule(self, write):
+        if REQUIRE_USER_PERMISSIONS:
+            return self.attribute_rule_with_permissions(AttributeOperationType.WRITE, write)
+
         if not self.write_rules.get(self.__name__):
             self.write_rules[self.__name__] = {}
         return self.write_rules[self.__name__].get(write)
@@ -74,7 +98,9 @@ class BasePolicy():
     def allow_actions(self, array, **kwargs):
         if not self.action_rules.get(self.__name__):
             self.action_rules[self.__name__] = {}
-        for key in array:
+
+        array_use = array or [OperationType.ALL]
+        for key in array_use:
             if not self.action_rules[self.__name__].get(key):
                 self.action_rules[self.__name__][key] = {}
             for scope in kwargs.get('scopes', []):
@@ -90,8 +116,18 @@ class BasePolicy():
         for key in array_use:
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
+            actions = kwargs.get('on_action', [OperationType.ALL])
+            actions = actions if isinstance(actions, list) else [actions]
             for scope in kwargs.get('scopes', []):
-                self.query_rules[self.__name__][key][scope] = extract(kwargs, ['condition'])
+                if not self.query_rules[self.__name__][key].get(scope):
+                    self.query_rules[self.__name__][key][scope] = {}
+                for action in actions:
+                    self.query_rules[self.__name__][key][scope][action] = extract(
+                        kwargs,
+                        [
+                            'condition',
+                        ],
+                    )
 
     @classmethod
     def allow_read(self, array, **kwargs):
@@ -128,6 +164,10 @@ class BasePolicy():
     @classmethod
     def resource_name(self):
         return inflection.pluralize(self.resource_name_singular())
+
+    @classmethod
+    def model_name(self) -> str:
+        return self.__name__.replace('Policy', '')
 
     @classmethod
     def resource_name_singular(self):
@@ -178,6 +218,9 @@ class BasePolicy():
         )
 
     async def authorize_action(self, action):
+        if self.is_owner():
+            return True
+
         config = self.__class__.action_rule(action)
         if config:
             await self.__validate_scopes(action, config.keys())
@@ -248,36 +291,50 @@ class BasePolicy():
         for attrb in attrbs:
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
-    async def authorize_query(self, query):
-        if not query:
-            return
+    async def authorize_query(self, query, **kwargs):
+        if self.is_owner() or not query:
+            return True
+
+        api_operation_action = self.options.get(
+            'api_operation_action',
+            kwargs.get('api_operation_action', OperationType.ALL),
+        )
 
         for key, value in query.items():
-            if key != settings.QUERY_API_KEY:
-                api_operation_action = self.options.get(
-                    'api_operation_action',
-                    OperationType.ALL,
-                )
+            if key == settings.QUERY_API_KEY:
+                continue
 
-                error_message = f'Query parameter {key} of value {value} ' \
-                    f'is not permitted on {api_operation_action} operation.'
+            error_message = f'Query parameter {key} of value {value} ' \
+                f'is not permitted on {api_operation_action} operation ' \
+                f'for {self.__class__.resource_name()}.'
 
-                config = self.__class__.query_rule(key) or \
-                    self.__class__.query_rule(AttributeType.ALL)
+            orig_config = self.__class__.query_rule(key) or \
+                self.__class__.query_rule(AttributeType.ALL)
 
-                if not config:
-                    error = ApiError.UNAUTHORIZED_ACCESS
-                    error.update({
-                        'message': error_message,
-                    })
-                    raise ApiError(error)
-                elif config.get(self.current_scope(), {}).get('condition'):
-                    await self.__validate_condition(
-                        key,
-                        config[self.current_scope()]['condition'],
-                        message=error_message,
-                        operation=api_operation_action,
-                    )
+            config = None
+            if orig_config:
+                await self.__validate_scopes(key, orig_config.keys())
+                config_scope = orig_config.get(self.current_scope(), {})
+                config = config_scope.get(api_operation_action)
+
+                if config is None:
+                    config = config_scope.get(OperationType.ALL)
+
+            if config is None:
+                error = ApiError.UNAUTHORIZED_ACCESS
+                error.update({
+                    'message': error_message,
+                })
+                raise ApiError(error)
+
+            cond = config.get('condition')
+
+            await self.__validate_condition(
+                key,
+                cond,
+                message=error_message,
+                operation=api_operation_action,
+            )
 
     def parent_model(self):
         if not self.parent_model_attr:
@@ -306,6 +363,12 @@ class BasePolicy():
         else:
             return OauthScope.CLIENT_PUBLIC
 
+    def result_set(self) -> ResultSet:
+        if self.resource:
+            return self.resource.result_set()
+
+        return self.result_set_attr
+
     async def __validate_condition(
         self,
         action,
@@ -322,15 +385,16 @@ class BasePolicy():
             validation = await validation
 
         if not validation:
+            r_name = self.resource_name()
             error = ApiError.UNAUTHORIZED_ACCESS
-            message = f'Unauthorized access for {action}'
+            message = f'Unauthorized access for {action} on {r_name}'
 
             if attribute_operation:
-                message = f'Unauthorized {attribute_operation} access for {action}'
+                message = f'Unauthorized {attribute_operation} access for {action} on {r_name}'
                 if operation:
-                    message = f'{message} on {operation} operation'
+                    message = f'{message} for {operation} operation'
             elif operation:
-                message = f'Unauthorized access for {action} on {operation} operation'
+                message = f'Unauthorized operation {operation} on {r_name}'
 
             error.update({
                 'message': kwargs.get(

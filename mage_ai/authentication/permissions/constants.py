@@ -4,6 +4,8 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 
 
 class EntityName(str, Enum):
+    ALL = 'ALL'
+    ALL_EXCEPT_RESERVED = 'ALL_EXCEPT_RESERVED'
     AutocompleteItem = 'AutocompleteItem'
     Backfill = 'Backfill'
     Block = 'Block'
@@ -67,6 +69,14 @@ class EntityName(str, Enum):
     Workspace = 'Workspace'
 
 
+RESERVED_ENTITY_NAMES = [
+    EntityName.Oauth,
+    EntityName.OauthAccessToken,
+    EntityName.OauthApplication,
+    EntityName.Workspace,
+]
+
+
 class BaseEntityType(str, Enum):
     pass
 
@@ -93,3 +103,71 @@ class PipelineEntityType(BaseEntityType):
     PYTHON = PipelineType.PYTHON.value
     PYSPARK = PipelineType.PYSPARK.value
     STREAMING = PipelineType.STREAMING.value
+
+
+class PermissionAccess(int, Enum):
+    OWNER = 1
+    ADMIN = 2
+    # Editor: list, detail, create, update, delete
+    EDITOR = 4
+    # Viewer: list, detail
+    VIEWER = 8
+    LIST = 16
+    DETAIL = 32
+    CREATE = 64
+    UPDATE = 128
+    DELETE = 512
+    # Operation all will allow user to perform list, detail, create, update, delete
+    # but doesn’t include granting access for query, read, and write attributes.
+    # Query, read, and write will still need to be manually granted.
+    OPERATION_ALL = 1024
+    QUERY = 2048
+    QUERY_ALL = 4096
+    READ = 8192
+    READ_ALL = 16384
+    WRITE = 32768
+    WRITE_ALL = 65536
+    # All will allow operation all, query all, read all, and write all.
+    ALL = 131072
+    DISABLE_LIST = 262144
+    DISABLE_DETAIL = 524288
+    DISABLE_CREATE = 1048576
+    DISABLE_UPDATE = 2097152
+    DISABLE_DELETE = 4194304
+    # Disable all operations: list, detail, create, update, delete.
+    DISABLE_OPERATION_ALL = 8388608
+    DISABLE_QUERY = 16777216
+    DISABLE_QUERY_ALL = 33554432
+    DISABLE_READ = 67108864
+    DISABLE_READ_ALL = 134217728
+    DISABLE_WRITE = 268435456
+    DISABLE_WRITE_ALL = 536870912
+
+
+ACCESS_FOR_VIEWER = [
+    PermissionAccess.DETAIL,
+    PermissionAccess.LIST,
+    PermissionAccess.READ,
+    PermissionAccess.VIEWER,
+]
+ACCESS_FOR_EDITOR = ACCESS_FOR_VIEWER + [
+    PermissionAccess.CREATE,
+    PermissionAccess.DELETE,
+    PermissionAccess.EDITOR,
+    PermissionAccess.QUERY,
+    PermissionAccess.UPDATE,
+    PermissionAccess.WRITE,
+]
+ACCESS_FOR_ADMIN = ACCESS_FOR_VIEWER + ACCESS_FOR_EDITOR + [
+    PermissionAccess.ADMIN,
+]
+ACCESS_FOR_OWNER = ACCESS_FOR_ADMIN + [
+    PermissionAccess.OWNER,
+]
+
+PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS = {
+    f'{PermissionAccess.ADMIN}': ACCESS_FOR_ADMIN,
+    f'{PermissionAccess.EDITOR}': ACCESS_FOR_EDITOR,
+    f'{PermissionAccess.OWNER}': ACCESS_FOR_OWNER,
+    f'{PermissionAccess.VIEWER}': ACCESS_FOR_VIEWER,
+}

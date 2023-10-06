@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship, validates
 from mage_ai.authentication.permissions.constants import (
     BlockEntityType,
     EntityName,
+    PermissionAccess,
     PipelineEntityType,
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
@@ -260,7 +261,8 @@ class Role(BaseModel):
         access = 0
         if permissions:
             for permission in permissions:
-                access = access | permission.access
+                if permission.access is not None:
+                    access = access | permission.access
             return access
         else:
             # TODO: Handle permissions with different entity types better.
@@ -306,20 +308,35 @@ class UserRole(BaseModel):
 
 class Permission(BaseModel):
     class Access(int, enum.Enum):
-        OWNER = 1
-        ADMIN = 2
-        # Editor: list, detail, create, update, delete
-        EDITOR = 4
-        # Viewer: list, detail
-        VIEWER = 8
-        LIST = 16
-        DETAIL = 32
-        CREATE = 64
-        UPDATE = 128
-        DELETE = 512
-        QUERY = 1024
-        READ = 2048
-        WRITE = 4096
+        OWNER = PermissionAccess.OWNER.value
+        ADMIN = PermissionAccess.ADMIN.value
+        EDITOR = PermissionAccess.EDITOR.value
+        VIEWER = PermissionAccess.VIEWER.value
+        LIST = PermissionAccess.LIST.value
+        DETAIL = PermissionAccess.DETAIL.value
+        CREATE = PermissionAccess.CREATE.value
+        UPDATE = PermissionAccess.UPDATE.value
+        DELETE = PermissionAccess.DELETE.value
+        OPERATION_ALL = PermissionAccess.OPERATION_ALL.value
+        QUERY = PermissionAccess.QUERY.value
+        QUERY_ALL = PermissionAccess.QUERY_ALL.value
+        READ = PermissionAccess.READ.value
+        READ_ALL = PermissionAccess.READ_ALL.value
+        WRITE = PermissionAccess.WRITE.value
+        WRITE_ALL = PermissionAccess.WRITE_ALL.value
+        ALL = PermissionAccess.ALL.value
+        DISABLE_LIST = PermissionAccess.DISABLE_LIST.value
+        DISABLE_DETAIL = PermissionAccess.DISABLE_DETAIL.value
+        DISABLE_CREATE = PermissionAccess.DISABLE_CREATE.value
+        DISABLE_UPDATE = PermissionAccess.DISABLE_UPDATE.value
+        DISABLE_DELETE = PermissionAccess.DISABLE_DELETE.value
+        DISABLE_OPERATION_ALL = PermissionAccess.DISABLE_OPERATION_ALL.value
+        DISABLE_QUERY = PermissionAccess.DISABLE_QUERY.value
+        DISABLE_QUERY_ALL = PermissionAccess.DISABLE_QUERY_ALL.value
+        DISABLE_READ = PermissionAccess.DISABLE_READ.value
+        DISABLE_READ_ALL = PermissionAccess.DISABLE_READ_ALL.value
+        DISABLE_WRITE = PermissionAccess.DISABLE_WRITE.value
+        DISABLE_WRITE_ALL = PermissionAccess.DISABLE_WRITE_ALL.value
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
@@ -429,6 +446,15 @@ class Permission(BaseModel):
                 )
             db_connection.session.commit()
         return new_permissions
+
+    @classmethod
+    def add_accesses(self, accesses: List[PermissionAccess]) -> int:
+        current = 0
+        for access in accesses:
+            access_current = bin(current)
+            access_new = bin(access)
+            current = int(access_current, 2) + int(access_new, 2)
+        return current
 
     @property
     def query_attributes(self) -> List[str]:

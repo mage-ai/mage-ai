@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
 from mage_ai.api.operations import constants
+from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 
 
@@ -10,9 +12,11 @@ class OperationTests(BaseApiTestCase):
         operation = self.build_operation(
             action=constants.CREATE,
             payload=dict(block=dict(
-                name='test block'
+                name='test block',
+                type=BlockType.DATA_LOADER,
             )),
             resource='blocks',
+            user=None,
         )
         response = await operation.execute()
 
@@ -24,9 +28,11 @@ class OperationTests(BaseApiTestCase):
         operation = self.build_operation(
             action=constants.CREATE,
             payload=dict(block=dict(
-                name='test block'
+                name='test block',
+                type=BlockType.DATA_LOADER,
             )),
             resource='blocks',
+            user=User(),
         )
         response = await operation.execute()
 
