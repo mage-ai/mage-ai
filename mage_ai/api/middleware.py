@@ -18,8 +18,8 @@ from mage_ai.shared.array import find
 
 
 class OAuthMiddleware(RequestHandler):
-    def initialize(self, bypass_oauth_check: bool = False) -> None:
-        self.bypass_oauth_check = bypass_oauth_check
+    def initialize(self, **kwargs) -> None:
+        self.bypass_oauth_check = kwargs.get('bypass_oauth_check', False)
 
     def prepare(self):
         self.request.__setattr__('current_user', None)

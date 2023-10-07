@@ -5,9 +5,11 @@ import shutil
 import stat
 import traceback
 import webbrowser
+from datetime import datetime
 from time import sleep
 from typing import Union
 
+import pytz
 import tornado.ioloop
 import tornado.web
 from tornado import autoreload
@@ -94,6 +96,17 @@ BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
 BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
 logger = Logger().new_server_logger(__name__)
+
+
+class ActivityTracker:
+    def __init__(self):
+        self.latest_activity = None
+
+    def update_latest_activity(self):
+        self.latest_activity = datetime.now(tz=pytz.UTC)
+
+
+latest_user_activity = ActivityTracker()
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -241,7 +254,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (
             r'/api/status(?:es)?',
             ApiListHandler,
-            {'resource': 'statuses', 'bypass_oauth_check': True},
+            {
+                'resource': 'statuses',
+                'bypass_oauth_check': True,
+                'is_health_check': True,
+            },
         ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',

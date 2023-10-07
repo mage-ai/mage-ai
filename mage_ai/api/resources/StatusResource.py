@@ -9,6 +9,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.settings import (
@@ -16,6 +17,7 @@ from mage_ai.settings import (
     is_disable_pipeline_edit_access,
 )
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import merge_dict
 
 
 class StatusResource(GenericResource):
@@ -23,6 +25,7 @@ class StatusResource(GenericResource):
     Resource to fetch block output for the notebook. Created to support legacy
     endpoint /api/pipelines/<pipeline_uuid>/blocks/<block_uuid>/outputs
     """
+
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
@@ -31,6 +34,8 @@ class StatusResource(GenericResource):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
+        from mage_ai.server.server import latest_user_activity
+
         instance_type = None
         project_type = get_project_type()
         repo_config = get_repo_config()
@@ -45,6 +50,7 @@ class StatusResource(GenericResource):
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
                     WorkloadManager,
                 )
+
                 if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
                     instance_type = ClusterType.K8S
             except ModuleNotFoundError:
@@ -61,5 +67,34 @@ class StatusResource(GenericResource):
             'project_type': project_type,
             'project_uuid': get_project_uuid(),
         }
+
+        display_format = meta.get('_format')
+        if 'with_activity_details' == display_format:
+            project_schedules = PipelineSchedule.repo_query.all()
+            project_schedule_ids = [schedule.id for schedule in project_schedules]
+            project_pipeline_runs = PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id.in_(project_schedule_ids)
+            )
+            sorted_pipeline_runs = project_pipeline_runs.order_by(
+                PipelineRun.updated_at.desc()
+            )
+            if sorted_pipeline_runs.count() > 0:
+                last_scheduler_activity = sorted_pipeline_runs[0].updated_at
+            active_pipeline_run_count = project_pipeline_runs.filter(
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                )
+            ).count()
+
+            activity_details = {
+                'last_user_request': latest_user_activity.latest_activity,
+                'last_scheduler_activity': last_scheduler_activity,
+                'active_pipeline_run_count': active_pipeline_run_count,
+            }
+
+            status = merge_dict(status, activity_details)
 
         return self.build_result_set([status], user, **kwargs)
