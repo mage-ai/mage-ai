@@ -19,6 +19,7 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
     has_drop_statement,
+    has_update_statement,
     interpolate_vars,
     split_query_string,
     table_name_parts_from_query,
@@ -29,6 +30,7 @@ from mage_ai.io.config import ConfigFileLoader
 from mage_ai.settings.repo import get_repo_path
 
 PREVIEWABLE_BLOCK_TYPES = [
+    BlockType.CUSTOM,
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
     BlockType.DBT,
@@ -646,16 +648,17 @@ def execute_raw_sql(
 
     has_create_or_insert = has_create_or_insert_statement(query_string)
     has_drop = has_drop_statement(query_string)
+    has_update = has_update_statement(query_string)
 
     for query in split_query_string(query_string):
-        if has_create_or_insert or has_drop:
+        if has_create_or_insert or has_drop or has_update:
             queries.append(query)
             fetch_query_at_indexes.append(False)
         else:
             queries.append(query)
             fetch_query_at_indexes.append(True)
 
-    if should_query and has_create_or_insert:
+    if should_query and (has_create_or_insert or has_update) and block.full_table_name:
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(block.full_table_name)
 

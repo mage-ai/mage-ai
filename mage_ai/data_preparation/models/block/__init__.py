@@ -551,6 +551,7 @@ class Block(DataIntegrationMixin):
         from mage_ai.data_preparation.models.block.sql.utils.shared import (
             extract_create_statement_table_name,
             extract_insert_statement_table_names,
+            extract_update_statement_table_names,
         )
 
         if not self.content:
@@ -561,6 +562,9 @@ class Block(DataIntegrationMixin):
             return table_name
 
         matches = extract_insert_statement_table_names(self.content)
+        if len(matches) == 0:
+            matches = extract_update_statement_table_names(self.content)
+
         if len(matches) == 0:
             return None
 
