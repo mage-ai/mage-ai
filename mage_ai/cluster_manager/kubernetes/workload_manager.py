@@ -1,8 +1,10 @@
+import json
 import os
 from typing import Dict, List
 
 import yaml
 from kubernetes import client, config
+from kubernetes.stream import stream
 
 from mage_ai.cluster_manager.config import WorkspaceConfig
 from mage_ai.cluster_manager.constants import (
@@ -55,14 +57,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        try:
-            config.load_incluster_config()
-            return True
-        except Exception:
-            pass
+        # try:
+        #     config.load_incluster_config()
+        #     return True
+        # except Exception:
+        #     pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/kubeconfig')
         except Exception:
             pass
 
@@ -71,6 +73,15 @@ class WorkloadManager:
     def list_workloads(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
         workloads_list = []
+
+        stateful_sets = self.apps_client.list_namespaced_stateful_set(self.namespace).items
+        stateful_set_mapping = dict()
+        for ss in stateful_sets:
+            try:
+                name = ss.metadata.name
+                stateful_set_mapping[name] = ss
+            except Exception:
+                pass
 
         pods = self.core_client.list_namespaced_pod(self.namespace).items
         pod_mapping = dict()
@@ -86,6 +97,7 @@ class WorkloadManager:
                 if not labels.get('dev-instance'):
                     continue
                 name = labels.get('app')
+                stateful_set = stateful_set_mapping.get(name)
                 service_type = service.spec.type
                 workload = dict(
                     name=name,
@@ -113,6 +125,8 @@ class WorkloadManager:
                                     workload['ip'] = f'{ip}:{node_port}'
                         except Exception:
                             pass
+                elif stateful_set and stateful_set.spec.replicas == 0:
+                    workload['status'] = 'STOPPED'
                 else:
                     workload['status'] = 'UNAVAILABLE'
 
@@ -148,6 +162,13 @@ class WorkloadManager:
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
         ingress_name = kwargs.get('ingress_name')
+
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
 
         # Create stateful set
         env_vars = self.__populate_env_vars(
@@ -356,6 +377,52 @@ class WorkloadManager:
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
         # TODO: remove service from ingress paths
 
+    def get_workload_activity(self, name: str) -> Dict:
+        pods = self.core_client.list_namespaced_pod(self.namespace).items
+        pod_name = None
+        for pod in pods:
+            try:
+                metadata_name = pod.metadata.labels.get('app')
+                if metadata_name == name:
+                    pod_name = pod.metadata.name
+                    break
+            except Exception:
+                pass
+        if pod_name:
+            exec_command = [
+                '/bin/sh',
+                '-c',
+                'curl',
+                '--request',
+                'GET',
+                '--url',
+                'http://localhost:6789/api/statuses?_format=with_activity_details',
+                '--header',
+                'Content-Type: application/json',
+            ]
+            resp = stream(
+                self.core_client.connect_get_namespaced_pod_exec,
+                pod_name,
+                self.namespace,
+                command=exec_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+            status = json.loads(resp).get('statuses')[0]
+            return status
+
+    def scale_down_workload(self, name: str) -> None:
+        self.apps_client.patch_namespaced_stateful_set_scale(
+            name, namespace=self.namespace, body={'spec': {'replicas': 0}},
+        )
+
+    def restart_workload(self, name: str) -> None:
+        self.apps_client.patch_namespaced_stateful_set_scale(
+            name, namespace=self.namespace, body={'spec': {'replicas': 1}},
+        )
+
     def __populate_env_vars(
         self,
         name,
@@ -530,7 +597,7 @@ class WorkloadManager:
             }
         }
         persistent_volumes = self.core_client.list_persistent_volume().items
-        for pv in persistent_volumes:
-            if pv.metadata.name == f'{name}-pv':
+        for volume in persistent_volumes:
+            if volume.metadata.name == f'{name}-pv':
                 return
         self.core_client.create_persistent_volume(pv)

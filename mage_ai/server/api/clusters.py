@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 
 import yaml
 
@@ -12,19 +11,13 @@ from mage_ai.cluster_manager.constants import (
     GCP_REGION,
     KUBE_NAMESPACE,
     KUBE_STORAGE_CLASS_NAME,
+    ClusterType,
 )
 from mage_ai.server.logger import Logger
 
 from .base import BaseHandler
 
 logger = Logger().new_server_logger(__name__)
-
-
-class ClusterType(str, Enum):
-    EMR = 'emr'
-    ECS = 'ecs'
-    CLOUD_RUN = 'cloud_run'
-    K8S = 'k8s'
 
 
 class ApiInstancesHandler(BaseHandler):
