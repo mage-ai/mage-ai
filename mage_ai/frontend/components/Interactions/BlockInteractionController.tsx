@@ -109,6 +109,7 @@ function BlockInteractionController({
     <div>
       {isEditing && (
         <InteractionSettings
+          containerWidth={containerWidth}
           interaction={interaction}
           removeBlockInteraction={removeBlockInteraction}
           updateInteraction={updateInteraction}

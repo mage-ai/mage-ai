@@ -138,6 +138,7 @@ import {
   hasErrorOrOutput,
 } from './utils';
 import { capitalize, pluralize } from '@utils/string';
+import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { find, indexBy } from '@utils/array';
 import { get, set } from '@storage/localStorage';
@@ -559,6 +560,28 @@ function CodeBlock({
       setSelectedTab(TAB_DBT_LOGS_UUID);
     }
 
+    const variablesToUse = {
+      ...(variablesOverride || variables),
+    };
+    if (blockInteractions?.length >= 1) {
+      blockInteractions?.forEach(({ uuid }) => {
+        const interaction = interactionsMapping?.[uuid];
+        Object.entries(interaction?.variables || {}).forEach(([
+          variableUUID,
+          {
+            types
+          },
+        ]) => {
+          if (variablesToUse && variableUUID in variablesToUse) {
+            variablesToUse[variableUUID] = convertValueToVariableDataType(
+              variablesToUse[variableUUID],
+              types,
+            );
+          }
+        });
+      });
+    }
+
     runBlock?.({
       block: blockPayload,
       code: code || content,
@@ -567,7 +590,7 @@ function CodeBlock({
       runSettings,
       runTests: runTests || false,
       runUpstream: runUpstream || false,
-      variables: variablesOverride || variables,
+      variables: variablesToUse,
     });
 
     if (!disableReset) {
@@ -576,8 +599,10 @@ function CodeBlock({
       setOutputCollapsed(false);
     }
   }, [
+    blockInteractions,
     content,
     hasDownstreamWidgets,
+    interactionsMapping,
     isDBT,
     runBlock,
     runCount,
@@ -2395,7 +2420,7 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {(!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
+              {(!selectedSubheaderTabUUID || !blockInteractions?.length || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                 && !codeCollapsed
                 && variablesFromBlockInteractions
                 && (
@@ -2406,7 +2431,10 @@ function CodeBlock({
                 </SubheaderStyle>
               )}
 
-              {SUBHEADER_TAB_INTERACTIONS.uuid === selectedSubheaderTabUUID && !codeCollapsed && (
+              {SUBHEADER_TAB_INTERACTIONS.uuid === selectedSubheaderTabUUID
+                && blockInteractions?.length >= 1
+                && !codeCollapsed
+                && (
                 <>
                   {blockInteractionsMemo}
                 </>
@@ -2415,6 +2443,7 @@ function CodeBlock({
               {!blockError
                 && (
                   !selectedSubheaderTabUUID
+                    || !blockInteractions?.length
                     || SUBHEADER_TAB_CODE.uuid === selectedSubheaderTabUUID
                   )
                 &&

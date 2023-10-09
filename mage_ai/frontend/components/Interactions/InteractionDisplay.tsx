@@ -103,7 +103,7 @@ function InteractionDisplay({
                       {...sharedProps}
                       label={label}
                       checked={!!currentValue}
-                      onClick={() => setVariables(prev => ({
+                      onClick={() => setVariables?.(prev => ({
                         ...prev,
                         [variableUUID]: {
                           ...checkboxValues,
@@ -128,7 +128,7 @@ function InteractionDisplay({
                   <TextArea
                     {...sharedProps}
                     key={`${key}-${inputType}`}
-                    onChange={(e) => setVariables(prev => ({
+                    onChange={(e) => setVariables?.(prev => ({
                       ...prev,
                       [variableUUID]: e.target.value,
                     }))}
@@ -139,7 +139,7 @@ function InteractionDisplay({
                   <TextInput
                     {...sharedProps}
                     key={`${key}-${inputType}`}
-                    onChange={(e) => setVariables(prev => ({
+                    onChange={(e) => setVariables?.(prev => ({
                       ...prev,
                       [variableUUID]: e.target.value,
                     }))}
@@ -155,7 +155,7 @@ function InteractionDisplay({
             <Select
               {...sharedProps}
               key={`${key}-${inputType}`}
-              onChange={(e) => setVariables(prev => ({
+              onChange={(e) => setVariables?.(prev => ({
                 ...prev,
                 [variableUUID]: e.target.value,
               }))}
@@ -181,7 +181,7 @@ function InteractionDisplay({
                   checked={variableValue as boolean}
                   compact
                   key={`${key}-${inputType}`}
-                  onCheck={(valFunc: (val: boolean) => boolean) => setVariables(prev => ({
+                  onCheck={(valFunc: (val: boolean) => boolean) => setVariables?.(prev => ({
                     ...prev,
                     [variableUUID]: valFunc(variableValue),
                   }))}

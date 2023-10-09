@@ -49,6 +49,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
@@ -99,6 +100,16 @@ class PipelineSchedule(BaseModel):
                 PipelineSchedule.repo_path.is_(None),
             )
         )
+
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
 
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
