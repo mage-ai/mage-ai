@@ -26,7 +26,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     schedule_all,
 )
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
@@ -110,6 +110,7 @@ class PipelineSchedulerTests(DBTestCase):
             print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
 
         shared_attrs = dict(
+            name='trigger',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
             schedule_type=ScheduleType.TIME,
@@ -151,6 +152,7 @@ class PipelineSchedulerTests(DBTestCase):
             print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
 
         shared_attrs = dict(
+            name='trigger',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
             schedule_type=ScheduleType.TIME,
@@ -272,7 +274,8 @@ class PipelineSchedulerTests(DBTestCase):
         mock_has_pipeline_run_job.return_value = False
         mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
-        mock_job_manager.add_job.assert_called_once_with(
+
+        call_args = [
             JobType.PIPELINE_RUN,
             pipeline_run.id,
             mock_run_pipeline,
@@ -288,7 +291,16 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline_schedule_id=pipeline_run.pipeline_schedule_id,
                 pipeline_uuid='test_pipeline_2',
             ),
-        )
+        ]
+
+        self.assertTrue(len(mock_job_manager.add_job.mock_calls) == 1)
+
+        mock_call = mock_job_manager.add_job.mock_calls[0]
+
+        for i in range(5):
+            self.assertEqual(call_args[i], mock_call[1][i])
+
+        self.assertEqual(call_args[5], ignore_keys(mock_call[1][5], ['hostname']))
 
     def test_on_block_complete(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
@@ -458,6 +470,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule = PipelineSchedule.create(
             name='test_sla_pipeline_trigger',
             pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
             sla=600,
         )
         pipeline_schedule.update(
@@ -501,6 +514,7 @@ class PipelineSchedulerTests(DBTestCase):
         PipelineSchedule.create(
             name='test_sla_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
             start_time=datetime(2023, 4, 1, 1, 20, 33),
             schedule_interval='@hourly',
@@ -508,6 +522,7 @@ class PipelineSchedulerTests(DBTestCase):
         PipelineSchedule.create(
             name='test_sla_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
             start_time=datetime(2023, 4, 5, 1, 20, 33),
             schedule_interval='@hourly',
@@ -536,6 +551,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule = PipelineSchedule.create(
             name='test_timeout_pipeline_trigger',
             pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
             settings=dict(timeout=600),
         )
         pipeline_schedule.update(
@@ -583,6 +599,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule = PipelineSchedule.create(
             name='test_block_timeout_pipeline_trigger',
             pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
         )
 
         block = pipeline.get_block('block1')

@@ -15,6 +15,7 @@ class InteractionInputStyleInputType(str, Enum):
 
 
 class InteractionVariableType(str, Enum):
+    BOOLEAN = 'boolean'
     DATE = 'date'
     DATETIME = 'datetime'
     DICTIONARY = 'dictionary'

@@ -44,6 +44,7 @@ import { removeAtIndex } from '@utils/array';
 
 type InteractionSettingsProps = {
   children?: any;
+  containerWidth?: number;
   interaction: InteractionType;
   removeBlockInteraction?: () => void;
   updateInteraction: (interaction: InteractionType) => void;
@@ -51,6 +52,7 @@ type InteractionSettingsProps = {
 
 function InteractionSettings({
   children,
+  containerWidth,
   interaction,
   removeBlockInteraction,
   updateInteraction: updateInteractionProp,
@@ -665,6 +667,7 @@ function InteractionSettings({
   const interactionLayoutMemo = useMemo(() => (
     <InteractionLayoutContainer
       containerRef={containerRef}
+      containerWidth={containerWidth}
       interaction={interaction}
       showVariableUUID
       updateLayout={(
@@ -675,6 +678,7 @@ function InteractionSettings({
     />
   ), [
     containerRef,
+    containerWidth,
     interaction,
     updateInteraction,
   ]);
