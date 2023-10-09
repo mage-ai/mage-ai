@@ -53,7 +53,7 @@ class BaseParser:
     @classmethod
     def parse_query(
         self,
-        parser: Callable[['BaseParser', Any, Dict], Any],
+        parser: Callable[['BaseParser', Any, Union[ApiError], Dict], Any],
         on_action: Union[List[OperationType], OperationType] = None,
         on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
@@ -83,7 +83,7 @@ class BaseParser:
     @classmethod
     def parse_read(
         self,
-        parser: Callable[['BaseParser', Any, Dict], Any],
+        parser: Callable[['BaseParser', Any, Union[ApiError, Dict]], Any],
         on_action: Union[List[OperationType], OperationType] = None,
         on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
@@ -113,7 +113,7 @@ class BaseParser:
     @classmethod
     def parse_write(
         self,
-        parser: Callable[['BaseParser', Any, Dict], Any],
+        parser: Callable[['BaseParser', Any, Union[ApiError, Dict]], Any],
         on_action: Union[List[OperationType], OperationType] = None,
         on_authorize_status: Union[List[AuthorizeStatusType], AuthorizeStatusType] = None,
         scopes: List[OauthScopeType] = None,
@@ -161,6 +161,7 @@ class BaseParser:
             self.query_parsers.get(self.__class__.__name__) or {},
             value,
             authorize_status,
+            error=error,
             **kwargs,
         )
 
@@ -242,6 +243,7 @@ class BaseParser:
         parser_mapping: Dict,
         value: Any,
         authorize_status: AuthorizeStatusType,
+        error: ApiError = None,
         **kwargs,
     ) -> Tuple[Any, bool]:
         api_operation_action = self.options.get('api_operation_action') or \
@@ -262,7 +264,7 @@ class BaseParser:
         if not parser:
             return value, False
 
-        value_parsed = parser(self, value, **kwargs)
+        value_parsed = parser(self, value, authorize_status=authorize_status, error=error, **kwargs)
 
         if value_parsed and inspect.isawaitable(value_parsed):
             value_parsed = await value_parsed
