@@ -34,7 +34,6 @@ class StatusResource(GenericResource):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
-        from mage_ai.server.server import latest_user_activity
 
         instance_type = None
         project_type = get_project_type()
@@ -70,6 +69,7 @@ class StatusResource(GenericResource):
 
         display_format = meta.get('_format')
         if 'with_activity_details' == display_format:
+            from mage_ai.server.server import latest_user_activity
             project_schedules = PipelineSchedule.repo_query.all()
             project_schedule_ids = [schedule.id for schedule in project_schedules]
             project_pipeline_runs = PipelineRun.query.filter(
