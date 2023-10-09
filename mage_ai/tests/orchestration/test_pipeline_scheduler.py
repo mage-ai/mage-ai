@@ -298,7 +298,7 @@ class PipelineSchedulerTests(DBTestCase):
         mock_call = mock_job_manager.add_job.mock_calls[0]
 
         for i in range(5):
-            self.assertEqual(call_args[i], mock_call.args[i])
+            self.assertEqual(call_args[i], mock_call[1][i])
 
         self.assertEqual(call_args[5], ignore_keys(mock_call.args[5], ['hostname']))
 
