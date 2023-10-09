@@ -417,6 +417,20 @@ function PipelineSchedules({
     setIsCreatingTrigger,
   ]);
 
+  if (isCreatingTrigger) {
+    return (
+       <TriggerEdit
+        creatingWithLimitation
+        errors={errors}
+        onCancel={() => setIsCreatingTrigger(false)}
+        pipeline={dataPipeline?.pipeline}
+        project={project}
+        setErrors={setErrors}
+        useCreateScheduleMutation={useCreateScheduleMutation}
+      />
+    );
+  }
+
   return (
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
@@ -429,18 +443,6 @@ function PipelineSchedules({
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
-      {isCreatingTrigger && (
-        <TriggerEdit
-          creatingWithLimitation
-          errors={errors}
-          onCancel={() => setIsCreatingTrigger(false)}
-          pipeline={dataPipeline?.pipeline}
-          project={project}
-          setErrors={setErrors}
-          useCreateScheduleMutation={useCreateScheduleMutation}
-        />
-      )}
-
       {!isCreatingTrigger && (
         <>
           <Divider light />

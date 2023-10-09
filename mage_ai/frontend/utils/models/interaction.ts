@@ -25,14 +25,14 @@ export function convertValueToVariableDataType(
       types?.filter(t => InteractionVariableTypeEnum.LIST !== t),
     ));
   } else if (types?.includes(InteractionVariableTypeEnum.DICTIONARY)) {
-    const obj = isObject(value)
-      ? obj
+    const valueObject = isObject(value)
+      ? value
       : isJsonString(value)
         ? JSON.parse(value)
         : value;
 
-    if (isObject(obj)) {
-      return Object.entries(obj).reduce((acc, [k, v]) => ({
+    if (isObject(valueObject)) {
+      return Object.entries(valueObject).reduce((acc, [k, v]) => ({
         ...acc,
         [k]: convertValueToVariableDataType(
           v,

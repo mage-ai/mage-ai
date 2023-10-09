@@ -111,6 +111,16 @@ class PipelineSchedule(BaseModel):
 
         return value
 
+    @validates('schedule_type')
+    def validate_schedule_type(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)

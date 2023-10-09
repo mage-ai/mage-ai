@@ -6,6 +6,7 @@ from faker import Faker
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
@@ -87,6 +88,7 @@ def create_pipeline_run_with_schedule(
         pipeline_schedule = PipelineSchedule.create(
             name=f'{pipeline_uuid}_trigger',
             pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
             settings=pipeline_schedule_settings,
         )
         pipeline_schedule_id = pipeline_schedule.id
