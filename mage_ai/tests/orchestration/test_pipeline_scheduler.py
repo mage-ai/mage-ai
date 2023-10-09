@@ -300,7 +300,7 @@ class PipelineSchedulerTests(DBTestCase):
         for i in range(5):
             self.assertEqual(call_args[i], mock_call[1][i])
 
-        self.assertEqual(call_args[5], ignore_keys(mock_call.args[5], ['hostname']))
+        self.assertEqual(call_args[5], ignore_keys(mock_call[1][5], ['hostname']))
 
     def test_on_block_complete(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
