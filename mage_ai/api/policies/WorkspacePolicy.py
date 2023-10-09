@@ -53,6 +53,7 @@ WorkspacePolicy.allow_write([
     'project_id',
     'path_to_credentials',
     'region',
+    'config',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

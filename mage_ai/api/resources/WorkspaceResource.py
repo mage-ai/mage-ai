@@ -7,6 +7,7 @@ import yaml
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cluster_manager.config import WorkspaceConfig
 from mage_ai.cluster_manager.constants import (
     ECS_CLUSTER_NAME,
     ECS_CONTAINER_NAME,
@@ -126,6 +127,10 @@ class WorkspaceResource(GenericResource):
             error.update(message='Please enter a valid workspace name.')
             raise ApiError(error)
 
+        config_yaml = payload.pop('config')
+        config = yaml.full_load(config_yaml) or {}
+        workspace_config = WorkspaceConfig(**config)
+
         workspace_file = None
         project_uuid = None
         project_type = get_project_type()
@@ -143,7 +148,7 @@ class WorkspaceResource(GenericResource):
                 yml.indent(mapping=2, sequence=2, offset=0)
 
                 project_uuid = uuid.uuid4().hex
-                data = dict(project_uuid=project_uuid)
+                data = dict(project_uuid=project_uuid, config=workspace_config.to_dict())
 
                 with open(workspace_file, 'w') as f:
                     yml.dump(data, f)
@@ -166,6 +171,7 @@ class WorkspaceResource(GenericResource):
                     }
                 k8s_workload_manager.create_workload(
                     workspace_name,
+                    workspace_config,
                     **payload,
                     **extra_args,
                 )

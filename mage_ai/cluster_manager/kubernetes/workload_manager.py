@@ -4,6 +4,7 @@ from typing import Dict, List
 import yaml
 from kubernetes import client, config
 
+from mage_ai.cluster_manager.config import WorkspaceConfig
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -124,6 +125,7 @@ class WorkloadManager:
     def create_workload(
         self,
         name: str,
+        workspace_config: WorkspaceConfig,
         project_type: str = ProjectType.STANDALONE,
         project_uuid: str = None,
         **kwargs,
