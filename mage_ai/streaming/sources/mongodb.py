@@ -16,7 +16,7 @@ class MongoDBConfig(BaseConfig):
     collection: str = None
     batch_size: Optional[int] = 100
     pipeline: Optional[_Pipeline] = None
-    operation_time: Optional[Timestamp] = None,
+    operation_time: Optional[Timestamp] = None
     start_after: Optional[Mapping[str, Any]] = None
 
 
