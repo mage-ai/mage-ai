@@ -196,26 +196,43 @@ function PipelineSchedules({
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
     const variablesOverride = selectedSchedule?.variables;
-    const hasOverride = !isEmptyObject(variablesOverride);
-
-    const showVariables = hasOverride
-      ? selectedSchedule?.variables
-      : !isEmptyObject(variablesOrig) ? variablesOrig : null;
+    const hasVariables = !isEmptyObject(variablesOrig);
 
     return (props: DependencyGraphProps) => {
-      const dependencyGraphHeight = props.height - (showVariables ? 151 : 80);
+      /** 
+       * Because it's required to specify the DependencyGraph height, we calculate
+       * the RuntimeVariables height here instead of within its component.
+       * We dynamically calculate the RuntimeVariables height based on the number
+       * of visible rows in the runtime variables table at any time.
+       */
+      let runtimeVariablesHeight = 80;
+      if (hasVariables) {
+        const maxVisibleRows = 5;
+        const headerRowHeight = 46; // Includes top + bottom border
+        const rowHeight = 43; // Includes bottom border
+        const numVariables = Object.keys(variablesOrig).length;
+        const numVisibleRows = Math.min(maxVisibleRows, numVariables);
+        runtimeVariablesHeight = headerRowHeight + (numVisibleRows * rowHeight) + 1;
+      }
+   
+      const dependencyGraphHeight = props.height - runtimeVariablesHeight;
 
       return (
         <>
-          {showVariables && (
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+            noStatus
+          />
+          {hasVariables && (
             <RuntimeVariables
-              hasOverride={hasOverride}
+              height={runtimeVariablesHeight}
               scheduleType={selectedSchedule?.schedule_type}
               variables={variablesOrig}
               variablesOverride={variablesOverride}
             />
           )}
-          {!showVariables && (
+          {!hasVariables && (
             <Spacing p={PADDING_UNITS}>
               <Text>
                 This pipeline has no runtime variables.
@@ -238,11 +255,6 @@ function PipelineSchedules({
               }
             </Spacing>
           )}
-          <DependencyGraph
-            {...props}
-            height={dependencyGraphHeight}
-            noStatus
-          />
         </>
       );
     };
