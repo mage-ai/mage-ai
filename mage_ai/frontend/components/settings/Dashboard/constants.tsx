@@ -20,7 +20,6 @@ export enum SectionEnum {
 }
 
 export enum SectionItemEnum {
-  PERMISSIONS = 'Permissions',
   ROLES = 'Roles',
   PERMISSIONS = 'Permissions',
   USERS = 'Users',
