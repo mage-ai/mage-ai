@@ -1,6 +1,7 @@
 import Dashboard from '@components/Dashboard';
 import VerticalSectionLinks from '@components/VerticalSectionLinks';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BreadcrumbType } from '@components/shared/Header';
 import { SECTIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getUser } from '@utils/session';
@@ -8,6 +9,7 @@ import { getUser } from '@utils/session';
 type SettingsDashboardProps = {
   after?: any;
   afterHidden?: boolean;
+  breadcrumbs?: BreadcrumbType[];
   children: any;
   uuidItemSelected: string;
   uuidWorkspaceSelected: string;
@@ -16,6 +18,7 @@ type SettingsDashboardProps = {
 function SettingsDashboard({
   after,
   afterHidden,
+  breadcrumbs,
   children,
   uuidItemSelected,
   uuidWorkspaceSelected,
@@ -40,6 +43,7 @@ function SettingsDashboard({
         </BeforeStyle>
       )}
       beforeWidth={BEFORE_WIDTH}
+      breadcrumbs={breadcrumbs}
       title="Settings"
       uuid="settings/index"
     >

@@ -24,6 +24,7 @@ import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
+import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 
 function UsersListPage() {
@@ -206,6 +207,7 @@ function UsersListPage() {
           avatar,
           created_at: createdAt,
           email,
+          id,
           roles_display,
           roles_new,
           username,
@@ -214,7 +216,7 @@ function UsersListPage() {
           sortedRoles.sort((a: RoleType, b: RoleType) => a.id - b.id);
 
           return [
-            <Text large key="avatar">
+            <Text large key="avatar" rightAligned>
               {avatar}
             </Text>,
             <Text key="username">
@@ -235,6 +237,10 @@ function UsersListPage() {
               noBackground
               noBorder
               noPadding
+              onClick={(e) => {
+                pauseEvent(e);
+                router.push(`/settings/workspace/users/${id}`);
+              }}
             >
               <Edit />
             </Button>,
