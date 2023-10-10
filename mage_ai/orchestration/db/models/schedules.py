@@ -620,10 +620,9 @@ class PipelineRun(BaseModel):
 
     @property
     def pipeline_tags(self):
-        cache = TagCache()
-        tags_by_pipeline_uuid = cache.get_tags_by_pipeline_uuid()
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
 
-        return tags_by_pipeline_uuid.get(self.pipeline_uuid, [])
+        return self.pipeline.tags if pipeline is not None else []
 
     def executable_block_runs(
         self,
