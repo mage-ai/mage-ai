@@ -38,6 +38,7 @@ UserPresenter.register_format(
 
 
 UserPresenter.register_formats([
+    f'permission/{constants.DETAIL}',
     f'role/{constants.DETAIL}',
     f'role/{constants.LIST}',
 ], [

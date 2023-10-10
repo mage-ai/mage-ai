@@ -2,7 +2,7 @@ import PermissionType from './PermissionType';
 
 export interface UserType {
   first_name?: string;
-  id?: number | string;
+  id?: string;
   last_name?: string;
   username?: string;
 }

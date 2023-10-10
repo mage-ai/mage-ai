@@ -30,6 +30,13 @@ export enum PermissionAccessEnum {
   DISABLE_WRITE_ALL = 536870912,
 }
 
+export interface UserType {
+  first_name?: string;
+  id?: string;
+  last_name?: string;
+  username?: string;
+}
+
 export default interface Permission {
   access?: PermissionAccessEnum;
   created_at?: string;
@@ -44,14 +51,10 @@ export default interface Permission {
     id: number;
     name: string;
     updated_at?: string;
-    user: {
-      first_name?: string;
-      id?: string;
-      last_name?: string;
-      username?: string;
-    };
+    user: UserType;
   }[];
   updated_at?: string;
+  user?: UserType;
   user_id?: number;
   write_attributes?: string[];
 }

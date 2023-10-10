@@ -41,6 +41,7 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'role',
+    'user',
     'user_id',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
