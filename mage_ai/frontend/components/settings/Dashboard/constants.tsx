@@ -3,6 +3,7 @@ import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import {
   Settings,
   Sun,
+  VisibleEye,
   WorkspacesIcon,
   WorkspacesUsersIcon,
 } from '@oracle/icons';
@@ -11,6 +12,15 @@ export const SECTION_UUID_WORKSPACE = 'Workspace';
 export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
 export const SECTION_ITEM_UUID_GIT_SETTINGS = 'Git settings';
 export const SECTION_ITEM_UUID_USERS = 'Users';
+
+export enum SectionEnum {
+  WORKSPACE = SECTION_UUID_WORKSPACE,
+}
+
+export enum SectionItemEnum {
+  ROLES = 'Roles',
+  USERS = SECTION_ITEM_UUID_USERS,
+}
 
 export const SECTION_UUID_ACCOUNT = 'Account';
 export const SECTION_ITEM_UUID_PROFILE = 'Profile';
@@ -27,13 +37,22 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
   ];
 
   if (owner || roles === RoleValueEnum.ADMIN || (project_access & 2) !== 0) {
-    workspaceItems.push({
-      Icon: WorkspacesUsersIcon,
-      linkProps: {
-        href: '/settings/workspace/users',
+    workspaceItems.push(...[
+      {
+        Icon: WorkspacesUsersIcon,
+        linkProps: {
+          href: '/settings/workspace/users',
+        },
+        uuid: SectionItemEnum.USERS,
       },
-      uuid: SECTION_ITEM_UUID_USERS,
-    });
+      {
+        Icon: VisibleEye,
+        linkProps: {
+          href: '/settings/workspace/roles',
+        },
+        uuid: SectionItemEnum.ROLES,
+      },
+    ]);
   }
   if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
     workspaceItems.push({

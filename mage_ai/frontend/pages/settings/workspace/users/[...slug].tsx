@@ -38,6 +38,8 @@ const ICON_SIZE = 2 * UNIT;
 type UserAttributesType = {
   avatar?: string;
   email?: string;
+  first_name?: string;
+  last_name?: string;
   password?: string;
   password_confirmation?: string;
   password_current?: string;
@@ -74,17 +76,16 @@ function UserDetailPage({
     setObjectAttributesState,
   ]);
 
-  const { data } = api.users.detail(slug, {
+  const { data } = api.users.detail(slug, {}, {
     revalidateOnFocus: false,
   });
   const user = useMemo(() => data?.user, [data]);
 
   useEffect(() => {
-    if (!objectAttributes && user) {
+    if (user) {
       setObjectAttributesState(user);
     }
   }, [
-    objectAttributes,
     setObjectAttributesState,
     user,
   ]);
@@ -237,6 +238,80 @@ function UserDetailPage({
                   paddingVertical={0}
                   placeholder="e.g. Mage Supreme"
                   value={objectAttributes?.username || ''}
+                />
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider light />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center">
+              <Text
+                default
+                large
+              >
+                First name
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex flex={1}>
+                <TextInput
+                  afterIcon={<Edit />}
+                  afterIconClick={(_, inputRef) => {
+                    inputRef?.current?.focus();
+                  }}
+                  afterIconSize={ICON_SIZE}
+                  alignRight
+                  large
+                  noBackground
+                  noBorder
+                  fullWidth
+                  onChange={e => setObjectAttributes({
+                    first_name: e.target.value,
+                  })}
+                  paddingHorizontal={0}
+                  paddingVertical={0}
+                  placeholder="e.g. Urza"
+                  value={objectAttributes?.first_name || ''}
+                />
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider light />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center">
+              <Text
+                default
+                large
+              >
+                Last name
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex flex={1}>
+                <TextInput
+                  afterIcon={<Edit />}
+                  afterIconClick={(_, inputRef) => {
+                    inputRef?.current?.focus();
+                  }}
+                  afterIconSize={ICON_SIZE}
+                  alignRight
+                  large
+                  noBackground
+                  noBorder
+                  fullWidth
+                  onChange={e => setObjectAttributes({
+                    last_name: e.target.value,
+                  })}
+                  paddingHorizontal={0}
+                  paddingVertical={0}
+                  placeholder="e.g. Andromeda"
+                  value={objectAttributes?.last_name || ''}
                 />
               </Flex>
             </FlexContainer>
@@ -463,11 +538,15 @@ function UserDetailPage({
             onClick={() => updateUser({
               user: selectKeys(objectAttributes, [
                 'avatar',
+                'first_name',
+                'last_name',
                 'password',
                 'password_confirmation',
                 'password_current',
                 'username',
-              ]),
+              ], {
+                include_blanks: true,
+              }),
             })}
             primary
           >

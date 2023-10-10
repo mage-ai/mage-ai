@@ -86,10 +86,12 @@ export function useDetail(
   swrOptions: any = {},
   customOptions?: {
     key?: string;
+    pauseFetch?: boolean;
   },
 ) {
   const {
     key: keyInit,
+    pauseFetch,
   } = customOptions || {};
 
   const url = id ? buildUrl(resource, id) : null;
@@ -101,7 +103,7 @@ export function useDetail(
     error,
     mutate,
   } = useSWR(
-    key,
+    pauseFetch ? null : key,
     () => fetcher(url, {
       method: GET,
       query,

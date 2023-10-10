@@ -37,12 +37,12 @@ UserPresenter.register_format(
     constants.CREATE, UserPresenter.default_attributes + ['token', ])
 
 
-UserPresenter.register_format(
+UserPresenter.register_formats([
     f'role/{constants.DETAIL}',
-    [
-        'first_name',
-        'id',
-        'last_name',
-        'username',
-    ],
-)
+    f'role/{constants.LIST}',
+], [
+    'first_name',
+    'id',
+    'last_name',
+    'username',
+])
