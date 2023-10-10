@@ -1,4 +1,3 @@
-import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -14,6 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { BreadcrumbType } from '@components/Breadcrumbs';
 import { Edit } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum, } from '@components/settings/Dashboard/constants';
@@ -28,7 +28,7 @@ function RolesListPage() {
   const { data } = api.roles.list();
   const roles: RoleType[] = useMemo(() => data?.roles || [], [data]);
 
-  const breadcrumbs = [
+  const breadcrumbs: BreadcrumbType[] = [
     {
       bold: !isAddingNew,
       label: () => 'Roles',
@@ -102,18 +102,15 @@ function RolesListPage() {
               </Text>,
               user
                 ? (
-                  <NextLink
-                    as={`/settings/workspace/users/${id}`}
-                    href="/settings/workspace/users/[...slug]"
-                    key="user"
-                    passHref
+                  <Link
+                    default
+                    onClick={(e) => {
+                      pauseEvent(e);
+                      router.push(`/settings/workspace/users/${id}`);
+                    }}
                   >
-                    <Link
-                      default
-                    >
-                      {user?.username}
-                    </Link>
-                  </NextLink>
+                    {user?.username}
+                  </Link>
                 )
                 : <div key="user" />,,
               <Text monospace default key="updatedAt">

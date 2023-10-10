@@ -530,7 +530,7 @@ function UserDetailPage({
                 justifyContent="flex-end"
               >
                 <Text large monospace muted>
-                  {objectAttributes?.created_at && dateFormatLong(objectAttributes?.created_at, {
+                  {user?.created_at && dateFormatLong(user?.created_at, {
                     includeSeconds: true,
                   })}
                 </Text>

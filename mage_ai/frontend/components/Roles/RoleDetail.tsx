@@ -9,12 +9,11 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
-import PermissionType from '@interacts/PermissionType';
-import RoleType from '@interacts/RoleType';
+import PermissionType from '@interfaces/PermissionType';
+import RoleType, { UserType } from '@interfaces/RoleType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import UserType from '@interfaces/UserType';
 import api from '@api';
 import { ContainerStyle } from '@components/shared/index.style';
 import {
@@ -33,8 +32,10 @@ import { onSuccess } from '@api/utils/response';
 
 const ICON_SIZE = 2 * UNIT;
 
-type UserAttributesType = {
+type ObjectAttributesType = {
+  created_at?: string;
   name?: string;
+  updated_at?: string;
 };
 
 type RoleDetailProps = {
@@ -46,8 +47,8 @@ function RoleDetail({
 }: RoleDetailProps) {
   const router = useRouter();
 
-  const [attributesTouched, setAttributesTouched] = useState<UserAttributesType>({});
-  const [objectAttributes, setObjectAttributesState] = useState<UserAttributesType>(null);
+  const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
+  const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
   const setObjectAttributes = useCallback((data) => {
     setAttributesTouched(prev => ({
       ...prev,
@@ -154,7 +155,7 @@ function RoleDetail({
   const permissions: PermissionType[] = useMemo(() => role?.role_permissions || [], [
     role,
   ]);
-  const users: PermissionType[] = useMemo(() => role?.users || [], [
+  const users: UserType[] = useMemo(() => role?.users || [], [
     role,
   ]);
 
@@ -388,6 +389,41 @@ function RoleDetail({
                     {objectAttributes?.created_at && dateFormatLong(objectAttributes?.created_at, {
                       includeSeconds: true,
                     })}
+                  </Text>
+
+                  <Spacing mr={PADDING_UNITS} />
+
+                  <Schedule muted size={ICON_SIZE} />
+
+                  <Spacing mr={1} />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Text default large>
+                  Created by
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex
+                  alignItems="center"
+                  flex={1}
+                  justifyContent="flex-end"
+                >
+                  <Text large monospace muted>
+                    {(role?.user?.first_name || role?.user?.last_name)
+                      ?
+                        [
+                          role?.user?.first_name,
+                          role?.user?.last_name,
+                        ].filter(n => n).join(' ')
+                      : role?.user?.username
+                    }
                   </Text>
 
                   <Spacing mr={PADDING_UNITS} />

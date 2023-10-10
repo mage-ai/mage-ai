@@ -1,16 +1,19 @@
-import Permission from './Permission';
+import PermissionType from './PermissionType';
+
+export interface UserType {
+  first_name?: string;
+  id?: number | string;
+  last_name?: string;
+  username?: string;
+}
 
 export default interface RoleType {
   created_at?: string;
   id: number;
   name: string;
   permissions: any[];
-  role_permissions: Permission[];
+  role_permissions: PermissionType[];
   updated_at?: string;
-  user: {
-    first_name?: string;
-    id?: string;
-    last_name?: string;
-    username?: string;
-  };
+  user: UserType;
+  users?: UserType[];
 }
