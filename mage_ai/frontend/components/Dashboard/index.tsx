@@ -37,6 +37,7 @@ export type DashboardSharedProps = {
 
 type DashboardProps = {
   addProjectBreadcrumbToCustomBreadcrumbs?: boolean;
+  appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children?: any;
   errors?: ErrorsType;
@@ -54,6 +55,7 @@ function Dashboard({
   afterHidden,
   afterWidth: afterWidthProp,
   afterWidthOverride,
+  appendBreadcrumbs,
   before,
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
@@ -107,11 +109,13 @@ function Dashboard({
     }
 
     breadcrumbs.push(...breadcrumbsProp);
-  } else if (projects?.length >= 1) {
-    breadcrumbs.push(...[
+  }
+
+  if ((!breadcrumbsProp?.length || appendBreadcrumbs) && projects?.length >= 1) {
+    breadcrumbs.unshift(...[
       breadcrumbProject,
       {
-        bold: true,
+        bold: !appendBreadcrumbs,
         label: () => title,
       },
     ]);

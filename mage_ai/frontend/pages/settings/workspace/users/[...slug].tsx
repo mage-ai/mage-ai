@@ -98,14 +98,6 @@ function UserDetailPage({
           callback: ({
             user: userServer,
           }) => {
-            // // @ts-ignore
-            // const keys = USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
-            //   uuid,
-            // }) => uuid);
-            // keys.push('id');
-            // const newProfile = selectKeys(userServer, keys);
-            // setProfile(newProfile);
-
             setAttributesTouched({});
             setObjectAttributesState(userServer);
 
@@ -140,8 +132,7 @@ function UserDetailPage({
 
   return (
     <SettingsDashboard
-      // after={formMemo}
-      // afterHidden={!user && !showAddNewUser}
+      appendBreadcrumbs
       breadcrumbs={[
         {
           label: () => 'Users',

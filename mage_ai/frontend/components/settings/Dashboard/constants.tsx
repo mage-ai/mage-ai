@@ -14,12 +14,12 @@ export const SECTION_ITEM_UUID_GIT_SETTINGS = 'Git settings';
 export const SECTION_ITEM_UUID_USERS = 'Users';
 
 export enum SectionEnum {
-  WORKSPACE = SECTION_UUID_WORKSPACE,
+  WORKSPACE = 'Workspace',
 }
 
 export enum SectionItemEnum {
   ROLES = 'Roles',
-  USERS = SECTION_ITEM_UUID_USERS,
+  USERS = 'Users',
 }
 
 export const SECTION_UUID_ACCOUNT = 'Account';

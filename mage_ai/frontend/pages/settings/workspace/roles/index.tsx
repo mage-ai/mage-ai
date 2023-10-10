@@ -27,6 +27,16 @@ function RolesListPage() {
 
   return (
     <SettingsDashboard
+      appendBreadcrumbs
+      breadcrumbs={[
+        {
+          bold: true,
+          label: () => 'Roles',
+          linkProps: {
+            href: '/settings/workspace/roles'
+          },
+        },
+      ]}
       uuidItemSelected={SectionItemEnum.ROLES}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >

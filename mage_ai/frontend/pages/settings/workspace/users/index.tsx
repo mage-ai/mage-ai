@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RoleType from '@interfaces/RoleType';
@@ -139,6 +140,16 @@ function UsersListPage() {
     <SettingsDashboard
       after={formMemo}
       afterHidden={!user && !showAddNewUser}
+      appendBreadcrumbs
+      breadcrumbs={[
+        {
+          bold: true,
+          label: () => 'Users',
+          linkProps: {
+            href: '/settings/workspace/users'
+          },
+        },
+      ]}
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
@@ -157,11 +168,8 @@ function UsersListPage() {
         </Spacing>
       }
 
-      <Spacing p={PADDING_UNITS}>
-        <Headline>
-          Users
-        </Headline>
-      </Spacing>
+      <Divider light />
+
       <Table
         columnFlex={[null, 1, 1, 1, 1, null, null]}
         columns={[

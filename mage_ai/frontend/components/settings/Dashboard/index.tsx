@@ -9,6 +9,7 @@ import { getUser } from '@utils/session';
 type SettingsDashboardProps = {
   after?: any;
   afterHidden?: boolean;
+  appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children: any;
   uuidItemSelected: string;
@@ -18,6 +19,7 @@ type SettingsDashboardProps = {
 function SettingsDashboard({
   after,
   afterHidden,
+  appendBreadcrumbs,
   breadcrumbs,
   children,
   uuidItemSelected,
@@ -31,6 +33,7 @@ function SettingsDashboard({
       afterHidden={!after || afterHidden}
       afterWidth={after ? 50 * UNIT : 0}
       afterWidthOverride
+      appendBreadcrumbs={appendBreadcrumbs}
       before={(
         <BeforeStyle>
           <VerticalSectionLinks
