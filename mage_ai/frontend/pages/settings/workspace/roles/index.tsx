@@ -114,7 +114,7 @@ function RolesListPage() {
                     {displayName(user)}
                   </Link>
                 )
-                : <div key="user" />,,
+                : <div key="user" />,
               <Text monospace default key="updatedAt">
                 {updatedAt && dateFormatLong(updatedAt)}
               </Text>,
