@@ -4,9 +4,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from mage_ai.cache.base import BaseCache
-from mage_ai.cache.constants import (
-    CACHE_KEY_TAGS_TO_OBJECT_MAPPING,
-)
+from mage_ai.cache.constants import CACHE_KEY_TAGS_TO_OBJECT_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
 
 KEY_FOR_PIPELINES = 'Pipeline'
