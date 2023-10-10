@@ -28,7 +28,6 @@ from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
 
-from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
