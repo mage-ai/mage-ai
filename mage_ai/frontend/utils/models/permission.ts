@@ -8,7 +8,7 @@ export function displayNames(access: number): string[] {
     permissionAccess,
     displayName,
   ]) => {
-    if (access & permissionAccess) {
+    if (access & Number(permissionAccess)) {
       return acc.concat(displayName);
     }
 
