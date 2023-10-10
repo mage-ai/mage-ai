@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import Checkbox from '@oracle/elements/Checkbox';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
@@ -11,7 +12,9 @@ import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import PermissionType from '@interfaces/PermissionType';
 import RoleType, { UserType } from '@interfaces/RoleType';
+import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
@@ -25,9 +28,17 @@ import {
   Schedule,
   Trash,
 } from '@oracle/icons';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTION,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
+import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
 import { displayName } from '@utils/models/user';
+import { displayNames } from '@utils/models/permission';
+import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -36,22 +47,38 @@ const ICON_SIZE = 2 * UNIT;
 type ObjectAttributesType = {
   created_at?: string;
   name?: string;
+  permissionsMapping?: {
+    [id: number]: PermissionType;
+  };
   updated_at?: string;
 };
 
 type RoleDetailProps = {
+  contained?: boolean;
   onCancel?: () => void;
-  role?: RoleType;
+  slug?: string;
 };
 
 function RoleDetail({
+  contained,
   onCancel,
-  role,
+  slug,
 }: RoleDetailProps) {
   const router = useRouter();
 
+  const [afterHidden, setAfterHidden] = useState(true);
   const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
+
+  const setObjectAttributesStateWithPermissions = useCallback((data, permissionsArray) => {
+    setObjectAttributesState({
+      ...role,
+      permissionsMapping: indexBy(permissionsArray || [], ({ id }) => id),
+    });
+  }, [
+    setObjectAttributesState,
+  ]);
+
   const setObjectAttributes = useCallback((data) => {
     setAttributesTouched(prev => ({
       ...prev,
@@ -66,12 +93,17 @@ function RoleDetail({
     setObjectAttributesState,
   ]);
 
+  const { data } = api.roles.detail(slug, {}, {
+    revalidateOnFocus: false,
+  });
+  const role = useMemo(() => data?.role, [data]);
+
   useEffect(() => {
     if (role) {
-      setObjectAttributesState(role);
+      setObjectAttributesStateWithPermissions(role, role?.role_permissions);
     }
   }, [
-    setObjectAttributesState,
+    setObjectAttributesStateWithPermissions,
     role,
   ]);
 
@@ -84,7 +116,7 @@ function RoleDetail({
             role: objectServer,
           }) => {
             setAttributesTouched({});
-            setObjectAttributesState(objectServer);
+            setObjectAttributesStateWithPermissions(objectServer, objectServer?.role_permissions);
 
             if (!role) {
               router.push(`/settings/workspace/roles/${objectServer?.id}`);
@@ -155,9 +187,26 @@ function RoleDetail({
     },
   );
 
-  const permissions: PermissionType[] = useMemo(() => role?.role_permissions || [], [
-    role,
+  const { data: dataPermissions } = api.permissions.list({}, {}, {
+    pauseFetch: !role,
+  });
+  const permissionsAll: PermissionType[] = useMemo(() => sortByKey(
+    dataPermissions?.permissions || [],
+    'entity_name',
+  ), [
+    dataPermissions,
   ]);
+
+  const permissionsMapping = useMemo(() => objectAttributes?.permissionsMapping || {}, [
+    objectAttributes,
+  ]);
+  const permissions: PermissionType[] = useMemo(() => sortByKey(
+    Object.values(permissionsMapping),
+    'entity_name',
+  ), [
+    permissionsMapping,
+  ]);
+
   const users: UserType[] = useMemo(() => role?.users || [], [
     role,
   ]);
@@ -167,9 +216,7 @@ function RoleDetail({
     <Button
       beforeIcon={<Add />}
       compact
-      onClick={(e) => {
-
-      }}
+      onClick={() => setAfterHidden(false)}
       primary={!hasPermissions}
       secondary={hasPermissions}
       small
@@ -178,6 +225,7 @@ function RoleDetail({
     </Button>
   ), [
     hasPermissions,
+    setAfterHidden,
   ]);
 
   const hasUsers = useMemo(() => users?.length >= 1, [users]);
@@ -198,7 +246,135 @@ function RoleDetail({
     hasUsers,
   ]);
 
-  return (
+  const buildTable = useCallback((permissionsArray: PermissionType[]) => (
+    <Table
+      columnFlex={[null, 1, 1, 1, 6]}
+      columns={[
+        {
+          label: () => {
+            const checked = permissionsArray?.every(({ id }) => permissionsMapping?.[id]);
+
+            return (
+              <Checkbox
+                checked={checked}
+                key="checkbox"
+                onClick={() => {
+                  if (checked) {
+                    setObjectAttributes({
+                      permissionsMapping: {},
+                    });
+                  } else {
+                    setObjectAttributes({
+                      permissionsMapping: indexBy(permissionsArray, ({ id }) => id),
+                    });
+                  }
+                }}
+              />
+            );
+          },
+          uuid: 'actions',
+        },
+        {
+          uuid: 'Entity',
+        },
+        {
+          uuid: 'Subtype',
+        },
+        {
+          uuid: 'Entity ID',
+        },
+        {
+          uuid: 'Access',
+        },
+      ]}
+      onClickRow={(rowIndex: number) => {
+        const permission = permissionsArray[rowIndex];
+        const id = permission?.id;
+        const checked = !!permissionsMapping?.[id];
+        const mapping = { ...permissionsMapping };
+
+        if (checked) {
+          delete mapping?.[id];
+        } else {
+          mapping[id] = permission;
+        }
+
+        setObjectAttributes({
+          permissionsMapping: mapping,
+        });
+      }}
+      rows={permissionsArray?.map(({
+        access,
+        entity,
+        entity_id: entityID,
+        entity_name: entityName,
+        entity_type: entityType,
+        id,
+      }) => {
+        const accessDisplayNames = access ? displayNames(access) : [];
+        const accessDisplayNamesCount = accessDisplayNames?.length || 0;
+        const checked = !!permissionsMapping?.[id];
+
+        return [
+          <Checkbox
+            checked={checked}
+            key="checkbox"
+          />,
+          <Text key="entityName" monospace>
+            {entityName || entity}
+          </Text>,
+          <Text default key="entityType" monospace={!!entityType}>
+            {entityType || '-'}
+          </Text>,
+          <Text default key="entityID" monospace={!!entityID}>
+            {entityID || '-'}
+          </Text>,
+          <div key="access">
+            {accessDisplayNamesCount >= 1 && (
+              <FlexContainer alignItems="center" flexWrap="wrap">
+                {accessDisplayNames?.map((displayName: string, idx: number) => (
+                  <div key={displayName}>
+                    <Text default monospace small>
+                      {displayName}{accessDisplayNamesCount >= 2
+                        && idx < accessDisplayNamesCount - 1
+                        && (
+                          <Text inline muted small>
+                            ,&nbsp;
+                          </Text>
+                        )
+                      }
+                    </Text>
+                  </div>
+                ))}
+              </FlexContainer>
+            )}
+          </div>,
+        ];
+      })}
+      uuid="permissions"
+    />
+  ), [
+    permissionsMapping,
+    setObjectAttributes,
+  ]);
+
+  const after = useMemo(() => {
+    return (
+      <>
+        {buildTable(permissionsAll)}
+      </>
+    );
+  }, [
+    permissionsAll,
+    buildTable,
+  ]);
+
+  const permissionsMemo = useMemo(() => buildTable(permissions), [
+    buildTable,
+    permissions,
+  ]);
+
+  const contentMemo = (
     <ContainerStyle>
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
@@ -277,21 +453,25 @@ function RoleDetail({
 
             <Divider light />
 
-            <Spacing p={PADDING_UNITS}>
-              {!hasPermissions && (
-                <>
-                  <Spacing mb={PADDING_UNITS}>
-                    <Text default>
-                      This role currently has no permissions attached.
-                    </Text>
-                  </Spacing>
+            {!hasPermissions && (
+              <Spacing p={PADDING_UNITS}>
+                <Spacing mb={PADDING_UNITS}>
+                  <Text default>
+                    This role currently has no permissions attached.
+                  </Text>
+                </Spacing>
 
-                  <FlexContainer alignItems="center">
-                    {addPermissionButton}
-                  </FlexContainer>
-                </>
-              )}
-            </Spacing>
+                <FlexContainer alignItems="center">
+                  {addPermissionButton}
+                </FlexContainer>
+              </Spacing>
+            )}
+
+            {hasPermissions && (
+              <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTION}>
+                {permissionsMemo}
+              </Spacing>
+            )}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -439,15 +619,20 @@ function RoleDetail({
       <FlexContainer>
         <Button
           beforeIcon={<Save />}
-          disabled={!attributesTouched || isEmptyObject(attributesTouched)}
+          disabled={!attributesTouched || !Object.keys(attributesTouched)?.length}
           loading={isLoadingMutateObject}
           // @ts-ignore
           onClick={() => mutateObject({
-            role: selectKeys(objectAttributes, [
-              'name',
-            ], {
-              include_blanks: true,
-            }),
+            role: {
+              ...selectKeys(objectAttributes, [
+                'name',
+              ], {
+                include_blanks: true,
+              }),
+              permission_ids: Object.keys(
+                objectAttributes?.permissionsMapping || {},
+              ).map(i => Number(i)),
+            },
           })}
           primary
         >
@@ -483,6 +668,44 @@ function RoleDetail({
         )}
       </FlexContainer>
     </ContainerStyle>
+  );
+
+  if (contained) {
+    return contentMemo;
+  }
+
+  return (
+    <SettingsDashboard
+      after={after}
+      afterHeader={
+        <Spacing px={PADDING_UNITS}>
+          <Text bold>
+            Permissions
+          </Text>
+        </Spacing>
+      }
+      afterHidden={afterHidden}
+      afterWidth={60 * UNIT}
+      appendBreadcrumbs
+      breadcrumbs={[
+        {
+          label: () => 'Roles',
+          linkProps: {
+            href: '/settings/workspace/roles'
+          },
+        },
+        {
+          bold: true,
+          label: () => role?.name,
+        },
+      ]}
+      setAfterHidden={setAfterHidden}
+      title={role?.name ? `${role?.name} role` : 'New role'}
+      uuidItemSelected={SectionItemEnum.ROLES}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
+    >
+      {role && contentMemo}
+    </SettingsDashboard>
   );
 }
 

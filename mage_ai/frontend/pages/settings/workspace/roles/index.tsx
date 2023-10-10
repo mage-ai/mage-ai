@@ -56,7 +56,7 @@ function RolesListPage() {
       uuidItemSelected={SectionItemEnum.ROLES}
       uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
-      {isAddingNew && <RoleDetail onCancel={() => setIsAddingNew(false)} />}
+      {isAddingNew && <RoleDetail contained onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>

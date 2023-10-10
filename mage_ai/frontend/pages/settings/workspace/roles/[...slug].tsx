@@ -1,8 +1,5 @@
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RoleDetail from '@components/Roles/RoleDetail';
-import SettingsDashboard from '@components/settings/Dashboard';
-import api from '@api';
-import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 
 type RoleDetailPageProps = {
   slug: number | string;
@@ -11,32 +8,10 @@ type RoleDetailPageProps = {
 function RoleDetailPage({
   slug,
 }: RoleDetailPageProps) {
-  const { data } = api.roles.detail(slug, {}, {
-    revalidateOnFocus: false,
-  });
-  const role = data?.role;
-
   return (
-    <SettingsDashboard
-      appendBreadcrumbs
-      breadcrumbs={[
-        {
-          label: () => 'Roles',
-          linkProps: {
-            href: '/settings/workspace/roles'
-          },
-        },
-        {
-          bold: true,
-          label: () => role?.name,
-        },
-      ]}
-      title={role?.name ? `${role?.name} role` : 'New role'}
-      uuidItemSelected={SectionItemEnum.ROLES}
-      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
-    >
-      {role && <RoleDetail role={role} />}
-    </SettingsDashboard>
+    <RoleDetail
+      slug={slug}
+    />
   );
 }
 

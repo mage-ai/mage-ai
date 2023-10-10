@@ -1,5 +1,5 @@
 import UserType, { RoleValueEnum } from '@interfaces/UserType';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
+import { REQUIRE_USER_AUTHENTICATION, REQUIRE_USER_PERMISSIONS } from '@utils/session';
 import {
   Locked,
   Settings,
@@ -61,15 +61,18 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
   }
 
   if (owner || roles === RoleValueEnum.ADMIN || (project_access & 2) !== 0) {
-    arr.push({
-      items: [
-        {
-          Icon: WorkspacesUsersIcon,
-          linkProps: {
-            href: '/settings/workspace/users',
-          },
-          uuid: SectionItemEnum.USERS,
+    const items = [
+      {
+        Icon: WorkspacesUsersIcon,
+        linkProps: {
+          href: '/settings/workspace/users',
         },
+        uuid: SectionItemEnum.USERS,
+      },
+    ];
+
+    if (REQUIRE_USER_PERMISSIONS()) {
+      items.push(...[
         {
           Icon: VisibleEye,
           linkProps: {
@@ -84,7 +87,11 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
           },
           uuid: SectionItemEnum.PERMISSIONS,
         },
-      ],
+      ]);
+    }
+
+    arr.push({
+      items,
       uuid: SectionEnum.USER_MANAGEMENT,
     });
   }
