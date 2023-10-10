@@ -8,10 +8,13 @@ import { getUser } from '@utils/session';
 
 type SettingsDashboardProps = {
   after?: any;
+  afterHeader?: any;
   afterHidden?: boolean;
+  afterWidth?: number;
   appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children: any;
+  setAfterHidden?: (value: boolean) => void;
   title?: string;
   uuidItemSelected: string;
   uuidWorkspaceSelected: string;
@@ -19,10 +22,13 @@ type SettingsDashboardProps = {
 
 function SettingsDashboard({
   after,
+  afterHeader,
   afterHidden,
+  afterWidth,
   appendBreadcrumbs,
   breadcrumbs,
   children,
+  setAfterHidden,
   title,
   uuidItemSelected,
   uuidWorkspaceSelected,
@@ -32,8 +38,12 @@ function SettingsDashboard({
   return (
     <Dashboard
       after={after}
+      afterHeader={afterHeader}
       afterHidden={!after || afterHidden}
-      afterWidth={after ? 50 * UNIT : 0}
+      afterWidth={after
+        ? afterWidth || 50 * UNIT
+        : 0
+      }
       afterWidthOverride
       appendBreadcrumbs={appendBreadcrumbs}
       before={(
@@ -49,6 +59,7 @@ function SettingsDashboard({
       )}
       beforeWidth={BEFORE_WIDTH}
       breadcrumbs={breadcrumbs}
+      setAfterHidden={setAfterHidden}
       title={title || 'Settings'}
       uuid={`${title || 'settings'}/index`}
     >

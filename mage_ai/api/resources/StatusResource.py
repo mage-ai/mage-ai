@@ -13,6 +13,7 @@ from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
     is_disable_pipeline_edit_access,
 )
 from mage_ai.settings.repo import get_repo_path
@@ -58,6 +59,7 @@ class StatusResource(GenericResource):
             'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
             'max_print_output_lines': MAX_PRINT_OUTPUT_LINES,
             'require_user_authentication': REQUIRE_USER_AUTHENTICATION,
+            'require_user_permissions': REQUIRE_USER_PERMISSIONS,
             'project_type': project_type,
             'project_uuid': get_project_uuid(),
         }

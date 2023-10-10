@@ -67,9 +67,9 @@ class DatabaseResource(BaseResource):
             for _col, _val in merge_dict(query, where).items():
                 filters.append(self.model_class)
             return self.model_class.query.filter(
-                **merge_dict(query, where)).all()
+                **merge_dict(query, where))
         else:
-            return self.model_class.query.filter(**query).all()
+            return self.model_class.query.filter(**query)
 
     @classmethod
     @safe_db_query

@@ -21,7 +21,16 @@ class PermissionResource(DatabaseResource):
                 **kwargs,
             )
 
-        return super().collection(query_arg, meta, user, **kwargs)
+        return super().collection(
+            query_arg,
+            meta,
+            user,
+            **kwargs,
+        ).order_by(
+            Permission.entity_name.asc(),
+            Permission.entity_type.asc(),
+            Permission.entity_id.asc(),
+        )
 
     @classmethod
     @safe_db_query
