@@ -35,7 +35,7 @@ function PermissionDetailPage({
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
-      <PermissionDetail permission={permission} />
+      {permission && <PermissionDetail permission={permission} />}
     </SettingsDashboard>
   );
 }

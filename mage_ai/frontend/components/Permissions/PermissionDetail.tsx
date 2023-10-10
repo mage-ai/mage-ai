@@ -100,6 +100,23 @@ function PermissionDetail({
     permission,
   ]);
 
+  const { data: dataPermissions } = api.permissions.list({
+    _format: 'with_only_entity_options',
+    only_entity_options: true,
+  }, {}, {
+    pauseFetch: !!permission,
+  });
+  const permissionEmpty = useMemo(() => dataPermissions?.permissions?.[0], [dataPermissions]);
+
+  const entityNames: string[] = useMemo(() => (permission || permissionEmpty)?.entity_names || [], [
+    permission,
+    permissionEmpty,
+  ]);
+  const entityTypes: string[] = useMemo(() => (permission || permissionEmpty)?.entity_types || [], [
+    permission,
+    permissionEmpty,
+  ]);
+
   const [mutateObject, { isLoading: isLoadingMutateObject }] = useMutation(
     permission ? api.permissions.useUpdate(permission?.id) : api.permissions.useCreate(),
     {
@@ -231,7 +248,7 @@ function PermissionDetail({
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
           <Headline level={4}>
-            Permission
+            {permission ? `Permission ${permission?.id}` : 'New permission'}
           </Headline>
         </Spacing>
 
@@ -269,7 +286,7 @@ function PermissionDetail({
                 placeholder="Select an entity"
                 value={objectAttributes?.entity_name || ''}
               >
-                {permission?.entity_names.map((entityName: string) => (
+                {entityNames.map((entityName: string) => (
                   <option key={entityName} value={entityName}>
                     {camelCaseToNormalWithSpaces(entityName)}
                   </option>
@@ -310,7 +327,7 @@ function PermissionDetail({
                 value={objectAttributes?.entity_type || ''}
               >
                 <option value="" />
-                {permission?.entity_types.map((entityType: string) => (
+                {entityTypes.map((entityType: string) => (
                   <option key={entityType} value={entityType}>
                     {entityType}
                   </option>

@@ -55,3 +55,11 @@ PermissionPresenter.register_formats([
     'user_id',
     'write_attributes',
 ])
+
+
+PermissionPresenter.register_formats([
+    'with_only_entity_options',
+], [
+    'entity_names',
+    'entity_types',
+])

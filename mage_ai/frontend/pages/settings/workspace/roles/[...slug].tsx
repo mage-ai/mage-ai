@@ -35,7 +35,7 @@ function RoleDetailPage({
       uuidItemSelected={SectionItemEnum.ROLES}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
-      <RoleDetail role={role} />
+      {role && <RoleDetail role={role} />}
     </SettingsDashboard>
   );
 }
