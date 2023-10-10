@@ -44,6 +44,7 @@ export const ROLES_FROM_SERVER = [
 
 export default interface UserType {
   avatar?: string;
+  created_at?: string;
   email?: string;
   first_name?: string;
   id?: string;

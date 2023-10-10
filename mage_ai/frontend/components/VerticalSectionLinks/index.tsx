@@ -1,12 +1,14 @@
 import NextLink from 'next/link';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ItemStyle, SectionTitleStyle } from './index.style';
-import { PADDING_VERTICAL_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_VERTICAL_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 export type SectionItemType = {
+  Icon?: any;
   label?: () => string;
   linkProps?: {
     as?: string;
@@ -49,21 +51,33 @@ function VerticalSectionLinks({
 
           {items?.map((item) => {
             const {
+              Icon: IconItem,
               label,
               linkProps,
               onClick,
               uuid: uuidItem,
             } = item;
+            const selected = isItemSelected?.({
+              ...item,
+              uuidWorkspace: uuid,
+            });
 
             const linkLabel = label ? label() : uuidItem;
             const el = (
               <ItemStyle
-                selected={isItemSelected?.({
-                ...item,
-                uuidWorkspace: uuid,
-                })}
+                selected={selected}
               >
-                {linkLabel}
+                <FlexContainer alignItems="center">
+                  {IconItem && (
+                    <>
+                      <IconItem default={!selected} size={1.75 * UNIT} />
+
+                      <Spacing mr={1} />
+                    </>
+                  )}
+
+                  {linkLabel}
+                </FlexContainer>
               </ItemStyle>
             );
 
@@ -76,9 +90,10 @@ function VerticalSectionLinks({
                 >
                   <Link
                     block
+                    default={!selected}
                     noHoverUnderline
                     noOutline
-                    sameColorAsText
+                    sameColorAsText={selected}
                   >
                     {el}
                   </Link>

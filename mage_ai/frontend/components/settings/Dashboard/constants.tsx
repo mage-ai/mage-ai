@@ -1,5 +1,11 @@
 import UserType, { RoleValueEnum } from '@interfaces/UserType';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
+import {
+  Settings,
+  Sun,
+  WorkspacesIcon,
+  WorkspacesUsersIcon,
+} from '@oracle/icons';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
@@ -12,6 +18,7 @@ export const SECTION_ITEM_UUID_PROFILE = 'Profile';
 export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
   const workspaceItems = [
     {
+      Icon: WorkspacesIcon,
       linkProps: {
         href: '/settings/workspace/preferences',
       },
@@ -21,6 +28,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
 
   if (owner || roles === RoleValueEnum.ADMIN || (project_access & 2) !== 0) {
     workspaceItems.push({
+      Icon: WorkspacesUsersIcon,
       linkProps: {
         href: '/settings/workspace/users',
       },
@@ -29,6 +37,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
   }
   if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
     workspaceItems.push({
+      Icon: Settings,
       linkProps: {
         href: '/settings/workspace/sync-data',
       },
@@ -51,6 +60,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
     {
       items: [
         {
+          Icon: Sun,
           linkProps: {
             href: '/settings/account/profile',
           },
