@@ -5,7 +5,6 @@ from typing import Dict, List
 
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import (
-    CACHE_KEY_PIPELINE_TO_TAGS_MAPPING,
     CACHE_KEY_TAGS_TO_OBJECT_MAPPING,
 )
 from mage_ai.cache.utils import build_pipeline_dict
@@ -27,28 +26,6 @@ class TagCache(BaseCache):
     def get_tags(self) -> Dict:
         return self.get(self.cache_key) or {}
 
-    def get_tags_by_pipeline_uuid(self) -> Dict:
-        tags_by_pipeline_uuid_cache = self.get(CACHE_KEY_PIPELINE_TO_TAGS_MAPPING)
-        if tags_by_pipeline_uuid_cache:
-            return tags_by_pipeline_uuid_cache
-
-        tags = self.get_tags()
-        tags_set_by_pipeline_uuid = dict()
-        for tag, pipelines in tags.items():
-            for pipeline_uuid in pipelines.get(KEY_FOR_PIPELINES, {}).keys():
-                if pipeline_uuid not in tags_set_by_pipeline_uuid:
-                    tags_set_by_pipeline_uuid[pipeline_uuid] = set([tag])
-                else:
-                    tags_set_by_pipeline_uuid[pipeline_uuid].add(tag)
-
-        pipeline_uuid_to_tags_mapping = {
-            pipeline_uuid: list(tags_set) for pipeline_uuid, tags_set
-            in tags_set_by_pipeline_uuid.items()
-        }
-        self.set(CACHE_KEY_PIPELINE_TO_TAGS_MAPPING, pipeline_uuid_to_tags_mapping)
-
-        return pipeline_uuid_to_tags_mapping
-
     def get_pipeline_uuids_with_tags(self, tags: List):
         tags_mapping = self.get_tags()
         pipeline_uuids = set()
@@ -59,12 +36,6 @@ class TagCache(BaseCache):
                 pipeline_uuids.update(pipelines_dict.keys())
 
         return list(pipeline_uuids)
-
-    def get_tags_for_specific_pipeline(self, pipeline) -> List:
-        tags_by_pipeline_uuid = self.get_tags_by_pipeline_uuid()
-        pipeline_uuid = pipeline.get('uuid') if type(pipeline) is dict else pipeline.uuid
-
-        return tags_by_pipeline_uuid.get(pipeline_uuid, [])
 
     def build_key(self, tag_uuid: str) -> str:
         """Generate cache key for tag.
@@ -119,9 +90,6 @@ class TagCache(BaseCache):
 
         mapping[key][KEY_FOR_PIPELINES] = pipelines_dict
 
-        # Clear pipeline_uuid_to_tags_mapping cache when new tags are added to any pipeline
-        self.set(CACHE_KEY_PIPELINE_TO_TAGS_MAPPING, {})
-
         self.set(self.cache_key, mapping)
 
     def remove_pipeline(self, tag_uuid: str, pipeline_uuid: str) -> None:
@@ -139,9 +107,6 @@ class TagCache(BaseCache):
         pipelines_dict = mapping[key].get(KEY_FOR_PIPELINES, {})
         pipelines_dict.pop(pipeline_uuid, None)
         mapping[key][KEY_FOR_PIPELINES] = pipelines_dict
-
-        # Clear pipeline_uuid_to_tags_mapping cache when any tag is removed from a pipeline
-        self.set(CACHE_KEY_PIPELINE_TO_TAGS_MAPPING, {})
 
         self.set(self.cache_key, mapping)
 

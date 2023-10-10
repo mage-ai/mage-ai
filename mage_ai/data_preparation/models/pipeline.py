@@ -1013,14 +1013,6 @@ class Pipeline:
 
             cache = await TagCache.initialize_cache()
 
-            # Update tag cache if tag was removed from pipeline
-            tags_cached = cache.get_tags_for_specific_pipeline(self)
-            tags_removed = set(tags_cached) - set(self.tags)
-            if len(tags_removed) > 0:
-                for tag_uuid in tags_removed:
-                    if old_uuid is None:
-                        cache.remove_pipeline(tag_uuid, self.uuid)
-
             for tag_uuid in self.tags:
                 if old_uuid:
                     cache.remove_pipeline(tag_uuid, old_uuid)
