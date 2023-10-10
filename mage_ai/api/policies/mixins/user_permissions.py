@@ -27,29 +27,6 @@ def get_entity_name_from_policy(policy) -> EntityName:
     return None
 
 
-def build_validate_attribute(
-    operation: OperationType,
-    attribute_operation_type: AttributeOperationType,
-    resource_attribute: str,
-) -> Callable[[Any], bool]:
-    def _validate_condition(policy) -> bool:
-        return validate_condition_with_permissions(
-            policy,
-            operation,
-            attribute_operation_type=attribute_operation_type,
-            resource_attribute=resource_attribute,
-        )
-
-    return _validate_condition
-
-
-def build_validate_condition(operation: OperationType) -> Callable[[Any], bool]:
-    def _validate_condition(policy) -> bool:
-        return validate_condition_with_permissions(policy, operation)
-
-    return _validate_condition
-
-
 async def validate_condition_with_permissions(
     policy,
     operation: OperationType,
@@ -224,7 +201,7 @@ class UserPermissionMixIn:
     def action_rule_with_permissions(self, operation: OperationType) -> Dict:
         return {
             OauthScope.CLIENT_PRIVATE: dict(
-                condition=build_validate_condition(operation),
+                condition=self.build_validate_condition(operation),
             ),
         }
 
@@ -237,7 +214,7 @@ class UserPermissionMixIn:
         conditions = {}
         for operation in OperationType:
             conditions[operation.value] = dict(
-                condition=build_validate_attribute(
+                condition=self.build_validate_attribute(
                     operation,
                     attribute_operation_type,
                     resource_attribute,
@@ -247,3 +224,27 @@ class UserPermissionMixIn:
         return {
             OauthScope.CLIENT_PRIVATE: conditions,
         }
+
+    @classmethod
+    def build_validate_attribute(
+        self,
+        operation: OperationType,
+        attribute_operation_type: AttributeOperationType,
+        resource_attribute: str,
+    ) -> Callable[[Any], bool]:
+        def _validate_condition(policy) -> bool:
+            return validate_condition_with_permissions(
+                policy,
+                operation,
+                attribute_operation_type=attribute_operation_type,
+                resource_attribute=resource_attribute,
+            )
+
+        return _validate_condition
+
+    @classmethod
+    def build_validate_condition(self, operation: OperationType) -> Callable[[Any], bool]:
+        def _validate_condition(policy) -> bool:
+            return validate_condition_with_permissions(policy, operation)
+
+        return _validate_condition
