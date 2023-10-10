@@ -27,6 +27,7 @@ import {
 } from '@oracle/icons';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { dateFormatLong } from '@utils/date';
+import { displayName } from '@utils/models/user';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -416,14 +417,7 @@ function RoleDetail({
                   justifyContent="flex-end"
                 >
                   <Text large monospace muted>
-                    {(role?.user?.first_name || role?.user?.last_name)
-                      ?
-                        [
-                          role?.user?.first_name,
-                          role?.user?.last_name,
-                        ].filter(n => n).join(' ')
-                      : role?.user?.username
-                    }
+                    {displayName(role?.user)}
                   </Text>
 
                   <Spacing mr={PADDING_UNITS} />

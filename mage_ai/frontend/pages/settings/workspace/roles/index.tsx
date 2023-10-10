@@ -18,6 +18,7 @@ import { Edit } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum, } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
+import { displayName } from '@utils/models/user';
 import { pauseEvent } from '@utils/events';
 
 function RolesListPage() {
@@ -106,10 +107,10 @@ function RolesListPage() {
                     default
                     onClick={(e) => {
                       pauseEvent(e);
-                      router.push(`/settings/workspace/users/${id}`);
+                      router.push(`/settings/workspace/users/${user?.id}`);
                     }}
                   >
-                    {user?.username}
+                    {displayName(user)}
                   </Link>
                 )
                 : <div key="user" />,,
