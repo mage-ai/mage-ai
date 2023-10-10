@@ -110,34 +110,40 @@ def check_auto_termination(cluster_type: ClusterType):
 
         workspaces = get_workspaces(cluster_type)
         for ws in workspaces:
-            workspace_config = WorkspaceConfig(**ws.get('config', {}))
-            if workspace_config.termination_policy.enable_auto_termination:
+            workspace_config = WorkspaceConfig.load(ws.get('config', {}))
+            termination_policy = workspace_config.termination_policy
+            if termination_policy.enable_auto_termination:
                 activity_details = workload_manager.get_workload_activity(
                     ws.get('name')
                 )
-                max_idle_seconds = workspace_config.termination_policy.max_idle_seconds
-                last_user_request_ts = activity_details.get('last_user_request')
-                last_user_request = datetime.fromisoformat(last_user_request_ts)
-                last_scheduler_activity_ts = activity_details.get(
-                    'last_scheduler_activity'
-                )
-                last_scheduler_activity = datetime.fromisoformat(
-                    last_scheduler_activity_ts
-                )
-                active_pipeline_run_count = activity_details.get(
-                    'active_pipeline_run_count'
-                )
+                max_idle_seconds = termination_policy.max_idle_seconds
+                if activity_details and max_idle_seconds > 0:
+                    active_pipeline_run_count = activity_details.get(
+                        'active_pipeline_run_count'
+                    )
 
-                now_time = datetime.utcnow().timestamp()
-                latest_activity_seconds = max(
-                    last_user_request.timestamp(),
-                    last_scheduler_activity.timestamp(),
-                )
-                if (
-                    not active_pipeline_run_count
-                    and now_time - latest_activity_seconds > max_idle_seconds
-                ):
-                    workload_manager.scale_down_workload(ws.get('name'))
+                    last_user_request_ts = activity_details.get('last_user_request')
+                    last_user_request = datetime.fromisoformat(last_user_request_ts)
+
+                    latest_activity_time = last_user_request.timestamp()
+                    last_scheduler_activity_ts = activity_details.get(
+                        'last_scheduler_activity'
+                    )
+                    if last_scheduler_activity_ts:
+                        last_scheduler_activity = datetime.fromisoformat(
+                            last_scheduler_activity_ts
+                        )
+                        latest_activity_time = max(
+                            latest_activity_time,
+                            last_scheduler_activity.timestamp(),
+                        )
+
+                    now_time = datetime.utcnow().timestamp()
+                    if (
+                        not active_pipeline_run_count
+                        and now_time - latest_activity_time > max_idle_seconds
+                    ):
+                        workload_manager.scale_down_workload(ws.get('name'))
 
 
 def create_workspace(

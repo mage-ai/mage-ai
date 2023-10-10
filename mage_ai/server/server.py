@@ -464,14 +464,13 @@ async def main(
     )
     periodic_callback.start()
 
-    cluster_type = get_cluster_type()
     if ProjectType.MAIN == project_type:
         # Check scheduler status periodically
-        periodic_callback = PeriodicCallback(
-            lambda: check_auto_termination(cluster_type),
+        auto_termination_callback = PeriodicCallback(
+            lambda: check_auto_termination(get_cluster_type()),
             60_000,
         )
-        periodic_callback.start()
+        auto_termination_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

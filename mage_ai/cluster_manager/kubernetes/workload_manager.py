@@ -1,4 +1,4 @@
-import json
+import ast
 import os
 from typing import Dict, List
 
@@ -57,14 +57,14 @@ class WorkloadManager:
 
     @classmethod
     def load_config(cls) -> bool:
-        # try:
-        #     config.load_incluster_config()
-        #     return True
-        # except Exception:
-        #     pass
+        try:
+            config.load_incluster_config()
+            return True
+        except Exception:
+            pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -162,13 +162,6 @@ class WorkloadManager:
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
         ingress_name = kwargs.get('ingress_name')
-
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
 
         # Create stateful set
         env_vars = self.__populate_env_vars(
@@ -392,13 +385,9 @@ class WorkloadManager:
             exec_command = [
                 '/bin/sh',
                 '-c',
-                'curl',
-                '--request',
-                'GET',
-                '--url',
-                'http://localhost:6789/api/statuses?_format=with_activity_details',
-                '--header',
-                'Content-Type: application/json',
+                'curl -s --request GET --url '
+                'http://localhost:6789/api/statuses?_format=with_activity_details '
+                '--header "Content-Type: application/json"',
             ]
             resp = stream(
                 self.core_client.connect_get_namespaced_pod_exec,
@@ -410,7 +399,8 @@ class WorkloadManager:
                 stdout=True,
                 tty=False,
             )
-            status = json.loads(resp).get('statuses')[0]
+            resp = ast.literal_eval(resp)
+            status = resp.get('statuses')[0]
             return status
 
     def scale_down_workload(self, name: str) -> None:

@@ -22,6 +22,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.server.logger import Logger
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import ignore_keys
 
 logger = Logger().new_server_logger(__name__)
 
@@ -105,7 +106,11 @@ class WorkspaceResource(GenericResource):
 
         error = ApiError.RESOURCE_ERROR.copy()
         try:
-            update_workspace(cluster_type, workspace_name, **payload)
+            update_workspace(
+                cluster_type,
+                workspace_name,
+                **ignore_keys(payload, ['name', 'cluster_type']),
+            )
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)
@@ -120,7 +125,11 @@ class WorkspaceResource(GenericResource):
         error = ApiError.RESOURCE_ERROR.copy()
 
         try:
-            delete_workspace(cluster_type, workspace_name, **instance)
+            delete_workspace(
+                cluster_type,
+                workspace_name,
+                **ignore_keys(instance, ['name', 'cluster_type'])
+            )
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)

@@ -11,7 +11,6 @@ from mage_ai.data_preparation.repo_manager import (
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
@@ -77,6 +76,7 @@ class StatusResource(GenericResource):
             sorted_pipeline_runs = project_pipeline_runs.order_by(
                 PipelineRun.updated_at.desc()
             )
+            last_scheduler_activity = None
             if sorted_pipeline_runs.count() > 0:
                 last_scheduler_activity = sorted_pipeline_runs[0].updated_at
             active_pipeline_run_count = project_pipeline_runs.filter(
