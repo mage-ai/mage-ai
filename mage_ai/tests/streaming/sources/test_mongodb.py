@@ -1,11 +1,13 @@
-from mage_ai.streaming.sources.mongodb import MongoSource  # Assuming this is where it's located
-from mage_ai.tests.base_test import TestCase
 from unittest.mock import patch
+
+from mage_ai.streaming.sources.mongodb import MongoSource
+from mage_ai.tests.base_test import TestCase
+
 
 class MongoTests(TestCase):
 
     def test_init(self):
-        with patch.object(MongoSource, 'init_client') as mock_init_client:  # Assuming MongoSource has an init_client method
+        with patch.object(MongoSource, 'init_client') as mock_init_client:
             MongoSource(dict(
                 connector_type='mongo',
                 connection_str='mongodb://localhost:27017/',
