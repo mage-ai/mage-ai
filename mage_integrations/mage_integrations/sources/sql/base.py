@@ -39,9 +39,10 @@ from mage_integrations.utils.schema_helpers import (
 class Source(BaseSource):
     @property
     def fetch_limit(self):
+        config = self.config or dict()
         return (
-            self.config.get(SUBBATCH_FETCH_LIMIT_KEY) or
-            self.config.get(BATCH_FETCH_LIMIT_KEY) or
+            config.get(SUBBATCH_FETCH_LIMIT_KEY) or
+            config.get(BATCH_FETCH_LIMIT_KEY) or
             BATCH_FETCH_LIMIT
         )
 
