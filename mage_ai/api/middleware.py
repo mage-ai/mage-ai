@@ -56,7 +56,11 @@ class OAuthMiddleware(RequestHandler):
 
         token_from_header = self.request.headers.get(HEADER_OAUTH_TOKEN, None)
         if not token_from_header:
-            token_from_header = get_bearer_auth_token_from_headers(self.request.headers)
+            token_from_header = self.request.headers.get('Authorization')
+            if token_from_header:
+                token_from_header = get_bearer_auth_token_from_headers(self.request.headers)
+            else:
+                token_from_header = self.request.query_arguments.get('HTTP_AUTHORIZATION', None)
 
         cookies = parse_cookie_header(self.request.headers.get('Cookie', ''))
 
