@@ -31,7 +31,7 @@ import {
 import {
   PADDING_UNITS,
   UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTION,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
@@ -43,6 +43,11 @@ import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
 const ICON_SIZE = 2 * UNIT;
+
+enum ObjectTypeEnum {
+  PERMISSIONS = 'Permissions',
+  USERS = 'Users',
+}
 
 type ObjectAttributesType = {
   created_at?: string;
@@ -67,13 +72,19 @@ function RoleDetail({
   const router = useRouter();
 
   const [afterHidden, setAfterHidden] = useState(true);
+  const [addingObjectType, setAddingObjectType] = useState(null);
   const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
 
-  const setObjectAttributesStateWithPermissions = useCallback((data, permissionsArray) => {
+  const setObjectAttributesStateWithMapping = useCallback((
+    data,
+    permissionsArray,
+    usersArray,
+  ) => {
     setObjectAttributesState({
       ...role,
       permissionsMapping: indexBy(permissionsArray || [], ({ id }) => id),
+      usersMapping: indexBy(usersArray || [], ({ id }) => id),
     });
   }, [
     setObjectAttributesState,
@@ -100,10 +111,10 @@ function RoleDetail({
 
   useEffect(() => {
     if (role) {
-      setObjectAttributesStateWithPermissions(role, role?.role_permissions);
+      setObjectAttributesStateWithMapping(role, role?.role_permissions, role?.users);
     }
   }, [
-    setObjectAttributesStateWithPermissions,
+    setObjectAttributesStateWithMapping,
     role,
   ]);
 
@@ -116,7 +127,11 @@ function RoleDetail({
             role: objectServer,
           }) => {
             setAttributesTouched({});
-            setObjectAttributesStateWithPermissions(objectServer, objectServer?.role_permissions);
+            setObjectAttributesStateWithMapping(
+              objectServer,
+              objectServer?.role_permissions,
+              objectServer?.users
+            );
 
             if (!role) {
               router.push(`/settings/workspace/roles/${objectServer?.id}`);
@@ -207,8 +222,24 @@ function RoleDetail({
     permissionsMapping,
   ]);
 
-  const users: UserType[] = useMemo(() => role?.users || [], [
-    role,
+  const { data: dataUsers } = api.users.list({}, {}, {
+    pauseFetch: !role,
+  });
+  const usersAll: UserType[] = useMemo(() => sortByKey(
+    dataUsers?.users || [],
+    user => displayName(user),
+  ), [
+    dataUsers,
+  ]);
+
+  const usersMapping = useMemo(() => objectAttributes?.usersMapping || {}, [
+    objectAttributes,
+  ]);
+  const users: UserType[] = useMemo(() => sortByKey(
+    Object.values(usersMapping),
+    user => displayName(user),
+  ), [
+    usersMapping,
   ]);
 
   const hasPermissions = useMemo(() => permissions?.length >= 1, [permissions]);
@@ -216,7 +247,10 @@ function RoleDetail({
     <Button
       beforeIcon={<Add />}
       compact
-      onClick={() => setAfterHidden(false)}
+      onClick={() => {
+        setAddingObjectType(ObjectTypeEnum.PERMISSIONS);
+        setAfterHidden(false);
+      }}
       primary={!hasPermissions}
       secondary={hasPermissions}
       small
@@ -225,6 +259,7 @@ function RoleDetail({
     </Button>
   ), [
     hasPermissions,
+    setAddingObjectType,
     setAfterHidden,
   ]);
 
@@ -233,8 +268,9 @@ function RoleDetail({
     <Button
       beforeIcon={<Add />}
       compact
-      onClick={(e) => {
-
+      onClick={() => {
+        setAddingObjectType(ObjectTypeEnum.USERS);
+        setAfterHidden(false);
       }}
       primary={!hasUsers}
       secondary={hasUsers}
@@ -248,7 +284,7 @@ function RoleDetail({
 
   const buildTable = useCallback((permissionsArray: PermissionType[]) => (
     <Table
-      columnFlex={[null, 1, 1, 1, 6]}
+      columnFlex={[null, 2, 1, 1, 6]}
       columns={[
         {
           label: () => {
@@ -284,6 +320,7 @@ function RoleDetail({
           uuid: 'Entity ID',
         },
         {
+          rightAligned: true,
           uuid: 'Access',
         },
       ]}
@@ -331,7 +368,7 @@ function RoleDetail({
           </Text>,
           <div key="access">
             {accessDisplayNamesCount >= 1 && (
-              <FlexContainer alignItems="center" flexWrap="wrap">
+              <FlexContainer alignItems="center" flexWrap="wrap" justifyContent="flex-end">
                 {accessDisplayNames?.map((displayName: string, idx: number) => (
                   <div key={displayName}>
                     <Text default monospace small>
@@ -358,20 +395,109 @@ function RoleDetail({
     setObjectAttributes,
   ]);
 
-  const after = useMemo(() => {
-    return (
-      <>
-        {buildTable(permissionsAll)}
-      </>
-    );
-  }, [
-    permissionsAll,
+  const buildTableUsers = useCallback((objectArray: UserType[]) => (
+    <Table
+      columnFlex={[null, 1, 1, 1]}
+      columns={[
+        {
+          label: () => {
+            const checked = objectArray?.every(({ id }) => usersMapping?.[id]);
+
+            return (
+              <Checkbox
+                checked={checked}
+                key="checkbox"
+                onClick={() => {
+                  if (checked) {
+                    setObjectAttributes({
+                      usersMapping: {},
+                    });
+                  } else {
+                    setObjectAttributes({
+                      usersMapping: indexBy(objectArray, ({ id }) => id),
+                    });
+                  }
+                }}
+              />
+            );
+          },
+          uuid: 'actions',
+        },
+        {
+          uuid: 'Username',
+        },
+        {
+          uuid: 'First name',
+        },
+        {
+          uuid: 'Last name',
+        },
+      ]}
+      onClickRow={(rowIndex: number) => {
+        const object = objectArray[rowIndex];
+        const id = object?.id;
+        const checked = !!usersMapping?.[id];
+        const mapping = { ...usersMapping };
+
+        if (checked) {
+          delete mapping?.[id];
+        } else {
+          mapping[id] = object;
+        }
+
+        setObjectAttributes({
+          usersMapping: mapping,
+        });
+      }}
+      rows={objectArray?.map(({
+        first_name: firstName,
+        id,
+        last_name: lastName,
+        username,
+      }) => {
+        const checked = !!usersMapping?.[id];
+
+        return [
+          <Checkbox
+            checked={checked}
+            key="checkbox"
+          />,
+          <Text key="username">
+            {username}
+          </Text>,
+          <Text default key="firstName">
+            {firstName}
+          </Text>,
+          <Text default key="lastName">
+            {lastName}
+          </Text>,
+        ];
+      })}
+      uuid="users"
+    />
+  ), [
+    usersMapping,
+    setObjectAttributes,
+  ]);
+
+  const afterPermissions = useMemo(() => buildTable(permissionsAll), [
     buildTable,
+    permissionsAll,
+  ]);
+
+  const afterUsers = useMemo(() => buildTableUsers(usersAll), [
+    buildTableUsers,
+    usersAll,
   ]);
 
   const permissionsMemo = useMemo(() => buildTable(permissions), [
     buildTable,
     permissions,
+  ]);
+
+  const usersMemo = useMemo(() => buildTableUsers(users), [
+    buildTable,
+    users,
   ]);
 
   const contentMemo = (
@@ -468,13 +594,14 @@ function RoleDetail({
             )}
 
             {hasPermissions && (
-              <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTION}>
+              <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
                 {permissionsMemo}
               </Spacing>
             )}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+
           <Panel noPadding>
             <Spacing p={PADDING_UNITS}>
               <FlexContainer
@@ -497,21 +624,25 @@ function RoleDetail({
 
             <Divider light />
 
-            <Spacing p={PADDING_UNITS}>
-              {!hasUsers && (
-                <>
-                  <Spacing mb={PADDING_UNITS}>
-                    <Text default>
-                      There are currently no users with this role.
-                    </Text>
-                  </Spacing>
+            {!hasUsers && (
+              <Spacing p={PADDING_UNITS}>
+                <Spacing mb={PADDING_UNITS}>
+                  <Text default>
+                    There are currently no users with this role.
+                  </Text>
+                </Spacing>
 
-                  <FlexContainer alignItems="center">
-                    {addUserButton}
-                  </FlexContainer>
-                </>
-              )}
-            </Spacing>
+                <FlexContainer alignItems="center">
+                  {addUserButton}
+                </FlexContainer>
+              </Spacing>
+            )}
+
+            {hasUsers && (
+              <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                {usersMemo}
+              </Spacing>
+            )}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -632,6 +763,9 @@ function RoleDetail({
               permission_ids: Object.keys(
                 objectAttributes?.permissionsMapping || {},
               ).map(i => Number(i)),
+              user_ids: Object.keys(
+                objectAttributes?.usersMapping || {},
+              ).map(i => Number(i)),
             },
           })}
           primary
@@ -676,11 +810,17 @@ function RoleDetail({
 
   return (
     <SettingsDashboard
-      after={after}
+      after={
+        ObjectTypeEnum.PERMISSIONS === addingObjectType
+          ? afterPermissions
+          : ObjectTypeEnum.USERS === addingObjectType
+            ? afterUsers
+            : null
+      }
       afterHeader={
         <Spacing px={PADDING_UNITS}>
           <Text bold>
-            Permissions
+            {addingObjectType}
           </Text>
         </Spacing>
       }

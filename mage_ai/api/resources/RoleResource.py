@@ -2,7 +2,7 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.oauth import Role, RolePermission
+from mage_ai.orchestration.db.models.oauth import Role, RolePermission, UserRole
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 
 
@@ -100,4 +100,37 @@ class RoleResource(DatabaseResource):
             )
             db_connection.session.execute(delete_statement)
 
-        return super().update(ignore_keys(payload, ['permission_ids']), **kwargs)
+        user_ids = [int(i) for i in payload.get('user_ids') or []]
+        user_role_mapping = index_by(lambda x: x.id, self.users or [])
+
+        user_ids_create = []
+        user_ids_delete = []
+
+        for permission_id in user_ids:
+            if permission_id not in user_role_mapping:
+                user_ids_create.append(permission_id)
+
+        for permission_id in user_role_mapping.keys():
+            if permission_id not in user_ids:
+                user_ids_delete.append(permission_id)
+
+        if user_ids_create:
+            db_connection.session.bulk_save_objects(
+                [UserRole(
+                    role_id=self.model.id,
+                    user_id=user_id,
+                ) for user_id in user_ids_create],
+                return_defaults=True,
+            )
+
+        if user_ids_delete:
+            delete_statement = UserRole.__table__.delete().where(
+                UserRole.role_id == self.id,
+                UserRole.user_id.in_(user_ids_delete),
+            )
+            db_connection.session.execute(delete_statement)
+
+        return super().update(ignore_keys(payload, [
+            'permission_ids',
+            'user_ids',
+        ]), **kwargs)

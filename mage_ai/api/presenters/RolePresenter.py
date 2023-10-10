@@ -26,12 +26,14 @@ RolePresenter.register_format(
 )
 
 
-RolePresenter.register_format(
+RolePresenter.register_formats([
     constants.DETAIL,
-    RolePresenter.default_attributes + [
-        'users',
-    ],
-)
+    constants.CREATE,
+    constants.UPDATE,
+    constants.DELETE,
+], RolePresenter.default_attributes + [
+    'users',
+])
 
 
 RolePresenter.register_formats([
