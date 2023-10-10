@@ -197,6 +197,10 @@ export function snakeCaseToUrlPathname(snakeCaseString) {
   return snakeCaseString.split('_').join('-');
 }
 
+export function camelCaseToNormalWithSpaces(camelCaseString: string): string {
+  return camelCaseString.replace(/([A-Z])/g, ' $1');
+}
+
 export function timeBetween(startAt, endAt) {
   const hours = endAt.diff(startAt, 'hours');
   const minutes = endAt.diff(startAt, 'minutes');

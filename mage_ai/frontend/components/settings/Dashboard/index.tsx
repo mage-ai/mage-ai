@@ -12,6 +12,7 @@ type SettingsDashboardProps = {
   appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children: any;
+  title?: string;
   uuidItemSelected: string;
   uuidWorkspaceSelected: string;
 };
@@ -22,6 +23,7 @@ function SettingsDashboard({
   appendBreadcrumbs,
   breadcrumbs,
   children,
+  title,
   uuidItemSelected,
   uuidWorkspaceSelected,
 }: SettingsDashboardProps) {
@@ -47,8 +49,8 @@ function SettingsDashboard({
       )}
       beforeWidth={BEFORE_WIDTH}
       breadcrumbs={breadcrumbs}
-      title="Settings"
-      uuid="settings/index"
+      title={title || 'Settings'}
+      uuid={`${title || 'settings'}/index`}
     >
       {children}
     </Dashboard>

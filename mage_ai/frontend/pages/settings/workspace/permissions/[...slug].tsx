@@ -1,46 +1,46 @@
+import PermissionDetail from '@components/Permissions/PermissionDetail';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import RoleDetail from '@components/Roles/RoleDetail';
 import SettingsDashboard from '@components/settings/Dashboard';
 import api from '@api';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 
-type RoleDetailPageProps = {
+type PermissionDetailPageProps = {
   slug: number | string;
 };
 
-function RoleDetailPage({
+function PermissionDetailPage({
   slug,
-}: RoleDetailPageProps) {
-  const { data } = api.roles.detail(slug, {}, {
+}: PermissionDetailPageProps) {
+  const { data } = api.permissions.detail(slug, {}, {
     revalidateOnFocus: false,
   });
-  const role = data?.role;
+  const permission = data?.permission;
 
   return (
     <SettingsDashboard
       appendBreadcrumbs
       breadcrumbs={[
         {
-          label: () => 'Roles',
+          label: () => 'Permissions',
           linkProps: {
-            href: '/settings/workspace/roles'
+            href: '/settings/workspace/permissions'
           },
         },
         {
           bold: true,
-          label: () => role?.name,
+          label: () => permission?.id,
         },
       ]}
-      title={role?.name ? `${role?.name} role` : 'New role'}
-      uuidItemSelected={SectionItemEnum.ROLES}
+      title={permission ? `Permission ${permission?.id}` : 'New permission'}
+      uuidItemSelected={SectionItemEnum.PERMISSIONS}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
-      <RoleDetail role={role} />
+      <PermissionDetail permission={permission} />
     </SettingsDashboard>
   );
 }
 
-RoleDetailPage.getInitialProps = async (ctx) => {
+PermissionDetailPage.getInitialProps = async (ctx) => {
   const {
     slug,
   }: {
@@ -52,4 +52,4 @@ RoleDetailPage.getInitialProps = async (ctx) => {
   };
 };
 
-export default PrivateRoute(RoleDetailPage);
+export default PrivateRoute(PermissionDetailPage);

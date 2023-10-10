@@ -40,6 +40,18 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
 
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
+    'entity_names',
+    'entity_types',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+    constants.DETAIL,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'role',
     'user',
     'user_id',

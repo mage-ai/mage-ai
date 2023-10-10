@@ -65,6 +65,7 @@ export const MONITOR_STATS = 'monitor_stats';
 export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PAGE_BLOCK_LAYOUTS: 'page_block_layouts' = 'page_block_layouts';
+export const PERMISSIONS: 'permissions' = 'permissions';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_INTERACTIONS: 'pipeline_interactions' = 'pipeline_interactions';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
@@ -137,6 +138,7 @@ const RESOURCES: any[][] = [
   [OUTPUTS, PIPELINES],
   [OUTPUTS],
   [PAGE_BLOCK_LAYOUTS],
+  [PERMISSIONS],
   [PIPELINES],
   [PIPELINE_INTERACTIONS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],

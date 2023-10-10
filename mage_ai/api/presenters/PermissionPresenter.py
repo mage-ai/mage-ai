@@ -1,5 +1,12 @@
+from typing import List
+
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.authentication.permissions.constants import (
+    BlockEntityType,
+    EntityName,
+    PipelineEntityType,
+)
 
 
 class PermissionPresenter(BasePresenter):
@@ -13,6 +20,14 @@ class PermissionPresenter(BasePresenter):
         'id',
         'updated_at',
     ]
+
+    def entity_names(self, **kwargs) -> List[str]:
+        return sorted([n for n in EntityName])
+
+    def entity_types(self, **kwargs) -> List[str]:
+        return sorted(
+            [n for n in BlockEntityType] + [n for n in PipelineEntityType],
+        )
 
 
 PermissionPresenter.register_format(
@@ -30,6 +45,8 @@ PermissionPresenter.register_formats([
     constants.DETAIL,
     constants.UPDATE,
 ], PermissionPresenter.default_attributes + [
+    'entity_names',
+    'entity_types',
     'query_attributes',
     'read_attributes',
     'role',

@@ -150,6 +150,7 @@ function UsersListPage() {
           },
         },
       ]}
+      title="Users"
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >

@@ -26,6 +26,7 @@ import {
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
+import { displayName } from '@utils/models/user';
 import { getUser } from '@utils/session';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -142,6 +143,7 @@ function UserDetailPage({
           label: () => objectAttributes?.username,
         },
       ]}
+      title={user ? displayName(user) : 'New user'}
       uuidItemSelected={SectionItemEnum.USERS}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >

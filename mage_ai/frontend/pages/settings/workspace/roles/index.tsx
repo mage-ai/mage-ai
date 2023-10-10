@@ -52,10 +52,11 @@ function RolesListPage() {
     <SettingsDashboard
       appendBreadcrumbs
       breadcrumbs={breadcrumbs}
+      title="Roles"
       uuidItemSelected={SectionItemEnum.ROLES}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
-      {isAddingNew && <RoleDetail />}
+      {isAddingNew && <RoleDetail onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>
