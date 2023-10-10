@@ -31,7 +31,7 @@ export type MetaType = {
 export type InputWrapperProps = {
   afterIcon?: any;
   afterIconSize?: number;
-  afterIconClick?: () => void;
+  afterIconClick?: (e?: any, ref?: any) => void;
   alignCenter?: boolean;
   alignRight?: boolean;
   autoComplete?: string;
@@ -668,6 +668,7 @@ const InputWrapper = ({
   ...props
 }: InputWrapperProps & InputWrapperInternalProps, ref) => {
   const hasError: boolean = !!(meta && meta.touched && meta.error);
+  const inputRef = useRef(null);
   const spanRef = useRef(null);
 
   const iconProps = {
@@ -772,7 +773,7 @@ const InputWrapper = ({
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            afterIconClick();
+            afterIconClick(e, ref || inputRef);
           }}
         >
           {AfterIconEl}
@@ -817,7 +818,7 @@ const InputWrapper = ({
         passwordrules,
         placeholder: (label || label === 0) ? (showLabel ? '' : label) : placeholder,
         readOnly,
-        ref,
+        ref: ref || inputRef,
         type: typeProp,
         value,
         width: dynamicSizing ? dynamicWidth : width,

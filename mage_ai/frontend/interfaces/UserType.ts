@@ -57,5 +57,6 @@ export default interface UserType {
   roles?: number;
   roles_new?: RoleType[];
   roles_display?: string;
+  updated_at?: string;
   username?: string;
 }

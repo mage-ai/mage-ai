@@ -80,6 +80,13 @@ class User(BaseModel):
 
         return value
 
+    @validates('avatar')
+    def shorten_avatar(self, key, value):
+        if value and len(value) >= 3:
+            return value[:2]
+
+        return value
+
     @property
     def project_access(self) -> int:
         return self.get_access(Entity.PROJECT, get_project_uuid())

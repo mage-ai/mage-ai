@@ -16,6 +16,7 @@ class UserPresenter(BasePresenter):
         'roles',
         'roles_display',
         'roles_new',
+        'updated_at',
         'username',
     ]
 
