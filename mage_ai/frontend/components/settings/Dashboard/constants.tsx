@@ -1,6 +1,7 @@
 import UserType, { RoleValueEnum } from '@interfaces/UserType';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import {
+  Locked,
   Settings,
   Sun,
   VisibleEye,
@@ -19,6 +20,7 @@ export enum SectionEnum {
 
 export enum SectionItemEnum {
   ROLES = 'Roles',
+  PERMISSIONS = 'Permissions',
   USERS = 'Users',
 }
 
@@ -51,6 +53,13 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
           href: '/settings/workspace/roles',
         },
         uuid: SectionItemEnum.ROLES,
+      },
+      {
+        Icon: Locked,
+        linkProps: {
+          href: '/settings/workspace/permissions',
+        },
+        uuid: SectionItemEnum.PERMISSIONS,
       },
     ]);
   }

@@ -30,6 +30,38 @@ export enum PermissionAccessEnum {
   DISABLE_WRITE_ALL = 536870912,
 }
 
+export const PERMISSION_ACCESS_HUMAN_READABLE_MAPPING = {
+  [PermissionAccessEnum.OWNER]: 'Owner',
+  [PermissionAccessEnum.ADMIN]: 'Admin',
+  [PermissionAccessEnum.EDITOR]: 'Editor',
+  [PermissionAccessEnum.VIEWER]: 'Viewer',
+  [PermissionAccessEnum.LIST]: 'List',
+  [PermissionAccessEnum.DETAIL]: 'Detail',
+  [PermissionAccessEnum.CREATE]: 'Create',
+  [PermissionAccessEnum.UPDATE]: 'Update',
+  [PermissionAccessEnum.DELETE]: 'Delete',
+  [PermissionAccessEnum.OPERATION_ALL]: 'All operations',
+  [PermissionAccessEnum.QUERY]: 'Query',
+  [PermissionAccessEnum.QUERY_ALL]: 'All query parameters',
+  [PermissionAccessEnum.READ]: 'Read',
+  [PermissionAccessEnum.READ_ALL]: 'All read attributes',
+  [PermissionAccessEnum.WRITE]: 'Write',
+  [PermissionAccessEnum.WRITE_ALL]: 'All write attributes',
+  [PermissionAccessEnum.ALL]: 'All',
+  [PermissionAccessEnum.DISABLE_LIST]: 'Disable list',
+  [PermissionAccessEnum.DISABLE_DETAIL]: 'Disable detail',
+  [PermissionAccessEnum.DISABLE_CREATE]: 'Disable create',
+  [PermissionAccessEnum.DISABLE_UPDATE]: 'Disable update',
+  [PermissionAccessEnum.DISABLE_DELETE]: 'Disable delete',
+  [PermissionAccessEnum.DISABLE_OPERATION_ALL]: 'Disable all operations',
+  [PermissionAccessEnum.DISABLE_QUERY]: 'Disable query',
+  [PermissionAccessEnum.DISABLE_QUERY_ALL]: 'Disable all query parameters',
+  [PermissionAccessEnum.DISABLE_READ]: 'Disable read',
+  [PermissionAccessEnum.DISABLE_READ_ALL]: 'Disable all read attributes',
+  [PermissionAccessEnum.DISABLE_WRITE]: 'Disable write',
+  [PermissionAccessEnum.DISABLE_WRITE_ALL]: 'Disable all write attributes',
+};
+
 export interface UserType {
   first_name?: string;
   id?: string;
@@ -37,9 +69,10 @@ export interface UserType {
   username?: string;
 }
 
-export default interface Permission {
+export default interface PermissionType {
   access?: PermissionAccessEnum;
   created_at?: string;
+  entity?: string;
   entity_id?: number | string;
   entity_name?: string;
   entity_type?: string;
