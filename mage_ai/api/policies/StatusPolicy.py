@@ -16,10 +16,9 @@ StatusPolicy.allow_actions([
 ])
 
 StatusPolicy.allow_read(StatusPresenter.default_attributes + [
-    'last_user_request',
-    'last_scheduler_activity',
     'active_pipeline_run_count',
-    'active_block_run_count',
+    'last_scheduler_activity',
+    'last_user_request',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
     OauthScope.CLIENT_PUBLIC,

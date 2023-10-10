@@ -70,6 +70,7 @@ class StatusResource(GenericResource):
         display_format = meta.get('_format')
         if 'with_activity_details' == display_format:
             from mage_ai.server.server import latest_user_activity
+
             project_schedules = PipelineSchedule.repo_query.all()
             project_schedule_ids = [schedule.id for schedule in project_schedules]
             project_pipeline_runs = PipelineRun.query.filter(
@@ -81,18 +82,13 @@ class StatusResource(GenericResource):
             if sorted_pipeline_runs.count() > 0:
                 last_scheduler_activity = sorted_pipeline_runs[0].updated_at
             active_pipeline_run_count = project_pipeline_runs.filter(
-                PipelineRun.status.in_(
-                    [
-                        PipelineRun.PipelineRunStatus.INITIAL,
-                        PipelineRun.PipelineRunStatus.RUNNING,
-                    ]
-                )
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING
             ).count()
 
             activity_details = {
-                'last_user_request': latest_user_activity.latest_activity,
-                'last_scheduler_activity': last_scheduler_activity,
                 'active_pipeline_run_count': active_pipeline_run_count,
+                'last_scheduler_activity': last_scheduler_activity,
+                'last_user_request': latest_user_activity.latest_activity,
             }
 
             status = merge_dict(status, activity_details)

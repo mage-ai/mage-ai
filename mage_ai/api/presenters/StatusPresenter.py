@@ -18,8 +18,8 @@ class StatusPresenter(BasePresenter):
 StatusPresenter.register_format(
     'with_activity_details',
     StatusPresenter.default_attributes + [
-        'last_user_request',
-        'last_scheduler_activity',
         'active_pipeline_run_count',
+        'last_scheduler_activity',
+        'last_user_request',
     ],
 )
