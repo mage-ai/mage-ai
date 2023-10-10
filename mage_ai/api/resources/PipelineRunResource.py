@@ -25,7 +25,7 @@ class PipelineRunResource(DatabaseResource):
 
     @classmethod
     @safe_db_query
-    def collection(self, query_arg, meta, user, **kwargs):
+    async def collection(self, query_arg, meta, user, **kwargs):
         pipeline_schedule_id = None
         parent_model = kwargs.get('parent_model')
         if parent_model:
@@ -57,6 +57,20 @@ class PipelineRunResource(DatabaseResource):
             statuses = statuses[0]
         if statuses:
             statuses = statuses.split(',')
+
+        pipeline_tags = query_arg.get('pipeline_tag[]', [None])
+        pipeline_uuids_with_tags = []
+        if pipeline_tags:
+            pipeline_tags = pipeline_tags[0]
+        if pipeline_tags:
+            pipeline_tags = pipeline_tags.split(',')
+
+            await TagCache.initialize_cache()
+
+            pipeline_tag_cache = TagCache()
+            pipeline_uuids_with_tags = pipeline_tag_cache.get_pipeline_uuids_with_tags(
+                pipeline_tags,
+            )
 
         order_by_arg = query_arg.get('order_by[]', [None])
         if order_by_arg:
@@ -98,6 +112,8 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
         if pipeline_uuids:
             results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
+        if pipeline_uuids_with_tags:
+            results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids_with_tags))
         if status is not None:
             results = results.filter(PipelineRun.status == status)
         if statuses:
@@ -124,7 +140,7 @@ class PipelineRunResource(DatabaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
-        total_results = self.collection(query_arg, meta, user, **kwargs)
+        total_results = await self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
@@ -134,23 +150,14 @@ class PipelineRunResource(DatabaseResource):
         if include_pipeline_uuids:
             include_pipeline_uuids = include_pipeline_uuids[0]
 
-        pipeline_tags = query_arg.get('pipeline_tag[]', [None])
-        if pipeline_tags:
-            pipeline_tags = pipeline_tags[0]
-
         pipeline_type = query_arg.get('pipeline_type', [None])
         if pipeline_type:
             pipeline_type = pipeline_type[0]
 
         filter_by_pipeline_type = pipeline_type is not None
-        filter_by_pipeline_tag = pipeline_tags is not None
-        if filter_by_pipeline_type or filter_by_pipeline_tag:
+        if filter_by_pipeline_type:
             try:
                 pipeline_type_by_pipeline_uuid = dict()
-                if filter_by_pipeline_tag:
-                    pipeline_tag_cache = TagCache()
-                    pipeline_tags_by_pipeline_uuid = \
-                        pipeline_tag_cache.get_tags_by_pipeline_uuid()
                 pipeline_runs = total_results.all()
                 results = []
                 for run in pipeline_runs:
@@ -160,13 +167,6 @@ class PipelineRunResource(DatabaseResource):
                             pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
                         run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
                         filters.append(run_pipeline_type == pipeline_type)
-                    if filter_by_pipeline_tag:
-                        pipeline_tags_for_run = \
-                            pipeline_tags_by_pipeline_uuid.get(run.pipeline_uuid, [])
-                        filters.append(
-                            len(pipeline_tags_for_run) > 0 and
-                            set(pipeline_tags_for_run).issubset(set(pipeline_tags.split(','))),
-                        )
                     if all(filters):
                         results.append(run)
                 total_count = len(results)

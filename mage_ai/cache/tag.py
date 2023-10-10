@@ -49,6 +49,17 @@ class TagCache(BaseCache):
 
         return pipeline_uuid_to_tags_mapping
 
+    def get_pipeline_uuids_with_tags(self, tags: List):
+        tags_mapping = self.get_tags()
+        pipeline_uuids = set()
+
+        for tag_uuid in tags:
+            pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
+            if pipelines_dict:
+                pipeline_uuids.update(pipelines_dict.keys())
+
+        return list(pipeline_uuids)
+
     def get_tags_for_specific_pipeline(self, pipeline) -> List:
         tags_by_pipeline_uuid = self.get_tags_by_pipeline_uuid()
         pipeline_uuid = pipeline.get('uuid') if type(pipeline) is dict else pipeline.uuid
