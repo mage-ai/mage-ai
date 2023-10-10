@@ -43,6 +43,7 @@ export type ColumnType = {
     columnIndex?: number;
     groupIndex?: number;
   }) => any | string;
+  rightAligned?: boolean;
   tooltipAppearAfter?: boolean;
   tooltipMessage?: string
   tooltipWidth?: number;
@@ -488,6 +489,7 @@ function Table({
           center,
           fitTooltipContentWidth,
           label,
+          rightAligned,
           tooltipAppearAfter,
           tooltipMessage,
           tooltipWidth,
@@ -540,7 +542,13 @@ function Table({
           >
             <FlexContainer
               alignItems="center"
-              justifyContent={center ? 'center': 'flex-start'}
+              justifyContent={
+                (center && !rightAligned)
+                  ? 'center'
+                  : rightAligned
+                    ? 'flex-end'
+                    : 'flex-start'
+                }
             >
               {isSortable
                 ? (

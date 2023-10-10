@@ -10,6 +10,7 @@ class RolePresenter(BasePresenter):
         'permissions',
         'role_permissions',
         'updated_at',
+        'user',
     ]
 
 
@@ -38,10 +39,9 @@ RolePresenter.register_formats([
     f'permission/{constants.DETAIL}',
     f'permission/{constants.UPDATE}',
 ], [
-        'created_at',
-        'id',
-        'name',
-        'updated_at',
-        'users',
-    ],
-)
+    'created_at',
+    'id',
+    'name',
+    'updated_at',
+    'users',
+])

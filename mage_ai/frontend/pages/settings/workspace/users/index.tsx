@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
 import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RoleType from '@interfaces/RoleType';
@@ -13,7 +14,7 @@ import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { AddUserSmileyFace, Edit } from '@oracle/icons';
+import { AddUserSmileyFace } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SECTION_ITEM_UUID_USERS,
@@ -139,6 +140,16 @@ function UsersListPage() {
     <SettingsDashboard
       after={formMemo}
       afterHidden={!user && !showAddNewUser}
+      appendBreadcrumbs
+      breadcrumbs={[
+        {
+          bold: true,
+          label: () => 'Users',
+          linkProps: {
+            href: '/settings/workspace/users'
+          },
+        },
+      ]}
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
@@ -157,13 +168,10 @@ function UsersListPage() {
         </Spacing>
       }
 
-      <Spacing p={PADDING_UNITS}>
-        <Headline>
-          Users
-        </Headline>
-      </Spacing>
+      <Divider light />
+
       <Table
-        columnFlex={[null, 1, 1, 1, null, null]}
+        columnFlex={[null, 1, 1, 1, 1, null, null]}
         columns={[
           {
             label: () => '',
@@ -173,41 +181,34 @@ function UsersListPage() {
             uuid: 'Username',
           },
           {
+            uuid: 'First name',
+          },
+          {
+            uuid: 'Last name',
+          },
+          {
             uuid: 'Email',
           },
           {
             uuid: 'Role',
           },
           {
+            rightAligned: true,
             uuid: 'Created',
-          },
-          {
-            label: () => '',
-            uuid: 'actions',
           },
         ]}
         isSelectedRow={(rowIndex: number) => users[rowIndex]?.id === user?.id}
         onClickRow={(rowIndex: number) => {
           const rowUserID = users[rowIndex]?.id;
-
-          if (rowUserID === currentUserID) {
-            router.push('/settings/account/profile');
-          } else if (+query?.user_id === rowUserID) {
-            goToWithQuery({
-              user_id: null,
-            });
-          } else {
-            goToWithQuery({
-              add_new_user: null,
-              user_id: rowUserID,
-            });
-          }
+          router.push(`/settings/workspace/users/${rowUserID}`);
         }}
         rows={users.map(({
           avatar,
           created_at: createdAt,
           email,
+          first_name: firstName,
           id,
+          last_name: lastName,
           roles_display,
           roles_new,
           username,
@@ -220,7 +221,13 @@ function UsersListPage() {
               {avatar}
             </Text>,
             <Text key="username">
-              {username}
+              {username || '-'}
+            </Text>,
+            <Text default key="firstName">
+              {firstName || '-'}
+            </Text>,
+            <Text default key="lastName">
+              {lastName || '-'}
             </Text>,
             <Text default key="email">
               {email}
@@ -231,19 +238,6 @@ function UsersListPage() {
             <Text monospace default key="created">
               {createdAt && dateFormatLong(createdAt)}
             </Text>,
-            <Button
-              iconOnly
-              key="edit"
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                pauseEvent(e);
-                router.push(`/settings/workspace/users/${id}`);
-              }}
-            >
-              <Edit />
-            </Button>,
           ];
         })}
         uuid="pipeline-runs"
