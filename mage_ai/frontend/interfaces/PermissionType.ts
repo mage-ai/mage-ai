@@ -119,6 +119,7 @@ export interface UserType {
 export default interface PermissionType {
   access?: PermissionAccessEnum;
   created_at?: string;
+  entity?: string;
   entity_id?: number | string;
   entity_name?: string;
   entity_names?: string[];

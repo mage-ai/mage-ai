@@ -58,10 +58,10 @@ type ObjectAttributesType = {
   entity_id?: string | number;
   entity_name?: string;
   entity_type?: string;
-  query_attributes?: string;
-  read_attributes?: string;
+  query_attributes?: string[];
+  read_attributes?: string[];
   updated_at?: string;
-  write_attributes?: string;
+  write_attributes?: string[];
 };
 
 type PermissionDetailProps = {
@@ -203,7 +203,7 @@ function PermissionDetail({
     permissionAccesses: PermissionAccessEnum[],
   ) => permissionAccesses.map((permissionAccess: PermissionAccessEnum, idx: number) => {
     const displayName = PERMISSION_ACCESS_HUMAN_READABLE_MAPPING[permissionAccess];
-    const checked = (access & Number(permissionAccess)) as boolean;
+    const checked = Boolean(access & Number(permissionAccess));
     const binaryStringCurrent = numberToBinaryString(access);
     const binaryStringNew = numberToBinaryString(permissionAccess);
 
