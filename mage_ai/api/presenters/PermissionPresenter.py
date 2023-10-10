@@ -30,11 +30,11 @@ PermissionPresenter.register_formats([
     constants.DETAIL,
     constants.UPDATE,
 ], PermissionPresenter.default_attributes + [
-        'query_attributes',
-        'read_attributes',
-        'role',
-        'roles',
-        'user_id',
-        'write_attributes',
-    ],
-)
+    'query_attributes',
+    'read_attributes',
+    'role',
+    'roles',
+    'user',
+    'user_id',
+    'write_attributes',
+])

@@ -24,10 +24,7 @@ import {
   Trash,
 } from '@oracle/icons';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
-import {
-  SECTION_ITEM_UUID_USERS,
-  SECTION_UUID_WORKSPACE,
-} from '@components/settings/Dashboard/constants';
+import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
 import { isEmptyObject, selectKeys } from '@utils/hash';
@@ -145,8 +142,8 @@ function UserDetailPage({
           label: () => objectAttributes?.username,
         },
       ]}
-      uuidItemSelected={SECTION_ITEM_UUID_USERS}
-      uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
+      uuidItemSelected={SectionItemEnum.USERS}
+      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
       <ContainerStyle>
         <Panel noPadding>
@@ -504,6 +501,36 @@ function UserDetailPage({
               >
                 <Text large monospace muted>
                   {objectAttributes?.updated_at && dateFormatLong(objectAttributes?.updated_at, {
+                    includeSeconds: true,
+                  })}
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Schedule muted size={ICON_SIZE} />
+
+                <Spacing mr={1} />
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+
+          <Divider light />
+
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center">
+              <Text default large>
+                Created at
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large monospace muted>
+                  {user?.created_at && dateFormatLong(user?.created_at, {
                     includeSeconds: true,
                   })}
                 </Text>
