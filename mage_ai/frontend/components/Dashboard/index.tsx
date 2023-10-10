@@ -112,13 +112,13 @@ function Dashboard({
   }
 
   if ((!breadcrumbsProp?.length || appendBreadcrumbs) && projects?.length >= 1) {
-    breadcrumbs.unshift(...[
-      breadcrumbProject,
-      {
+    if (!breadcrumbsProp?.length) {
+      breadcrumbs.unshift({
         bold: !appendBreadcrumbs,
         label: () => title,
-      },
-    ]);
+      });
+    }
+    breadcrumbs.unshift(breadcrumbProject);
   }
 
   useEffect(() => {

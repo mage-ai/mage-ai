@@ -26,6 +26,8 @@ PermissionPolicy.allow_actions([
 
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
+    'entity_names',
+    'entity_types',
     'query_attributes',
     'read_attributes',
     'write_attributes',
@@ -63,3 +65,12 @@ PermissionPolicy.allow_write([
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_admin_role())
+
+
+PermissionPolicy.allow_query([
+    'only_entity_options',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

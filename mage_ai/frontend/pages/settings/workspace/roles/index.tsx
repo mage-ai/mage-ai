@@ -52,8 +52,9 @@ function RolesListPage() {
     <SettingsDashboard
       appendBreadcrumbs
       breadcrumbs={breadcrumbs}
+      title="Roles"
       uuidItemSelected={SectionItemEnum.ROLES}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       {isAddingNew && <RoleDetail onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (

@@ -51,3 +51,29 @@ export function calculateStartTimestamp(timeIntervalInSec: number) {
 
   return currentTimestampInSec;
 }
+
+export function numberToBinaryString(dec: number): string {
+  // dec = 15
+  // => '1111'
+  return (dec >>> 0).toString(2);
+}
+
+export function addBinaryStrings(bin1: string, bin2: string): string {
+  // bin1: '10'
+  // bin2: '1'
+  // result: 11n
+  return String(BigInt(bin1) + BigInt(bin2));
+}
+
+export function minusBinaryStrings(bin1: string, bin2: string): string {
+  // bin1: '111'
+  // bin2: '100'
+  // result: '11'
+  return String(BigInt(bin1) - BigInt(bin2));
+}
+
+export function binaryStringToNumber(binaryString: string): number {
+  // binaryString = '1111'
+  // => 15
+  return parseInt(binaryString, 2);
+}

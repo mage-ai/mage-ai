@@ -5,6 +5,7 @@ import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PermissionDetail from '@components/Permissions/PermissionDetail';
 import PermissionType from '@interfaces/PermissionType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';
@@ -51,10 +52,11 @@ function PermissionsListPage() {
     <SettingsDashboard
       appendBreadcrumbs
       breadcrumbs={breadcrumbs}
+      title="Permissions"
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
-      {isAddingNew && <div />}
+      {isAddingNew && <PermissionDetail onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>

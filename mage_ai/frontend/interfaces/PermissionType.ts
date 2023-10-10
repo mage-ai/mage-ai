@@ -42,11 +42,11 @@ export const PERMISSION_ACCESS_HUMAN_READABLE_MAPPING = {
   [PermissionAccessEnum.DELETE]: 'Delete',
   [PermissionAccessEnum.OPERATION_ALL]: 'All operations',
   [PermissionAccessEnum.QUERY]: 'Query',
-  [PermissionAccessEnum.QUERY_ALL]: 'All query parameters',
+  [PermissionAccessEnum.QUERY_ALL]: 'Query all attributes',
   [PermissionAccessEnum.READ]: 'Read',
-  [PermissionAccessEnum.READ_ALL]: 'All read attributes',
+  [PermissionAccessEnum.READ_ALL]: 'Read all attributes',
   [PermissionAccessEnum.WRITE]: 'Write',
-  [PermissionAccessEnum.WRITE_ALL]: 'All write attributes',
+  [PermissionAccessEnum.WRITE_ALL]: 'Write all attributes',
   [PermissionAccessEnum.ALL]: 'All',
   [PermissionAccessEnum.DISABLE_LIST]: 'Disable list',
   [PermissionAccessEnum.DISABLE_DETAIL]: 'Disable detail',
@@ -62,6 +62,53 @@ export const PERMISSION_ACCESS_HUMAN_READABLE_MAPPING = {
   [PermissionAccessEnum.DISABLE_WRITE_ALL]: 'Disable all write attributes',
 };
 
+export const PERMISSION_ACCESS_GROUPS = [
+  PermissionAccessEnum.OWNER,
+  PermissionAccessEnum.ADMIN,
+  PermissionAccessEnum.EDITOR,
+  PermissionAccessEnum.VIEWER,
+  PermissionAccessEnum.ALL,
+];
+
+export const PERMISSION_ACCESS_OPERATIONS = [
+  PermissionAccessEnum.LIST,
+  PermissionAccessEnum.DETAIL,
+  PermissionAccessEnum.CREATE,
+  PermissionAccessEnum.UPDATE,
+  PermissionAccessEnum.DELETE,
+  PermissionAccessEnum.OPERATION_ALL,
+];
+
+export const PERMISSION_DISABLE_ACCESS_OPERATIONS = [
+  PermissionAccessEnum.DISABLE_LIST,
+  PermissionAccessEnum.DISABLE_DETAIL,
+  PermissionAccessEnum.DISABLE_CREATE,
+  PermissionAccessEnum.DISABLE_UPDATE,
+  PermissionAccessEnum.DISABLE_DELETE,
+  PermissionAccessEnum.DISABLE_OPERATION_ALL,
+];
+
+export const PERMISSION_ACCESS_QUERY_OPERATIONS = [
+  PermissionAccessEnum.QUERY,
+  PermissionAccessEnum.QUERY_ALL,
+  PermissionAccessEnum.DISABLE_QUERY,
+  PermissionAccessEnum.DISABLE_QUERY_ALL,
+];
+
+export const PERMISSION_ACCESS_READ_OPERATIONS = [
+  PermissionAccessEnum.READ,
+  PermissionAccessEnum.READ_ALL,
+  PermissionAccessEnum.DISABLE_READ,
+  PermissionAccessEnum.DISABLE_READ_ALL,
+];
+
+export const PERMISSION_ACCESS_WRITE_OPERATIONS = [
+  PermissionAccessEnum.WRITE,
+  PermissionAccessEnum.WRITE_ALL,
+  PermissionAccessEnum.DISABLE_WRITE,
+  PermissionAccessEnum.DISABLE_WRITE_ALL,
+];
+
 export interface UserType {
   first_name?: string;
   id?: string;
@@ -75,7 +122,9 @@ export default interface PermissionType {
   entity?: string;
   entity_id?: number | string;
   entity_name?: string;
+  entity_names?: string[];
   entity_type?: string;
+  entity_types?: string[];
   id?: number;
   query_attributes?: string[];
   read_attributes?: string[];
@@ -88,6 +137,7 @@ export default interface PermissionType {
   }[];
   updated_at?: string;
   user?: UserType;
+  users?: UserType[];
   user_id?: number;
   write_attributes?: string[];
 }

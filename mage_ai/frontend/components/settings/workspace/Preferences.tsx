@@ -202,16 +202,30 @@ function Preferences({
           {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
             <Spacing
               key={k}
-              mt={idx === 0 ? 0 : '4px'}
+              mt={idx === 0 ? 0 : 1}
             >
               <FlexContainer
                 alignItems="center"
-                justifyContent="space-between"
               >
+                <ToggleSwitch
+                  checked={!!v}
+                  compact
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+
+                <Spacing mr={PADDING_UNITS} />
+
                 <Flex>
-                  <Text default monospace>
+                  <Text default={!v} monospace>
                     {k}
                   </Text>
+
                   {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
                     <Spacing ml={1}>
                       <Tooltip
@@ -227,19 +241,6 @@ function Preferences({
                     </Spacing>
                   }
                 </Flex>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <ToggleSwitch
-                  checked={!!v}
-                  onCheck={() => setProjectAttributes(prev => ({
-                    ...prev,
-                    features: {
-                      ...projectAttributes?.features,
-                      [k]: !v,
-                    },
-                  }))}
-                />
               </FlexContainer>
             </Spacing>
           ))}
