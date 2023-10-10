@@ -13,6 +13,7 @@ from mage_ai.data_integrations.logger.utils import (
     print_log_from_line,
     print_logs_from_output,
 )
+from mage_ai.data_integrations.utils.config import get_batch_fetch_limit
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     EXECUTION_PARTITION_FROM_NOTEBOOK,
@@ -383,21 +384,20 @@ def execute_data_integration(
         # Handle incremental sync
         state_file_path = None
         if index is not None:
+            batch_fetch_limit = get_batch_fetch_limit(config)
             state_file_path = get_state_file_path(block, data_integration_uuid, stream)
-
             stream_catalogs = get_streams_from_catalog(catalog, [stream]) or []
+
             if len(stream_catalogs) == 1 and \
                     REPLICATION_METHOD_INCREMENTAL == stream_catalogs[0].get('replication_method'):
                 # Use the state to adjust the query
                 # How do we write to the state when the source syncs can run in parallel?
                 pass
             else:
-                from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-                query_data['_offset'] = BATCH_FETCH_LIMIT * index
+                query_data['_offset'] = batch_fetch_limit * index
 
             if not is_last_block_run:
-                from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-                query_data['_limit'] = BATCH_FETCH_LIMIT
+                query_data['_limit'] = batch_fetch_limit
 
         tags = dict(block_tags=dict(
             index=index,
