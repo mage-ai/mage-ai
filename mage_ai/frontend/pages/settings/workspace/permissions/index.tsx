@@ -54,7 +54,7 @@ function PermissionsListPage() {
       breadcrumbs={breadcrumbs}
       title="Permissions"
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       {isAddingNew && <PermissionDetail onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (

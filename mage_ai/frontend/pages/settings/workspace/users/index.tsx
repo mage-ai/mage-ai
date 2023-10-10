@@ -16,10 +16,7 @@ import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { AddUserSmileyFace } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import {
-  SECTION_ITEM_UUID_USERS,
-  SECTION_UUID_WORKSPACE,
-} from '@components/settings/Dashboard/constants';
+import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
 import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
@@ -151,8 +148,8 @@ function UsersListPage() {
         },
       ]}
       title="Users"
-      uuidItemSelected={SECTION_ITEM_UUID_USERS}
-      uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
+      uuidItemSelected={SectionItemEnum.USERS}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       {isOwner &&
         <Spacing p={PADDING_UNITS}>

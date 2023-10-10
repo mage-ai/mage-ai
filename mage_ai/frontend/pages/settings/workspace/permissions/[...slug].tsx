@@ -33,7 +33,7 @@ function PermissionDetailPage({
       ]}
       title={permission ? `Permission ${permission?.id}` : 'New permission'}
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       {permission && <PermissionDetail permission={permission} />}
     </SettingsDashboard>

@@ -145,7 +145,7 @@ function UserDetailPage({
       ]}
       title={user ? displayName(user) : 'New user'}
       uuidItemSelected={SectionItemEnum.USERS}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       <ContainerStyle>
         <Panel noPadding>

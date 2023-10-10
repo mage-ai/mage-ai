@@ -33,7 +33,7 @@ function RoleDetailPage({
       ]}
       title={role?.name ? `${role?.name} role` : 'New role'}
       uuidItemSelected={SectionItemEnum.ROLES}
-      uuidWorkspaceSelected={SectionEnum.WORKSPACE}
+      uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
       {role && <RoleDetail role={role} />}
     </SettingsDashboard>
