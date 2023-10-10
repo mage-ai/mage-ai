@@ -55,13 +55,16 @@ type ObjectAttributesType = {
   permissionsMapping?: {
     [id: number]: PermissionType;
   };
+  usersMapping?: {
+    [id: number]: UserType;
+  };
   updated_at?: string;
 };
 
 type RoleDetailProps = {
   contained?: boolean;
   onCancel?: () => void;
-  slug?: string;
+  slug?: number | string;
 };
 
 function RoleDetail({
