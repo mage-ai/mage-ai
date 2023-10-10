@@ -203,6 +203,13 @@ class DataIntegrationMixin:
                 f.write(json.dumps(catalog))
 
     def is_data_integration(self) -> bool:
+        """
+        Check if the block is a data integration block.
+        If the data_integration_in_batch_pipeline feature is not enabled, return False.
+
+        Returns:
+            bool: True if it's a data integration block, False otherwise.
+        """
         if not self.pipeline or not \
                 Project(self.pipeline.repo_config).is_feature_enabled(
                     FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
@@ -245,6 +252,30 @@ class DataIntegrationMixin:
         partition: str = None,
         **kwargs,
     ) -> Dict:
+        """
+        Retrieve data integration settings for the current block.
+
+        Args:
+            data_integration_uuid_only (bool, optional): If True, retrieve only the data integration
+                UUID. Defaults to False.
+            dynamic_block_index (Union[int, None], optional): The index of the dynamic block, if
+                applicable. Defaults to None.
+            dynamic_upstream_block_uuids (Union[List[str], None], optional): List of upstream block
+                UUIDs, if applicable. Defaults to None.
+            from_notebook (bool, optional): Whether the request is made from a notebook context.
+                Defaults to False.
+            global_vars (Dict, optional): Global variables to be used in template rendering.
+                Defaults to None.
+            input_vars (List[Any], optional): Input variables for the block. Defaults to None.
+            partition (str, optional): Partition identifier, if applicable.
+                Defaults to None.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Dict: A dictionary containing the data integration settings, including catalog, config,
+            data_integration_uuid, selected_streams, and the appropriate key
+            (source or destination).
+        """
         if not self.is_data_integration():
             return
 
