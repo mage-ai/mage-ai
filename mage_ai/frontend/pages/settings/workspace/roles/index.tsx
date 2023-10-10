@@ -55,7 +55,7 @@ function RolesListPage() {
       uuidItemSelected={SectionItemEnum.ROLES}
       uuidWorkspaceSelected={SectionEnum.WORKSPACE}
     >
-      {isAddingNew && <RoleDetail />}
+      {isAddingNew && <RoleDetail onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>
@@ -113,7 +113,7 @@ function RolesListPage() {
                     {displayName(user)}
                   </Link>
                 )
-                : <div key="user" />,,
+                : <div key="user" />,
               <Text monospace default key="updatedAt">
                 {updatedAt && dateFormatLong(updatedAt)}
               </Text>,

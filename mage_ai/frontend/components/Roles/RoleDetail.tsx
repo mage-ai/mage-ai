@@ -40,10 +40,12 @@ type ObjectAttributesType = {
 };
 
 type RoleDetailProps = {
+  onCancel?: () => void;
   role?: RoleType;
 };
 
 function RoleDetail({
+  onCancel,
   role,
 }: RoleDetailProps) {
   const router = useRouter();
@@ -451,6 +453,19 @@ function RoleDetail({
         >
           {role ? 'Save changes' : 'Create new role'}
         </Button>
+
+        {onCancel && (
+          <>
+            <Spacing mr={PADDING_UNITS} />
+
+            <Button
+              onClick={() => onCancel?.()}
+              secondary
+            >
+              Cancel and go back
+            </Button>
+          </>
+        )}
 
         {role && (
           <>
