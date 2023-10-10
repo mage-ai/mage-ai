@@ -79,6 +79,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.SNOWFLAKE,
+    DataSourceTypeEnum.MONGODB,
   ],
   [BlockTypeEnum.DATA_EXPORTER]: [
     DataSourceTypeEnum.GENERIC,

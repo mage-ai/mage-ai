@@ -38,6 +38,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
+        DataSourceTypeEnum.MONGODB
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,
