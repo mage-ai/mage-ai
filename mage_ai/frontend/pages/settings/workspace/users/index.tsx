@@ -13,13 +13,14 @@ import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add } from '@oracle/icons';
+import { AddUserSmileyFace, Edit } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SECTION_ITEM_UUID_USERS,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
+import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
@@ -143,7 +144,7 @@ function UsersListPage() {
       {isOwner &&
         <Spacing p={PADDING_UNITS}>
           <Button
-            beforeIcon={<Add />}
+            beforeIcon={<AddUserSmileyFace />}
             onClick={() => goToWithQuery({
               add_new_user: 1,
               user_id: null,
@@ -161,8 +162,12 @@ function UsersListPage() {
         </Headline>
       </Spacing>
       <Table
-        columnFlex={[1, 1, 1]}
+        columnFlex={[null, 1, 1, 1, null, null]}
         columns={[
+          {
+            label: () => '',
+            uuid: 'avatar',
+          },
           {
             uuid: 'Username',
           },
@@ -171,6 +176,13 @@ function UsersListPage() {
           },
           {
             uuid: 'Role',
+          },
+          {
+            uuid: 'Created',
+          },
+          {
+            label: () => '',
+            uuid: 'actions',
           },
         ]}
         isSelectedRow={(rowIndex: number) => users[rowIndex]?.id === user?.id}
@@ -191,6 +203,8 @@ function UsersListPage() {
           }
         }}
         rows={users.map(({
+          avatar,
+          created_at: createdAt,
           email,
           roles_display,
           roles_new,
@@ -200,7 +214,10 @@ function UsersListPage() {
           sortedRoles.sort((a: RoleType, b: RoleType) => a.id - b.id);
 
           return [
-            <Text bold key="username">
+            <Text large key="avatar">
+              {avatar}
+            </Text>,
+            <Text key="username">
               {username}
             </Text>,
             <Text default key="email">
@@ -209,6 +226,18 @@ function UsersListPage() {
             <Text default key="roles">
               {sortedRoles.length > 0 ? sortedRoles[0].name : roles_display}
             </Text>,
+            <Text monospace default key="created">
+              {createdAt && dateFormatLong(createdAt)}
+            </Text>,
+            <Button
+              iconOnly
+              key="edit"
+              noBackground
+              noBorder
+              noPadding
+            >
+              <Edit />
+            </Button>,
           ];
         })}
         uuid="pipeline-runs"

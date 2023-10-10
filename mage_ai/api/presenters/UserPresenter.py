@@ -6,15 +6,16 @@ from mage_ai.shared.hash import extract
 class UserPresenter(BasePresenter):
     default_attributes = [
         'avatar',
+        'created_at',
         'email',
         'first_name',
         'id',
         'last_name',
         'owner',
+        'project_access',
         'roles',
         'roles_display',
         'roles_new',
-        'project_access',
         'username',
     ]
 
