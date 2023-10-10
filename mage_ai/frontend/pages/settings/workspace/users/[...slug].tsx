@@ -34,11 +34,14 @@ import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
 const ICON_SIZE = 2 * UNIT;
+
 type UserAttributesType = {
   avatar?: string;
+  email?: string;
   password?: string;
   password_confirmation?: string;
   password_current?: string;
+  updated_at?: string;
   username?: string;
 };
 
@@ -144,12 +147,10 @@ function UserDetailPage({
           linkProps: {
             href: '/settings/workspace/users'
           },
-          uuid: 'Users',
         },
         {
           bold: true,
           label: () => objectAttributes?.username,
-          uuid: objectAttributes?.username,
         },
       ]}
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
@@ -458,6 +459,7 @@ function UserDetailPage({
             beforeIcon={<Save />}
             disabled={!attributesTouched || isEmptyObject(attributesTouched)}
             loading={isLoadingUpdateUser}
+            // @ts-ignore
             onClick={() => updateUser({
               user: selectKeys(objectAttributes, [
                 'avatar',
