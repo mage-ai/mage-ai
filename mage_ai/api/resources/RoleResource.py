@@ -41,6 +41,7 @@ class RoleResource(DatabaseResource):
             roles = []
             for permission in permissions:
                 roles.append(permission.role)
+            roles = list(filter(lambda x: x, roles))
         else:
             roles = Role.query.all()
 
