@@ -85,7 +85,7 @@ function RoleDetail({
     usersArray,
   ) => {
     setObjectAttributesState({
-      ...role,
+      ...data,
       permissionsMapping: indexBy(permissionsArray || [], ({ id }) => id),
       usersMapping: indexBy(usersArray || [], ({ id }) => id),
     });
