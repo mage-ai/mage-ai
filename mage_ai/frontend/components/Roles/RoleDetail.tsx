@@ -329,30 +329,15 @@ function RoleDetail({
           uuid: 'Access',
         },
       ]}
-      onClickRow={(rowIndex: number) => {
-        const permission = permissionsArray[rowIndex];
-        const id = permission?.id;
-        const checked = !!permissionsMapping?.[id];
-        const mapping = { ...permissionsMapping };
-
-        if (checked) {
-          delete mapping?.[id];
-        } else {
-          mapping[id] = permission;
-        }
-
-        setObjectAttributes({
-          permissionsMapping: mapping,
-        });
-      }}
-      rows={permissionsArray?.map(({
-        access,
-        entity,
-        entity_id: entityID,
-        entity_name: entityName,
-        entity_type: entityType,
-        id,
-      }) => {
+      rows={permissionsArray?.map((permission) => {
+        const {
+          access,
+          entity,
+          entity_id: entityID,
+          entity_name: entityName,
+          entity_type: entityType,
+          id,
+        } = permission;
         const accessDisplayNames = access ? displayNames(access) : [];
         const accessDisplayNamesCount = accessDisplayNames?.length || 0;
         const checked = !!permissionsMapping?.[id];
@@ -361,6 +346,19 @@ function RoleDetail({
           <Checkbox
             checked={checked}
             key="checkbox"
+            onClick={() => {
+              const mapping = { ...permissionsMapping };
+
+              if (checked) {
+                delete mapping?.[id];
+              } else {
+                mapping[id] = permission;
+              }
+
+              setObjectAttributes({
+                permissionsMapping: mapping,
+              });
+            }}
           />,
           <Text key="entityName" monospace>
             {entityName || entity}
@@ -438,34 +436,32 @@ function RoleDetail({
           uuid: 'Last name',
         },
       ]}
-      onClickRow={(rowIndex: number) => {
-        const object = objectArray[rowIndex];
-        const id = object?.id;
-        const checked = !!usersMapping?.[id];
-        const mapping = { ...usersMapping };
-
-        if (checked) {
-          delete mapping?.[id];
-        } else {
-          mapping[id] = object;
-        }
-
-        setObjectAttributes({
-          usersMapping: mapping,
-        });
-      }}
-      rows={objectArray?.map(({
-        first_name: firstName,
-        id,
-        last_name: lastName,
-        username,
-      }) => {
+      rows={objectArray?.map((object) => {
+        const {
+          first_name: firstName,
+          id,
+          last_name: lastName,
+          username,
+        } = object;
         const checked = !!usersMapping?.[id];
 
         return [
           <Checkbox
             checked={checked}
             key="checkbox"
+            onClick={() => {
+              const mapping = { ...usersMapping };
+
+              if (checked) {
+                delete mapping?.[id];
+              } else {
+                mapping[id] = object;
+              }
+
+              setObjectAttributes({
+                usersMapping: mapping,
+              });
+            }}
           />,
           <Text key="username">
             {username}
