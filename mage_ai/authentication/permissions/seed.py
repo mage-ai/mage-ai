@@ -5,7 +5,9 @@ import os
 from mage_ai.api import policies
 from mage_ai.api.oauth_scope import OauthScopeType
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.presenters.UserPresenter import UserPresenter
 from mage_ai.authentication.permissions.constants import (
+    EntityName,
     PermissionAccess,
     PermissionCondition,
 )
@@ -259,13 +261,200 @@ async def bootstrap_permissions():
     #         f.write(json.dumps(mapping, indent=2))
 
     permissions_mapping = {
-        KEY_ADMIN: [],
+        KEY_ADMIN: [
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.DETAIL,
+                    PermissionAccess.LIST,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.READ,
+                    PermissionAccess.OPERATION_ALL,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    read_attributes=UserPresenter.default_attributes,
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.READ,
+                    PermissionAccess.DETAIL,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    read_attributes=UserPresenter.default_attributes + [
+                        'permissions',
+                        'token',
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.WRITE,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    write_attributes=[
+                        'avatar',
+                        'email',
+                        'first_name',
+                        'last_name',
+                        'password',
+                        'password_confirmation',
+                        'password_current',
+                        'username',
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.WRITE,
+                    PermissionAccess.DELETE,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    write_attributes=[
+                        'role_ids',
+                        'roles',
+                        'roles_new',
+                    ],
+                ),
+            ),
+        ],
         KEY_EDITOR: [],
         KEY_EDITOR_NOTEBOOK: [],
         KEY_EDITOR_PIPELINE: [],
         KEY_NO_CONDITION: [],
-        KEY_OWNER: [],
-        KEY_VIEWER: [],
+        KEY_OWNER: [
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.CREATE,
+                    PermissionAccess.DELETE,
+                ]),
+                entity_name=EntityName.User,
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.READ,
+                    PermissionAccess.CREATE,
+                    PermissionAccess.DELETE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    read_attributes=UserPresenter.default_attributes + [
+                        'permissions',
+                        'token',
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.WRITE,
+                    PermissionAccess.CREATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    write_attributes=[
+                        'avatar',
+                        'email',
+                        'first_name',
+                        'last_name',
+                        'password',
+                        'password_confirmation',
+                        'role_ids',
+                        'roles',
+                        'roles_new',
+                        'username',
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.WRITE,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    write_attributes=[
+                        'owner',
+                    ],
+                ),
+            ),
+        ],
+        KEY_VIEWER: [
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.DETAIL,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    conditions=[
+                        PermissionCondition.USER_OWNS_ENTITY,
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.READ,
+                    PermissionAccess.OPERATION_ALL,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    conditions=[
+                        PermissionCondition.USER_OWNS_ENTITY,
+                    ],
+                    read_attributes=UserPresenter.default_attributes,
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.READ,
+                    PermissionAccess.DETAIL,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    conditions=[
+                        PermissionCondition.USER_OWNS_ENTITY,
+                    ],
+                    read_attributes=UserPresenter.default_attributes + [
+                        'permissions',
+                        'token',
+                    ],
+                ),
+            ),
+            dict(
+                access=Permission.add_accesses([
+                    PermissionAccess.WRITE,
+                    PermissionAccess.UPDATE,
+                ]),
+                entity_name=EntityName.User,
+                options=dict(
+                    conditions=[
+                        PermissionCondition.USER_OWNS_ENTITY,
+                    ],
+                    write_attributes=[
+                        'avatar',
+                        'email',
+                        'first_name',
+                        'last_name',
+                        'password',
+                        'password_confirmation',
+                        'password_current',
+                        'username',
+                    ],
+                ),
+            ),
+        ],
     }
 
     for entity_name, rules_by_scope in action_rules_mapping.items():

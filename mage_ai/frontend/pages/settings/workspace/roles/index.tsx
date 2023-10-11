@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PrivateRoute from '@components/shared/PrivateRoute';
@@ -12,6 +13,7 @@ import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BreadcrumbType } from '@components/Breadcrumbs';
 import { Edit } from '@oracle/icons';
@@ -60,13 +62,42 @@ function RolesListPage() {
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>
-            <Button
-              beforeIcon={<Mage8Bit />}
-              onClick={() => setIsAddingNew(true)}
-              primary
-            >
-              Add new role
-            </Button>
+            <FlexContainer alignItems="center" justifyContent="space-between">
+              <Button
+                beforeIcon={<Mage8Bit />}
+                onClick={() => setIsAddingNew(true)}
+                primary
+              >
+                Add new role
+              </Button>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Tooltip
+                appearBefore
+                fullSize
+                description={(
+                  <Text default>
+                    This will create 6 roles and 100s of permissions
+                    <br />
+                    that Mage normally uses when user defined
+                    <br />
+                    permissions isn’t turned on.
+                  </Text>
+                )}
+                lightBackground
+                widthFitContent
+              >
+                <Button
+                  compact
+                  onClick={() => setIsAddingNew(true)}
+                  secondary
+                  small
+                >
+                  Create default roles and permissions
+                </Button>
+              </Tooltip>
+            </FlexContainer>
           </Spacing>
 
           <Divider light />
