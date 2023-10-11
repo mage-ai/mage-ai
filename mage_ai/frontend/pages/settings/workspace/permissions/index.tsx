@@ -56,7 +56,7 @@ function PermissionsListPage() {
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
       uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
-      {isAddingNew && <PermissionDetail onCancel={() => setIsAddingNew(false)} />}
+      {isAddingNew && <PermissionDetail contained onCancel={() => setIsAddingNew(false)} />}
       {!isAddingNew && (
         <>
           <Spacing p={PADDING_UNITS}>
