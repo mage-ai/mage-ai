@@ -962,9 +962,14 @@ function PermissionDetail({
               ], {
                 include_blanks: true,
               }),
-              role_ids: Object.keys(
-                objectAttributes?.rolesMapping || {},
-              ).map(i => Number(i)),
+              ...(permission
+                  ? {
+                    role_ids: Object.keys(
+                      objectAttributes?.rolesMapping || {},
+                    ).map(i => Number(i)),
+                  }
+                  : {}
+              ),
             },
           })}
           primary
