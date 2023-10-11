@@ -5,7 +5,7 @@ from mage_ai.api.presenters.UserPresenter import UserPresenter
 
 
 class UserPolicy(BasePolicy):
-    def is_current_user(self):
+    def is_current_user(self) -> bool:
         return self.current_user.owner or self.current_user.id == self.resource.id
 
 
