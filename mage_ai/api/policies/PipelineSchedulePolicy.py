@@ -62,7 +62,9 @@ async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:
         policy.result_set().context.data['pipeline_interactions'][pipeline.uuid] = \
             pipeline_interaction
 
-    return cond
+        return cond
+
+    return False
 
 
 PipelineSchedulePolicy.allow_actions([

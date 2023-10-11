@@ -1,4 +1,6 @@
+import { toast } from 'react-toastify';
 import { useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -50,6 +52,41 @@ function RolesListPage() {
     };
   }
 
+  const [createSeed, { isLoading: isLoadingCreateSeed }] = useMutation(
+    api.seeds.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            toast.success(
+              'Roles and permissions successfully created.',
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: `seed-create-success`,
+              },
+            );
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <SettingsDashboard
       appendBreadcrumbs
@@ -90,7 +127,13 @@ function RolesListPage() {
               >
                 <Button
                   compact
-                  onClick={() => setIsAddingNew(true)}
+                  loading={isLoadingCreateSeed}
+                  onClick={() => createSeed({
+                    seed: {
+                      permissions: true,
+                      roles: true,
+                    },
+                  })}
                   secondary
                   small
                 >

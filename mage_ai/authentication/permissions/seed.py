@@ -224,10 +224,11 @@ async def bootstrap_permissions():
 
     policy_names = []
     for n in os.listdir(policies.__path__[0]):
-        if not n.startswith('BasePolicy.py') and \
-                not n.startswith('UserPolicy.py') and \
-                n.endswith('Policy.py'):
-
+        if n.endswith('Policy.py') and n not in [
+            'BasePolicy.py',
+            'SeedPolicy.py',
+            'UserPolicy.py',
+        ]:
             policy_names.append(n.replace('Policy.py', ''))
 
     for policy_name in policy_names:

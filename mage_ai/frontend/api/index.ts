@@ -76,6 +76,7 @@ export const PROJECTS: 'projects' = 'projects';
 export const ROLES: 'roles' = 'roles';
 export const SEARCH_RESULTS: 'search_results' = 'search_results';
 export const SECRETS: 'secrets' = 'secrets';
+export const SEEDS: 'seeds' = 'seeds';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
@@ -151,6 +152,7 @@ const RESOURCES: any[][] = [
   [ROLES],
   [SEARCH_RESULTS],
   [SECRETS],
+  [SEEDS],
   [SESSIONS],
   [STATUSES],
   [SYNCS],
