@@ -52,6 +52,7 @@ enum ObjectTypeEnum {
 
 type UserAttributesType = {
   avatar?: string;
+  created_at?: string;
   email?: string;
   first_name?: string;
   last_name?: string;
@@ -71,7 +72,7 @@ type UserAttributesType = {
 type UserDetailPageProps = {
   contained?: boolean;
   onCancel?: () => void;
-  slug: number | string;
+  slug?: number | string;
 };
 
 function UserDetail({

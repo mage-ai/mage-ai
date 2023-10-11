@@ -16,6 +16,7 @@ import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { AddUserSmileyFace } from '@oracle/icons';
+import { BreadcrumbType } from '@components/Breadcrumbs';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
