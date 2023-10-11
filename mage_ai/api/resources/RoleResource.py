@@ -3,7 +3,7 @@ from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role, RolePermission, UserRole
-from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 
 
 class RoleResource(DatabaseResource):
@@ -63,7 +63,9 @@ class RoleResource(DatabaseResource):
     @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
-        return super().create(merge_dict(payload, dict(
+        return super().create(merge_dict(extract(payload, [
+            'name',
+        ]), dict(
             user_id=user.id if user else None,
         )), user, **kwargs)
 

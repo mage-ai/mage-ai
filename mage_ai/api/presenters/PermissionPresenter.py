@@ -42,6 +42,7 @@ PermissionPresenter.register_format(
 
 PermissionPresenter.register_formats([
     constants.CREATE,
+    constants.DELETE,
     constants.DETAIL,
     constants.UPDATE,
 ], PermissionPresenter.default_attributes + [
@@ -53,6 +54,7 @@ PermissionPresenter.register_formats([
     'roles',
     'user',
     'user_id',
+    'users',
     'write_attributes',
 ])
 
