@@ -9,23 +9,15 @@ readme = "README.md"
 python = ">=3.8,<4.0"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "*"
-black = "*"
-flake8 = "*"
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
 interrogate = "*"
-isort = "*"
 commitizen = "*"
 ipykernel = "^6.17.1"
-pandas-stubs = "*"
-flake8-bugbear = "*"
-sourcery = "*"
 
 [tool.isort]
 profile = "black"
-
 
 [build-system]
 requires = ["setuptools>=42"]
