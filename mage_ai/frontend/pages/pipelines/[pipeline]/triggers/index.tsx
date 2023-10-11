@@ -73,7 +73,6 @@ function PipelineSchedules({
 
   const { data: dataClientPage } = api.client_pages.detail('pipeline_schedule:create', {
     'pipelines[]': [pipelineUUID],
-    'pipeline_schedules[]': [],
   }, {}, {
     key: `Triggers/Edit/${pipelineUUID}`,
   });
@@ -199,7 +198,7 @@ function PipelineSchedules({
     const hasVariables = !isEmptyObject(variablesOrig);
 
     return (props: DependencyGraphProps) => {
-      /** 
+      /**
        * Because it's required to specify the DependencyGraph height, we calculate
        * the RuntimeVariables height here instead of within its component.
        * We dynamically calculate the RuntimeVariables height based on the number
@@ -214,7 +213,7 @@ function PipelineSchedules({
         const numVisibleRows = Math.min(maxVisibleRows, numVariables);
         runtimeVariablesHeight = headerRowHeight + (numVisibleRows * rowHeight) + 1;
       }
-   
+
       const dependencyGraphHeight = props.height - runtimeVariablesHeight;
 
       return (
