@@ -137,8 +137,6 @@ function UserDetail({
     user,
   ]);
 
-  console.log(user, objectAttributes)
-
   const [mutateObject, { isLoading: isLoadingMutateObject }] = useMutation(
     user ? api.users.useUpdate(slug) : api.users.useCreate(),
     {
@@ -509,7 +507,6 @@ function UserDetail({
               )}
             </Text>
 
-
             <Spacing mr={PADDING_UNITS} />
 
             <Flex flex={1}>
@@ -614,27 +611,71 @@ function UserDetail({
 
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center">
-            <Text default large>
-              Email
-            </Text>
+            {user && (
+              <Text default large>
+                Email
+              </Text>
+            )}
+
+            {!user && (
+              <Text
+                danger={'email' in attributesTouched && !objectAttributes?.email}
+                default
+                large
+              >
+                Email {'email' in attributesTouched && !objectAttributes?.email && (
+                  <Text danger inline large>
+                    is required
+                  </Text>
+                )}
+              </Text>
+            )}
 
             <Spacing mr={PADDING_UNITS} />
 
-            <Flex
-              alignItems="center"
-              flex={1}
-              justifyContent="flex-end"
-            >
-              <Text large muted>
-                {objectAttributes?.email}
-              </Text>
+            {user && (
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large muted>
+                  {objectAttributes?.email}
+                </Text>
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <Alphabet muted size={ICON_SIZE} />
+                <Alphabet muted size={ICON_SIZE} />
 
-              <Spacing mr={1} />
-            </Flex>
+                <Spacing mr={1} />
+              </Flex>
+            )}
+
+            {!user && (
+              <Flex flex={1}>
+                <TextInput
+                  afterIcon={<Alphabet />}
+                  afterIconClick={(_, inputRef) => {
+                    inputRef?.current?.focus();
+                  }}
+                  afterIconSize={ICON_SIZE}
+                  alignRight
+                  autoComplete="off"
+                  large
+                  noBackground
+                  noBorder
+                  fullWidth
+                  onChange={e => setObjectAttributes({
+                    email: e.target.value,
+                  })}
+                  paddingHorizontal={0}
+                  paddingVertical={0}
+                  placeholder="e.g. mage@power.com"
+                  type="email"
+                  value={objectAttributes?.email || ''}
+                />
+              </Flex>
+            )}
           </FlexContainer>
         </Spacing>
       </Panel>
@@ -650,48 +691,52 @@ function UserDetail({
 
         <Divider light />
 
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer alignItems="center">
-            <Text
-              danger={'password_current' in attributesTouched && !objectAttributes?.password_current}
-              default
-              large
-            >
-              Current password {'password_current' in attributesTouched && !objectAttributes?.password_current && (
-                <Text danger inline large>
-                  is required
+        {user && (
+          <>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Text
+                  danger={'password_current' in attributesTouched && !objectAttributes?.password_current}
+                  default
+                  large
+                >
+                  Current password {'password_current' in attributesTouched && !objectAttributes?.password_current && (
+                    <Text danger inline large>
+                      is required
+                    </Text>
+                  )}
                 </Text>
-              )}
-            </Text>
 
-            <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-            <Flex flex={1}>
-              <TextInput
-                afterIcon={<Edit />}
-                afterIconClick={(_, inputRef) => {
-                  inputRef?.current?.focus();
-                }}
-                afterIconSize={ICON_SIZE}
-                alignRight
-                large
-                noBackground
-                noBorder
-                fullWidth
-                onChange={e => setObjectAttributes({
-                  password_current: e.target.value,
-                })}
-                paddingHorizontal={0}
-                paddingVertical={0}
-                placeholder="* * * * * * * *"
-                type="password"
-                value={objectAttributes?.password_current || ''}
-              />
-            </Flex>
-          </FlexContainer>
-        </Spacing>
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    large
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributes({
+                      password_current: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="* * * * * * * *"
+                    type="password"
+                    value={objectAttributes?.password_current || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
 
-        <Divider light />
+            <Divider light />
+          </>
+        )}
 
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center">
@@ -700,7 +745,7 @@ function UserDetail({
               default
               large
             >
-              New password {'password' in attributesTouched && !objectAttributes?.password && (
+              {user ? 'New password' : 'Password'} {'password' in attributesTouched && !objectAttributes?.password && (
                 <Text danger inline large>
                   is required
                 </Text>
@@ -744,7 +789,7 @@ function UserDetail({
               default
               large
             >
-              Confirm new password {'password_confirmation' in attributesTouched && !objectAttributes?.password_confirmation && (
+              Confirm {user ? 'new password' : 'password'} {'password_confirmation' in attributesTouched && !objectAttributes?.password_confirmation && (
                 <Text danger inline large>
                   is required
                 </Text>
@@ -948,7 +993,7 @@ function UserDetail({
                 'password_confirmation',
                 'password_current',
                 'username',
-              ], {
+              ].concat(user ? [] : 'email'), {
                 include_blanks: true,
               }),
               role_ids: Object.keys(
@@ -974,7 +1019,7 @@ function UserDetail({
           </>
         )}
 
-        {String(currentUserID) !== String(slug) && isOwner && (
+        {user && String(currentUserID) !== String(slug) && isOwner && (
           <>
             <Spacing mr={PADDING_UNITS} />
 
@@ -992,6 +1037,10 @@ function UserDetail({
       </FlexContainer>
     </ContainerStyle>
   );
+
+  if (contained) {
+    return contentMemo;
+  }
 
   return (
     <SettingsDashboard
