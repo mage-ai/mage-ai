@@ -1369,14 +1369,14 @@ function Edit({
           
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             <FlexContainer alignItems="center">
-              <Spacing mr={2}>
+              <Spacing mr={1}>
                 <ToggleSwitch
                   checked={useHeaderUrl}
                   onCheck={() => setUseHeaderUrl(!useHeaderUrl)}
                 />
               </Spacing>
-              <Text default monospace>
-                Supply token through request headers
+              <Text muted>
+                Show alternative endpoint to pass token in headers
               </Text>
             </FlexContainer>
           </Spacing>
