@@ -76,14 +76,20 @@ type ObjectAttributesType = {
   entity_type?: string;
   query_attributes?: string[];
   read_attributes?: string[];
+  rolesMapping?: {
+    [id: number]: RoleType;
+  };
   updated_at?: string;
+  usersMapping?: {
+    [id: number]: UserType;
+  };
   write_attributes?: string[];
 };
 
 type PermissionDetailProps = {
   contained?: boolean;
   onCancel?: () => void;
-  slug?: string;
+  slug?: number | string;
 };
 
 function PermissionDetail({
