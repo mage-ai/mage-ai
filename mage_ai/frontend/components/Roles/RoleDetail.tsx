@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import Checkbox from '@oracle/elements/Checkbox';
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -114,7 +114,11 @@ function RoleDetail({
 
   useEffect(() => {
     if (role) {
-      setObjectAttributesStateWithMapping(role, role?.role_permissions, role?.users);
+      setObjectAttributesStateWithMapping(
+        role,
+        role?.role_permissions,
+        role?.users,
+      );
     }
   }, [
     setObjectAttributesStateWithMapping,
@@ -214,7 +218,6 @@ function RoleDetail({
   ), [
     dataPermissions,
   ]);
-
   const permissionsMapping = useMemo(() => objectAttributes?.permissionsMapping || {}, [
     objectAttributes,
   ]);
@@ -234,7 +237,6 @@ function RoleDetail({
   ), [
     dataUsers,
   ]);
-
   const usersMapping = useMemo(() => objectAttributes?.usersMapping || {}, [
     objectAttributes,
   ]);
@@ -499,7 +501,7 @@ function RoleDetail({
   ]);
 
   const usersMemo = useMemo(() => buildTableUsers(users), [
-    buildTable,
+    buildTableUsers,
     users,
   ]);
 

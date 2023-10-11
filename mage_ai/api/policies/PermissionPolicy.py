@@ -45,10 +45,14 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'role',
     'user',
     'user_id',
+    'users',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.CREATE,
+    constants.DELETE,
     constants.DETAIL,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 
@@ -59,6 +63,7 @@ PermissionPolicy.allow_write([
     'entity_name',
     'entity_type',
     'role_id',
+    'role_ids',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
