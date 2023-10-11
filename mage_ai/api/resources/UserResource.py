@@ -1,5 +1,3 @@
-import importlib
-
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_access_for_roles
@@ -246,11 +244,9 @@ class UserResource(DatabaseResource):
 
 
 def __load_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
     ids = [r.id for r in resource.result_set()]
-    PermissionResource = getattr(
-        importlib.import_module('mage_ai.api.resources.PermissionResource'),
-        'PermissionResource',
-    )
 
     return [PermissionResource(p, resource.current_user) for p in User.fetch_permissions(ids)]
 
@@ -260,11 +256,9 @@ def __select_permissions(resource, arr):
 
 
 def __load_roles(resource):
+    from mage_ai.api.resources.RoleResource import RoleResource
+
     ids = [r.id for r in resource.result_set()]
-    RoleResource = getattr(
-        importlib.import_module('mage_ai.api.resources.RoleResource'),
-        'RoleResource',
-    )
 
     return [RoleResource(p, resource.current_user) for p in User.fetch_roles(ids)]
 

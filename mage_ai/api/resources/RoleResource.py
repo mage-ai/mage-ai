@@ -1,5 +1,3 @@
-import importlib
-
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
@@ -143,11 +141,9 @@ class RoleResource(DatabaseResource):
 
 
 def __load_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
     ids = [r.id for r in resource.result_set()]
-    PermissionResource = getattr(
-        importlib.import_module('mage_ai.api.resources.PermissionResource'),
-        'PermissionResource',
-    )
 
     return [PermissionResource(p, resource.current_user) for p in Role.fetch_permissions(ids)]
 
@@ -157,11 +153,9 @@ def __select_permissions(resource, arr):
 
 
 def __load_role_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
     ids = [r.id for r in resource.result_set()]
-    PermissionResource = getattr(
-        importlib.import_module('mage_ai.api.resources.PermissionResource'),
-        'PermissionResource',
-    )
 
     return [PermissionResource(p, resource.current_user) for p in Role.fetch_role_permissions(ids)]
 
@@ -171,11 +165,9 @@ def __select_role_permissions(resource, arr):
 
 
 def __load_users(resource):
+    from mage_ai.api.resources.UserResource import UserResource
+
     ids = [r.id for r in resource.result_set()]
-    UserResource = getattr(
-        importlib.import_module('mage_ai.api.resources.UserResource'),
-        'UserResource',
-    )
 
     return [UserResource(p, resource.current_user) for p in User.fetch_users(ids)]
 
@@ -185,11 +177,9 @@ def __select_users(resource, arr):
 
 
 def __load_users_created_role(resource):
+    from mage_ai.api.resources.UserResource import UserResource
+
     ids = [r.user_id for r in resource.result_set()]
-    UserResource = getattr(
-        importlib.import_module('mage_ai.api.resources.UserResource'),
-        'UserResource',
-    )
 
     return [UserResource(
         p,

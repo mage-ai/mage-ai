@@ -77,12 +77,11 @@ def build_select_filter(query_column_name):
 
 
 def load_user(resource):
+    from mage_ai.api.resources.UserResource import UserResource
+
     user_ids = [r.user_id for r in resource.result_set()]
     query_set = User.query.filter(User.id.in_(user_ids))
-    UserResource = getattr(
-        importlib.import_module('mage_ai.api.resources.UserResource'),
-        'UserResource',
-    )
+
     return UserResource.build_result_set(query_set, resource.current_user)
 
 

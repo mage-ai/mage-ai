@@ -23,6 +23,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum, } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
 import { displayName } from '@utils/models/user';
+import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
 function RolesListPage() {
@@ -128,6 +129,7 @@ function RolesListPage() {
                 <Button
                   compact
                   loading={isLoadingCreateSeed}
+                  // @ts-ignore
                   onClick={() => createSeed({
                     seed: {
                       permissions: true,
