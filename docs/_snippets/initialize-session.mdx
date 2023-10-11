@@ -1,0 +1,45 @@
+If your Mage project requires user authentication (`REQUIRE_USER_AUTHENTICATION=1`), you'll need to create a new session before you can make any API calls. If your project _does not_ require user auth, you can skip straight to making API calls with your API key. 😃
+
+To initialize a session, see the `POST /api/sessions` endpoint. You'll need to supply your email and password as a JSON payload. Here's an example of how to do this in Python:
+
+``` python
+import requests
+import json
+import os
+from dotenv import load_dotenv
+from pprint import pprint
+
+secrets_path = os.path.expanduser("~/Documents/secrets/.env.mage-test")
+
+load_dotenv(secrets_path)
+
+API_KEY = os.getenv('API_KEY')
+EMAIL = os.getenv('EMAIL')
+PASSWORD = os.getenv('PASSWORD')
+
+base_url = 'http://localhost:6789'
+
+headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": API_KEY
+}
+
+json_data = {
+    "session": {
+        "email": EMAIL,
+        "password": PASSWORD
+    }
+}
+
+s = requests.Session()
+s.headers = headers
+sessions_url = base_url + "/api/sessions"
+
+r = s.post(url=sessions_url, json=json_data)
+
+if r.json().get('error'):
+    raise ValueError(r.text)
+else:
+    mage_session = r.json().get('session')
+    pprint(mage_session)
+```
