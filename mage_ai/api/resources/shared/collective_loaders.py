@@ -1,6 +1,7 @@
+import importlib
+
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
-import importlib
 
 
 def build_load(associated_resource_class, **kwargs):
@@ -41,8 +42,8 @@ def build_load_select(current_resource, associated_resource_class, **kwargs):
         ids = [r.id for r in resource.result_set()]
         query = {}
         query[f'{associated_id_column_name}__in'] = ids
-        query_set = associated_resource_class.model_class.objects.filter(
-            **query)
+        query_set = associated_resource_class.model_class.query.filter(
+            **query).all()
         return getattr(
             importlib.import_module(
                 'api.resources.{}'.format(
