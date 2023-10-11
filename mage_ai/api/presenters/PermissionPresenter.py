@@ -33,6 +33,7 @@ class PermissionPresenter(BasePresenter):
 PermissionPresenter.register_format(
     f'role/{constants.DETAIL}',
     PermissionPresenter.default_attributes + [
+        'conditions',
         'query_attributes',
         'read_attributes',
         'write_attributes',
@@ -46,6 +47,7 @@ PermissionPresenter.register_formats([
     constants.DETAIL,
     constants.UPDATE,
 ], PermissionPresenter.default_attributes + [
+    'conditions',
     'entity_names',
     'entity_types',
     'query_attributes',

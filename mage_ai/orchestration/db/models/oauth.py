@@ -413,6 +413,7 @@ class Permission(BaseModel):
         DISABLE_READ_ALL = PermissionAccess.DISABLE_READ_ALL.value
         DISABLE_WRITE = PermissionAccess.DISABLE_WRITE.value
         DISABLE_WRITE_ALL = PermissionAccess.DISABLE_WRITE_ALL.value
+        DISABLE_UNLESS_CONDITIONS = PermissionAccess.DISABLE_UNLESS_CONDITIONS.value
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
@@ -536,6 +537,14 @@ class Permission(BaseModel):
             access_new = bin(access)
             current = int(access_current, 2) + int(access_new, 2)
         return current
+
+    @property
+    def conditions(self) -> List[str]:
+        return self.__get_access_attributes('conditions')
+
+    @conditions.setter
+    def conditions(self, values: List[str]) -> None:
+        self.__set_access_attributes('conditions', values)
 
     @property
     def query_attributes(self) -> List[str]:

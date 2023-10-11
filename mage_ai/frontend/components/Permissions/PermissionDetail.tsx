@@ -17,8 +17,10 @@ import PermissionType, {
   PERMISSION_ACCESS_QUERY_OPERATIONS,
   PERMISSION_ACCESS_READ_OPERATIONS,
   PERMISSION_ACCESS_WRITE_OPERATIONS,
+  PERMISSION_CONDITION_HUMAN_READABLE_MAPPING,
   PERMISSION_DISABLE_ACCESS_OPERATIONS,
   PermissionAccessEnum,
+  PermissionConditionEnum,
   UserType,
 } from '@interfaces/PermissionType';
 import RoleType from '@interfaces/RoleType';
@@ -284,6 +286,144 @@ function PermissionDetail({
     );
   }), [
     access,
+    setObjectAttributes,
+  ]);
+
+  const conditions = useMemo(() => objectAttributes?.conditions || [], [
+    objectAttributes,
+  ]);
+  const buildSpecialConditionsMemo = useMemo(() => {
+    const permissionAccess = PermissionAccessEnum.DISABLE_UNLESS_CONDITIONS;
+    const binaryStringCurrent = numberToBinaryString(access);
+    const binaryStringNew = numberToBinaryString(permissionAccess);
+
+    const hasAccess = Boolean(access & Number(permissionAccess));
+
+    let conditionsUpdated = new Set([...conditions]);
+
+    const conditionHasNotebookEditAccess =
+      conditionsUpdated.has(PermissionConditionEnum.HAS_NOTEBOOK_EDIT_ACCESS);
+    const conditionHasPipelineEditAccess =
+      conditionsUpdated.has(PermissionConditionEnum.HAS_PIPELINE_EDIT_ACCESS);
+    const conditionUserOwnsEntity =
+      conditionsUpdated.has(PermissionConditionEnum.USER_OWNS_ENTITY);
+
+    const checkedHasNotebookEditAccess = hasAccess && conditionHasNotebookEditAccess;
+    const checkedHasPipelineEditAccess = hasAccess && conditionHasPipelineEditAccess;
+    const checkedUserOwnsEntity = hasAccess && conditionUserOwnsEntity;
+
+    return (
+      <FlexContainer flexDirection="column">
+        <Spacing mt={1}>
+          <FlexContainer alignItems="center">
+            <ToggleSwitch
+              checked={checkedHasNotebookEditAccess}
+              compact
+              onCheck={(valFunc: (val: boolean) => boolean) => {
+                let accessBinaryStringUpdated = binaryStringCurrent;
+
+                if (valFunc(checkedHasNotebookEditAccess)) {
+                  if (!hasAccess) {
+                    accessBinaryStringUpdated = addBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.add(PermissionConditionEnum.HAS_NOTEBOOK_EDIT_ACCESS);
+                } else {
+                  if (!conditionHasPipelineEditAccess && !conditionUserOwnsEntity) {
+                    accessBinaryStringUpdated = minusBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.delete(PermissionConditionEnum.HAS_NOTEBOOK_EDIT_ACCESS);
+                }
+
+                setObjectAttributes({
+                  access: binaryStringToNumber(accessBinaryStringUpdated),
+                  conditions: [...conditionsUpdated],
+                });
+              }}
+            />
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Text default={!checkedHasNotebookEditAccess}>
+              {PERMISSION_CONDITION_HUMAN_READABLE_MAPPING[PermissionConditionEnum.HAS_NOTEBOOK_EDIT_ACCESS]}
+            </Text>
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing mt={1}>
+          <FlexContainer alignItems="center">
+            <ToggleSwitch
+              checked={checkedHasPipelineEditAccess}
+              compact
+              onCheck={(valFunc: (val: boolean) => boolean) => {
+                let accessBinaryStringUpdated = binaryStringCurrent;
+
+                if (valFunc(checkedHasPipelineEditAccess)) {
+                  if (!hasAccess) {
+                    accessBinaryStringUpdated = addBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.add(PermissionConditionEnum.HAS_PIPELINE_EDIT_ACCESS);
+                } else {
+                  if (!conditionHasNotebookEditAccess && !conditionUserOwnsEntity) {
+                    accessBinaryStringUpdated = minusBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.delete(PermissionConditionEnum.HAS_PIPELINE_EDIT_ACCESS);
+                }
+
+                setObjectAttributes({
+                  access: binaryStringToNumber(accessBinaryStringUpdated),
+                  conditions: [...conditionsUpdated],
+                });
+              }}
+            />
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Text default={!checkedHasPipelineEditAccess}>
+              {PERMISSION_CONDITION_HUMAN_READABLE_MAPPING[PermissionConditionEnum.HAS_PIPELINE_EDIT_ACCESS]}
+            </Text>
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing mt={1}>
+          <FlexContainer alignItems="center">
+            <ToggleSwitch
+              checked={checkedUserOwnsEntity}
+              compact
+              onCheck={(valFunc: (val: boolean) => boolean) => {
+                let accessBinaryStringUpdated = binaryStringCurrent;
+
+                if (valFunc(checkedUserOwnsEntity)) {
+                  if (!hasAccess) {
+                    accessBinaryStringUpdated = addBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.add(PermissionConditionEnum.USER_OWNS_ENTITY);
+                } else {
+                  if (!conditionHasNotebookEditAccess && !conditionHasNotebookEditAccess) {
+                    accessBinaryStringUpdated = minusBinaryStrings(binaryStringCurrent, binaryStringNew);
+                  }
+                  conditionsUpdated.delete(PermissionConditionEnum.USER_OWNS_ENTITY);
+                }
+
+                setObjectAttributes({
+                  access: binaryStringToNumber(accessBinaryStringUpdated),
+                  conditions: [...conditionsUpdated],
+                });
+              }}
+            />
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Text default={!checkedUserOwnsEntity}>
+              {PERMISSION_CONDITION_HUMAN_READABLE_MAPPING[PermissionConditionEnum.USER_OWNS_ENTITY]}
+            </Text>
+          </FlexContainer>
+        </Spacing>
+      </FlexContainer>
+    );
+  }, [
+    access,
+    conditions,
+    setObjectAttributes,
   ]);
 
   const { data: dataRoles } = api.roles.list({}, {}, {
@@ -614,15 +754,31 @@ function PermissionDetail({
 
         <Divider light />
 
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mb={PADDING_UNITS}>
-            <Text default large>
-              Groups
-            </Text>
-          </Spacing>
+        <FlexContainer alignItems="center">
+          <Flex flex={1}>
+            <Spacing p={PADDING_UNITS}>
+              <Spacing mb={PADDING_UNITS}>
+                <Text default large>
+                  Groups
+                </Text>
+              </Spacing>
 
-          {buildAccessMemo(PERMISSION_ACCESS_GROUPS)}
-        </Spacing>
+              {buildAccessMemo(PERMISSION_ACCESS_GROUPS)}
+            </Spacing>
+          </Flex>
+
+          <Flex flex={1}>
+            <Spacing p={PADDING_UNITS}>
+              <Spacing mb={PADDING_UNITS}>
+                <Text default large>
+                  Special conditions
+                </Text>
+              </Spacing>
+
+              {buildSpecialConditionsMemo}
+            </Spacing>
+          </Flex>
+        </FlexContainer>
 
         <Divider light />
 
@@ -951,6 +1107,7 @@ function PermissionDetail({
             permission: {
               ...selectKeys(objectAttributes, [
                 'access',
+                'conditions',
                 'entity_id',
                 'entity_name',
                 'entity_type',

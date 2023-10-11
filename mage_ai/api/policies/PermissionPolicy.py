@@ -26,6 +26,7 @@ PermissionPolicy.allow_actions([
 
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
+    'conditions',
     'entity_names',
     'entity_types',
     'query_attributes',
@@ -58,12 +59,16 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
 
 PermissionPolicy.allow_write([
     'access',
+    'conditions',
     'entity',
     'entity_id',
     'entity_name',
     'entity_type',
+    'query_attributes',
+    'read_attributes',
     'role_id',
     'role_ids',
+    'write_attributes',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

@@ -28,6 +28,13 @@ export enum PermissionAccessEnum {
   DISABLE_READ_ALL = 134217728,
   DISABLE_WRITE = 268435456,
   DISABLE_WRITE_ALL = 536870912,
+  DISABLE_UNLESS_CONDITIONS = 1073741824
+}
+
+export enum PermissionConditionEnum {
+  HAS_NOTEBOOK_EDIT_ACCESS = 'HAS_NOTEBOOK_EDIT_ACCESS',
+  HAS_PIPELINE_EDIT_ACCESS = 'HAS_PIPELINE_EDIT_ACCESS',
+  USER_OWNS_ENTITY = 'USER_OWNS_ENTITY',
 }
 
 export const PERMISSION_ACCESS_HUMAN_READABLE_MAPPING = {
@@ -60,6 +67,12 @@ export const PERMISSION_ACCESS_HUMAN_READABLE_MAPPING = {
   [PermissionAccessEnum.DISABLE_READ_ALL]: 'Disable all read attributes',
   [PermissionAccessEnum.DISABLE_WRITE]: 'Disable write',
   [PermissionAccessEnum.DISABLE_WRITE_ALL]: 'Disable all write attributes',
+};
+
+export const PERMISSION_CONDITION_HUMAN_READABLE_MAPPING = {
+  [PermissionConditionEnum.HAS_NOTEBOOK_EDIT_ACCESS]: 'Disable unless user has notebook edit access',
+  [PermissionConditionEnum.HAS_PIPELINE_EDIT_ACCESS]: 'Disable unless user has pipeline edit access',
+  [PermissionConditionEnum.USER_OWNS_ENTITY]: 'Disable unless user owns the current entity',
 };
 
 export const PERMISSION_ACCESS_GROUPS = [
@@ -118,6 +131,7 @@ export interface UserType {
 
 export default interface PermissionType {
   access?: PermissionAccessEnum;
+  conditions?: PermissionConditionEnum[];
   created_at?: string;
   entity?: string;
   entity_id?: number | string;
