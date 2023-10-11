@@ -72,6 +72,7 @@ enum ObjectTypeEnum {
 
 type ObjectAttributesType = {
   access?: number;
+  conditions?: PermissionConditionEnum[];
   created_at?: string;
   entity_id?: string | number;
   entity_name?: string;
@@ -336,6 +337,7 @@ function PermissionDetail({
 
                 setObjectAttributes({
                   access: binaryStringToNumber(accessBinaryStringUpdated),
+                  // @ts-ignore
                   conditions: [...conditionsUpdated],
                 });
               }}
@@ -371,6 +373,7 @@ function PermissionDetail({
 
                 setObjectAttributes({
                   access: binaryStringToNumber(accessBinaryStringUpdated),
+                  // @ts-ignore
                   conditions: [...conditionsUpdated],
                 });
               }}
@@ -406,6 +409,7 @@ function PermissionDetail({
 
                 setObjectAttributes({
                   access: binaryStringToNumber(accessBinaryStringUpdated),
+                  // @ts-ignore
                   conditions: [...conditionsUpdated],
                 });
               }}
