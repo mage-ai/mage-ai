@@ -1,6 +1,7 @@
 import singer
-from tap_pipedrive.stream import PipedriveStream
+
 from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.pipedrive.tap_pipedrive.stream import PipedriveStream
 
 logger = singer.get_logger()
 
@@ -26,7 +27,7 @@ class RecentsStream(PipedriveStream):
         # for /recents/ streams override default (schema name equals to endpoint) with items
         #singer.write_schema(self.schema, self.get_schema(), key_properties=self.key_properties)
         write_schema(self.schema, self.get_schema(), key_properties=self.key_properties,replication_method=self.replication_method)
-        
+
 
     def get_name(self):
         return self.schema

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 
-import sys
-import json
 import argparse
+import json
+import sys
+
 import singer
 from singer import metadata, utils
-from tap_linkedin_ads.client import LinkedinClient, REQUEST_TIMEOUT
-from tap_linkedin_ads.discover import discover
-from tap_linkedin_ads.sync import sync as _sync
 
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.client import (
+    REQUEST_TIMEOUT,
+    LinkedinClient,
+)
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.discover import discover
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.sync import sync as _sync
 
 LOGGER = singer.get_logger()
 REQUEST_TIMEOUT = 300

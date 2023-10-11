@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-import sys
-import json
 import argparse
+import json
+import sys
 
 import singer
 from singer import metadata
 from singer.catalog import write_catalog
 
-from tap_outreach.client import OutreachClient
-from tap_outreach.discover import discover
-from tap_outreach.sync import sync
+from mage_integrations.sources.outreach.tap_outreach.client import OutreachClient
+from mage_integrations.sources.outreach.tap_outreach.discover import discover
+from mage_integrations.sources.outreach.tap_outreach.sync import sync
 
 LOGGER = singer.get_logger()
 

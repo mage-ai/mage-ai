@@ -8,7 +8,9 @@
 from collections import namedtuple
 from typing import Dict
 
-from target_salesforce.utils.exceptions import InvalidStreamSchema
+from mage_integrations.destinations.salesforce.target_salesforce.utils.exceptions import (
+    InvalidStreamSchema,
+)
 
 ObjectField = namedtuple("ObjectField", "type createable updateable")
 
