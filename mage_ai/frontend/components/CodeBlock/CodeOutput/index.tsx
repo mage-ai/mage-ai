@@ -278,6 +278,19 @@ function CodeOutput({
       if (shape) {
         setDataFrameShape(shape);
       }
+
+      const columnHeadersContainEmptyString = columns?.some(header => header === '');
+      if (columnHeadersContainEmptyString) {
+        return (
+          <Spacing mx={5} my={3}>
+            <Text monospace warning>
+              Block output table could not be rendered due to empty string headers.
+              Please check your data’s column headers for empty strings.
+            </Text>
+          </Spacing>
+        );
+      }
+
       return rows.length >= 1 && (
         <DataTable
           columns={columns}
