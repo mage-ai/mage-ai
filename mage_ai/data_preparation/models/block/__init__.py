@@ -1616,6 +1616,34 @@ class Block(DataIntegrationMixin):
             variable_uuid=variable_uuid,
         )
 
+    def get_raw_outputs(
+        self,
+        block_uuid: str,
+        execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+    ) -> List[Any]:
+        all_variables = self.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+
+        outputs = []
+
+        for variable_uuid in all_variables:
+            variable = self.pipeline.get_block_variable(
+                block_uuid,
+                variable_uuid,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                partition=execution_partition,
+                raise_exception=True,
+                spark=(global_vars or dict()).get('spark'),
+            )
+            outputs.append(variable)
+
+        return outputs
+
     def get_outputs(
         self,
         execution_partition: str = None,
@@ -2241,21 +2269,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if not test_functions or len(test_functions) == 0:
             return
 
-        variable_manager = self.pipeline.variable_manager
-        outputs = [
-            variable_manager.get_variable(
-                self.pipeline.uuid,
-                self.uuid,
-                variable,
-                partition=execution_partition,
-                spark=(global_vars or dict()).get('spark'),
-            )
-            for variable in self.output_variables(
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-            )
-        ]
+        outputs = self.get_raw_outputs(
+            dynamic_block_uuid or self.uuid,
+            execution_partition=execution_partition,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+        )
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
