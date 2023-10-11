@@ -1,4 +1,6 @@
-from tap_pipedrive.streams.recents import RecentsStream
+from mage_integrations.sources.pipedrive.tap_pipedrive.streams.recents import (
+    RecentsStream,
+)
 
 
 class RecentUsersStream(RecentsStream):

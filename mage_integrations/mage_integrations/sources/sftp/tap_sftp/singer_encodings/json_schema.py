@@ -1,5 +1,5 @@
 
-from tap_sftp.aws_ssm import AWS_SSM
+from mage_integrations.sources.sftp.tap_sftp.aws_ssm import AWS_SSM
 
 from . import csv_handler
 

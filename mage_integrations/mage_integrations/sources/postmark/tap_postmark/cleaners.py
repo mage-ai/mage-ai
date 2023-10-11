@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import collections
-from types import MappingProxyType
-from tap_postmark.streams import STREAMS
-from typing import Any, Optional
 import sys
+from types import MappingProxyType
+from typing import Any, Optional
+
+from mage_integrations.sources.postmark.tap_postmark.streams import STREAMS
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
     from collections.abc import MutableMapping

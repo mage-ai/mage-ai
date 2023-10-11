@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import logging
+
 import singer
 from singer import utils
-from tap_google_ads.discover import create_resource_schema
-from tap_google_ads.discover import do_discover
-from tap_google_ads.sync import do_sync
 
+from mage_integrations.sources.google_ads.tap_google_ads.discover import (
+    create_resource_schema,
+    do_discover,
+)
+from mage_integrations.sources.google_ads.tap_google_ads.sync import do_sync
 
 LOGGER = singer.get_logger()
 
