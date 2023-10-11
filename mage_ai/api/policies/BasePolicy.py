@@ -58,6 +58,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         else:
             self.result_set_attr = ResultSet([])
 
+        # This is only used to override the environment variable when bootstrapping permissions.
+        self.disable_notebook_edit_access_override = None
+
     @property
     def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
         return Entity.PROJECT, get_project_uuid()
@@ -285,18 +288,32 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             entity_id=self.entity[1],
         )
 
-    def has_at_least_editor_role_and_notebook_edit_access(self) -> bool:
+    def has_at_least_editor_role_and_notebook_edit_access(
+        self,
+        disable_notebook_edit_access_override: int = None,
+    ) -> bool:
         return has_at_least_editor_role_and_notebook_edit_access(
             self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
+            disable_notebook_edit_access_override=(
+                disable_notebook_edit_access_override or
+                self.disable_notebook_edit_access_override
+            ),
         )
 
-    def has_at_least_editor_role_and_pipeline_edit_access(self) -> bool:
+    def has_at_least_editor_role_and_pipeline_edit_access(
+        self,
+        disable_notebook_edit_access_override: int = None,
+    ) -> bool:
         return has_at_least_editor_role_and_pipeline_edit_access(
             self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
+            disable_notebook_edit_access_override=(
+                disable_notebook_edit_access_override or
+                self.disable_notebook_edit_access_override
+            ),
         )
 
     def has_at_least_viewer_role(self) -> bool:
