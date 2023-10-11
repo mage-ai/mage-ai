@@ -330,32 +330,30 @@ function UserDetail({
           uuid: 'Role',
         },
       ]}
-      onClickRow={(rowIndex: number) => {
-        const object = objectsArray[rowIndex];
-        const id = object?.id;
-        const checked = !!rolesMapping?.[id];
-        const mapping = { ...rolesMapping };
-
-        if (checked) {
-          delete mapping?.[id];
-        } else {
-          mapping[id] = object;
-        }
-
-        setObjectAttributes({
-          rolesMapping: mapping,
-        });
-      }}
-      rows={objectsArray?.map(({
-        name,
-        id,
-      }) => {
+      rows={objectsArray?.map((object) => {
+        const {
+          name,
+          id,
+        } = object;
         const checked = !!rolesMapping?.[id];
 
         return [
           <Checkbox
             checked={checked}
             key="checkbox"
+            onClick={() => {
+              const mapping = { ...rolesMapping };
+
+              if (checked) {
+                delete mapping?.[id];
+              } else {
+                mapping[id] = object;
+              }
+
+              setObjectAttributes({
+                rolesMapping: mapping,
+              });
+            }}
           />,
           <Text key="name" monospace>
             {name}
