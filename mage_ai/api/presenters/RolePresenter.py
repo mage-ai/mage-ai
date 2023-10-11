@@ -47,3 +47,18 @@ RolePresenter.register_formats([
     'updated_at',
     'users',
 ])
+
+
+RolePresenter.register_formats([
+    f'user/{constants.CREATE}',
+    f'user/{constants.DELETE}',
+    f'user/{constants.DETAIL}',
+    f'user/{constants.LIST}',
+    f'user/{constants.UPDATE}',
+], [
+    'created_at',
+    'id',
+    'name',
+    'permissions',
+    'updated_at',
+])

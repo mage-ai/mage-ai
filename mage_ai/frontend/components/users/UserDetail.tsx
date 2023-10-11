@@ -10,26 +10,13 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
-import PermissionType, {
-  PERMISSION_ACCESS_GROUPS,
-  PERMISSION_ACCESS_HUMAN_READABLE_MAPPING,
-  PERMISSION_ACCESS_OPERATIONS,
-  PERMISSION_ACCESS_QUERY_OPERATIONS,
-  PERMISSION_ACCESS_READ_OPERATIONS,
-  PERMISSION_ACCESS_WRITE_OPERATIONS,
-  PERMISSION_DISABLE_ACCESS_OPERATIONS,
-  PermissionAccessEnum,
-  UserType,
-} from '@interfaces/PermissionType';
+import PermissionType from '@interfaces/PermissionType';
 import RoleType from '@interfaces/RoleType';
-import Select from '@oracle/elements/Inputs/Select';
 import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import { ContainerStyle } from '@components/shared/index.style';
 import {
@@ -48,15 +35,10 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
-import {
-  addBinaryStrings,
-  binaryStringToNumber,
-  minusBinaryStrings,
-  numberToBinaryString,
-} from '@utils/number';
-import { camelCaseToNormalWithSpaces } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { displayName } from '@utils/models/user';
+import { displayNames } from '@utils/models/permission';
+import { getUser } from '@utils/session';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -64,55 +46,60 @@ import { onSuccess } from '@api/utils/response';
 const ICON_SIZE = 2 * UNIT;
 
 enum ObjectTypeEnum {
+  PERMISSIONS = 'Permissions',
   ROLES = 'Roles',
-  USERS = 'Users',
 }
 
-type ObjectAttributesType = {
-  access?: number;
-  created_at?: string;
-  entity_id?: string | number;
-  entity_name?: string;
-  entity_type?: string;
-  query_attributes?: string[];
-  read_attributes?: string[];
+type UserAttributesType = {
+  avatar?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  password?: string;
+  password_confirmation?: string;
+  password_current?: string;
+  permissionsMapping?: {
+    [id: number]: PermissionType;
+  };
   rolesMapping?: {
     [id: number]: RoleType;
   };
   updated_at?: string;
-  usersMapping?: {
-    [id: number]: UserType;
-  };
-  write_attributes?: string[];
+  username?: string;
 };
 
-type PermissionDetailProps = {
+type UserDetailPageProps = {
   contained?: boolean;
   onCancel?: () => void;
-  slug?: number | string;
+  slug: number | string;
 };
 
-function PermissionDetail({
+function UserDetail({
   contained,
   onCancel,
   slug,
-}: PermissionDetailProps) {
+}: UserDetailPageProps) {
+  const {
+    id: currentUserID,
+    owner: isOwner,
+  } = getUser() || {};
+
   const router = useRouter();
 
   const [afterHidden, setAfterHidden] = useState(true);
   const [addingObjectType, setAddingObjectType] = useState(null);
-  const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
-  const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
+  const [attributesTouched, setAttributesTouched] = useState<UserAttributesType>({});
+  const [objectAttributes, setObjectAttributesState] = useState<UserAttributesType>(null);
 
   const setObjectAttributesStateWithMapping = useCallback((
     data,
     rolesArray,
-    usersArray,
+    permissionsArray,
   ) => {
     setObjectAttributesState({
       ...data,
       rolesMapping: indexBy(rolesArray || [], ({ id }) => id),
-      usersMapping: indexBy(usersArray || [], ({ id }) => id),
+      permissionsMapping: indexBy(permissionsArray || [], ({ id }) => id),
     });
   }, [
     setObjectAttributesState,
@@ -132,65 +119,50 @@ function PermissionDetail({
     setObjectAttributesState,
   ]);
 
-  const { data } = api.permissions.detail(slug, {}, {
+  const { data } = api.users.detail(slug, {}, {
     revalidateOnFocus: false,
   });
-  const permission = useMemo(() => data?.permission, [data]);
+  const user = useMemo(() => data?.user, [data]);
 
   useEffect(() => {
-    if (permission) {
+    if (user) {
       setObjectAttributesStateWithMapping(
-        permission,
-        permission?.roles,
-        permission?.users,
+        user,
+        user?.roles_new,
+        user?.permissions,
       );
     }
   }, [
     setObjectAttributesStateWithMapping,
-    permission,
+    user,
   ]);
 
-  const { data: dataPermissions } = api.permissions.list({
-    _format: 'with_only_entity_options',
-    only_entity_options: true,
-  }, {}, {
-    pauseFetch: !!permission,
-  });
-  const permissionEmpty = useMemo(() => dataPermissions?.permissions?.[0], [dataPermissions]);
-
-  const entityNames: string[] = useMemo(() => (permission || permissionEmpty)?.entity_names || [], [
-    permission,
-    permissionEmpty,
-  ]);
-  const entityTypes: string[] = useMemo(() => (permission || permissionEmpty)?.entity_types || [], [
-    permission,
-    permissionEmpty,
-  ]);
+  console.log(user, objectAttributes)
 
   const [mutateObject, { isLoading: isLoadingMutateObject }] = useMutation(
-    permission ? api.permissions.useUpdate(permission?.id) : api.permissions.useCreate(),
+    user ? api.users.useUpdate(slug) : api.users.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
-            permission: objectServer,
+            user: objectServer,
           }) => {
             setAttributesTouched({});
             setObjectAttributesStateWithMapping(
               objectServer,
-              objectServer?.roles,
-              objectServer?.users,
+              objectServer?.roles_new,
+              objectServer?.permissions,
             );
 
-            if (!permission) {
-              router.push(`/settings/workspace/permissions/${objectServer?.id}`);
+            if (!user) {
+              router.push(`/settings/workspace/users/${objectServer?.id}`);
             }
 
             toast.success(
-              permission ? 'Permission successfully updated.' : 'New permission created successfully.',
+              user ? 'User profile successfully updated.' : 'New user created successfully.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `permission-mutate-success-${objectServer.id}`,
+                toastId: `user-update-success-${objectServer.id}`,
               },
             );
           },
@@ -215,18 +187,18 @@ function PermissionDetail({
     },
   );
   const [deleteObject, { isLoading: isLoadingDeleteObject }] = useMutation(
-    api.permissions.useDelete(permission?.id),
+    api.users.useDelete(user?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            router.push('/settings/workspace/permissions');
+            router.push('/settings/workspace/users');
 
             toast.success(
-              'Permission successfully delete.',
+              'User successfully delete.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `permission-delete-success-${permission?.id}`,
+                toastId: `user-delete-success-${user?.id}`,
               },
             );
           },
@@ -251,44 +223,7 @@ function PermissionDetail({
     },
   );
 
-  const access = useMemo(() => objectAttributes?.access || 0, [objectAttributes]);
-  const buildAccessMemo = useCallback((
-    permissionAccesses: PermissionAccessEnum[],
-  ) => permissionAccesses.map((permissionAccess: PermissionAccessEnum, idx: number) => {
-    const displayName = PERMISSION_ACCESS_HUMAN_READABLE_MAPPING[permissionAccess];
-    const checked = Boolean(access & Number(permissionAccess));
-    const binaryStringCurrent = numberToBinaryString(access);
-    const binaryStringNew = numberToBinaryString(permissionAccess);
-
-    return (
-      <Spacing key={displayName} mt={idx >= 1 ? 1 : 0}>
-        <FlexContainer alignItems="center">
-          <ToggleSwitch
-            checked={checked}
-            compact
-            onCheck={(valFunc: (val: boolean) => boolean) => setObjectAttributes({
-              access: binaryStringToNumber(valFunc(checked)
-                ? addBinaryStrings(binaryStringCurrent, binaryStringNew)
-                : minusBinaryStrings(binaryStringCurrent, binaryStringNew)
-              ),
-            })}
-          />
-
-          <Spacing mr={PADDING_UNITS} />
-
-          <Text default={!checked}>
-            {displayName}
-          </Text>
-        </FlexContainer>
-      </Spacing>
-    );
-  }), [
-    access,
-  ]);
-
-  const { data: dataRoles } = api.roles.list({}, {}, {
-    pauseFetch: !permission,
-  });
+  const { data: dataRoles } = api.roles.list();
   const rolesAll: RoleType[] = useMemo(() => sortByKey(
     dataRoles?.roles || [],
     'name',
@@ -305,23 +240,21 @@ function PermissionDetail({
     rolesMapping,
   ]);
 
-  const { data: dataUsers } = api.users.list({}, {}, {
-    pauseFetch: !permission,
-  });
-  const usersAll: UserType[] = useMemo(() => sortByKey(
-    dataUsers?.users || [],
-    user => displayName(user),
+  const { data: dataPermissions } = api.permissions.list();
+  const permissionsAll: PermissionType[] = useMemo(() => sortByKey(
+    dataPermissions?.permissions || [],
+    'entity_name',
   ), [
-    dataUsers,
+    dataPermissions,
   ]);
-  const usersMapping = useMemo(() => objectAttributes?.usersMapping || {}, [
+  const permissionsMapping = useMemo(() => objectAttributes?.permissionsMapping || {}, [
     objectAttributes,
   ]);
-  const users: UserType[] = useMemo(() => sortByKey(
-    Object.values(usersMapping),
-    user => displayName(user),
+  const permissions: PermissionType[] = useMemo(() => sortByKey(
+    Object.values(permissionsMapping),
+    'entity_name',
   ), [
-    usersMapping,
+    permissionsMapping,
   ]);
 
   const hasRoles = useMemo(() => roles?.length >= 1, [roles]);
@@ -345,7 +278,26 @@ function PermissionDetail({
     setAfterHidden,
   ]);
 
-  const hasUsers = useMemo(() => users?.length >= 1, [users]);
+  const hasPermissions = useMemo(() => permissions?.length >= 1, [permissions]);
+  const addPermissionButton = useMemo(() => (
+    <Button
+      beforeIcon={<Add />}
+      compact
+      onClick={() => {
+        setAddingObjectType(ObjectTypeEnum.PERMISSIONS);
+        setAfterHidden(false);
+      }}
+      primary={!hasPermissions}
+      secondary={hasPermissions}
+      small
+    >
+      Add permission
+    </Button>
+  ), [
+    hasPermissions,
+    setAddingObjectType,
+    setAfterHidden,
+  ]);
 
   const buildTable = useCallback((objectsArray: RoleType[]) => (
     <Table
@@ -418,43 +370,69 @@ function PermissionDetail({
     setObjectAttributes,
   ]);
 
-  const buildTableUsers = useCallback((objectArray: UserType[]) => (
-    <Table
-      columnFlex={[1, 1, 1]}
+  const buildTablePermissions = useCallback((objectArray: PermissionType[]) => (
+   <Table
+      columnFlex={[2, 1, 1, 6]}
       columns={[
         {
-          uuid: 'Username',
+          uuid: 'Entity',
         },
         {
-          uuid: 'First name',
+          uuid: 'Subtype',
         },
         {
-          uuid: 'Last name',
+          uuid: 'Entity ID',
+        },
+        {
+          rightAligned: true,
+          uuid: 'Access',
         },
       ]}
       rows={objectArray?.map(({
-        first_name: firstName,
-        last_name: lastName,
-        username,
+        access,
+        entity,
+        entity_id: entityID,
+        entity_name: entityName,
+        entity_type: entityType,
       }) => {
+        const accessDisplayNames = access ? displayNames(access) : [];
+        const accessDisplayNamesCount = accessDisplayNames?.length || 0;
+
         return [
-          <Text key="username">
-            {username}
+          <Text key="entityName" monospace>
+            {entityName || entity}
           </Text>,
-          <Text default key="firstName">
-            {firstName}
+          <Text default key="entityType" monospace={!!entityType}>
+            {entityType || '-'}
           </Text>,
-          <Text default key="lastName">
-            {lastName}
+          <Text default key="entityID" monospace={!!entityID}>
+            {entityID || '-'}
           </Text>,
+          <div key="access">
+            {accessDisplayNamesCount >= 1 && (
+              <FlexContainer alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+                {accessDisplayNames?.map((displayName: string, idx: number) => (
+                  <div key={displayName}>
+                    <Text default monospace small>
+                      {displayName}{accessDisplayNamesCount >= 2
+                        && idx < accessDisplayNamesCount - 1
+                        && (
+                          <Text inline muted small>
+                            ,&nbsp;
+                          </Text>
+                        )
+                      }
+                    </Text>
+                  </div>
+                ))}
+              </FlexContainer>
+            )}
+          </div>,
         ];
       })}
-      uuid="users"
+      uuid="permissions"
     />
-  ), [
-    usersMapping,
-    setObjectAttributes,
-  ]);
+  ), []);
 
   const afterRoles = useMemo(() => buildTable(rolesAll), [
     buildTable,
@@ -466,9 +444,9 @@ function PermissionDetail({
     roles,
   ]);
 
-  const usersMemo = useMemo(() => buildTableUsers(users), [
-    buildTableUsers,
-    users,
+  const permissionsMemo = useMemo(() => buildTablePermissions(permissions), [
+    buildTablePermissions,
+    permissions,
   ]);
 
   const contentMemo = (
@@ -476,7 +454,7 @@ function PermissionDetail({
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
           <Headline level={4}>
-            {permission ? `Permission ${permission?.id}` : 'New permission'}
+            Profile
           </Headline>
         </Spacing>
 
@@ -484,96 +462,8 @@ function PermissionDetail({
 
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center">
-            <Text
-              danger={'entity_name' in attributesTouched && !objectAttributes?.entity_name}
-              default
-              large
-            >
-              Entity {'entity_name' in attributesTouched && !objectAttributes?.entity_name && (
-                <Text danger inline large>
-                  is required
-                </Text>
-              )}
-            </Text>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            <Flex flex={1} justifyContent="flex-end">
-              <Select
-                afterIconSize={ICON_SIZE}
-                alignRight
-                autoComplete="off"
-                large
-                noBackground
-                noBorder
-                onChange={e => setObjectAttributes({
-                  entity_name: e.target.value,
-                })}
-                paddingHorizontal={0}
-                paddingVertical={0}
-                placeholder="Select an entity"
-                value={objectAttributes?.entity_name || ''}
-              >
-                {entityNames.map((entityName: string) => (
-                  <option key={entityName} value={entityName}>
-                    {camelCaseToNormalWithSpaces(entityName)}
-                  </option>
-                ))}
-              </Select>
-            </Flex>
-          </FlexContainer>
-        </Spacing>
-
-        <Divider light />
-
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer alignItems="center">
-            <Text
-              default
-              large
-            >
-              Entity subtype
-            </Text>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            <Flex flex={1} justifyContent="flex-end">
-              <Select
-                afterIconSize={ICON_SIZE}
-                alignRight
-                autoComplete="off"
-                large
-                monospace
-                noBackground
-                noBorder
-                onChange={e => setObjectAttributes({
-                  entity_type: e.target.value,
-                })}
-                paddingHorizontal={0}
-                paddingVertical={0}
-                placeholder="Select an entity subtype"
-                value={objectAttributes?.entity_type || ''}
-              >
-                <option value="" />
-                {entityTypes.map((entityType: string) => (
-                  <option key={entityType} value={entityType}>
-                    {entityType}
-                  </option>
-                ))}
-              </Select>
-            </Flex>
-          </FlexContainer>
-        </Spacing>
-
-        <Divider light />
-
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer alignItems="center">
-            <Text
-              default
-              large
-            >
-              Enity UUID
+            <Text default large>
+              Avatar
             </Text>
 
             <Spacing mr={PADDING_UNITS} />
@@ -588,18 +478,162 @@ function PermissionDetail({
                 alignRight
                 autoComplete="off"
                 large
-                monospace
                 noBackground
                 noBorder
                 fullWidth
                 onChange={e => setObjectAttributes({
-                  entity_id: e.target.value,
+                  avatar: e.target.value,
                 })}
                 paddingHorizontal={0}
                 paddingVertical={0}
-                placeholder="e.g. pipeline_uuid"
-                value={objectAttributes?.entity_id || ''}
+                placeholder="Add initials or an emoji"
+                value={objectAttributes?.avatar || ''}
               />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              danger={'username' in attributesTouched && !objectAttributes?.username}
+              default
+              large
+            >
+              Username {'username' in attributesTouched && !objectAttributes?.username && (
+                <Text danger inline large>
+                  is required
+                </Text>
+              )}
+            </Text>
+
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  username: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. Mage Supreme"
+                value={objectAttributes?.username || ''}
+              />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              default
+              large
+            >
+              First name
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  first_name: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. Urza"
+                value={objectAttributes?.first_name || ''}
+              />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              default
+              large
+            >
+              Last name
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  last_name: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. Andromeda"
+                value={objectAttributes?.last_name || ''}
+              />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text default large>
+              Email
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex
+              alignItems="center"
+              flex={1}
+              justifyContent="flex-end"
+            >
+              <Text large muted>
+                {objectAttributes?.email}
+              </Text>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Alphabet muted size={ICON_SIZE} />
+
+              <Spacing mr={1} />
             </Flex>
           </FlexContainer>
         </Spacing>
@@ -610,162 +644,145 @@ function PermissionDetail({
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
           <Headline level={4}>
-            Access
+            Authentication
           </Headline>
         </Spacing>
 
         <Divider light />
 
         <Spacing p={PADDING_UNITS}>
-          <Spacing mb={PADDING_UNITS}>
-            <Text default large>
-              Groups
+          <FlexContainer alignItems="center">
+            <Text
+              danger={'password_current' in attributesTouched && !objectAttributes?.password_current}
+              default
+              large
+            >
+              Current password {'password_current' in attributesTouched && !objectAttributes?.password_current && (
+                <Text danger inline large>
+                  is required
+                </Text>
+              )}
             </Text>
-          </Spacing>
 
-          {buildAccessMemo(PERMISSION_ACCESS_GROUPS)}
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  password_current: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="* * * * * * * *"
+                type="password"
+                value={objectAttributes?.password_current || ''}
+              />
+            </Flex>
+          </FlexContainer>
         </Spacing>
 
         <Divider light />
 
-        <FlexContainer alignItems="center">
-          <Flex flex={1}>
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Operations
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              danger={'password' in attributesTouched && !objectAttributes?.password}
+              default
+              large
+            >
+              New password {'password' in attributesTouched && !objectAttributes?.password && (
+                <Text danger inline large>
+                  is required
                 </Text>
-              </Spacing>
+              )}
+            </Text>
 
-              {buildAccessMemo(PERMISSION_ACCESS_OPERATIONS)}
-            </Spacing>
-          </Flex>
+            <Spacing mr={PADDING_UNITS} />
 
-          <Flex flex={1}>
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Disable operations
-                </Text>
-              </Spacing>
-
-              {buildAccessMemo(PERMISSION_DISABLE_ACCESS_OPERATIONS)}
-            </Spacing>
-          </Flex>
-        </FlexContainer>
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                autoComplete="off"
+                large
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  password: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="* * * * * * * *"
+                type="password"
+                value={objectAttributes?.password || ''}
+              />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
 
         <Divider light />
 
-        <FlexContainer alignItems="flex-start">
-          <Flex flex={1}>
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Read attributes
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              danger={'password_confirmation' in attributesTouched && !objectAttributes?.password_confirmation}
+              default
+              large
+            >
+              Confirm new password {'password_confirmation' in attributesTouched && !objectAttributes?.password_confirmation && (
+                <Text danger inline large>
+                  is required
                 </Text>
-              </Spacing>
+              )}
+            </Text>
 
-               {buildAccessMemo(PERMISSION_ACCESS_READ_OPERATIONS)}
-             </Spacing>
-           </Flex>
+            <Spacing mr={PADDING_UNITS} />
 
-           <Flex flex={1}>
-            <Spacing fullWidth p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Readable attributes (comma separated)
-                </Text>
-              </Spacing>
-
-              <TextArea
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                autoComplete="off"
+                large
+                noBackground
+                noBorder
                 fullWidth
-                monospace
                 onChange={e => setObjectAttributes({
-                  read_attributes: e.target.value,
+                  password_confirmation: e.target.value,
                 })}
-                placeholder="e.g. email"
-                value={objectAttributes?.read_attributes || ''}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="* * * * * * * *"
+                type="password"
+                value={objectAttributes?.password_confirmation || ''}
               />
-            </Spacing>
-          </Flex>
-        </FlexContainer>
-
-        <Divider light />
-
-        <FlexContainer alignItems="flex-start">
-          <Flex flex={1}>
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Write attributes
-                </Text>
-              </Spacing>
-
-               {buildAccessMemo(PERMISSION_ACCESS_WRITE_OPERATIONS)}
-             </Spacing>
-           </Flex>
-
-           <Flex flex={1}>
-            <Spacing fullWidth p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Writable attributes (comma separated)
-                </Text>
-              </Spacing>
-
-              <TextArea
-                fullWidth
-                monospace
-                onChange={e => setObjectAttributes({
-                  write_attributes: e.target.value,
-                })}
-                placeholder="e.g. password"
-                value={objectAttributes?.write_attributes || ''}
-              />
-            </Spacing>
-          </Flex>
-        </FlexContainer>
-
-        <Divider light />
-
-        <FlexContainer alignItems="flex-start">
-          <Flex flex={1}>
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Query parameters
-                </Text>
-              </Spacing>
-
-              {buildAccessMemo(PERMISSION_ACCESS_QUERY_OPERATIONS)}
-            </Spacing>
-          </Flex>
-
-          <Flex flex={1}>
-            <Spacing fullWidth p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default large>
-                  Parameters that can be queried (comma separated)
-                </Text>
-              </Spacing>
-
-              <TextArea
-                fullWidth
-                monospace
-                onChange={e => setObjectAttributes({
-                  query_attributes: e.target.value,
-                })}
-                placeholder="e.g. include_outputs"
-                value={objectAttributes?.query_attributes || ''}
-              />
-            </Spacing>
-          </Flex>
-        </FlexContainer>
+            </Flex>
+          </FlexContainer>
+        </Spacing>
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
 
-      {permission && (
+      {user && (
         <>
           <Panel noPadding>
             <Spacing p={PADDING_UNITS}>
@@ -793,7 +810,7 @@ function PermissionDetail({
               <Spacing p={PADDING_UNITS}>
                 <Spacing mb={PADDING_UNITS}>
                   <Text default>
-                    This permission is currently not attached to any role.
+                    This user currently has no roles attached.
                   </Text>
                 </Spacing>
 
@@ -819,24 +836,24 @@ function PermissionDetail({
                 justifyContent="space-between"
               >
                 <Headline level={4}>
-                  Users
+                  Permissions
                 </Headline>
               </FlexContainer>
             </Spacing>
 
             <Divider light />
 
-            {!hasUsers && (
+            {!hasPermissions && (
               <Spacing p={PADDING_UNITS}>
                 <Text default>
-                  There are currently no users with this permission.
+                  This user currently has no permissions.
                 </Text>
               </Spacing>
             )}
 
-            {hasUsers && (
+            {hasPermissions && (
               <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                {usersMemo}
+                {permissionsMemo}
               </Spacing>
             )}
           </Panel>
@@ -909,34 +926,6 @@ function PermissionDetail({
                 </Flex>
               </FlexContainer>
             </Spacing>
-
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <Text default large>
-                  Created by
-                </Text>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <Flex
-                  alignItems="center"
-                  flex={1}
-                  justifyContent="flex-end"
-                >
-                  <Text large monospace muted>
-                    {displayName(permission?.user)}
-                  </Text>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Schedule muted size={ICON_SIZE} />
-
-                  <Spacing mr={1} />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -950,15 +939,15 @@ function PermissionDetail({
           loading={isLoadingMutateObject}
           // @ts-ignore
           onClick={() => mutateObject({
-            permission: {
+            user: {
               ...selectKeys(objectAttributes, [
-                'access',
-                'entity_id',
-                'entity_name',
-                'entity_type',
-                'query_attributes',
-                'read_attributes',
-                'write_attributes',
+                'avatar',
+                'first_name',
+                'last_name',
+                'password',
+                'password_confirmation',
+                'password_current',
+                'username',
               ], {
                 include_blanks: true,
               }),
@@ -969,7 +958,7 @@ function PermissionDetail({
           })}
           primary
         >
-          {permission ? 'Save changes' : 'Create new permission'}
+          {user ? 'Save changes' : 'Create new user'}
         </Button>
 
         {onCancel && (
@@ -985,7 +974,7 @@ function PermissionDetail({
           </>
         )}
 
-        {permission && (
+        {String(currentUserID) !== String(slug) && isOwner && (
           <>
             <Spacing mr={PADDING_UNITS} />
 
@@ -995,17 +984,14 @@ function PermissionDetail({
               loading={isLoadingDeleteObject}
               onClick={() => deleteObject()}
             >
-              Delete permission
+              Delete user
             </Button>
           </>
         )}
+
       </FlexContainer>
     </ContainerStyle>
   );
-
-  if (contained) {
-    return contentMemo;
-  }
 
   return (
     <SettingsDashboard
@@ -1022,24 +1008,24 @@ function PermissionDetail({
       appendBreadcrumbs
       breadcrumbs={[
         {
-          label: () => 'Permissions',
+          label: () => 'Users',
           linkProps: {
-            href: '/settings/workspace/permissions'
+            href: '/settings/workspace/users'
           },
         },
         {
           bold: true,
-          label: () => `Permission ${permission?.id}`,
+          label: () => displayName(objectAttributes),
         },
       ]}
       setAfterHidden={setAfterHidden}
-      title={permission?.id ? `Permission ${permission?.id}` : 'New permission'}
-      uuidItemSelected={SectionItemEnum.PERMISSIONS}
+      title={user ? displayName(user) : 'New user'}
+      uuidItemSelected={SectionItemEnum.USERS}
       uuidWorkspaceSelected={SectionEnum.USER_MANAGEMENT}
     >
-      {permission && contentMemo}
+      {user && contentMemo}
     </SettingsDashboard>
   );
 }
 
-export default PermissionDetail;
+export default UserDetail;
