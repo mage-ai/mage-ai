@@ -1040,7 +1040,7 @@ class Block(DataIntegrationMixin):
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=True,
-                        spark=(global_vars or dict()).get('spark'),
+                        spark=self.__get_spark_session_from_global_vars(global_vars=global_vars),
                         dynamic_block_uuid=dynamic_block_uuid,
                     )
                 except ValueError as e:
@@ -1638,7 +1638,7 @@ class Block(DataIntegrationMixin):
                 global_vars=global_vars,
                 partition=execution_partition,
                 raise_exception=True,
-                spark=(global_vars or dict()).get('spark'),
+                spark=self.__get_spark_session_from_global_vars(global_vars),
             )
             outputs.append(variable)
 
@@ -2490,6 +2490,23 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         self.spark_init = True
         return self.spark
+
+    def __get_spark_session_from_global_vars(self, global_vars: Dict = None):
+        if global_vars is None:
+            global_vars = dict()
+        spark = global_vars.get('spark')
+        if self.pipeline and self.pipeline.spark_config:
+            spark_config = self.pipeline.spark_config
+        else:
+            repo_config = RepoConfig(repo_path=self.repo_path)
+            spark_config = repo_config.spark_config
+        if not spark_config:
+            return spark
+        spark_config = SparkConfig.load(config=spark_config)
+        if spark_config.use_custom_session:
+            return global_vars.get('context', dict()).get(
+                spark_config.custom_session_var_name, spark)
+        return spark
 
     def __store_variables_prepare(
         self,
