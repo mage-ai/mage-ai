@@ -78,6 +78,37 @@ export function datetimeInLocalTimezone(
   return datetime;
 }
 
+/**
+ * Given a UTC datetime string, find how much time has elapsed between then 
+ * and now. Return the elapsed time in the first matching format:
+ *   - >= 1 year: X year(s) ago
+ *   - >= 1 month: X month(s) ago
+ *   - >= 1 day: X day(s) ago
+ *   - >= 1 hr: X hr(s) Y min(s) ago
+ *   - < 1 hr: X min(s) ago
+ */
+export function utcStringToElapsedTime(datetime: string) {
+  const then = moment.utc(datetime);
+  const now = moment.utc();
+  const duration = moment.duration(now.diff(then));
+
+  let timeDisplay = '';
+  if (duration.years() >= 1) {
+    timeDisplay = `${duration.years()} year${duration.years() > 1 ? 's' : ''} ago`;
+  } else if (duration.months() >= 1) {
+    timeDisplay = `${duration.months()} month${duration.months() > 1 ? 's' : ''} ago`;
+  } else if (duration.days() >= 1) {
+    timeDisplay = `${duration.days()} day${duration.days() > 1 ? 's' : ''} ago`;
+  } else if (duration.hours() >= 1) {
+    timeDisplay = `${duration.hours()} hr${duration.hours() > 1 ? 's' : ''} ` +
+      `${duration.minutes()} min${duration.minutes() > 1 ? 's' : ''} ago`;
+  } else {
+    timeDisplay = `${duration.minutes()} min${duration.minutes() > 1 || duration.minutes() === 0 ? 's' : ''} ago`;
+  }
+
+  return timeDisplay;
+}
+
 export function utcStringToLocalDate(
   datetime: string,
 ): Date {
