@@ -135,6 +135,7 @@ function Edit({
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
+  const [useHeaderUrl, setUseHeaderUrl] = useState<boolean>(false);
 
   const [settings, setSettings] = useState<PipelineScheduleSettingsType>(null);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
@@ -1326,7 +1327,7 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    const url = getTriggerApiEndpoint(pipelineSchedule);
+    const url = getTriggerApiEndpoint(pipelineSchedule, useHeaderUrl);
 
     return (
       <>
@@ -1365,7 +1366,52 @@ function Edit({
               withCopyIcon
             />
           </Spacing>
+          
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Spacing mr={1}>
+                <ToggleSwitch
+                  checked={useHeaderUrl}
+                  onCheck={() => setUseHeaderUrl(!useHeaderUrl)}
+                />
+              </Spacing>
+              <Text muted>
+                Show alternative endpoint to pass token in headers
+              </Text>
+            </FlexContainer>
+          </Spacing>
         </Spacing>
+        
+        {useHeaderUrl && (
+          <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+            <Headline>
+              Headers
+            </Headline>
+
+            <Text muted>
+              You will need to include the following headers in your request to authenticate
+              with the server.
+            </Text>
+
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <CopyToClipboard
+                copiedText={`Content-Type: application/json
+  Authorization: Bearer ${pipelineSchedule?.token}
+  `}
+                withCopyIcon
+              >
+                <CodeBlock
+                  language="json"
+                  small
+                  source={`
+      Content-Type: application/json
+      Authorization: Bearer ${pipelineSchedule?.token}
+  `}
+                />
+              </CopyToClipboard>
+            </Spacing>
+          </Spacing>
+        )}
 
         <Spacing mb={2} mt={5} px={PADDING_UNITS}>
           <Headline>
@@ -1417,7 +1463,20 @@ function Edit({
             <CodeBlock
               language="bash"
               small
-              source={`
+              source={useHeaderUrl ? `
+    curl -X POST ${url} \\
+      --header 'Content-Type: application/json' \\
+      --header 'Authorization: Bearer ${pipelineSchedule?.token}' \\
+      --data '
+    {
+      "pipeline_run": {
+        "variables": {
+          "key1": "value1",
+          "key2": "value2"
+        }
+      }
+    }'
+  ` : `
     curl -X POST ${url} \\
       --header 'Content-Type: application/json' \\
       --data '
@@ -1435,7 +1494,13 @@ function Edit({
         </Spacing>
       </>
     );
-  }, [pipelineSchedule, triggerDescriptionRowEl, triggerNameRowEl]);
+  }, [
+    pipelineSchedule,
+    setUseHeaderUrl,
+    triggerDescriptionRowEl,
+    triggerNameRowEl,
+    useHeaderUrl,
+  ]);
 
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType

@@ -22,11 +22,6 @@ from mage_ai.shared.hash import merge_dict
 
 
 class StatusResource(GenericResource):
-    """
-    Resource to fetch block output for the notebook. Created to support legacy
-    endpoint /api/pipelines/<pipeline_uuid>/blocks/<block_uuid>/outputs
-    """
-
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):

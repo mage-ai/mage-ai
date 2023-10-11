@@ -199,16 +199,23 @@ export function getDatetimeFromDateAndTime(
   return datetimeString;
 }
 
-export function getTriggerApiEndpoint(pipelineSchedule: PipelineScheduleType) {
+export function getTriggerApiEndpoint(
+  pipelineSchedule: PipelineScheduleType,
+  useHeaderUrl: boolean = false,
+) {
   let url = '';
   let port: string;
 
   const windowIsDefined = typeof window !== 'undefined';
   if (windowIsDefined) {
-    url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
-
-    if (pipelineSchedule?.token) {
-      url = `${url}/${pipelineSchedule.token}`;
+    if (useHeaderUrl) {
+      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/api_trigger`;
+    } else {
+      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+      
+      if (pipelineSchedule?.token) {
+        url = `${url}/${pipelineSchedule.token}`;
+      }
     }
   }
 
