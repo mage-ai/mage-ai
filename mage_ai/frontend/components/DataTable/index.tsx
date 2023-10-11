@@ -543,6 +543,11 @@ function DataTable({
   rows: rowsProp,
   width,
 }: DataTableProps) {
+  const columnHeadersContainEmptyString = columnsProp?.some(header => header === '');
+  if (columnHeadersContainEmptyString) {
+    return null;
+  }
+
   const numberOfIndexes = useMemo(() => index?.length
     ? (Array.isArray(index[0]) ? index[0].length : 1)
     : 1

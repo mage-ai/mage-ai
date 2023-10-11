@@ -26,6 +26,8 @@ PermissionPolicy.allow_actions([
 
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
+    'entity_names',
+    'entity_types',
     'query_attributes',
     'read_attributes',
     'write_attributes',
@@ -41,11 +43,16 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'role',
+    'user',
     'user_id',
+    'users',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.CREATE,
+    constants.DELETE,
     constants.DETAIL,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 
@@ -56,9 +63,19 @@ PermissionPolicy.allow_write([
     'entity_name',
     'entity_type',
     'role_id',
+    'role_ids',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_admin_role())
+
+
+PermissionPolicy.allow_query([
+    'only_entity_options',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

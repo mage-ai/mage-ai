@@ -12,6 +12,9 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    and_,
+    asc,
+    func,
 )
 from sqlalchemy.orm import relationship, validates
 
@@ -157,6 +160,72 @@ class User(BaseModel):
                 roles_new = [Role.get_role(Role.DefaultRole.VIEWER)]
             user.roles_new = roles_new
         db_connection.session.commit()
+
+    def permissions(self) -> List:
+        row_number_column = (
+                func.
+                row_number().
+                over(
+                    order_by=asc(UserRole.id),
+                    partition_by=Permission.id,
+                ).
+                label('row_number')
+        )
+
+        query = (
+            Permission.
+            select(
+                Permission.access,
+                Permission.created_at,
+                Permission.entity,
+                Permission.entity_id,
+                Permission.entity_name,
+                Permission.entity_type,
+                Permission.id,
+                Permission.options,
+                Permission.role_id,
+                Permission.updated_at,
+                Permission.user_id,
+            ).
+            join(
+                RolePermission,
+                RolePermission.permission_id == Permission.id,
+            ).
+            join(
+                Role,
+                Role.id == RolePermission.role_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.role_id == Role.id,
+                    UserRole.user_id == self.id,
+                ),
+            )
+        )
+
+        query = query.add_column(row_number_column)
+        query = query.from_self().filter(row_number_column == 1)
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Permission()
+            model.access = row.access
+            model.created_at = row.created_at
+            model.entity = row.entity
+            model.entity_id = row.entity_id
+            model.entity_name = row.entity_name
+            model.entity_type = row.entity_type
+            model.id = row.id
+            model.options = row.options
+            model.role_id = row.role_id
+            model.updated_at = row.updated_at
+            model.user_id = row.user_id
+            arr.append(model)
+
+        return arr
 
 
 class Role(BaseModel):
@@ -491,6 +560,63 @@ class Permission(BaseModel):
     @write_attributes.setter
     def write_attributes(self, values: List[str]) -> None:
         self.__set_access_attributes('write_attributes', values)
+
+    def users(self) -> List[User]:
+        row_number_column = (
+                func.
+                row_number().
+                over(
+                    order_by=asc(UserRole.id),
+                    partition_by=User.id,
+                ).
+                label('row_number')
+        )
+
+        query = (
+            User.
+            select(
+                User.avatar,
+                User.created_at,
+                User.email,
+                User.first_name,
+                User.id,
+                User.last_name,
+                User.preferences,
+                User.roles,
+                User.updated_at,
+                User.username,
+            ).
+            join(UserRole, UserRole.user_id == User.id).
+            join(Role, Role.id == UserRole.role_id).
+            join(
+                RolePermission,
+                and_(
+                    RolePermission.permission_id == self.id,
+                    RolePermission.role_id == Role.id,
+                ),
+            )
+        )
+
+        query = query.add_column(row_number_column)
+        query = query.from_self().filter(row_number_column == 1)
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            user = User()
+            user.avatar = row.avatar
+            user.created_at = row.created_at
+            user.first_name = row.first_name
+            user.id = row.id
+            user.last_name = row.last_name
+            user.preferences = row.preferences
+            user.roles = row.roles
+            user.updated_at = row.updated_at
+            user.username = row.username
+            arr.append(user)
+
+        return arr
 
     def __get_access_attributes(self, access_name: str) -> List[str]:
         return (self.options or {}).get(access_name)

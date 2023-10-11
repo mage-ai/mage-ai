@@ -44,6 +44,7 @@ RolePolicy.allow_read([
 
 RolePolicy.allow_read(RolePresenter.default_attributes + [
     'user_id',
+    'users',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -55,6 +56,8 @@ RolePolicy.allow_read(RolePresenter.default_attributes + [
 
 RolePolicy.allow_write([
     'name'
+    'permission_ids',
+    'user_ids',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

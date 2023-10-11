@@ -26,11 +26,13 @@ import { useWindowSize } from '@utils/sizes';
 
 export type DashboardSharedProps = {
   after?: any;
+  afterHeader?: any;
   afterHidden?: boolean;
   afterWidth?: number;
   afterWidthOverride?: boolean;
   before?: any;
   beforeWidth?: number;
+  setAfterHidden?: (value: boolean) => void;
   subheaderNoPadding?: boolean;
   uuid: string;
 };
@@ -52,6 +54,7 @@ type DashboardProps = {
 function Dashboard({
   addProjectBreadcrumbToCustomBreadcrumbs,
   after,
+  afterHeader,
   afterHidden,
   afterWidth: afterWidthProp,
   afterWidthOverride,
@@ -65,6 +68,7 @@ function Dashboard({
   headerOffset,
   mainContainerHeader,
   navigationItems,
+  setAfterHidden,
   setErrors,
   subheaderChildren,
   subheaderNoPadding,
@@ -112,13 +116,13 @@ function Dashboard({
   }
 
   if ((!breadcrumbsProp?.length || appendBreadcrumbs) && projects?.length >= 1) {
-    breadcrumbs.unshift(...[
-      breadcrumbProject,
-      {
+    if (!breadcrumbsProp?.length) {
+      breadcrumbs.unshift({
         bold: !appendBreadcrumbs,
         label: () => title,
-      },
-    ]);
+      });
+    }
+    breadcrumbs.unshift(breadcrumbProject);
   }
 
   useEffect(() => {
@@ -195,6 +199,7 @@ function Dashboard({
           {/* @ts-ignore */}
           <TripleLayout
             after={after}
+            afterHeader={afterHeader}
             afterHeightOffset={HEADER_HEIGHT}
             afterHidden={afterHidden}
             afterMousedownActive={afterMousedownActive}
@@ -204,10 +209,11 @@ function Dashboard({
             beforeMousedownActive={beforeMousedownActive}
             beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
             headerOffset={headerOffset}
-            hideAfterCompletely
+            hideAfterCompletely={!setAfterHidden}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
             mainContainerHeader={mainContainerHeader}
             mainContainerRef={mainContainerRef}
+            setAfterHidden={setAfterHidden}
             setAfterMousedownActive={setAfterMousedownActive}
             setAfterWidth={setAfterWidth}
             setBeforeMousedownActive={setBeforeMousedownActive}

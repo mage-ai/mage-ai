@@ -27,6 +27,7 @@ from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
+from mage_ai.settings import REQUIRE_USER_PERMISSIONS
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.shared.strings import classify
@@ -170,9 +171,13 @@ class BaseOperation():
                 }
         except ApiError as err:
             if err.code == 403 and \
-                    self.user and self.user.project_access == 0 and not self.user.roles:
-                err.message = 'You do not have access to this project. ' + \
-                    'Please ask an admin or owner for permissions.'
+                    self.user and \
+                    self.user.project_access == 0 and \
+                    not self.user.roles:
+
+                if not REQUIRE_USER_PERMISSIONS:
+                    err.message = 'You don’t have access to this project. ' + \
+                        'Please ask an admin or owner for permissions.'
             if settings.DEBUG:
                 raise err
             else:

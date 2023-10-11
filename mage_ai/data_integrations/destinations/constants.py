@@ -11,6 +11,7 @@ DESTINATIONS = [
         uuid='mssql',
     ),
     dict(name='MySQL'),
+    dict(name='Opensearch'),
     dict(name='OracleDB'),
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
