@@ -41,7 +41,12 @@ import {
   Schedule,
   Trash,
 } from '@oracle/icons';
-import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import {
   addBinaryStrings,
@@ -95,12 +100,12 @@ function PermissionDetail({
 
   const setObjectAttributesStateWithMapping = useCallback((
     data,
-    rowsArray,
+    rolesArray,
     usersArray,
   ) => {
     setObjectAttributesState({
       ...data,
-      rowsMapping: indexBy(rowsArray || [], ({ id }) => id),
+      rolesMapping: indexBy(rolesArray || [], ({ id }) => id),
       usersMapping: indexBy(usersArray || [], ({ id }) => id),
     });
   }, [
@@ -288,7 +293,7 @@ function PermissionDetail({
   const rolesMapping = useMemo(() => objectAttributes?.rolesMapping || {}, [
     objectAttributes,
   ]);
-  const roles: PermissionType[] = useMemo(() => sortByKey(
+  const roles: RoleType[] = useMemo(() => sortByKey(
     Object.values(rolesMapping),
     'name',
   ), [
@@ -336,25 +341,8 @@ function PermissionDetail({
   ]);
 
   const hasUsers = useMemo(() => users?.length >= 1, [users]);
-  const addUserButton = useMemo(() => (
-    <Button
-      beforeIcon={<Add />}
-      compact
-      onClick={() => {
-        setAddingObjectType(ObjectTypeEnum.USERS);
-        setAfterHidden(false);
-      }}
-      primary={!hasUsers}
-      secondary={hasUsers}
-      small
-    >
-      Add user
-    </Button>
-  ), [
-    hasUsers,
-  ]);
 
-  const buildTable = useCallback((objectsArray: PermissionType[]) => (
+  const buildTable = useCallback((objectsArray: RoleType[]) => (
     <Table
       columnFlex={[null, 1]}
       columns={[
@@ -427,32 +415,8 @@ function PermissionDetail({
 
   const buildTableUsers = useCallback((objectArray: UserType[]) => (
     <Table
-      columnFlex={[null, 1, 1, 1]}
+      columnFlex={[1, 1, 1]}
       columns={[
-        {
-          label: () => {
-            const checked = objectArray?.every(({ id }) => usersMapping?.[id]);
-
-            return (
-              <Checkbox
-                checked={checked}
-                key="checkbox"
-                onClick={() => {
-                  if (checked) {
-                    setObjectAttributes({
-                      usersMapping: {},
-                    });
-                  } else {
-                    setObjectAttributes({
-                      usersMapping: indexBy(objectArray, ({ id }) => id),
-                    });
-                  }
-                }}
-              />
-            );
-          },
-          uuid: 'actions',
-        },
         {
           uuid: 'Username',
         },
@@ -463,35 +427,12 @@ function PermissionDetail({
           uuid: 'Last name',
         },
       ]}
-      onClickRow={(rowIndex: number) => {
-        const object = objectArray[rowIndex];
-        const id = object?.id;
-        const checked = !!usersMapping?.[id];
-        const mapping = { ...usersMapping };
-
-        if (checked) {
-          delete mapping?.[id];
-        } else {
-          mapping[id] = object;
-        }
-
-        setObjectAttributes({
-          usersMapping: mapping,
-        });
-      }}
       rows={objectArray?.map(({
         first_name: firstName,
-        id,
         last_name: lastName,
         username,
       }) => {
-        const checked = !!usersMapping?.[id];
-
         return [
-          <Checkbox
-            checked={checked}
-            key="checkbox"
-          />,
           <Text key="username">
             {username}
           </Text>,
@@ -513,11 +454,6 @@ function PermissionDetail({
   const afterRoles = useMemo(() => buildTable(rolesAll), [
     buildTable,
     rolesAll,
-  ]);
-
-  const afterUsers = useMemo(() => buildTableUsers(usersAll), [
-    buildTableUsers,
-    usersAll,
   ]);
 
   const rolesMemo = useMemo(() => buildTable(roles), [
@@ -884,13 +820,19 @@ function PermissionDetail({
 
             <Divider light />
 
-            <Spacing p={PADDING_UNITS}>
-              {!hasUsers && (
+            {!hasUsers && (
+              <Spacing p={PADDING_UNITS}>
                 <Text default>
                   There are currently no users with this permission.
                 </Text>
-              )}
-            </Spacing>
+              </Spacing>
+            )}
+
+            {hasUsers && (
+              <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                {usersMemo}
+              </Spacing>
+            )}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -1002,17 +944,22 @@ function PermissionDetail({
           loading={isLoadingMutateObject}
           // @ts-ignore
           onClick={() => mutateObject({
-            permission: selectKeys(objectAttributes, [
-              'access',
-              'entity_id',
-              'entity_name',
-              'entity_type',
-              'query_attributes',
-              'read_attributes',
-              'write_attributes',
-            ], {
-              include_blanks: true,
-            }),
+            permission: {
+              ...selectKeys(objectAttributes, [
+                'access',
+                'entity_id',
+                'entity_name',
+                'entity_type',
+                'query_attributes',
+                'read_attributes',
+                'write_attributes',
+              ], {
+                include_blanks: true,
+              }),
+              role_ids: Object.keys(
+                objectAttributes?.rolesMapping || {},
+              ).map(i => Number(i)),
+            },
           })}
           primary
         >
@@ -1056,13 +1003,7 @@ function PermissionDetail({
 
   return (
     <SettingsDashboard
-      after={
-        ObjectTypeEnum.ROLES === addingObjectType
-          ? afterRoles
-          : ObjectTypeEnum.USERS === addingObjectType
-            ? afterUsers
-            : null
-      }
+      after={afterRoles}
       afterHeader={
         <Spacing px={PADDING_UNITS}>
           <Text bold>

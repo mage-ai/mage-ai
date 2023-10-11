@@ -63,6 +63,7 @@ PermissionPolicy.allow_write([
     'entity_name',
     'entity_type',
     'role_id',
+    'role_ids',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
