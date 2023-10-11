@@ -135,15 +135,6 @@ async def validate_condition_with_permissions(
                         has_access_for_all_attributes
                     )
 
-                print(
-                    'WTFFFFFFFFFFFFFFFFFFFFFF',
-                    disable_access_for_attribute_operation,
-                    resource_attribute,
-                    permission.id,
-                    permission.access,
-                    permission.access & disable_access_for_attribute_operation,
-                )
-
                 # Don’t grant access if permission disables access to this entity’s attributes
                 # for this attribute operation.
                 if disable_access_for_attribute_operation is not None and \
