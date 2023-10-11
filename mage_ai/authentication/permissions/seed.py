@@ -1,104 +1,159 @@
 import importlib
-import json
+import inspect
 import os
 
 from mage_ai.api import policies
 from mage_ai.api.oauth_scope import OauthScopeType
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.authentication.permissions.constants import (
+    PermissionAccess,
+    PermissionCondition,
+)
+from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db.models.oauth import Permission, Role, RolePermission, User
+
+KEY_ADMIN = 'admin'
+KEY_EDITOR = 'editor'
+KEY_EDITOR_NOTEBOOK = 'editor_notebook'
+KEY_EDITOR_PIPELINE = 'editor_pipeline'
+KEY_NO_CONDITION = 'no_condition'
+KEY_OWNER = 'owner'
+KEY_VIEWER = 'viewer'
+
+ROLE_NAME_TO_KEY = {
+    KEY_ADMIN: 'Admin default permissions',
+    KEY_EDITOR: 'Editor default permissions',
+    KEY_EDITOR_NOTEBOOK: 'Editor with notebook edit access',
+    KEY_EDITOR_PIPELINE: 'Editor with pipeline edit access',
+    KEY_OWNER: 'Owner default permissions',
+    KEY_VIEWER: 'Viewer default permissions',
+}
 
 
-def condition_is_for_owner(policy_class, condition):
+async def evaluate_condition(condition):
+    if condition and inspect.isawaitable(condition):
+        condition = await condition
+    return condition
+
+
+async def condition_is_for_owner(policy_class, condition):
     policy_f = policy_class(None, User(_owner=False))
     policy_t = policy_class(None, User(_owner=True))
 
-    return condition(policy_f) is policy_f.is_owner() and \
-        condition(policy_t) is policy_t.is_owner()
+    return all([
+        await evaluate_condition(condition(policy_f)) is policy_f.is_owner(),
+        await evaluate_condition(condition(policy_t)) is policy_t.is_owner(),
+    ])
 
 
-def condition_is_for_admin(policy_class, condition):
+async def condition_is_for_admin(policy_class, condition):
     policy_f = policy_class(None, User(roles=0))
     policy_t = policy_class(None, User(roles=1))
 
-    return condition(policy_f) is policy_f.has_at_least_admin_role() and \
-        condition(policy_t) is policy_t.has_at_least_admin_role()
+    return all([
+        await evaluate_condition(condition(policy_f)) is policy_f.has_at_least_admin_role(),
+        await evaluate_condition(condition(policy_t)) is policy_t.has_at_least_admin_role(),
+    ])
 
 
-def condition_is_for_viewer(policy_class, condition):
+async def condition_is_for_viewer(policy_class, condition):
     policy_f = policy_class(None, User(roles=0))
     policy_t = policy_class(None, User(roles=4))
 
-    return condition(policy_f) is policy_f.has_at_least_viewer_role() and \
-        condition(policy_t) is policy_t.has_at_least_viewer_role()
+    return all([
+        await evaluate_condition(condition(policy_f)) is policy_f.has_at_least_viewer_role(),
+        await evaluate_condition(condition(policy_t)) is policy_t.has_at_least_viewer_role(),
+    ])
 
 
-def condition_is_for_editor(policy_class, condition):
+async def condition_is_for_editor(policy_class, condition):
     policy_f = policy_class(None, User(roles=0))
     policy_t = policy_class(None, User(roles=2))
 
-    return condition(policy_f) is policy_f.has_at_least_editor_role() and \
-        condition(policy_t) is policy_t.has_at_least_editor_role()
+    return all([
+        await evaluate_condition(condition(policy_f)) is policy_f.has_at_least_editor_role(),
+        await evaluate_condition(condition(policy_t)) is policy_t.has_at_least_editor_role(),
+    ])
 
 
-def condition_is_for_editor_notebook_edit_access(policy_class, condition):
+async def condition_is_for_editor_notebook_edit_access(policy_class, condition):
     policy_f = policy_class(None, User(roles=2))
     policy_f.disable_notebook_edit_access_override = 1
     policy_t = policy_class(None, User(roles=2))
     policy_t.disable_notebook_edit_access_override = 2
 
-    return condition(policy_f) is policy_f.has_at_least_editor_role_and_notebook_edit_access() and \
-        condition(policy_t) is policy_t.has_at_least_editor_role_and_notebook_edit_access() and \
-        condition(policy_f) is policy_f.has_at_least_editor_role_and_pipeline_edit_access() and \
-        condition(policy_t) is not policy_t.has_at_least_editor_role_and_pipeline_edit_access()
+    return all([
+        await evaluate_condition(
+            condition(policy_f),
+        ) is policy_f.has_at_least_editor_role_and_notebook_edit_access(),
+        await evaluate_condition(
+            condition(policy_t),
+        ) is policy_t.has_at_least_editor_role_and_notebook_edit_access(),
+        await evaluate_condition(
+            condition(policy_f),
+        ) is policy_f.has_at_least_editor_role_and_pipeline_edit_access(),
+        await evaluate_condition(
+            condition(policy_t),
+        ) is not policy_t.has_at_least_editor_role_and_pipeline_edit_access(),
+    ])
 
 
-def condition_is_for_editor_pipeline_edit_access(policy_class, condition):
+async def condition_is_for_editor_pipeline_edit_access(policy_class, condition):
     policy_f = policy_class(None, User(roles=2))
     policy_f.disable_notebook_edit_access_override = 2
     policy_t = policy_class(None, User(roles=2))
     policy_t.disable_notebook_edit_access_override = 0
 
-    return condition(policy_f) is policy_f.has_at_least_editor_role_and_pipeline_edit_access() and \
-        condition(policy_t) is policy_t.has_at_least_editor_role_and_pipeline_edit_access() and \
-        condition(policy_f) is not \
-        policy_f.has_at_least_editor_role_and_notebook_edit_access() and \
-        condition(policy_t) is policy_t.has_at_least_editor_role_and_notebook_edit_access()
+    return all([
+        await evaluate_condition(
+            condition(policy_f),
+        ) is policy_f.has_at_least_editor_role_and_pipeline_edit_access(),
+        await evaluate_condition(
+            condition(policy_t),
+        ) is policy_t.has_at_least_editor_role_and_pipeline_edit_access(),
+        await evaluate_condition(
+            condition(policy_f),
+        ) is not policy_f.has_at_least_editor_role_and_notebook_edit_access(),
+        await evaluate_condition(
+            condition(policy_t),
+        ) is policy_t.has_at_least_editor_role_and_notebook_edit_access(),
+    ])
 
 
-def get_key(policy_class, condition):
-    key = 'no_condition'
+async def get_key(policy_class, condition):
+    key = KEY_NO_CONDITION
 
     if condition:
-        admin = condition_is_for_admin(policy_class, condition)
-        editor = condition_is_for_editor(policy_class, condition)
-        editor_notebook = condition_is_for_editor_notebook_edit_access(
+        admin = await condition_is_for_admin(policy_class, condition)
+        editor = await condition_is_for_editor(policy_class, condition)
+        editor_notebook = await condition_is_for_editor_notebook_edit_access(
             policy_class,
             condition,
         )
-        editor_pipeline = condition_is_for_editor_pipeline_edit_access(
+        editor_pipeline = await condition_is_for_editor_pipeline_edit_access(
             policy_class,
             condition,
         )
-        owner = condition_is_for_owner(policy_class, condition)
-        viewer = condition_is_for_viewer(policy_class, condition)
+        owner = await condition_is_for_owner(policy_class, condition)
+        viewer = await condition_is_for_viewer(policy_class, condition)
 
         if viewer:
-            key = 'viewer'
+            key = KEY_VIEWER
         elif editor and not editor_notebook and not editor_pipeline:
-            key = 'editor'
+            key = KEY_EDITOR
         elif editor and editor_notebook and not editor_pipeline:
-            key = 'editor_notebook'
+            key = KEY_EDITOR_NOTEBOOK
         elif editor and not editor_notebook and editor_pipeline:
-            key = 'editor_pipeline'
+            key = KEY_EDITOR_PIPELINE
         elif admin:
-            key = 'admin'
+            key = KEY_ADMIN
         elif owner:
-            key = 'owner'
+            key = KEY_OWNER
 
     return key
 
 
-def action_rules(policy_class):
+async def action_rules(policy_class):
     operations_mapping = {}
 
     for operation in OperationType:
@@ -115,7 +170,7 @@ def action_rules(policy_class):
                 operations_mapping[scope] = {}
 
             condition = config2.get('condition')
-            key = get_key(policy_class, condition)
+            key = await get_key(policy_class, condition)
 
             if key not in operations_mapping[scope]:
                 operations_mapping[scope][key] = []
@@ -125,7 +180,7 @@ def action_rules(policy_class):
     return operations_mapping
 
 
-def attribute_rules(policy_class, rules):
+async def attribute_rules(policy_class, rules):
     mapping = {}
 
     rules_by_attribute = rules.get(policy_class.__name__) or {}
@@ -146,7 +201,7 @@ def attribute_rules(policy_class, rules):
                     continue
 
                 condition = config2.get('condition') if config2 else None
-                key = get_key(policy_class, condition)
+                key = await get_key(policy_class, condition)
 
                 if key not in mapping[scope]:
                     mapping[scope][key] = {}
@@ -159,7 +214,7 @@ def attribute_rules(policy_class, rules):
     return mapping
 
 
-if __name__ == '__main__':
+async def bootstrap_permissions():
     action_rules_mapping = {}
     query_rules_mapping = {}
     read_rules_mapping = {}
@@ -180,25 +235,198 @@ if __name__ == '__main__':
         )
 
         model_name = policy_class.model_name()
-        action_rules_mapping[model_name] = action_rules(policy_class)
-        query_rules_mapping[model_name] = attribute_rules(
+        action_rules_mapping[model_name] = await action_rules(policy_class)
+        query_rules_mapping[model_name] = await attribute_rules(
             policy_class,
             policy_class.query_rules,
         )
-        read_rules_mapping[model_name] = attribute_rules(
+        read_rules_mapping[model_name] = await attribute_rules(
             policy_class,
             policy_class.read_rules,
         )
-        write_rules_mapping[model_name] = attribute_rules(
+        write_rules_mapping[model_name] = await attribute_rules(
             policy_class,
             policy_class.write_rules,
         )
 
-    for filename, mapping in [
-        ('operations', action_rules_mapping),
-        ('query', query_rules_mapping),
-        ('read', read_rules_mapping),
-        ('write', write_rules_mapping),
+    # for filename, mapping in [
+    #     ('operations', action_rules_mapping),
+    #     ('query', query_rules_mapping),
+    #     ('read', read_rules_mapping),
+    #     ('write', write_rules_mapping),
+    # ]:
+    #     with open(f'seed_{filename}.json', 'w') as f:
+    #         f.write(json.dumps(mapping, indent=2))
+
+    permissions_mapping = {
+        KEY_ADMIN: [],
+        KEY_EDITOR: [],
+        KEY_EDITOR_NOTEBOOK: [],
+        KEY_EDITOR_PIPELINE: [],
+        KEY_NO_CONDITION: [],
+        KEY_OWNER: [],
+        KEY_VIEWER: [],
+    }
+
+    for entity_name, rules_by_scope in action_rules_mapping.items():
+        rules = rules_by_scope.get(OauthScopeType.CLIENT_PRIVATE)
+        if rules is None:
+            continue
+
+        for key, operations in rules.items():
+            for operation in operations:
+                access = 0
+
+                if OperationType.ALL == operation:
+                    access = PermissionAccess.OPERATION_ALL
+                elif OperationType.CREATE == operation:
+                    access = PermissionAccess.CREATE
+                elif OperationType.DELETE == operation:
+                    access = PermissionAccess.DELETE
+                elif OperationType.DETAIL == operation:
+                    access = PermissionAccess.DETAIL
+                elif OperationType.LIST == operation:
+                    access = PermissionAccess.LIST
+                elif OperationType.UPDATE == operation:
+                    access = PermissionAccess.UPDATE
+
+                permission = dict(
+                    access=access,
+                    entity_name=entity_name,
+                )
+                permissions_mapping[key].append(permission)
+
+    for mapping, access_attribute_operation, options_key in [
+        (
+            query_rules_mapping,
+            PermissionAccess.QUERY,
+            'query_attributes',
+        ),
+        (
+            read_rules_mapping,
+            PermissionAccess.READ,
+            'read_attributes',
+        ),
+        (
+            write_rules_mapping,
+            PermissionAccess.WRITE,
+            'write_attributes',
+        ),
     ]:
-        with open(f'seed_{filename}.json', 'w') as f:
-            f.write(json.dumps(mapping, indent=2))
+        for entity_name, rules_by_scope in mapping.items():
+            rules = rules_by_scope.get(OauthScopeType.CLIENT_PRIVATE)
+            if rules is None:
+                continue
+
+            for key, attributes_by_operation in rules.items():
+                for operation, attributes in attributes_by_operation.items():
+                    access = 0
+
+                    if OperationType.ALL == operation:
+                        access = PermissionAccess.OPERATION_ALL
+                    elif OperationType.CREATE == operation:
+                        access = PermissionAccess.CREATE
+                    elif OperationType.DELETE == operation:
+                        access = PermissionAccess.DELETE
+                    elif OperationType.DETAIL == operation:
+                        access = PermissionAccess.DETAIL
+                    elif OperationType.LIST == operation:
+                        access = PermissionAccess.LIST
+                    elif OperationType.UPDATE == operation:
+                        access = PermissionAccess.UPDATE
+
+                    permission = dict(
+                        access=Permission.add_accesses([
+                            access,
+                            access_attribute_operation,
+                        ]),
+                        entity_name=entity_name,
+                        options={
+                            options_key: attributes,
+                        }
+                    )
+                    permissions_mapping[key].append(permission)
+
+    # print(json.dumps(permissions_mapping, indent=2))
+
+    for key, role_name in ROLE_NAME_TO_KEY.items():
+        permissions_existing = []
+        permissions_new = []
+
+        permissions_dicts = permissions_mapping[key]
+        for permission_dict in permissions_dicts:
+            arr = Permission.query.filter(
+                Permission.access == permission_dict['access'],
+                Permission.entity_name == permission_dict['entity_name'],
+            ).all()
+
+            permission = None
+
+            options = permission_dict.get('options') or {}
+            if KEY_EDITOR_NOTEBOOK == key:
+                options['conditions'] = [PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS]
+            elif KEY_EDITOR_PIPELINE == key:
+                options['conditions'] = [PermissionCondition.HAS_PIPELINE_EDIT_ACCESS]
+
+            if arr and len(arr) >= 1:
+                if options:
+                    arr = list(filter(
+                        lambda x: x.options and x.options == options,
+                        arr,
+                    ))
+                    if arr and len(arr) >= 1:
+                        permission = arr[0]
+                else:
+                    permission = arr[0]
+
+            if permission:
+                permissions_existing.append(permission)
+            else:
+                permission = Permission(
+                    access=permission_dict['access'],
+                    entity_name=permission_dict['entity_name'],
+                    options=options,
+                )
+                permissions_new.append(permission)
+
+        roles = Role.query.filter(Role.name == role_name).all()
+        if roles:
+            role = roles[0]
+            print(f'Role {role.name} ({role.id}) found.')
+        else:
+            role = Role(name=role_name)
+            role.save()
+            print(f'Role {role.name} ({role.id}) created.')
+
+        print(f'{len(permissions_existing)} permissions exist.')
+        db_connection.session.bulk_save_objects(
+            permissions_new,
+            return_defaults=True,
+        )
+        print(f'{len(permissions_new)} permissions created for {role.name}.')
+
+        role_permissions_existing = RolePermission.query.filter(
+            RolePermission.role_id == role.id,
+            RolePermission.permission_id.in_([p.id for p in permissions_existing]),
+        ).all()
+        print(f'{len(role_permissions_existing)} role permissions exist for role {role.name}.')
+        permissions_ids_to_skip = [rp.permission_id for rp in role_permissions_existing]
+
+        permission_ids = [p.id for p in permissions_new] + \
+            [p.id for p in permissions_existing if p.id not in permissions_ids_to_skip]
+
+        role_permissions_to_create = [RolePermission(
+            permission_id=permission_id,
+            role_id=role.id,
+        ) for permission_id in permission_ids]
+        db_connection.session.bulk_save_objects(
+            role_permissions_to_create,
+            return_defaults=True,
+        )
+        print(f'{len(role_permissions_to_create)} role permissions created for {role.name}.')
+
+        try:
+            db_connection.session.commit()
+        except Exception as err:
+            db_connection.session.rollback()
+            raise err

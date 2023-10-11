@@ -24,21 +24,13 @@ from mage_ai.settings import (
 )
 
 
-def get_entity_name_from_policy(policy) -> EntityName:
-    model_name = policy.model_name()
-    if model_name in EntityName._value2member_map_:
-        return EntityName(model_name)
-
-    return None
-
-
 async def validate_condition_with_permissions(
     policy,
     operation: OperationType,
     attribute_operation_type: AttributeOperationType = None,
     resource_attribute: str = None,
 ) -> bool:
-    entity_name = get_entity_name_from_policy(policy)
+    entity_name = policy.entity_name()
     access = OPERATION_TYPE_TO_ACCESS_MAPPING.get(operation) or Permission.Access.OWNER
     disable_access = OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING.get(operation)
 
