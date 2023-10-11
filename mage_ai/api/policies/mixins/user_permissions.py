@@ -15,8 +15,13 @@ from mage_ai.authentication.permissions.constants import (
     RESERVED_ENTITY_NAMES,
     EntityName,
     PermissionAccess,
+    PermissionCondition,
 )
-from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.orchestration.db.models.oauth import Permission, User
+from mage_ai.settings import (
+    DISABLE_NOTEBOOK_EDIT_ACCESS,
+    is_disable_pipeline_edit_access,
+)
 
 
 def get_entity_name_from_policy(policy) -> EntityName:
@@ -163,6 +168,27 @@ async def validate_condition_with_permissions(
                             permitted_attributes = permission.write_attributes
 
                         valid_for_operation = resource_attribute in (permitted_attributes or [])
+
+            # Special conditions
+            if permission_access & PermissionAccess.DISABLE_UNLESS_CONDITIONS:
+                conditions = permission.conditions or []
+                conditions_evaluated = []
+
+                if PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS in conditions:
+                    conditions_evaluated.append(DISABLE_NOTEBOOK_EDIT_ACCESS != 1)
+
+                if PermissionCondition.HAS_PIPELINE_EDIT_ACCESS in conditions:
+                    conditions_evaluated.append(not is_disable_pipeline_edit_access())
+
+                if PermissionCondition.USER_OWNS_ENTITY in conditions:
+                    if policy.resource.model_class is User:
+                        conditions_evaluated.append(
+                            policy.current_user.owner or
+                            policy.current_user.id == policy.resource.id
+                        )
+
+                if conditions_evaluated and len(conditions_evaluated):
+                    valid_for_operation = all(conditions_evaluated)
 
             if valid_for_operation:
                 permission_granted = True
