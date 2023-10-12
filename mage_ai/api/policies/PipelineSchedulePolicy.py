@@ -43,22 +43,28 @@ async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:
         return True
 
     pipeline = policy.parent_model()
-    if not pipeline:
+    if not pipeline and policy.resource:
         pipeline = policy.resource.pipeline
 
-    if not Project(pipeline.repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
+    if not Project(
+        pipeline.repo_config if pipeline else None,
+    ).is_feature_enabled(FeatureUUID.INTERACTIONS):
         return False
 
-    pipeline_interaction = PipelineInteractions(pipeline)
-    cond = await pipeline_interaction.filter_for_permissions(policy.current_user)
+    if pipeline:
+        pipeline_interaction = PipelineInteractions(pipeline)
+        cond = await pipeline_interaction.filter_for_permissions(policy.current_user)
 
-    if not policy.result_set().context.data:
-        policy.result_set().context.data = {}
-    if not policy.result_set().context.data.get('pipeline_interactions'):
-        policy.result_set().context.data['pipeline_interactions'] = {}
-    policy.result_set().context.data['pipeline_interactions'][pipeline.uuid] = pipeline_interaction
+        if not policy.result_set().context.data:
+            policy.result_set().context.data = {}
+        if not policy.result_set().context.data.get('pipeline_interactions'):
+            policy.result_set().context.data['pipeline_interactions'] = {}
+        policy.result_set().context.data['pipeline_interactions'][pipeline.uuid] = \
+            pipeline_interaction
 
-    return cond
+        return cond
+
+    return False
 
 
 PipelineSchedulePolicy.allow_actions([

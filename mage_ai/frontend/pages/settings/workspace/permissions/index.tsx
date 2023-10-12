@@ -26,7 +26,9 @@ function PermissionsListPage() {
 
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  const { data } = api.permissions.list();
+  const { data } = api.permissions.list({
+    _limit: 1000,
+  });
   const permissions: PermissionType[] = useMemo(() => data?.permissions || [], [data]);
 
   const breadcrumbs: BreadcrumbType[] = [

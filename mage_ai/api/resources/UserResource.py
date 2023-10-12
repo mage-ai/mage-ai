@@ -241,3 +241,41 @@ class UserResource(DatabaseResource):
             raise ApiError(error)
 
         return roles_new
+
+
+def __load_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [PermissionResource(p, resource.current_user) for p in User.fetch_permissions(ids)]
+
+
+def __select_permissions(resource, arr):
+    return [r for r in arr if r.user_id == resource.id]
+
+
+def __load_roles(resource):
+    from mage_ai.api.resources.RoleResource import RoleResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [RoleResource(p, resource.current_user) for p in User.fetch_roles(ids)]
+
+
+def __select_roles(resource, arr):
+    return [r for r in arr if r.user_id == resource.id]
+
+
+UserResource.register_collective_loader(
+    'permissions',
+    load=__load_permissions,
+    select=__select_permissions,
+)
+
+
+UserResource.register_collective_loader(
+    'roles_new',
+    load=__load_roles,
+    select=__select_roles,
+)

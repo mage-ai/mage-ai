@@ -19,8 +19,11 @@ except ValueError:
     DISABLE_NOTEBOOK_EDIT_ACCESS = 1 if os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS') else 0
 
 
-def is_disable_pipeline_edit_access():
-    return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
+def is_disable_pipeline_edit_access(disable_notebook_edit_access_override: int = None):
+    value = DISABLE_NOTEBOOK_EDIT_ACCESS
+    if disable_notebook_edit_access_override is not None:
+        value = disable_notebook_edit_access_override
+    return value >= 1
 
 
 # ------------------------- DISABLE TERMINAL ----------------------

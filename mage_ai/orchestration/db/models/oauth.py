@@ -161,7 +161,42 @@ class User(BaseModel):
             user.roles_new = roles_new
         db_connection.session.commit()
 
-    def permissions(self) -> List:
+    @classmethod
+    def fetch_roles(self, user_ids: List[str]) -> List:
+        query = (
+            Role.
+            select(
+                Role.created_at,
+                Role.id,
+                Role.name,
+                Role.updated_at,
+                UserRole.user_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.role_id == Role.id,
+                    UserRole.user_id.in_(user_ids),
+                ),
+            )
+        )
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Role()
+            model.created_at = row.created_at
+            model.id = row.id
+            model.name = row.name
+            model.updated_at = row.updated_at
+            arr.append(model)
+
+        return arr
+
+    @classmethod
+    def fetch_permissions(self, user_ids: List[str]) -> List:
         row_number_column = (
                 func.
                 row_number().
@@ -185,7 +220,7 @@ class User(BaseModel):
                 Permission.options,
                 Permission.role_id,
                 Permission.updated_at,
-                Permission.user_id,
+                UserRole.user_id,
             ).
             join(
                 RolePermission,
@@ -199,7 +234,7 @@ class User(BaseModel):
                 UserRole,
                 and_(
                     UserRole.role_id == Role.id,
-                    UserRole.user_id == self.id,
+                    UserRole.user_id.in_(user_ids),
                 ),
             )
         )
@@ -226,6 +261,9 @@ class User(BaseModel):
             arr.append(model)
 
         return arr
+
+    def permissions(self) -> List:
+        return self.__class__.fetch_permissions([self.id])
 
 
 class Role(BaseModel):
@@ -355,6 +393,107 @@ class Role(BaseModel):
             return self.get_access(Entity.GLOBAL)
         else:
             return 0
+
+    @classmethod
+    def fetch_permissions(self, ids: List[str]) -> List:
+        query = (
+            Permission.
+            query.
+            filter(Permission.role_id.in_(ids))
+        )
+
+        return query.all()
+
+    @classmethod
+    def fetch_role_permissions(self, ids: List[str]) -> List:
+        query = (
+            Permission.
+            select(
+                Permission.access,
+                Permission.created_at,
+                Permission.entity,
+                Permission.entity_id,
+                Permission.entity_name,
+                Permission.entity_type,
+                Permission.id,
+                Permission.options,
+                Permission.updated_at,
+                RolePermission.role_id,
+            ).
+            join(
+                RolePermission,
+                and_(
+                    RolePermission.permission_id == Permission.id,
+                    RolePermission.role_id.in_(ids),
+                )
+            )
+        )
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Permission()
+            model.access = row.access
+            model.created_at = row.created_at
+            model.entity = row.entity
+            model.entity_id = row.entity_id
+            model.entity_name = row.entity_name
+            model.entity_type = row.entity_type
+            model.id = row.id
+            model.options = row.options
+            model.role_id = row.role_id
+            model.updated_at = row.updated_at
+            arr.append(model)
+
+        return arr
+
+    @classmethod
+    def fetch_users(self, ids: List[str]) -> List:
+        query = (
+            User.
+            select(
+                User.avatar,
+                User.created_at,
+                User.email,
+                User.first_name,
+                User.id,
+                User.last_name,
+                User.preferences,
+                User.roles,
+                User.updated_at,
+                User.username,
+                UserRole.role_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.user_id == User.id,
+                    UserRole.role_id.in_(ids),
+                ),
+            )
+        )
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            user = User()
+            user.avatar = row.avatar
+            user.created_at = row.created_at
+            user.first_name = row.first_name
+            user.id = row.id
+            user.last_name = row.last_name
+            user.preferences = row.preferences
+            user.role_id = row.role_id
+            user.roles = row.roles
+            user.updated_at = row.updated_at
+            user.username = row.username
+            arr.append(user)
+
+        return arr
 
 
 class UserRole(BaseModel):

@@ -2,7 +2,8 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.oauth import Role, RolePermission, UserRole
+from mage_ai.orchestration.db.models.oauth import Role, RolePermission, User, UserRole
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 
 
@@ -137,3 +138,82 @@ class RoleResource(DatabaseResource):
             'permission_ids',
             'user_ids',
         ]), **kwargs)
+
+
+def __load_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [PermissionResource(p, resource.current_user) for p in Role.fetch_permissions(ids)]
+
+
+def __select_permissions(resource, arr):
+    return [r for r in arr if r.role_id == resource.id]
+
+
+def __load_role_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [PermissionResource(p, resource.current_user) for p in Role.fetch_role_permissions(ids)]
+
+
+def __select_role_permissions(resource, arr):
+    return [r for r in arr if r.role_id == resource.id]
+
+
+def __load_users(resource):
+    from mage_ai.api.resources.UserResource import UserResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [UserResource(p, resource.current_user) for p in User.fetch_users(ids)]
+
+
+def __select_users(resource, arr):
+    return [r for r in arr if r.role_id == resource.id]
+
+
+def __load_users_created_role(resource):
+    from mage_ai.api.resources.UserResource import UserResource
+
+    ids = [r.user_id for r in resource.result_set()]
+
+    return [UserResource(
+        p,
+        resource.current_user,
+    ) for p in User.query.filter(User.id.in_(ids)).all()]
+
+
+def __find_user_created_role(resource, arr):
+    return find(lambda x: x.id == resource.user_id, arr)
+
+
+RoleResource.register_collective_loader(
+    'permissions',
+    load=__load_permissions,
+    select=__select_permissions,
+)
+
+
+RoleResource.register_collective_loader(
+    'role_permissions',
+    load=__load_role_permissions,
+    select=__select_role_permissions,
+)
+
+
+RoleResource.register_collective_loader(
+    'users',
+    load=__load_users,
+    select=__select_users,
+)
+
+
+RoleResource.register_collective_loader(
+    'user',
+    load=__load_users_created_role,
+    select=__find_user_created_role,
+)
