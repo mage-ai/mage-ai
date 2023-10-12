@@ -13,6 +13,7 @@ type WorkspacesDashboardProps = {
   children: any;
   errors?: ErrorsType;
   pageName: WorkspacesPageNameEnum;
+  setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
 };
 
@@ -22,6 +23,7 @@ function WorkspacesDashboard({
   children,
   errors,
   pageName,
+  setErrors,
   subheaderChildren,
 }: WorkspacesDashboardProps) {
   const { data: dataStatus } = api.statuses.list();
@@ -39,6 +41,7 @@ function WorkspacesDashboard({
       breadcrumbs={breadcrumbs}
       errors={errors}
       navigationItems={buildNavigationItems(user, projectType, pageName)}
+      setErrors={setErrors}
       subheaderChildren={subheaderChildren}
       title="Workspaces"
       uuid="workspaces/index"

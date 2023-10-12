@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import CodeEditor from '@components/CodeEditor';
@@ -12,13 +12,17 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
-import { ACCESS_MODES, K8S_TEXT_FIELDS, WORKSPACE_FIELDS, WorkspaceFieldType } from './constants';
+import { ACCESS_MODES, GENERAL_K8S_FIELDS, K8S_TEXT_FIELDS, VOLUME_CLAIM_K8S_FIELDS, WORKSPACE_FIELDS, WorkspaceFieldType } from './constants';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ClusterTypeEnum } from '../constants';
 import { PURPLE } from '@oracle/styles/colors/main';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Flex from '@oracle/components/Flex';
+import Divider from '@oracle/elements/Divider';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;
@@ -34,6 +38,7 @@ function ConfigureWorkspace({
   const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [workspaceConfig, setWorkspaceConfig] = useState(null);
+  const [lifecycleConfig, setLifecycleConfig] = useState(null);
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),
@@ -69,81 +74,125 @@ function ConfigureWorkspace({
     }
   };
 
-  const k8sSettingsFields = useMemo(() => (
-    <>
-      <Headline level={5}>
-        Kubernetes settings (optional)
-      </Headline>
-      {K8S_TEXT_FIELDS.map(({
-        autoComplete,
-        disabled,
-        label,
-        labelDescription,
-        required,
-        type,
-        uuid,
-      }: WorkspaceFieldType) => (
-        <Spacing key={uuid} mt={1}>
-          {labelDescription && (
-            <Spacing mb={1}>
-              <Text small>
+  const createWorkspaceTextField = useCallback(({
+    autoComplete,
+    disabled,
+    label,
+    labelDescription,
+    placeholder,
+    required,
+    type,
+    uuid,
+  }: WorkspaceFieldType) => (
+    <div key={uuid}>
+      <Divider muted/>
+      <Spacing my={1} ml={3} mr={2}>
+        <FlexContainer justifyContent="space-between" alignItems="center">
+          <Flex flexDirection="column" flex={2}>
+            <Text>
+              {label}
+            </Text>
+            {labelDescription && (
+              <Text muted>
                 {labelDescription}
               </Text>
-            </Spacing>
-          )}
-          <TextInput
-            autoComplete={autoComplete}
-            disabled={disabled}
-            label={label}
-            // @ts-ignore
-            onChange={e => {
-              setWorkspaceConfig(prev => ({
-                ...prev,
-                [uuid]: e.target.value,
-              }));
-            }}
-            primary
-            required={required}
-            setContentOnMount
-            type={type}
-            value={workspaceConfig?.[uuid] || ''}
-          />
-        </Spacing>
-      ))}
-      <Spacing mt={1}>
-        <Select
-          label="Access mode"
-          onChange={(e) => {
-            e.preventDefault();
-            setWorkspaceConfig(prev => ({
-              ...prev,
-              storage_access_mode: e.target.value,
-            }));
-          }}
-          placeholder="Access mode"
-          value={workspaceConfig?.['storage_access_mode']}
-        >
-          {ACCESS_MODES.map(val => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </Select>
-      </Spacing>
-      <Spacing mt={2}>
-        <FlexContainer alignItems="center">
-          <Text default monospace small>
-            Configure container
-          </Text>
-          <Spacing ml={1} />
-          <ToggleSwitch
-            checked={configureContainer}
-            onCheck={() => setConfigureContainer(prevVal => !prevVal)}
-          />
+            )}
+          </Flex>
+          <Flex flex={1} />
+          <Flex flex={1}>
+            <TextInput
+              autoComplete={autoComplete}
+              disabled={disabled}
+              // @ts-ignore
+              onChange={e => {
+                setWorkspaceConfig(prev => ({
+                  ...prev,
+                  [uuid]: e.target.value,
+                }));
+              }}
+              placeholder={placeholder}
+              required={required}
+              setContentOnMount
+              type={type}
+              value={workspaceConfig?.[uuid] || ''}
+            />
+          </Flex>
         </FlexContainer>
       </Spacing>
+    </div>
+  ), [workspaceConfig, setWorkspaceConfig]);
+
+  const k8sSettingsFields = useMemo(() => (
+    <>
+      <FlexContainer>
+        <Spacing my={2} ml={2}>
+          <Text bold sky>
+            General
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      {GENERAL_K8S_FIELDS.map(
+        (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
+      <Divider muted/>
+      <FlexContainer>
+        <Spacing my={2} ml={2}>
+          <Text bold sky>
+            Volume claim params
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      <Divider muted/>
+      {VOLUME_CLAIM_K8S_FIELDS.map(
+        (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
+      <Divider muted/>
+      <Spacing my={1} ml={3} mr={2}>
+        <FlexContainer justifyContent="space-between" alignItems="center">
+          <Flex flex={3}>
+            <Text>
+              Access mode
+            </Text>
+          </Flex>
+          <Flex flex={1}>
+            <Select
+              fullWidth
+              label="Access mode"
+              onChange={(e) => {
+                e.preventDefault();
+                setWorkspaceConfig(prev => ({
+                  ...prev,
+                  storage_access_mode: e.target.value,
+                }));
+              }}
+              placeholder="Access mode"
+              value={workspaceConfig?.['storage_access_mode']}
+            >
+              {ACCESS_MODES.map(val => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <Spacing my={2} ml={2}>
+        <FlexContainer alignItems="center">
+          <ToggleSwitch
+            checked={configureContainer}
+            compact
+            onCheck={() => setConfigureContainer(prevVal => !prevVal)}
+          />
+          <Spacing ml={1}>
+            <Text bold sky>
+              Configure container
+            </Text>
+          </Spacing>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted />
       {configureContainer && (
-        <Spacing mt={1}>
+        <Spacing my={1} ml={3} mr={2}>
           <CodeEditorStyle>
             <CodeEditor
               autoHeight
@@ -167,16 +216,94 @@ function ConfigureWorkspace({
     configureContainer,
     workspaceConfig,
   ]);
+
+  const [showTerminationPolicy, setShowTerminationPolicy] = useState<boolean>(false);
+  const lifecycleConfigFields = useMemo(() => (
+    <>
+      <FlexContainer>
+        <Spacing my={2} ml={2}>
+          <Text bold sky>
+            Termination policy
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      <Divider muted />
+      <Spacing my={1} ml={3} mr={2}>
+        <FlexContainer justifyContent="space-between" alignItems="center">
+          <Flex flex={3}>
+            <Text>
+              Enable auto termination
+            </Text>
+          </Flex>
+          <Flex flex={1}>
+            <Select
+              fullWidth
+              onChange={(e) => {
+                e.preventDefault();
+                setLifecycleConfig(prev => ({
+                  ...prev,
+                  termination_policy: {
+                    ...prev?.['termination_policy'],
+                    enable_auto_termination: e.target.value === 'true',
+                  },
+                }));
+              }}
+              value={lifecycleConfig?.termination_policy?.['enable_auto_termination'] || 'false'}
+            >
+              <option key="true" value="true">
+                True
+              </option>
+              <option key="false" value="false">
+                False
+              </option>
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted />
+      <Spacing my={1} ml={3} mr={2}>
+        <FlexContainer justifyContent="space-between" alignItems="center">
+          <Flex flex={3}>
+            <Text>
+              Max idle time (in seconds)
+            </Text>
+          </Flex>
+          <Flex flex={1}>
+            <TextInput
+              // @ts-ignore
+              onChange={e => {
+                setLifecycleConfig(prev => ({
+                  ...prev,
+                  termination_policy: {
+                    ...prev?.['termination_policy'],
+                    max_idle_seconds: e.target.value,
+                  },
+                }));
+              }}
+              setContentOnMount
+              type="number"
+              value={lifecycleConfig?.termination_policy?.['max_idle_seconds'] || ''}
+            />
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+    </>
+  ), [
+    configureContainer,
+    lifecycleConfig,
+    setLifecycleConfig,
+    setShowTerminationPolicy,
+    showTerminationPolicy,
+    workspaceConfig,
+  ]);
   
   return (
     <Panel>
-      <div style={{ width: '500px' }}>
+      <div style={{ width: '750px' }}>
         <Spacing p={2}>
-          <FlexContainer justifyContent="center">
-            <Headline level={4}>
-              Create new workspace
-            </Headline>
-          </FlexContainer>
+          <Headline level={4}>
+            Create workspace
+          </Headline>
           <form>
             {WORKSPACE_FIELDS.map(({
               autoComplete,
@@ -198,7 +325,6 @@ function ConfigureWorkspace({
                       [uuid]: e.target.value,
                     }));
                   }}
-                  primary
                   required={required}
                   setContentOnMount
                   type={type}
@@ -206,11 +332,18 @@ function ConfigureWorkspace({
                 />
               </Spacing>
             ))}
-            {clusterType === ClusterTypeEnum.K8S && (
-              <Spacing mt={2}>
-                {k8sSettingsFields}
-              </Spacing>
-            )}
+            <Spacing mt={2}>
+              <Accordion noPaddingContent>
+                {clusterType === ClusterTypeEnum.K8S && (
+                  <AccordionPanel title="Kubernetes">
+                    {k8sSettingsFields}
+                  </AccordionPanel>
+                )}
+                <AccordionPanel title="Lifecycle (optional)">
+                  {lifecycleConfigFields}
+                </AccordionPanel>
+              </Accordion>
+            </Spacing>
           </form>
           {isLoadingCreateWorkspace && (
             <Spacing mt={1}>
@@ -234,7 +367,7 @@ function ConfigureWorkspace({
             </>
           )}
           <Spacing my={2}>
-            <FlexContainer>
+            <FlexContainer flexDirection="row-reverse">
               <KeyboardShortcutButton
                 background={PURPLE}
                 bold

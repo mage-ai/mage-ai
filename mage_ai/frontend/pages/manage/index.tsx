@@ -23,15 +23,18 @@ import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constan
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
+import ErrorsType from '@interfaces/ErrorsType';
 
 function MoreActions({
+  clusterType,
   fetchWorkspaces,
   instance,
-  clusterType,
+  setErrors,
 }: {
+  clusterType: string;
   fetchWorkspaces: any;
   instance: InstanceType;
-  clusterType: string;
+  setErrors: (errors: ErrorsType) => void;
 }) {
   const refMoreActions = useRef(null);
   const [showMoreActions, setShowMoreActions] = useState<boolean>();
@@ -55,14 +58,10 @@ function MoreActions({
             fetchWorkspaces();
             setShowMoreActions(false);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -77,14 +76,10 @@ function MoreActions({
             fetchWorkspaces();
             setShowMoreActions(false);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -214,6 +209,7 @@ function MoreActions({
 
 function WorkspacePage() {
   const { data: dataStatus } = api.statuses.list();
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const clusterType = useMemo(
     () => dataStatus?.statuses?.[0]?.instance_type || 'ecs',
     [dataStatus],
@@ -247,6 +243,8 @@ function WorkspacePage() {
     fetchWorkspaces,
   ], {
     background: true,
+    disableClickOutside: true,
+    disableEscape: true,
     uuid: 'configure_workspace',
   });
 
@@ -258,7 +256,9 @@ function WorkspacePage() {
           label: () => 'Workspaces',
         },
       ]}
+      errors={errors}
       pageName={WorkspacesPageNameEnum.WORKSPACES}
+      setErrors={setErrors}
       subheaderChildren={
         <KeyboardShortcutButton
           background={BUTTON_GRADIENT}
