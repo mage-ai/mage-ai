@@ -270,23 +270,6 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             self.__name__.replace(
                 'Policy', '')).lower()
 
-    def __get_and_set_user_role_validation(
-        self,
-        key: str,
-        condition: Callable,
-    ) -> bool:
-        mapping = self.result_set().context.data.get(CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS) or {}
-        if key in mapping:
-            return mapping.get(key)
-
-        if CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS not in self.result_set().context.data:
-            self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS] = {}
-
-        validation = condition()
-        self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS][key] = validation
-
-        return validation
-
     def is_owner(self) -> bool:
         def _validate(
             user=self.current_user,
@@ -667,3 +650,20 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
                     'scopes': scopes,
                 }
             raise ApiError(error)
+
+    def __get_and_set_user_role_validation(
+        self,
+        key: str,
+        condition: Callable,
+    ) -> bool:
+        mapping = self.result_set().context.data.get(CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS) or {}
+        if key in mapping:
+            return mapping.get(key)
+
+        if CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS not in self.result_set().context.data:
+            self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS] = {}
+
+        validation = condition()
+        self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS][key] = validation
+
+        return validation
