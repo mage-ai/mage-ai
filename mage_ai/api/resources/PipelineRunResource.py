@@ -162,11 +162,14 @@ class PipelineRunResource(DatabaseResource):
                 results = []
                 for run in pipeline_runs:
                     filters = []
-                    if filter_by_pipeline_type:
-                        if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
-                            pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
-                        run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
-                        filters.append(run_pipeline_type == pipeline_type)
+
+                    # Check pipeline_type of pipeline runs if filtering by pipeline type
+                    if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
+                        pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
+                    run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
+                    filters.append(run_pipeline_type == pipeline_type)
+
+                    # Multiple filters can be added while iterating through pipeline_runs once
                     if all(filters):
                         results.append(run)
                 total_count = len(results)
