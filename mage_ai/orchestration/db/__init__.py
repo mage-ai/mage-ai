@@ -90,10 +90,14 @@ class DBConnection:
         self.session = None
 
     def start_cache(self):
-        self.session.registry.registry.value.start_cache()
+        if hasattr(self.session.registry.registry, 'value'):
+            if hasattr(self.session.registry.registry.value, 'start_cache'):
+                self.session.registry.registry.value.start_cache()
 
     def stop_cache(self):
-        self.session.registry.registry.value.stop_cache()
+        if hasattr(self.session.registry.registry, 'value'):
+            if hasattr(self.session.registry.registry.value, 'stop_cache'):
+                self.session.registry.registry.value.stop_cache()
 
 
 def get_postgresql_schema(url):
