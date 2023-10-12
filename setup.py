@@ -171,7 +171,7 @@ setuptools.setup(
             'sshtunnel==0.4.0',
             'thefuzz[speedup]==0.19.0',
             'torch>=2.0.1',
-            'transformers>=4.31.0',
+            'transformers>=4.34.0',
         ],
     },
 )
