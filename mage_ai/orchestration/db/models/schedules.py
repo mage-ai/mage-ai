@@ -111,6 +111,13 @@ class PipelineSchedule(BaseModel):
 
         return value
 
+    @classmethod
+    def fetch_pipeline_runs(self, ids: List[int]) -> List:
+        query = PipelineRun.query
+        query.cache = True
+        query = query.filter(PipelineRun.pipeline_schedule_id.in_(ids))
+        return query.all()
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)
@@ -121,7 +128,7 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline_runs_count(self) -> int:
-        return len(self.pipeline_runs)
+        return len(self.fetch_pipeline_runs([self.id]))
 
     @property
     def timeout(self) -> int:
@@ -138,9 +145,9 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
-        if len(self.pipeline_runs) == 0:
+        if len(self.fetch_pipeline_runs([self.id])) == 0:
             return None
-        return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
 
     @property
     def tag_associations(self):
@@ -407,7 +414,7 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.pipeline_runs)
+            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -415,7 +422,7 @@ class PipelineSchedule(BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.pipeline_runs) == 0:
+            if len(self.fetch_pipeline_runs([self.id])) == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
@@ -439,7 +446,7 @@ class PipelineSchedule(BaseModel):
                     x.execution_date.replace(tzinfo=pytz.UTC),
                     current_execution_date,
                 ) == 0,
-                self.pipeline_runs
+                self.fetch_pipeline_runs([self.id])
             ):
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:

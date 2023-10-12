@@ -109,7 +109,7 @@ class User(BaseModel):
         '''
         access = 0
 
-        roles = self.roles_new
+        roles = self.fetch_roles([self.id])
         permissions = Role.fetch_permissions([r.id for r in roles])
         permissions_mapping = group_by(lambda x: x.role_id, permissions)
 
@@ -137,12 +137,12 @@ class User(BaseModel):
 
     @property
     def owner(self) -> bool:
-        access = self.project_access if self.roles_new else 0
+        access = self.project_access if self.fetch_roles([self.id]) else 0
         return self._owner or access & Permission.Access.OWNER != 0
 
     @property
     def is_admin(self) -> bool:
-        if self.roles_new:
+        if self.fetch_roles([self.id]):
             access = self.project_access
             return access & \
                 (Permission.Access.OWNER | Permission.Access.ADMIN) == Permission.Access.ADMIN
@@ -191,6 +191,7 @@ class User(BaseModel):
                 ),
             )
         )
+        query.cache = True
 
         rows = query.all()
 
@@ -253,6 +254,7 @@ class User(BaseModel):
 
         query = query.add_column(row_number_column)
         query = query.from_self().filter(row_number_column == 1)
+        query.cache = True
         rows = query.all()
 
         arr = []
@@ -429,6 +431,7 @@ class Role(BaseModel):
             query.
             filter(Permission.role_id.in_(ids))
         )
+        query.cache = True
 
         return query.all()
 
@@ -456,6 +459,7 @@ class Role(BaseModel):
                 )
             )
         )
+        query.cache = True
 
         rows = query.all()
 
@@ -502,6 +506,7 @@ class Role(BaseModel):
                 ),
             )
         )
+        query.cache = True
 
         rows = query.all()
 
