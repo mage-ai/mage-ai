@@ -31,8 +31,7 @@ TestUserRoleResource.register_parent_resource(UserResource)
 
 
 class DatabaseResourceTest(BaseApiTestCase):
-    def setUp(self):
-        super().setUp()
+    def bootstrap(self):
         self.options = dict(lightning=4, rock=5)
 
         user1 = User.create(username=self.faker.name())
@@ -45,12 +44,13 @@ class DatabaseResourceTest(BaseApiTestCase):
         ]
         self.user = self.users[0]
 
-    def tearDown(self):
+    def cleanup(self):
         User.query.delete()
         UserRole.query.delete()
-        super().tearDown()
 
     async def test_process_collection(self):
+        self.bootstrap()
+
         result_set = await UserResource.process_collection(
             {},
             {},
@@ -103,7 +103,11 @@ class DatabaseResourceTest(BaseApiTestCase):
             next=False,
         ))
 
+        self.cleanup()
+
     async def test_collection(self):
+        self.bootstrap()
+
         models = UserResource.collection(
             dict(username=self.user.username),
             {},
@@ -114,7 +118,11 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertEqual(len(list(models)), 1)
         self.assertEqual(self.user, models[0])
 
+        self.cleanup()
+
     async def test_collection_with_parent_model(self):
+        self.bootstrap()
+
         user_roles = [UserRole.create(
             role_id=2 if idx == 2 else 0,
             user_id=user.id,
@@ -132,7 +140,11 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertEqual(user_roles[0], models[0])
         self.assertEqual(self.user.id, models[0].id)
 
+        self.cleanup()
+
     def test_create(self):
+        self.bootstrap()
+
         self.assertEqual(len(User.query.all()), len(self.users))
 
         username = self.faker.name()
@@ -141,7 +153,11 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertEqual(resource.model.username, username)
         self.assertEqual(len(User.query.all()), len(self.users) + 1)
 
+        self.cleanup()
+
     def test_create_with_parent_model(self):
+        self.bootstrap()
+
         self.assertEqual(len(UserRole.query.all()), 0)
 
         resource = TestUserRoleResource.create(dict(role_id=0), None, parent_model=self.user)
@@ -150,11 +166,19 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertEqual(resource.user_id, self.user.id)
         self.assertEqual(len(UserRole.query.all()), 1)
 
+        self.cleanup()
+
     def test_member(self):
+        self.bootstrap()
+
         resource = UserResource.member(self.user.id, None)
         self.assertEqual(resource.model, self.user)
 
+        self.cleanup()
+
     def test_member_failure(self):
+        self.bootstrap()
+
         error = False
         try:
             UserResource.member(0, None)
@@ -162,7 +186,11 @@ class DatabaseResourceTest(BaseApiTestCase):
             error = True
         self.assertTrue(error)
 
+        self.cleanup()
+
     def test_delete(self):
+        self.bootstrap()
+
         user_id = self.user.id
 
         self.assertEqual(len(User.query.all()), len(self.users))
@@ -172,7 +200,11 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertIsNone(User.query.get(user_id))
         self.assertEqual(len(User.query.all()), len(self.users) - 1)
 
+        self.cleanup()
+
     async def test_process_update(self):
+        self.bootstrap()
+
         username_new = self.faker.name()
 
         with patch.object(GenericObject, 'on_callback') as mock_on_callback:
@@ -182,7 +214,11 @@ class DatabaseResourceTest(BaseApiTestCase):
             self.assertEqual(User.query.get(self.user.id).username, username_new)
             mock_on_callback.assert_called_once_with(resource=resource)
 
+        self.cleanup()
+
     async def test_process_update_failure(self):
+        self.bootstrap()
+
         username_old = self.user.username
         username_new = self.users[1].username
         resource = UserResource(self.user, None)
@@ -198,7 +234,11 @@ class DatabaseResourceTest(BaseApiTestCase):
             self.assertEqual(User.query.get(self.user.id).username, username_old)
             mock_on_failure_callback.assert_called_once_with(resource=resource)
 
+        self.cleanup()
+
     def test_update(self):
+        self.bootstrap()
+
         username_new = self.faker.name()
         first_name = self.faker.name()
         last_name = self.faker.name()
@@ -214,3 +254,5 @@ class DatabaseResourceTest(BaseApiTestCase):
         self.assertEqual(user.first_name, first_name)
         self.assertEqual(user.last_name, last_name)
         self.assertEqual(user.username, username_new)
+
+        self.cleanup()
