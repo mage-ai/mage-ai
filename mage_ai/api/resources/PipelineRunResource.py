@@ -154,8 +154,7 @@ class PipelineRunResource(DatabaseResource):
         if pipeline_type:
             pipeline_type = pipeline_type[0]
 
-        filter_by_pipeline_type = pipeline_type is not None
-        if filter_by_pipeline_type:
+        if pipeline_type is not None:
             try:
                 pipeline_type_by_pipeline_uuid = dict()
                 pipeline_runs = total_results.all()
