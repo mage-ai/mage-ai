@@ -27,3 +27,10 @@ For example, if your project is named `demo_project` then the file will be locat
 matplotlib
 tqdm
 ```
+
+## Automatic installation
+
+To automatically install the packages in `requirements.txt`, you'll need to make sure the
+environment variable `USER_CODE_PATH` is set to the value of your project path (e.g. `/home/src/project_name`).
+
+Mage's `run_app.sh` script automatically installs the requirements.txt under the `USER_CODE_PATH` before server starts.
