@@ -153,7 +153,13 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
     for operation, operation_unauthorized in operation_pairs:
         @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
         @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
-        async def _test_action(self):
+        async def _test_action(
+            self,
+            accesses=accesses,
+            operation=operation,
+            operation_unauthorized=operation_unauthorized,
+            test_suites=test_suites,
+        ):
             self.bootstrap()
 
             if TestSuite.UNAUTHORIZED in test_suites:
@@ -167,6 +173,15 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
             if TestSuite.AUTHORIZED in test_suites:
                 self.create_permission(accesses)
                 await self.build_policy().authorize_action(operation)
+
+                error = False
+                try:
+                    await self.build_policy(
+                        entity_name=EntityName.Block,
+                    ).authorize_action(operation_unauthorized)
+                except ApiError:
+                    error = True
+                self.assertTrue(error)
 
             if operation_unauthorized:
                 error = False
@@ -198,7 +213,17 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                 for attribute, attribute_unauthorized in attributes_pairs:
                     @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
                     @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
-                    async def _test_authorize_attribute(self):
+                    async def _test_authorize_attribute(
+                        self,
+                        accesses=accesses,
+                        attribute=attribute,
+                        attribute_operation=attribute_operation,
+                        attribute_operation_unauthorized=attribute_operation_unauthorized,
+                        attribute_unauthorized=attribute_unauthorized,
+                        operation=operation,
+                        operation_unauthorized=operation_unauthorized,
+                        test_suites=test_suites,
+                    ):
                         self.bootstrap()
 
                         if TestSuite.UNAUTHORIZED in test_suites:
@@ -242,6 +267,27 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                                     attribute,
                                     api_operation_action=operation,
                                 )
+
+                            error = False
+                            try:
+                                if AttributeOperationType.QUERY == attribute_operation:
+                                    await self.build_policy(
+                                        entity_name=EntityName.Block,
+                                    ).authorize_query(
+                                        attribute,
+                                        api_operation_action=operation,
+                                    )
+                                else:
+                                    await self.build_policy(
+                                        entity_name=EntityName.Block,
+                                    ).authorize_attribute(
+                                        attribute_operation,
+                                        attribute,
+                                        api_operation_action=operation,
+                                    )
+                            except ApiError:
+                                error = True
+                            self.assertTrue(error)
 
                         if operation_unauthorized:
                             error = False
