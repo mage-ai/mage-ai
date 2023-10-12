@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, List
 
 import yaml
+from croniter import croniter
 
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
 from mage_ai.settings.repo import get_repo_path
@@ -65,6 +66,17 @@ class Trigger(BaseConfig):
             self.status = ScheduleStatus(self.status)
         if any(env not in VALID_ENVS for env in self.envs):
             raise Exception(f'Please provide valid env values inside {list(VALID_ENVS)}.')
+
+    @property
+    def has_valid_schedule_interval(self) -> bool:
+        # Check if trigger has valid cron expression
+        if self.schedule_interval is not None and \
+            self.schedule_type == ScheduleType.TIME and \
+            self.schedule_interval not in [e.value for e in ScheduleInterval] and \
+                not croniter.is_valid(self.schedule_interval):
+            return False
+
+        return True
 
     def to_dict(self) -> Dict:
         return dict(
@@ -146,6 +158,11 @@ def build_triggers(
             trigger_config['pipeline_uuid'] = pipeline_uuid
         try:
             trigger = Trigger.load(config=trigger_config)
+
+            # Add flag to settings so frontend can detect triggers with invalid cron expressions
+            if not trigger.has_valid_schedule_interval:
+                trigger.settings['invalid_schedule_interval'] = True
+
             triggers.append(trigger)
         except Exception as e:
             if raise_exception:
