@@ -103,7 +103,7 @@ Implement it in {code_language} language.
 Provide your response in JSON format with the key "code".
 """
 PROMPT_TO_SPLIT_BLOCKS = """
-A BLOCK does one action either reading data from one data source, transforming the data from
+[INST]A BLOCK does one action either reading data from one data source, transforming the data from
 one format to another or exporting data into a data source.
 Based on the code description delimited by triple backticks, your task is to identify
 how many BLOCKS required, function for each BLOCK and upstream blocks between BLOCKs.
@@ -195,12 +195,12 @@ class LLMPipelineWizard:
         repo_config = get_repo_config()
         openai_api_key = repo_config.openai_api_key or os.getenv('OPENAI_API_KEY')
         print(f"Testing openai_api_key: {openai_api_key}")
-        if not openai_api_key:
-            print(f"Testing openai_api_key: {openai_api_key}")
+        # if not openai_api_key:
+        #     print(f"Testing openai_api_key: {openai_api_key}")
 
-            self.client = HuggingFaceClient()
-        else:
-            self.client = OpenAIClient()
+        self.client = HuggingFaceClient()
+        # else:
+        #     self.client = OpenAIClient()
 
     async def __async_llm_call(
         self,
@@ -384,12 +384,13 @@ class LLMPipelineWizard:
         print(f"Testing client name: {self.client.__class__.__name__}")
         variable_values = dict()
         variable_values['code_description'] = pipeline_description
-        splited_block_descriptions = await self.client.inference_with_prompt(
+        # splited_block_descriptions =
+        await self.client.inference_with_prompt(
             variable_values,
             PROMPT_TO_SPLIT_BLOCKS,
             is_json_response=False,
         )
-        print(f"Testing splited_block_descriptions: {splited_block_descriptions}")
+        # print(f"Testing splited_block_descriptions: {splited_block_descriptions}")
         blocks = {}
         block_tasks = []
         # for line in splited_block_descriptions.strip().split('\n'):
