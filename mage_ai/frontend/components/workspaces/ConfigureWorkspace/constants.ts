@@ -29,8 +29,7 @@ export const GENERAL_K8S_FIELDS = [
     placeholder: 'my-ingress',
     uuid: 'ingress_name',
   },
-
-]
+];
 
 export const VOLUME_CLAIM_K8S_FIELDS = [
   {

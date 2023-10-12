@@ -1,7 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import CodeEditor from '@components/CodeEditor';
+import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -12,17 +16,19 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
-import { ACCESS_MODES, GENERAL_K8S_FIELDS, K8S_TEXT_FIELDS, VOLUME_CLAIM_K8S_FIELDS, WORKSPACE_FIELDS, WorkspaceFieldType } from './constants';
+import {
+  ACCESS_MODES,
+  GENERAL_K8S_FIELDS,
+  VOLUME_CLAIM_K8S_FIELDS,
+  WORKSPACE_FIELDS,
+  WorkspaceFieldType,
+} from './constants';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ClusterTypeEnum } from '../constants';
 import { PURPLE } from '@oracle/styles/colors/main';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
-import Accordion from '@oracle/components/Accordion';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
-import Flex from '@oracle/components/Flex';
-import Divider from '@oracle/elements/Divider';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;
@@ -86,9 +92,9 @@ function ConfigureWorkspace({
   }: WorkspaceFieldType) => (
     <div key={uuid}>
       <Divider muted/>
-      <Spacing my={1} ml={3} mr={2}>
-        <FlexContainer justifyContent="space-between" alignItems="center">
-          <Flex flexDirection="column" flex={2}>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={2} flexDirection="column">
             <Text>
               {label}
             </Text>
@@ -125,7 +131,7 @@ function ConfigureWorkspace({
   const k8sSettingsFields = useMemo(() => (
     <>
       <FlexContainer>
-        <Spacing my={2} ml={2}>
+        <Spacing ml={2} my={2}>
           <Text bold sky>
             General
           </Text>
@@ -135,7 +141,7 @@ function ConfigureWorkspace({
         (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
       <Divider muted/>
       <FlexContainer>
-        <Spacing my={2} ml={2}>
+        <Spacing ml={2} my={2} >
           <Text bold sky>
             Volume claim params
           </Text>
@@ -145,8 +151,8 @@ function ConfigureWorkspace({
       {VOLUME_CLAIM_K8S_FIELDS.map(
         (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
       <Divider muted/>
-      <Spacing my={1} ml={3} mr={2}>
-        <FlexContainer justifyContent="space-between" alignItems="center">
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex flex={3}>
             <Text>
               Access mode
@@ -176,7 +182,7 @@ function ConfigureWorkspace({
         </FlexContainer>
       </Spacing>
       <Divider muted/>
-      <Spacing my={2} ml={2}>
+      <Spacing ml={2} my={2}>
         <FlexContainer alignItems="center">
           <ToggleSwitch
             checked={configureContainer}
@@ -192,7 +198,7 @@ function ConfigureWorkspace({
       </Spacing>
       <Divider muted />
       {configureContainer && (
-        <Spacing my={1} ml={3} mr={2}>
+        <Spacing ml={3} mr={2} my={1}>
           <CodeEditorStyle>
             <CodeEditor
               autoHeight
@@ -213,23 +219,23 @@ function ConfigureWorkspace({
       )}
     </>
   ), [
+    createWorkspaceTextField,
     configureContainer,
     workspaceConfig,
   ]);
 
-  const [showTerminationPolicy, setShowTerminationPolicy] = useState<boolean>(false);
   const lifecycleConfigFields = useMemo(() => (
     <>
       <FlexContainer>
-        <Spacing my={2} ml={2}>
+        <Spacing ml={2} my={2}>
           <Text bold sky>
             Termination policy
           </Text>
         </Spacing>
       </FlexContainer>
       <Divider muted />
-      <Spacing my={1} ml={3} mr={2}>
-        <FlexContainer justifyContent="space-between" alignItems="center">
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex flex={3}>
             <Text>
               Enable auto termination
@@ -261,8 +267,8 @@ function ConfigureWorkspace({
         </FlexContainer>
       </Spacing>
       <Divider muted />
-      <Spacing my={1} ml={3} mr={2}>
-        <FlexContainer justifyContent="space-between" alignItems="center">
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex flex={3}>
             <Text>
               Max idle time (in seconds)
@@ -289,12 +295,8 @@ function ConfigureWorkspace({
       </Spacing>
     </>
   ), [
-    configureContainer,
     lifecycleConfig,
     setLifecycleConfig,
-    setShowTerminationPolicy,
-    showTerminationPolicy,
-    workspaceConfig,
   ]);
   
   return (

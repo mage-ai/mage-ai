@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -23,7 +24,6 @@ import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constan
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
-import ErrorsType from '@interfaces/ErrorsType';
 
 function MoreActions({
   clusterType,
@@ -349,6 +349,7 @@ function WorkspacePage() {
               fetchWorkspaces={fetchWorkspaces}
               instance={instance}
               key="more_actions"
+              setErrors={setErrors}
             />,
           ];
         })}
