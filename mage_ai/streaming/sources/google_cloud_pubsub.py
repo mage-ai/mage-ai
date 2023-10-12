@@ -96,7 +96,7 @@ class GoogleCloudPubSubSource(BaseSource):
             # self._print(f'Received: {received_message}.')
             handler(dict(
                 data=received_message.message.data.decode(),
-                attributes=received_message.message.attributes))
+                metadata=dict(attributes=received_message.message.attributes)))
             # self._print(f'Handled: {received_message.message.data}.')
             received_message.ack()
 
@@ -141,7 +141,7 @@ class GoogleCloudPubSubSource(BaseSource):
                     # self._print(f'Received: {received_message.message.data}.')
                     message_values.append(
                         dict(data=received_message.message.data.decode(),
-                             attributes=received_message.message.attributes)
+                             metadata=dict(attributes=received_message.message.attributes))
                     )
                     # self._print(f'Batched: {received_message.message.data}.')
                     ack_ids.append(received_message.ack_id)
