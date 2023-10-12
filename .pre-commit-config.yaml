@@ -16,7 +16,7 @@ repos:
         types: [python]
     -   id: name-tests-test
         types: [python]
-        exclude: "base_test|factory"
+        exclude: "base_test|factory|mixins|utils"
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer

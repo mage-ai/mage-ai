@@ -3,15 +3,9 @@ from unittest.mock import patch
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.orchestration.db.models.oauth import User, UserRole
+from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
-
-
-class GenericObject:
-    def on_callback(resource):
-        return resource
-
-    def on_failure_callback(resource):
-        return
+from mage_ai.tests.api.utils import GenericObject
 
 
 class UserResource(DatabaseResource):
@@ -30,24 +24,7 @@ class TestUserRoleResource(DatabaseResource):
 TestUserRoleResource.register_parent_resource(UserResource)
 
 
-class DatabaseResourceTest(BaseApiTestCase):
-    def bootstrap(self):
-        self.options = dict(lightning=4, rock=5)
-
-        user1 = User.create(username=self.faker.name())
-        user2 = User.create(username=self.faker.name())
-        user3 = User.create(username=self.faker.name())
-        self.users = [
-            user1,
-            user2,
-            user3,
-        ]
-        self.user = self.users[0]
-
-    def cleanup(self):
-        User.query.delete()
-        UserRole.query.delete()
-
+class DatabaseResourceTest(BaseApiTestCase, BootstrapMixin):
     async def test_process_collection(self):
         self.bootstrap()
 
