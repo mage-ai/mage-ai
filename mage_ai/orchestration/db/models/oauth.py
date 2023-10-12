@@ -191,6 +191,7 @@ class User(BaseModel):
             model.id = row.id
             model.name = row.name
             model.updated_at = row.updated_at
+            model.user_id = row.user_id
             arr.append(model)
 
         return arr
