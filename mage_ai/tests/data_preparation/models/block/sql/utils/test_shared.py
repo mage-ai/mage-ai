@@ -135,6 +135,15 @@ class SQLBlockSharedUtilsTest(DBTestCase):
         expected_result = []
         self.assertEqual(extract_update_statement_table_names(text), expected_result)
 
+        # Test case 4: UPDATE statement with alias
+        text = """
+        UPDATE table_name as x
+        SET column1 = value1, column2 = value2
+        WHERE condition;
+        """
+        expected_result = ['table_name']
+        self.assertEqual(extract_update_statement_table_names(text), expected_result)
+
     def test_interpolate_input(self):
         self.pipeline = Pipeline.create(
             'test pipeline',
