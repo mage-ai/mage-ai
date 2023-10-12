@@ -25,40 +25,63 @@ class CustomTestResource(GenericResource):
         return CustomTestPolicy
 
 
-CustomTestPolicy.allow_actions([
-    OperationType.LIST,
-], scopes=[
-    OauthScopeType.CLIENT_PRIVATE,
-], condition=lambda policy: policy.test_condition())
+CustomTestPolicy.allow_actions(
+    [
+        OperationType.LIST,
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.test_condition(),
+    override_permission_condition=lambda policy: policy.test_condition(),
+)
 
 
-CustomTestPolicy.allow_read([
-    'first_name',
-    'username',
-], scopes=[
-    OauthScopeType.CLIENT_PRIVATE,
-], on_action=[
-    OperationType.LIST,
-], condition=lambda policy: policy.test_condition())
+CustomTestPolicy.allow_read(
+    [
+        'first_name',
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.test_condition(),
+    override_permission_condition=lambda policy: policy.test_condition(),
+)
 
 
-CustomTestPolicy.allow_write([
-    'first_name',
-    'username',
-], scopes=[
-    OauthScopeType.CLIENT_PRIVATE,
-], on_action=[
-    OperationType.LIST,
-], condition=lambda policy: policy.test_condition())
+CustomTestPolicy.allow_write(
+    [
+        'first_name',
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.test_condition(),
+    override_permission_condition=lambda policy: policy.test_condition(),
+)
 
 
-CustomTestPolicy.allow_query([
-    'username',
-], scopes=[
-    OauthScopeType.CLIENT_PRIVATE,
-], on_action=[
-    OperationType.LIST,
-], condition=lambda policy: policy.test_condition())
+CustomTestPolicy.allow_query(
+    [
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.test_condition(),
+    override_permission_condition=lambda policy: policy.test_condition(),
+)
 
 
 class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
@@ -612,3 +635,95 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
         policy = CustomTestPolicy(None, None)
         policy.result_set_attr = 1
         self.assertEqual(policy.result_set(), 1)
+
+    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
+    async def test_authorize_action_with_permissions_and_override_permissions(self):
+        self.bootstrap()
+
+        def _rule(action):
+            return {
+                OperationType.LIST: {
+                    OauthScopeType.CLIENT_PRIVATE: dict(
+                        condition=lambda _policy: False,
+                    ),
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'action_rule_with_permissions', _rule):
+            resource = CustomTestResource(self.user, self.user)
+            policy = CustomTestPolicy(resource, self.user)
+            await policy.authorize_action(OperationType.LIST)
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
+    async def test_authorize_attribute_read_with_permissions_and_override_permissions(self):
+        self.bootstrap()
+
+        def _rule(_attribute_operation_type, resource_attribute):
+            return {
+                OauthScopeType.CLIENT_PRIVATE: {
+                    OperationType.LIST: dict(
+                        condition=lambda _policy: False,
+                    ),
+                },
+            }
+
+        with patch.object(CustomTestPolicy, 'attribute_rule_with_permissions', _rule):
+            resource = CustomTestResource(self.user, self.user)
+            policy = CustomTestPolicy(resource, self.user)
+            await policy.authorize_attribute(
+                AttributeOperationType.READ,
+                'username',
+                api_operation_action=OperationType.LIST,
+            )
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
+    async def test_authorize_attribute_write_with_permissions_and_override_permissions(self):
+        self.bootstrap()
+
+        def _rule(_attribute_operation_type, resource_attribute):
+            return {
+                OauthScopeType.CLIENT_PRIVATE: {
+                    OperationType.LIST: dict(
+                        condition=lambda _policy: False,
+                    ),
+                },
+            }
+
+        with patch.object(CustomTestPolicy, 'attribute_rule_with_permissions', _rule):
+            resource = CustomTestResource(self.user, self.user)
+            policy = CustomTestPolicy(resource, self.user)
+            await policy.authorize_attribute(
+                AttributeOperationType.WRITE,
+                'username',
+                api_operation_action=OperationType.LIST,
+            )
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
+    async def test_authorize_attribute_query_with_permissions_and_override_permissions(self):
+        self.bootstrap()
+
+        def _rule(_attribute_operation_type, resource_attribute):
+            return {
+                OauthScopeType.CLIENT_PRIVATE: {
+                    OperationType.LIST: dict(
+                        condition=lambda _policy: False,
+                    ),
+                },
+            }
+
+        with patch.object(CustomTestPolicy, 'attribute_rule_with_permissions', _rule):
+            resource = CustomTestResource(self.user, self.user)
+            policy = CustomTestPolicy(resource, self.user)
+            await policy.authorize_attribute(
+                AttributeOperationType.QUERY,
+                'username',
+                api_operation_action=OperationType.LIST,
+            )
+
+        self.cleanup()
