@@ -31,7 +31,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import group_by, merge_dict
 
 
 class User(BaseModel):
@@ -108,8 +108,19 @@ class User(BaseModel):
         return the access of the user for that entity.
         '''
         access = 0
-        for role in self.roles_new:
-            access = access | role.get_access(entity, entity_id)
+
+        roles = self.fetch_roles([self.id])
+        permissions = Role.fetch_permissions([r.id for r in roles])
+        permissions_mapping = group_by(lambda x: x.role_id, permissions)
+
+        for role in roles:
+            permissions_for_role = permissions_mapping.get(role.id) or []
+
+            access = access | role.get_access(
+                entity,
+                entity_id,
+                permissions_for_role=permissions_for_role,
+            )
         return access
 
     @property
@@ -126,12 +137,12 @@ class User(BaseModel):
 
     @property
     def owner(self) -> bool:
-        access = self.project_access if self.roles_new else 0
+        access = self.project_access if self.fetch_roles([self.id]) else 0
         return self._owner or access & Permission.Access.OWNER != 0
 
     @property
     def is_admin(self) -> bool:
-        if self.roles_new:
+        if self.fetch_roles([self.id]):
             access = self.project_access
             return access & \
                 (Permission.Access.OWNER | Permission.Access.ADMIN) == Permission.Access.ADMIN
@@ -180,6 +191,7 @@ class User(BaseModel):
                 ),
             )
         )
+        query.cache = True
 
         rows = query.all()
 
@@ -242,6 +254,7 @@ class User(BaseModel):
 
         query = query.add_column(row_number_column)
         query = query.from_self().filter(row_number_column == 1)
+        query.cache = True
         rows = query.all()
 
         arr = []
@@ -358,17 +371,20 @@ class Role(BaseModel):
         self,
         entity: Union[Entity, None],
         entity_id: Union[str, None] = None,
+        permissions_for_role: List['Permission'] = None,
     ) -> int:
+        arr = self.permissions if permissions_for_role is None else permissions_for_role
+
         permissions = []
         if entity is None:
             return 0
         elif entity == Entity.ANY:
-            permissions.extend(self.permissions)
+            permissions.extend(arr)
         else:
             entity_permissions = list(filter(
                 lambda perm: perm.entity == entity and
                 (entity_id is None or perm.entity_id == entity_id),
-                self.permissions,
+                arr,
             ))
             if entity_permissions:
                 permissions.extend(entity_permissions)
@@ -381,17 +397,30 @@ class Role(BaseModel):
             return access
         else:
             # TODO: Handle permissions with different entity types better.
-            return self.get_parent_access(entity)
+            return self.get_parent_access(
+                entity,
+                permissions_for_role=permissions_for_role,
+            )
 
-    def get_parent_access(self, entity) -> int:
+    def get_parent_access(
+        self,
+        entity,
+        permissions_for_role: List['Permission'] = None,
+    ) -> int:
         '''
         This method is used when a role does not have a permission for a specified entity. Then,
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
         if entity == Entity.PIPELINE:
-            return self.get_access(Entity.PROJECT, get_project_uuid())
+            return self.get_access(
+                Entity.PROJECT, get_project_uuid(),
+                permissions_for_role=permissions_for_role,
+            )
         elif entity == Entity.PROJECT:
-            return self.get_access(Entity.GLOBAL)
+            return self.get_access(
+                Entity.GLOBAL,
+                permissions_for_role=permissions_for_role,
+            )
         else:
             return 0
 
@@ -402,6 +431,7 @@ class Role(BaseModel):
             query.
             filter(Permission.role_id.in_(ids))
         )
+        query.cache = True
 
         return query.all()
 
@@ -429,6 +459,7 @@ class Role(BaseModel):
                 )
             )
         )
+        query.cache = True
 
         rows = query.all()
 
@@ -475,6 +506,7 @@ class Role(BaseModel):
                 ),
             )
         )
+        query.cache = True
 
         rows = query.all()
 

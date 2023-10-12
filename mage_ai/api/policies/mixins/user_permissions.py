@@ -24,13 +24,45 @@ from mage_ai.settings import (
 )
 
 
+async def validate_condition_with_cache(
+    policy,
+    operation: OperationType,
+    attribute_operation_type: AttributeOperationType = None,
+    resource_attribute: str = None,
+) -> bool:
+    previously_authorized = await (policy.resource or policy).load_cached_permission_authorization(
+        operation,
+        attribute_operation_type=attribute_operation_type,
+        resource_attribute=resource_attribute,
+    )
+
+    if previously_authorized is not None:
+        return previously_authorized
+
+    authorized = await validate_condition_with_permissions(
+        policy,
+        operation,
+        attribute_operation_type=attribute_operation_type,
+        resource_attribute=resource_attribute,
+    )
+
+    await (policy.resource or policy).cache_permission_authorization(
+        authorized,
+        operation,
+        attribute_operation_type=attribute_operation_type,
+        resource_attribute=resource_attribute,
+    )
+
+    return authorized
+
+
 async def validate_condition_with_permissions(
     policy,
     operation: OperationType,
     attribute_operation_type: AttributeOperationType = None,
     resource_attribute: str = None,
 ) -> bool:
-    entity_name = policy.entity_name()
+    entity_name = policy.entity_name_uuid()
     access = OPERATION_TYPE_TO_ACCESS_MAPPING.get(operation) or Permission.Access.OWNER
     disable_access = OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING.get(operation)
 
@@ -242,7 +274,7 @@ class UserPermissionMixIn:
         resource_attribute: str,
     ) -> Callable[[Any], bool]:
         def _validate_condition(policy) -> bool:
-            return validate_condition_with_permissions(
+            return validate_condition_with_cache(
                 policy,
                 operation,
                 attribute_operation_type=attribute_operation_type,
@@ -254,6 +286,6 @@ class UserPermissionMixIn:
     @classmethod
     def build_validate_condition(self, operation: OperationType) -> Callable[[Any], bool]:
         def _validate_condition(policy) -> bool:
-            return validate_condition_with_permissions(policy, operation)
+            return validate_condition_with_cache(policy, operation)
 
         return _validate_condition

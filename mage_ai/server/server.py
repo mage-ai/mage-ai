@@ -81,6 +81,7 @@ from mage_ai.settings import (
     REDIS_URL,
     REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
     ROUTES_BASE_PATH,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
@@ -445,6 +446,9 @@ async def main(
                 name='frontend',
                 user_id=owner_user.id,
             )
+
+    if REQUIRE_USER_PERMISSIONS:
+        logger.info('User permissions requirement is enabled.')
 
     logger.info('Initializing block cache.')
     await BlockCache.initialize_cache(replace=True)

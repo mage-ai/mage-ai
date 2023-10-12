@@ -239,7 +239,7 @@ function UserDetail({
     rolesMapping,
   ]);
 
-  const { data: dataPermissions } = api.permissions.list();
+  const { data: dataPermissions } = api.permissions.list({ _limit: 1000 });
   const permissionsAll: PermissionType[] = useMemo(() => sortByKey(
     dataPermissions?.permissions || [],
     'entity_name',
