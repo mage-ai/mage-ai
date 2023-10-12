@@ -1293,14 +1293,12 @@ def cancel_block_runs_and_jobs(
 
 def check_sla():
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
-    pipeline_schedules = \
-        set([
-            s.id
-            for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
-        ])
+    pipeline_schedules_results = PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
+    pipeline_schedules_mapping = index_by(lambda x: x.id, pipeline_schedules_results)
+
+    pipeline_schedules = set([s.id for s in pipeline_schedules_results])
 
     pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
-    pipeline_schedules_mapping = index_by(lambda x: x.id, list(pipeline_schedules))
 
     if pipeline_runs:
         current_time = datetime.now(tz=pytz.UTC)
