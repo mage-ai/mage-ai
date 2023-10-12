@@ -181,7 +181,7 @@ class BaseResource(Resource, ResultSetMixIn):
             return res
         except Exception as err:
             if self.on_create_failure_callback:
-                self.on_create_failure_callback(resource=res)
+                self.on_create_failure_callback()
 
             raise err
 
@@ -246,7 +246,7 @@ class BaseResource(Resource, ResultSetMixIn):
             return res
         except Exception as err:
             if self.on_delete_failure_callback:
-                self.on_delete_failure_callback(resource=res)
+                self.on_delete_failure_callback(resource=self)
 
             raise err
 
@@ -265,7 +265,7 @@ class BaseResource(Resource, ResultSetMixIn):
             return res
         except Exception as err:
             if self.on_update_failure_callback:
-                self.on_update_failure_callback(resource=res)
+                self.on_update_failure_callback(resource=self)
 
             raise err
 
