@@ -1,5 +1,6 @@
 from enum import Enum
 
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 
 
@@ -177,4 +178,18 @@ PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS = {
     f'{PermissionAccess.EDITOR}': ACCESS_FOR_EDITOR,
     f'{PermissionAccess.OWNER}': ACCESS_FOR_OWNER,
     f'{PermissionAccess.VIEWER}': ACCESS_FOR_VIEWER,
+}
+
+OPERATION_TYPE_TO_PERMISSION_ACCESS_MAPPING = {
+    OperationType.LIST: PermissionAccess.LIST,
+    OperationType.DETAIL: PermissionAccess.DETAIL,
+    OperationType.CREATE: PermissionAccess.CREATE,
+    OperationType.UPDATE: PermissionAccess.UPDATE,
+    OperationType.DELETE: PermissionAccess.DELETE,
+}
+
+ATTRIBUTE_OPERATION_TYPE_TO_PERMISSION_ACCESS_MAPPING = {
+    'query': PermissionAccess.QUERY,
+    'read': PermissionAccess.READ,
+    'write': PermissionAccess.WRITE,
 }

@@ -460,7 +460,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
                 cond,
                 attribute_operation=attribute_operation,
                 operation=api_operation_action,
-                override_permission_condition=config_override.get('override_permission_condition'),
+                override_permission_condition=config_override.get(
+                    'override_permission_condition',
+                ) if config_override else None,
                 **kwargs,
             )
 
@@ -531,7 +533,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
                 cond,
                 message=error_message,
                 operation=api_operation_action,
-                override_permission_condition=config_override.get('override_permission_condition'),
+                override_permission_condition=config_override.get(
+                    'override_permission_condition',
+                ) if config_override else None,
             )
 
     def parent_model(self):
