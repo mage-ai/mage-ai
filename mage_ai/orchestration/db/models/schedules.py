@@ -678,6 +678,12 @@ class PipelineRun(BaseModel):
     def pipeline_schedule_type(self):
         return self.pipeline_schedule.schedule_type
 
+    @property
+    def pipeline_tags(self):
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+
+        return self.pipeline.tags if pipeline is not None else []
+
     def executable_block_runs(
         self,
         allow_blocks_to_fail: bool = False,

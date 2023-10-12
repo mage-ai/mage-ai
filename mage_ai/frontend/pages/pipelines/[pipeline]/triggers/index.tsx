@@ -37,6 +37,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
+import { capitalize, randomNameGenerator } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
@@ -45,7 +46,6 @@ import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 
@@ -357,6 +357,9 @@ function PipelineSchedules({
         type: Object.values(ScheduleTypeEnum),
       }}
       filterValueLabelMapping={{
+        status: Object.values(ScheduleStatusEnum).reduce(
+          (acc, cv) => ({ ...acc, [cv]: capitalize(cv) }), {},
+        ),
         tag: tags.reduce((acc, { uuid }) => ({
           ...acc,
           [uuid]: uuid,
@@ -370,6 +373,7 @@ function PipelineSchedules({
         );
       }}
       query={query}
+      resetPageOnFilterApply
       secondaryButtonProps={!isCreateDisabled && {
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
@@ -461,7 +465,7 @@ function PipelineSchedules({
           {!dataPipelineSchedules
             ?
               <Spacing m={2}>
-                <Spinner inverted />
+                <Spinner inverted large />
               </Spacing>
             :
               <>

@@ -37,8 +37,16 @@ export interface PipelineRunReqQueryParamsType {
   _offset?: number;
   disable_retries_grouping?: boolean;
   global_data_product_uuid?: string;
+  include_pipeline_tags?: boolean;
+  include_pipeline_uuids?: boolean;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
+}
+
+export enum PipelineRunFilterQueryEnum {
+  PIPELINE_UUID = 'pipeline_uuid[]',
+  STATUS = 'status[]',
+  TAG = 'pipeline_tag[]',
 }
 
 interface Obj {
@@ -123,6 +131,7 @@ export default interface PipelineRunType {
   pipeline_schedule_name?: string;
   pipeline_schedule_token?: string;
   pipeline_schedule_type?: ScheduleTypeEnum;
+  pipeline_tags?: string[];
   pipeline_uuid?: string;
   started_at?: string;
   status?: RunStatusEnum;
