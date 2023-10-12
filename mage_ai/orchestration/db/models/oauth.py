@@ -31,7 +31,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import group_by, merge_dict
 
 
 class User(BaseModel):
@@ -108,8 +108,19 @@ class User(BaseModel):
         return the access of the user for that entity.
         '''
         access = 0
-        for role in self.roles_new:
-            access = access | role.get_access(entity, entity_id)
+
+        roles = self.roles_new
+        permissions = Role.fetch_permissions([r.id for r in roles])
+        permissions_mapping = group_by(lambda x: x.role_id, permissions)
+
+        for role in roles:
+            permissions_for_role = permissions_mapping.get(role.id) or []
+
+            access = access | role.get_access(
+                entity,
+                entity_id,
+                permissions_for_role=permissions_for_role,
+            )
         return access
 
     @property
@@ -358,17 +369,20 @@ class Role(BaseModel):
         self,
         entity: Union[Entity, None],
         entity_id: Union[str, None] = None,
+        permissions_for_role: List['Permission'] = None,
     ) -> int:
+        arr = self.permissions if permissions_for_role is None else permissions_for_role
+
         permissions = []
         if entity is None:
             return 0
         elif entity == Entity.ANY:
-            permissions.extend(self.permissions)
+            permissions.extend(arr)
         else:
             entity_permissions = list(filter(
                 lambda perm: perm.entity == entity and
                 (entity_id is None or perm.entity_id == entity_id),
-                self.permissions,
+                arr,
             ))
             if entity_permissions:
                 permissions.extend(entity_permissions)
@@ -381,17 +395,30 @@ class Role(BaseModel):
             return access
         else:
             # TODO: Handle permissions with different entity types better.
-            return self.get_parent_access(entity)
+            return self.get_parent_access(
+                entity,
+                permissions_for_role=permissions_for_role,
+            )
 
-    def get_parent_access(self, entity) -> int:
+    def get_parent_access(
+        self,
+        entity,
+        permissions_for_role: List['Permission'] = None,
+    ) -> int:
         '''
         This method is used when a role does not have a permission for a specified entity. Then,
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
         if entity == Entity.PIPELINE:
-            return self.get_access(Entity.PROJECT, get_project_uuid())
+            return self.get_access(
+                Entity.PROJECT, get_project_uuid(),
+                permissions_for_role=permissions_for_role,
+            )
         elif entity == Entity.PROJECT:
-            return self.get_access(Entity.GLOBAL)
+            return self.get_access(
+                Entity.GLOBAL,
+                permissions_for_role=permissions_for_role,
+            )
         else:
             return 0
 

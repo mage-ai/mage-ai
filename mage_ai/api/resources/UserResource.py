@@ -177,7 +177,9 @@ class UserResource(DatabaseResource):
             payload['password_salt'] = password_salt
 
         role_ids = [int(i) for i in payload.get('role_ids') or []]
-        role_mapping = index_by(lambda x: x.id, self.roles_new or [])
+        # Need to call roles_new directly on the model or else the resource will
+        # cache the result because of the collective loader.
+        role_mapping = index_by(lambda x: x.id, self.model.roles_new or [])
 
         role_ids_create = []
         role_ids_delete = []

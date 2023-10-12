@@ -21,16 +21,18 @@ from mage_ai.api.utils import (
     has_at_least_viewer_role,
     is_owner,
 )
-from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
+from mage_ai.server.api.constants import URL_PARAMETER_API_KEY
 from mage_ai.services.tracking.metrics import increment
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     REQUIRE_USER_AUTHENTICATION,
     REQUIRE_USER_PERMISSIONS,
 )
-from mage_ai.shared.hash import extract
+from mage_ai.shared.hash import extract, ignore_keys
+
+CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS = '__user_role_validations'
 
 
 class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
@@ -65,14 +67,6 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     @property
     def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
         return Entity.PROJECT, get_project_uuid()
-
-    @classmethod
-    def entity_name(self) -> EntityName:
-        model_name = self.model_name()
-        if model_name in EntityName._value2member_map_:
-            return EntityName(model_name)
-
-        return None
 
     @classmethod
     def action_rule(self, action):
@@ -276,61 +270,132 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             self.__name__.replace(
                 'Policy', '')).lower()
 
+    def __get_and_set_user_role_validation(
+        self,
+        key: str,
+        condition: Callable,
+    ) -> bool:
+        mapping = self.result_set().context.data.get(CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS) or {}
+        if key in mapping:
+            return mapping.get(key)
+
+        if CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS not in self.result_set().context.data:
+            self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS] = {}
+
+        validation = condition()
+        self.result_set().context.data[CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS][key] = validation
+
+        return validation
+
     def is_owner(self) -> bool:
-        return is_owner(
-            self.current_user,
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-        )
+        ):
+            return is_owner(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+            )
+
+        return self.__get_and_set_user_role_validation('is_owner', _validate)
 
     def has_at_least_admin_role(self) -> bool:
-        return has_at_least_admin_role(
-            self.current_user,
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-        )
+        ):
+            return has_at_least_admin_role(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+            )
+
+        return self.__get_and_set_user_role_validation('has_at_least_admin_role', _validate)
 
     def has_at_least_editor_role(self) -> bool:
-        return has_at_least_editor_role(
-            self.current_user,
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-        )
+        ):
+            return has_at_least_editor_role(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+            )
+
+        return self.__get_and_set_user_role_validation('has_at_least_editor_role', _validate)
 
     def has_at_least_editor_role_and_notebook_edit_access(
         self,
         disable_notebook_edit_access_override: int = None,
     ) -> bool:
-        return has_at_least_editor_role_and_notebook_edit_access(
-            self.current_user,
+        disable_notebook = (
+            disable_notebook_edit_access_override or
+            self.disable_notebook_edit_access_override
+        )
+
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-            disable_notebook_edit_access_override=(
-                disable_notebook_edit_access_override or
-                self.disable_notebook_edit_access_override
-            ),
+            disable_notebook=disable_notebook,
+        ):
+            return has_at_least_editor_role_and_notebook_edit_access(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+                disable_notebook_edit_access_override=disable_notebook,
+            )
+
+        return self.__get_and_set_user_role_validation(
+            'has_at_least_editor_role_and_notebook_edit_access',
+            _validate,
         )
 
     def has_at_least_editor_role_and_pipeline_edit_access(
         self,
         disable_notebook_edit_access_override: int = None,
     ) -> bool:
-        return has_at_least_editor_role_and_pipeline_edit_access(
-            self.current_user,
+        disable_notebook = (
+            disable_notebook_edit_access_override or
+            self.disable_notebook_edit_access_override
+        )
+
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-            disable_notebook_edit_access_override=(
-                disable_notebook_edit_access_override or
-                self.disable_notebook_edit_access_override
-            ),
+            disable_notebook=disable_notebook,
+        ):
+            return has_at_least_editor_role_and_pipeline_edit_access(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+                disable_notebook_edit_access_override=disable_notebook,
+            )
+
+        return self.__get_and_set_user_role_validation(
+            'has_at_least_editor_role_and_pipeline_edit_access',
+            _validate,
         )
 
     def has_at_least_viewer_role(self) -> bool:
-        return has_at_least_viewer_role(
-            self.current_user,
+        def _validate(
+            user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-        )
+        ):
+            return has_at_least_viewer_role(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+            )
+
+        return self.__get_and_set_user_role_validation('has_at_least_viewer_role', _validate)
 
     async def authorize_action(self, action):
         if self.is_owner():
@@ -424,7 +489,12 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
     async def authorize_query(self, query, **kwargs):
-        if self.is_owner() or not query:
+        query_filtered = ignore_keys(query or {}, [URL_PARAMETER_API_KEY])
+
+        if not query_filtered:
+            return True
+
+        if self.is_owner():
             return True
 
         api_operation_action = self.options.get(
@@ -432,7 +502,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             kwargs.get('api_operation_action', OperationType.ALL),
         )
 
-        for key, value in query.items():
+        for key, value in query_filtered.items():
             if key == settings.QUERY_API_KEY:
                 continue
 
