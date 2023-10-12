@@ -32,6 +32,7 @@ TestUserRoleResource.register_parent_resource(UserResource)
 
 class DatabaseResourceTest(BaseApiTestCase):
     def setUp(self):
+        super().setUp()
         self.options = dict(lightning=4, rock=5)
 
         user1 = User.create(username=self.faker.name())
@@ -47,6 +48,7 @@ class DatabaseResourceTest(BaseApiTestCase):
     def tearDown(self):
         User.query.delete()
         UserRole.query.delete()
+        super().tearDown()
 
     async def test_process_collection(self):
         result_set = await UserResource.process_collection(
