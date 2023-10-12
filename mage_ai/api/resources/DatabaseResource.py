@@ -54,22 +54,22 @@ class DatabaseResource(BaseResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        query = ignore_keys(query_arg, [settings.QUERY_API_KEY])
+        query_parameters = ignore_keys(query_arg, [settings.QUERY_API_KEY])
+
+        query = self.model_class.query
+
+        for key, value in query_parameters.items():
+            query = query.filter(getattr(self.model_class, key) == value)
+
         parent_model = kwargs.get('parent_model')
         if parent_model and self.parent_resource():
-            column_name, parent_class = next(
+            column_name, _parent_class = next(
                 (k, v) for k, v in self.parent_resource().items() if isinstance(
                     parent_model, v.model_class))
-            where = {}
-            where[column_name] = parent_model.id
 
-            filters = []
-            for _col, _val in merge_dict(query, where).items():
-                filters.append(self.model_class)
-            return self.model_class.query.filter(
-                **merge_dict(query, where))
-        else:
-            return self.model_class.query.filter(**query)
+            query = query.filter(getattr(self.model_class, column_name) == parent_model.id)
+
+        return query
 
     @classmethod
     @safe_db_query
@@ -144,14 +144,14 @@ class DatabaseResource(BaseResource):
             db_connection.session.commit()
 
             if self.on_update_callback:
-                self.on_update_callback(resource=res)
+                self.on_update_callback(resource=self)
 
             return res
         except Exception as err:
             db_connection.session.rollback()
 
             if self.on_update_failure_callback:
-                self.on_update_failure_callback(resource=res)
+                self.on_update_failure_callback(resource=self)
 
             raise err
 
