@@ -24,20 +24,7 @@ class MongoSource(BaseSource):
     config_class = MongoDBConfig
 
     def init_client(self):
-        connection_str = self.config.connection_str
-        database = self.config.database
-        collection = self.config.collection
-        batch_size = self.config.batch_size
-        pipeline = self.config.pipeline
-        operation_time = self.config.operation_time
-        start_after = self.config.start_after
-        self._print(f"Starting to MongoDB Stream for {database}")
-        self._print(f"You can use this collection {collection}")
-        self._print(f"You can use {connection_str}")
-        self._print(f"You can use {batch_size}")
-        self._print(f"You can use {pipeline}")
-        self._print(f"You can use {operation_time}")
-        self._print(f"You can use {start_after}")
+        self.client = MongoClient(self.config.connection_str)
 
     def read(self, handler: Callable):
         pass
@@ -45,8 +32,7 @@ class MongoSource(BaseSource):
     def batch_read(self, handler: Callable):
         self._print("Start getting message for MongoDB streaming.")
         try:
-            client = MongoClient(self.config.connection_str)
-            db = client.get_database(self.config.database)
+            db = self.client.get_database(self.config.database)
             parsed_messages = []
             if self.config_class.collection:
                 watch_args = {'batch_size': self.config.batch_size}
