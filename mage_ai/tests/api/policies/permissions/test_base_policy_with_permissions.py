@@ -231,7 +231,9 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                             try:
                                 if AttributeOperationType.QUERY == attribute_operation:
                                     await self.build_policy().authorize_query(
-                                        attribute,
+                                        {
+                                            attribute: 1,
+                                        },
                                         api_operation_action=operation,
                                     )
                                 else:
@@ -258,7 +260,9 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
 
                             if AttributeOperationType.QUERY == attribute_operation:
                                 await self.build_policy().authorize_query(
-                                    attribute,
+                                    {
+                                        attribute: 1,
+                                    },
                                     api_operation_action=operation,
                                 )
                             else:
@@ -274,7 +278,9 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                                     await self.build_policy(
                                         entity_name=EntityName.Block,
                                     ).authorize_query(
-                                        attribute,
+                                        {
+                                            attribute: 1,
+                                        },
                                         api_operation_action=operation,
                                     )
                                 else:
@@ -294,7 +300,9 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                             try:
                                 if AttributeOperationType.QUERY == attribute_operation:
                                     await self.build_policy().authorize_query(
-                                        attribute,
+                                        {
+                                            attribute: 1,
+                                        },
                                         api_operation_action=operation_unauthorized,
                                     )
                                 else:
@@ -312,7 +320,9 @@ for operation_pairs, attribute_operation_pairs, attributes_pairs, accesses, test
                             try:
                                 if AttributeOperationType.QUERY == attribute_operation:
                                     await self.build_policy().authorize_query(
-                                        attribute_unauthorized,
+                                        {
+                                            attribute_unauthorized: 1,
+                                        },
                                         api_operation_action=operation,
                                     )
                                 else:
