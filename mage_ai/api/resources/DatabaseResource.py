@@ -54,22 +54,28 @@ class DatabaseResource(BaseResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        query = ignore_keys(query_arg, [settings.QUERY_API_KEY])
-        parent_model = kwargs.get('parent_model')
-        if parent_model and self.parent_resource():
-            column_name, parent_class = next(
-                (k, v) for k, v in self.parent_resource().items() if isinstance(
-                    parent_model, v.model_class))
-            where = {}
-            where[column_name] = parent_model.id
+        query_parameters = ignore_keys(query_arg, [settings.QUERY_API_KEY])
 
-            filters = []
-            for _col, _val in merge_dict(query, where).items():
-                filters.append(self.model_class)
-            return self.model_class.query.filter(
-                **merge_dict(query, where))
-        else:
-            return self.model_class.query.filter(**query)
+        # parent_model = kwargs.get('parent_model')
+        # if parent_model and self.parent_resource():
+        #     column_name, parent_class = next(
+        #         (k, v) for k, v in self.parent_resource().items() if isinstance(
+        #             parent_model, v.model_class))
+        #     where = {}
+        #     where[column_name] = parent_model.id
+
+        #     filters = []
+        #     for _col, _val in merge_dict(query_parameters, where).items():
+        #         filters.append(self.model_class)
+        #     return self.model_class.query.filter(
+        #         **merge_dict(query_parameters, where))
+
+        query = self.model_class.query
+
+        for key, value in query_parameters.items():
+            query = query.filter(getattr(self.model_class, key) == value)
+
+        return query
 
     @classmethod
     @safe_db_query

@@ -1,6 +1,7 @@
 import secrets
 from unittest.mock import patch
 
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
@@ -155,7 +156,7 @@ class BaseResourceTest(BaseApiTestCase):
             error = False
             try:
                 await TestBaseResource.process_member(pk, user, **options)
-            except DoesNotExistError:
+            except (ApiError, DoesNotExistError):
                 error = True
             self.assertTrue(error)
 
