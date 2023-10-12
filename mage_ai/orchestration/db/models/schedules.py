@@ -183,6 +183,70 @@ class PipelineSchedule(BaseModel):
 
     @classmethod
     @safe_db_query
+    def create_or_update_batch(self, trigger_configs: List[Trigger]):
+        trigger_names = []
+        trigger_pipeline_uuids = []
+        for trigger_config in trigger_configs:
+            trigger_names.append(trigger_config.name)
+            trigger_pipeline_uuids.append(trigger_config.pipeline_uuid)
+
+        existing_pipeline_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.name.in_(trigger_names),
+            PipelineSchedule.pipeline_uuid.in_(trigger_pipeline_uuids),
+        ).all()
+
+        existing_pipeline_schedules_mapping = index_by(
+            lambda x: f'{x.pipeline_uuid}:{x.name}',
+            existing_pipeline_schedules,
+        )
+
+        triggers_to_create = []
+
+        for trigger_config in trigger_configs:
+            try:
+                existing_trigger = existing_pipeline_schedules_mapping.get(
+                    f'{trigger_config.pipeline_uuid}:{trigger_config.name}',
+                )
+            except Exception:
+                traceback.print_exc()
+                continue
+
+            kwargs = dict(
+                name=trigger_config.name,
+                pipeline_uuid=trigger_config.pipeline_uuid,
+                schedule_type=trigger_config.schedule_type,
+                start_time=trigger_config.start_time,
+                schedule_interval=trigger_config.schedule_interval,
+                status=trigger_config.status,
+                variables=trigger_config.variables,
+                sla=trigger_config.sla,
+                settings=trigger_config.settings,
+            )
+
+            if existing_trigger:
+                if any([
+                    existing_trigger.name != kwargs.get('name'),
+                    existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
+                    existing_trigger.schedule_interval != kwargs.get('schedule_interval'),
+                    existing_trigger.schedule_type != kwargs.get('schedule_type'),
+                    existing_trigger.settings != kwargs.get('settings'),
+                    existing_trigger.sla != kwargs.get('sla'),
+                    existing_trigger.start_time != kwargs.get('start_time'),
+                    existing_trigger.status != kwargs.get('status'),
+                    existing_trigger.variables != kwargs.get('variables'),
+                ]):
+                    existing_trigger.update(**kwargs)
+            else:
+                triggers_to_create.append(kwargs)
+
+        db_connection.session.bulk_save_objects(
+            [PipelineSchedule(**data) for data in triggers_to_create],
+            return_defaults=True,
+        )
+        db_connection.session.commit()
+
+    @classmethod
+    @safe_db_query
     def create_or_update(self, trigger_config: Trigger):
         try:
             existing_trigger = PipelineSchedule.repo_query.filter(

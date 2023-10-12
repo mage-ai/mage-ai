@@ -1300,12 +1300,18 @@ def check_sla():
         ])
 
     pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
+    pipeline_schedules_mapping = index_by(lambda x: x.id, list(pipeline_schedules))
 
     if pipeline_runs:
         current_time = datetime.now(tz=pytz.UTC)
+
         # TODO: combine all SLA alerts in one notification
         for pipeline_run in pipeline_runs:
-            sla = pipeline_run.pipeline_schedule.sla
+            pipeline_schedule = pipeline_schedules_mapping.get(pipeline_run.pipeline_schedule_id)
+            if not pipeline_schedule:
+                continue
+
+            sla = pipeline_schedule.sla
             if not sla:
                 continue
             start_date = \
@@ -1314,7 +1320,7 @@ def check_sla():
                 else pipeline_run.created_at
             if compare(start_date + timedelta(seconds=sla), current_time) == -1:
                 # passed SLA for pipeline_run
-                pipeline = Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid)
+                pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
                 notification_sender = NotificationSender(
                     NotificationConfig.load(
                         config=merge_dict(
@@ -1543,12 +1549,16 @@ def schedule_with_event(event: Dict = None):
 
 
 def sync_schedules(pipeline_uuids: List[str]):
+    trigger_configs = []
+
     # Sync schedule configs from triggers.yaml to DB
     for pipeline_uuid in pipeline_uuids:
         pipeline_triggers = get_triggers_by_pipeline(pipeline_uuid)
-
         logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.')
         for pipeline_trigger in pipeline_triggers:
             if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
                 continue
-            PipelineSchedule.create_or_update(pipeline_trigger)
+
+            trigger_configs.append(pipeline_trigger)
+
+    PipelineSchedule.create_or_update_batch(trigger_configs)
