@@ -503,7 +503,7 @@ def extract_drop_statement_table_names(text: str) -> List[str]:
 
 def extract_update_statement_table_names(text: str) -> List[str]:
     matches = re.findall(
-        r'\bupdate\b\s+([\w.]+)\s+set\s+[\s\S]*?\bwhere\b',
+        r'\bupdate\b\s+([\w.]+)\s+(?:as\s+\w+\s+)?set\s+[\s\S]*?\bwhere\b',
         remove_comments(text),
         re.IGNORECASE,
     )
