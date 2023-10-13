@@ -1,5 +1,6 @@
 import moment from 'moment';
 
+import { pluralize } from '@utils/string';
 import { rangeSequential } from '@utils/array';
 
 export enum TimePeriodEnum {
@@ -94,16 +95,16 @@ export function utcStringToElapsedTime(datetime: string) {
 
   let timeDisplay = '';
   if (duration.years() >= 1) {
-    timeDisplay = `${duration.years()} year${duration.years() > 1 ? 's' : ''} ago`;
+    timeDisplay = `${pluralize('year', duration.years(), true)} ago`;
   } else if (duration.months() >= 1) {
-    timeDisplay = `${duration.months()} month${duration.months() > 1 ? 's' : ''} ago`;
+    timeDisplay = `${pluralize('month', duration.months(), true)} ago`;
   } else if (duration.days() >= 1) {
-    timeDisplay = `${duration.days()} day${duration.days() > 1 ? 's' : ''} ago`;
+    timeDisplay = `${pluralize('day', duration.days(), true)} ago`;
   } else if (duration.hours() >= 1) {
-    timeDisplay = `${duration.hours()} hr${duration.hours() > 1 ? 's' : ''} ` +
-      `${duration.minutes()} min${duration.minutes() > 1 ? 's' : ''} ago`;
+    timeDisplay = `${pluralize('hr', duration.hours(), true)} ` +
+      `${pluralize('min', duration.minutes(), true)} ago`;
   } else {
-    timeDisplay = `${duration.minutes()} min${duration.minutes() > 1 || duration.minutes() === 0 ? 's' : ''} ago`;
+    timeDisplay = `${pluralize('min', duration.minutes(), true)} ago`;
   }
 
   return timeDisplay;
