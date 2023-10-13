@@ -49,7 +49,7 @@ class BasePolicyWithPermissionsTest(BaseApiTestCase, BootstrapMixin):
     def bootstrap(self):
         super().bootstrap()
 
-        self.role = Role.create(name=self.faker.name())
+        self.role = Role.create(name=secrets.token_urlsafe())
         UserRole.create(role_id=self.role.id, user_id=self.user.id)
 
     def build_policy(
