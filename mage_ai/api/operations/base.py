@@ -198,7 +198,7 @@ class BaseOperation():
         query = {}
         for key, values in self._query.items():
             query[key] = values
-            if type(values) is list:
+            if isinstance(values, list):
                 arr = []
                 for v in values:
                     try:
