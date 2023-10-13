@@ -17,4 +17,10 @@ You must enter the following credentials when configuring this source:
 | `schema` | Schema of the data you want to read data from. | `public` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `batch_fetch_limit` | The number of rows to fetch in each batch (default to 50k). You can specify a larger batch size if your instance has higher memory. | `50000`
+
 <br />
