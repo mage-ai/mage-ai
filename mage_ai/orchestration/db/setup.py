@@ -31,11 +31,11 @@ def get_postgres_connection_url() -> Optional[str]:
                 db_user = secrets.get('username')
                 db_pass = secrets.get('password')
                 db_name = secrets.get('dbname')
-                db_host = secrets.get('host', DEFAULT_POSTGRES_HOST)
+                db_host = secrets.get('host')
                 db_port = secrets.get('port', DEFAULT_POSTGRES_PORT)
 
-        except Exception as e:
-            print("Unable to fetch secrets from AWS Secrets Manager", e)
+        except Exception as ex:
+            print("Unable to fetch secrets from AWS Secrets Manager", ex)
     elif os.getenv(PG_DB_USER):
         db_user = os.getenv(PG_DB_USER)
         db_pass = os.getenv(PG_DB_PASS)
