@@ -1,3 +1,4 @@
+import secrets
 from enum import Enum
 from typing import Dict, List
 from unittest.mock import patch
@@ -22,10 +23,11 @@ from mage_ai.orchestration.db.models.oauth import (
     Permission,
     Role,
     RolePermission,
+    User,
     UserRole,
 )
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import index_by
+from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 
@@ -50,14 +52,21 @@ class BasePolicyWithPermissionsTest(BaseApiTestCase, BootstrapMixin):
         self.role = Role.create(name=self.faker.name())
         UserRole.create(role_id=self.role.id, user_id=self.user.id)
 
-    def build_policy(self, entity_name: EntityName = None):
+    def build_policy(
+        self,
+        entity_name: EntityName = None,
+        current_user=None,
+    ):
+        class CustomTestWithPermissionsResource(GenericResource):
+            model_class = User
+
         class CustomTestWithPermissionsPolicy(BasePolicy):
             @classmethod
             def entity_name_uuid(self):
                 return entity_name or ENTITY_NAME
 
-        model = dict(power=1)
-        resource = GenericResource(model, self.user)
+        model = dict(id=(current_user or self.user).id)
+        resource = CustomTestWithPermissionsResource(model, self.user)
 
         return CustomTestWithPermissionsPolicy(resource, self.user)
 
@@ -91,7 +100,7 @@ attribute_operations = [
 entity_names = [en for en in EntityName]
 
 for entity_name in [
-    EntityName.Pipeline,
+    EntityName.User,
 ]:
     for operation in operations:
         operation_access = OPERATION_TYPE_TO_ACCESS_MAPPING[operation]
@@ -99,6 +108,7 @@ for entity_name in [
         def build_test_action(
             access,
             operation_type,
+            current_user=None,
             permission_options: Dict = None,
             test_suites: List[TestSuite] = None,
         ):
@@ -107,6 +117,7 @@ for entity_name in [
             async def _test_action(
                 self,
                 access=access,
+                current_user=current_user,
                 operation_type=operation_type,
                 permission_options=permission_options,
                 test_suites=test_suites,
@@ -117,7 +128,10 @@ for entity_name in [
                 if not test_suites or TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS in test_suites:
                     error = False
                     try:
-                        await self.build_policy(entity_name=entity_name).authorize_action(
+                        await self.build_policy(
+                            current_user=current_user,
+                            entity_name=entity_name,
+                        ).authorize_action(
                             operation_type,
                         )
                     except ApiError:
@@ -132,14 +146,20 @@ for entity_name in [
 
                 # Authorized
                 if not test_suites or TestSuite.AUTHORIZED in test_suites:
-                    await self.build_policy(entity_name=entity_name).authorize_action(
+                    await self.build_policy(
+                        current_user=current_user,
+                        entity_name=entity_name,
+                    ).authorize_action(
                         operation_type,
                     )
 
                 if test_suites and TestSuite.INVERSE in test_suites:
                     error = False
                     try:
-                        await self.build_policy(entity_name=entity_name).authorize_action(
+                        await self.build_policy(
+                            current_user=current_user,
+                            entity_name=entity_name,
+                        ).authorize_action(
                             operation_type,
                         )
                     except ApiError:
@@ -150,10 +170,13 @@ for entity_name in [
                 if not test_suites or TestSuite.UNAUTHORIZED_FOR_ANOTHER_ENTITY in test_suites:
                     error = False
                     try:
-                        await self.build_policy(entity_name=find(
-                            lambda x, entity_name=entity_name: x != entity_name,
-                            entity_names,
-                        )).authorize_action(operation_type)
+                        await self.build_policy(
+                            current_user=current_user,
+                            entity_name=find(
+                                lambda x, entity_name=entity_name: x != entity_name,
+                                entity_names,
+                            ),
+                        ).authorize_action(operation_type)
                     except ApiError:
                         error = True
                     self.assertTrue(error)
@@ -162,7 +185,10 @@ for entity_name in [
                 if not test_suites or TestSuite.UNAUTHORIZED in test_suites:
                     error = False
                     try:
-                        await self.build_policy(entity_name=entity_name).authorize_action(find(
+                        await self.build_policy(
+                            current_user=current_user,
+                            entity_name=entity_name,
+                        ).authorize_action(find(
                             lambda x: x != operation_type,
                             operations,
                         ))
@@ -177,7 +203,10 @@ for entity_name in [
                     ], entity_name=entity_name)
                     error = False
                     try:
-                        await self.build_policy(entity_name=entity_name).authorize_action(
+                        await self.build_policy(
+                            current_user=current_user,
+                            entity_name=entity_name,
+                        ).authorize_action(
                             operation_type,
                         )
                     except ApiError:
@@ -203,11 +232,38 @@ for entity_name in [
             OperationType.DETAIL,
             OperationType.LIST,
         ]:
-            for group_access in [
-                PermissionAccess.EDITOR,
-                PermissionAccess.VIEWER,
-                PermissionAccess.ADMIN,
-                PermissionAccess.OWNER,
+            for group_access, test_suites in [
+                (
+                    PermissionAccess.ADMIN,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.DISABLED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
+                (
+                    PermissionAccess.EDITOR,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.DISABLED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
+                (
+                    PermissionAccess.OWNER,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
+                (
+                    PermissionAccess.VIEWER,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.DISABLED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
             ]:
                 method_name = f'test_authorize_action_{operation}_for_{entity_name}'
                 method_name = f'{method_name}_with_group_access_{group_access}'
@@ -217,23 +273,39 @@ for entity_name in [
                     build_test_action(
                         access=group_access,
                         operation_type=operation,
-                        test_suites=[
-                            TestSuite.AUTHORIZED,
-                            TestSuite.DISABLED,
-                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
-                        ],
+                        test_suites=test_suites,
                     ),
                 )
 
         if operation in [
-            PermissionAccess.CREATE,
-            PermissionAccess.DELETE,
-            PermissionAccess.UPDATE,
+            OperationType.CREATE,
+            OperationType.DELETE,
+            OperationType.UPDATE,
         ]:
-            for group_access in [
-                PermissionAccess.VIEWER,
-                PermissionAccess.ADMIN,
-                PermissionAccess.OWNER,
+            for group_access, test_suites in [
+                (
+                    PermissionAccess.ADMIN,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.DISABLED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
+                (
+                    PermissionAccess.EDITOR,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.DISABLED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
+                (
+                    PermissionAccess.OWNER,
+                    [
+                        TestSuite.AUTHORIZED,
+                        TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                    ],
+                ),
             ]:
                 method_name = f'test_authorize_action_{operation}_for_{entity_name}'
                 method_name = f'{method_name}_with_group_access_{group_access}'
@@ -243,11 +315,7 @@ for entity_name in [
                     build_test_action(
                         access=group_access,
                         operation_type=operation,
-                        test_suites=[
-                            TestSuite.AUTHORIZED,
-                            TestSuite.DISABLED,
-                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
-                        ],
+                        test_suites=test_suites,
                     ),
                 )
 
@@ -275,15 +343,18 @@ for entity_name in [
             @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
             async def _test_action_with_disable_access_operation_all(
                 self,
-                access_all=access_all,
                 access_disable=access_disable,
                 operation=operation,
+                operation_access=operation_access,
             ):
                 self.bootstrap()
 
                 # Unauthorized
                 error = False
-                self.create_permission([access_disable], entity_name=entity_name)
+                self.create_permission([
+                    access_disable,
+                    operation_access,
+                ], entity_name=entity_name)
                 try:
                     await self.build_policy(entity_name=entity_name).authorize_action(operation)
                 except ApiError:
@@ -375,13 +446,49 @@ for entity_name in [
             ))
         )
 
+        method_name = f'test_authorize_action_{operation}_for_{entity_name}'
+        method_name = f'{method_name}_with_access_condition_user_owns_entity_pass'
+        setattr(
+            BasePolicyWithPermissionsTest,
+            method_name,
+            build_test_action(
+                access=Permission.add_accesses([
+                    PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                    operation_access,
+                ]),
+                operation_type=operation,
+                permission_options=dict(conditions=[PermissionCondition.USER_OWNS_ENTITY]),
+            ),
+        )
+
+        method_name = f'test_authorize_action_{operation}_for_{entity_name}'
+        method_name = f'{method_name}_with_access_condition_user_owns_entity_fail'
+        setattr(
+            BasePolicyWithPermissionsTest,
+            method_name,
+            build_test_action(
+                access=Permission.add_accesses([
+                    PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                    operation_access,
+                ]),
+                current_user=User(id=secrets.token_urlsafe()),
+                operation_type=operation,
+                permission_options=dict(conditions=[PermissionCondition.USER_OWNS_ENTITY]),
+                test_suites=[TestSuite.INVERSE],
+            ),
+        )
+
         for attribute_operation in attribute_operations:
+            access_attribute_operation = \
+                ATTRIBUTE_OPERATION_TYPE_TO_ACCESS_MAPPING[attribute_operation]
+
             def build_test_attribute(
                 access,
                 access_attribute_operation,
                 operation_type,
                 attribute_operation_type,
                 attributes: List[str],
+                current_user=None,
                 permission_options: Dict = None,
                 test_suites: List[TestSuite] = None,
                 entity_name=entity_name,
@@ -393,10 +500,11 @@ for entity_name in [
                     access=access,
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation_type,
+                    current_user=current_user,
+                    entity_name=entity_name,
                     operation_type=operation_type,
                     permission_options=permission_options,
                     test_suites=test_suites,
-                    entity_name=entity_name,
                 ):
                     self.bootstrap()
 
@@ -406,6 +514,7 @@ for entity_name in [
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
                                 await self.build_policy(
+                                    current_user=current_user,
                                     entity_name=entity_name,
                                 ).authorize_query(
                                     index_by(lambda x: x, attributes),
@@ -414,6 +523,7 @@ for entity_name in [
                             else:
                                 for attribute in attributes:
                                     await self.build_policy(
+                                        current_user=current_user,
                                         entity_name=entity_name,
                                     ).authorize_attribute(
                                         attribute_operation_type,
@@ -425,7 +535,10 @@ for entity_name in [
                         self.assertTrue(error)
 
                     self.create_permission(
-                        [access, access_attribute_operation],
+                        list(filter(
+                            lambda x: x is not None,
+                            [access, access_attribute_operation],
+                        )),
                         entity_name=entity_name,
                         options=permission_options,
                     )
@@ -434,6 +547,7 @@ for entity_name in [
                     if not test_suites or TestSuite.AUTHORIZED in test_suites:
                         if AttributeOperationType.QUERY == attribute_operation_type:
                             await self.build_policy(
+                                current_user=current_user,
                                 entity_name=entity_name,
                             ).authorize_query(
                                 index_by(lambda x: x, attributes),
@@ -442,6 +556,7 @@ for entity_name in [
                         else:
                             for attribute in attributes:
                                 await self.build_policy(
+                                    current_user=current_user,
                                     entity_name=entity_name,
                                 ).authorize_attribute(
                                     attribute_operation_type,
@@ -449,34 +564,55 @@ for entity_name in [
                                     api_operation_action=operation_type,
                                 )
 
-                    # if test_suites and TestSuite.INVERSE in test_suites:
-                    #     error = False
-                    #     try:
-                    #         await self.build_policy(entity_name=entity_name).authorize_action(
-                    #             operation_type,
-                    #         )
-                    #     except ApiError:
-                    #         error = True
-                    #     self.assertTrue(error)
+                    if test_suites and TestSuite.INVERSE in test_suites:
+                        error = False
+                        try:
+                            if AttributeOperationType.QUERY == attribute_operation_type:
+                                await self.build_policy(
+                                    current_user=current_user,
+                                    entity_name=entity_name,
+                                ).authorize_query(
+                                    index_by(lambda x: x, attributes),
+                                    api_operation_action=operation_type,
+                                )
+                            else:
+                                for attribute in attributes:
+                                    await self.build_policy(
+                                        current_user=current_user,
+                                        entity_name=entity_name,
+                                    ).authorize_attribute(
+                                        attribute_operation_type,
+                                        attribute,
+                                        api_operation_action=operation_type,
+                                    )
+                        except ApiError:
+                            error = True
+                        self.assertTrue(error)
 
                     # Unauthorized for a different entity and different attribute
                     if not test_suites or TestSuite.UNAUTHORIZED_FOR_ANOTHER_ENTITY in test_suites:
                         error = False
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
-                                await self.build_policy(entity_name=find(
-                                    lambda x, entity_name=entity_name: x != entity_name,
-                                    entity_names,
-                                )).authorize_query(
+                                await self.build_policy(
+                                    current_user=current_user,
+                                    entity_name=find(
+                                        lambda x, entity_name=entity_name: x != entity_name,
+                                        entity_names,
+                                    ),
+                                ).authorize_query(
                                     index_by(lambda x: x, attributes),
                                     api_operation_action=operation_type,
                                 )
                             else:
                                 for attribute in attributes:
-                                    await self.build_policy(entity_name=find(
-                                        lambda x, entity_name=entity_name: x != entity_name,
-                                        entity_names,
-                                    )).authorize_attribute(
+                                    await self.build_policy(
+                                        current_user=current_user,
+                                        entity_name=find(
+                                            lambda x, entity_name=entity_name: x != entity_name,
+                                            entity_names,
+                                        ),
+                                    ).authorize_attribute(
                                         attribute_operation_type,
                                         attribute,
                                         api_operation_action=operation_type,
@@ -489,6 +625,7 @@ for entity_name in [
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
                                 await self.build_policy(
+                                    current_user=current_user,
                                     entity_name=entity_name,
                                 ).authorize_query(
                                     index_by(lambda x: f'not_{x}', attributes),
@@ -497,6 +634,7 @@ for entity_name in [
                             else:
                                 for attribute in attributes:
                                     await self.build_policy(
+                                        current_user=current_user,
                                         entity_name=entity_name,
                                     ).authorize_attribute(
                                         attribute_operation_type,
@@ -513,6 +651,7 @@ for entity_name in [
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
                                 await self.build_policy(
+                                    current_user=current_user,
                                     entity_name=entity_name,
                                 ).authorize_query(
                                     index_by(lambda x: x, attributes),
@@ -524,6 +663,7 @@ for entity_name in [
                             else:
                                 for attribute in attributes:
                                     await self.build_policy(
+                                        current_user=current_user,
                                         entity_name=entity_name,
                                     ).authorize_attribute(
                                         attribute_operation_type,
@@ -541,11 +681,13 @@ for entity_name in [
                     if not test_suites or TestSuite.DISABLED in test_suites:
                         self.create_permission(
                             [
-                                OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING[operation_type],
                                 ATTRIBUTE_OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING[
                                     attribute_operation_type
                                 ],
-                            ],
+                            ] + list(filter(
+                                lambda x: x is not None,
+                                [access, access_attribute_operation],
+                            )),
                             entity_name=entity_name,
                             options=permission_options,
                         )
@@ -553,6 +695,7 @@ for entity_name in [
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
                                 await self.build_policy(
+                                    current_user=current_user,
                                     entity_name=entity_name,
                                 ).authorize_query(
                                     index_by(lambda x: x, attributes),
@@ -561,6 +704,7 @@ for entity_name in [
                             else:
                                 for attribute in attributes:
                                     await self.build_policy(
+                                        current_user=current_user,
                                         entity_name=entity_name,
                                     ).authorize_attribute(
                                         attribute_operation_type,
@@ -591,13 +735,406 @@ for entity_name in [
                 method_name,
                 build_test_attribute(
                     access=operation_access,
-                    access_attribute_operation=ATTRIBUTE_OPERATION_TYPE_TO_ACCESS_MAPPING[
-                        attribute_operation
-                    ],
+                    access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
                     attributes=[attribute_uuid],
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=options,
+                ),
+            )
+
+            if operation in [
+                OperationType.DETAIL,
+                OperationType.LIST,
+            ] and attribute_operation in [
+                AttributeOperationType.READ,
+            ]:
+                for group_access, test_suites in [
+                    (
+                        PermissionAccess.ADMIN,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.DISABLED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                    (
+                        PermissionAccess.EDITOR,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.DISABLED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                    (
+                        PermissionAccess.OWNER,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                    (
+                        PermissionAccess.VIEWER,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.DISABLED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                ]:
+                    method_name = f'test_authorize_{attribute_operation}_' \
+                        f'attribute_on_{operation}_for'
+                    method_name = f'{method_name}_{entity_name}_with_access_{group_access}'
+                    setattr(
+                        BasePolicyWithPermissionsTest,
+                        method_name,
+                        build_test_attribute(
+                            access=None,
+                            access_attribute_operation=group_access,
+                            attribute_operation_type=attribute_operation,
+                            attributes=[attribute_uuid],
+                            entity_name=entity_name,
+                            operation_type=operation,
+                            permission_options=options,
+                            test_suites=test_suites,
+                        ),
+                    )
+
+            if operation in [
+                OperationType.CREATE,
+                OperationType.DELETE,
+                OperationType.UPDATE,
+            ] and attribute_operation in [
+                AttributeOperationType.QUERY,
+                AttributeOperationType.WRITE,
+            ]:
+                for group_access, test_suites in [
+                    (
+                        PermissionAccess.ADMIN,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.DISABLED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                    (
+                        PermissionAccess.EDITOR,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.DISABLED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                    (
+                        PermissionAccess.OWNER,
+                        [
+                            TestSuite.AUTHORIZED,
+                            TestSuite.UNAUTHORIZED_WITH_NO_PERMISSIONS,
+                        ],
+                    ),
+                ]:
+                    method_name = f'test_authorize_{attribute_operation}_' \
+                        f'attribute_on_{operation}_for'
+                    method_name = f'{method_name}_{entity_name}_with_access_{group_access}'
+                    setattr(
+                        BasePolicyWithPermissionsTest,
+                        method_name,
+                        build_test_attribute(
+                            access=None,
+                            access_attribute_operation=group_access,
+                            attribute_operation_type=attribute_operation,
+                            attributes=[attribute_uuid],
+                            entity_name=entity_name,
+                            operation_type=operation,
+                            permission_options=options,
+                            test_suites=test_suites,
+                        ),
+                    )
+
+            for access_all in [
+                PermissionAccess.ALL,
+                Permission.add_accesses([
+                    PermissionAccess.OPERATION_ALL,
+                    access_attribute_operation,
+                ]),
+            ]:
+                method_name = f'test_authorize_{attribute_operation}_' \
+                    f'attribute_on_{operation}_for'
+                method_name = f'{method_name}_{entity_name}_with_access_{access_all}'
+
+                setattr(
+                    BasePolicyWithPermissionsTest,
+                    method_name,
+                    build_test_attribute(
+                        access=None,
+                        access_attribute_operation=access_all,
+                        attribute_operation_type=attribute_operation,
+                        attributes=[attribute_uuid],
+                        entity_name=entity_name,
+                        operation_type=operation,
+                        permission_options=options,
+                        test_suites=[
+                            TestSuite.AUTHORIZED,
+                        ],
+                    ),
+                )
+
+            disable_all_attribute_operation = 0
+            if AttributeOperationType.QUERY == attribute_operation:
+                disable_all_attribute_operation = PermissionAccess.DISABLE_QUERY_ALL
+            elif AttributeOperationType.READ == attribute_operation:
+                disable_all_attribute_operation = PermissionAccess.DISABLE_READ_ALL
+            elif AttributeOperationType.WRITE == attribute_operation:
+                disable_all_attribute_operation = PermissionAccess.DISABLE_WRITE_ALL
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                f'with_access_{disable_all_attribute_operation}'
+
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                build_test_attribute(
+                    access=operation_access,
+                    access_attribute_operation=Permission.add_accesses([
+                        access_attribute_operation,
+                        disable_all_attribute_operation,
+                    ]),
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=options,
+                    test_suites=[
+                        TestSuite.INVERSE,
+                    ],
+                ),
+            )
+
+            for access_disable in [
+                PermissionAccess.DISABLE_OPERATION_ALL,
+            ]:
+                @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
+                @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
+                async def _test_action_with_disable_access_operation_all(
+                    self,
+                    access_attribute_operation=access_attribute_operation,
+                    access_disable=access_disable,
+                    attribute_operation=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation=operation,
+                    operation_access=operation_access,
+                ):
+                    self.bootstrap()
+
+                    self.create_permission(
+                        [
+                            access_attribute_operation,
+                            access_disable,
+                            operation_access,
+                        ],
+                        entity_name=entity_name,
+                        options=dict(
+                            query_attributes=attributes,
+                            read_attributes=attributes,
+                            write_attributes=attributes,
+                        ),
+                    )
+
+                    # Unauthorized
+                    error = False
+                    try:
+                        if AttributeOperationType.QUERY == attribute_operation:
+                            await self.build_policy(
+                                entity_name=entity_name,
+                            ).authorize_query(
+                                index_by(lambda x: x, attributes),
+                                api_operation_action=operation,
+                            )
+                        else:
+                            for attribute in attributes:
+                                await self.build_policy(
+                                    entity_name=entity_name,
+                                ).authorize_attribute(
+                                    attribute_operation,
+                                    attribute,
+                                    api_operation_action=operation,
+                                )
+                    except ApiError:
+                        error = True
+                    self.assertTrue(error)
+
+                    self.cleanup()
+
+                method_name = f'test_authorize_{attribute_operation}_' \
+                    f'attribute_on_{operation}_for'
+                method_name = f'{method_name}_{entity_name}_with_disable_access_operation_all'
+
+                setattr(
+                    BasePolicyWithPermissionsTest,
+                    method_name,
+                    _test_action_with_disable_access_operation_all,
+                )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_condition_has_notebook_edit_access_0'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                patch(
+                    'mage_ai.api.policies.mixins.user_permissions.DISABLE_NOTEBOOK_EDIT_ACCESS',
+                    0,
+                )(build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS]),
+                    ),
+                )),
+            )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_condition_has_notebook_edit_access_1'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                patch(
+                    'mage_ai.api.policies.mixins.user_permissions.DISABLE_NOTEBOOK_EDIT_ACCESS',
+                    1,
+                )(build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS]),
+                    ),
+                    test_suites=[TestSuite.INVERSE],
+                )),
+            )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_access_condition_has_pipeline_edit_access_0'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                patch(
+                    'mage_ai.api.policies.mixins.user_permissions.is_disable_pipeline_edit_access',
+                    lambda: False,
+                )(build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.HAS_PIPELINE_EDIT_ACCESS]),
+                    ),
+                )),
+            )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_access_condition_has_pipeline_edit_access_2'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                patch(
+                    'mage_ai.api.policies.mixins.user_permissions.is_disable_pipeline_edit_access',
+                    lambda: True,
+                )(build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.HAS_PIPELINE_EDIT_ACCESS]),
+                    ),
+                    test_suites=[TestSuite.INVERSE],
+                )),
+            )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_access_condition_user_owns_entity_pass'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.USER_OWNS_ENTITY]),
+                    ),
+                ),
+            )
+
+            method_name = f'test_authorize_{attribute_operation}_' \
+                f'attribute_on_{operation}_for'
+            method_name = f'{method_name}_{entity_name}_' \
+                'with_access_condition_user_owns_entity_fail'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                build_test_attribute(
+                    access=Permission.add_accesses([
+                        PermissionAccess.DISABLE_UNLESS_CONDITIONS,
+                        operation_access,
+                    ]),
+                    access_attribute_operation=access_attribute_operation,
+                    attribute_operation_type=attribute_operation,
+                    attributes=[attribute_uuid],
+                    entity_name=entity_name,
+                    current_user=User(id=secrets.token_urlsafe()),
+                    operation_type=operation,
+                    permission_options=merge_dict(
+                        options,
+                        dict(conditions=[PermissionCondition.USER_OWNS_ENTITY]),
+                    ),
+                    test_suites=[TestSuite.INVERSE],
                 ),
             )

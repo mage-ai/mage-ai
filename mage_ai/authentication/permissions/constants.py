@@ -158,20 +158,20 @@ ACCESS_FOR_VIEWER = [
     PermissionAccess.READ,
     PermissionAccess.VIEWER,
 ]
-ACCESS_FOR_EDITOR = ACCESS_FOR_VIEWER + [
+ACCESS_FOR_EDITOR = list(set(ACCESS_FOR_VIEWER + [
     PermissionAccess.CREATE,
     PermissionAccess.DELETE,
     PermissionAccess.EDITOR,
     PermissionAccess.QUERY,
     PermissionAccess.UPDATE,
     PermissionAccess.WRITE,
-]
-ACCESS_FOR_ADMIN = ACCESS_FOR_VIEWER + ACCESS_FOR_EDITOR + [
+]))
+ACCESS_FOR_ADMIN = list(set(ACCESS_FOR_VIEWER + ACCESS_FOR_EDITOR + [
     PermissionAccess.ADMIN,
-]
-ACCESS_FOR_OWNER = ACCESS_FOR_ADMIN + [
+]))
+ACCESS_FOR_OWNER = list(set(ACCESS_FOR_ADMIN + [
     PermissionAccess.OWNER,
-]
+]))
 
 PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS = {
     f'{PermissionAccess.ADMIN}': ACCESS_FOR_ADMIN,
