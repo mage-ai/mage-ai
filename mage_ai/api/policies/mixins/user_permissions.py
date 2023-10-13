@@ -79,6 +79,10 @@ async def validate_condition_with_permissions(
 
     permissions = await (policy.resource or policy).load_and_cache_user_permissions()
 
+    # If owner, then they get all permissions and it can’t be superseded.
+    if any([permission.access & PermissionAccess.OWNER for permission in permissions]):
+        return True
+
     async def __permission_grants_access(
         permission: Permission,
         entity_name=entity_name,
@@ -115,108 +119,106 @@ async def validate_condition_with_permissions(
         # 3. Add additional permission access (e.g. read, list, detail for viewer)
         # to grant access to this entity and its attributes
         permission_accesses = PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS.get(f'{permission.access}')
-        if not permission_accesses:
-            permission_accesses = [permission.access]
+        if permission_accesses:
+            permission_access = Permission.add_accesses(list(set(permission_accesses)))
+        else:
+            permission_access = permission.access
 
         permission_granted = False
         permission_disabled = False
 
-        for permission_access in permission_accesses:
-            if permission_granted:
-                break
+        # Access to all operations and attribute operations
+        if permission_access & PermissionAccess.ALL.value:
+            permission_granted = True
+            return (permission_granted, permission_disabled)
 
-            # Access to all operations and attribute operations
-            if permission_access & PermissionAccess.ALL.value:
-                permission_granted = True
-                break
+        # Disable all operations
+        if permission_access & PermissionAccess.DISABLE_OPERATION_ALL.value:
+            permission_disabled = True
+            return (permission_granted, permission_disabled)
 
-            # Disable all operations
-            if permission_access & PermissionAccess.DISABLE_OPERATION_ALL.value:
+        has_access_for_all_operations = permission_access & PermissionAccess.OPERATION_ALL
+        valid_for_operation = has_access_for_all_operations or permission_access & access
+
+        # If this condition is validating attribute operations for an attribute:
+        if access_for_attribute_operation:
+            access_for_all = 0
+            disable_access_for_all = 0
+
+            if AttributeOperationType.QUERY == attribute_operation_type:
+                access_for_all = PermissionAccess.QUERY_ALL
+                disable_access_for_all = PermissionAccess.DISABLE_QUERY_ALL
+            elif AttributeOperationType.READ == attribute_operation_type:
+                access_for_all = PermissionAccess.READ_ALL
+                disable_access_for_all = PermissionAccess.DISABLE_READ_ALL
+            elif AttributeOperationType.WRITE == attribute_operation_type:
+                access_for_all = PermissionAccess.WRITE_ALL
+                disable_access_for_all = PermissionAccess.DISABLE_WRITE_ALL
+
+            if permission_access & disable_access_for_all:
                 permission_disabled = True
-                break
+                return (permission_granted, permission_disabled)
 
-            has_access_for_all_operations = permission_access & PermissionAccess.OPERATION_ALL
-            valid_for_operation = has_access_for_all_operations or permission_access & access
+            has_access_for_all_attributes = permission_access & access_for_all
+            valid_for_operation = valid_for_operation and \
+                (
+                    permission_access & access_for_attribute_operation or
+                    has_access_for_all_attributes
+                )
 
-            # If this condition is validating attribute operations for an attribute:
-            if access_for_attribute_operation:
-                access_for_all = 0
-                disable_access_for_all = 0
+            # Don’t grant access if permission disables access to this entity’s attributes
+            # for this attribute operation.
+            if disable_access_for_attribute_operation is not None and \
+                    permission.access & disable_access_for_attribute_operation:
 
+                disabled_attributes = []
                 if AttributeOperationType.QUERY == attribute_operation_type:
-                    access_for_all = PermissionAccess.QUERY_ALL
-                    disable_access_for_all = PermissionAccess.DISABLE_QUERY_ALL
+                    disabled_attributes = permission.query_attributes
                 elif AttributeOperationType.READ == attribute_operation_type:
-                    access_for_all = PermissionAccess.READ_ALL
-                    disable_access_for_all = PermissionAccess.DISABLE_READ_ALL
+                    disabled_attributes = permission.read_attributes
                 elif AttributeOperationType.WRITE == attribute_operation_type:
-                    access_for_all = PermissionAccess.WRITE_ALL
-                    disable_access_for_all = PermissionAccess.DISABLE_WRITE_ALL
+                    disabled_attributes = permission.write_attributes
 
-                if permission_access & disable_access_for_all:
+                if resource_attribute in (disabled_attributes or []):
                     permission_disabled = True
-                    break
+                    return (permission_granted, permission_disabled)
 
-                has_access_for_all_attributes = permission_access & access_for_all
-                valid_for_operation = valid_for_operation and \
-                    (
-                        permission_access & access_for_attribute_operation or
-                        has_access_for_all_attributes
+            if not has_access_for_all_attributes:
+                if valid_for_operation and attribute_operation_type and resource_attribute:
+                    permitted_attributes = []
+                    if AttributeOperationType.QUERY == attribute_operation_type:
+                        permitted_attributes = permission.query_attributes
+                    elif AttributeOperationType.READ == attribute_operation_type:
+                        permitted_attributes = permission.read_attributes
+                    elif AttributeOperationType.WRITE == attribute_operation_type:
+                        permitted_attributes = permission.write_attributes
+
+                    valid_for_operation = resource_attribute in (permitted_attributes or [])
+
+        # Special conditions
+        if permission_access & PermissionAccess.DISABLE_UNLESS_CONDITIONS:
+            conditions = permission.conditions or []
+            conditions_evaluated = []
+
+            if PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS in conditions:
+                conditions_evaluated.append(DISABLE_NOTEBOOK_EDIT_ACCESS != 1)
+
+            if PermissionCondition.HAS_PIPELINE_EDIT_ACCESS in conditions:
+                conditions_evaluated.append(not is_disable_pipeline_edit_access())
+
+            if PermissionCondition.USER_OWNS_ENTITY in conditions:
+                if policy.resource.model_class is User:
+                    conditions_evaluated.append(
+                        policy.current_user.owner or
+                        policy.current_user.id == policy.resource.id
                     )
 
-                # Don’t grant access if permission disables access to this entity’s attributes
-                # for this attribute operation.
-                if disable_access_for_attribute_operation is not None and \
-                        permission.access & disable_access_for_attribute_operation:
+            if conditions_evaluated and len(conditions_evaluated):
+                valid_for_operation = valid_for_operation and all(conditions_evaluated)
 
-                    disabled_attributes = []
-                    if AttributeOperationType.QUERY == attribute_operation_type:
-                        disabled_attributes = permission.query_attributes
-                    elif AttributeOperationType.READ == attribute_operation_type:
-                        disabled_attributes = permission.read_attributes
-                    elif AttributeOperationType.WRITE == attribute_operation_type:
-                        disabled_attributes = permission.write_attributes
-
-                    if resource_attribute in (disabled_attributes or []):
-                        permission_disabled = True
-                        break
-
-                if not has_access_for_all_attributes:
-                    if valid_for_operation and attribute_operation_type and resource_attribute:
-                        permitted_attributes = []
-                        if AttributeOperationType.QUERY == attribute_operation_type:
-                            permitted_attributes = permission.query_attributes
-                        elif AttributeOperationType.READ == attribute_operation_type:
-                            permitted_attributes = permission.read_attributes
-                        elif AttributeOperationType.WRITE == attribute_operation_type:
-                            permitted_attributes = permission.write_attributes
-
-                        valid_for_operation = resource_attribute in (permitted_attributes or [])
-
-            # Special conditions
-            if permission_access & PermissionAccess.DISABLE_UNLESS_CONDITIONS:
-                conditions = permission.conditions or []
-                conditions_evaluated = []
-
-                if PermissionCondition.HAS_NOTEBOOK_EDIT_ACCESS in conditions:
-                    conditions_evaluated.append(DISABLE_NOTEBOOK_EDIT_ACCESS != 1)
-
-                if PermissionCondition.HAS_PIPELINE_EDIT_ACCESS in conditions:
-                    conditions_evaluated.append(not is_disable_pipeline_edit_access())
-
-                if PermissionCondition.USER_OWNS_ENTITY in conditions:
-                    if policy.resource.model_class is User:
-                        conditions_evaluated.append(
-                            policy.current_user.owner or
-                            policy.current_user.id == policy.resource.id
-                        )
-
-                if conditions_evaluated and len(conditions_evaluated):
-                    valid_for_operation = all(conditions_evaluated)
-
-            if valid_for_operation:
-                permission_granted = True
-                break
+        if valid_for_operation:
+            permission_granted = True
+            return (permission_granted, permission_disabled)
 
         return (permission_granted, permission_disabled)
 
