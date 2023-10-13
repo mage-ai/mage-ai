@@ -14,7 +14,7 @@ class MongoDBConfig(BaseConfig):
     connection_str: str
     database: str
     collection: str = None
-    batch_size: Optional[int] = 100
+    batch_size: Optional[int] = 10
     pipeline: Optional[_Pipeline] = None
     operation_time: Optional[Timestamp] = None
     start_after: Optional[Mapping[str, Any]] = None
@@ -29,27 +29,44 @@ class MongoSource(BaseSource):
     def read(self, handler: Callable):
         pass
 
+    def build_watch_args(self):
+        """Build the watch arguments based on config attributes."""
+        watch_args = {}
+
+        # Check each parameter and append to watch_args if present
+        if hasattr(self.config, 'batch_size') and self.config.batch_size is not None:
+            watch_args['batch_size'] = self.config.batch_size
+
+        if hasattr(self.config, 'pipeline') and self.config.pipeline is not None:
+            watch_args['pipeline'] = self.config.pipeline
+
+        if hasattr(self.config, 'operation_time') and self.config.operation_time is not None:
+            watch_args['operation_time'] = self.config.operation_time
+
+        if hasattr(self.config, 'start_after') and self.config.start_after is not None:
+            watch_args['start_after'] = self.config.start_after
+
+        return watch_args
+
     def batch_read(self, handler: Callable):
         self._print("Start getting message for MongoDB streaming.")
         try:
             db = self.client.get_database(self.config.database)
             parsed_messages = []
-            if self.config_class.collection:
-                watch_args = {'batch_size': self.config.batch_size}
-                if self.config_class.pipeline:
-                    watch_args['pipeline'] = self.config.pipeline
-                if self.config_class.operation_time:
-                    watch_args['operation_time'] = self.config.operation_time
-                if self.config_class.start_after:
-                    watch_args['start_after'] = self.config.start_after
-                with db[self.config_class.collection].watch(**watch_args) as stream:
+            self._print(db)
+
+            if self.config.collection:
+                watch_args = self.build_watch_args()
+                collection = db[self.config.collection]
+
+                with collection.watch(**watch_args) as stream:
                     for change in stream:
                         parsed_messages.append(change)
-            if parsed_messages:
-                self._print(f'Received {len(parsed_messages)} message. '
-                            f'Sample: {parsed_messages[0]}.')
-                handler(parsed_messages)
+                        if parsed_messages:
+                            self._print(f'Received {len(parsed_messages)} message. '
+                                        f'Sample: {parsed_messages[0]}.')
+                            handler(parsed_messages)
 
         except Exception as e:
-            self._print(f"Error: {e}")
-            raise
+            # Handle potential exceptions when working with external systems.
+            self._print(f"Error reading from MongoDB: {e}")
